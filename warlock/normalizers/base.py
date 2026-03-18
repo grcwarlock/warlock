@@ -1,0 +1,124 @@
+"""Layer 2 — Normalization.
+
+BaseNormalizer defines the contract for transforming RawEventData → FindingData.
+Each source type registers a normalizer that knows how to extract structure
+from that source's raw payloads.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
+from uuid import uuid4
+
+from warlock.connectors.base import RawEventData, SourceType
+
+log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Finding — the universal normalized unit
+# ---------------------------------------------------------------------------
+
+@dataclass
+class FindingData:
+    raw_event_id: str
+
+    # What was observed
+    observation_type: str      # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
+    title: str
+    detail: dict[str, Any]
+
+    # What resource
+    resource_id: str = ""
+    resource_type: str = ""
+    resource_name: str = ""
+    account_id: str = ""
+    region: str = ""
+
+    # Source lineage
+    source: str = ""
+    source_type: SourceType = SourceType.CUSTOM
+    provider: str = ""
+
+    # Severity as reported by source
+    severity: str = "info"     # critical, high, medium, low, info
+    confidence: float = 1.0
+
+    # Time
+    observed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Identity
+    id: str = field(default_factory=lambda: str(uuid4()))
+
+    @property
+    def sha256(self) -> str:
+        content = json.dumps(
+            {"type": self.observation_type, "detail": self.detail,
+             "resource_id": self.resource_id, "resource_type": self.resource_type},
+            sort_keys=True, default=str,
+        )
+        return hashlib.sha256(content.encode()).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Normalizer contract
+# ---------------------------------------------------------------------------
+
+class BaseNormalizer(ABC):
+    """Transform raw events from a specific source into Findings.
+
+    One normalizer per (source, event_type) combination. A single raw event
+    can produce zero, one, or many findings — e.g., an IAM credential report
+    produces one finding per user.
+    """
+
+    @abstractmethod
+    def can_handle(self, raw_event: RawEventData) -> bool:
+        """Return True if this normalizer knows how to process this event."""
+        ...
+
+    @abstractmethod
+    def normalize(self, raw_event: RawEventData) -> list[FindingData]:
+        """Transform a raw event into zero or more findings."""
+        ...
+
+
+# ---------------------------------------------------------------------------
+# Normalizer registry
+# ---------------------------------------------------------------------------
+
+class NormalizerRegistry:
+    """Finds the right normalizer for a given raw event."""
+
+    def __init__(self) -> None:
+        self._normalizers: list[BaseNormalizer] = []
+
+    def register(self, normalizer: BaseNormalizer) -> None:
+        self._normalizers.append(normalizer)
+
+    def normalize(self, raw_event: RawEventData) -> list[FindingData]:
+        for normalizer in self._normalizers:
+            if normalizer.can_handle(raw_event):
+                try:
+                    return normalizer.normalize(raw_event)
+                except Exception:
+                    log.exception(
+                        "Normalizer %s failed on event %s",
+                        type(normalizer).__name__, raw_event.id,
+                    )
+                    return []
+        log.warning(
+            "No normalizer found for source=%s event_type=%s",
+            raw_event.source, raw_event.event_type,
+        )
+        return []
+
+
+# Singleton registry
+registry = NormalizerRegistry()

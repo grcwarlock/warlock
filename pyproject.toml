@@ -1,0 +1,34 @@
+[project]
+name = "warlock"
+version = "2.0.0a1"
+description = "Compliance telemetry pipeline"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg2-binary>=2.9",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "pyyaml>=6.0",
+    "click>=8.1",
+    "rich>=13.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+aws = ["boto3>=1.34"]
+azure = ["azure-identity>=1.16", "azure-mgmt-resource>=23.0"]
+gcp = ["google-cloud-asset>=3.26", "google-cloud-securitycenter>=1.30"]
+ai = ["anthropic>=0.25", "openai>=1.30"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
+
+[project.scripts]
+warlock = "warlock.cli:cli"
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
