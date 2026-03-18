@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 
 import click
 from rich.console import Console
@@ -37,13 +36,13 @@ def init() -> None:
 def collect(source: tuple[str, ...]) -> None:
     """Run the full pipeline: collect → normalize → map → assess."""
     from warlock.db.engine import get_session, init_db
-    from warlock.pipeline.orchestrator import Pipeline
     from warlock.pipeline.bus import EventBus
+    from warlock.pipeline.loader import build_pipeline
 
     # Bootstrap
     init_db()
     bus = EventBus()
-    pipeline = _build_pipeline(bus, sources=source or None)
+    pipeline = build_pipeline(bus, sources=source or None)
 
     # Wire up a simple event logger
     bus.subscribe_all(lambda e: logging.getLogger("bus").debug(
@@ -205,7 +204,9 @@ def findings() -> None:
 def connectors() -> None:
     """List registered connector types."""
     from warlock.connectors.base import registry as conn_registry
-    _load_connectors()
+    from warlock.pipeline.loader import load_all_connectors
+
+    load_all_connectors()
     table = Table(title="Registered Connectors")
     table.add_column("Provider")
     table.add_column("Status")
@@ -214,67 +215,105 @@ def connectors() -> None:
     console.print(table)
 
 
-# ---------------------------------------------------------------------------
-# Pipeline assembly
-# ---------------------------------------------------------------------------
+@cli.command()
+def sources() -> None:
+    """List all registered connector types and normalizer types."""
+    from warlock.connectors.base import registry as conn_registry
+    from warlock.normalizers.base import registry as norm_registry
+    from warlock.pipeline.loader import load_all_connectors, load_all_normalizers
 
-def _build_pipeline(bus, sources: tuple[str, ...] | None = None):
-    from warlock.connectors.base import ConnectorConfig, ConnectorRegistry, SourceType, registry as type_registry
-    from warlock.normalizers.base import NormalizerRegistry, registry as norm_registry
-    from warlock.mappers.control_mapper import ControlMapper
-    from warlock.assessors.engine import Assessor, engine as assertion_engine
-    from warlock.pipeline.orchestrator import Pipeline
-    from warlock.config import get_settings
+    load_all_connectors()
+    load_all_normalizers()
 
-    settings = get_settings()
+    table = Table(title="Registered Sources")
+    table.add_column("Type", style="cyan")
+    table.add_column("Name")
+    table.add_column("Status")
 
-    # Load connector types
-    _load_connectors()
+    for provider in sorted(conn_registry.list_types()):
+        table.add_row("connector", provider, "[green]registered[/green]")
+    for normalizer in norm_registry._normalizers:
+        name = type(normalizer).__name__
+        table.add_row("normalizer", name, "[green]registered[/green]")
 
-    # Build connector registry with configured sources
-    connectors = ConnectorRegistry()
-    connectors._types = type_registry._types  # share registered types
+    console.print(table)
 
-    if settings.aws_enabled and (sources is None or "aws" in sources):
-        connectors.create(ConnectorConfig(
-            name="aws",
-            source_type=SourceType.CLOUD,
-            provider="aws",
-            settings={"regions": settings.aws_regions, "assume_role_arn": settings.aws_assume_role_arn},
-        ))
 
-    # Load normalizers
-    _load_normalizers()
+@cli.command()
+@click.option("--source", "-s", required=True, help="Source identifier (e.g., webhook, manual)")
+@click.option("--provider", "-p", required=True, help="Provider name (e.g., crowdstrike, okta)")
+@click.option("--event-type", "-t", required=True, help="Event type label (e.g., falcon_detections)")
+@click.option("--file", "-f", "file_path", required=True, type=click.Path(exists=True), help="Path to JSON file")
+def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
+    """Ingest a JSON file through the webhook receiver and pipeline."""
+    import json
+    from warlock.connectors.webhook import WebhookReceiver
+    from warlock.connectors.base import ConnectorResult, SourceType
+    from warlock.db.engine import get_session, init_db
+    from warlock.pipeline.bus import EventBus
+    from warlock.pipeline.loader import build_pipeline
 
-    # Build mapper (empty for now — loaded from framework configs)
-    mapper = ControlMapper()
+    # Read the JSON payload
+    with open(file_path) as fh:
+        payload = json.load(fh)
 
-    # Build assessor
-    assessor = Assessor(engine=assertion_engine)
+    # Wrap in a list if it's a single object
+    payloads = payload if isinstance(payload, list) else [payload]
 
-    return Pipeline(
-        connectors=connectors,
-        normalizers=norm_registry,
-        mapper=mapper,
-        assessor=assessor,
-        bus=bus,
+    # Bootstrap
+    init_db()
+    bus = EventBus()
+    pipeline = build_pipeline(bus)
+
+    # Ingest through the webhook receiver
+    receiver = WebhookReceiver()
+    raw_events = receiver.ingest_batch(
+        payloads, source=source, provider=provider, event_type=event_type,
     )
 
+    # Synthesise a ConnectorResult so the pipeline persistence works
+    cr = ConnectorResult(
+        connector_name=f"ingest:{source}",
+        source=source,
+        source_type=raw_events[0].source_type if raw_events else SourceType.CUSTOM,
+        provider=provider,
+        events=raw_events,
+    )
+    cr.complete()
 
-def _load_connectors():
-    """Import connector modules to trigger registration."""
-    try:
-        import warlock.connectors.aws  # noqa: F401
-    except ImportError:
-        pass
+    # Run through stages 2-4 by feeding the connector result into the pipeline
+    from warlock.pipeline.orchestrator import PipelineRunStats
+    stats = PipelineRunStats()
 
+    with get_session() as session:
+        db_run = pipeline._persist_connector_run(session, cr)
+        stats.connectors_succeeded = 1
 
-def _load_normalizers():
-    """Import normalizer modules to trigger registration."""
-    try:
-        import warlock.normalizers.aws  # noqa: F401
-    except ImportError:
-        pass
+        for raw_event in cr.events:
+            db_raw = pipeline._persist_raw_event(session, raw_event, db_run.id)
+            stats.raw_events_collected += 1
+
+            findings = pipeline.normalizers.normalize(raw_event)
+            for finding in findings:
+                finding.raw_event_id = db_raw.id
+                db_finding = pipeline._persist_finding(session, finding)
+                stats.findings_normalized += 1
+
+                mapped = pipeline.mapper.map(finding)
+                for mapping in mapped.mappings:
+                    pipeline._persist_mapping(session, mapping)
+                    stats.controls_mapped += 1
+
+                results = pipeline.assessor.assess(mapped, raw_data=raw_event.raw_data)
+                for result in results:
+                    pipeline._persist_result(session, result)
+                    stats.results_assessed += 1
+
+        session.flush()
+
+    from datetime import datetime, timezone
+    stats.completed_at = datetime.now(timezone.utc)
+    _print_stats(stats)
 
 
 def _print_stats(stats) -> None:
