@@ -1,0 +1,449 @@
+framework_id: soc2
+
+control_families:
+  # ---------------------------------------------------------------------------
+  # CC1 — Control Environment
+  # ---------------------------------------------------------------------------
+  CC1:
+    controls:
+      CC1.1:
+        checks:
+          - id: cc1_1_org_commitment
+            event_types:
+              - sailpoint_identities
+              - sailpoint_roles
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_role
+
+      CC1.2:
+        checks:
+          - id: cc1_2_board_oversight
+            event_types:
+              - sailpoint_certifications
+            resource_types:
+              - sailpoint_certification
+
+  # ---------------------------------------------------------------------------
+  # CC2 — Communication and Information
+  # ---------------------------------------------------------------------------
+  CC2:
+    controls:
+      CC2.1:
+        checks:
+          - id: cc2_1_internal_communication
+            event_types:
+              - splunk_notable_events
+              - sentinel_incidents
+            resource_types:
+              - splunk_notable_event
+              - sentinel_incident
+
+  # ---------------------------------------------------------------------------
+  # CC3 — Risk Assessment
+  # ---------------------------------------------------------------------------
+  CC3:
+    controls:
+      CC3.1:
+        checks:
+          - id: cc3_1_risk_identification
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+              - wiz_vuln_findings
+              - wiz_issues
+            resource_types:
+              - host
+              - endpoint
+              - vulnerability
+
+      CC3.2:
+        checks:
+          - id: cc3_2_risk_analysis
+            event_types:
+              - defender_recommendations
+              - prisma_alerts
+              - wiz_issues
+              - scc_findings
+            resource_types:
+              - recommendation
+
+  # ---------------------------------------------------------------------------
+  # CC4 — Monitoring Activities
+  # ---------------------------------------------------------------------------
+  CC4:
+    controls:
+      CC4.1:
+        checks:
+          - id: cc4_1_monitoring
+            event_types:
+              - config_recorders
+              - securityhub_hub
+              - guardduty_detectors
+              - policy_compliance
+              - scc_findings
+              - prisma_compliance
+              - wiz_config_findings
+            resource_types:
+              - aws_config
+              - securityhub
+              - guardduty
+              - compliance_standard
+
+      CC4.2:
+        checks:
+          - id: cc4_2_deficiency_remediation
+            event_types:
+              - defender_recommendations
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - recommendation
+
+  # ---------------------------------------------------------------------------
+  # CC5 — Control Activities
+  # ---------------------------------------------------------------------------
+  CC5:
+    controls:
+      CC5.1:
+        checks:
+          - id: cc5_1_control_selection
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      CC5.2:
+        checks:
+          - id: cc5_2_general_it_controls
+            event_types:
+              - config_recorders
+              - policy_compliance
+              - prisma_policies
+            resource_types:
+              - aws_config
+              - azure_resource
+              - policy
+
+  # ---------------------------------------------------------------------------
+  # CC6 — Logical and Physical Access Controls
+  # ---------------------------------------------------------------------------
+  CC6:
+    controls:
+      CC6.1:
+        checks:
+          - id: cc6_1_access_controls
+            event_types:
+              - iam_credential_report
+              - iam_users
+              - iam_account_summary
+              - okta_users
+              - entra_users
+              - entra_risky_users
+              - sailpoint_identities
+              - sailpoint_accounts
+            resource_types:
+              - iam_user
+              - iam_account
+              - okta_user
+              - entra_user
+              - sailpoint_identity
+              - sailpoint_account
+
+      CC6.2:
+        checks:
+          - id: cc6_2_user_registration
+            event_types:
+              - iam_users
+              - okta_users
+              - entra_users
+              - sailpoint_identities
+              - entra_directory_audits
+            resource_types:
+              - iam_user
+              - okta_user
+              - entra_user
+              - sailpoint_identity
+              - entra_audit
+
+      CC6.3:
+        checks:
+          - id: cc6_3_role_based_access
+            event_types:
+              - iam_policies
+              - gcp_iam_policies
+              - okta_policies
+              - entra_conditional_access_policies
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - cyberark_accounts
+            resource_types:
+              - iam_policy
+              - gcp_iam_binding
+              - okta_policy
+              - entra_conditional_access_policy
+              - sailpoint_role
+              - sailpoint_entitlement
+              - cyberark_account
+
+      CC6.6:
+        checks:
+          - id: cc6_6_boundary_protection
+            event_types:
+              - ec2_security_groups
+              - ec2_network_acls
+              - compute_firewall_rules
+              - network_security_groups
+            resource_types:
+              - ec2_security_group
+              - ec2_network_acl
+              - compute_firewall_rule
+              - network_security_group
+
+      CC6.7:
+        checks:
+          - id: cc6_7_data_restrictions
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      CC6.8:
+        checks:
+          - id: cc6_8_malware_prevention
+            event_types:
+              - falcon_detection_details
+              - falcon_device_details
+              - falcon_devices
+              - defender_machines
+              - defender_alerts
+              - s1_threats
+              - s1_agents
+            resource_types:
+              - endpoint
+              - endpoint_fleet
+
+  # ---------------------------------------------------------------------------
+  # CC7 — System Operations
+  # ---------------------------------------------------------------------------
+  CC7:
+    controls:
+      CC7.1:
+        checks:
+          - id: cc7_1_detection
+            event_types:
+              - guardduty_detectors
+              - securityhub_hub
+              - splunk_notable_events
+              - splunk_correlation_rules
+              - sentinel_analytics_rules
+              - elastic_detection_rules
+              - scc_findings
+              - falcon_detection_details
+              - defender_alerts
+              - s1_threats
+            resource_types:
+              - guardduty
+              - securityhub
+              - splunk_notable_event
+              - splunk_correlation_rule
+              - sentinel_analytics_rule
+              - elastic_detection_rule
+              - endpoint
+
+      CC7.2:
+        checks:
+          - id: cc7_2_monitoring
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - config_recorders
+              - monitor_alerts
+              - splunk_index_health
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - aws_config
+              - azure_monitor
+              - splunk_index
+
+      CC7.3:
+        checks:
+          - id: cc7_3_change_detection
+            event_types:
+              - config_recorders
+              - cloudtrail_trails
+              - entra_directory_audits
+              - okta_system_log
+            resource_types:
+              - aws_config
+              - cloudtrail
+              - entra_audit
+              - okta_event
+
+      CC7.4:
+        checks:
+          - id: cc7_4_incident_response
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - elastic_security_alerts
+              - falcon_detection_details
+              - defender_alerts
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+              - elastic_security_alert
+              - endpoint
+
+      CC7.5:
+        checks:
+          - id: cc7_5_incident_recovery
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+
+  # ---------------------------------------------------------------------------
+  # CC8 — Change Management
+  # ---------------------------------------------------------------------------
+  CC8:
+    controls:
+      CC8.1:
+        checks:
+          - id: cc8_1_change_management
+            event_types:
+              - config_recorders
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+            resource_types:
+              - aws_config
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+
+  # ---------------------------------------------------------------------------
+  # CC9 — Risk Mitigation
+  # ---------------------------------------------------------------------------
+  CC9:
+    controls:
+      CC9.1:
+        checks:
+          - id: cc9_1_risk_mitigation
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+              - defender_recommendations
+              - wiz_vuln_findings
+              - wiz_issues
+            resource_types:
+              - host
+              - endpoint
+              - vulnerability
+              - recommendation
+
+  # ---------------------------------------------------------------------------
+  # A1 — Availability
+  # ---------------------------------------------------------------------------
+  A1:
+    controls:
+      A1.1:
+        checks:
+          - id: a1_1_capacity_planning
+            event_types:
+              - prisma_assets
+              - asset_export
+              - asset_inventory
+              - falcon_devices
+              - defender_machines
+              - s1_agents
+            resource_types:
+              - endpoint
+              - endpoint_fleet
+              - host
+              - agent
+
+      A1.2:
+        checks:
+          - id: a1_2_recovery
+            event_types:
+              - config_recorders
+              - policy_compliance
+            resource_types:
+              - aws_config
+              - azure_resource
+
+  # ---------------------------------------------------------------------------
+  # C1 — Confidentiality
+  # ---------------------------------------------------------------------------
+  C1:
+    controls:
+      C1.1:
+        checks:
+          - id: c1_1_data_classification
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+              - prisma_assets
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      C1.2:
+        checks:
+          - id: c1_2_data_disposal
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - key_vault
+
+  # ---------------------------------------------------------------------------
+  # PI1 — Processing Integrity
+  # ---------------------------------------------------------------------------
+  PI1:
+    controls:
+      PI1.1:
+        checks:
+          - id: pi1_1_processing_integrity
+            event_types:
+              - cloudtrail_trails
+              - config_recorders
+              - audit_logs
+            resource_types:
+              - cloudtrail
+              - aws_config
+              - gcp_audit
+
+      PI1.2:
+        checks:
+          - id: pi1_2_system_inputs
+            event_types:
+              - config_recorders
+              - policy_compliance
+            resource_types:
+              - aws_config
+              - azure_resource

@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 from uuid import uuid4
 
+from warlock.assessors.ai_reasoning import AIReasoner
 from warlock.mappers.control_mapper import ControlMappingData, MappedFinding
 from warlock.normalizers.base import FindingData
 
@@ -133,7 +134,7 @@ class Assessor:
             when Tier 1 result is uncertain.
     """
 
-    def __init__(self, engine: AssertionEngine, ai_reasoner: Any | None = None) -> None:
+    def __init__(self, engine: AssertionEngine, ai_reasoner: AIReasoner | None = None) -> None:
         self.engine = engine
         self.ai_reasoner = ai_reasoner
 
@@ -193,14 +194,17 @@ class Assessor:
             result.status = "not_assessed"
             result.assessor = "none"
 
-        # Tier 2: AI reasoning (future — plug in here)
-        # if result.status == "not_assessed" and self.ai_reasoner:
-        #     ai_result = self.ai_reasoner.evaluate(finding, mapping)
-        #     result.ai_assessment = ai_result.assessment
-        #     result.ai_confidence = ai_result.confidence
-        #     result.ai_model = ai_result.model
-        #     result.status = ai_result.status
-        #     result.assessor = f"ai:{ai_result.model}"
+        # Tier 2: AI reasoning
+        if result.status == "not_assessed" and self.ai_reasoner:
+            try:
+                ai_result = self.ai_reasoner.evaluate(finding, mapping, raw_data)
+                result.ai_assessment = ai_result.assessment
+                result.ai_confidence = ai_result.confidence
+                result.ai_model = ai_result.model
+                result.status = ai_result.status
+                result.assessor = f"ai:{ai_result.model}"
+            except Exception:
+                log.exception("Tier 2 AI reasoning failed for %s/%s", mapping.framework, mapping.control_id)
 
         return result
 
