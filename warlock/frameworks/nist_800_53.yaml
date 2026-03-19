@@ -1,537 +1,6932 @@
 framework_id: nist_800_53
-
 control_families:
-  # ---------------------------------------------------------------------------
-  # AC — Access Control
-  # ---------------------------------------------------------------------------
   AC:
     controls:
       AC-2:
         checks:
-          - id: ac2_iam_users
-            event_types:
-              - iam_credential_report
-              - iam_users
-              - okta_users
-              - entra_users
-              - entra_id_users
-            resource_types:
-              - iam_user
-              - okta_user
-              - entra_user
-          - id: ac2_account_inventory
-            event_types:
-              - sailpoint_identities
-              - sailpoint_accounts
-              - iam_account_summary
-            resource_types:
-              - sailpoint_identity
-              - sailpoint_account
-              - iam_account
-          - id: ac2_access_reviews
-            event_types:
-              - sailpoint_certifications
-            resource_types:
-              - sailpoint_certification
-
+        - id: ac2_iam_users
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          - sailpoint_accounts
+          resource_types:
+          - iam_user
+          - iam_account
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+        - id: ac2_account_activity
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_directory_audits
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_audit
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+        - id: ac2_access_reviews
+          event_types:
+          - sailpoint_certifications
+          resource_types:
+          - sailpoint_certification
       AC-3:
         checks:
-          - id: ac3_access_enforcement
-            event_types:
-              - iam_policies
-              - gcp_iam_policies
-              - okta_policies
-              - entra_conditional_access_policies
-            resource_types:
-              - iam_policy
-              - gcp_iam_binding
-              - okta_policy
-              - entra_conditional_access_policy
-
+        - id: ac3_access_enforcement
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_policies
+          - entra_conditional_access_policies
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - iam_policy
+          - okta_policy
+          - entra_conditional_access_policy
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
       AC-6:
         checks:
-          - id: ac6_least_privilege
-            event_types:
-              - iam_policies
-              - gcp_iam_policies
-              - cyberark_accounts
-            resource_types:
-              - iam_policy
-              - gcp_iam_binding
-              - cyberark_account
-          - id: ac6_privileged_accounts
-            event_types:
-              - cyberark_accounts
-              - cyberark_safes
-              - sailpoint_roles
-              - sailpoint_entitlements
-            resource_types:
-              - cyberark_account
-              - cyberark_safe
-              - sailpoint_role
-              - sailpoint_entitlement
-
+        - id: ac6_least_priv
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_groups
+          - cyberark_accounts
+          - sailpoint_roles
+          - sailpoint_entitlements
+          resource_types:
+          - iam_policy
+          - iam_user
+          - okta_user
+          - cyberark_account
+          - sailpoint_role
+          - sailpoint_entitlement
       AC-7:
         checks:
-          - id: ac7_unsuccessful_logon
-            event_types:
-              - okta_system_log
-              - entra_sign_ins
-            resource_types:
-              - okta_event
-              - entra_sign_in
-
+        - id: ac7_failed_logon
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_risky_users
+          - cloudtrail_trails
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_user
+          - cloudtrail
       AC-17:
         checks:
-          - id: ac17_remote_access
-            event_types:
-              - ec2_security_groups
-              - compute_firewall_rules
-              - network_security_groups
-            resource_types:
-              - ec2_security_group
-              - compute_firewall_rule
-              - network_security_group
-
-  # ---------------------------------------------------------------------------
-  # AU — Audit and Accountability
-  # ---------------------------------------------------------------------------
+        - id: ac17_remote_access
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_conditional_access_policies
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_conditional_access_policy
+          - ec2_security_group
+          - network_security_group
+      AC-1:
+        checks: []
+      AC-2(1):
+        checks:
+        - id: ac2_1_automated_mgmt
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+      AC-2(2):
+        checks:
+        - id: ac2_2_temp_accounts
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+      AC-2(3):
+        checks:
+        - id: ac2_3_disable_accounts
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+      AC-2(4):
+        checks:
+        - id: ac2_4_audit_actions
+          event_types:
+          - okta_system_log
+          - entra_directory_audits
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - okta_event
+          - entra_audit
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AC-2(5):
+        checks:
+        - id: ac2_5_inactivity_logout
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      AC-2(6):
+        checks:
+        - id: ac2_6_dynamic_privilege
+          event_types:
+          - cyberark_accounts
+          - cyberark_safes
+          - sailpoint_roles
+          - sailpoint_entitlements
+          resource_types:
+          - cyberark_account
+          - cyberark_safe
+          - sailpoint_role
+          - sailpoint_entitlement
+      AC-2(7):
+        checks:
+        - id: ac2_7_privileged_users
+          event_types:
+          - iam_credential_report
+          - iam_account_summary
+          - cyberark_accounts
+          - sailpoint_roles
+          - sailpoint_entitlements
+          resource_types:
+          - iam_user
+          - iam_account
+          - cyberark_account
+          - sailpoint_role
+          - sailpoint_entitlement
+      AC-2(8):
+        checks:
+        - id: ac2_8_dynamic_account
+          event_types:
+          - entra_risky_users
+          - entra_sign_ins
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_user
+          - entra_sign_in
+          - entra_conditional_access_policy
+      AC-2(9):
+        checks:
+        - id: ac2_9_shared_accounts
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+      AC-2(10):
+        checks:
+        - id: ac2_10_credential_change
+          event_types:
+          - iam_credential_report
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - iam_user
+          - okta_event
+          - entra_audit
+      AC-2(11):
+        checks:
+        - id: ac2_11_usage_conditions
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      AC-2(12):
+        checks:
+        - id: ac2_12_atypical_usage
+          event_types:
+          - entra_risky_users
+          - entra_sign_ins
+          - okta_system_log
+          - guardduty_detectors
+          - sentinel_incidents
+          resource_types:
+          - entra_user
+          - entra_sign_in
+          - okta_event
+          - guardduty
+          - sentinel_incident
+      AC-2(13):
+        checks:
+        - id: ac2_13_high_risk_disable
+          event_types:
+          - entra_risky_users
+          - okta_users
+          - sailpoint_identities
+          resource_types:
+          - entra_user
+          - okta_user
+          - sailpoint_identity
+      AC-3(1):
+        checks:
+        - id: ac3_1_restricted_priv
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - cyberark_accounts
+          - cyberark_safes
+          resource_types:
+          - iam_policy
+          - cyberark_account
+          - cyberark_safe
+      AC-3(2):
+        checks:
+        - id: ac3_2_dual_auth
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - cyberark_safes
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - cyberark_safe
+      AC-3(3):
+        checks:
+        - id: ac3_3_mac
+          event_types:
+          - gcp_iam_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_policy
+          - entra_conditional_access_policy
+      AC-3(4):
+        checks:
+        - id: ac3_4_dac
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - iam_policy
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AC-3(5):
+        checks:
+        - id: ac3_5_sec_relevant_info
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AC-3(6):
+        checks: []
+      AC-3(7):
+        checks:
+        - id: ac3_7_rbac
+          event_types:
+          - gcp_iam_policies
+          - okta_groups
+          - sailpoint_roles
+          - sailpoint_entitlements
+          resource_types:
+          - iam_policy
+          - okta_user
+          - sailpoint_role
+          - sailpoint_entitlement
+      AC-3(8):
+        checks:
+        - id: ac3_8_revocation
+          event_types:
+          - okta_system_log
+          - entra_directory_audits
+          - sailpoint_certifications
+          resource_types:
+          - okta_event
+          - entra_audit
+          - sailpoint_certification
+      AC-3(9):
+        checks:
+        - id: ac3_9_controlled_release
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AC-3(10):
+        checks:
+        - id: ac3_10_audited_override
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - cyberark_recordings
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - cyberark_account
+      AC-3(11):
+        checks:
+        - id: ac3_11_restrict_info_types
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - key_vault
+      AC-3(12):
+        checks:
+        - id: ac3_12_app_access
+          event_types:
+          - okta_applications
+          - entra_app_registrations
+          - entra_service_principals
+          resource_types:
+          - okta_application
+          - entra_service_principal
+      AC-3(13):
+        checks:
+        - id: ac3_13_abac
+          event_types:
+          - gcp_iam_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_policy
+          - entra_conditional_access_policy
+      AC-3(14):
+        checks:
+        - id: ac3_14_individual_access
+          event_types:
+          - okta_users
+          - entra_users
+          - iam_users
+          resource_types:
+          - okta_user
+          - entra_user
+          - iam_user
+      AC-3(15):
+        checks:
+        - id: ac3_15_dac_mac
+          event_types:
+          - gcp_iam_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_policy
+          - entra_conditional_access_policy
+      AC-4:
+        checks:
+        - id: ac4_info_flow
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      AC-4(1):
+        checks:
+        - id: ac4_1_object_attrs
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AC-4(2):
+        checks:
+        - id: ac4_2_processing_domains
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      AC-4(3):
+        checks:
+        - id: ac4_3_dynamic_flow
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+      AC-4(4):
+        checks:
+        - id: ac4_4_encrypted_flow
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - key_vault
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - key_vault
+      AC-4(5):
+        checks:
+        - id: ac4_5_embedded_data
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+      AC-4(6):
+        checks:
+        - id: ac4_6_metadata
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+      AC-4(7):
+        checks:
+        - id: ac4_7_one_way_flow
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - network_security_group
+      AC-4(8):
+        checks:
+        - id: ac4_8_policy_filters
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      AC-4(9):
+        checks: []
+      AC-4(10):
+        checks:
+        - id: ac4_10_toggle_filters
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+      AC-4(11):
+        checks:
+        - id: ac4_11_config_filters
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+      AC-4(12):
+        checks:
+        - id: ac4_12_data_type_ids
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+      AC-4(13):
+        checks:
+        - id: ac4_13_decomposition
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+      AC-4(14):
+        checks:
+        - id: ac4_14_filter_constraints
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+      AC-4(15):
+        checks:
+        - id: ac4_15_unsanctioned
+          event_types:
+          - guardduty_detectors
+          - scc_findings
+          - defender_alerts
+          - wiz_config_findings
+          resource_types:
+          - guardduty
+          - securityhub
+          - endpoint
+      AC-4(16):
+        checks: []
+      AC-4(17):
+        checks:
+        - id: ac4_17_domain_auth
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      AC-4(18):
+        checks: []
+      AC-4(19):
+        checks:
+        - id: ac4_19_metadata_validation
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+      AC-4(20):
+        checks: []
+      AC-4(21):
+        checks:
+        - id: ac4_21_separation
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      AC-4(22):
+        checks:
+        - id: ac4_22_access_only
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AC-4(23):
+        checks: []
+      AC-4(24):
+        checks: []
+      AC-4(25):
+        checks: []
+      AC-4(26):
+        checks:
+        - id: ac4_26_audit_filtering
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AC-4(27):
+        checks:
+        - id: ac4_27_redundant_filter
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - network_security_group
+      AC-4(28):
+        checks:
+        - id: ac4_28_linear_filter
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+      AC-4(29):
+        checks: []
+      AC-4(30):
+        checks: []
+      AC-4(31):
+        checks:
+        - id: ac4_31_failed_transfer
+          event_types:
+          - guardduty_detectors
+          - scc_findings
+          - defender_alerts
+          resource_types:
+          - guardduty
+          - securityhub
+          - endpoint
+      AC-4(32):
+        checks: []
+      AC-5:
+        checks:
+        - id: ac5_sep_duties
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_groups
+          - sailpoint_roles
+          - sailpoint_entitlements
+          resource_types:
+          - iam_policy
+          - okta_user
+          - sailpoint_role
+          - sailpoint_entitlement
+      AC-5(1):
+        checks: []
+      AC-6(1):
+        checks:
+        - id: ac6_1_security_functions
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - cyberark_accounts
+          - cyberark_safes
+          resource_types:
+          - iam_policy
+          - iam_user
+          - cyberark_account
+          - cyberark_safe
+      AC-6(2):
+        checks:
+        - id: ac6_2_nonpriv_access
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - iam_policy
+          - okta_user
+          - entra_user
+      AC-6(3):
+        checks:
+        - id: ac6_3_network_priv
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          - cyberark_accounts
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+          - cyberark_account
+      AC-6(4):
+        checks:
+        - id: ac6_4_sep_domains
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - gke_clusters
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+      AC-6(5):
+        checks:
+        - id: ac6_5_priv_accounts
+          event_types:
+          - iam_credential_report
+          - iam_account_summary
+          - cyberark_accounts
+          - cyberark_safes
+          - sailpoint_roles
+          resource_types:
+          - iam_user
+          - iam_account
+          - cyberark_account
+          - cyberark_safe
+          - sailpoint_role
+      AC-6(6):
+        checks:
+        - id: ac6_6_external_priv
+          event_types:
+          - iam_users
+          - entra_users
+          - entra_service_principals
+          - okta_users
+          resource_types:
+          - iam_user
+          - entra_user
+          - entra_service_principal
+          - okta_user
+      AC-6(7):
+        checks:
+        - id: ac6_7_review_privs
+          event_types:
+          - iam_credential_report
+          - sailpoint_certifications
+          - sailpoint_entitlements
+          - cyberark_accounts
+          resource_types:
+          - iam_user
+          - sailpoint_certification
+          - sailpoint_entitlement
+          - cyberark_account
+      AC-6(8):
+        checks:
+        - id: ac6_8_code_exec_priv
+          event_types:
+          - gcp_iam_policies
+          - iam_users
+          resource_types:
+          - iam_policy
+          - iam_user
+      AC-6(9):
+        checks:
+        - id: ac6_9_log_priv
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - cyberark_recordings
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - cyberark_account
+      AC-6(10):
+        checks:
+        - id: ac6_10_prohibit_priv_exec
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_policy
+          - iam_user
+          - okta_policy
+          - entra_conditional_access_policy
+      AC-7(1):
+        checks: []
+      AC-7(2):
+        checks:
+        - id: ac7_2_wipe_mobile
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+      AC-7(3):
+        checks: []
+      AC-7(4):
+        checks:
+        - id: ac7_4_alt_auth
+          event_types:
+          - okta_factors
+          - okta_system_log
+          - entra_sign_ins
+          resource_types:
+          - okta_user
+          - okta_event
+          - entra_sign_in
+      AC-8:
+        checks: []
+      AC-8(1):
+        checks: []
+      AC-9:
+        checks:
+        - id: ac9_previous_logon
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          resource_types:
+          - okta_event
+          - entra_sign_in
+      AC-10:
+        checks:
+        - id: ac10_concurrent_sessions
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - okta_policies
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - okta_policy
+      AC-10(1):
+        checks: []
+      AC-11:
+        checks:
+        - id: ac11_session_lock
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      AC-11(1):
+        checks: []
+      AC-12:
+        checks:
+        - id: ac12_session_term
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - okta_system_log
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - okta_event
+      AC-12(1):
+        checks:
+        - id: ac12_1_user_logout
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          resource_types:
+          - okta_event
+          - entra_sign_in
+      AC-12(2):
+        checks: []
+      AC-12(3):
+        checks: []
+      AC-13:
+        checks: []
+      AC-14:
+        checks:
+        - id: ac14_permitted_actions
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - ec2_security_groups
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - ec2_security_group
+      AC-14(1):
+        checks: []
+      AC-15:
+        checks: []
+      AC-16:
+        checks:
+        - id: ac16_sec_attributes
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          - gcp_iam_policies
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+          - iam_policy
+      AC-16(1):
+        checks:
+        - id: ac16_1_dynamic_attrs
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+      AC-16(2):
+        checks:
+        - id: ac16_2_attr_changes
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AC-16(3):
+        checks:
+        - id: ac16_3_attr_maintenance
+          event_types:
+          - config_recorders
+          - s3_buckets
+          resource_types:
+          - aws_config
+          - s3_bucket
+      AC-16(4):
+        checks:
+        - id: ac16_4_attr_assoc
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AC-16(5):
+        checks: []
+      AC-16(6):
+        checks:
+        - id: ac16_6_maintain_assoc
+          event_types:
+          - config_recorders
+          resource_types:
+          - aws_config
+      AC-16(7):
+        checks: []
+      AC-16(8):
+        checks: []
+      AC-16(9):
+        checks:
+        - id: ac16_9_reassignment
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AC-16(10):
+        checks:
+        - id: ac16_10_attr_config
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AC-17(1):
+        checks:
+        - id: ac17_1_monitoring
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - cloudtrail_trails
+          - sentinel_incidents
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - cloudtrail
+          - sentinel_incident
+      AC-17(2):
+        checks:
+        - id: ac17_2_encryption
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - key_vault
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - key_vault
+      AC-17(3):
+        checks:
+        - id: ac17_3_managed_acp
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - network_security_group
+          - compute_firewall_rule
+      AC-17(4):
+        checks:
+        - id: ac17_4_priv_remote
+          event_types:
+          - cyberark_accounts
+          - cyberark_recordings
+          - cloudtrail_trails
+          resource_types:
+          - cyberark_account
+          - cloudtrail
+      AC-17(5):
+        checks: []
+      AC-17(6):
+        checks:
+        - id: ac17_6_protect_mech
+          event_types:
+          - key_vault
+          - s3_buckets
+          resource_types:
+          - key_vault
+          - s3_bucket
+      AC-17(7):
+        checks: []
+      AC-17(8):
+        checks: []
+      AC-17(9):
+        checks:
+        - id: ac17_9_disconnect
+          event_types:
+          - okta_users
+          - entra_users
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - okta_user
+          - entra_user
+          - ec2_security_group
+          - network_security_group
+      AC-17(10):
+        checks:
+        - id: ac17_10_auth_remote_cmd
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AC-18:
+        checks:
+        - id: ac18_wireless
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+      AC-18(1):
+        checks:
+        - id: ac18_1_auth_encrypt
+          event_types:
+          - network_security_groups
+          - key_vault
+          resource_types:
+          - network_security_group
+          - key_vault
+      AC-18(2):
+        checks: []
+      AC-18(3):
+        checks:
+        - id: ac18_3_disable_wireless
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+      AC-18(4):
+        checks:
+        - id: ac18_4_restrict_config
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - endpoint
+      AC-18(5):
+        checks: []
+      AC-19:
+        checks:
+        - id: ac19_mobile_devices
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          - entra_conditional_access_policies
+          resource_types:
+          - endpoint
+          - entra_conditional_access_policy
+      AC-19(1):
+        checks: []
+      AC-19(2):
+        checks: []
+      AC-19(3):
+        checks: []
+      AC-19(4):
+        checks: []
+      AC-19(5):
+        checks:
+        - id: ac19_5_device_encrypt
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+      AC-20:
+        checks:
+        - id: ac20_external_systems
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          - entra_service_principals
+          - entra_app_registrations
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+          - entra_service_principal
+      AC-20(1):
+        checks:
+        - id: ac20_1_limits
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      AC-20(2):
+        checks:
+        - id: ac20_2_portable_storage
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - endpoint
+      AC-20(3):
+        checks:
+        - id: ac20_3_non_org_systems
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      AC-20(4):
+        checks:
+        - id: ac20_4_net_storage
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+      AC-21:
+        checks:
+        - id: ac21_info_sharing
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AC-22:
+        checks:
+        - id: ac22_public_content
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AC-22(1):
+        checks: []
+      AC-23:
+        checks:
+        - id: ac23_data_mining
+          event_types:
+          - guardduty_detectors
+          - scc_findings
+          - sentinel_incidents
+          resource_types:
+          - guardduty
+          - securityhub
+          - sentinel_incident
+      AC-24:
+        checks:
+        - id: ac24_access_decisions
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - gcp_iam_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - iam_policy
+      AC-24(1):
+        checks:
+        - id: ac24_1_transmit_authz
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      AC-24(2):
+        checks:
+        - id: ac24_2_no_identity
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      AC-25:
+        checks: []
   AU:
     controls:
       AU-2:
         checks:
-          - id: au2_event_logging
-            event_types:
-              - cloudtrail_trails
-              - audit_logs
-              - activity_log
-              - okta_system_log
-              - entra_directory_audits
-            resource_types:
-              - cloudtrail
-              - gcp_audit
-              - azure_activity
-
+        - id: au2_event_logging
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
       AU-3:
         checks:
-          - id: au3_content_of_audit_records
-            event_types:
-              - cloudtrail_trails
-              - audit_logs
-              - activity_log
-            resource_types:
-              - cloudtrail
-              - gcp_audit
-              - azure_activity
-
+        - id: au3_audit_content
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - okta_event
+          - entra_audit
       AU-6:
         checks:
-          - id: au6_audit_review
-            event_types:
-              - splunk_notable_events
-              - splunk_saved_searches
-              - sentinel_incidents
-              - elastic_security_alerts
-            resource_types:
-              - splunk_notable_event
-              - sentinel_incident
-              - elastic_security_alert
-
+        - id: au6_audit_review
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - elastic_security_alerts
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
       AU-12:
         checks:
-          - id: au12_audit_generation
-            event_types:
-              - cloudtrail_trails
-              - config_recorders
-              - audit_logs
-              - activity_log
-              - monitor_alerts
-            resource_types:
-              - cloudtrail
-              - aws_config
-              - gcp_audit
-              - azure_activity
-              - azure_monitor
-
-  # ---------------------------------------------------------------------------
-  # CM — Configuration Management
-  # ---------------------------------------------------------------------------
+        - id: au12_audit_generation
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
+          - okta_event
+          - entra_audit
+      AU-1:
+        checks: []
+      AU-2(1):
+        checks: []
+      AU-2(2):
+        checks: []
+      AU-2(3):
+        checks: []
+      AU-2(4):
+        checks: []
+      AU-3(1):
+        checks:
+        - id: au3_1_additional_info
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-3(2):
+        checks: []
+      AU-3(3):
+        checks:
+        - id: au3_3_limit_pii
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AU-4:
+        checks:
+        - id: au4_storage_capacity
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AU-5:
+        checks:
+        - id: au5_audit_failures
+          event_types:
+          - cloudtrail_trails
+          - config_recorders
+          - monitor_alerts
+          resource_types:
+          - cloudtrail
+          - aws_config
+      AU-5(1):
+        checks:
+        - id: au5_1_storage_warning
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - monitor_alerts
+          resource_types:
+          - s3_bucket
+          - storage_account
+      AU-5(2):
+        checks:
+        - id: au5_2_realtime_alerts
+          event_types:
+          - monitor_alerts
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-5(3):
+        checks:
+        - id: au5_3_traffic_thresholds
+          event_types:
+          - monitor_alerts
+          - sentinel_analytics_rules
+          - splunk_correlation_rules
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-5(4):
+        checks:
+        - id: au5_4_shutdown_failure
+          event_types:
+          - cloudtrail_trails
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - aws_config
+      AU-5(5):
+        checks:
+        - id: au5_5_alt_logging
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-6(1):
+        checks:
+        - id: au6_1_automated_process
+          event_types:
+          - sentinel_analytics_rules
+          - splunk_correlation_rules
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-6(2):
+        checks: []
+      AU-6(3):
+        checks:
+        - id: au6_3_correlate
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-6(4):
+        checks:
+        - id: au6_4_central_review
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-6(5):
+        checks:
+        - id: au6_5_integrated_analysis
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - splunk_notable_events
+          - splunk_correlation_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      AU-6(6):
+        checks: []
+      AU-6(7):
+        checks:
+        - id: au6_7_permitted_actions
+          event_types:
+          - sentinel_analytics_rules
+          - splunk_correlation_rules
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-6(8):
+        checks:
+        - id: au6_8_full_text_priv
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - cyberark_recordings
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - cyberark_account
+      AU-6(9):
+        checks: []
+      AU-6(10):
+        checks:
+        - id: au6_10_level_adjustment
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-7:
+        checks:
+        - id: au7_audit_reduction
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-7(1):
+        checks:
+        - id: au7_1_auto_processing
+          event_types:
+          - sentinel_analytics_rules
+          - splunk_correlation_rules
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AU-7(2):
+        checks: []
+      AU-8:
+        checks:
+        - id: au8_timestamps
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-9:
+        checks:
+        - id: au9_protect_audit
+          event_types:
+          - cloudtrail_trails
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          resource_types:
+          - cloudtrail
+          - s3_bucket
+          - storage_account
+          - key_vault
+      AU-9(1):
+        checks: []
+      AU-9(2):
+        checks:
+        - id: au9_2_separate_storage
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AU-9(3):
+        checks:
+        - id: au9_3_crypto_protection
+          event_types:
+          - cloudtrail_trails
+          - s3_buckets
+          - key_vault
+          resource_types:
+          - cloudtrail
+          - s3_bucket
+          - key_vault
+      AU-9(4):
+        checks:
+        - id: au9_4_priv_subset
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - cyberark_accounts
+          resource_types:
+          - iam_user
+          - iam_policy
+          - cyberark_account
+      AU-9(5):
+        checks:
+        - id: au9_5_dual_auth
+          event_types:
+          - cyberark_safes
+          - iam_users
+          resource_types:
+          - cyberark_safe
+          - iam_user
+      AU-9(6):
+        checks:
+        - id: au9_6_read_only
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - iam_users
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - iam_policy
+      AU-9(7):
+        checks: []
+      AU-10:
+        checks:
+        - id: au10_non_repudiation
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-10(1):
+        checks:
+        - id: au10_1_identity_assoc
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - okta_event
+          - entra_audit
+      AU-10(2):
+        checks:
+        - id: au10_2_validate_binding
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AU-10(3):
+        checks:
+        - id: au10_3_chain_custody
+          event_types:
+          - cloudtrail_trails
+          - s3_buckets
+          resource_types:
+          - cloudtrail
+          - s3_bucket
+      AU-10(4):
+        checks:
+        - id: au10_4_reviewer_binding
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AU-10(5):
+        checks: []
+      AU-11:
+        checks:
+        - id: au11_retention
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+      AU-11(1):
+        checks:
+        - id: au11_1_long_term
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_account
+      AU-12(1):
+        checks:
+        - id: au12_1_system_wide
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - sentinel_incidents
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - sentinel_incident
+      AU-12(2):
+        checks:
+        - id: au12_2_standard_formats
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      AU-12(3):
+        checks:
+        - id: au12_3_auth_changes
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - aws_config
+      AU-12(4):
+        checks:
+        - id: au12_4_pii_audits
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AU-13:
+        checks:
+        - id: au13_info_disclosure
+          event_types:
+          - guardduty_detectors
+          - scc_findings
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - guardduty
+          - securityhub
+          - sentinel_incident
+          - splunk_notable_event
+      AU-14:
+        checks:
+        - id: au14_session_audit
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - cloudtrail_trails
+          - cyberark_recordings
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - cloudtrail
+          - cyberark_account
+      AU-14(1):
+        checks:
+        - id: au14_1_startup
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+      AU-14(2):
+        checks: []
+      AU-14(3):
+        checks:
+        - id: au14_3_remote_view
+          event_types:
+          - cyberark_recordings
+          - cloudtrail_trails
+          resource_types:
+          - cyberark_account
+          - cloudtrail
+      AU-15:
+        checks: []
+      AU-16:
+        checks:
+        - id: au16_cross_org
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - sentinel_incidents
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - sentinel_incident
   CM:
     controls:
       CM-2:
         checks:
-          - id: cm2_baseline_config
-            event_types:
-              - config_recorders
-              - policy_compliance
-              - prisma_compliance
-              - wiz_config_findings
-            resource_types:
-              - aws_config
-              - compliance_standard
-              - compliance_requirement
-
+        - id: cm2_baseline_config
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          - wiz_config_findings
+          resource_types:
+          - aws_config
+          - compliance_standard
+          - compliance_requirement
       CM-6:
         checks:
-          - id: cm6_config_settings
-            event_types:
-              - config_recorders
-              - policy_compliance
-              - wiz_config_findings
-              - prisma_alerts
-            resource_types:
-              - aws_config
-              - azure_resource
-
+        - id: cm6_config_settings
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - wiz_config_findings
+          - prisma_alerts
+          resource_types:
+          - aws_config
+          - azure_resource
       CM-8:
         checks:
-          - id: cm8_system_inventory
-            event_types:
-              - falcon_device_details
-              - falcon_devices
-              - defender_machines
-              - s1_agents
-              - prisma_assets
-              - asset_export
-              - asset_inventory
-            resource_types:
-              - endpoint
-              - endpoint_fleet
-              - host
-              - agent
-
-  # ---------------------------------------------------------------------------
-  # IA — Identification and Authentication
-  # ---------------------------------------------------------------------------
+        - id: cm8_system_inventory
+          event_types:
+          - falcon_device_details
+          - falcon_devices
+          - defender_machines
+          - s1_agents
+          - prisma_assets
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+          - host
+          - agent
+      CM-1:
+        checks: []
+      CM-2(1):
+        checks: []
+      CM-2(2):
+        checks:
+        - id: cm2_2_automation_support
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-2(3):
+        checks:
+        - id: cm2_3_retention_previous
+          event_types:
+          - config_recorders
+          resource_types:
+          - aws_config
+      CM-2(4):
+        checks: []
+      CM-2(5):
+        checks: []
+      CM-2(6):
+        checks:
+        - id: cm2_6_dev_test_environments
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-2(7):
+        checks:
+        - id: cm2_7_high_risk_config
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-3:
+        checks:
+        - id: cm3_change_control
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      CM-3(1):
+        checks:
+        - id: cm3_1_automated_documentation
+          event_types:
+          - cloudtrail_trails
+          - config_recorders
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - aws_config
+          - gcp_audit
+          - azure_activity
+      CM-3(2):
+        checks:
+        - id: cm3_2_testing_validation
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-3(3):
+        checks:
+        - id: cm3_3_automated_change_impl
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-3(4):
+        checks: []
+      CM-3(5):
+        checks:
+        - id: cm3_5_automated_security_response
+          event_types:
+          - config_recorders
+          - securityhub_hub
+          - prisma_alerts
+          resource_types:
+          - aws_config
+          - securityhub
+      CM-3(6):
+        checks:
+        - id: cm3_6_cryptography_mgmt
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      CM-3(7):
+        checks: []
+      CM-3(8):
+        checks:
+        - id: cm3_8_prevent_config_changes
+          event_types:
+          - config_recorders
+          - iam_policies
+          - gcp_iam_policies
+          resource_types:
+          - aws_config
+          - iam_policy
+          - gcp_iam_binding
+      CM-4:
+        checks:
+        - id: cm4_impact_analyses
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-4(1):
+        checks:
+        - id: cm4_1_separate_test_env
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-4(2):
+        checks:
+        - id: cm4_2_verification_controls
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-5:
+        checks:
+        - id: cm5_access_restrictions
+          event_types:
+          - iam_policies
+          - gcp_iam_policies
+          - okta_policies
+          resource_types:
+          - iam_policy
+          - gcp_iam_binding
+          - okta_policy
+      CM-5(1):
+        checks:
+        - id: cm5_1_automated_access_enforcement
+          event_types:
+          - iam_policies
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - iam_policy
+          - cloudtrail
+          - gcp_audit
+      CM-5(2):
+        checks: []
+      CM-5(3):
+        checks: []
+      CM-5(4):
+        checks:
+        - id: cm5_4_dual_authorization
+          event_types:
+          - iam_policies
+          - okta_policies
+          resource_types:
+          - iam_policy
+          - okta_policy
+      CM-5(5):
+        checks:
+        - id: cm5_5_privilege_limitation
+          event_types:
+          - iam_policies
+          - gcp_iam_policies
+          - cyberark_accounts
+          resource_types:
+          - iam_policy
+          - gcp_iam_binding
+          - cyberark_account
+      CM-5(6):
+        checks:
+        - id: cm5_6_limit_library_privileges
+          event_types:
+          - iam_policies
+          - gcp_iam_policies
+          resource_types:
+          - iam_policy
+          - gcp_iam_binding
+      CM-5(7):
+        checks: []
+      CM-6(1):
+        checks:
+        - id: cm6_1_automated_management
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-6(2):
+        checks:
+        - id: cm6_2_respond_unauthorized
+          event_types:
+          - config_recorders
+          - securityhub_hub
+          - prisma_alerts
+          resource_types:
+          - aws_config
+          - securityhub
+      CM-6(3):
+        checks: []
+      CM-6(4):
+        checks: []
+      CM-7:
+        checks:
+        - id: cm7_least_functionality
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-7(1):
+        checks:
+        - id: cm7_1_periodic_review
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-7(2):
+        checks:
+        - id: cm7_2_prevent_program_execution
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - agent
+      CM-7(3):
+        checks:
+        - id: cm7_3_registration_compliance
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-7(4):
+        checks:
+        - id: cm7_4_unauthorized_software
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          - policy_compliance
+          resource_types:
+          - endpoint
+          - agent
+          - compliance_standard
+      CM-7(5):
+        checks:
+        - id: cm7_5_authorized_software
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          - policy_compliance
+          resource_types:
+          - endpoint
+          - agent
+          - compliance_standard
+      CM-7(6):
+        checks:
+        - id: cm7_6_confined_environments
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-7(7):
+        checks:
+        - id: cm7_7_code_execution_protected
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-7(8):
+        checks:
+        - id: cm7_8_binary_executable_code
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - endpoint
+      CM-7(9):
+        checks:
+        - id: cm7_9_unauthorized_hardware
+          event_types:
+          - falcon_device_details
+          - falcon_devices
+          - defender_machines
+          - prisma_assets
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+      CM-8(1):
+        checks:
+        - id: cm8_1_updates_install_removal
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          - asset_inventory
+          resource_types:
+          - aws_config
+          - cloudtrail
+          - host
+      CM-8(2):
+        checks:
+        - id: cm8_2_automated_maintenance
+          event_types:
+          - config_recorders
+          - asset_inventory
+          - prisma_assets
+          resource_types:
+          - aws_config
+          - host
+          - endpoint
+      CM-8(3):
+        checks:
+        - id: cm8_3_unauthorized_component_detection
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - config_recorders
+          - prisma_assets
+          resource_types:
+          - endpoint
+          - aws_config
+      CM-8(4):
+        checks:
+        - id: cm8_4_accountability_info
+          event_types:
+          - asset_inventory
+          - prisma_assets
+          - falcon_device_details
+          resource_types:
+          - host
+          - endpoint
+      CM-8(5):
+        checks: []
+      CM-8(6):
+        checks:
+        - id: cm8_6_assessed_configurations
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-8(7):
+        checks:
+        - id: cm8_7_centralized_repository
+          event_types:
+          - asset_inventory
+          - prisma_assets
+          - config_recorders
+          resource_types:
+          - host
+          - aws_config
+      CM-8(8):
+        checks:
+        - id: cm8_8_automated_location_tracking
+          event_types:
+          - asset_inventory
+          - prisma_assets
+          - falcon_device_details
+          resource_types:
+          - host
+          - endpoint
+      CM-8(9):
+        checks:
+        - id: cm8_9_assignment_to_systems
+          event_types:
+          - asset_inventory
+          - prisma_assets
+          resource_types:
+          - host
+          - endpoint
+      CM-9:
+        checks: []
+      CM-9(1):
+        checks:
+        - id: cm9_1_assignment_responsibility
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_standard
+      CM-10:
+        checks: []
+      CM-10(1):
+        checks:
+        - id: cm10_1_open_source_software
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_standard
+      CM-11:
+        checks:
+        - id: cm11_user_installed_software
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - agent
+      CM-11(1):
+        checks:
+        - id: cm11_1_alerts_unauthorized
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - endpoint
+      CM-11(2):
+        checks:
+        - id: cm11_2_privileged_install
+          event_types:
+          - iam_policies
+          - gcp_iam_policies
+          - falcon_device_details
+          resource_types:
+          - iam_policy
+          - gcp_iam_binding
+          - endpoint
+      CM-11(3):
+        checks:
+        - id: cm11_3_automated_enforcement
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - policy_compliance
+          resource_types:
+          - endpoint
+          - compliance_standard
+      CM-12:
+        checks:
+        - id: cm12_information_location
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - prisma_assets
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      CM-12(1):
+        checks:
+        - id: cm12_1_automated_info_location
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - prisma_assets
+          - asset_inventory
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      CM-13:
+        checks: []
+      CM-14:
+        checks:
+        - id: cm14_signed_components
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CM-14(1):
+        checks:
+        - id: cm14_1_integrity_verification
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
   IA:
     controls:
       IA-2:
         checks:
-          - id: ia2_mfa
-            event_types:
-              - iam_credential_report
-              - iam_account_summary
-              - okta_factors
-              - okta_users
-              - entra_users
-              - entra_risky_users
-            resource_types:
-              - iam_user
-              - iam_account
-              - okta_user
-              - okta_user_factors
-              - entra_user
-
+        - id: ia2_user_identification
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - entra_sign_ins
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - entra_sign_in
+        - id: ia2_authentication_policy
+          event_types:
+          - iam_password_policy
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_password_policy
+          - okta_policy
+          - entra_conditional_access_policy
       IA-5:
         checks:
-          - id: ia5_authenticator_management
-            event_types:
-              - iam_password_policy
-              - okta_policies
-              - entra_conditional_access_policies
-              - cyberark_password_compliance
-            resource_types:
-              - iam_password_policy
-              - okta_policy
-              - entra_conditional_access_policy
-              - cyberark_compliance
-
+        - id: ia5_authenticator_management
+          event_types:
+          - iam_credential_report
+          - iam_password_policy
+          - okta_policies
+          - okta_factors
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - iam_password_policy
+          - okta_policy
+          - okta_user_factors
+          - entra_user
+          - entra_conditional_access_policy
       IA-8:
         checks:
-          - id: ia8_non_org_users
-            event_types:
-              - entra_service_principals
-              - entra_app_registrations
-              - okta_applications
-            resource_types:
-              - entra_service_principal
-              - entra_app_registration
-              - okta_application
-
-  # ---------------------------------------------------------------------------
-  # SC — System and Communications Protection
-  # ---------------------------------------------------------------------------
+        - id: ia8_non_organizational_users
+          event_types:
+          - entra_users
+          - entra_sign_ins
+          - entra_conditional_access_policies
+          - okta_users
+          resource_types:
+          - entra_user
+          - entra_sign_in
+          - entra_conditional_access_policy
+          - okta_user
+      IA-1:
+        checks: []
+      IA-2(1):
+        checks:
+        - id: ia2_1_mfa_privileged
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_factors
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user_factors
+          - entra_user
+          - entra_conditional_access_policy
+      IA-2(2):
+        checks:
+        - id: ia2_2_mfa_non_privileged
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_factors
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user_factors
+          - entra_user
+          - entra_conditional_access_policy
+      IA-2(3):
+        checks:
+        - id: ia2_3_local_access_mfa
+          event_types:
+          - okta_factors
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_user_factors
+          - entra_conditional_access_policy
+      IA-2(4):
+        checks:
+        - id: ia2_4_remote_access_mfa
+          event_types:
+          - okta_factors
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_user_factors
+          - entra_conditional_access_policy
+      IA-2(5):
+        checks:
+        - id: ia2_5_individual_authentication_group
+          event_types:
+          - iam_users
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+      IA-2(6):
+        checks:
+        - id: ia2_6_access_to_accounts
+          event_types:
+          - iam_credential_report
+          - okta_factors
+          - entra_conditional_access_policies
+          - cyberark_accounts
+          resource_types:
+          - iam_user
+          - okta_user_factors
+          - entra_conditional_access_policy
+          - cyberark_account
+      IA-2(7):
+        checks:
+        - id: ia2_7_network_access_non_privileged_replay_resistant
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-2(8):
+        checks:
+        - id: ia2_8_replay_resistant_mfa
+          event_types:
+          - okta_policies
+          - okta_factors
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - okta_user_factors
+          - entra_conditional_access_policy
+      IA-2(9):
+        checks:
+        - id: ia2_9_network_service_access_replay_resistant
+          event_types:
+          - entra_service_principals
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_service_principal
+          - entra_conditional_access_policy
+      IA-2(10):
+        checks:
+        - id: ia2_10_single_sign_on
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - entra_sign_ins
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - entra_sign_in
+      IA-2(11):
+        checks:
+        - id: ia2_11_remote_access_separate_device
+          event_types:
+          - okta_factors
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_user_factors
+          - entra_conditional_access_policy
+      IA-2(12):
+        checks:
+        - id: ia2_12_acceptance_of_piv_credentials
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      IA-2(13):
+        checks:
+        - id: ia2_13_out_of_band_authentication
+          event_types:
+          - okta_factors
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_user_factors
+          - entra_conditional_access_policy
+      IA-3:
+        checks:
+        - id: ia3_device_identification
+          event_types:
+          - entra_conditional_access_policies
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - entra_conditional_access_policy
+          - endpoint
+      IA-3(1):
+        checks:
+        - id: ia3_1_cryptographic_bidirectional_auth
+          event_types:
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_conditional_access_policy
+      IA-3(2):
+        checks: []
+      IA-3(3):
+        checks:
+        - id: ia3_3_dynamic_address_allocation
+          event_types:
+          - audit_logs
+          resource_types: []
+      IA-3(4):
+        checks:
+        - id: ia3_4_device_attestation
+          event_types:
+          - entra_conditional_access_policies
+          - falcon_device_details
+          resource_types:
+          - entra_conditional_access_policy
+          - endpoint
+      IA-4:
+        checks:
+        - id: ia4_identifier_management
+          event_types:
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+      IA-4(1):
+        checks: []
+      IA-4(2):
+        checks:
+        - id: ia4_2_supervisor_authorization
+          event_types:
+          - sailpoint_certifications
+          resource_types:
+          - sailpoint_certification
+      IA-4(3):
+        checks:
+        - id: ia4_3_multiple_forms_of_certification
+          event_types:
+          - sailpoint_certifications
+          resource_types:
+          - sailpoint_certification
+      IA-4(4):
+        checks:
+        - id: ia4_4_identify_user_status
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+      IA-4(5):
+        checks:
+        - id: ia4_5_dynamic_management
+          event_types:
+          - sailpoint_identities
+          - entra_users
+          resource_types:
+          - sailpoint_identity
+          - entra_user
+      IA-4(6):
+        checks: []
+      IA-4(7):
+        checks: []
+      IA-4(8):
+        checks:
+        - id: ia4_8_pairwise_pseudonymous_identifiers
+          event_types:
+          - entra_users
+          - entra_app_registrations
+          resource_types:
+          - entra_user
+      IA-4(9):
+        checks:
+        - id: ia4_9_attribute_maintenance
+          event_types:
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+      IA-5(1):
+        checks:
+        - id: ia5_1_password_based
+          event_types:
+          - iam_password_policy
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_password_policy
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-5(2):
+        checks:
+        - id: ia5_2_pki_based
+          event_types:
+          - entra_conditional_access_policies
+          - key_vault
+          resource_types:
+          - entra_conditional_access_policy
+          - key_vault
+      IA-5(3):
+        checks: []
+      IA-5(4):
+        checks: []
+      IA-5(5):
+        checks:
+        - id: ia5_5_change_authenticators_prior_delivery
+          event_types:
+          - iam_password_policy
+          - okta_policies
+          resource_types:
+          - iam_password_policy
+          - okta_policy
+      IA-5(6):
+        checks:
+        - id: ia5_6_protection_of_authenticators
+          event_types:
+          - key_vault
+          - cyberark_accounts
+          - cyberark_password_compliance
+          resource_types:
+          - key_vault
+          - cyberark_account
+          - cyberark_compliance
+      IA-5(7):
+        checks:
+        - id: ia5_7_no_embedded_unencrypted_static_authenticators
+          event_types:
+          - iam_credential_report
+          resource_types:
+          - iam_user
+      IA-5(8):
+        checks:
+        - id: ia5_8_multiple_system_accounts
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+      IA-5(9):
+        checks:
+        - id: ia5_9_federated_credential_management
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - entra_service_principals
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - entra_service_principal
+      IA-5(10):
+        checks:
+        - id: ia5_10_dynamic_credential_binding
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      IA-5(11):
+        checks: []
+      IA-5(12):
+        checks:
+        - id: ia5_12_biometric_auth
+          event_types:
+          - okta_factors
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_user_factors
+          - entra_conditional_access_policy
+      IA-5(13):
+        checks:
+        - id: ia5_13_expiration_of_cached_authenticators
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-5(14):
+        checks: []
+      IA-5(15):
+        checks:
+        - id: ia5_15_gsa_approved_products_services
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-5(16):
+        checks:
+        - id: ia5_16_in_person_or_trusted_third_party_registration
+          event_types:
+          - sailpoint_identities
+          resource_types:
+          - sailpoint_identity
+      IA-5(17):
+        checks:
+        - id: ia5_17_presentation_attack_detection
+          event_types:
+          - okta_factors
+          resource_types:
+          - okta_user_factors
+      IA-5(18):
+        checks:
+        - id: ia5_18_password_managers
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-6:
+        checks:
+        - id: ia6_authentication_feedback
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-6(1):
+        checks: []
+      IA-7:
+        checks:
+        - id: ia7_cryptographic_module_auth
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      IA-7(1):
+        checks: []
+      IA-7(2):
+        checks: []
+      IA-8(1):
+        checks:
+        - id: ia8_1_acceptance_of_piv_external
+          event_types:
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_conditional_access_policy
+      IA-8(2):
+        checks:
+        - id: ia8_2_acceptance_of_external_authenticators
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      IA-8(3):
+        checks:
+        - id: ia8_3_use_of_ficam_approved_products
+          event_types:
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_conditional_access_policy
+      IA-8(4):
+        checks:
+        - id: ia8_4_use_of_defined_profiles
+          event_types:
+          - entra_conditional_access_policies
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - okta_policy
+      IA-8(5):
+        checks:
+        - id: ia8_5_acceptance_of_piv_i_credentials
+          event_types:
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_conditional_access_policy
+      IA-8(6):
+        checks:
+        - id: ia8_6_disassociability
+          event_types:
+          - entra_users
+          - entra_app_registrations
+          resource_types:
+          - entra_user
+      IA-9:
+        checks:
+        - id: ia9_service_identification
+          event_types:
+          - entra_service_principals
+          - entra_app_registrations
+          resource_types:
+          - entra_service_principal
+      IA-9(1):
+        checks:
+        - id: ia9_1_information_exchange
+          event_types:
+          - entra_service_principals
+          resource_types:
+          - entra_service_principal
+      IA-9(2):
+        checks:
+        - id: ia9_2_transmission_of_decisions
+          event_types:
+          - entra_service_principals
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_service_principal
+          - entra_conditional_access_policy
+      IA-10:
+        checks:
+        - id: ia10_adaptive_authentication
+          event_types:
+          - entra_conditional_access_policies
+          - entra_risky_users
+          - entra_sign_ins
+          - okta_policies
+          resource_types:
+          - entra_conditional_access_policy
+          - entra_user
+          - entra_sign_in
+          - okta_policy
+      IA-10(1):
+        checks:
+        - id: ia10_1_risk_based_authentication
+          event_types:
+          - entra_risky_users
+          - entra_sign_ins
+          - entra_conditional_access_policies
+          resource_types:
+          - entra_user
+          - entra_sign_in
+          - entra_conditional_access_policy
+      IA-11:
+        checks:
+        - id: ia11_re_authentication
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+      IA-11(1):
+        checks:
+        - id: ia11_1_re_authentication_for_privileged
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - cyberark_accounts
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - cyberark_account
+      IA-12:
+        checks:
+        - id: ia12_identity_proofing
+          event_types:
+          - sailpoint_identities
+          - entra_users
+          - okta_users
+          resource_types:
+          - sailpoint_identity
+          - entra_user
+          - okta_user
+      IA-12(1):
+        checks:
+        - id: ia12_1_supervisor_authorization
+          event_types:
+          - sailpoint_certifications
+          resource_types:
+          - sailpoint_certification
+      IA-12(2):
+        checks:
+        - id: ia12_2_identity_evidence
+          event_types:
+          - sailpoint_identities
+          resource_types:
+          - sailpoint_identity
+      IA-12(3):
+        checks:
+        - id: ia12_3_identity_evidence_validation_verification
+          event_types:
+          - sailpoint_identities
+          resource_types:
+          - sailpoint_identity
+      IA-12(4):
+        checks:
+        - id: ia12_4_in_person_validation_verification
+          event_types:
+          - sailpoint_identities
+          resource_types:
+          - sailpoint_identity
+      IA-12(5):
+        checks:
+        - id: ia12_5_address_confirmation
+          event_types:
+          - sailpoint_identities
+          resource_types:
+          - sailpoint_identity
+      IA-12(6):
+        checks:
+        - id: ia12_6_accept_externally_proofed
+          event_types:
+          - entra_users
+          - okta_users
+          resource_types:
+          - entra_user
+          - okta_user
+      IA-13:
+        checks: []
   SC:
     controls:
       SC-7:
+        title: Boundary Protection
         checks:
-          - id: sc7_boundary_protection
-            event_types:
-              - ec2_security_groups
-              - ec2_network_acls
-              - compute_firewall_rules
-              - network_security_groups
-            resource_types:
-              - ec2_security_group
-              - ec2_network_acl
-              - compute_firewall_rule
-              - network_security_group
-
+        - id: sc7_boundary
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
       SC-8:
+        title: Transmission Confidentiality and Integrity
         checks:
-          - id: sc8_transmission_confidentiality
-            event_types:
-              - key_vault
-              - storage_accounts
-              - s3_buckets
-              - storage_buckets
-            resource_types:
-              - key_vault
-              - storage_account
-              - s3_bucket
-              - storage_bucket
-
+        - id: sc8_transmission
+          event_types:
+          - key_vault
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - key_vault
+          - s3_bucket
+          - storage_account
+          - storage_bucket
       SC-12:
+        title: Cryptographic Key Establishment and Management
         checks:
-          - id: sc12_key_management
-            event_types:
-              - key_vault
-            resource_types:
-              - key_vault
-
+        - id: sc12_key_mgmt
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
       SC-28:
+        title: Protection of Information at Rest
         checks:
-          - id: sc28_encryption_at_rest
-            event_types:
-              - s3_buckets
-              - storage_accounts
-              - storage_buckets
-              - key_vault
-            resource_types:
-              - s3_bucket
-              - storage_account
-              - storage_bucket
-              - key_vault
-
-  # ---------------------------------------------------------------------------
-  # SI — System and Information Integrity
-  # ---------------------------------------------------------------------------
+        - id: sc28_encryption_rest
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+          - key_vault
+      SC-1:
+        title: Policy and Procedures
+        checks: []
+      SC-2:
+        title: Separation of User and System Functionality
+        checks: []
+      SC-2(1):
+        title: Interfaces for Non-Privileged Users
+        checks: []
+      SC-2(2):
+        title: Disassociability
+        checks: []
+      SC-3:
+        title: Security Function Isolation
+        checks: []
+      SC-3(1):
+        title: Hardware Separation
+        checks: []
+      SC-3(2):
+        title: Access and Flow Control Functions
+        checks: []
+      SC-3(3):
+        title: Minimize Nonsecurity Functionality
+        checks: []
+      SC-3(4):
+        title: Module Coupling and Cohesiveness
+        checks: []
+      SC-3(5):
+        title: Layered Structures
+        checks: []
+      SC-4:
+        title: Information in Shared System Resources
+        checks: []
+      SC-4(1):
+        title: Security Levels
+        checks: []
+      SC-4(2):
+        title: Periods Processing
+        checks: []
+      SC-5:
+        title: Denial-of-Service Protection
+        checks:
+        - id: sc5_dos_protection
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          - monitor_alerts
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SC-5(1):
+        title: Restrict Ability to Attack Other Systems
+        checks:
+        - id: sc5_1_restrict_attack
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      SC-5(2):
+        title: Capacity, Bandwidth, and Redundancy
+        checks: []
+      SC-5(3):
+        title: Detection and Monitoring
+        checks:
+        - id: sc5_3_dos_monitor
+          event_types:
+          - guardduty_detectors
+          - monitor_alerts
+          - defender_alerts
+          resource_types:
+          - guardduty
+      SC-6:
+        title: Resource Availability
+        checks: []
+      SC-7(1):
+        title: Physically Separated Subnetworks
+        checks: []
+      SC-7(2):
+        title: Public Access
+        checks: []
+      SC-7(3):
+        title: Access Points
+        checks:
+        - id: sc7_3_access_points
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(4):
+        title: External Telecommunications Services
+        checks: []
+      SC-7(5):
+        title: Deny by Default — Allow by Exception
+        checks:
+        - id: sc7_5_deny_default
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(6):
+        title: Response to Recognized Failures
+        checks: []
+      SC-7(7):
+        title: Split Tunneling for Remote Devices
+        checks: []
+      SC-7(8):
+        title: Route Traffic to Authenticated Proxy Servers
+        checks:
+        - id: sc7_8_proxy
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(9):
+        title: Restrict Threatening Outgoing Communications Traffic
+        checks:
+        - id: sc7_9_outgoing
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          - guardduty_detectors
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+          - guardduty
+      SC-7(10):
+        title: Prevent Exfiltration
+        checks:
+        - id: sc7_10_exfiltration
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - guardduty_detectors
+          - s3_buckets
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - guardduty
+          - s3_bucket
+      SC-7(11):
+        title: Restrict Incoming Communications Traffic
+        checks:
+        - id: sc7_11_incoming
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(12):
+        title: Host-Based Protection
+        checks:
+        - id: sc7_12_host_based
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - agent
+      SC-7(13):
+        title: Isolation of Security Tools, Mechanisms, and Support Components
+        checks: []
+      SC-7(14):
+        title: Protect Against Unauthorized Physical Connections
+        checks: []
+      SC-7(15):
+        title: Networked Privileged Accesses
+        checks:
+        - id: sc7_15_privileged_net
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(16):
+        title: Prevent Discovery of System Components
+        checks: []
+      SC-7(17):
+        title: Automated Enforcement of Protocol Formats
+        checks: []
+      SC-7(18):
+        title: Fail Secure
+        checks: []
+      SC-7(19):
+        title: Block Communication from Non-Organizationally Configured Hosts
+        checks:
+        - id: sc7_19_block_nonorg
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(20):
+        title: Dynamic Isolation and Segregation
+        checks: []
+      SC-7(21):
+        title: Isolation of System Components
+        checks:
+        - id: sc7_21_isolation
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(22):
+        title: Separate Subnets for Connecting to Different Security Domains
+        checks: []
+      SC-7(23):
+        title: Disable Sender Feedback on Protocol Validation Failure
+        checks: []
+      SC-7(24):
+        title: Personally Identifiable Information
+        checks: []
+      SC-7(25):
+        title: Unclassified Telecommunications Systems — External Network
+        checks: []
+      SC-7(26):
+        title: Classified National Security System Connections
+        checks: []
+      SC-7(27):
+        title: Unclassified Non-National Security System Connections
+        checks: []
+      SC-7(28):
+        title: Connections to Public Networks
+        checks:
+        - id: sc7_28_public
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SC-7(29):
+        title: Separate Subnets to Isolate Functions
+        checks:
+        - id: sc7_29_subnets
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+      SC-8(1):
+        title: Cryptographic Protection
+        checks:
+        - id: sc8_1_crypto
+          event_types:
+          - key_vault
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - key_vault
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      SC-8(2):
+        title: Pre- and Post-Transmission Handling
+        checks: []
+      SC-8(3):
+        title: Cryptographic Protection for Message Externals
+        checks:
+        - id: sc8_3_msg_externals
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-8(4):
+        title: Conceal or Randomize Communications
+        checks: []
+      SC-8(5):
+        title: Protected Distribution System
+        checks: []
+      SC-9:
+        title: Transmission Confidentiality
+        checks: []
+      SC-10:
+        title: Network Disconnect
+        checks: []
+      SC-10(1):
+        title: Session Termination Notification
+        checks: []
+      SC-11:
+        title: Trusted Path
+        checks: []
+      SC-12(1):
+        title: Availability
+        checks:
+        - id: sc12_1_key_avail
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-12(2):
+        title: Symmetric Keys
+        checks:
+        - id: sc12_2_symmetric
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-12(3):
+        title: Asymmetric Keys
+        checks:
+        - id: sc12_3_asymmetric
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-12(4):
+        title: PKI Certificates
+        checks:
+        - id: sc12_4_pki
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-12(5):
+        title: PKI Certificates — Hardware Tokens
+        checks: []
+      SC-12(6):
+        title: Physical Control of Keys
+        checks: []
+      SC-13:
+        title: Cryptographic Protection
+        checks:
+        - id: sc13_crypto_protection
+          event_types:
+          - key_vault
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - key_vault
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      SC-13(1):
+        title: FIPS-Validated Cryptography
+        checks:
+        - id: sc13_1_fips
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-13(2):
+        title: NSA-Approved Cryptography
+        checks: []
+      SC-13(3):
+        title: Individuals Without Formal Access Approvals
+        checks: []
+      SC-13(4):
+        title: Digital Signatures
+        checks: []
+      SC-14:
+        title: Public Access Protections
+        checks: []
+      SC-15:
+        title: Collaborative Computing Devices and Applications
+        checks: []
+      SC-16:
+        title: Transmission of Security and Privacy Attributes
+        checks: []
+      SC-16(1):
+        title: Integrity Verification
+        checks: []
+      SC-16(2):
+        title: Anti-Spoofing Mechanisms
+        checks: []
+      SC-16(3):
+        title: Cryptographic Binding
+        checks: []
+      SC-17:
+        title: Public Key Infrastructure Certificates
+        checks:
+        - id: sc17_pki_certs
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-17(1):
+        title: Interoperable Root Certification Authority
+        checks: []
+      SC-18:
+        title: Mobile Code
+        checks: []
+      SC-18(1):
+        title: Identify Unacceptable Code and Take Corrective Actions
+        checks:
+        - id: sc18_1_mobile_code
+          event_types:
+          - defender_alerts
+          - falcon_detection_details
+          - s1_threats
+          resource_types:
+          - endpoint
+      SC-18(2):
+        title: Acquisition, Development, and Use
+        checks: []
+      SC-18(3):
+        title: Prevent Downloading and Execution
+        checks:
+        - id: sc18_3_prevent_download
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          - s1_policies
+          resource_types:
+          - endpoint
+      SC-18(4):
+        title: Prevent Automatic Execution
+        checks: []
+      SC-18(5):
+        title: Allow Execution Only in Confined Environments
+        checks: []
+      SC-19:
+        title: Voice Over Internet Protocol
+        checks: []
+      SC-20:
+        title: Secure Name/Address Resolution Service — Authoritative Source
+        checks: []
+      SC-21:
+        title: Secure Name/Address Resolution Service — Recursive or Caching Resolver
+        checks: []
+      SC-22:
+        title: Architecture and Provisioning for Name/Address Resolution Service
+        checks: []
+      SC-23:
+        title: Session Authenticity
+        checks: []
+      SC-23(1):
+        title: Invalidate Session Identifiers at Logout
+        checks: []
+      SC-23(2):
+        title: User-Initiated Logouts and Message Displays
+        checks: []
+      SC-23(3):
+        title: Unique System-Generated Session Identifiers
+        checks: []
+      SC-23(4):
+        title: Unique Session Identifiers with Randomization
+        checks: []
+      SC-23(5):
+        title: Allowed Certificate Authorities
+        checks:
+        - id: sc23_5_allowed_ca
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-24:
+        title: Fail in Known State
+        checks: []
+      SC-25:
+        title: Thin Nodes
+        checks: []
+      SC-26:
+        title: Honeypots
+        checks: []
+      SC-26(1):
+        title: Detection of Malicious Code
+        checks:
+        - id: sc26_1_honeypot_detect
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - guardduty_detectors
+          resource_types:
+          - endpoint
+          - guardduty
+      SC-27:
+        title: Platform-Independent Applications
+        checks: []
+      SC-28(1):
+        title: Cryptographic Protection
+        checks:
+        - id: sc28_1_crypto_rest
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+          - key_vault
+      SC-28(2):
+        title: Offline Storage
+        checks: []
+      SC-28(3):
+        title: Cryptographic Keys
+        checks:
+        - id: sc28_3_keys
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SC-29:
+        title: Heterogeneity
+        checks: []
+      SC-30:
+        title: Concealment and Misdirection
+        checks: []
+      SC-31:
+        title: Covert Channel Analysis
+        checks: []
+      SC-31(1):
+        title: Test Covert Channels for Exploitability
+        checks: []
+      SC-31(2):
+        title: Maximum Bandwidth
+        checks: []
+      SC-31(3):
+        title: Measure Bandwidth in Operational Environments
+        checks: []
+      SC-32:
+        title: System Partitioning
+        checks: []
+      SC-33:
+        title: Transmission Preparation Integrity
+        checks: []
+      SC-34:
+        title: Non-Modifiable Executable Programs
+        checks: []
+      SC-35:
+        title: External Malicious Code Identification
+        checks: []
+      SC-36:
+        title: Distributed Processing and Storage
+        checks: []
+      SC-36(1):
+        title: Polling Techniques
+        checks: []
+      SC-36(2):
+        title: Synchronization
+        checks: []
+      SC-37:
+        title: Out-of-Band Channels
+        checks: []
+      SC-38:
+        title: Operations Security
+        checks: []
+      SC-39:
+        title: Process Isolation
+        checks: []
+      SC-39(1):
+        title: Hardware Separation
+        checks: []
+      SC-39(2):
+        title: Separate Execution Domain Per Thread
+        checks: []
+      SC-40:
+        title: Wireless Link Protection
+        checks: []
+      SC-41:
+        title: Port and I/O Device Access
+        checks: []
+      SC-42:
+        title: Sensor Capability and Data
+        checks: []
+      SC-43:
+        title: Usage Restrictions
+        checks: []
+      SC-44:
+        title: Detonation Chambers
+        checks: []
+      SC-45:
+        title: System Time Synchronization
+        checks: []
+      SC-45(1):
+        title: Synchronization with Authoritative Time Source
+        checks: []
+      SC-45(2):
+        title: Secondary Authoritative Time Source
+        checks: []
+      SC-46:
+        title: Cross Domain Policy Enforcement
+        checks: []
+      SC-47:
+        title: Alternate Communications Paths
+        checks: []
+      SC-48:
+        title: Sensor Relocation
+        checks: []
+      SC-49:
+        title: Hardware-Enforced Separation and Policy Enforcement
+        checks: []
+      SC-50:
+        title: Software-Enforced Separation and Policy Enforcement
+        checks: []
+      SC-51:
+        title: Hardware-Based Protection
+        checks: []
   SI:
     controls:
       SI-2:
+        title: Flaw Remediation
         checks:
-          - id: si2_flaw_remediation
-            event_types:
-              - vuln_export
-              - host_detections
-              - falcon_vulnerabilities
-              - defender_vulnerabilities
-              - wiz_vuln_findings
-              - qualys_detections
-            resource_types:
-              - host
-              - endpoint
-              - vulnerability
-
+        - id: si2_flaw_remediation
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
       SI-3:
+        title: Malicious Code Protection
         checks:
-          - id: si3_malicious_code
-            event_types:
-              - falcon_detection_details
-              - defender_alerts
-              - s1_threats
-              - elastic_security_alerts
-            resource_types:
-              - endpoint
-
+        - id: si3_malware
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          - elastic_security_alerts
+          resource_types:
+          - endpoint
       SI-4:
+        title: System Monitoring
         checks:
-          - id: si4_monitoring
-            event_types:
-              - guardduty_detectors
-              - securityhub_hub
-              - splunk_notable_events
-              - splunk_correlation_rules
-              - sentinel_analytics_rules
-              - elastic_detection_rules
-              - scc_findings
-              - defender_alerts
-              - monitor_alerts
-            resource_types:
-              - guardduty
-              - securityhub
-              - splunk_notable_event
-              - splunk_correlation_rule
-              - sentinel_analytics_rule
-              - elastic_detection_rule
-
+        - id: si4_monitoring
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - elastic_security_alerts
+          - elastic_detection_rules
+          - scc_findings
+          - defender_alerts
+          - monitor_alerts
+          resource_types:
+          - guardduty
+          - securityhub
+          - splunk_notable_event
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
       SI-5:
+        title: Security Alerts, Advisories, and Directives
         checks:
-          - id: si5_security_alerts
-            event_types:
-              - securityhub_hub
-              - defender_alerts
-              - prisma_alerts
-              - wiz_issues
-            resource_types:
-              - securityhub
-              - azure_defender_alert
-
-  # ---------------------------------------------------------------------------
-  # RA — Risk Assessment
-  # ---------------------------------------------------------------------------
+        - id: si5_alerts
+          event_types:
+          - securityhub_hub
+          - defender_alerts
+          - prisma_alerts
+          - wiz_issues
+          resource_types:
+          - securityhub
+      SI-1:
+        title: Policy and Procedures
+        checks: []
+      SI-2(1):
+        title: Central Management
+        checks:
+        - id: si2_1_central_mgmt
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
+      SI-2(2):
+        title: Automated Flaw Remediation Status
+        checks:
+        - id: si2_2_auto_status
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
+      SI-2(3):
+        title: Time to Remediate Flaws and Benchmarks for Corrective Actions
+        checks:
+        - id: si2_3_time_to_remediate
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          resource_types:
+          - vulnerability
+          - host
+      SI-2(4):
+        title: Automated Patch Management Tools
+        checks:
+        - id: si2_4_patch_mgmt
+          event_types:
+          - vuln_export
+          - host_detections
+          - defender_vulnerabilities
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
+      SI-2(5):
+        title: Automatic Software and Firmware Updates
+        checks:
+        - id: si2_5_auto_updates
+          event_types:
+          - defender_vulnerabilities
+          - falcon_vulnerabilities
+          resource_types:
+          - endpoint
+          - vulnerability
+      SI-2(6):
+        title: Removal of Previous Versions of Software and Firmware
+        checks:
+        - id: si2_6_remove_old
+          event_types:
+          - asset_inventory
+          - vuln_export
+          resource_types:
+          - host
+          - vulnerability
+      SI-3(1):
+        title: Central Management
+        checks:
+        - id: si3_1_central_mgmt
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          - s1_policies
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+          - agent
+      SI-3(2):
+        title: Automatic Updates
+        checks:
+        - id: si3_2_auto_updates
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          - agent_status
+          resource_types:
+          - endpoint
+          - agent
+      SI-3(3):
+        title: Non-Privileged Users
+        checks: []
+      SI-3(4):
+        title: Updates Only by Privileged Users
+        checks: []
+      SI-3(5):
+        title: Portable Storage Devices
+        checks: []
+      SI-3(6):
+        title: Testing and Verification
+        checks:
+        - id: si3_6_test_verify
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - endpoint
+      SI-3(7):
+        title: Nonsignature-Based Detection
+        checks:
+        - id: si3_7_nonsig_detect
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          - elastic_security_alerts
+          resource_types:
+          - endpoint
+      SI-3(8):
+        title: Detect Unauthorized Commands
+        checks:
+        - id: si3_8_unauth_commands
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - elastic_security_alerts
+          resource_types:
+          - endpoint
+      SI-3(9):
+        title: Authenticate Remote Commands
+        checks: []
+      SI-3(10):
+        title: Malicious Code Analysis
+        checks:
+        - id: si3_10_malware_analysis
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - endpoint
+      SI-4(1):
+        title: System-Wide Intrusion Detection System
+        checks:
+        - id: si4_1_ids
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - defender_alerts
+          resource_types:
+          - guardduty
+          - securityhub
+      SI-4(2):
+        title: Automated Tools and Mechanisms for Real-Time Analysis
+        checks:
+        - id: si4_2_realtime
+          event_types:
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          - guardduty_detectors
+          resource_types:
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+          - guardduty
+      SI-4(3):
+        title: Automated Tool and Mechanism Integration
+        checks:
+        - id: si4_3_integration
+          event_types:
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          resource_types:
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+      SI-4(4):
+        title: Inbound and Outbound Communications Traffic
+        checks:
+        - id: si4_4_traffic
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          - guardduty_detectors
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+          - guardduty
+      SI-4(5):
+        title: System-Generated Alerts
+        checks:
+        - id: si4_5_alerts
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          - elastic_security_alerts
+          - defender_alerts
+          - prisma_alerts
+          - wiz_issues
+          - monitor_alerts
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
+          - elastic_security_alert
+      SI-4(6):
+        title: Restrict Non-Privileged Users
+        checks: []
+      SI-4(7):
+        title: Automated Response to Suspicious Events
+        checks:
+        - id: si4_7_auto_response
+          event_types:
+          - sentinel_analytics_rules
+          - splunk_correlation_rules
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_analytics_rule
+          - splunk_correlation_rule
+          - elastic_detection_rule
+      SI-4(8):
+        title: Protection of Monitoring Information
+        checks: []
+      SI-4(9):
+        title: Testing of Monitoring Tools and Mechanisms
+        checks: []
+      SI-4(10):
+        title: Visibility of Encrypted Communications
+        checks: []
+      SI-4(11):
+        title: Analyze Communications Traffic Anomalies
+        checks:
+        - id: si4_11_traffic_anomalies
+          event_types:
+          - guardduty_detectors
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          resource_types:
+          - guardduty
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+      SI-4(12):
+        title: Automated Organization-Generated Alerts
+        checks:
+        - id: si4_12_org_alerts
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          - elastic_security_alerts
+          - monitor_alerts
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
+          - elastic_security_alert
+      SI-4(13):
+        title: Analyze Traffic and Event Patterns
+        checks:
+        - id: si4_13_patterns
+          event_types:
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          resource_types:
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+      SI-4(14):
+        title: Wireless Intrusion Detection
+        checks: []
+      SI-4(15):
+        title: Wireless to Wireline Communications
+        checks: []
+      SI-4(16):
+        title: Correlate Monitoring Information
+        checks:
+        - id: si4_16_correlate
+          event_types:
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - securityhub_hub
+          resource_types:
+          - splunk_notable_event
+          - splunk_correlation_rule
+          - sentinel_incident
+          - sentinel_analytics_rule
+          - securityhub
+      SI-4(17):
+        title: Integrated Situational Awareness
+        checks:
+        - id: si4_17_situational
+          event_types:
+          - securityhub_hub
+          - guardduty_detectors
+          - scc_findings
+          - prisma_alerts
+          - wiz_issues
+          resource_types:
+          - securityhub
+          - guardduty
+      SI-4(18):
+        title: Analyze Traffic and Covert Exfiltration
+        checks:
+        - id: si4_18_exfiltration
+          event_types:
+          - guardduty_detectors
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          resource_types:
+          - guardduty
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+      SI-4(19):
+        title: Risk for Individuals
+        checks: []
+      SI-4(20):
+        title: Privileged Users
+        checks:
+        - id: si4_20_priv_users
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - splunk_notable_events
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      SI-4(21):
+        title: Probationary Periods
+        checks: []
+      SI-4(22):
+        title: Unauthorized Network Services
+        checks:
+        - id: si4_22_unauth_services
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          - guardduty_detectors
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+          - guardduty
+      SI-4(23):
+        title: Host-Based Devices
+        checks:
+        - id: si4_23_host_based
+          event_types:
+          - falcon_device_details
+          - falcon_detection_details
+          - defender_machines
+          - defender_alerts
+          - s1_agents
+          - s1_threats
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+          - agent
+      SI-4(24):
+        title: Indicators of Compromise
+        checks:
+        - id: si4_24_ioc
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - sentinel_incidents
+          - elastic_security_alerts
+          - splunk_notable_events
+          resource_types:
+          - endpoint
+          - sentinel_incident
+          - elastic_security_alert
+          - splunk_notable_event
+      SI-4(25):
+        title: Optimize Network Traffic Analysis
+        checks:
+        - id: si4_25_optimize
+          event_types:
+          - guardduty_detectors
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          resource_types:
+          - guardduty
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+      SI-5(1):
+        title: Automated Alerts and Advisories
+        checks:
+        - id: si5_1_auto_alerts
+          event_types:
+          - securityhub_hub
+          - defender_alerts
+          - prisma_alerts
+          - wiz_issues
+          - scc_findings
+          resource_types:
+          - securityhub
+      SI-6:
+        title: Security and Privacy Function Verification
+        checks:
+        - id: si6_function_verify
+          event_types:
+          - policy_compliance
+          - prisma_compliance
+          - wiz_config_findings
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      SI-6(1):
+        title: Notification of Failed Security Tests
+        checks:
+        - id: si6_1_failed_tests
+          event_types:
+          - prisma_alerts
+          - wiz_issues
+          - monitor_alerts
+          resource_types:
+          - compliance_standard
+      SI-6(2):
+        title: Automation Support for Distributed Testing
+        checks:
+        - id: si6_2_auto_test
+          event_types:
+          - policy_compliance
+          - prisma_compliance
+          - wiz_config_findings
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      SI-6(3):
+        title: Report Verification Results
+        checks:
+        - id: si6_3_report
+          event_types:
+          - compliance_audits
+          - compliance_posture
+          - prisma_compliance
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      SI-7:
+        title: Software, Firmware, and Information Integrity
+        checks:
+        - id: si7_integrity
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - wiz_config_findings
+          resource_types:
+          - endpoint
+      SI-7(1):
+        title: Integrity Checks
+        checks:
+        - id: si7_1_checks
+          event_types:
+          - wiz_config_findings
+          - prisma_compliance
+          - policy_compliance
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      SI-7(2):
+        title: Automated Notifications of Integrity Violations
+        checks:
+        - id: si7_2_notifications
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - endpoint
+      SI-7(3):
+        title: Centrally Managed Integrity Tools
+        checks:
+        - id: si7_3_central_tools
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - agent
+      SI-7(4):
+        title: Tamper-Evident Packaging
+        checks: []
+      SI-7(5):
+        title: Automated Response to Integrity Violations
+        checks:
+        - id: si7_5_auto_response
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - endpoint
+      SI-7(6):
+        title: Cryptographic Protection
+        checks:
+        - id: si7_6_crypto
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SI-7(7):
+        title: Integration of Detection and Response
+        checks:
+        - id: si7_7_detect_respond
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - endpoint
+          - sentinel_incident
+          - splunk_notable_event
+      SI-7(8):
+        title: Auditing Capability for Significant Events
+        checks:
+        - id: si7_8_audit
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      SI-7(9):
+        title: Verify Boot Process
+        checks: []
+      SI-7(10):
+        title: Protection of Boot Firmware
+        checks: []
+      SI-7(11):
+        title: Confined Environments with Limited Privileges
+        checks: []
+      SI-7(12):
+        title: Integrity Verification
+        checks:
+        - id: si7_12_verify
+          event_types:
+          - wiz_config_findings
+          - prisma_compliance
+          resource_types:
+          - compliance_standard
+      SI-7(13):
+        title: Code Execution in Protected Environments
+        checks: []
+      SI-7(14):
+        title: Binary or Machine Executable Code
+        checks: []
+      SI-7(15):
+        title: Code Authentication
+        checks: []
+      SI-7(16):
+        title: Time Limit on Process Execution Without Supervision
+        checks: []
+      SI-7(17):
+        title: Runtime Application Self-Protection
+        checks:
+        - id: si7_17_rasp
+          event_types:
+          - defender_alerts
+          - falcon_detection_details
+          resource_types:
+          - endpoint
+      SI-8:
+        title: Spam Protection
+        checks: []
+      SI-9:
+        title: Information Input Restrictions
+        checks: []
+      SI-10:
+        title: Information Input Validation
+        checks: []
+      SI-10(1):
+        title: Manual Override Capability
+        checks: []
+      SI-10(2):
+        title: Review and Resolve Errors
+        checks: []
+      SI-10(3):
+        title: Predictive or Known Correct Behavior
+        checks: []
+      SI-10(4):
+        title: Timing Interactions
+        checks: []
+      SI-10(5):
+        title: Restrict Inputs to Trusted Sources and Approved Formats
+        checks: []
+      SI-10(6):
+        title: Injection Prevention
+        checks: []
+      SI-11:
+        title: Error Handling
+        checks: []
+      SI-12:
+        title: Information Management and Retention
+        checks: []
+      SI-12(1):
+        title: Limit Personally Identifiable Information Elements
+        checks: []
+      SI-12(2):
+        title: Minimize Personally Identifiable Information in Testing, Training, and Research
+        checks: []
+      SI-12(3):
+        title: Information Disposal
+        checks: []
+      SI-13:
+        title: Predictable Failure Prevention
+        checks: []
+      SI-14:
+        title: Non-Persistence
+        checks: []
+      SI-15:
+        title: Information Output Filtering
+        checks: []
+      SI-16:
+        title: Memory Protection
+        checks:
+        - id: si16_memory_protection
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - endpoint
+      SI-16(1):
+        title: Stack Canaries
+        checks: []
+      SI-16(2):
+        title: Address Space Layout Randomization
+        checks: []
+      SI-16(3):
+        title: Data Execution Prevention
+        checks: []
+      SI-17:
+        title: Fail-Safe Procedures
+        checks: []
+      SI-18:
+        title: Personally Identifiable Information Quality Operations
+        checks: []
+      SI-18(1):
+        title: Automation Support
+        checks: []
+      SI-18(2):
+        title: Data Tags
+        checks: []
+      SI-18(3):
+        title: Collection
+        checks: []
+      SI-18(4):
+        title: Individual Requests
+        checks: []
+      SI-18(5):
+        title: Notice of Correction or Deletion
+        checks: []
+      SI-19:
+        title: De-Identification
+        checks: []
+      SI-19(1):
+        title: Collection
+        checks: []
+      SI-19(2):
+        title: Archiving
+        checks: []
+      SI-19(3):
+        title: Release
+        checks: []
+      SI-19(4):
+        title: Removal, Masking, Encryption, Hashing, or Replacement of Direct Identifiers
+        checks: []
+      SI-19(5):
+        title: Statistical Disclosure Control
+        checks: []
+      SI-19(6):
+        title: Differential Privacy
+        checks: []
+      SI-19(7):
+        title: Validated Algorithms and Software
+        checks: []
+      SI-19(8):
+        title: Motivated Intruder
+        checks: []
+      SI-20:
+        title: Tainting
+        checks: []
+      SI-20(1):
+        title: Taint Sources
+        checks: []
+      SI-20(2):
+        title: Taint Sinks
+        checks: []
+      SI-21:
+        title: Information Refresh
+        checks: []
+      SI-21(1):
+        title: Data Refresh — Non-Persistent Memory
+        checks: []
+      SI-22:
+        title: Information Diversity
+        checks: []
+      SI-23:
+        title: Information Fragmentation
+        checks: []
+      SI-23(1):
+        title: Data Fragmentation — Reconstructability
+        checks: []
   RA:
     controls:
       RA-5:
+        title: Vulnerability Monitoring and Scanning
         checks:
-          - id: ra5_vulnerability_scanning
-            event_types:
-              - vuln_export
-              - host_detections
-              - compliance_audits
-              - falcon_vulnerabilities
-              - defender_vulnerabilities
-              - wiz_vuln_findings
-              - asset_inventory
-              - compliance_posture
-            resource_types:
-              - host
-              - endpoint
-              - vulnerability
-              - knowledge_base
-
+        - id: ra5_vuln_scanning
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          - prisma_alerts
+          - compliance_audits
+          - compliance_posture
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
       RA-7:
+        title: Risk Response
         checks:
-          - id: ra7_risk_response
-            event_types:
-              - defender_recommendations
-              - wiz_issues
-              - prisma_alerts
-            resource_types:
-              - recommendation
-
-  # ---------------------------------------------------------------------------
-  # IR — Incident Response
-  # ---------------------------------------------------------------------------
+        - id: ra7_risk_response
+          event_types:
+          - defender_recommendations
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - recommendation
+      RA-1:
+        title: Policy and Procedures
+        checks: []
+      RA-2:
+        title: Security Categorization
+        checks: []
+      RA-2(1):
+        title: Impact-Level Prioritization
+        checks: []
+      RA-3:
+        title: Risk Assessment
+        checks:
+        - id: ra3_risk_assessment
+          event_types:
+          - wiz_issues
+          - prisma_alerts
+          - defender_recommendations
+          - securityhub_hub
+          resource_types:
+          - recommendation
+          - compliance_standard
+      RA-3(1):
+        title: Supply Chain Risk Assessment
+        checks: []
+      RA-3(2):
+        title: Use of All-Source Intelligence
+        checks: []
+      RA-3(3):
+        title: Dynamic Threat Awareness
+        checks:
+        - id: ra3_3_dynamic_threat
+          event_types:
+          - sentinel_incidents
+          - falcon_detection_details
+          - guardduty_detectors
+          resource_types:
+          - sentinel_incident
+          - endpoint
+          - guardduty
+      RA-3(4):
+        title: Predictive Cyber Analytics
+        checks: []
+      RA-4:
+        title: Risk Assessment Update
+        checks: []
+      RA-5(1):
+        title: Update Tool Capability
+        checks:
+        - id: ra5_1_tool_update
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          resource_types:
+          - vulnerability
+          - host
+      RA-5(2):
+        title: Update Vulnerabilities to Be Scanned
+        checks:
+        - id: ra5_2_vuln_update
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
+      RA-5(3):
+        title: Breadth and Depth of Coverage
+        checks:
+        - id: ra5_3_coverage
+          event_types:
+          - asset_export
+          - asset_inventory
+          - agent_status
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - host
+          - endpoint
+          - endpoint_fleet
+          - agent
+      RA-5(4):
+        title: Discoverable Information
+        checks:
+        - id: ra5_4_discoverable_info
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          - s3_buckets
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+          - s3_bucket
+      RA-5(5):
+        title: Privileged Access
+        checks:
+        - id: ra5_5_privileged_scan
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          resource_types:
+          - vulnerability
+          - host
+      RA-5(6):
+        title: Automated Trend Analyses
+        checks:
+        - id: ra5_6_trend
+          event_types:
+          - vuln_export
+          - host_detections
+          - wiz_vuln_findings
+          - prisma_alerts
+          resource_types:
+          - vulnerability
+          - host
+      RA-5(7):
+        title: Automated Detection and Notification of Unauthorized Components
+        checks:
+        - id: ra5_7_unauthorized_components
+          event_types:
+          - asset_inventory
+          - asset_export
+          - wiz_config_findings
+          - prisma_assets
+          resource_types:
+          - host
+          - endpoint
+      RA-5(8):
+        title: Review Historic Audit Logs
+        checks:
+        - id: ra5_8_audit_review
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+      RA-5(9):
+        title: Penetration Testing and Analysis
+        checks: []
+      RA-5(10):
+        title: Correlate Scanning Information
+        checks:
+        - id: ra5_10_correlate
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          - securityhub_hub
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
+          - securityhub
+      RA-5(11):
+        title: Public Disclosure Program
+        checks: []
+      RA-6:
+        title: Technical Surveillance Countermeasures Survey
+        checks: []
+      RA-7(1):
+        title: Risk Response — Continuous Monitoring
+        checks:
+        - id: ra7_1_continuous_risk
+          event_types:
+          - securityhub_hub
+          - guardduty_detectors
+          - wiz_issues
+          - prisma_alerts
+          - scc_findings
+          resource_types:
+          - securityhub
+          - guardduty
+          - recommendation
+      RA-8:
+        title: Privacy Impact Assessments
+        checks: []
+      RA-9:
+        title: Criticality Analysis
+        checks: []
+      RA-9(1):
+        title: Impact Identification
+        checks: []
+      RA-9(2):
+        title: Criticality Review
+        checks: []
+      RA-9(3):
+        title: Supply Chain Criticality
+        checks: []
+      RA-9(4):
+        title: Continuity of Operations
+        checks: []
+      RA-10:
+        title: Threat Hunting
+        checks:
+        - id: ra10_threat_hunting
+          event_types:
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - elastic_security_alerts
+          - elastic_detection_rules
+          - falcon_detection_details
+          resource_types:
+          - splunk_notable_event
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+          - endpoint
+      RA-10(1):
+        title: Threat Hunting — Automated Techniques
+        checks:
+        - id: ra10_1_auto_hunting
+          event_types:
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          resource_types:
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
   IR:
     controls:
       IR-4:
         checks:
-          - id: ir4_incident_handling
-            event_types:
-              - sentinel_incidents
-              - splunk_notable_events
-              - elastic_security_alerts
-              - falcon_detection_details
-              - defender_alerts
-            resource_types:
-              - sentinel_incident
-              - splunk_notable_event
-              - elastic_security_alert
-              - endpoint
-
+        - id: ir4_incident_handling
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
       IR-5:
         checks:
-          - id: ir5_incident_monitoring
-            event_types:
-              - guardduty_detectors
-              - sentinel_analytics_rules
-              - splunk_correlation_rules
-              - elastic_detection_rules
-            resource_types:
-              - guardduty
-              - sentinel_analytics_rule
-              - splunk_correlation_rule
-              - elastic_detection_rule
-
+        - id: ir5_incident_monitoring
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
       IR-6:
         checks:
-          - id: ir6_incident_reporting
-            event_types:
-              - sentinel_incidents
-              - splunk_notable_events
-              - elastic_security_alerts
-            resource_types:
-              - sentinel_incident
-              - splunk_notable_event
-              - elastic_security_alert
-
-  # ---------------------------------------------------------------------------
-  # CA — Assessment, Authorization, and Monitoring
-  # ---------------------------------------------------------------------------
+        - id: ir6_incident_reporting
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-1:
+        checks: []
+      IR-1(1):
+        checks: []
+      IR-2:
+        checks: []
+      IR-2(1):
+        checks: []
+      IR-2(2):
+        checks: []
+      IR-2(3):
+        checks:
+        - id: ir2_3_breach_notification
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-3:
+        checks:
+        - id: ir3_incident_response_testing
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-3(1):
+        checks:
+        - id: ir3_1_automated_testing
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          resource_types:
+          - sentinel_incident
+      IR-3(2):
+        checks:
+        - id: ir3_2_coordination_with_related_plans
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-3(3):
+        checks:
+        - id: ir3_3_continuous_improvement
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-4(1):
+        checks:
+        - id: ir4_1_automated_incident_handling
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-4(2):
+        checks:
+        - id: ir4_2_dynamic_reconfiguration
+          event_types:
+          - sentinel_analytics_rules
+          resource_types: []
+      IR-4(3):
+        checks:
+        - id: ir4_3_continuity_of_operations
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-4(4):
+        checks:
+        - id: ir4_4_information_correlation
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      IR-4(5):
+        checks:
+        - id: ir4_5_automatic_disabling
+          event_types:
+          - sentinel_analytics_rules
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-4(6):
+        checks:
+        - id: ir4_6_insider_threats
+          event_types:
+          - sentinel_incidents
+          - entra_risky_users
+          - entra_sign_ins
+          resource_types:
+          - sentinel_incident
+          - entra_user
+          - entra_sign_in
+      IR-4(7):
+        checks:
+        - id: ir4_7_insider_threats_intra_organization
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-4(8):
+        checks:
+        - id: ir4_8_correlation_with_external_orgs
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-4(9):
+        checks:
+        - id: ir4_9_dynamic_response_capability
+          event_types:
+          - sentinel_analytics_rules
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-4(10):
+        checks:
+        - id: ir4_10_supply_chain_coordination
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-4(11):
+        checks:
+        - id: ir4_11_integrated_incident_response_team
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-4(12):
+        checks:
+        - id: ir4_12_malicious_code_and_forensic_analysis
+          event_types:
+          - sentinel_incidents
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - sentinel_incident
+          - endpoint
+      IR-4(13):
+        checks:
+        - id: ir4_13_behavior_analysis
+          event_types:
+          - sentinel_incidents
+          - entra_risky_users
+          - falcon_detection_details
+          resource_types:
+          - sentinel_incident
+          - entra_user
+          - endpoint
+      IR-4(14):
+        checks:
+        - id: ir4_14_security_operations_center
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - splunk_notable_events
+          - elastic_security_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      IR-5(1):
+        checks:
+        - id: ir5_1_automated_tracking_collection_analysis
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-6(1):
+        checks:
+        - id: ir6_1_automated_reporting
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          resource_types:
+          - sentinel_incident
+      IR-6(2):
+        checks:
+        - id: ir6_2_vulnerabilities_related_to_incidents
+          event_types:
+          - sentinel_incidents
+          - defender_alerts
+          - falcon_detection_details
+          resource_types:
+          - sentinel_incident
+          - vulnerability
+      IR-6(3):
+        checks:
+        - id: ir6_3_supply_chain_coordination
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-7:
+        checks:
+        - id: ir7_incident_response_assistance
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-7(1):
+        checks:
+        - id: ir7_1_automation_support
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          resource_types:
+          - sentinel_incident
+      IR-7(2):
+        checks:
+        - id: ir7_2_coordination_with_external_providers
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-8:
+        checks: []
+      IR-8(1):
+        checks: []
+      IR-9:
+        checks:
+        - id: ir9_information_spillage
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      IR-9(1):
+        checks:
+        - id: ir9_1_responsible_personnel
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-9(2):
+        checks: []
+      IR-9(3):
+        checks:
+        - id: ir9_3_post_spill_operations
+          event_types:
+          - sentinel_incidents
+          resource_types:
+          - sentinel_incident
+      IR-9(4):
+        checks:
+        - id: ir9_4_exposure_to_unauthorized_personnel
+          event_types:
+          - sentinel_incidents
+          - entra_sign_ins
+          resource_types:
+          - sentinel_incident
+          - entra_sign_in
+      IR-10:
+        checks: []
+      IR-10(1):
+        checks: []
   CA:
     controls:
       CA-2:
         checks:
-          - id: ca2_control_assessments
-            event_types:
-              - prisma_compliance
-              - compliance_audits
-              - compliance_posture
-              - wiz_config_findings
-            resource_types:
-              - compliance_standard
-              - compliance_requirement
-
+        - id: ca2_control_assessments
+          event_types:
+          - prisma_compliance
+          - compliance_audits
+          - compliance_posture
+          - wiz_config_findings
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
       CA-7:
         checks:
-          - id: ca7_continuous_monitoring
-            event_types:
-              - config_recorders
-              - securityhub_hub
-              - guardduty_detectors
-              - policy_compliance
-              - scc_findings
-              - prisma_alerts
-              - wiz_issues
-            resource_types:
-              - aws_config
-              - securityhub
-              - guardduty
-
-  # ---------------------------------------------------------------------------
-  # AT — Awareness and Training
-  # ---------------------------------------------------------------------------
+        - id: ca7_continuous_monitoring
+          event_types:
+          - config_recorders
+          - securityhub_hub
+          - guardduty_detectors
+          - policy_compliance
+          - scc_findings
+          - prisma_alerts
+          - wiz_issues
+          resource_types:
+          - aws_config
+          - securityhub
+          - guardduty
+      CA-1:
+        checks: []
+      CA-2(1):
+        checks: []
+      CA-2(2):
+        checks:
+        - id: ca2_2_specialized_assessments
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
+      CA-2(3):
+        checks: []
+      CA-3:
+        checks:
+        - id: ca3_information_exchange
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      CA-3(1):
+        checks: []
+      CA-3(2):
+        checks: []
+      CA-3(3):
+        checks: []
+      CA-3(4):
+        checks:
+        - id: ca3_4_public_network_connections
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      CA-3(5):
+        checks: []
+      CA-3(6):
+        checks:
+        - id: ca3_6_transfer_authorizations
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_standard
+      CA-3(7):
+        checks: []
+      CA-4:
+        checks: []
+      CA-5:
+        checks: []
+      CA-5(1):
+        checks:
+        - id: ca5_1_poam_automation
+          event_types:
+          - prisma_compliance
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      CA-6:
+        checks: []
+      CA-7(1):
+        checks:
+        - id: ca7_1_independent_assessment
+          event_types:
+          - compliance_audits
+          - prisma_compliance
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      CA-7(2):
+        checks: []
+      CA-7(3):
+        checks:
+        - id: ca7_3_trend_analyses
+          event_types:
+          - securityhub_hub
+          - prisma_alerts
+          - wiz_issues
+          - splunk_notable_events
+          resource_types:
+          - securityhub
+          - splunk_notable_event
+      CA-7(4):
+        checks:
+        - id: ca7_4_risk_monitoring
+          event_types:
+          - guardduty_detectors
+          - defender_alerts
+          - prisma_alerts
+          - wiz_issues
+          resource_types:
+          - guardduty
+          - azure_defender_alert
+      CA-7(5):
+        checks:
+        - id: ca7_5_consistency_analysis
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CA-7(6):
+        checks:
+        - id: ca7_6_automation_support
+          event_types:
+          - config_recorders
+          - securityhub_hub
+          - guardduty_detectors
+          - scc_findings
+          - monitor_alerts
+          resource_types:
+          - aws_config
+          - securityhub
+          - guardduty
+          - azure_monitor
+      CA-8:
+        checks: []
+      CA-8(1):
+        checks: []
+      CA-8(2):
+        checks: []
+      CA-8(3):
+        checks: []
+      CA-9:
+        checks:
+        - id: ca9_internal_connections
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      CA-9(1):
+        checks:
+        - id: ca9_1_compliance_checks
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
   AT:
     controls:
       AT-2:
+        checks: []
+      AT-1:
+        checks: []
+      AT-2(1):
+        checks: []
+      AT-2(2):
         checks:
-          - id: at2_awareness_training
-            event_types:
-              - sailpoint_certifications
-            resource_types:
-              - sailpoint_certification
-
-  # ---------------------------------------------------------------------------
-  # PE — Physical and Environmental Protection
-  # ---------------------------------------------------------------------------
+        - id: at2_2_insider_threat
+          event_types:
+          - entra_risky_users
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - entra_user
+          - sentinel_incident
+          - splunk_notable_event
+      AT-2(3):
+        checks: []
+      AT-2(4):
+        checks:
+        - id: at2_4_suspicious_comms
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+      AT-2(5):
+        checks:
+        - id: at2_5_apt
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - falcon_detection_details
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - endpoint
+      AT-3:
+        checks: []
+      AT-3(1):
+        checks: []
+      AT-3(2):
+        checks: []
+      AT-3(3):
+        checks: []
+      AT-3(4):
+        checks: []
+      AT-3(5):
+        checks: []
+      AT-4:
+        checks: []
+      AT-5:
+        checks: []
+      AT-6:
+        checks: []
+      AT-6(1):
+        checks:
+        - id: at6_1_awareness_events
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+      AT-6(2):
+        checks: []
   PE:
     controls:
       PE-3:
+        checks: []
+      PE-1:
+        checks: []
+      PE-2:
+        checks: []
+      PE-2(1):
+        checks: []
+      PE-2(2):
+        checks: []
+      PE-2(3):
+        checks: []
+      PE-3(1):
+        checks: []
+      PE-3(2):
+        checks: []
+      PE-3(3):
+        checks: []
+      PE-3(4):
+        checks: []
+      PE-3(5):
+        checks: []
+      PE-3(6):
+        checks: []
+      PE-3(7):
+        checks: []
+      PE-3(8):
+        checks: []
+      PE-4:
+        checks: []
+      PE-4(1):
+        checks: []
+      PE-5:
+        checks: []
+      PE-5(1):
+        checks: []
+      PE-5(2):
+        checks: []
+      PE-5(3):
+        checks: []
+      PE-6:
         checks:
-          - id: pe3_physical_access
-            event_types:
-              - policy_compliance
-            resource_types:
-              - azure_resource
-
-  # ---------------------------------------------------------------------------
-  # PS — Personnel Security
-  # ---------------------------------------------------------------------------
+        - id: pe6_monitoring_audit_logs
+          event_types:
+          - audit_logs
+          - activity_log
+          resource_types:
+          - audit_event
+      PE-6(1):
+        checks:
+        - id: pe6_1_intrusion_alarms
+          event_types:
+          - audit_logs
+          resource_types:
+          - audit_event
+      PE-6(2):
+        checks: []
+      PE-6(3):
+        checks: []
+      PE-6(4):
+        checks: []
+      PE-7:
+        checks: []
+      PE-8:
+        checks: []
+      PE-8(1):
+        checks: []
+      PE-8(2):
+        checks: []
+      PE-8(3):
+        checks: []
+      PE-9:
+        checks: []
+      PE-9(1):
+        checks: []
+      PE-9(2):
+        checks: []
+      PE-10:
+        checks: []
+      PE-10(1):
+        checks: []
+      PE-11:
+        checks: []
+      PE-11(1):
+        checks: []
+      PE-11(2):
+        checks: []
+      PE-12:
+        checks: []
+      PE-12(1):
+        checks: []
+      PE-13:
+        checks: []
+      PE-13(1):
+        checks: []
+      PE-13(2):
+        checks: []
+      PE-13(3):
+        checks: []
+      PE-13(4):
+        checks: []
+      PE-14:
+        checks: []
+      PE-14(1):
+        checks: []
+      PE-14(2):
+        checks: []
+      PE-15:
+        checks: []
+      PE-15(1):
+        checks: []
+      PE-16:
+        checks: []
+      PE-17:
+        checks: []
+      PE-17(1):
+        checks: []
+      PE-18:
+        checks: []
+      PE-18(1):
+        checks: []
+      PE-19:
+        checks: []
+      PE-20:
+        checks: []
+      PE-21:
+        checks: []
+      PE-22:
+        checks: []
+      PE-23:
+        checks: []
+      PE-23(1):
+        checks: []
   PS:
     controls:
       PS-4:
         checks:
-          - id: ps4_personnel_termination
-            event_types:
-              - sailpoint_identities
-              - sailpoint_accounts
-              - okta_users
-              - entra_users
-            resource_types:
-              - sailpoint_identity
-              - sailpoint_account
-              - okta_user
-              - entra_user
-
+        - id: ps4_personnel_termination_access
+          event_types:
+          - sailpoint_identities
+          - sailpoint_accounts
+          - okta_users
+          - entra_users
+          resource_types:
+          - sailpoint_identity
+          - sailpoint_account
+          - okta_user
+          - entra_user
       PS-5:
         checks:
-          - id: ps5_personnel_transfer
-            event_types:
-              - sailpoint_identities
-              - sailpoint_certifications
-              - sailpoint_roles
-            resource_types:
-              - sailpoint_identity
-              - sailpoint_certification
-              - sailpoint_role
+        - id: ps5_personnel_transfer_access
+          event_types:
+          - sailpoint_identities
+          - sailpoint_accounts
+          - okta_users
+          - entra_users
+          resource_types:
+          - sailpoint_identity
+          - sailpoint_account
+          - okta_user
+          - entra_user
+      PS-1:
+        checks: []
+      PS-2:
+        checks: []
+      PS-3:
+        checks: []
+      PS-3(1):
+        checks: []
+      PS-3(2):
+        checks: []
+      PS-3(3):
+        checks: []
+      PS-3(4):
+        checks: []
+      PS-4(1):
+        checks: []
+      PS-4(2):
+        checks:
+        - id: ps4_2_automated_actions
+          event_types:
+          - sailpoint_identities
+          - sailpoint_accounts
+          - okta_users
+          - entra_users
+          - entra_directory_audits
+          resource_types:
+          - sailpoint_identity
+          - sailpoint_account
+          - okta_user
+          - entra_user
+      PS-5(1):
+        checks: []
+      PS-5(2):
+        checks: []
+      PS-5(3):
+        checks: []
+      PS-6:
+        checks: []
+      PS-6(1):
+        checks: []
+      PS-6(2):
+        checks: []
+      PS-6(3):
+        checks: []
+      PS-7:
+        checks: []
+      PS-7(1):
+        checks: []
+      PS-8:
+        checks: []
+      PS-9:
+        checks: []
+      PS-9(1):
+        checks: []
+      PS-9(2):
+        checks: []
+  CP:
+    controls:
+      CP-1:
+        checks: []
+      CP-2:
+        checks: []
+      CP-2(1):
+        checks: []
+      CP-2(2):
+        checks:
+        - id: cp2_2_capacity_planning
+          event_types:
+          - config_recorders
+          - monitor_alerts
+          resource_types:
+          - aws_config
+          - azure_monitor
+      CP-2(3):
+        checks: []
+      CP-2(4):
+        checks: []
+      CP-2(5):
+        checks: []
+      CP-2(6):
+        checks: []
+      CP-2(7):
+        checks: []
+      CP-2(8):
+        checks:
+        - id: cp2_8_identify_critical_assets
+          event_types:
+          - asset_inventory
+          - prisma_assets
+          - config_recorders
+          resource_types:
+          - host
+          - aws_config
+      CP-3:
+        checks: []
+      CP-3(1):
+        checks: []
+      CP-3(2):
+        checks: []
+      CP-4:
+        checks: []
+      CP-4(1):
+        checks: []
+      CP-4(2):
+        checks:
+        - id: cp4_2_alternate_processing_site
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-4(3):
+        checks: []
+      CP-4(4):
+        checks: []
+      CP-4(5):
+        checks: []
+      CP-5:
+        checks: []
+      CP-6:
+        checks:
+        - id: cp6_alternate_storage_site
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      CP-6(1):
+        checks:
+        - id: cp6_1_separation_primary
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      CP-6(2):
+        checks:
+        - id: cp6_2_rto_rpo
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-6(3):
+        checks:
+        - id: cp6_3_accessibility
+          event_types:
+          - policy_compliance
+          - config_recorders
+          resource_types:
+          - compliance_standard
+          - aws_config
+      CP-7:
+        checks:
+        - id: cp7_alternate_processing_site
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-7(1):
+        checks:
+        - id: cp7_1_separation_primary
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-7(2):
+        checks:
+        - id: cp7_2_accessibility
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-7(3):
+        checks:
+        - id: cp7_3_priority_of_service
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_standard
+      CP-7(4):
+        checks:
+        - id: cp7_4_preparation_for_use
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-7(5):
+        checks: []
+      CP-7(6):
+        checks: []
+      CP-8:
+        checks:
+        - id: cp8_telecom_services
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-8(1):
+        checks: []
+      CP-8(2):
+        checks: []
+      CP-8(3):
+        checks:
+        - id: cp8_3_separation_providers
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-8(4):
+        checks: []
+      CP-8(5):
+        checks: []
+      CP-9:
+        checks:
+        - id: cp9_system_backup
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - s3_buckets
+          - storage_accounts
+          resource_types:
+          - aws_config
+          - compliance_standard
+          - s3_bucket
+          - storage_account
+      CP-9(1):
+        checks:
+        - id: cp9_1_testing_reliability
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-9(2):
+        checks:
+        - id: cp9_2_test_restoration
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-9(3):
+        checks:
+        - id: cp9_3_separate_storage
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+      CP-9(4):
+        checks: []
+      CP-9(5):
+        checks:
+        - id: cp9_5_transfer_alternate
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - config_recorders
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+          - aws_config
+      CP-9(6):
+        checks:
+        - id: cp9_6_redundant_secondary
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-9(7):
+        checks:
+        - id: cp9_7_dual_auth_deletion
+          event_types:
+          - iam_policies
+          - s3_buckets
+          resource_types:
+          - iam_policy
+          - s3_bucket
+      CP-9(8):
+        checks:
+        - id: cp9_8_cryptographic_protection
+          event_types:
+          - key_vault
+          - s3_buckets
+          - storage_accounts
+          resource_types:
+          - key_vault
+          - s3_bucket
+          - storage_account
+      CP-10:
+        checks:
+        - id: cp10_system_recovery
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-10(1):
+        checks: []
+      CP-10(2):
+        checks:
+        - id: cp10_2_transaction_recovery
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-10(3):
+        checks: []
+      CP-10(4):
+        checks:
+        - id: cp10_4_restore_within_time
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-10(5):
+        checks: []
+      CP-10(6):
+        checks:
+        - id: cp10_6_component_protection
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-11:
+        checks:
+        - id: cp11_alternate_comms
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-12:
+        checks:
+        - id: cp12_safe_mode
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-12(1):
+        checks: []
+      CP-13:
+        checks:
+        - id: cp13_alternative_security
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+      CP-13(1):
+        checks: []
+  MA:
+    controls:
+      MA-1:
+        checks: []
+      MA-2:
+        checks: []
+      MA-2(1):
+        checks: []
+      MA-2(2):
+        checks: []
+      MA-3:
+        checks: []
+      MA-3(1):
+        checks: []
+      MA-3(2):
+        checks: []
+      MA-3(3):
+        checks: []
+      MA-3(4):
+        checks: []
+      MA-3(5):
+        checks: []
+      MA-3(6):
+        checks: []
+      MA-4:
+        checks:
+        - id: ma4_nonlocal_maintenance
+          event_types:
+          - audit_logs
+          - cloudtrail_trails
+          - activity_log
+          resource_types:
+          - cloudtrail
+      MA-4(1):
+        checks:
+        - id: ma4_1_logging_and_review
+          event_types:
+          - audit_logs
+          - cloudtrail_trails
+          - activity_log
+          resource_types:
+          - cloudtrail
+      MA-4(2):
+        checks: []
+      MA-4(3):
+        checks:
+        - id: ma4_3_comparable_security
+          event_types:
+          - audit_logs
+          resource_types: []
+      MA-4(4):
+        checks:
+        - id: ma4_4_authentication_and_separation_of_sessions
+          event_types:
+          - entra_sign_ins
+          - okta_system_log
+          resource_types:
+          - entra_sign_in
+      MA-4(5):
+        checks: []
+      MA-4(6):
+        checks:
+        - id: ma4_6_cryptographic_protection
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      MA-4(7):
+        checks:
+        - id: ma4_7_disconnect_verification
+          event_types:
+          - audit_logs
+          resource_types: []
+      MA-5:
+        checks: []
+      MA-5(1):
+        checks:
+        - id: ma5_1_individuals_without_appropriate_access
+          event_types:
+          - iam_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - entra_user
+      MA-5(2):
+        checks: []
+      MA-5(3):
+        checks: []
+      MA-5(4):
+        checks:
+        - id: ma5_4_foreign_nationals
+          event_types:
+          - sailpoint_identities
+          resource_types:
+          - sailpoint_identity
+      MA-5(5):
+        checks:
+        - id: ma5_5_nonsystem_related_maintenance
+          event_types:
+          - audit_logs
+          resource_types: []
+      MA-6:
+        checks: []
+      MA-6(1):
+        checks: []
+      MA-6(2):
+        checks: []
+      MA-6(3):
+        checks: []
+      MA-7:
+        checks: []
+      MA-7(1):
+        checks: []
+      MA-7(2):
+        checks: []
+  MP:
+    controls:
+      MP-1:
+        checks: []
+      MP-2:
+        checks: []
+      MP-2(1):
+        checks: []
+      MP-2(2):
+        checks: []
+      MP-3:
+        checks: []
+      MP-3(1):
+        checks: []
+      MP-3(2):
+        checks: []
+      MP-4:
+        checks:
+        - id: mp4_media_storage
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+      MP-4(1):
+        checks: []
+      MP-4(2):
+        checks:
+        - id: mp4_2_automated_restricted_access
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+      MP-5:
+        checks: []
+      MP-5(1):
+        checks: []
+      MP-5(2):
+        checks: []
+      MP-5(3):
+        checks:
+        - id: mp5_3_custodians
+          event_types:
+          - audit_logs
+          resource_types: []
+      MP-5(4):
+        checks:
+        - id: mp5_4_cryptographic_protection
+          event_types:
+          - key_vault
+          - s3_buckets
+          - storage_accounts
+          resource_types:
+          - key_vault
+          - s3_bucket
+          - storage_account
+      MP-6:
+        checks: []
+      MP-6(1):
+        checks: []
+      MP-6(2):
+        checks: []
+      MP-6(3):
+        checks: []
+      MP-6(4):
+        checks: []
+      MP-6(5):
+        checks: []
+      MP-6(6):
+        checks: []
+      MP-6(7):
+        checks: []
+      MP-6(8):
+        checks: []
+      MP-7:
+        checks:
+        - id: mp7_media_use
+          event_types:
+          - ec2_security_groups
+          - defender_machines
+          - falcon_device_details
+          resource_types:
+          - endpoint
+      MP-7(1):
+        checks:
+        - id: mp7_1_prohibit_use_without_owner
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - endpoint
+      MP-7(2):
+        checks:
+        - id: mp7_2_prohibit_use_of_sanitization_resistant_media
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - endpoint
+      MP-8:
+        checks: []
+      MP-8(1):
+        checks: []
+      MP-8(2):
+        checks: []
+      MP-8(3):
+        checks: []
+      MP-8(4):
+        checks: []
+  PL:
+    controls:
+      PL-1:
+        checks: []
+      PL-2:
+        checks: []
+      PL-2(1):
+        checks: []
+      PL-2(2):
+        checks: []
+      PL-2(3):
+        checks: []
+      PL-3:
+        checks: []
+      PL-4:
+        checks: []
+      PL-4(1):
+        checks: []
+      PL-5:
+        checks: []
+      PL-6:
+        checks: []
+      PL-7:
+        checks: []
+      PL-7(1):
+        checks: []
+      PL-7(2):
+        checks: []
+      PL-8:
+        checks: []
+      PL-8(1):
+        checks: []
+      PL-8(2):
+        checks: []
+      PL-9:
+        checks: []
+      PL-10:
+        checks: []
+      PL-11:
+        checks: []
+  PM:
+    controls:
+      PM-1:
+        checks: []
+      PM-2:
+        checks: []
+      PM-3:
+        checks: []
+      PM-4:
+        checks: []
+      PM-5:
+        checks: []
+      PM-5(1):
+        checks: []
+      PM-6:
+        checks: []
+      PM-7:
+        checks: []
+      PM-7(1):
+        checks: []
+      PM-8:
+        checks: []
+      PM-9:
+        checks: []
+      PM-10:
+        checks: []
+      PM-11:
+        checks: []
+      PM-11(1):
+        checks: []
+      PM-12:
+        checks: []
+      PM-13:
+        checks: []
+      PM-14:
+        checks:
+        - id: pm14_compliance_testing
+          event_types:
+          - policy_compliance
+          - prisma_compliance
+          resource_types:
+          - compliance_result
+      PM-14(1):
+        checks:
+        - id: pm14_1_automation_support
+          event_types:
+          - policy_compliance
+          - prisma_compliance
+          - config_recorders
+          resource_types:
+          - compliance_result
+          - config_recorder
+      PM-15:
+        checks: []
+      PM-16:
+        checks: []
+      PM-16(1):
+        checks: []
+      PM-17:
+        checks: []
+      PM-18:
+        checks: []
+      PM-19:
+        checks: []
+      PM-20:
+        checks: []
+      PM-21:
+        checks: []
+      PM-22:
+        checks: []
+      PM-23:
+        checks: []
+      PM-24:
+        checks: []
+      PM-25:
+        checks: []
+      PM-25(1):
+        checks: []
+      PM-26:
+        checks: []
+      PM-27:
+        checks: []
+      PM-28:
+        checks: []
+      PM-29:
+        checks: []
+      PM-30:
+        checks: []
+      PM-30(1):
+        checks: []
+      PM-31:
+        checks:
+        - id: pm31_continuous_monitoring
+          event_types:
+          - policy_compliance
+          - prisma_compliance
+          - config_recorders
+          - cloudtrail_trails
+          resource_types:
+          - compliance_result
+          - config_recorder
+          - cloudtrail_trail
+      PM-31(1):
+        checks: []
+      PM-32:
+        checks: []
+  PT:
+    controls:
+      PT-1:
+        checks: []
+      PT-2:
+        checks:
+        - id: pt2_pii_authority_to_process
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_result
+      PT-2(1):
+        checks: []
+      PT-2(2):
+        checks: []
+      PT-3:
+        checks:
+        - id: pt3_pii_processing_purposes
+          event_types:
+          - policy_compliance
+          - prisma_policies
+          resource_types:
+          - compliance_result
+          - prisma_policy
+      PT-3(1):
+        checks: []
+      PT-3(2):
+        checks: []
+      PT-4:
+        checks:
+        - id: pt4_consent
+          event_types:
+          - audit_logs
+          - activity_log
+          resource_types:
+          - audit_event
+      PT-4(1):
+        checks: []
+      PT-4(2):
+        checks: []
+      PT-4(3):
+        checks: []
+      PT-5:
+        checks: []
+      PT-5(1):
+        checks: []
+      PT-5(2):
+        checks:
+        - id: pt5_2_privacy_act_statements
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_result
+      PT-6:
+        checks:
+        - id: pt6_system_of_records_notice
+          event_types:
+          - policy_compliance
+          resource_types:
+          - compliance_result
+      PT-6(1):
+        checks: []
+      PT-6(2):
+        checks: []
+      PT-7:
+        checks:
+        - id: pt7_specific_categories_pii
+          event_types:
+          - policy_compliance
+          - prisma_policies
+          resource_types:
+          - compliance_result
+          - prisma_policy
+      PT-7(1):
+        checks:
+        - id: pt7_1_social_security_numbers
+          event_types:
+          - policy_compliance
+          - prisma_policies
+          resource_types:
+          - compliance_result
+          - prisma_policy
+      PT-7(2):
+        checks: []
+      PT-8:
+        checks:
+        - id: pt8_computer_matching
+          event_types:
+          - audit_logs
+          resource_types:
+          - audit_event
+      PT-8(1):
+        checks: []
+      PT-8(2):
+        checks: []
+      PT-8(3):
+        checks: []
+  SA:
+    controls:
+      SA-1:
+        title: Policy and Procedures
+        checks: []
+      SA-2:
+        title: Allocation of Resources
+        checks: []
+      SA-2(1):
+        title: Sufficient Resources
+        checks: []
+      SA-2(2):
+        title: Risk-Based Resource Allocation
+        checks: []
+      SA-3:
+        title: System Development Life Cycle
+        checks: []
+      SA-3(1):
+        title: Manage Preproduction Environment
+        checks: []
+      SA-3(2):
+        title: Use of Live or Operational Data
+        checks: []
+      SA-3(3):
+        title: Technology Refresh
+        checks: []
+      SA-4:
+        title: Acquisition Process
+        checks: []
+      SA-4(1):
+        title: Functional Properties of Controls
+        checks: []
+      SA-4(2):
+        title: Design and Implementation Information for Controls
+        checks: []
+      SA-4(3):
+        title: Development Methods, Techniques, and Practices
+        checks: []
+      SA-4(4):
+        title: Assignment of Components to Systems
+        checks: []
+      SA-4(5):
+        title: System, Component, and Service Configurations
+        checks:
+        - id: sa4_5_config
+          event_types:
+          - policy_compliance
+          - prisma_compliance
+          - wiz_config_findings
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+      SA-4(6):
+        title: Use of Information Assurance Products
+        checks: []
+      SA-4(7):
+        title: NIAP-Approved Protection Profiles
+        checks: []
+      SA-4(8):
+        title: Continuous Monitoring Plan
+        checks:
+        - id: sa4_8_continuous_monitor
+          event_types:
+          - securityhub_hub
+          - guardduty_detectors
+          - policy_compliance
+          resource_types:
+          - securityhub
+          - guardduty
+      SA-4(9):
+        title: Functions, Ports, Protocols, and Services in Use
+        checks:
+        - id: sa4_9_ports_protocols
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SA-4(10):
+        title: Use of Approved PIV Products
+        checks: []
+      SA-4(11):
+        title: System of Records
+        checks: []
+      SA-4(12):
+        title: Data Ownership
+        checks: []
+      SA-5:
+        title: System Documentation
+        checks: []
+      SA-5(1):
+        title: Functional Properties of Security Controls
+        checks: []
+      SA-5(2):
+        title: Security-Relevant External System Interfaces
+        checks: []
+      SA-5(3):
+        title: High-Level Design
+        checks: []
+      SA-5(4):
+        title: Low-Level Design
+        checks: []
+      SA-5(5):
+        title: Source Code
+        checks: []
+      SA-6:
+        title: Software Usage Restrictions
+        checks: []
+      SA-7:
+        title: User-Installed Software
+        checks: []
+      SA-8:
+        title: Security and Privacy Engineering Principles
+        checks: []
+      SA-8(1):
+        title: Clear Abstractions
+        checks: []
+      SA-8(2):
+        title: Least Common Mechanism
+        checks: []
+      SA-8(3):
+        title: Modularity and Layering
+        checks: []
+      SA-8(4):
+        title: Partially Ordered Dependencies
+        checks: []
+      SA-8(5):
+        title: Efficiently Mediated Access
+        checks: []
+      SA-8(6):
+        title: Minimized Sharing
+        checks: []
+      SA-8(7):
+        title: Reduced Complexity
+        checks: []
+      SA-8(8):
+        title: Secure Evolvability
+        checks: []
+      SA-8(9):
+        title: Trusted Components
+        checks: []
+      SA-8(10):
+        title: Hierarchical Trust
+        checks: []
+      SA-8(11):
+        title: Inverse Modification Threshold
+        checks: []
+      SA-8(12):
+        title: Hierarchical Protection
+        checks: []
+      SA-8(13):
+        title: Minimized Security Elements
+        checks: []
+      SA-8(14):
+        title: Least Privilege
+        checks: []
+      SA-8(15):
+        title: Predicate Permission
+        checks: []
+      SA-8(16):
+        title: Self-Reliant Trustworthiness
+        checks: []
+      SA-8(17):
+        title: Secure Distributed Composition
+        checks: []
+      SA-8(18):
+        title: Trusted Communications Channels
+        checks: []
+      SA-8(19):
+        title: Continuous Protection
+        checks: []
+      SA-8(20):
+        title: Secure Metadata Management
+        checks: []
+      SA-8(21):
+        title: Self-Analysis
+        checks: []
+      SA-8(22):
+        title: Accountability and Traceability
+        checks: []
+      SA-8(23):
+        title: Secure Defaults
+        checks: []
+      SA-8(24):
+        title: Secure Failure and Recovery
+        checks: []
+      SA-8(25):
+        title: Economic Security
+        checks: []
+      SA-8(26):
+        title: Performance Security
+        checks: []
+      SA-8(27):
+        title: Human Factored Security
+        checks: []
+      SA-8(28):
+        title: Acceptable Security
+        checks: []
+      SA-8(29):
+        title: Repeatable and Documented Procedures
+        checks: []
+      SA-8(30):
+        title: Procedural Rigor
+        checks: []
+      SA-8(31):
+        title: Secure System Modification
+        checks: []
+      SA-8(32):
+        title: Sufficient Documentation
+        checks: []
+      SA-8(33):
+        title: Minimization
+        checks: []
+      SA-9:
+        title: External System Services
+        checks:
+        - id: sa9_external_services
+          event_types:
+          - entra_service_principals
+          - entra_app_registrations
+          - okta_applications
+          resource_types:
+          - entra_service_principal
+          - okta_application
+      SA-9(1):
+        title: Risk Assessments and Organizational Approvals
+        checks: []
+      SA-9(2):
+        title: Identification of Functions, Ports, Protocols, and Services
+        checks:
+        - id: sa9_2_ports
+          event_types:
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
+      SA-9(3):
+        title: Establish and Maintain Trust Relationship with Providers
+        checks: []
+      SA-9(4):
+        title: Consistent Interests of Consumers and Providers
+        checks: []
+      SA-9(5):
+        title: Processing, Storage, and Service Location
+        checks: []
+      SA-9(6):
+        title: Organization-Controlled Cryptographic Keys
+        checks:
+        - id: sa9_6_crypto_keys
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+      SA-9(7):
+        title: Organization-Controlled Integrity Checking
+        checks: []
+      SA-9(8):
+        title: Processing and Storage Location — U.S. Jurisdiction
+        checks: []
+      SA-10:
+        title: Developer Configuration Management
+        checks: []
+      SA-10(1):
+        title: Software and Firmware Integrity Verification
+        checks: []
+      SA-10(2):
+        title: Alternative Configuration Management Processes
+        checks: []
+      SA-10(3):
+        title: Hardware Integrity Verification
+        checks: []
+      SA-10(4):
+        title: Trusted Generation
+        checks: []
+      SA-10(5):
+        title: Mapping Integrity for Version Control
+        checks: []
+      SA-10(6):
+        title: Trusted Distribution
+        checks: []
+      SA-10(7):
+        title: Security and Privacy Representatives
+        checks: []
+      SA-11:
+        title: Developer Testing and Evaluation
+        checks: []
+      SA-11(1):
+        title: Static Code Analysis
+        checks: []
+      SA-11(2):
+        title: Threat Modeling and Vulnerability Analyses
+        checks: []
+      SA-11(3):
+        title: Independent Verification of Assessment Plans and Evidence
+        checks: []
+      SA-11(4):
+        title: Manual Code Reviews
+        checks: []
+      SA-11(5):
+        title: Penetration Testing
+        checks: []
+      SA-11(6):
+        title: Attack Surface Reviews
+        checks: []
+      SA-11(7):
+        title: Verify Scope of Testing and Evaluation
+        checks: []
+      SA-11(8):
+        title: Dynamic Code Analysis
+        checks: []
+      SA-11(9):
+        title: Interactive Application Security Testing
+        checks: []
+      SA-12:
+        title: Supply Chain Protection
+        checks: []
+      SA-12(1):
+        title: Acquisition Strategies, Tools, and Methods
+        checks: []
+      SA-12(2):
+        title: Supplier Reviews
+        checks: []
+      SA-12(3):
+        title: Trusted Shipping and Warehousing
+        checks: []
+      SA-12(4):
+        title: Diversity of Suppliers
+        checks: []
+      SA-12(5):
+        title: Limitation of Harm
+        checks: []
+      SA-12(6):
+        title: Minimizing Procurement Time
+        checks: []
+      SA-12(7):
+        title: Assessments Prior to Selection, Acceptance, Modification, or Update
+        checks: []
+      SA-12(8):
+        title: Use of All-Source Intelligence
+        checks: []
+      SA-12(9):
+        title: Operations Security
+        checks: []
+      SA-12(10):
+        title: Validate as Genuine and Not Altered
+        checks: []
+      SA-12(11):
+        title: Penetration Testing and Analysis of Elements, Processes, and Actors
+        checks: []
+      SA-12(12):
+        title: Inter-Organizational Agreements
+        checks: []
+      SA-12(13):
+        title: Critical Information System Components
+        checks: []
+      SA-12(14):
+        title: Identity and Traceability
+        checks: []
+      SA-12(15):
+        title: Processes to Address Weaknesses or Deficiencies
+        checks: []
+      SA-13:
+        title: Trustworthiness
+        checks: []
+      SA-14:
+        title: Criticality Analysis
+        checks: []
+      SA-15:
+        title: Development Process, Standards, and Tools
+        checks: []
+      SA-15(1):
+        title: Quality Metrics
+        checks: []
+      SA-15(2):
+        title: Security and Privacy Tracking Tools
+        checks: []
+      SA-15(3):
+        title: Criticality Analysis
+        checks: []
+      SA-15(4):
+        title: Threat Modeling and Vulnerability Analysis
+        checks: []
+      SA-15(5):
+        title: Attack Surface Reduction
+        checks: []
+      SA-15(6):
+        title: Continuous Improvement
+        checks: []
+      SA-15(7):
+        title: Automated Vulnerability Analysis
+        checks:
+        - id: sa15_7_auto_vuln
+          event_types:
+          - vuln_export
+          - wiz_vuln_findings
+          - prisma_alerts
+          resource_types:
+          - vulnerability
+      SA-15(8):
+        title: Reuse of Threat and Vulnerability Information
+        checks: []
+      SA-15(9):
+        title: Use of Live Data
+        checks: []
+      SA-15(10):
+        title: Incident Response Plan
+        checks: []
+      SA-15(11):
+        title: Archive System or Component
+        checks: []
+      SA-15(12):
+        title: Minimize Personally Identifiable Information
+        checks: []
+      SA-16:
+        title: Developer-Provided Training
+        checks: []
+      SA-17:
+        title: Developer Security and Privacy Architecture and Design
+        checks: []
+      SA-17(1):
+        title: Formal Policy Model
+        checks: []
+      SA-17(2):
+        title: Security-Relevant Components
+        checks: []
+      SA-17(3):
+        title: Formal Correspondence
+        checks: []
+      SA-17(4):
+        title: Informal Correspondence
+        checks: []
+      SA-17(5):
+        title: Conceptually Simple Design
+        checks: []
+      SA-17(6):
+        title: Structure for Testing
+        checks: []
+      SA-17(7):
+        title: Structure for Least Privilege
+        checks: []
+      SA-17(8):
+        title: Orchestration
+        checks: []
+      SA-17(9):
+        title: Design Diversity
+        checks: []
+      SA-18:
+        title: Tamper Resistance and Detection
+        checks: []
+      SA-19:
+        title: Component Authenticity
+        checks: []
+      SA-20:
+        title: Customized Development of Critical Components
+        checks: []
+      SA-21:
+        title: Developer Screening
+        checks: []
+      SA-22:
+        title: Unsupported System Components
+        checks:
+        - id: sa22_unsupported
+          event_types:
+          - vuln_export
+          - host_detections
+          - asset_inventory
+          resource_types:
+          - vulnerability
+          - host
+      SA-23:
+        title: Specialization
+        checks: []
+  SR:
+    controls:
+      SR-1:
+        title: Policy and Procedures
+        checks: []
+      SR-2:
+        title: Supply Chain Risk Management Plan
+        checks: []
+      SR-2(1):
+        title: Establish SCRM Team
+        checks: []
+      SR-3:
+        title: Supply Chain Controls and Processes
+        checks: []
+      SR-3(1):
+        title: Diverse Supply Base
+        checks: []
+      SR-3(2):
+        title: Limitation of Harm
+        checks: []
+      SR-3(3):
+        title: Sub-Tier Flow Down
+        checks: []
+      SR-4:
+        title: Provenance
+        checks: []
+      SR-4(1):
+        title: Identity
+        checks: []
+      SR-4(2):
+        title: Track and Trace
+        checks: []
+      SR-4(3):
+        title: Validate as Genuine and Not Altered
+        checks: []
+      SR-4(4):
+        title: Supply Chain Integrity — Pedigree
+        checks: []
+      SR-5:
+        title: Acquisition Strategies, Tools, and Methods
+        checks: []
+      SR-5(1):
+        title: Adequate Supply
+        checks: []
+      SR-5(2):
+        title: Assessments Prior to Selection, Acceptance, Modification, or Update
+        checks: []
+      SR-6:
+        title: Supplier Assessments and Reviews
+        checks: []
+      SR-6(1):
+        title: Testing and Analysis
+        checks: []
+      SR-7:
+        title: Supply Chain Operations Security
+        checks: []
+      SR-8:
+        title: Notification Agreements
+        checks: []
+      SR-9:
+        title: Tamper Resistance and Detection
+        checks: []
+      SR-9(1):
+        title: Multiple Stages of System Development Life Cycle
+        checks: []
+      SR-10:
+        title: Inspection of Systems or Components
+        checks: []
+      SR-10(1):
+        title: Processes and Procedures
+        checks: []
+      SR-11:
+        title: Component Authenticity
+        checks: []
+      SR-11(1):
+        title: Anti-Counterfeit Training
+        checks: []
+      SR-11(2):
+        title: Configuration Control for Component Service and Repair
+        checks: []
+      SR-11(3):
+        title: Anti-Counterfeit Scanning
+        checks:
+        - id: sr11_3_scanning
+          event_types:
+          - asset_inventory
+          - asset_export
+          resource_types:
+          - host
+          - endpoint
+      SR-12:
+        title: Component Disposal
+        checks: []
+      SR-12(1):
+        title: Data Destruction
+        checks: []

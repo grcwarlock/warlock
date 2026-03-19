@@ -701,6 +701,288 @@ for _ctrl, _assertion in _SOC2_BINDINGS:
 
 
 # ---------------------------------------------------------------------------
+# Control bindings — ISO 27001:2022
+# ---------------------------------------------------------------------------
+
+_ISO27001_BINDINGS: list[tuple[str, str]] = [
+    ("A.5.7", "guardduty_enabled"),          # Threat intelligence
+    ("A.5.15", "mfa_enabled"),               # Access control
+    ("A.5.16", "access_reviews_current"),     # Identity management
+    ("A.5.17", "password_policy_compliant"),  # Authentication information
+    ("A.5.23", "config_recorder_enabled"),    # Cloud services
+    ("A.5.25", "siem_monitoring_active"),     # Assessment of security events
+    ("A.5.26", "siem_monitoring_active"),     # Response to incidents
+    ("A.6.5", "access_reviews_current"),      # After termination
+    ("A.8.1", "device_compliant"),             # User endpoint devices
+    ("A.8.2", "privileged_access_managed"),   # Privileged access rights
+    ("A.8.5", "mfa_enabled"),                 # Secure authentication
+    ("A.8.7", "endpoint_protection_active"),  # Protection against malware
+    ("A.8.8", "vulnerability_scan_current"),  # Management of technical vulnerabilities
+    ("A.8.9", "config_recorder_enabled"),     # Configuration management
+    ("A.8.15", "cloudtrail_enabled"),         # Logging
+    ("A.8.16", "siem_monitoring_active"),     # Monitoring activities
+    ("A.8.20", "no_open_security_groups"),    # Networks security
+    ("A.8.22", "no_open_security_groups"),    # Segregation of networks
+    ("A.8.24", "encryption_at_rest"),         # Use of cryptography
+]
+
+for _ctrl, _assertion in _ISO27001_BINDINGS:
+    engine.bind_control("iso_27001", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — ISO 27701
+# ---------------------------------------------------------------------------
+
+_ISO27701_BINDINGS: list[tuple[str, str]] = [
+    ("CL6.5.2.1", "mfa_enabled"),            # Access control
+    ("CL6.5.3.1", "encryption_at_rest"),      # Cryptographic controls
+    ("CL6.6.2.1", "cloudtrail_enabled"),      # Event logging
+    ("CL6.8.2.1", "no_open_security_groups"), # Network security
+    ("CL6.9.3.1", "encryption_at_rest"),      # Protection of records
+    ("A.7.4.5", "encryption_at_rest"),        # PII de-identification and deletion
+    ("A.7.4.9", "encryption_at_rest"),        # PII transmission controls
+    ("B.8.4.3", "encryption_at_rest"),        # Processor PII transmission
+]
+
+for _ctrl, _assertion in _ISO27701_BINDINGS:
+    engine.bind_control("iso_27701", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — ISO 42001
+# ---------------------------------------------------------------------------
+
+_ISO42001_BINDINGS: list[tuple[str, str]] = [
+    ("A.6.2.12", "siem_monitoring_active"),      # AI system operation and monitoring
+    ("A.9.3", "mfa_enabled"),                    # Misuse prevention — access
+    ("A.9.4", "access_reviews_current"),         # Human oversight — reviews
+]
+
+for _ctrl, _assertion in _ISO42001_BINDINGS:
+    engine.bind_control("iso_42001", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Assertions — new connectors
+# ---------------------------------------------------------------------------
+
+@engine.assertion("background_check_completed")
+def background_check_completed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that employee background checks are completed."""
+    reasons = []
+    status = detail.get("background_check_status") or detail.get("status")
+    if status and str(status).lower() not in ("completed", "passed", "clear"):
+        name = detail.get("employee_name") or detail.get("name") or "unknown"
+        reasons.append(f"Employee {name} background check status: {status}")
+        return False, reasons
+    if detail.get("background_check_missing"):
+        name = detail.get("employee_name") or detail.get("name") or "unknown"
+        reasons.append(f"Employee {name} has no background check on file")
+        return False, reasons
+    return True, []
+
+@engine.assertion("employment_agreement_signed")
+def employment_agreement_signed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that employment agreements and NDAs are signed."""
+    reasons = []
+    agreement = detail.get("agreement_signed") or detail.get("employment_agreement")
+    nda = detail.get("nda_signed") or detail.get("confidentiality_agreement")
+    name = detail.get("employee_name") or detail.get("name") or "unknown"
+    if agreement is False or detail.get("agreement_missing"):
+        reasons.append(f"Employee {name} has not signed employment agreement")
+    if nda is False or detail.get("nda_missing"):
+        reasons.append(f"Employee {name} has not signed NDA/confidentiality agreement")
+    if reasons:
+        return False, reasons
+    return True, []
+
+@engine.assertion("change_request_approved")
+def change_request_approved(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that change requests have proper approval before implementation."""
+    reasons = []
+    approval = detail.get("approval") or detail.get("approval_status") or ""
+    if str(approval).lower() not in ("approved", "completed", "accepted"):
+        change_id = detail.get("number") or detail.get("change_id") or "unknown"
+        reasons.append(f"Change {change_id} not approved (status: {approval})")
+        return False, reasons
+    backout = detail.get("backout_plan") or detail.get("rollback_plan") or ""
+    if not backout.strip():
+        change_id = detail.get("number") or detail.get("change_id") or "unknown"
+        reasons.append(f"Change {change_id} has no rollback/backout plan")
+        return False, reasons
+    return True, []
+
+@engine.assertion("training_completion_rate")
+def training_completion_rate(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check security awareness training completion meets threshold."""
+    reasons = []
+    # Campaign level
+    completion_pct = detail.get("completion_pct") or detail.get("completion_rate")
+    if completion_pct is not None:
+        if float(completion_pct) < 95.0:
+            campaign = detail.get("campaign_name") or detail.get("name") or "unknown"
+            reasons.append(f"Training campaign '{campaign}' completion at {completion_pct}% (target: 95%)")
+            return False, reasons
+        return True, []
+    # Individual enrollment level
+    status = detail.get("status") or detail.get("enrollment_status") or ""
+    if str(status).lower() in ("overdue", "past_due", "not_started"):
+        user = detail.get("user") or detail.get("email") or "unknown"
+        reasons.append(f"User {user} training status: {status}")
+        return False, reasons
+    return True, []
+
+@engine.assertion("phishing_failure_rate")
+def phishing_failure_rate(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check phishing simulation click rate is below threshold."""
+    reasons = []
+    click_rate = detail.get("click_rate") or detail.get("phish_prone_percentage")
+    if click_rate is not None and float(click_rate) > 5.0:
+        reasons.append(f"Phishing click rate at {click_rate}% (target: <5%)")
+        return False, reasons
+    clicked = detail.get("clicked") or detail.get("was_clicked")
+    if clicked is True:
+        user = detail.get("user") or detail.get("email") or "unknown"
+        reasons.append(f"User {user} clicked phishing simulation")
+        return False, reasons
+    return True, []
+
+@engine.assertion("no_critical_code_vulns")
+def no_critical_code_vulns(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that no critical/high code vulnerabilities are open."""
+    reasons = []
+    severity = detail.get("severity") or detail.get("issue_severity") or ""
+    if str(severity).lower() in ("critical", "high"):
+        title = detail.get("title") or detail.get("issue_title") or "unknown"
+        pkg = detail.get("package") or detail.get("package_name") or ""
+        reasons.append(f"Open {severity} code vulnerability: {title}" + (f" in {pkg}" if pkg else ""))
+        return False, reasons
+    return True, []
+
+@engine.assertion("backup_job_successful")
+def backup_job_successful(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that backup jobs completed successfully and RPO is met."""
+    reasons = []
+    status = detail.get("status") or detail.get("result") or ""
+    if str(status).lower() in ("failed", "error", "warning"):
+        job = detail.get("job_name") or detail.get("name") or "unknown"
+        reasons.append(f"Backup job '{job}' status: {status}")
+        return False, reasons
+    # RPO check
+    rpo_exceeded = detail.get("rpo_exceeded")
+    if rpo_exceeded:
+        reasons.append(f"RPO exceeded: last successful backup more than target hours ago")
+        return False, reasons
+    return True, []
+
+@engine.assertion("device_compliant")
+def device_compliant(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that managed devices pass compliance policies."""
+    reasons = []
+    compliant = detail.get("complianceState") or detail.get("compliance_state") or ""
+    if str(compliant).lower() in ("noncompliant", "non_compliant", "error", "conflict"):
+        device = detail.get("deviceName") or detail.get("device_name") or "unknown"
+        reasons.append(f"Device {device} compliance state: {compliant}")
+        return False, reasons
+    encrypted = detail.get("isEncrypted") or detail.get("is_encrypted")
+    if encrypted is False:
+        device = detail.get("deviceName") or detail.get("device_name") or "unknown"
+        reasons.append(f"Device {device} disk is not encrypted")
+        return False, reasons
+    return True, []
+
+@engine.assertion("policy_reviewed_within_year")
+def policy_reviewed_within_year(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that policy/procedure documents have been reviewed within 365 days."""
+    reasons = []
+    last_updated = detail.get("last_updated") or detail.get("modified_date") or detail.get("updated_at")
+    if last_updated:
+        days = _days_since(str(last_updated))
+        if days is not None and days > 365:
+            title = detail.get("title") or detail.get("name") or "unknown"
+            reasons.append(f"Document '{title}' last updated {days} days ago (>365)")
+            return False, reasons
+    return True, []
+
+@engine.assertion("dlp_policies_active")
+def dlp_policies_active(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that DLP policies are enabled and active."""
+    reasons = []
+    enabled = detail.get("isEnabled") or detail.get("enabled") or detail.get("state")
+    if enabled is False or str(enabled).lower() in ("disabled", "off"):
+        policy = detail.get("name") or detail.get("policy_name") or "unknown"
+        reasons.append(f"DLP policy '{policy}' is disabled")
+        return False, reasons
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — new connectors
+# ---------------------------------------------------------------------------
+
+# Personnel / HR controls
+_HR_BINDINGS = [
+    # NIST PS family
+    ("PS-3", "background_check_completed"),
+    ("PS-6", "employment_agreement_signed"),
+    ("PS-7", "employment_agreement_signed"),
+]
+for _ctrl, _assertion in _HR_BINDINGS:
+    engine.bind_control("nist_800_53", _ctrl, _assertion)
+
+engine.bind_control("iso_27001", "A.6.1", "background_check_completed")
+engine.bind_control("iso_27001", "A.6.2", "employment_agreement_signed")
+engine.bind_control("iso_27001", "A.6.6", "employment_agreement_signed")
+engine.bind_control("soc2", "CC1.3", "background_check_completed")
+engine.bind_control("soc2", "CC1.4", "training_completion_rate")
+engine.bind_control("soc2", "CC1.5", "background_check_completed")
+engine.bind_control("ucf", "UCF-HRS-1", "background_check_completed")
+engine.bind_control("ucf", "UCF-HRS-2", "employment_agreement_signed")
+
+# Change management
+engine.bind_control("nist_800_53", "CM-3", "change_request_approved")
+engine.bind_control("nist_800_53", "CM-4", "change_request_approved")
+engine.bind_control("soc2", "CC8.1", "change_request_approved")
+engine.bind_control("iso_27001", "A.8.32", "change_request_approved")
+engine.bind_control("ucf", "UCF-CFG-2", "change_request_approved")
+
+# Training
+engine.bind_control("nist_800_53", "AT-2", "training_completion_rate")
+engine.bind_control("nist_800_53", "AT-3", "training_completion_rate")
+engine.bind_control("iso_27001", "A.6.3", "training_completion_rate")
+engine.bind_control("ucf", "UCF-HRS-3", "training_completion_rate")
+
+# Code security
+engine.bind_control("nist_800_53", "SA-11", "no_critical_code_vulns")
+engine.bind_control("iso_27001", "A.8.28", "no_critical_code_vulns")
+engine.bind_control("iso_27001", "A.8.29", "no_critical_code_vulns")
+engine.bind_control("ucf", "UCF-DEV-2", "no_critical_code_vulns")
+engine.bind_control("ucf", "UCF-DEV-3", "no_critical_code_vulns")
+
+# Backup
+engine.bind_control("nist_800_53", "CP-9", "backup_job_successful")
+engine.bind_control("nist_800_53", "CP-10", "backup_job_successful")
+engine.bind_control("soc2", "A1.2", "backup_job_successful")
+engine.bind_control("soc2", "A1.3", "backup_job_successful")
+engine.bind_control("iso_27001", "A.8.13", "backup_job_successful")
+engine.bind_control("ucf", "UCF-BCP-2", "backup_job_successful")
+
+# MDM / Device compliance
+engine.bind_control("nist_800_53", "AC-19", "device_compliant")
+engine.bind_control("ucf", "UCF-EPP-4", "device_compliant")
+
+# DLP
+engine.bind_control("iso_27001", "A.8.12", "dlp_policies_active")
+engine.bind_control("ucf", "UCF-DAT-7", "dlp_policies_active")
+
+# Policy/document management
+engine.bind_control("iso_27001", "A.5.1", "policy_reviewed_within_year")
+engine.bind_control("iso_27001", "A.5.37", "policy_reviewed_within_year")
+engine.bind_control("ucf", "UCF-GOV-6", "policy_reviewed_within_year")
+
+
+# ---------------------------------------------------------------------------
 # Remediation guidance
 # ---------------------------------------------------------------------------
 
@@ -867,4 +1149,114 @@ engine.set_remediation("siem_monitoring_active", {
         "Test detection rules with simulated attack scenarios",
     ],
     "console_path": "SIEM > Detection Rules",
+})
+
+engine.set_remediation("background_check_completed", {
+    "summary": "Ensure all employees have completed background checks before or shortly after hire.",
+    "steps": [
+        "Identify employees without completed background checks",
+        "Initiate background check process through HR/Workday",
+        "Set automated triggers for new hire background checks",
+        "Track completion status and follow up on delays",
+    ],
+    "console_path": "Workday > Staffing > Background Checks",
+})
+
+engine.set_remediation("employment_agreement_signed", {
+    "summary": "Ensure all employees have signed employment agreements and NDAs.",
+    "steps": [
+        "Identify employees without signed agreements",
+        "Send agreement documents for e-signature",
+        "Configure onboarding workflow to require signatures before system access",
+        "Audit quarterly for gaps",
+    ],
+    "console_path": "Workday > Documents > Agreements",
+})
+
+engine.set_remediation("change_request_approved", {
+    "summary": "Ensure all changes have documented approval and rollback plans.",
+    "steps": [
+        "Review change management policy for approval requirements",
+        "Configure ServiceNow to require approval before implementation",
+        "Add rollback plan as required field on change request form",
+        "Audit emergency changes for post-implementation review",
+    ],
+    "console_path": "ServiceNow > Change Management",
+})
+
+engine.set_remediation("training_completion_rate", {
+    "summary": "Ensure security awareness training completion meets organizational targets.",
+    "steps": [
+        "Identify users with overdue or incomplete training",
+        "Send reminder notifications through KnowBe4",
+        "Escalate chronic non-completers to management",
+        "Configure automated enrollment for new hires within 30 days",
+    ],
+    "console_path": "KnowBe4 > Training > Campaigns",
+})
+
+engine.set_remediation("phishing_failure_rate", {
+    "summary": "Reduce phishing simulation click rate below organizational threshold.",
+    "steps": [
+        "Review phishing simulation results by department",
+        "Provide targeted training for high-risk users",
+        "Increase simulation frequency for repeat offenders",
+        "Report metrics to management quarterly",
+    ],
+    "console_path": "KnowBe4 > Phishing > Security Tests",
+})
+
+engine.set_remediation("no_critical_code_vulns", {
+    "summary": "Remediate critical and high severity code vulnerabilities.",
+    "steps": [
+        "Triage critical/high findings in Snyk dashboard",
+        "Apply available fixes and upgrade vulnerable packages",
+        "If no fix available, evaluate compensating controls or risk acceptance",
+        "Configure CI/CD to block merges with critical vulnerabilities",
+    ],
+    "console_path": "Snyk > Projects > Issues",
+})
+
+engine.set_remediation("backup_job_successful", {
+    "summary": "Ensure backup jobs complete successfully and RPO targets are met.",
+    "steps": [
+        "Investigate failed backup job errors",
+        "Verify backup storage capacity and connectivity",
+        "Test restore from most recent backup",
+        "Configure alerting for backup failures",
+    ],
+    "console_path": "Veeam > Jobs > Last Session",
+})
+
+engine.set_remediation("device_compliant", {
+    "summary": "Ensure all managed devices meet compliance policies.",
+    "steps": [
+        "Review non-compliant devices in Intune portal",
+        "Enable disk encryption (BitLocker/FileVault) on non-encrypted devices",
+        "Push OS updates to devices with outdated versions",
+        "Configure conditional access to block non-compliant devices",
+    ],
+    "console_path": "Intune > Devices > Compliance",
+})
+
+engine.set_remediation("policy_reviewed_within_year", {
+    "summary": "Ensure all security policies and procedures are reviewed annually.",
+    "steps": [
+        "Identify documents not reviewed within 365 days",
+        "Assign document owners to review and update content",
+        "Update revision date and approval signatures",
+        "Schedule recurring annual review calendar reminders",
+    ],
+    "console_path": "Confluence > Space > Pages",
+})
+
+engine.set_remediation("dlp_policies_active", {
+    "summary": "Ensure DLP policies are enabled and actively monitoring data flows.",
+    "steps": [
+        "Review disabled DLP policies in Purview compliance portal",
+        "Enable policies or update if requirements have changed",
+        "Verify policy conditions and actions are correctly configured",
+        "Test policies with synthetic sensitive data",
+    ],
+    "console_path": "Microsoft Purview > Data Loss Prevention > Policies",
 })

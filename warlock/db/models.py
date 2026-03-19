@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     Index,
+    Integer,
     String,
     Text,
     Boolean,
@@ -44,8 +45,8 @@ class ConnectorRun(Base):
     source_type = Column(String(20), nullable=False)
     provider = Column(String(50), nullable=False)
     status = Column(String(20), nullable=False, default="running")  # running, success, partial, error
-    event_count = Column(Float, default=0)
-    error_count = Column(Float, default=0)
+    event_count = Column(Integer, default=0)
+    error_count = Column(Integer, default=0)
     errors = Column(SQLiteJSON, default=list)
     started_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     completed_at = Column(DateTime(timezone=True))
@@ -201,4 +202,194 @@ class ControlResult(Base):
         Index("idx_result_status", "status"),
         Index("idx_result_assessed", "assessed_at"),
         Index("idx_result_finding", "finding_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Immutable Audit Trail — append-only evidence chain
+# ---------------------------------------------------------------------------
+
+class AuditEntry(Base):
+    """Append-only audit log with hash chaining for tamper evidence.
+
+    Each entry's hash includes the previous entry's hash, creating a
+    verifiable chain. If any entry is modified or deleted, the chain breaks.
+    """
+    __tablename__ = "audit_entries"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    sequence = Column(Integer, nullable=False)  # monotonically increasing
+    previous_hash = Column(String(64), nullable=False, default="genesis")
+    entry_hash = Column(String(64), nullable=False)
+
+    # What happened
+    action = Column(String(50), nullable=False)  # evidence_collected, finding_created, control_assessed, etc.
+    entity_type = Column(String(50), nullable=False)  # raw_event, finding, control_result, etc.
+    entity_id = Column(String(36), nullable=False)
+
+    # Who/what did it
+    actor = Column(String(100), nullable=False)  # "pipeline", "api:user@example.com", "system"
+
+    # Evidence integrity
+    evidence_sha256 = Column(String(64))  # SHA256 of the evidence payload
+
+    # Context
+    extra = Column("metadata", SQLiteJSON, default=dict)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_audit_sequence", "sequence"),
+        Index("idx_audit_entity", "entity_type", "entity_id"),
+        Index("idx_audit_created", "created_at"),
+        Index("idx_audit_action", "action"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Posture Snapshots — periodic control-level rollups
+# ---------------------------------------------------------------------------
+
+class PostureSnapshot(Base):
+    """Point-in-time compliance posture per control per framework.
+
+    Created periodically (daily/weekly) to enable trend analysis,
+    historical queries, and drift detection without scanning all findings.
+    """
+    __tablename__ = "posture_snapshots"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    snapshot_date = Column(DateTime(timezone=True), nullable=False)
+    framework = Column(String(50), nullable=False)
+    control_id = Column(String(50), nullable=False)
+
+    # Aggregated posture
+    status = Column(String(20), nullable=False)  # compliant, non_compliant, partial, not_assessed
+    posture_score = Column(Float, nullable=False, default=0.0)  # 0.0-100.0
+
+    # Evidence metrics
+    total_findings = Column(Integer, default=0)
+    compliant_findings = Column(Integer, default=0)
+    non_compliant_findings = Column(Integer, default=0)
+    partial_findings = Column(Integer, default=0)
+    not_assessed_findings = Column(Integer, default=0)
+
+    # Evidence sources
+    evidence_sources = Column(SQLiteJSON, default=list)  # ["aws", "okta", "crowdstrike"]
+    evidence_freshness_hours = Column(Float)  # hours since newest evidence
+
+    # Sufficiency
+    sufficiency_score = Column(Float, default=0.0)  # 0.0-100.0
+    sufficiency_details = Column(SQLiteJSON, default=dict)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_posture_date", "snapshot_date"),
+        Index("idx_posture_framework", "framework", "control_id"),
+        Index("idx_posture_status", "status"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Users & RBAC
+# ---------------------------------------------------------------------------
+
+class User(Base):
+    """Platform user with role-based access control."""
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    email = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default="viewer")  # admin, auditor, owner, viewer
+    is_active = Column(Boolean, default=True)
+
+    # Scoping — for 'owner' role, which system boundaries they can see
+    allowed_frameworks = Column(SQLiteJSON, default=list)  # empty = all
+    allowed_sources = Column(SQLiteJSON, default=list)  # empty = all
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    last_login = Column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("idx_user_email", "email"),
+        Index("idx_user_role", "role"),
+    )
+
+
+class APIKey(Base):
+    """API keys for programmatic access."""
+    __tablename__ = "api_keys"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    key_hash = Column(String(64), nullable=False)  # SHA256 of the actual key
+    name = Column(String(100), nullable=False)
+    scopes = Column(SQLiteJSON, default=list)  # ["read", "write", "admin"]
+    is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    last_used = Column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("idx_apikey_hash", "key_hash"),
+        Index("idx_apikey_user", "user_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Audit Engagements — scoped audit periods
+# ---------------------------------------------------------------------------
+
+class RiskAnalysis(Base):
+    """FAIR Monte Carlo risk quantification results."""
+    __tablename__ = "risk_analyses"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    framework = Column(String(50), nullable=False)
+    scenario_name = Column(String(255), nullable=False)
+    mean_ale = Column(Float, nullable=False)
+    var_95 = Column(Float, nullable=False)
+    var_99 = Column(Float, nullable=False)
+    control_effectiveness = Column(Float)
+    iterations = Column(Integer, default=10000)
+    details = Column(SQLiteJSON, default=dict)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_risk_framework", "framework"),
+        Index("idx_risk_created", "created_at"),
+    )
+
+
+class AuditEngagement(Base):
+    """Represents a scoped audit period for evidence packaging.
+
+    e.g., "SOC 2 Type II 2025" covering Jan 1 - Dec 31 2025 for SOC 2 framework.
+    """
+    __tablename__ = "audit_engagements"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)  # "SOC 2 Type II 2025"
+    framework = Column(String(50), nullable=False)
+    period_start = Column(DateTime(timezone=True), nullable=False)
+    period_end = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(20), nullable=False, default="active")  # active, completed, archived
+
+    # Scoping
+    in_scope_controls = Column(SQLiteJSON, default=list)  # empty = all controls in framework
+    excluded_controls = Column(SQLiteJSON, default=list)
+
+    # Auditor info
+    auditor_name = Column(String(255))
+    auditor_firm = Column(String(255))
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    completed_at = Column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("idx_engagement_framework", "framework"),
+        Index("idx_engagement_period", "period_start", "period_end"),
+        Index("idx_engagement_status", "status"),
     )

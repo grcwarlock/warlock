@@ -3,11 +3,16 @@
 Two-tier evaluation:
   Tier 1: Deterministic assertions (fast, auditable, reproducible)
   Tier 2: AI reasoning (optional, for when Tier 1 is insufficient)
+
+Supports parent→child control inheritance: when a parent control (AC-2)
+is assessed, child enhancements (AC-2(1), AC-2(2)) can inherit the
+parent's status if they have no assertion of their own.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -207,6 +212,82 @@ class Assessor:
                 log.exception("Tier 2 AI reasoning failed for %s/%s", mapping.framework, mapping.control_id)
 
         return result
+
+    # ------------------------------------------------------------------
+    # Control Inheritance
+    # ------------------------------------------------------------------
+
+    def assess_with_inheritance(
+        self,
+        mapped_finding: MappedFinding,
+        raw_data: dict[str, Any] | None = None,
+        parent_results: dict[tuple[str, str], ControlResultData] | None = None,
+    ) -> list[ControlResultData]:
+        """Assess with parent->child inheritance for control enhancements.
+
+        If a control like AC-2(3) has no assertion and no AI reasoner,
+        but AC-2 (the parent) was already assessed, the child inherits
+        the parent's status with reduced confidence.
+
+        Args:
+            mapped_finding: The finding with its control mappings.
+            raw_data: Optional raw event data for assertion evaluation.
+            parent_results: Pre-computed parent results keyed by
+                ``(framework, control_id)``. If None, inheritance is skipped.
+
+        Returns:
+            List of ControlResultData, one per mapping.
+        """
+        results: list[ControlResultData] = []
+        finding = mapped_finding.finding
+        raw = raw_data or {}
+        parents = parent_results or {}
+
+        for mapping in mapped_finding.mappings:
+            result = self._assess_one(finding, mapping, raw)
+
+            # If still not_assessed after Tier 1 + Tier 2, try inheritance
+            if result.status == "not_assessed" and parents:
+                parent_id = _parse_parent_control(mapping.control_id)
+                if parent_id is not None:
+                    parent_key = (mapping.framework, parent_id)
+                    parent = parents.get(parent_key)
+                    if parent is not None and parent.status != "not_assessed":
+                        result.status = parent.status
+                        result.assessor = f"inherited:{parent_id}"
+                        # Reduce confidence by 0.1 from parent
+                        parent_conf = parent.ai_confidence if parent.ai_confidence is not None else 1.0
+                        result.ai_confidence = max(0.0, round(parent_conf - 0.1, 2))
+                        result.remediation_summary = parent.remediation_summary
+                        result.remediation_steps = list(parent.remediation_steps)
+                        result.console_path = parent.console_path
+
+            results.append(result)
+
+        return results
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+# Matches control IDs with parenthetical enhancements:
+#   AC-2(3), SC-7(5), SI-4(2), etc.
+_ENHANCEMENT_RE = re.compile(r"^(.+?)\(\d+\)$")
+
+
+def _parse_parent_control(control_id: str) -> str | None:
+    """Extract parent control ID from an enhancement.
+
+    Examples:
+        AC-2(3) -> AC-2
+        SC-7(5) -> SC-7
+        AC-2    -> None  (already a base control)
+    """
+    m = _ENHANCEMENT_RE.match(control_id)
+    if m:
+        return m.group(1).rstrip()
+    return None
 
 
 # Singleton engine

@@ -316,6 +316,205 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
     _print_stats(stats)
 
 
+@cli.command()
+@click.option("-f", "--framework", default=None, help="Filter by framework (e.g. nist_800_53, iso_27001)")
+@click.option("-s", "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
+@click.option("-o", "--output", default=None, help="Output file path (default: stdout)")
+@click.option("--format", "fmt", type=click.Choice(["ar", "ssp", "poam"]), default="ar", help="OSCAL document type")
+@click.option("--description", default="", help="System description (for SSP)")
+@click.option("--ai/--no-ai", default=False, help="Use AI to generate framework-aware narratives (SSP/POA&M)")
+def oscal(framework, system_name, output, fmt, description, ai):
+    """Export assessment data in OSCAL JSON format.
+
+    Use --ai with SSP or POA&M to generate rich, framework-aware narratives.
+    The AI adapts its language to match the framework: NIST SSP language,
+    ISO SoA language, SOC 2 report language, etc.
+
+    Requires WLK_AI_PROVIDER and WLK_AI_API_KEY to be set.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.oscal import OscalExporter
+
+    init_db()
+    exporter = OscalExporter()
+
+    # Set up AI narrator if requested
+    narrator = None
+    if ai and fmt in ("ssp", "poam"):
+        from warlock.assessors.ai_narrator import create_narrator
+        narrator = create_narrator()
+        if narrator is None:
+            console.print("[yellow]Warning: --ai requested but WLK_AI_PROVIDER / WLK_AI_API_KEY not configured. Falling back to deterministic output.[/yellow]")
+        else:
+            console.print(f"[cyan]AI narrator active: {narrator.provider}/{narrator.model}[/cyan]")
+
+    with get_session() as session:
+        if fmt == "ar":
+            data = exporter.export_assessment_results(session, framework=framework, system_name=system_name)
+        elif fmt == "ssp":
+            if not framework:
+                console.print("[red]SSP export requires --framework[/red]")
+                raise SystemExit(1)
+            data = exporter.export_ssp(
+                session, framework=framework, system_name=system_name,
+                description=description or f"{system_name} System Security Plan",
+                narrator=narrator,
+            )
+        elif fmt == "poam":
+            data = exporter.export_poam(
+                session, framework=framework, system_name=system_name,
+                narrator=narrator,
+            )
+
+    json_str = exporter.to_json(data)
+
+    if output:
+        exporter.to_file(data, output)
+        console.print(f"[green]OSCAL {fmt.upper()} written to {output}[/green]")
+    else:
+        console.print(json_str)
+
+
+@cli.command()
+@click.option("-f", "--framework", required=True, help="Framework to analyze (e.g. nist_800_53)")
+@click.option("-n", "--iterations", default=10000, help="Monte Carlo iterations")
+def risk(framework: str, iterations: int) -> None:
+    """Run FAIR risk quantification for a framework."""
+    from warlock.assessors.risk_engine import RiskEngine
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    engine = RiskEngine(default_iterations=iterations)
+
+    with get_session() as session:
+        result = engine.analyze_framework_risk(session, framework, iterations=iterations)
+
+    scenarios = result.get("scenarios", [])
+    portfolio = result.get("portfolio", {})
+
+    if not scenarios:
+        console.print(f"[dim]No risk scenarios for framework '{framework}'.[/dim]")
+        return
+
+    table = Table(title=f"FAIR Risk Analysis — {framework}")
+    table.add_column("Scenario", style="cyan")
+    table.add_column("Mean ALE", justify="right")
+    table.add_column("VaR 95", justify="right")
+    table.add_column("VaR 99", justify="right")
+    table.add_column("Control Eff.", justify="right")
+
+    for s in scenarios:
+        table.add_row(
+            s["name"],
+            f"${s['mean_ale']:,.0f}",
+            f"${s['var_95']:,.0f}",
+            f"${s['var_99']:,.0f}",
+            f"{s['control_effectiveness']:.0%}",
+        )
+
+    console.print(table)
+    console.print()
+    console.print(f"[bold]Portfolio Total Mean ALE:[/bold] ${portfolio['total_mean_ale']:,.0f}")
+    console.print(f"[bold]Portfolio Total VaR 95:[/bold]  ${portfolio['total_var_95']:,.0f}")
+    console.print(f"[bold]Scenarios:[/bold]               {portfolio['scenario_count']}")
+    console.print(f"[bold]Iterations:[/bold]              {portfolio['iterations']:,}")
+
+
+@cli.command()
+@click.option("-p", "--provider", default="securityscorecard", help="Vendor data provider")
+@click.option("-t", "--threshold", default=60.0, help="High-risk threshold (0-100)")
+def vendors(provider: str, threshold: float) -> None:
+    """Score and monitor vendor risk."""
+    from warlock.assessors.vendor_risk import VendorRiskEngine
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    engine = VendorRiskEngine()
+
+    with get_session() as session:
+        scores = engine.monitor_all(session, provider=provider, high_risk_threshold=threshold)
+
+    if not scores:
+        console.print(f"[dim]No vendor data from provider '{provider}'.[/dim]")
+        return
+
+    table = Table(title="Vendor Risk Scores")
+    table.add_column("Vendor", style="cyan")
+    table.add_column("Score", justify="right")
+    table.add_column("Level")
+    table.add_column("Issues", justify="right")
+    table.add_column("Security", justify="right", style="dim")
+    table.add_column("Currency", justify="right", style="dim")
+
+    for s in sorted(scores, key=lambda x: x.overall_score):
+        level_style = {
+            "critical": "red bold",
+            "high": "red",
+            "medium": "yellow",
+            "low": "green",
+        }.get(s.risk_level, "")
+        table.add_row(
+            s.vendor_name,
+            f"{s.overall_score:.0f}",
+            f"[{level_style}]{s.risk_level}[/]",
+            str(s.issues_count),
+            f"{s.security_posture_score:.0f}/25",
+            f"{s.assessment_currency_score:.0f}/20",
+        )
+
+    console.print(table)
+
+    high_risk = [s for s in scores if s.overall_score < threshold]
+    if high_risk:
+        console.print(f"\n[yellow]High-risk vendors ({len(high_risk)}):[/yellow]")
+        for s in high_risk:
+            for rec in s.recommendations:
+                console.print(f"  [dim]• {rec}[/dim]")
+
+
+@cli.command("policy-coverage")
+@click.option("-f", "--framework", required=True, help="Framework to check coverage for")
+@click.option("--no-rag", is_flag=True, help="Skip RAG matching, use keyword heuristics only")
+def policy_coverage(framework: str, no_rag: bool) -> None:
+    """Check policy documentation coverage for a framework."""
+    from warlock.assessors.policy_discovery import score_policy_coverage
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+
+    with get_session() as session:
+        coverage = score_policy_coverage(session, framework, use_rag=not no_rag)
+
+    if coverage.total_controls == 0:
+        console.print(f"[dim]No controls found for framework '{framework}'.[/dim]")
+        return
+
+    pct_style = "green" if coverage.coverage_pct >= 80 else "yellow" if coverage.coverage_pct >= 50 else "red"
+
+    console.print(f"\n[bold]Policy Coverage — {framework}[/bold]")
+    console.print(f"  Total controls:       {coverage.total_controls}")
+    console.print(f"  With policy docs:     {coverage.controls_with_policy}")
+    console.print(f"  Coverage:             [{pct_style}]{coverage.coverage_pct:.0f}%[/]")
+
+    if coverage.policy_map:
+        table = Table(title="Policy-to-Control Mapping")
+        table.add_column("Control", style="cyan")
+        table.add_column("Policies")
+
+        for control_id in sorted(coverage.policy_map):
+            policies = coverage.policy_map[control_id]
+            table.add_row(control_id, ", ".join(policies[:3]))
+
+        console.print(table)
+
+    if coverage.gaps:
+        console.print(f"\n[yellow]Policy gaps ({len(coverage.gaps)} controls):[/yellow]")
+        for gap in sorted(coverage.gaps)[:20]:
+            console.print(f"  [dim]• {gap}[/dim]")
+        if len(coverage.gaps) > 20:
+            console.print(f"  [dim]... and {len(coverage.gaps) - 20} more[/dim]")
+
+
 def _print_stats(stats) -> None:
     table = Table(title="Pipeline Run")
     table.add_column("Metric", style="cyan")
