@@ -188,9 +188,14 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
         if request.url.path in _SKIP_PATHS:
             return await call_next(request)
 
+        from warlock.logging_config import new_correlation_id
+        cid = new_correlation_id()
+
         start = time.monotonic()
         response: Response = await call_next(request)
         duration_ms = round((time.monotonic() - start) * 1000, 2)
+
+        response.headers["X-Correlation-ID"] = cid
 
         # Identify the caller
         identity = _extract_identity(request)

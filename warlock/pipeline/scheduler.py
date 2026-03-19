@@ -107,8 +107,10 @@ class PipelineScheduler:
 
     def _run_loop(self) -> None:
         """Main loop: check all schedules, dispatch any that are due."""
-        # Run pipeline_collect immediately on first tick
-        self._dispatch("pipeline_collect")
+        # Run all enabled schedules on startup
+        for name, sched in self._schedules.items():
+            if sched.enabled:
+                self._dispatch(name)
 
         while not self._stop_event.is_set():
             now = datetime.now(timezone.utc)
@@ -117,10 +119,6 @@ class PipelineScheduler:
                 if not sched.enabled:
                     continue
                 if sched.last_run is None:
-                    # Already ran pipeline_collect above; skip others on first tick
-                    # unless they have a very short interval
-                    if name != "pipeline_collect":
-                        sched.last_run = now  # Start counting from now
                     continue
 
                 elapsed = (now - sched.last_run).total_seconds()

@@ -63,7 +63,7 @@ class RawEvent(Base):
     __tablename__ = "raw_events"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    connector_run_id = Column(String(36), ForeignKey("connector_runs.id"), nullable=False)
+    connector_run_id = Column(String(36), ForeignKey("connector_runs.id", ondelete="CASCADE"), nullable=False)
     source = Column(String(50), nullable=False)          # "aws", "crowdstrike", "tenable"
     source_type = Column(String(20), nullable=False)      # cloud, edr, scanner, siem, iam
     provider = Column(String(50), nullable=False)         # specific product
@@ -90,7 +90,7 @@ class Finding(Base):
     __tablename__ = "findings"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    raw_event_id = Column(String(36), ForeignKey("raw_events.id"), nullable=False)
+    raw_event_id = Column(String(36), ForeignKey("raw_events.id", ondelete="CASCADE"), nullable=False)
 
     # What was observed
     observation_type = Column(String(50), nullable=False)  # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
@@ -103,7 +103,7 @@ class Finding(Base):
     resource_name = Column(Text)
     account_id = Column(String(100))
     region = Column(String(50))
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))  # Phase 3: multi-system scoping
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))  # Phase 3: multi-system scoping
 
     # Source lineage
     source = Column(String(50), nullable=False)
@@ -141,7 +141,7 @@ class ControlMapping(Base):
     __tablename__ = "control_mappings"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    finding_id = Column(String(36), ForeignKey("findings.id"), nullable=False)
+    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False)
     framework = Column(String(50), nullable=False)        # nist_800_53, soc2, iso_27001
     control_id = Column(String(50), nullable=False)       # AC-2, CC6.1, A.9.2.1
     control_family = Column(String(50))
@@ -168,12 +168,12 @@ class ControlResult(Base):
     __tablename__ = "control_results"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    finding_id = Column(String(36), ForeignKey("findings.id"), nullable=False)
-    control_mapping_id = Column(String(36), ForeignKey("control_mappings.id"), nullable=False)
+    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False)
+    control_mapping_id = Column(String(36), ForeignKey("control_mappings.id", ondelete="CASCADE"), nullable=False)
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50), nullable=False)
 
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))  # Phase 3
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))  # Phase 3
 
     # Determination
     status = Column(String(20), nullable=False)         # compliant, non_compliant, partial, not_assessed, not_applicable, risk_accepted, inherited_compliant, inherited_at_risk
@@ -246,7 +246,7 @@ class AuditEntry(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
     __table_args__ = (
-        Index("idx_audit_sequence", "sequence"),
+        Index("idx_audit_sequence", "sequence", unique=True),
         Index("idx_audit_entity", "entity_type", "entity_id"),
         Index("idx_audit_created", "created_at"),
         Index("idx_audit_action", "action"),
@@ -560,7 +560,7 @@ class Issue(Base):
     # Linked to compliance data
     finding_id = Column(String(36), ForeignKey("findings.id"))
     control_result_id = Column(String(36), ForeignKey("control_results.id"))
-    poam_id = Column(String(36), ForeignKey("poams.id"))
+    poam_id = Column(String(36), ForeignKey("poams.id", ondelete="SET NULL"))
     framework = Column(String(50))
     control_id = Column(String(50))
 
@@ -614,7 +614,7 @@ class IssueComment(Base):
     __tablename__ = "issue_comments"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    issue_id = Column(String(36), ForeignKey("issues.id"), nullable=False)
+    issue_id = Column(String(36), ForeignKey("issues.id", ondelete="CASCADE"), nullable=False)
     author = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     comment_type = Column(String(20), default="comment")  # comment, status_change, assignment, evidence

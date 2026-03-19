@@ -7,10 +7,13 @@ tamper-evident chain that auditors can verify.
 
 import hashlib
 import json
+import threading
 
 from sqlalchemy.orm import Session
 
 from warlock.db.models import AuditEntry
+
+_audit_lock = threading.Lock()
 
 
 class AuditTrail:
@@ -27,47 +30,48 @@ class AuditTrail:
         metadata: dict | None = None,
     ) -> AuditEntry:
         """Record an action in the immutable audit trail."""
-        # Get the last entry for chain linking
-        last = (
-            self.session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.desc())
-            .with_for_update()
-            .first()
-        )
+        with _audit_lock:
+            # Get the last entry for chain linking
+            last = (
+                self.session.query(AuditEntry)
+                .order_by(AuditEntry.sequence.desc())
+                .with_for_update()
+                .first()
+            )
 
-        prev_hash = last.entry_hash if last else "genesis"
-        sequence = int(last.sequence + 1) if last else 1
+            prev_hash = last.entry_hash if last else "genesis"
+            sequence = int(last.sequence + 1) if last else 1
 
-        # Compute this entry's hash (includes previous hash for chaining).
-        # Timestamp is deliberately excluded so verify_chain() can recompute
-        # the hash deterministically from stored columns.
-        content = json.dumps(
-            {
-                "sequence": sequence,
-                "previous_hash": prev_hash,
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": entity_id,
-                "actor": actor,
-                "evidence_sha256": evidence_sha256,
-            },
-            sort_keys=True,
-        )
-        entry_hash = hashlib.sha256(content.encode()).hexdigest()
+            # Compute this entry's hash (includes previous hash for chaining).
+            # Timestamp is deliberately excluded so verify_chain() can recompute
+            # the hash deterministically from stored columns.
+            content = json.dumps(
+                {
+                    "sequence": sequence,
+                    "previous_hash": prev_hash,
+                    "action": action,
+                    "entity_type": entity_type,
+                    "entity_id": entity_id,
+                    "actor": actor,
+                    "evidence_sha256": evidence_sha256,
+                },
+                sort_keys=True,
+            )
+            entry_hash = hashlib.sha256(content.encode()).hexdigest()
 
-        entry = AuditEntry(
-            sequence=sequence,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
-            action=action,
-            entity_type=entity_type,
-            entity_id=entity_id,
-            actor=actor,
-            evidence_sha256=evidence_sha256,
-            extra=metadata or {},
-        )
-        self.session.add(entry)
-        return entry
+            entry = AuditEntry(
+                sequence=sequence,
+                previous_hash=prev_hash,
+                entry_hash=entry_hash,
+                action=action,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                actor=actor,
+                evidence_sha256=evidence_sha256,
+                extra=metadata or {},
+            )
+            self.session.add(entry)
+            return entry
 
     def verify_chain(self) -> tuple[bool, list[str]]:
         """Verify the entire audit chain is intact. Returns (valid, errors)."""
