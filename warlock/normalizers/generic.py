@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from warlock.connectors.base import RawEventData, SourceType
+from warlock.connectors.base import RawEventData
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 
 log = logging.getLogger(__name__)

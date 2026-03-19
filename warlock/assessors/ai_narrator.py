@@ -21,7 +21,7 @@ from typing import Any
 
 import httpx
 
-from warlock.assessors.ai_reasoning import AIReasoner, create_reasoner, _parse_response, _sanitize_field
+from warlock.assessors.ai_reasoning import _sanitize_field
 from warlock.config import get_settings
 
 log = logging.getLogger(__name__)
@@ -661,9 +661,8 @@ def aggregate_control_evidence(
         CompensatingControl, RiskAcceptance, POAM,
         ControlInheritance, PostureSnapshot,
     )
-    from datetime import timedelta
 
-    now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+    __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
 
     # Compensating controls
     cc_rows = (

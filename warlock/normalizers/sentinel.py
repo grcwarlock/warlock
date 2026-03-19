@@ -82,7 +82,7 @@ class SentinelNormalizer(BaseNormalizer):
                     "created_time": props.get("createdTimeUtc", ""),
                     "last_modified_time": props.get("lastModifiedTimeUtc", ""),
                     "classification": props.get("classification", ""),
-                    "labels": [l.get("labelName", "") for l in props.get("labels", [])],
+                    "labels": [lbl.get("labelName", "") for lbl in props.get("labels", [])],
                 },
                 resource_id=incident.get("id", ""),
                 resource_type="sentinel_incident",
@@ -111,13 +111,6 @@ class SentinelNormalizer(BaseNormalizer):
 
             rule_name = props.get("displayName", rule.get("name", "unknown"))
             severity_raw = props.get("severity", "Informational").lower()
-            severity_map = {
-                "high": "high",
-                "critical": "critical",
-                "medium": "medium",
-                "low": "low",
-                "informational": "info",
-            }
 
             findings.append(FindingData(
                 **self._base(raw),

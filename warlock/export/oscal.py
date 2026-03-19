@@ -18,10 +18,9 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4, uuid5
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from warlock.db.models import ConnectorRun, ControlMapping, ControlResult, Finding
+from warlock.db.models import ControlResult, Finding
 
 log = logging.getLogger(__name__)
 

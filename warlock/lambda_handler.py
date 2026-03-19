@@ -66,8 +66,6 @@ def _run_collect(sources: list[str] | None = None) -> dict[str, Any]:
 def _run_posture_snapshot() -> dict[str, Any]:
     """Take a posture snapshot."""
     from warlock.db.engine import get_session, init_db
-    from warlock.pipeline.loader import build_pipeline
-    from warlock.pipeline.bus import EventBus
 
     init_db()
 

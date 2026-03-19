@@ -109,7 +109,7 @@ class SecurityScorecardNormalizer(BaseNormalizer):
                 **self._base(raw),
                 observation_type=obs_type,
                 title=f"SSC vendor: {name} (score: {score})"
-                      + (f" -- low score" if severity in ("critical", "high") else ""),
+                      + (" -- low score" if severity in ("critical", "high") else ""),
                 detail={
                     "domain": domain,
                     "name": name,

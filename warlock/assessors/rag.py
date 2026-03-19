@@ -23,9 +23,8 @@ import math
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-from uuid import uuid4
 
 from warlock.mappers.control_mapper import ControlMappingData
 from warlock.normalizers.base import FindingData
@@ -451,7 +450,6 @@ class PgVectorStore(VectorStore):
 
         from sqlalchemy import (
             Column,
-            Float,
             MetaData,
             String,
             Table,

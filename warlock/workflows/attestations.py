@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -13,7 +12,6 @@ from warlock.db.models import (
     AuditComment,
     AuditEngagement,
     ControlResult,
-    PostureSnapshot,
 )
 
 

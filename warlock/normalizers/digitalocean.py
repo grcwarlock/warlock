@@ -225,7 +225,7 @@ class DigitalOceanNormalizer(BaseNormalizer):
 
             # Check trusted sources — empty means publicly accessible
             rules = db.get("rules", [])
-            trusted_sources = [
+            [
                 r for r in rules if r.get("type") != "ip_addr" or r.get("value") != "0.0.0.0/0"
             ]
             all_sources = rules
@@ -237,7 +237,7 @@ class DigitalOceanNormalizer(BaseNormalizer):
 
             # Check SSL enforcement
             connection = db.get("connection", {})
-            private_connection = db.get("private_connection", {})
+            db.get("private_connection", {})
             if connection and not connection.get("ssl", False):
                 issues.append("ssl_not_enforced")
 

@@ -126,12 +126,6 @@ class ElasticNormalizer(BaseNormalizer):
 
             name = rule.get("name", "unknown")
             severity_raw = rule.get("severity", "low").lower()
-            severity_map = {
-                "critical": "critical",
-                "high": "high",
-                "medium": "medium",
-                "low": "low",
-            }
 
             findings.append(FindingData(
                 **self._base(raw),

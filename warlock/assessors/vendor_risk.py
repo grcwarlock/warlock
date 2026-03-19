@@ -12,15 +12,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
-    ControlMapping,
-    ControlResult,
     Finding,
-    _uuid,
-    _utcnow,
 )
 
 log = logging.getLogger(__name__)
