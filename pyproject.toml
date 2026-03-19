@@ -29,6 +29,9 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
 warlock = "warlock.cli:cli"
 warlock-api = "warlock.api.app:run_server"
 
+[tool.setuptools.packages.find]
+include = ["warlock*"]
+
 [build-system]
 requires = ["setuptools>=69.0"]
 build-backend = "setuptools.build_meta"
