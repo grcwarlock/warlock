@@ -260,7 +260,7 @@ warlock/
   frameworks/    — 10 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
 tests/           — 190 pytest tests (9 files)
-policies/        — 604 OPA/Rego files (631 tests) across 7 frameworks
+policies/        — 616 OPA/Rego files (631 tests) across 7 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 10 frameworks
 terraform/       — 5 IaC modules (AWS, Azure, GCP)
 .github/workflows/

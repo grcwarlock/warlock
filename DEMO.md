@@ -14,7 +14,7 @@ cd warlock
 
 That's it. The script:
 1. Creates a virtualenv and installs dependencies
-2. Starts the OPA server with 604 Rego policies (if OPA is installed)
+2. Starts the OPA server with 616 Rego policies (if OPA is installed)
 3. Runs database migrations
 4. Seeds 40 connectors, 547+ findings, 29,207 control results across 10 frameworks
 5. Starts the API server on port 8000
@@ -85,4 +85,4 @@ It wipes and re-creates everything from scratch each time.
 brew install opa
 ```
 
-With OPA installed, the demo evaluates 604 Rego policies across 6 frameworks (NIST 800-53, ISO 27001, SOC 2, CMMC, HIPAA, UCF). Without OPA, the demo still works — it just skips policy evaluation.
+With OPA installed, the demo evaluates 616 Rego policies across 7 frameworks (NIST 800-53, ISO 27001, SOC 2, CMMC, HIPAA, UCF, Terraform). Without OPA, the demo still works — it just skips policy evaluation.
