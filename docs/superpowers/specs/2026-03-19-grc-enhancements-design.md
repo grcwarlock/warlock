@@ -33,7 +33,7 @@ These three compose into "is my compliance posture healthy?" — the #1 question
 ### 1a. Continuous Monitoring Cadence
 
 **Schema changes:**
-- Add `monitoring_frequency` to framework YAML controls. Values: `daily`, `weekly`, `monthly`, `quarterly`, `annual`. Default: `monthly`.
+- Add `monitoring_frequency` to framework YAML controls. Values: `daily`, `weekly`, `monthly`, `quarterly`, `annual`. Default: `monthly`. **Note:** Framework YAML must be populated with per-control frequencies before Phase 1a is considered complete — NIST 800-53A Table D-2 defines frequency by control volatility (e.g., AC-2, AU-6, SI-4 require `daily`/`weekly`; PE-* physical controls are `annual`). The `monthly` default is a fallback only.
 - Add `monitoring_frequency` column (`String(20)`) to `ControlMapping` table — populated from YAML during mapping stage.
 
 **New module:** `warlock/assessors/cadence.py`
@@ -45,8 +45,11 @@ These three compose into "is my compliance posture healthy?" — the #1 question
   - Frequency-to-hours mapping: daily=24, weekly=168, monthly=720, quarterly=2160, annual=8760
   - Emits `control.stale` event on the bus when `staleness_ratio > 1.0`
 
+**Scheduler refactor (prerequisite):**
+- Refactor `PipelineScheduler` from single-interval loop to multi-schedule dispatcher. The current implementation has `DEFAULT_SCHEDULES` with three entries but only runs `_execute_run()` on a single interval. Refactor to: track `last_run` per schedule name, iterate schedules on each loop tick, dispatch to `_execute_run()` / `_execute_snapshot()` / `_execute_cadence()` based on which schedules are due. This is required for Phase 1a, 1b, and 4a.
+
 **Pipeline integration:**
-- Wire cadence check into scheduler: runs after every `pipeline_collect` execution
+- Wire cadence check into the refactored scheduler as `cadence_check` schedule (runs after every `pipeline_collect`)
 - Add `cadence_check` to `DEFAULT_SCHEDULES` in `scheduler.py`
 
 **CLI:** `warlock cadence [--framework F] [--stale-only]`
@@ -80,12 +83,29 @@ With snapshots running daily, `PostureSnapshot` accumulates history.
 - `PostureTimeSeriesQuery` class:
   - `query_control(session, framework, control_id, days=90) -> PostureTimeSeries`
   - `query_framework(session, framework, days=90) -> list[PostureTimeSeries]`
-  - Trend calculation: simple linear regression slope on posture_score. Slope > 0.5/day = improving, < -0.5/day = degrading, else stable.
+  - Trend calculation: simple linear regression slope on posture_score. Slope > 0.05/day = improving, < -0.05/day = degrading, else stable. (0.05/day ≈ 4.5 points over 90-day window — sensitive enough to detect meaningful change without noise.)
 
 **CLI:** `warlock posture --history [--framework F] [--control C] [--days N]`
 - Shows trend arrows (↑ ↓ →) and mini sparkline per control
 
 **API:** `GET /api/v1/posture/history?framework=X&control_id=Y&days=90`
+
+### ControlResult Status Enum (cross-cutting)
+
+The `ControlResult.status` field gains new values across phases. Full enum after all phases:
+
+| Status | Added In | Posture Scoring Behavior |
+|---|---|---|
+| `compliant` | Existing | Counts as compliant |
+| `non_compliant` | Existing | Counts as non-compliant |
+| `partial` | Existing | Counts as 50% compliant |
+| `not_assessed` | Existing | Excluded from scoring |
+| `not_applicable` | Existing | Excluded from scoring |
+| `risk_accepted` | Phase 2c | Counts as partial (configurable) |
+| `inherited_compliant` | Phase 3a | Counts as compliant |
+| `inherited_at_risk` | Phase 3a | Counts as non-compliant |
+
+`PostureAggregator.aggregate_control()` must be updated to handle all status values. Currently has a hard-coded switch (lines 164-173 in `posture.py`) that will silently drop unknown statuses. Update in Phase 2 when `risk_accepted` is introduced.
 
 ## Phase 2: Remediation Workflows
 
@@ -118,6 +138,7 @@ delay_justifications   JSON  # [{date, justification, approved_by}]
 resources_required     Text
 
 created_by             String(255)
+updated_by             String(255)  # status transition attribution (complements AuditEntry)
 approved_by            String(255)
 approved_at            DateTime
 vendor_dependency      String(255)
@@ -146,6 +167,7 @@ updated_at             DateTime
 id                      String(36) PK
 original_framework      String(50) NOT NULL
 original_control_id     String(50) NOT NULL
+poam_id                 String(36) FK -> poams.id (nullable — compensating controls often created as part of POA&M remediation)
 system_profile_id       String(36) FK -> system_profiles.id (nullable, wired in Phase 3)
 
 title                   String(255) NOT NULL
@@ -229,7 +251,10 @@ framework               String(50) NOT NULL
 control_id              String(50) NOT NULL
 
 inheritance_type        String(20) NOT NULL
-  # inherited, shared, system_specific, hybrid
+  # inherited, shared, common, system_specific
+  # (per NIST SP 800-53A / FedRAMP CRM: "inherited" = fully provided,
+  #  "shared" = split responsibility, "common" = org-wide controls,
+  #  "system_specific" = system implements independently)
 
 provider_system_id      String(36) FK -> system_profiles.id (nullable — who provides)
 provider_description    Text  # "AWS provides physical security controls"
@@ -260,8 +285,9 @@ updated_at              DateTime
 ### 3b. Multi-System Scoping
 
 **Schema changes (Alembic migration):**
-- Add `system_profile_id` (String(36), FK, nullable) to: `Finding`, `ControlMapping`, `ControlResult`, `PostureSnapshot`, `POAM`
+- Add `system_profile_id` (String(36), FK, nullable) to: `Finding`, `ControlMapping`, `ControlResult`, `PostureSnapshot`
 - Add index on `system_profile_id` to each table
+- Note: `POAM.system_profile_id` was already defined (nullable) in Phase 2a. Phase 3b adds the index and begins populating it via pipeline scoping.
 
 **Pipeline enhancement:**
 - After normalization (Stage 2), orchestrator matches findings to system profiles:
@@ -323,6 +349,8 @@ sha256              String(64) NOT NULL
 
 **Indexes:** `(source, source_type)`, `occurred_at`, `resource_id`, `sha256`
 
+**Dedup & retention:** Skip insert if `sha256` already exists (CloudTrail alone can emit millions of events/day). Default retention: 90 days, configurable via `WLK_CHANGE_EVENT_RETENTION_DAYS`. Purged by scheduler on the `retention_purge` schedule.
+
 **New model `ComplianceDrift`:**
 ```
 id                          String(36) PK
@@ -372,7 +400,8 @@ snapshot_id                 String(36)  # which snapshot detected it
   3. Query open POA&Ms — which will be overdue by target_date?
   4. Query active risk acceptances — which expire before target_date?
   5. Use PostureTimeSeries trend to project posture scores at target_date
-  6. Compute projected coverage: `controls_compliant / total_controls`
+  6. For inherited controls, check provider system's projected posture at target_date
+  7. Compute projected coverage: `controls_compliant / total_controls`
 - Output: `AuditSimulationResult` dataclass with projected coverage, stale controls, overdue POA&Ms, expiring risk acceptances, at-risk controls
 
 **CLI:** `warlock simulate-audit --framework soc2 --date 2026-09-01 [--system <id>]`
@@ -434,8 +463,6 @@ id                  String(36) PK
 email               String(255) NOT NULL UNIQUE
 name                String(255) NOT NULL
 firm                String(255)
-engagement_ids      JSON  # [engagement UUIDs]
-
 magic_link_hash     String(64)  # SHA256 of token
 token_expires_at    DateTime
 last_accessed       DateTime
@@ -444,10 +471,18 @@ is_active           Boolean default True
 created_at          DateTime NOT NULL
 ```
 
+**Junction table `AuditorEngagementAssignment`:**
+```
+auditor_id          String(36) FK -> external_auditors.id NOT NULL
+engagement_id       String(36) FK -> audit_engagements.id NOT NULL
+assigned_at         DateTime NOT NULL
+```
+Composite PK on `(auditor_id, engagement_id)`. Replaces JSON `engagement_ids` array for proper referential integrity and join-based queries.
+
 **New model `EvidenceRequest`:**
 ```
 id                  String(36) PK
-engagement_id       String(36) FK NOT NULL
+engagement_id       String(36) FK -> audit_engagements.id NOT NULL
 auditor_id          String(36) FK -> external_auditors.id NOT NULL
 framework           String(50)
 control_id          String(50)
@@ -593,7 +628,7 @@ Output: OSCAL SSP JSON with populated `control-implementations` sections.
 | 0 | Alembic bootstrap | 0 | 0 | 0 | 0 |
 | 1 | #1, #3, W3 | 0 | 1 (ControlMapping) | 3 | 3 |
 | 2 | #5, #4, #8 | 3 (POAM, CompensatingControl, RiskAcceptance) | 1 (Issue) | 6 | 3 |
-| 3 | #2, #10, W6 | 2 (ControlInheritance, SystemDependency) | 5 (Finding, ControlMapping, ControlResult, PostureSnapshot, POAM) | 4 | 2 |
+| 3 | #2, #10, W6 | 2 (ControlInheritance, SystemDependency) | 4 (Finding, ControlMapping, ControlResult, PostureSnapshot) + POAM index | 4 | 2 |
 | 4 | W1, #9, W2, W3 | 2 (ChangeEvent, ComplianceDrift) | 1 (PostureSnapshot) | 4 | 3 |
-| 5 | #6, W7, #11, W8, W5, W4, #7 | 3 (ExternalAuditor, EvidenceRequest, PolicyOverride) | 3 (User, ControlResult, SystemProfile) | ~8 | 5+ |
-| **Total** | **19** | **10** | — | **~25** | **~16** |
+| 5 | #6, W7, #11, W8, W5, W4, #7 | 4 (ExternalAuditor, AuditorEngagementAssignment, EvidenceRequest, PolicyOverride) | 3 (User, ControlResult, SystemProfile) | ~8 | 5+ |
+| **Total** | **19** | **11** | — | **~25** | **~16** |
