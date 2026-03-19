@@ -71,37 +71,31 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 
-# Seed a demo environment (no credentials needed)
+# Seed a fully populated demo environment (no credentials needed)
 python scripts/demo_seed.py
 
-# View results
-warlock results
-warlock results --status non_compliant
-warlock coverage
-warlock findings
-
-# Create issues from non-compliant results
-warlock issues-auto-create
-warlock issues
-
-# Export OSCAL
-warlock oscal --format ar -f nist_800_53 -o assessment.json
-warlock oscal --format ssp -f iso_27001 --ai -o soa.json
-warlock oscal --format poam -f soc2 -o remediation.json
-
-# Risk quantification
-warlock risk -f nist_800_53
-
-# Policy coverage
-warlock policy-coverage -f iso_27001
-
-# Vendor risk
-warlock vendors
+# Explore every feature
+warlock results                        # control results (8,833 across 6 frameworks)
+warlock results --status non_compliant # non-compliant findings
+warlock coverage                       # compliance coverage summary
+warlock findings                       # 125 normalized findings
+warlock systems                        # 5 system profiles (FIPS 199 boundaries)
+warlock personnel                      # HR/IdP/training cross-reference
+warlock vendors                        # vendor risk scores (5 vendors)
+warlock questionnaires                 # vendor security questionnaires
+warlock data-silos                     # 7 data storage locations
+warlock retention report               # retention policies & legal holds
+warlock issues                         # 245 compliance issues
+warlock policy-coverage -f iso_27001   # policy documentation gaps
+warlock risk -f nist_800_53            # FAIR Monte Carlo risk analysis
+warlock oscal                          # OSCAL JSON export
 ```
 
-The demo seed script creates mock data from AWS, Okta, and CrowdStrike and
-runs it through the full pipeline (collect, normalize, map, assess) across all
-6 frameworks. No API credentials required.
+The demo seed creates mock data from 7 connectors (AWS, Okta, CrowdStrike,
+Workday, KnowBe4, SecurityScorecard, Confluence) and runs it through the full
+pipeline, then populates system profiles, personnel records, vendor
+questionnaires, data silos, legal holds, and compliance issues. No API
+credentials required.
 
 To run against real sources instead, configure connectors via environment
 variables (see [Configuration](#configuration)) and use `warlock collect`.
