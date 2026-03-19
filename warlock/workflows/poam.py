@@ -12,11 +12,24 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from warlock.db.models import POAM, ControlResult, Finding
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
 # Terminal statuses that should not be considered "open"
 _CLOSED_STATUSES = frozenset({"completed", "verified", "closed", "risk_accepted"})
+
+# W-2: Valid POA&M status transitions
+VALID_TRANSITIONS: dict[str, set[str]] = {
+    "draft": {"open"},
+    "open": {"in_progress"},
+    "in_progress": {"remediated"},
+    "remediated": {"verified"},
+    "verified": {"completed"},
+}
+
+# Statuses reachable from any state
+_ANY_STATE_TARGETS = {"risk_accepted", "cancelled"}
 
 
 class POAMManager:
@@ -152,6 +165,64 @@ class POAMManager:
         )
         return poam
 
+    def transition(
+        self,
+        session: Session,
+        poam_id: str,
+        new_status: str,
+        actor: str = "",
+    ) -> POAM:
+        """Transition a POA&M to a new status with validation.
+
+        Args:
+            session: SQLAlchemy session.
+            poam_id: ID of the POA&M.
+            new_status: Target status.
+            actor: Who performed the transition.
+
+        Returns:
+            Updated POAM.
+
+        Raises:
+            ValueError: If POA&M not found or transition is invalid.
+        """
+        poam = session.get(POAM, poam_id)
+        if not poam:
+            raise ValueError(f"POA&M not found: {poam_id}")
+
+        # Allow any-state targets
+        if new_status in _ANY_STATE_TARGETS:
+            old_status = poam.status
+            poam.status = new_status
+            poam.updated_by = actor
+            session.flush()
+            log.info(
+                "POA&M %s transitioned %s -> %s by %s",
+                poam_id, old_status, new_status, actor,
+            )
+            return poam
+
+        allowed = VALID_TRANSITIONS.get(poam.status, set())
+        if new_status not in allowed:
+            raise ValueError(
+                f"Cannot transition POA&M from '{poam.status}' to '{new_status}'. "
+                f"Allowed transitions: {allowed | _ANY_STATE_TARGETS}"
+            )
+
+        old_status = poam.status
+        now = datetime.now(timezone.utc)
+        poam.status = new_status
+        poam.updated_by = actor
+        if new_status == "completed":
+            poam.actual_completion = now
+        session.flush()
+
+        log.info(
+            "POA&M %s transitioned %s -> %s by %s",
+            poam_id, old_status, new_status, actor,
+        )
+        return poam
+
     def list_poams(
         self,
         session: Session,
@@ -192,13 +263,17 @@ class POAMManager:
             List of overdue POAM rows, ordered by scheduled completion.
         """
         now = datetime.now(timezone.utc)
-        return (
+        poams = (
             session.query(POAM)
             .filter(
-                POAM.scheduled_completion < now,
                 POAM.scheduled_completion.isnot(None),
                 ~POAM.status.in_(_CLOSED_STATUSES),
             )
             .order_by(POAM.scheduled_completion)
             .all()
         )
+        # W-4: ensure_aware before comparing scheduled_completion
+        return [
+            p for p in poams
+            if ensure_aware(p.scheduled_completion) < now
+        ]

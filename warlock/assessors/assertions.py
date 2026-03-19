@@ -103,8 +103,8 @@ def mfa_enabled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
         reasons.append(f"User {user_id} — no MFA evidence found")
         return False, reasons
 
-    # Insufficient data to determine
-    return True, []
+    # Insufficient data to determine — fail closed
+    return False, ["Insufficient data to determine MFA status"]
 
 
 @engine.assertion("no_root_access_keys")
@@ -137,7 +137,13 @@ def no_root_access_keys(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
             reasons.append("Root account has active access keys")
             return False, reasons
 
-    return True, []
+    # If the finding is clearly about a non-root user (has a user field that
+    # is not root-like), the assertion is not applicable — pass through.
+    if user and user != "<root_account>" and "root" not in user.lower():
+        return True, []
+
+    # Looks like it should have root key data but doesn't — fail closed
+    return False, ["No root access key data available"]
 
 
 @engine.assertion("cloudtrail_enabled")
@@ -969,6 +975,7 @@ engine.bind_control("ucf", "UCF-DEV-3", "no_critical_code_vulns")
 # Backup
 engine.bind_control("nist_800_53", "CP-9", "backup_job_successful")
 engine.bind_control("nist_800_53", "CP-10", "backup_job_successful")
+engine.bind_control("soc2", "A1.1", "backup_job_successful")
 engine.bind_control("soc2", "A1.2", "backup_job_successful")
 engine.bind_control("soc2", "A1.3", "backup_job_successful")
 engine.bind_control("iso_27001", "A.8.13", "backup_job_successful")
@@ -979,6 +986,8 @@ engine.bind_control("nist_800_53", "AC-19", "device_compliant")
 engine.bind_control("ucf", "UCF-EPP-4", "device_compliant")
 
 # DLP
+engine.bind_control("nist_800_53", "SC-7", "dlp_policies_active")
+engine.bind_control("soc2", "CC6.7", "dlp_policies_active")
 engine.bind_control("iso_27001", "A.8.12", "dlp_policies_active")
 engine.bind_control("ucf", "UCF-DAT-7", "dlp_policies_active")
 

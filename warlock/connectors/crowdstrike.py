@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -19,17 +18,6 @@ from warlock.connectors.base import (
 )
 
 log = logging.getLogger(__name__)
-
-# API resource → (service_class, method, kwargs, event_type)
-FALCON_CHECKS: list[tuple[str, str, dict, str]] = [
-    ("Hosts", "QueryDevicesByFilterScroll", {}, "falcon_devices"),
-    ("Hosts", "GetDeviceDetailsV2", {}, "falcon_device_details"),
-    ("Detects", "QueryDetects", {}, "falcon_detections"),
-    ("Detects", "GetDetectSummaries", {}, "falcon_detection_details"),
-    ("SpotlightVulnerabilities", "queryVulnerabilities", {"filter": "status:!'closed'"}, "falcon_vulnerabilities"),
-    ("ZeroTrustAssessment", "getAssessmentV1", {}, "falcon_zero_trust"),
-    ("SensorUpdatePolicy", "querySensorUpdatePolicies", {}, "falcon_sensor_policies"),
-]
 
 
 class CrowdStrikeConnector(BaseConnector):

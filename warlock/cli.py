@@ -15,26 +15,44 @@ def _resolve_system_id(session, value: str) -> str:
     """Resolve a system profile ID from a UUID, partial UUID, or acronym."""
     from warlock.db.models import SystemProfile
 
+    # C-1: Guard against empty string (startswith("") matches everything)
+    if not value or not value.strip():
+        return value
+
     # Try exact UUID match first
     sp = session.query(SystemProfile).filter(SystemProfile.id == value).first()
     if sp:
         return sp.id
 
-    # Try case-insensitive acronym match
-    sp = session.query(SystemProfile).filter(
+    # C-5: Try case-insensitive acronym match, warn on ambiguous
+    matches = session.query(SystemProfile).filter(
         SystemProfile.acronym.ilike(value)
-    ).first()
-    if sp:
-        return sp.id
+    ).all()
+    if len(matches) > 1:
+        console.print(
+            f"[yellow]Warning: ambiguous system match for '{value}'. "
+            f"Matches: {', '.join(m.id[:8] + ' (' + (m.name or '') + ')' for m in matches)}. "
+            f"Using first match.[/yellow]"
+        )
+        return matches[0].id
+    if matches:
+        return matches[0].id
 
-    # Try partial UUID prefix
-    sp = session.query(SystemProfile).filter(
+    # C-5: Try partial UUID prefix, warn on ambiguous
+    matches = session.query(SystemProfile).filter(
         SystemProfile.id.startswith(value)
-    ).first()
-    if sp:
-        return sp.id
+    ).all()
+    if len(matches) > 1:
+        console.print(
+            f"[yellow]Warning: ambiguous system match for '{value}'. "
+            f"Matches: {', '.join(m.id[:8] + ' (' + (m.name or '') + ')' for m in matches)}. "
+            f"Using first match.[/yellow]"
+        )
+        return matches[0].id
+    if matches:
+        return matches[0].id
 
-    # Fall through — return as-is, let the query return empty
+    # Fall through -- return as-is, let the query return empty
     return value
 
 
@@ -86,7 +104,7 @@ def collect(source: tuple[str, ...]) -> None:
 
 @cli.command()
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--status", default=None, help="Filter by status")
+@click.option("--status", default=None, type=click.Choice(["compliant", "non_compliant", "not_assessed", "partial"], case_sensitive=False), help="Filter by status")
 @click.option("--limit", "-n", default=50, help="Max results")
 def results(framework: str | None, status: str | None, limit: int) -> None:
     """Query control results from the last pipeline run."""
@@ -259,7 +277,7 @@ def sources() -> None:
 
     for provider in sorted(conn_registry.list_types()):
         table.add_row("connector", provider, "[green]registered[/green]")
-    for normalizer in norm_registry._normalizers:
+    for normalizer in norm_registry.list_normalizers():
         name = type(normalizer).__name__
         table.add_row("normalizer", name, "[green]registered[/green]")
 
@@ -270,7 +288,7 @@ def sources() -> None:
 @click.option("--source", "-s", required=True, help="Source identifier (e.g., webhook, manual)")
 @click.option("--provider", "-p", required=True, help="Provider name (e.g., crowdstrike, okta)")
 @click.option("--event-type", "-t", required=True, help="Event type label (e.g., falcon_detections)")
-@click.option("--file", "-f", "file_path", required=True, type=click.Path(exists=True), help="Path to JSON file")
+@click.option("--input-file", "file_path", required=True, type=click.Path(exists=True), help="Path to JSON file")
 def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
     """Ingest a JSON file through the webhook receiver and pipeline."""
     import json
@@ -414,6 +432,8 @@ def risk(framework: str, iterations: int) -> None:
 
     init_db()
     engine = RiskEngine(default_iterations=iterations)
+
+    console.print("[dim]Running Monte Carlo simulation...[/dim]")
 
     with get_session() as session:
         result = engine.analyze_framework_risk(session, framework, iterations=iterations)
@@ -1644,7 +1664,10 @@ def simulate_audit(framework: str, date: str, system: str | None) -> None:
     from warlock.assessors.simulation import AuditSimulator
 
     init_db()
-    target = dt.fromisoformat(date).replace(tzinfo=__import__("datetime").timezone.utc)
+    try:
+        target = dt.fromisoformat(date).replace(tzinfo=__import__("datetime").timezone.utc)
+    except ValueError:
+        raise click.BadParameter("Invalid date format. Use YYYY-MM-DD.")
     sim = AuditSimulator()
 
     with get_session() as session:
@@ -1720,8 +1743,8 @@ def effectiveness_report(framework: str | None, days: int) -> None:
 
 
 @cli.command("framework-diff")
-@click.option("--old", "old_path", required=True, help="Path to old framework YAML")
-@click.option("--new", "new_path", required=True, help="Path to new framework YAML")
+@click.option("--old", "old_path", required=True, type=click.Path(exists=True), help="Path to old framework YAML")
+@click.option("--new", "new_path", required=True, type=click.Path(exists=True), help="Path to new framework YAML")
 def framework_diff_cmd(old_path: str, new_path: str) -> None:
     """Compare two framework versions and show control changes."""
     from warlock.frameworks.diff import FrameworkDiff

@@ -1,4 +1,12 @@
-"""Core pipeline schema. Four tables that everything flows through."""
+"""Core pipeline schema. Four tables that everything flows through.
+
+PostgreSQL production note: JSON columns defined here with SQLiteJSON map to
+native JSON in SQLite and JSON in PostgreSQL. For production PostgreSQL
+deployments, these should be migrated to JSONB to enable GIN index support
+for efficient JSONB containment queries (@>) and full-text search. This is a
+PostgreSQL-specific migration that should be applied separately from this
+schema -- do not change the column type here.
+"""
 
 from __future__ import annotations
 
@@ -210,6 +218,7 @@ class ControlResult(Base):
         Index("idx_result_status", "status"),
         Index("idx_result_assessed", "assessed_at"),
         Index("idx_result_finding", "finding_id"),
+        Index("idx_result_mapping", "control_mapping_id"),
     )
 
 
@@ -242,7 +251,7 @@ class AuditEntry(Base):
     evidence_sha256 = Column(String(64))  # SHA256 of the evidence payload
 
     # Context
-    extra = Column("metadata", SQLiteJSON, default=dict)
+    extra = Column("extra", SQLiteJSON, default=dict)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
     __table_args__ = (
@@ -290,7 +299,7 @@ class PostureSnapshot(Base):
     sufficiency_details = Column(SQLiteJSON, default=dict)
 
     # Phase 3: multi-system scoping
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))
 
     # Phase 4: effectiveness scoring
     uptime_pct = Column(Float)           # % of time compliant over trailing window
@@ -303,6 +312,7 @@ class PostureSnapshot(Base):
         Index("idx_posture_date", "snapshot_date"),
         Index("idx_posture_framework", "framework", "control_id"),
         Index("idx_posture_status", "status"),
+        Index("idx_posture_system", "system_profile_id"),
     )
 
 
@@ -344,7 +354,7 @@ class APIKey(Base):
     __tablename__ = "api_keys"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     key_hash = Column(String(64), nullable=False)  # SHA256 of the actual key
     name = Column(String(100), nullable=False)
     scopes = Column(SQLiteJSON, default=list)  # ["read", "write", "admin"]
@@ -426,11 +436,11 @@ class POAM(Base):
     __tablename__ = "poams"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    finding_id = Column(String(36), ForeignKey("findings.id"))
-    control_result_id = Column(String(36), ForeignKey("control_results.id"))
+    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="SET NULL"))
+    control_result_id = Column(String(36), ForeignKey("control_results.id", ondelete="SET NULL"))
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50), nullable=False)
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))
 
     weakness_description = Column(Text, nullable=False)
     severity = Column(String(20), nullable=False)
@@ -475,8 +485,8 @@ class CompensatingControl(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     original_framework = Column(String(50), nullable=False)
     original_control_id = Column(String(50), nullable=False)
-    poam_id = Column(String(36), ForeignKey("poams.id"))
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+    poam_id = Column(String(36), ForeignKey("poams.id", ondelete="SET NULL"))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))
 
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
@@ -515,8 +525,8 @@ class RiskAcceptance(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50), nullable=False)
-    poam_id = Column(String(36), ForeignKey("poams.id"))
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+    poam_id = Column(String(36), ForeignKey("poams.id", ondelete="SET NULL"))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))
 
     risk_description = Column(Text, nullable=False)
     risk_level = Column(String(20), nullable=False)  # critical, high, moderate, low
@@ -558,8 +568,8 @@ class Issue(Base):
     description = Column(Text)
 
     # Linked to compliance data
-    finding_id = Column(String(36), ForeignKey("findings.id"))
-    control_result_id = Column(String(36), ForeignKey("control_results.id"))
+    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="SET NULL"))
+    control_result_id = Column(String(36), ForeignKey("control_results.id", ondelete="SET NULL"))
     poam_id = Column(String(36), ForeignKey("poams.id", ondelete="SET NULL"))
     framework = Column(String(50))
     control_id = Column(String(50))
@@ -635,7 +645,7 @@ class Attestation(Base):
     __tablename__ = "attestations"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    engagement_id = Column(String(36), ForeignKey("audit_engagements.id"))
+    engagement_id = Column(String(36), ForeignKey("audit_engagements.id", ondelete="SET NULL"))
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50))  # null = framework-level attestation
 
@@ -698,6 +708,7 @@ class AuditComment(Base):
     __table_args__ = (
         Index("idx_auditcomment_engagement", "engagement_id"),
         Index("idx_auditcomment_target", "target_type", "target_id"),
+        Index("idx_auditcomment_auditor", "external_auditor_id"),
     )
 
 
@@ -717,6 +728,16 @@ class LegalHold(Base):
     created_by = Column(String(255))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    # W-5: Optional scoping fields
+    framework = Column(String(50), nullable=True)
+    system_profile_id = Column(
+        String(36),
+        ForeignKey("system_profiles.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    date_range_start = Column(DateTime(timezone=True), nullable=True)
+    date_range_end = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("idx_legal_hold_active", "is_active"),
@@ -1122,6 +1143,7 @@ class ComplianceDrift(Base):
         Index("idx_drift_control", "framework", "control_id"),
         Index("idx_drift_detected", "detected_at"),
         Index("idx_drift_direction", "drift_direction"),
+        Index("idx_drift_system", "system_profile_id"),
     )
 
 
@@ -1141,6 +1163,10 @@ class PolicyOverride(Base):
     is_active = Column(Boolean, default=True)
     created_by = Column(String(255))
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_policy_override_active", "is_active"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1163,6 +1189,11 @@ class ExternalAuditor(Base):
     is_active = Column(Boolean, default=True)
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_ext_auditor_email", "email"),
+        Index("idx_ext_auditor_magic_hash", "magic_link_hash"),
+    )
 
 
 class AuditorEngagementAssignment(Base):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, Header, Request, status
 from sqlalchemy.orm import Session
 
 from warlock.db.engine import get_session as _get_session
@@ -39,6 +39,7 @@ class AuthContext:
 
 
 def get_current_user(
+    request: Request,
     authorization: str | None = Header(None),
     x_api_key: str | None = Header(None),
     db: Session = Depends(get_db),
@@ -62,6 +63,8 @@ def get_current_user(
                     log.warning("API key %s has empty scopes — no permissions granted", api_key.id[:8])
             else:
                 effective = role_perms
+            # S-9: Set request.state.user so OPA policy gate can read it
+            request.state.user = user
             return AuthContext(
                 user=user,
                 effective_permissions=effective,
@@ -102,6 +105,8 @@ def get_current_user(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Token has been revoked",
                 )
+        # S-9: Set request.state.user so OPA policy gate can read it
+        request.state.user = user
         return AuthContext(
             user=user,
             effective_permissions=PERMISSIONS.get(user.role, set()),

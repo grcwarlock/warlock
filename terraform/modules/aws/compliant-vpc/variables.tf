@@ -1,13 +1,25 @@
 variable "name_prefix" {
-  description = "Prefix for resource names"
+  description = "Prefix applied to all resource names"
   type        = string
   default     = "grc"
+
+  # T-10: Enforce a non-empty, reasonably sized prefix
+  validation {
+    condition     = length(var.name_prefix) >= 2 && length(var.name_prefix) <= 20
+    error_message = "name_prefix must be between 2 and 20 characters."
+  }
 }
 
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string
   default     = "10.0.0.0/16"
+
+  # T-10: Validate CIDR is parseable
+  validation {
+    condition     = can(cidrhost(var.vpc_cidr, 0))
+    error_message = "vpc_cidr must be a valid CIDR block (e.g. 10.0.0.0/16)."
+  }
 }
 
 variable "availability_zones" {
@@ -35,12 +47,26 @@ variable "enable_flow_logs" {
 }
 
 variable "flow_log_retention_days" {
-  description = "CloudWatch log retention for flow logs"
+  description = "CloudWatch log retention in days for VPC flow logs"
   type        = number
   default     = 365
+
+  # T-10: Retention must be a positive integer
+  validation {
+    condition     = var.flow_log_retention_days > 0
+    error_message = "flow_log_retention_days must be greater than 0."
+  }
+}
+
+# T-6: Optional KMS key for encrypting the flow logs CloudWatch log group
+variable "flow_logs_kms_key_id" {
+  description = "ARN of a KMS key to encrypt the flow logs CloudWatch log group. If null, CloudWatch-managed encryption is used."
+  type        = string
+  default     = null
 }
 
 variable "tags" {
-  type    = map(string)
-  default = {}
+  description = "Map of tags applied to all resources in this module"
+  type        = map(string)
+  default     = {}
 }

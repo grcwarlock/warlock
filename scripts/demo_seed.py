@@ -8956,6 +8956,14 @@ def _create_demo_users(session):
 
 
 def main():
+    # Registry divergence note: this demo builds its own ConnectorRegistry,
+    # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
+    # DemoXxxConnector mocks. Production pipelines use the global registry
+    # constructed by warlock/pipeline/loader.py (build_pipeline / load_assertions),
+    # which discovers real connectors from settings and wires the configured
+    # queue backend (memory, Redis, Kafka, or SQS). Do not rely on the demo
+    # registry for production behaviour -- it is intentionally isolated so that
+    # demo seeds can run without any real credentials or external services.
     print("=" * 60)
     print("  Warlock Demo Seed")
     print("=" * 60)

@@ -28,6 +28,11 @@ class AWSNormalizer(BaseNormalizer):
         "securityhub_hub": "_normalize_securityhub",
         "s3_buckets": "_normalize_s3_buckets",
         "config_recorders": "_normalize_config_recorders",
+        "config_compliance": "_normalize_config_compliance",
+        "iam_policies": "_normalize_iam_policies",
+        "ec2_vpcs": "_normalize_ec2_vpcs",
+        "ec2_flow_logs": "_normalize_ec2_flow_logs",
+        "cloudtrail_status": "_normalize_cloudtrail_status",
     }
 
     def can_handle(self, raw_event: RawEventData) -> bool:
@@ -365,6 +370,127 @@ class AWSNormalizer(BaseNormalizer):
                 severity="info" if all_supported else "medium",
             ))
         return findings
+
+
+    # -- Config Compliance --
+
+    def _normalize_config_compliance(self, raw: RawEventData) -> list[FindingData]:
+        """Normalize AWS Config compliance evaluation results."""
+        findings = []
+        results = raw.raw_data.get("response", {}).get("EvaluationResults", [])
+        for result in results:
+            resource_id = result.get("EvaluationResultIdentifier", {}).get(
+                "EvaluationResultQualifier", {}
+            ).get("ResourceId", "")
+            resource_type = result.get("EvaluationResultIdentifier", {}).get(
+                "EvaluationResultQualifier", {}
+            ).get("ResourceType", "")
+            compliance = result.get("ComplianceType", "")
+            rule_name = result.get("EvaluationResultIdentifier", {}).get(
+                "EvaluationResultQualifier", {}
+            ).get("ConfigRuleName", "")
+
+            is_compliant = compliance == "COMPLIANT"
+            findings.append(FindingData(
+                **self._base(raw),
+                observation_type="inventory" if is_compliant else "misconfiguration",
+                title=f"Config rule {rule_name}: {compliance}",
+                detail=result,
+                resource_id=resource_id,
+                resource_type=resource_type,
+                resource_name=resource_id,
+                severity="info" if is_compliant else "medium",
+            ))
+        return findings
+
+    # -- IAM Policies --
+
+    def _normalize_iam_policies(self, raw: RawEventData) -> list[FindingData]:
+        """Normalize IAM policy listing."""
+        findings = []
+        policies = raw.raw_data.get("response", {}).get("Policies", [])
+        for policy in policies:
+            findings.append(FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"IAM policy: {policy.get('PolicyName', '?')}",
+                detail=policy,
+                resource_id=policy.get("Arn", ""),
+                resource_type="iam_policy",
+                resource_name=policy.get("PolicyName", ""),
+                severity="info",
+            ))
+        return findings
+
+    # -- EC2 VPCs --
+
+    def _normalize_ec2_vpcs(self, raw: RawEventData) -> list[FindingData]:
+        """Normalize VPC inventory."""
+        findings = []
+        vpcs = raw.raw_data.get("response", {}).get("Vpcs", [])
+        for vpc in vpcs:
+            findings.append(FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"VPC: {vpc.get('VpcId', '?')}",
+                detail=vpc,
+                resource_id=vpc.get("VpcId", ""),
+                resource_type="ec2_vpc",
+                resource_name=vpc.get("VpcId", ""),
+                severity="info",
+            ))
+        return findings
+
+    # -- EC2 Flow Logs --
+
+    def _normalize_ec2_flow_logs(self, raw: RawEventData) -> list[FindingData]:
+        """Normalize VPC flow log configuration."""
+        flow_logs = raw.raw_data.get("response", {}).get("FlowLogs", [])
+        if not flow_logs:
+            return [FindingData(
+                **self._base(raw),
+                observation_type="misconfiguration",
+                title="VPC flow logs - none configured",
+                detail={"flow_logs": [], "issues": ["no_flow_logs"]},
+                resource_id="vpc-flow-logs",
+                resource_type="ec2_flow_log",
+                resource_name="flow-logs",
+                severity="medium",
+            )]
+        findings = []
+        for fl in flow_logs:
+            findings.append(FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"Flow log: {fl.get('FlowLogId', '?')}",
+                detail=fl,
+                resource_id=fl.get("FlowLogId", ""),
+                resource_type="ec2_flow_log",
+                resource_name=fl.get("FlowLogId", ""),
+                severity="info",
+            ))
+        return findings
+
+    # -- CloudTrail Status --
+
+    def _normalize_cloudtrail_status(self, raw: RawEventData) -> list[FindingData]:
+        """Normalize CloudTrail trail status (get_trail_status response)."""
+        status = raw.raw_data.get("response", {})
+        is_logging = status.get("IsLogging", False)
+        issues = []
+        if not is_logging:
+            issues.append("logging_disabled")
+
+        return [FindingData(
+            **self._base(raw),
+            observation_type="misconfiguration" if issues else "inventory",
+            title="CloudTrail status" + (" - logging disabled" if issues else " - active"),
+            detail={"status": status, "issues": issues},
+            resource_id=raw.raw_data.get("trail_arn", "cloudtrail"),
+            resource_type="cloudtrail",
+            resource_name="cloudtrail-status",
+            severity="high" if issues else "info",
+        )]
 
 
 # Register

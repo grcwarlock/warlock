@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from warlock.db.models import CompensatingControl
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -73,7 +74,8 @@ class CompensatingControlManager:
         )
 
         # Check expiry — an active control past its expiry is not valid
-        if cc and cc.expiry_date and cc.expiry_date < now:
+        # W-4: ensure_aware before comparing expiry_date
+        if cc and cc.expiry_date and ensure_aware(cc.expiry_date) < now:
             log.info(
                 "Compensating control %s expired at %s, skipping",
                 cc.id,

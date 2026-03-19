@@ -483,7 +483,7 @@ def test_assertion_engine():
     check("unknown assertion returns False", passed is False)
 
     # Control binding lookup
-    check("bound control found", eng.get_assertion_for_control("nist", "AC-1") == "test_pass")
+    check("bound control found", eng.get_assertion_for_control("nist", "AC-1") == ["test_pass"])
     check("unbound control returns None", eng.get_assertion_for_control("nist", "ZZ-99") is None)
 
 
@@ -525,7 +525,7 @@ def test_assessor():
 
     bound_result = [r for r in results if r.control_id == "IA-2"][0]
     check("bound control is non_compliant", bound_result.status == "non_compliant")
-    check("assertion ran", bound_result.assertion_name == "check_mfa")
+    check("assertion ran", "check_mfa" in bound_result.assertion_name)
     check("has remediation", bound_result.remediation_summary == "Enable MFA")
     check("has evidence ids", len(bound_result.evidence_ids) > 0)
 
@@ -698,9 +698,9 @@ def test_assertions_library():
     check("mfa_enabled fails when MFA inactive + console access", not passed)
     check("mfa_enabled gives reason", len(reasons) > 0)
 
-    # Test with empty detail (shouldn't crash)
+    # Test with empty detail — fail-closed when no MFA evidence
     passed, reasons = fn({}, {})
-    check("mfa_enabled handles empty detail", passed)  # no recognizable fields = pass
+    check("mfa_enabled fails closed on empty detail", not passed)  # no recognizable fields = fail closed
 
     # Test no_open_security_groups
     fn_sg = engine._assertions["no_open_security_groups"]
@@ -718,9 +718,9 @@ def test_assertions_library():
 
     # Verify control bindings exist
     check("IA-2 bound to mfa_enabled",
-          engine.get_assertion_for_control("nist_800_53", "IA-2") == "mfa_enabled")
+          "mfa_enabled" in (engine.get_assertion_for_control("nist_800_53", "IA-2") or []))
     check("AU-2 bound to cloudtrail_enabled",
-          engine.get_assertion_for_control("nist_800_53", "AU-2") == "cloudtrail_enabled")
+          "cloudtrail_enabled" in (engine.get_assertion_for_control("nist_800_53", "AU-2") or []))
 
 
 # ===================================================================

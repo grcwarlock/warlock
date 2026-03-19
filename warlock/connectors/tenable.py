@@ -12,7 +12,6 @@ from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -197,7 +196,15 @@ class TenableConnector(BaseConnector):
             result.errors.append(f"agent_status: {e}")
 
     def _poll_export(self, client: httpx.Client, resource: str, export_uuid: str) -> list:
-        """Poll an export until ready, then download all chunks."""
+        """Poll an export until ready, then download all chunks.
+
+        Note: This method uses blocking ``time.sleep()`` between poll attempts,
+        which will block the calling thread for up to ``export_poll_max *
+        export_poll_interval`` seconds (default: 60 * 5 = 300s).  For production
+        deployments with many concurrent connectors, consider replacing this with
+        an async implementation using ``asyncio.sleep()`` and ``httpx.AsyncClient``
+        to avoid starving the thread pool.
+        """
         max_attempts = self.config.settings.get("export_poll_max", 60)
         poll_interval = self.config.settings.get("export_poll_interval", 5)
 

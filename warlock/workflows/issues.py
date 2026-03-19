@@ -300,9 +300,11 @@ class IssueManager:
         created: list[Issue] = []
 
         for result in results:
-            # Check if an issue already exists for this control result
+            # W-7: Check for any open issue on the same (framework, control_id)
             existing = session.query(Issue).filter(
-                Issue.control_result_id == result.id,
+                Issue.framework == result.framework,
+                Issue.control_id == result.control_id,
+                Issue.status.notin_(["closed", "verified", "risk_accepted"]),
             ).first()
             if existing:
                 continue

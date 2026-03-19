@@ -336,11 +336,61 @@ class AuditorWorkflow:
                 excluded = set(eng.excluded_controls)
                 control_ids = [c for c in control_ids if c not in excluded]
 
-        # Build per-control packages
+        # Pre-load all data for the framework/date range in 3 bulk queries
+        # to avoid N+1 queries in the per-control loop below.
+        all_results: list[ControlResult] = (
+            session.query(ControlResult)
+            .filter(
+                ControlResult.framework == framework,
+                ControlResult.assessed_at >= start,
+                ControlResult.assessed_at <= end,
+            )
+            .order_by(ControlResult.assessed_at.desc())
+            .all()
+        )
+        results_by_control: dict[str, list[ControlResult]] = {}
+        for r in all_results:
+            results_by_control.setdefault(r.control_id, []).append(r)
+
+        all_mappings: list[ControlMapping] = (
+            session.query(ControlMapping)
+            .filter(ControlMapping.framework == framework)
+            .all()
+        )
+        mappings_by_control: dict[str, list[ControlMapping]] = {}
+        for m in all_mappings:
+            mappings_by_control.setdefault(m.control_id, []).append(m)
+
+        # Collect all finding IDs referenced by mappings and results
+        all_finding_ids: set[str] = set()
+        for m in all_mappings:
+            all_finding_ids.add(m.finding_id)
+        for r in all_results:
+            all_finding_ids.add(r.finding_id)
+
+        all_findings_list: list[Finding] = []
+        if all_finding_ids:
+            all_findings_list = (
+                session.query(Finding)
+                .filter(
+                    Finding.id.in_(all_finding_ids),
+                    Finding.observed_at >= start,
+                    Finding.observed_at <= end,
+                )
+                .order_by(Finding.observed_at.desc())
+                .all()
+            )
+        findings_by_id: dict[str, Finding] = {f.id: f for f in all_findings_list}
+
+        # Build per-control packages using in-memory data (no per-control DB hits)
         control_packages: dict[str, ControlEvidencePackage] = {}
         for cid in sorted(control_ids):
-            control_packages[cid] = self.build_control_package(
-                session, framework, cid, start, end
+            control_packages[cid] = self._build_control_package_from_cache(
+                framework,
+                cid,
+                results_by_control.get(cid, []),
+                mappings_by_control.get(cid, []),
+                findings_by_id,
             )
 
         # Compute summary
@@ -375,6 +425,61 @@ class AuditorWorkflow:
             period_end=end,
             control_packages=control_packages,
             summary=summary,
+        )
+
+    def _build_control_package_from_cache(
+        self,
+        framework: str,
+        control_id: str,
+        results: list[ControlResult],
+        mappings: list[ControlMapping],
+        findings_by_id: dict[str, "Finding"],
+    ) -> ControlEvidencePackage:
+        """Build a ControlEvidencePackage from pre-fetched, in-memory data.
+
+        Called by build_audit_package to avoid per-control DB queries (N+1).
+        """
+        # Collect finding IDs for this control
+        finding_ids: set[str] = {m.finding_id for m in mappings}
+        finding_ids.update(r.finding_id for r in results)
+
+        findings = [findings_by_id[fid] for fid in finding_ids if fid in findings_by_id]
+
+        control_family = ""
+        if mappings:
+            control_family = mappings[0].control_family or ""
+
+        artifacts = [_finding_to_artifact(f, control_id, framework) for f in findings]
+        assertions_run = [_result_to_assertion_record(r) for r in results]
+        overall_status = _determine_overall_status(results)
+
+        gaps: list[str] = []
+        if not findings:
+            gaps.append(f"No evidence collected for {control_id} in the audit period")
+        if not results:
+            gaps.append(f"No assessments run for {control_id} in the audit period")
+        elif all(r.assessor == "none" for r in results):
+            gaps.append(f"No assertions defined for {control_id}")
+
+        recommendations: list[str] = []
+        if overall_status == "non_compliant":
+            recommendations.append(
+                f"Remediate non-compliant findings for {control_id} before audit"
+            )
+        if not findings:
+            recommendations.append(
+                f"Configure a connector to collect evidence for {control_id}"
+            )
+
+        return ControlEvidencePackage(
+            framework=framework,
+            control_id=control_id,
+            control_family=control_family,
+            overall_status=overall_status,
+            artifacts=artifacts,
+            assertions_run=assertions_run,
+            gaps=gaps,
+            recommendations=recommendations,
         )
 
     def export_package_json(self, package: AuditPackage) -> str:
@@ -448,10 +553,58 @@ class AuditorWorkflow:
         )
         control_ids = sorted(row[0] for row in rows)
 
+        # Pre-load all data in 3 bulk queries to avoid N+1
+        all_results: list[ControlResult] = (
+            session.query(ControlResult)
+            .filter(
+                ControlResult.framework == framework,
+                ControlResult.assessed_at >= start,
+                ControlResult.assessed_at <= end,
+            )
+            .order_by(ControlResult.assessed_at.desc())
+            .all()
+        )
+        results_by_control: dict[str, list[ControlResult]] = {}
+        for r in all_results:
+            results_by_control.setdefault(r.control_id, []).append(r)
+
+        all_mappings: list[ControlMapping] = (
+            session.query(ControlMapping)
+            .filter(ControlMapping.framework == framework)
+            .all()
+        )
+        mappings_by_control: dict[str, list[ControlMapping]] = {}
+        for m in all_mappings:
+            mappings_by_control.setdefault(m.control_id, []).append(m)
+
+        all_finding_ids: set[str] = set()
+        for m in all_mappings:
+            all_finding_ids.add(m.finding_id)
+        for r in all_results:
+            all_finding_ids.add(r.finding_id)
+
+        all_findings_list: list[Finding] = []
+        if all_finding_ids:
+            all_findings_list = (
+                session.query(Finding)
+                .filter(
+                    Finding.id.in_(all_finding_ids),
+                    Finding.observed_at >= start,
+                    Finding.observed_at <= end,
+                )
+                .order_by(Finding.observed_at.desc())
+                .all()
+            )
+        findings_by_id: dict[str, Finding] = {f.id: f for f in all_findings_list}
+
         control_packages: dict[str, ControlEvidencePackage] = {}
         for cid in control_ids:
-            control_packages[cid] = self.build_control_package(
-                session, framework, cid, start, end
+            control_packages[cid] = self._build_control_package_from_cache(
+                framework,
+                cid,
+                results_by_control.get(cid, []),
+                mappings_by_control.get(cid, []),
+                findings_by_id,
             )
 
         total = len(control_packages)

@@ -5,7 +5,7 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    aws = { source = "hashicorp/aws", version = ">= 5.0" }
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
 }
 
@@ -16,7 +16,8 @@ locals {
 # ── Warlock Audit Role (read-only) ────────────────────────────────────
 
 resource "aws_iam_role" "grc_auditor" {
-  name = "warlock-auditor"
+  # T-7: Use name_prefix variable instead of hardcoded "warlock-auditor"
+  name = "${var.name_prefix}-auditor"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -43,16 +44,19 @@ resource "aws_iam_policy" "require_mfa" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowViewAccountInfo"
-        Effect    = "Allow"
-        Action    = ["iam:ListVirtualMFADevices", "iam:GetAccountPasswordPolicy"]
-        Resource  = "*"
+        Sid      = "AllowViewAccountInfo"
+        Effect   = "Allow"
+        Action   = ["iam:ListVirtualMFADevices", "iam:GetAccountPasswordPolicy"]
+        Resource = "*"
       },
       {
-        Sid       = "AllowManageOwnMFA"
-        Effect    = "Allow"
-        Action    = ["iam:CreateVirtualMFADevice", "iam:EnableMFADevice", "iam:ResyncMFADevice"]
-        Resource  = ["arn:aws:iam::*:mfa/$${aws:username}", "arn:aws:iam::*:user/$${aws:username}"]
+        Sid    = "AllowManageOwnMFA"
+        Effect = "Allow"
+        Action = ["iam:CreateVirtualMFADevice", "iam:EnableMFADevice", "iam:ResyncMFADevice"]
+        Resource = [
+          "arn:aws:iam::*:mfa/$${aws:username}",
+          "arn:aws:iam::*:user/$${aws:username}"
+        ]
       },
       {
         Sid       = "DenyAllExceptMFASetup"
@@ -69,7 +73,8 @@ resource "aws_iam_policy" "require_mfa" {
 # ── Root Account Usage Alarm ─────────────────────────────────────────
 
 resource "aws_sns_topic" "security_alerts" {
-  name = "grc-security-alerts"
+  # T-7: Use name_prefix variable instead of hardcoded "grc-security-alerts"
+  name = "${var.name_prefix}-security-alerts"
   tags = local.common_tags
 }
 

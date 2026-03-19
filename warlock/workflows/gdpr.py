@@ -9,12 +9,23 @@ Handles:
 from __future__ import annotations
 
 import logging
+import secrets
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from warlock.db.models import Personnel, User, TrustAccessRequest
+from warlock.db.models import (
+    CompensatingControl,
+    Issue,
+    IssueComment,
+    POAM,
+    Personnel,
+    Questionnaire,
+    RiskAcceptance,
+    TrustAccessRequest,
+    User,
+)
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +45,8 @@ _TRUST_PII_FIELDS = [
 
 
 def _anonymize_value(field_name: str, record_id: str) -> str:
-    """Generate a consistent anonymized value."""
-    return f"[REDACTED-{record_id[:8]}]"
+    """Generate a random anonymized value (W-6: non-deterministic)."""
+    return f"[REDACTED-{secrets.token_hex(4)}]"
 
 
 class GDPRManager:
@@ -140,6 +151,87 @@ class GDPRManager:
                     setattr(tr, field, _anonymize_value(field, tr.id))
             result["affected"]["trust_requests"] = len(trust_requests)
             log.info("GDPR erasure: anonymized %d trust requests", len(trust_requests))
+
+        # W-3: Cascade anonymization to workflow tables
+        # Issues
+        issue_fields = ["assigned_to", "assigned_by", "created_by"]
+        issues = session.query(Issue).filter(
+            (Issue.assigned_to == email)
+            | (Issue.assigned_by == email)
+            | (Issue.created_by == email)
+        ).all()
+        for iss in issues:
+            for fld in issue_fields:
+                if getattr(iss, fld, None) == email:
+                    setattr(iss, fld, _anonymize_value(fld, iss.id))
+        if issues:
+            result["affected"]["issues"] = len(issues)
+            log.info("GDPR erasure: anonymized %d issue records", len(issues))
+
+        # POA&Ms
+        poam_fields = ["created_by", "updated_by"]
+        poams = session.query(POAM).filter(
+            (POAM.created_by == email) | (POAM.updated_by == email)
+        ).all()
+        for p in poams:
+            for fld in poam_fields:
+                if getattr(p, fld, None) == email:
+                    setattr(p, fld, _anonymize_value(fld, p.id))
+        if poams:
+            result["affected"]["poams"] = len(poams)
+            log.info("GDPR erasure: anonymized %d POAM records", len(poams))
+
+        # Risk Acceptances
+        ra_fields = ["requested_by", "approved_by"]
+        ras = session.query(RiskAcceptance).filter(
+            (RiskAcceptance.requested_by == email)
+            | (RiskAcceptance.approved_by == email)
+        ).all()
+        for ra in ras:
+            for fld in ra_fields:
+                if getattr(ra, fld, None) == email:
+                    setattr(ra, fld, _anonymize_value(fld, ra.id))
+        if ras:
+            result["affected"]["risk_acceptances"] = len(ras)
+            log.info("GDPR erasure: anonymized %d risk acceptance records", len(ras))
+
+        # Compensating Controls
+        cc_fields = ["created_by", "approved_by"]
+        ccs = session.query(CompensatingControl).filter(
+            (CompensatingControl.created_by == email)
+            | (CompensatingControl.approved_by == email)
+        ).all()
+        for cc in ccs:
+            for fld in cc_fields:
+                if getattr(cc, fld, None) == email:
+                    setattr(cc, fld, _anonymize_value(fld, cc.id))
+        if ccs:
+            result["affected"]["compensating_controls"] = len(ccs)
+            log.info("GDPR erasure: anonymized %d compensating control records", len(ccs))
+
+        # Questionnaires
+        q_fields = ["vendor_contact_email", "created_by"]
+        qs = session.query(Questionnaire).filter(
+            (Questionnaire.vendor_contact_email == email)
+            | (Questionnaire.created_by == email)
+        ).all()
+        for q in qs:
+            for fld in q_fields:
+                if getattr(q, fld, None) == email:
+                    setattr(q, fld, _anonymize_value(fld, q.id))
+        if qs:
+            result["affected"]["questionnaires"] = len(qs)
+            log.info("GDPR erasure: anonymized %d questionnaire records", len(qs))
+
+        # Issue Comments
+        comments = session.query(IssueComment).filter(
+            IssueComment.author == email
+        ).all()
+        for c in comments:
+            c.author = _anonymize_value("author", c.id)
+        if comments:
+            result["affected"]["issue_comments"] = len(comments)
+            log.info("GDPR erasure: anonymized %d issue comment records", len(comments))
 
         session.flush()
         return result

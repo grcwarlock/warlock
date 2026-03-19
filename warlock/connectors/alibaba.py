@@ -20,7 +20,6 @@ from uuid import uuid4
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -461,9 +460,6 @@ class AlibabaConnector(BaseConnector):
 
     def _get_access_key_secret(self) -> str:
         return self.get_secret("WLK_ALIBABA_ACCESS_KEY_SECRET")
-
-    def _get_region(self) -> str:
-        return self.config.settings.get("region", "cn-hangzhou")
 
 
 # Register

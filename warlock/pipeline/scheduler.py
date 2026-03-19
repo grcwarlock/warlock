@@ -163,11 +163,11 @@ class PipelineScheduler:
     def _execute_collect(self) -> None:
         """Run the 4-stage pipeline."""
         from warlock.db.engine import get_session, init_db
-        from warlock.pipeline.bus import EventBus
+        from warlock.pipeline.queue import create_bus_from_settings
         from warlock.pipeline.loader import build_pipeline
 
         init_db()
-        bus = EventBus()
+        bus = create_bus_from_settings()
         pipeline = build_pipeline(bus)
 
         with get_session() as session:

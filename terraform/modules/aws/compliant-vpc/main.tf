@@ -6,8 +6,14 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    aws = { source = "hashicorp/aws", version = ">= 5.0" }
+    aws    = { source = "hashicorp/aws", version = "~> 5.0" }
+    random = { source = "hashicorp/random", version = "~> 3.5" }
   }
+}
+
+# T-3: Unique suffix to prevent IAM role name collisions across deployments
+resource "random_id" "flow_log_suffix" {
+  byte_length = 4
 }
 
 locals {
@@ -23,7 +29,7 @@ resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = merge(local.common_tags, { Name = "${var.name_prefix}-vpc" })
+  tags                 = merge(local.common_tags, { Name = "${var.name_prefix}-vpc" })
 }
 
 # ── Subnets ───────────────────────────────────────────────────────────
@@ -70,7 +76,8 @@ resource "aws_nat_gateway" "main" {
   tags          = merge(local.common_tags, { Name = "${var.name_prefix}-nat-${count.index}" })
 }
 
-# Route Tables
+# ── Route Tables ──────────────────────────────────────────────────────
+
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -79,7 +86,8 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.main.id
   }
 
-  tags = merge(var.tags, {
+  # T-11: Use local.common_tags (includes ManagedBy/Framework) instead of bare var.tags
+  tags = merge(local.common_tags, {
     Name = "${var.name_prefix}-public-rt"
   })
 }
@@ -99,7 +107,8 @@ resource "aws_route_table" "private" {
     nat_gateway_id = aws_nat_gateway.main[count.index].id
   }
 
-  tags = merge(var.tags, {
+  # T-11: Use local.common_tags (includes ManagedBy/Framework) instead of bare var.tags
+  tags = merge(local.common_tags, {
     Name = "${var.name_prefix}-private-rt-${var.availability_zones[count.index]}"
   })
 }
@@ -124,12 +133,16 @@ resource "aws_cloudwatch_log_group" "flow_logs" {
   count             = var.enable_flow_logs ? 1 : 0
   name              = "/vpc/${var.name_prefix}/flow-logs"
   retention_in_days = var.flow_log_retention_days
-  tags              = local.common_tags
+  # T-6: Optionally encrypt the log group with a caller-supplied KMS key
+  kms_key_id = var.flow_logs_kms_key_id
+  tags       = local.common_tags
 }
 
+# T-3: Role name includes random suffix to prevent collisions when multiple instances
+# of this module deploy into the same account
 resource "aws_iam_role" "flow_logs" {
   count = var.enable_flow_logs ? 1 : 0
-  name  = "${var.name_prefix}-flow-logs-role"
+  name  = "${var.name_prefix}-${random_id.flow_log_suffix.hex}-flow-logs-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -156,13 +169,13 @@ resource "aws_iam_role_policy" "flow_logs" {
 }
 
 resource "aws_flow_log" "main" {
-  count                = var.enable_flow_logs ? 1 : 0
-  iam_role_arn         = aws_iam_role.flow_logs[0].arn
-  log_destination      = aws_cloudwatch_log_group.flow_logs[0].arn
-  traffic_type         = "ALL"
-  vpc_id               = aws_vpc.main.id
+  count                    = var.enable_flow_logs ? 1 : 0
+  iam_role_arn             = aws_iam_role.flow_logs[0].arn
+  log_destination          = aws_cloudwatch_log_group.flow_logs[0].arn
+  traffic_type             = "ALL"
+  vpc_id                   = aws_vpc.main.id
   max_aggregation_interval = 60
-  tags                 = local.common_tags
+  tags                     = local.common_tags
 }
 
 # ── VPC Endpoints (reduce internet exposure) ─────────────────────────

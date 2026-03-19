@@ -40,6 +40,49 @@ _FRAMEWORK_PROFILE_URIS: dict[str, str] = {
     "pci_dss": "#pci-dss-profile",
 }
 
+# Local OSCAL catalog paths (relative to project root).
+# Maps framework_id → catalog JSON path within frameworks-oscal/.
+_LOCAL_CATALOG_PATHS: dict[str, str] = {
+    "nist_800_53": "frameworks-oscal/nist-800-53-oscal/catalog/catalog.json",
+    "iso_27001": "frameworks-oscal/iso-27001-oscal/catalog/catalog.json",
+    "soc2": "frameworks-oscal/soc2-oscal/catalog/catalog.json",
+    "iso_42001": "frameworks-oscal/iso-42001-oscal/catalog/catalog.json",
+    "iso_27701": "frameworks-oscal/iso-27701-oscal/catalog/catalog.json",
+    "ucf": "frameworks-oscal/unified-controls-framework/catalog/ucf-catalog.json",
+}
+
+
+def _load_local_catalog(framework: str) -> str | None:
+    """Load a local OSCAL catalog and return its UUID for use as a profile href.
+
+    Walks up from this file to find the project root (where frameworks-oscal/ lives),
+    then reads the catalog JSON and extracts the UUID.  Returns a ``#<uuid>`` href
+    if successful, or ``None`` if no local catalog is available.
+    """
+    rel_path = _LOCAL_CATALOG_PATHS.get(framework)
+    if not rel_path:
+        return None
+
+    # Resolve project root: this file is at warlock/export/oscal.py
+    project_root = Path(__file__).resolve().parent.parent.parent
+    catalog_path = project_root / rel_path
+    if not catalog_path.is_file():
+        log.debug("Local catalog not found for %s at %s", framework, catalog_path)
+        return None
+
+    try:
+        data = json.loads(catalog_path.read_text(encoding="utf-8"))
+        # Handle both standard {"catalog": {...}} and non-standard root keys
+        catalog_obj = data.get("catalog", data.get("ucf-catalog", data))
+        uuid = catalog_obj.get("uuid")
+        if uuid:
+            log.debug("Using local catalog UUID %s for %s", uuid, framework)
+            return f"#{uuid}"
+        return None
+    except Exception:
+        log.debug("Failed to read local catalog for %s", framework, exc_info=True)
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Helper functions
@@ -47,14 +90,14 @@ _FRAMEWORK_PROFILE_URIS: dict[str, str] = {
 
 
 def _oscal_control_id(framework: str, control_id: str) -> str:
-    """Convert a control ID to OSCAL format (lowercase, hyphens for spaces/underscores).
+    """Convert a control ID to OSCAL format (lowercase, hyphens for dots/spaces/underscores).
 
     Examples:
         AC-2   -> ac-2
-        CC6.1  -> cc6.1
-        A.5.15 -> a.5.15
+        CC6.1  -> cc6-1
+        A.5.15 -> a-5-15
     """
-    return control_id.lower().replace("_", "-").replace(" ", "-")
+    return control_id.lower().replace("_", "-").replace(" ", "-").replace(".", "-")
 
 
 def _status_to_oscal(status: str) -> str:
@@ -528,7 +571,10 @@ class OscalExporter:
                 req["statements"] = statements
             implemented_requirements.append(req)
 
-        profile_href = _FRAMEWORK_PROFILE_URIS.get(framework, f"#{framework}-profile")
+        profile_href = (
+            _load_local_catalog(framework)
+            or _FRAMEWORK_PROFILE_URIS.get(framework, f"#{framework}-profile")
+        )
 
         return {
             "system-security-plan": {
@@ -542,7 +588,7 @@ class OscalExporter:
                     "system-ids": [
                         {
                             "identifier-type": "https://warlock.dev",
-                            "id": _deterministic_uuid("system", system_name),
+                            "identifier": _deterministic_uuid("system", system_name),
                         }
                     ],
                     "description": description,

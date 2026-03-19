@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from warlock.db.models import RiskAcceptance
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -76,6 +77,9 @@ class RiskAcceptanceManager:
             )
             .first()
         )
+        # W-4: ensure_aware before comparing expiry_date
+        if ra and ra.expiry_date and ensure_aware(ra.expiry_date) <= now:
+            return None
         return ra
 
     def check_expired(self, session: Session) -> list[RiskAcceptance]:

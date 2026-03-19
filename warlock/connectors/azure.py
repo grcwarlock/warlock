@@ -12,7 +12,6 @@ from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -90,6 +89,7 @@ class AzureConnector(BaseConnector):
                     raw_data={
                         "subscription_id": subscription_id,
                         "tenant_id": tenant_id,
+                        "region": self.config.settings.get("region", ""),
                         "response": data,
                     },
                     observed_at=datetime.now(timezone.utc),

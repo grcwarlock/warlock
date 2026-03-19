@@ -2,10 +2,10 @@
   "catalog": {
     "uuid": "e75ab3c9-60ef-4124-bae5-b685fc38fe5c",
     "metadata": {
-      "title": "ISO/IEC 42001:2023 AI Management System",
+      "title": "ISO/IEC 42001:2023 AI Management System - Annex A Controls",
       "version": "2023",
       "oscal-version": "1.1.2",
-      "last-modified": "2026-03-16T20:39:37Z",
+      "last-modified": "2026-03-19T20:45:25Z",
       "links": [
         {
           "rel": "source",
@@ -21,70 +21,405 @@
     },
     "groups": [
       {
-        "id": "a5",
-        "title": "AI Policies",
+        "id": "a10",
+        "title": "Third-Party and Customer Relationships",
         "controls": [
           {
-            "id": "a5-1",
-            "title": "AI Policy",
+            "id": "A.10.2",
+            "title": "Control A.10.2",
             "props": [
               {
                 "name": "label",
-                "value": "A5-1"
+                "value": "A.10.2"
               },
               {
                 "name": "sort-id",
-                "value": "a5-1"
+                "value": "a.10.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a5-1_smt",
+                "id": "a-10-2_smt",
                 "name": "statement",
-                "prose": "Establish and maintain an AI policy appropriate to the organization's purpose."
-              },
-              {
-                "id": "a5-1-1",
-                "name": "assessment-objective",
-                "prose": "AI policy is documented, approved, and communicated",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "policy"
-                  }
-                ]
+                "prose": "Requirements for A.10.2."
               }
             ]
           },
           {
-            "id": "a5-2",
-            "title": "AI Roles and Responsibilities",
+            "id": "A.10.3",
+            "title": "Control A.10.3",
             "props": [
               {
                 "name": "label",
-                "value": "A5-2"
+                "value": "A.10.3"
               },
               {
                 "name": "sort-id",
-                "value": "a5-2"
+                "value": "a.10.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a5-2_smt",
+                "id": "a-10-3_smt",
                 "name": "statement",
-                "prose": "Define and assign roles and responsibilities for AI management."
+                "prose": "Requirements for A.10.3."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a2",
+        "title": "AI Policies",
+        "controls": [
+          {
+            "id": "A.2.2",
+            "title": "Control A.2.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.2.2"
               },
               {
-                "id": "a5-2-1",
-                "name": "assessment-objective",
-                "prose": "AI governance roles are clearly defined",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "org_chart"
-                  }
-                ]
+                "name": "sort-id",
+                "value": "a.2.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-2-2_smt",
+                "name": "statement",
+                "prose": "Requirements for A.2.2."
+              }
+            ]
+          },
+          {
+            "id": "A.2.3",
+            "title": "Control A.2.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.2.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.2.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-2-3_smt",
+                "name": "statement",
+                "prose": "Requirements for A.2.3."
+              }
+            ]
+          },
+          {
+            "id": "A.2.4",
+            "title": "Control A.2.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.2.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.2.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-2-4_smt",
+                "name": "statement",
+                "prose": "Requirements for A.2.4."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a3",
+        "title": "Organization of AI",
+        "controls": [
+          {
+            "id": "A.3.2",
+            "title": "Control A.3.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.3.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.3.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-3-2_smt",
+                "name": "statement",
+                "prose": "Requirements for A.3.2."
+              }
+            ]
+          },
+          {
+            "id": "A.3.3",
+            "title": "Control A.3.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.3.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.3.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-3-3_smt",
+                "name": "statement",
+                "prose": "Requirements for A.3.3."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a4",
+        "title": "Support for AI",
+        "controls": [
+          {
+            "id": "A.4.2",
+            "title": "Control A.4.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.4.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.4.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-4-2_smt",
+                "name": "statement",
+                "prose": "Requirements for A.4.2."
+              }
+            ]
+          },
+          {
+            "id": "A.4.3",
+            "title": "Control A.4.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.4.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.4.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-4-3_smt",
+                "name": "statement",
+                "prose": "Requirements for A.4.3."
+              }
+            ]
+          },
+          {
+            "id": "A.4.4",
+            "title": "Control A.4.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.4.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.4.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-4-4_smt",
+                "name": "statement",
+                "prose": "Requirements for A.4.4."
+              }
+            ]
+          },
+          {
+            "id": "A.4.5",
+            "title": "Control A.4.5",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.4.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.4.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-4-5_smt",
+                "name": "statement",
+                "prose": "Requirements for A.4.5."
+              }
+            ]
+          },
+          {
+            "id": "A.4.6",
+            "title": "Control A.4.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.4.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.4.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-4-6_smt",
+                "name": "statement",
+                "prose": "Requirements for A.4.6."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a5",
+        "title": "AI Impact Assessment",
+        "controls": [
+          {
+            "id": "A.5.2",
+            "title": "Control A.5.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.5.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.5.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "quarterly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-5-2_smt",
+                "name": "statement",
+                "prose": "Requirements for A.5.2."
+              }
+            ]
+          },
+          {
+            "id": "A.5.3",
+            "title": "Control A.5.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.5.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.5.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "quarterly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-5-3_smt",
+                "name": "statement",
+                "prose": "Requirements for A.5.3."
+              }
+            ]
+          },
+          {
+            "id": "A.5.4",
+            "title": "Control A.5.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.5.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.5.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "quarterly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-5-4_smt",
+                "name": "statement",
+                "prose": "Requirements for A.5.4."
               }
             ]
           }
@@ -92,101 +427,355 @@
       },
       {
         "id": "a6",
-        "title": "Planning",
+        "title": "AI System Lifecycle",
         "controls": [
           {
-            "id": "a6-1",
-            "title": "AI Risk Assessment",
+            "id": "A.6.1.2",
+            "title": "Control A.6.1.2",
             "props": [
               {
                 "name": "label",
-                "value": "A6-1"
+                "value": "A.6.1.2"
               },
               {
                 "name": "sort-id",
-                "value": "a6-1"
+                "value": "a.6.1.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a6-1_smt",
+                "id": "a-6-1-2_smt",
                 "name": "statement",
-                "prose": "Establish process to identify and assess AI-related risks."
-              },
-              {
-                "id": "a6-1-1",
-                "name": "assessment-objective",
-                "prose": "AI risk assessment methodology documented",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "risk_assessment"
-                  }
-                ]
+                "prose": "Requirements for A.6.1.2."
               }
             ]
           },
           {
-            "id": "a6-2",
-            "title": "AI Impact Assessment",
+            "id": "A.6.1.3",
+            "title": "Control A.6.1.3",
             "props": [
               {
                 "name": "label",
-                "value": "A6-2"
+                "value": "A.6.1.3"
               },
               {
                 "name": "sort-id",
-                "value": "a6-2"
+                "value": "a.6.1.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a6-2_smt",
+                "id": "a-6-1-3_smt",
                 "name": "statement",
-                "prose": "Conduct impact assessments for AI systems on individuals and groups."
-              },
-              {
-                "id": "a6-2-1",
-                "name": "assessment-objective",
-                "prose": "AI impact assessments completed for deployed AI systems",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "impact_assessment"
-                  }
-                ]
+                "prose": "Requirements for A.6.1.3."
               }
             ]
           },
           {
-            "id": "a6-3",
-            "title": "AI Objectives",
+            "id": "A.6.2.10",
+            "title": "Control A.6.2.10",
             "props": [
               {
                 "name": "label",
-                "value": "A6-3"
+                "value": "A.6.2.10"
               },
               {
                 "name": "sort-id",
-                "value": "a6-3"
+                "value": "a.6.2.10"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a6-3_smt",
+                "id": "a-6-2-10_smt",
                 "name": "statement",
-                "prose": "Establish measurable AI objectives consistent with AI policy."
+                "prose": "Requirements for A.6.2.10."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.11",
+            "title": "Control A.6.2.11",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.11"
               },
               {
-                "id": "a6-3-1",
-                "name": "assessment-objective",
-                "prose": "AI objectives are defined and measurable",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "objectives"
-                  }
-                ]
+                "name": "sort-id",
+                "value": "a.6.2.11"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-11_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.11."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.12",
+            "title": "Control A.6.2.12",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.12"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.12"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-12_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.12."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.13",
+            "title": "Control A.6.2.13",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.13"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.13"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-13_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.13."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.2",
+            "title": "Control A.6.2.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-2_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.2."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.3",
+            "title": "Control A.6.2.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-3_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.3."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.4",
+            "title": "Control A.6.2.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-4_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.4."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.5",
+            "title": "Control A.6.2.5",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-5_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.5."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.6",
+            "title": "Control A.6.2.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-6_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.6."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.7",
+            "title": "Control A.6.2.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-7_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.7."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.8",
+            "title": "Control A.6.2.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-8_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.8."
+              }
+            ]
+          },
+          {
+            "id": "A.6.2.9",
+            "title": "Control A.6.2.9",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.6.2.9"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.6.2.9"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-6-2-9_smt",
+                "name": "statement",
+                "prose": "Requirements for A.6.2.9."
               }
             ]
           }
@@ -194,133 +783,105 @@
       },
       {
         "id": "a7",
-        "title": "Support",
+        "title": "Data for AI Systems",
         "controls": [
           {
-            "id": "a7-1",
-            "title": "Resources for AI",
+            "id": "A.7.2",
+            "title": "Control A.7.2",
             "props": [
               {
                 "name": "label",
-                "value": "A7-1"
+                "value": "A.7.2"
               },
               {
                 "name": "sort-id",
-                "value": "a7-1"
+                "value": "a.7.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a7-1_smt",
+                "id": "a-7-2_smt",
                 "name": "statement",
-                "prose": "Determine and provide resources needed for AI management system."
-              },
-              {
-                "id": "a7-1-1",
-                "name": "assessment-objective",
-                "prose": "AI resources are allocated and documented",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "resource_plan"
-                  }
-                ]
+                "prose": "Requirements for A.7.2."
               }
             ]
           },
           {
-            "id": "a7-2",
-            "title": "AI Competence",
+            "id": "A.7.3",
+            "title": "Control A.7.3",
             "props": [
               {
                 "name": "label",
-                "value": "A7-2"
+                "value": "A.7.3"
               },
               {
                 "name": "sort-id",
-                "value": "a7-2"
+                "value": "a.7.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a7-2_smt",
+                "id": "a-7-3_smt",
                 "name": "statement",
-                "prose": "Ensure persons doing work affecting AI system performance are competent."
-              },
-              {
-                "id": "a7-2-1",
-                "name": "assessment-objective",
-                "prose": "AI team competency requirements defined and verified",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "training_records"
-                  }
-                ]
+                "prose": "Requirements for A.7.3."
               }
             ]
           },
           {
-            "id": "a7-3",
-            "title": "AI Awareness",
+            "id": "A.7.4",
+            "title": "Control A.7.4",
             "props": [
               {
                 "name": "label",
-                "value": "A7-3"
+                "value": "A.7.4"
               },
               {
                 "name": "sort-id",
-                "value": "a7-3"
+                "value": "a.7.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a7-3_smt",
+                "id": "a-7-4_smt",
                 "name": "statement",
-                "prose": "Ensure persons are aware of AI policy, their contribution, and implications."
-              },
-              {
-                "id": "a7-3-1",
-                "name": "assessment-objective",
-                "prose": "AI awareness training completed by relevant personnel",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "training_records"
-                  }
-                ]
+                "prose": "Requirements for A.7.4."
               }
             ]
           },
           {
-            "id": "a7-4",
-            "title": "Communication",
+            "id": "A.7.5",
+            "title": "Control A.7.5",
             "props": [
               {
                 "name": "label",
-                "value": "A7-4"
+                "value": "A.7.5"
               },
               {
                 "name": "sort-id",
-                "value": "a7-4"
+                "value": "a.7.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a7-4_smt",
+                "id": "a-7-5_smt",
                 "name": "statement",
-                "prose": "Determine internal and external communications relevant to AI management."
-              },
-              {
-                "id": "a7-4-1",
-                "name": "assessment-objective",
-                "prose": "AI communication plan established",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "communication_plan"
-                  }
-                ]
+                "prose": "Requirements for A.7.5."
               }
             ]
           }
@@ -328,219 +889,80 @@
       },
       {
         "id": "a8",
-        "title": "Operation",
+        "title": "Transparency and Provision of Information",
         "controls": [
           {
-            "id": "a8-1",
-            "title": "AI System Lifecycle",
+            "id": "A.8.2",
+            "title": "Control A.8.2",
             "props": [
               {
                 "name": "label",
-                "value": "A8-1"
+                "value": "A.8.2"
               },
               {
                 "name": "sort-id",
-                "value": "a8-1"
+                "value": "a.8.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a8-1_smt",
+                "id": "a-8-2_smt",
                 "name": "statement",
-                "prose": "Plan, implement, and control processes for AI system lifecycle."
-              },
-              {
-                "id": "a8-1-1",
-                "name": "assessment-objective",
-                "prose": "AI development lifecycle documented",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "sdlc"
-                  }
-                ]
+                "prose": "Requirements for A.8.2."
               }
             ]
           },
           {
-            "id": "a8-2",
-            "title": "Data Management for AI",
+            "id": "A.8.3",
+            "title": "Control A.8.3",
             "props": [
               {
                 "name": "label",
-                "value": "A8-2"
+                "value": "A.8.3"
               },
               {
                 "name": "sort-id",
-                "value": "a8-2"
+                "value": "a.8.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a8-2_smt",
+                "id": "a-8-3_smt",
                 "name": "statement",
-                "prose": "Establish processes for data used in AI systems."
-              },
-              {
-                "id": "a8-2-1",
-                "name": "assessment-objective",
-                "prose": "AI training data governance documented",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "data_governance"
-                  }
-                ]
-              },
-              {
-                "id": "a8-2-2",
-                "name": "assessment-objective",
-                "prose": "Data quality and bias monitoring in place",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "monitoring_config"
-                  }
-                ]
+                "prose": "Requirements for A.8.3."
               }
             ]
           },
           {
-            "id": "a8-3",
-            "title": "AI System Design and Development",
+            "id": "A.8.4",
+            "title": "Control A.8.4",
             "props": [
               {
                 "name": "label",
-                "value": "A8-3"
+                "value": "A.8.4"
               },
               {
                 "name": "sort-id",
-                "value": "a8-3"
+                "value": "a.8.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
               }
             ],
             "parts": [
               {
-                "id": "a8-3_smt",
+                "id": "a-8-4_smt",
                 "name": "statement",
-                "prose": "Plan and execute AI system design and development activities."
-              },
-              {
-                "id": "a8-3-1",
-                "name": "assessment-objective",
-                "prose": "AI model development follows documented procedures",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "development_docs"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "a8-4",
-            "title": "AI System Testing and Validation",
-            "props": [
-              {
-                "name": "label",
-                "value": "A8-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "a8-4"
-              }
-            ],
-            "parts": [
-              {
-                "id": "a8-4_smt",
-                "name": "statement",
-                "prose": "Test and validate AI systems prior to deployment."
-              },
-              {
-                "id": "a8-4-1",
-                "name": "assessment-objective",
-                "prose": "AI model testing includes fairness, accuracy, and robustness",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "test_results"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "a8-5",
-            "title": "AI System Deployment",
-            "props": [
-              {
-                "name": "label",
-                "value": "A8-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "a8-5"
-              }
-            ],
-            "parts": [
-              {
-                "id": "a8-5_smt",
-                "name": "statement",
-                "prose": "Plan and manage deployment of AI systems."
-              },
-              {
-                "id": "a8-5-1",
-                "name": "assessment-objective",
-                "prose": "AI deployment checklist completed before production",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "deployment_checklist"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "a8-6",
-            "title": "AI System Monitoring",
-            "props": [
-              {
-                "name": "label",
-                "value": "A8-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "a8-6"
-              }
-            ],
-            "parts": [
-              {
-                "id": "a8-6_smt",
-                "name": "statement",
-                "prose": "Monitor AI system performance, output, and impact post-deployment."
-              },
-              {
-                "id": "a8-6-1",
-                "name": "assessment-objective",
-                "prose": "AI model drift monitoring active",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "monitoring_config"
-                  }
-                ]
-              },
-              {
-                "id": "a8-6-2",
-                "name": "assessment-objective",
-                "prose": "AI output quality metrics tracked",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "monitoring_dashboard"
-                  }
-                ]
+                "prose": "Requirements for A.8.4."
               }
             ]
           }
@@ -548,369 +970,80 @@
       },
       {
         "id": "a9",
-        "title": "Performance Evaluation",
+        "title": "Use of AI Systems",
         "controls": [
           {
-            "id": "a9-1",
-            "title": "Monitoring and Measurement",
+            "id": "A.9.2",
+            "title": "Control A.9.2",
             "props": [
               {
                 "name": "label",
-                "value": "A9-1"
+                "value": "A.9.2"
               },
               {
                 "name": "sort-id",
-                "value": "a9-1"
+                "value": "a.9.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "weekly"
               }
             ],
             "parts": [
               {
-                "id": "a9-1_smt",
+                "id": "a-9-2_smt",
                 "name": "statement",
-                "prose": "Determine what needs to be monitored and measured for AI management."
-              },
-              {
-                "id": "a9-1-1",
-                "name": "assessment-objective",
-                "prose": "AI KPIs defined and regularly measured",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "metrics"
-                  }
-                ]
+                "prose": "Requirements for A.9.2."
               }
             ]
           },
           {
-            "id": "a9-2",
-            "title": "Internal Audit",
+            "id": "A.9.3",
+            "title": "Control A.9.3",
             "props": [
               {
                 "name": "label",
-                "value": "A9-2"
+                "value": "A.9.3"
               },
               {
                 "name": "sort-id",
-                "value": "a9-2"
+                "value": "a.9.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "weekly"
               }
             ],
             "parts": [
               {
-                "id": "a9-2_smt",
+                "id": "a-9-3_smt",
                 "name": "statement",
-                "prose": "Conduct internal audits of AI management system at planned intervals."
-              },
-              {
-                "id": "a9-2-1",
-                "name": "assessment-objective",
-                "prose": "Annual AI management system audit conducted",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "audit_report"
-                  }
-                ]
+                "prose": "Requirements for A.9.3."
               }
             ]
           },
           {
-            "id": "a9-3",
-            "title": "Management Review",
+            "id": "A.9.4",
+            "title": "Control A.9.4",
             "props": [
               {
                 "name": "label",
-                "value": "A9-3"
+                "value": "A.9.4"
               },
               {
                 "name": "sort-id",
-                "value": "a9-3"
+                "value": "a.9.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "weekly"
               }
             ],
             "parts": [
               {
-                "id": "a9-3_smt",
+                "id": "a-9-4_smt",
                 "name": "statement",
-                "prose": "Top management reviews AI management system at planned intervals."
-              },
-              {
-                "id": "a9-3-1",
-                "name": "assessment-objective",
-                "prose": "Management review of AI program conducted",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "review_minutes"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "a10",
-        "title": "Improvement",
-        "controls": [
-          {
-            "id": "a10-1",
-            "title": "Continual Improvement",
-            "props": [
-              {
-                "name": "label",
-                "value": "A10-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "a10-1"
-              }
-            ],
-            "parts": [
-              {
-                "id": "a10-1_smt",
-                "name": "statement",
-                "prose": "Continually improve the suitability, adequacy, and effectiveness of AI management."
-              },
-              {
-                "id": "a10-1-1",
-                "name": "assessment-objective",
-                "prose": "AI improvement process documented with lessons learned",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "improvement_log"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "a10-2",
-            "title": "Nonconformity and Corrective Action",
-            "props": [
-              {
-                "name": "label",
-                "value": "A10-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "a10-2"
-              }
-            ],
-            "parts": [
-              {
-                "id": "a10-2_smt",
-                "name": "statement",
-                "prose": "React to nonconformities and take corrective action."
-              },
-              {
-                "id": "a10-2-1",
-                "name": "assessment-objective",
-                "prose": "AI incident and nonconformity tracking process established",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "ncr_log"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "annexb",
-        "title": "AI Controls Reference (Annex B)",
-        "controls": [
-          {
-            "id": "b1-transparency",
-            "title": "Transparency",
-            "props": [
-              {
-                "name": "label",
-                "value": "B1-Transparency"
-              },
-              {
-                "name": "sort-id",
-                "value": "b1-transparency"
-              }
-            ],
-            "parts": [
-              {
-                "id": "b1-transparency_smt",
-                "name": "statement",
-                "prose": "Ensure transparency of AI system decisions and processes."
-              },
-              {
-                "id": "b1-1",
-                "name": "assessment-objective",
-                "prose": "AI system decisions are explainable to stakeholders",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "explainability_docs"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "b2-accountability",
-            "title": "Accountability",
-            "props": [
-              {
-                "name": "label",
-                "value": "B2-Accountability"
-              },
-              {
-                "name": "sort-id",
-                "value": "b2-accountability"
-              }
-            ],
-            "parts": [
-              {
-                "id": "b2-accountability_smt",
-                "name": "statement",
-                "prose": "Ensure accountability for AI system outcomes."
-              },
-              {
-                "id": "b2-1",
-                "name": "assessment-objective",
-                "prose": "Accountability chain documented for AI decisions",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "raci_matrix"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "b3-fairness",
-            "title": "Fairness and Bias",
-            "props": [
-              {
-                "name": "label",
-                "value": "B3-Fairness"
-              },
-              {
-                "name": "sort-id",
-                "value": "b3-fairness"
-              }
-            ],
-            "parts": [
-              {
-                "id": "b3-fairness_smt",
-                "name": "statement",
-                "prose": "Prevent and mitigate unfair bias in AI systems."
-              },
-              {
-                "id": "b3-1",
-                "name": "assessment-objective",
-                "prose": "Bias testing conducted on AI models",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "bias_assessment"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "b4-privacy",
-            "title": "Privacy in AI",
-            "props": [
-              {
-                "name": "label",
-                "value": "B4-Privacy"
-              },
-              {
-                "name": "sort-id",
-                "value": "b4-privacy"
-              }
-            ],
-            "parts": [
-              {
-                "id": "b4-privacy_smt",
-                "name": "statement",
-                "prose": "Protect privacy in AI data processing and outputs."
-              },
-              {
-                "id": "b4-1",
-                "name": "assessment-objective",
-                "prose": "Privacy impact assessment for AI systems",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "pia"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "b5-safety",
-            "title": "AI Safety",
-            "props": [
-              {
-                "name": "label",
-                "value": "B5-Safety"
-              },
-              {
-                "name": "sort-id",
-                "value": "b5-safety"
-              }
-            ],
-            "parts": [
-              {
-                "id": "b5-safety_smt",
-                "name": "statement",
-                "prose": "Ensure AI systems operate safely and reliably."
-              },
-              {
-                "id": "b5-1",
-                "name": "assessment-objective",
-                "prose": "AI safety testing and red-teaming conducted",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "safety_report"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "b6-security",
-            "title": "AI Security",
-            "props": [
-              {
-                "name": "label",
-                "value": "B6-Security"
-              },
-              {
-                "name": "sort-id",
-                "value": "b6-security"
-              }
-            ],
-            "parts": [
-              {
-                "id": "b6-security_smt",
-                "name": "statement",
-                "prose": "Protect AI systems from adversarial attacks and manipulation."
-              },
-              {
-                "id": "b6-1",
-                "name": "assessment-objective",
-                "prose": "AI-specific security controls implemented (model poisoning, evasion)",
-                "props": [
-                  {
-                    "name": "evidence-type",
-                    "value": "security_assessment"
-                  }
-                ]
+                "prose": "Requirements for A.9.4."
               }
             ]
           }

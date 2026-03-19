@@ -30,6 +30,17 @@ class EventBus:
     Good enough for single-process pipeline execution. When you need to
     scale, replace this with Redis Streams or similar — the interface stays
     the same.
+
+    Infrastructure status: this in-process bus is intentionally the default
+    for development and single-process Lambda deployments. It currently has
+    no production subscribers registered at startup; events are published by
+    the pipeline orchestrator but only consumed if a caller explicitly calls
+    subscribe() or subscribe_all(). This is not dead code -- the bus is
+    extensible by design and serves as the integration point for future
+    consumers (alerting, audit logging, webhooks, etc.). Production
+    deployments that need async fan-out should use the drop-in backends in
+    queue.py (RedisStreamBus, KafkaBus, SQSBus) without changing the
+    orchestrator.
     """
 
     def __init__(self) -> None:

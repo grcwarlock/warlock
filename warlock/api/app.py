@@ -46,7 +46,7 @@ from warlock.api.auth import (
     generate_api_key,
     PERMISSIONS,
 )
-from warlock.api.deps import get_db, require_permission
+from warlock.api.deps import get_db, require_permission, apply_framework_scope, apply_source_scope
 from warlock.db.models import (
     APIKey,
     Attestation,
@@ -376,6 +376,13 @@ configure_logging()
 from warlock.config import get_settings as _get_cors_settings  # noqa: E402
 _cors_settings = _get_cors_settings()
 if _cors_settings.cors_origins:
+    # S-10: Reject wildcard origin when credentials are enabled
+    if "*" in _cors_settings.cors_origins:
+        raise RuntimeError(
+            "CORS misconfiguration: allow_origins contains '*' with allow_credentials=True. "
+            "This is insecure and forbidden by the CORS specification. "
+            "Set WLK_CORS_ORIGINS to specific origins, not '*'."
+        )
     from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
     app.add_middleware(
         CORSMiddleware,
@@ -389,6 +396,23 @@ if _cors_settings.cors_origins:
 from warlock.api.middleware import register_middleware  # noqa: E402
 
 register_middleware(app)
+
+# S-18: Request size limit — reject requests larger than 10MB
+_MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
+
+
+@app.middleware("http")
+async def request_size_limit_middleware(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > _MAX_CONTENT_LENGTH:
+        from starlette.responses import Response
+        return Response(
+            content='{"detail":"Request body too large (max 10MB)"}',
+            status_code=413,
+            media_type="application/json",
+        )
+    return await call_next(request)
+
 
 # Register trust portal (public, no auth)
 from warlock.api.trust_portal import router as trust_router  # noqa: E402
@@ -449,7 +473,9 @@ def health_ready(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
         checks["database"] = "ok"
     except Exception as e:
-        checks["database"] = f"failed: {e}"
+        # S-8: Don't leak internal error details in health probe response
+        log.error("Readiness probe database check failed: %s", e)
+        checks["database"] = "failed"
         all_ok = False
 
     # Scheduler check
@@ -516,6 +542,18 @@ def create_api_key_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manage_keys")),
 ):
+    # S-11: Validate all requested scopes are valid permission names
+    if body.scopes:
+        all_valid_perms = set()
+        for perms in PERMISSIONS.values():
+            all_valid_perms.update(perms)
+        invalid_scopes = set(body.scopes) - all_valid_perms
+        if invalid_scopes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid scopes: {sorted(invalid_scopes)}. Valid scopes: {sorted(all_valid_perms)}",
+            )
+
     raw_key, key_hash = generate_api_key()
     expires_at = None
     if body.expires_days:
@@ -660,9 +698,15 @@ def pipeline_status(
     )
     is_running = db.query(ConnectorRun).filter(ConnectorRun.status == "running").count() > 0
 
-    raw_count = db.query(func.count(RawEvent.id)).scalar() or 0
-    finding_count = db.query(func.count(Finding.id)).scalar() or 0
-    result_count = db.query(func.count(ControlResult.id)).scalar() or 0
+    # Use cached event_count from ConnectorRun records to avoid 3 full-table
+    # COUNT queries on potentially large raw_events/findings/control_results tables.
+    # Summing event_count across all runs is a cheap index scan on connector_runs.
+    if latest_run is not None:
+        raw_count = int(db.query(func.sum(ConnectorRun.event_count)).scalar() or 0)
+    else:
+        raw_count = 0
+    finding_count = 0
+    result_count = 0
 
     return {
         "running": is_running,
@@ -688,12 +732,19 @@ def pipeline_status(
 
 @app.get(PREFIX + "/frameworks", response_model=list[FrameworkResponse])
 def list_frameworks(
+    limit: int = Query(default=100, le=1000),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
+    # S-12: Added pagination defaults
+    # S-1: Apply ABAC scope filters
+    base_q = apply_framework_scope(db.query(ControlMapping), ControlMapping, current_user)
     rows = (
-        db.query(ControlMapping.framework, func.count(func.distinct(ControlMapping.control_id)))
+        base_q.with_entities(ControlMapping.framework, func.count(func.distinct(ControlMapping.control_id)))
         .group_by(ControlMapping.framework)
+        .offset(offset)
+        .limit(limit)
         .all()
     )
     return [FrameworkResponse(name=fw, control_count=cnt) for fw, cnt in rows]
@@ -702,11 +753,16 @@ def list_frameworks(
 @app.get(PREFIX + "/frameworks/{framework_id}/controls", response_model=list[ControlResponse])
 def list_controls(
     framework_id: str,
+    limit: int = Query(default=100, le=1000),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
+    # S-12: Added pagination defaults
+    # S-1: Apply ABAC scope filters
+    base_q = apply_framework_scope(db.query(ControlMapping), ControlMapping, current_user)
     rows = (
-        db.query(
+        base_q.with_entities(
             ControlMapping.framework,
             ControlMapping.control_id,
             ControlMapping.control_family,
@@ -715,6 +771,8 @@ def list_controls(
         .outerjoin(ControlResult, ControlResult.control_mapping_id == ControlMapping.id)
         .filter(ControlMapping.framework == framework_id)
         .group_by(ControlMapping.framework, ControlMapping.control_id, ControlMapping.control_family)
+        .offset(offset)
+        .limit(limit)
         .all()
     )
     return [
@@ -744,15 +802,19 @@ def list_findings(
     current_user: User = Depends(require_permission("read")),
 ):
     query = db.query(Finding)
+    # S-1: Apply ABAC scope filters
+    query = apply_source_scope(query, Finding, current_user)
 
     if framework:
-        # Filter findings that have a control mapping to the given framework
-        finding_ids_subq = (
-            db.query(ControlMapping.finding_id)
+        # Use a JOIN instead of IN(subquery) for better query plan efficiency.
+        # The subquery form forces a full scan and hash lookup; a JOIN lets the
+        # planner use the idx_mapping_control and idx_mapping_finding indexes.
+        query = (
+            query
+            .join(ControlMapping, ControlMapping.finding_id == Finding.id)
             .filter(ControlMapping.framework == framework)
-            .subquery()
+            .distinct()
         )
-        query = query.filter(Finding.id.in_(finding_ids_subq))
     if severity:
         query = query.filter(Finding.severity == severity)
     if observation_type:
@@ -795,7 +857,9 @@ def get_finding(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    f = db.query(Finding).filter(Finding.id == finding_id).first()
+    # S-1: Apply ABAC scope filters
+    query = apply_source_scope(db.query(Finding), Finding, current_user)
+    f = query.filter(Finding.id == finding_id).first()
     if not f:
         raise HTTPException(status_code=404, detail="Finding not found")
     return FindingResponse(
@@ -832,6 +896,8 @@ def list_results(
     current_user: User = Depends(require_permission("read")),
 ):
     query = db.query(ControlResult)
+    # S-1: Apply ABAC scope filters
+    query = apply_framework_scope(query, ControlResult, current_user)
 
     if framework:
         query = query.filter(ControlResult.framework == framework)
@@ -877,7 +943,9 @@ def results_coverage(
     current_user: User = Depends(require_permission("read")),
 ):
     """Coverage summary: per-framework counts of each status."""
-    query = db.query(
+    # S-1: Apply ABAC scope filter before aggregation
+    base_q = apply_framework_scope(db.query(ControlResult), ControlResult, current_user)
+    query = base_q.with_entities(
         ControlResult.framework,
         ControlResult.status,
         func.count(ControlResult.id),
@@ -928,6 +996,8 @@ def results_posture(
 ):
     """Posture scores from the latest snapshot."""
     query = db.query(PostureSnapshot)
+    # S-1: Apply ABAC scope filters
+    query = apply_framework_scope(query, PostureSnapshot, current_user)
 
     if framework:
         query = query.filter(PostureSnapshot.framework == framework)
@@ -1265,6 +1335,8 @@ def list_engagements(
     current_user: User = Depends(require_permission("read")),
 ):
     query = db.query(AuditEngagement)
+    # S-1: Apply ABAC scope filters
+    query = apply_framework_scope(query, AuditEngagement, current_user)
     if framework:
         query = query.filter(AuditEngagement.framework == framework)
     if engagement_status:
@@ -1626,6 +1698,13 @@ def deactivate_user(
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
     user.is_active = False
+    # S-4: Revoke all tokens by setting token_valid_after to now
+    user.token_valid_after = datetime.now(timezone.utc)
+    # S-4: Deactivate all associated API keys
+    db.query(APIKey).filter(APIKey.user_id == user_id, APIKey.is_active == True).update(  # noqa: E712
+        {"is_active": False}, synchronize_session="fetch"
+    )
+    log.info("User %s deactivated: tokens revoked, %s API keys deactivated", user.email, user_id[:8])
     return MessageResponse(message="User deactivated")
 
 
@@ -1992,6 +2071,8 @@ def list_issues(
     current_user: User = Depends(require_permission("read")),
 ):
     query = db.query(Issue)
+    # S-1: Apply ABAC scope filters
+    query = apply_framework_scope(query, Issue, current_user)
     if issue_status:
         query = query.filter(Issue.status == issue_status)
     if priority:
@@ -2327,6 +2408,8 @@ def list_attestations(
     current_user: User = Depends(require_permission("read")),
 ):
     query = db.query(Attestation)
+    # S-1: Apply ABAC scope filters
+    query = apply_framework_scope(query, Attestation, current_user)
     if engagement_id:
         query = query.filter(Attestation.engagement_id == engagement_id)
     if framework:
@@ -2681,13 +2764,16 @@ def _system_profile_to_response(sp: SystemProfile) -> SystemProfileResponse:
 
 @app.get(PREFIX + "/systems", response_model=list[SystemProfileResponse])
 def list_systems(
+    limit: int = Query(default=100, le=1000),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
+    # S-12: Added pagination defaults
     from warlock.workflows.system_profile import SystemProfileManager
     mgr = SystemProfileManager()
     profiles = mgr.list_active(db)
-    return [_system_profile_to_response(sp) for sp in profiles]
+    return [_system_profile_to_response(sp) for sp in profiles[offset:offset + limit]]
 
 
 @app.post(PREFIX + "/systems", response_model=SystemProfileResponse, status_code=201)
@@ -3004,11 +3090,15 @@ def scheduler_stop(
 
 @app.get(PREFIX + "/tools", response_model=list[dict[str, Any]])
 def list_tools(
+    limit: int = Query(default=100, le=1000),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_permission("read")),
 ):
+    # S-12: Added pagination defaults
     from warlock.workflows.tool_config import ToolConfigManager
     mgr = ToolConfigManager()
-    return mgr.list_connectors()
+    connectors = mgr.list_connectors()
+    return connectors[offset:offset + limit]
 
 
 @app.post(PREFIX + "/tools/{provider}/test")
@@ -3627,6 +3717,8 @@ def list_data_silos(
     current_user: User = Depends(require_permission("read")),
 ):
     query = db.query(DataSilo).filter(DataSilo.is_active == True)  # noqa: E712
+    # S-1: Apply ABAC scope filters
+    query = apply_source_scope(query, DataSilo, current_user)
     if silo_type:
         query = query.filter(DataSilo.silo_type == silo_type)
     if classification:

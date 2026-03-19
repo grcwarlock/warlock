@@ -225,7 +225,7 @@ class Settings(BaseSettings):
 
     # OPA policy enforcement
     opa_url: str = ""  # OPA decision endpoint URL
-    opa_fail_mode: str = "open"  # "open" (allow if OPA down) or "closed" (deny)
+    opa_fail_mode: str = "closed"  # S-2: "closed" (deny if OPA down) or "open" (allow)
 
     # Change event retention
     change_event_retention_days: int = 90  # auto-purge change events older than this
