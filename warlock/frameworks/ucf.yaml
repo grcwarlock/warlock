@@ -1,0 +1,1902 @@
+framework_id: ucf
+
+control_families:
+  # ===========================================================================
+  # UCF-GOV — Governance & Policy
+  # Maps to: NIST PL/PM, SOC2 CC1, ISO A.5.1-A.5.4, ISO42001 A.2
+  # ===========================================================================
+  GOV:
+    controls:
+      UCF-GOV-1:
+        # Security/Privacy Policies
+        checks:
+          - id: gov1_security_policies
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+              - prisma_policies
+              - s1_policies
+              - falcon_sensor_policies
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+              - policy
+
+      UCF-GOV-2:
+        # Roles & Responsibilities
+        checks:
+          - id: gov2_roles
+            event_types:
+              - sailpoint_identities
+              - sailpoint_roles
+              - okta_groups
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_role
+
+      UCF-GOV-3:
+        # Management Commitment & Oversight
+        checks:
+          - id: gov3_oversight
+            event_types:
+              - sailpoint_certifications
+            resource_types:
+              - sailpoint_certification
+
+      UCF-GOV-4:
+        # Regulatory & Legal Compliance
+        checks:
+          - id: gov4_compliance
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+              - policy_compliance
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      UCF-GOV-5:
+        # Security Planning
+        checks:
+          - id: gov5_security_planning
+            event_types:
+              - confluence_pages
+              - confluence_page_versions
+              - snow_policies
+            resource_types:
+              - grc_document
+              - grc_document_version
+              - itsm_policy
+
+      UCF-GOV-6:
+        # Documented Procedures & Operating Standards
+        checks:
+          - id: gov6_documentation
+            event_types:
+              - confluence_pages
+            resource_types:
+              - grc_document
+
+  # ===========================================================================
+  # UCF-RSK — Risk Management
+  # Maps to: NIST RA/SR, SOC2 CC3/CC9, ISO A.5.29-A.5.31, ISO42001 A.5
+  # ===========================================================================
+  RSK:
+    controls:
+      UCF-RSK-1:
+        # Risk Assessment
+        checks:
+          - id: rsk1_vuln_risk
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+              - wiz_vuln_findings
+              - wiz_issues
+            resource_types:
+              - host
+              - endpoint
+              - vulnerability
+          - id: rsk1_cspm_risk
+            event_types:
+              - prisma_alerts
+              - scc_findings
+              - defender_recommendations
+            resource_types:
+              - recommendation
+
+      UCF-RSK-2:
+        # Risk Treatment
+        checks:
+          - id: rsk2_treatment
+            event_types:
+              - defender_recommendations
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - recommendation
+
+      UCF-RSK-3:
+        # Risk Acceptance & Tolerance
+        checks:
+          - id: rsk3_risk_acceptance
+            event_types:
+              - snow_risks
+            resource_types:
+              - itsm_risk
+
+      UCF-RSK-4:
+        # Risk Monitoring & Review
+        checks:
+          - id: rsk4_monitoring
+            event_types:
+              - config_recorders
+              - securityhub_hub
+              - guardduty_detectors
+              - policy_compliance
+              - scc_findings
+              - prisma_compliance
+              - wiz_config_findings
+            resource_types:
+              - aws_config
+              - securityhub
+              - guardduty
+              - compliance_standard
+
+      UCF-RSK-5:
+        # Supply Chain Risk
+        checks:
+          - id: rsk5_supply_chain
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+              - okta_applications
+              - wiz_config_findings
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+              - okta_application
+
+      UCF-RSK-6:
+        # AI-Specific Risk Assessment
+        checks:
+          - id: rsk6_ai_risk
+            event_types:
+              - scc_findings
+              - wiz_issues
+              - prisma_alerts
+              - monitor_alerts
+              - defender_alerts
+            resource_types:
+              - recommendation
+              - azure_monitor
+              - azure_defender_alert
+
+  # ===========================================================================
+  # UCF-IAM — Identity & Access Management
+  # Maps to: NIST AC/IA, SOC2 CC6, ISO A.5.15-A.5.18/A.8.2-A.8.5
+  # ===========================================================================
+  IAM:
+    controls:
+      UCF-IAM-1:
+        # Account Lifecycle Management
+        checks:
+          - id: iam1_cloud_accounts
+            event_types:
+              - iam_credential_report
+              - iam_users
+              - iam_account_summary
+            resource_types:
+              - iam_user
+              - iam_account
+          - id: iam1_idp_accounts
+            event_types:
+              - okta_users
+              - entra_users
+            resource_types:
+              - okta_user
+              - entra_user
+          - id: iam1_iga_accounts
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+
+      UCF-IAM-2:
+        # Authentication & MFA
+        checks:
+          - id: iam2_mfa
+            event_types:
+              - okta_factors
+              - entra_conditional_access_policies
+              - iam_credential_report
+            resource_types:
+              - okta_user_factors
+              - entra_conditional_access_policy
+              - iam_user
+          - id: iam2_password_policy
+            event_types:
+              - iam_password_policy
+              - okta_policies
+            resource_types:
+              - iam_password_policy
+              - okta_policy
+          - id: iam2_sign_in_risk
+            event_types:
+              - entra_sign_ins
+              - entra_risky_users
+              - okta_system_log
+            resource_types:
+              - entra_sign_in
+              - entra_user
+              - okta_event
+
+      UCF-IAM-3:
+        # Authorization & Access Enforcement
+        checks:
+          - id: iam3_access_enforcement
+            event_types:
+              - iam_users
+              - gcp_iam_policies
+              - okta_policies
+              - entra_conditional_access_policies
+            resource_types:
+              - iam_policy
+              - gcp_iam_binding
+              - okta_policy
+              - entra_conditional_access_policy
+
+      UCF-IAM-4:
+        # Least Privilege
+        checks:
+          - id: iam4_least_priv
+            event_types:
+              - iam_users
+              - gcp_iam_policies
+              - okta_groups
+              - sailpoint_roles
+              - sailpoint_entitlements
+            resource_types:
+              - iam_policy
+              - iam_user
+              - gcp_iam_binding
+              - sailpoint_role
+              - sailpoint_entitlement
+          - id: iam4_segregation
+            event_types:
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - cyberark_accounts
+            resource_types:
+              - sailpoint_role
+              - sailpoint_entitlement
+              - cyberark_account
+
+      UCF-IAM-5:
+        # Privileged Access Management
+        checks:
+          - id: iam5_pam
+            event_types:
+              - cyberark_accounts
+              - cyberark_safes
+              - cyberark_password_compliance
+            resource_types:
+              - cyberark_account
+              - cyberark_safe
+              - cyberark_compliance
+          - id: iam5_privileged_cloud
+            event_types:
+              - iam_credential_report
+              - iam_account_summary
+              - gcp_iam_policies
+            resource_types:
+              - iam_user
+              - iam_account
+              - gcp_iam_binding
+          - id: iam5_privileged_iga
+            event_types:
+              - sailpoint_roles
+              - sailpoint_entitlements
+            resource_types:
+              - sailpoint_role
+              - sailpoint_entitlement
+
+      UCF-IAM-6:
+        # Remote Access
+        checks:
+          - id: iam6_remote_access
+            event_types:
+              - okta_system_log
+              - entra_sign_ins
+              - entra_conditional_access_policies
+              - falcon_zero_trust
+            resource_types:
+              - okta_event
+              - entra_sign_in
+              - entra_conditional_access_policy
+
+      UCF-IAM-7:
+        # Access Reviews & Recertification
+        checks:
+          - id: iam7_access_reviews
+            event_types:
+              - sailpoint_certifications
+              - sailpoint_roles
+              - sailpoint_entitlements
+            resource_types:
+              - sailpoint_certification
+              - sailpoint_role
+              - sailpoint_entitlement
+
+      UCF-IAM-8:
+        # Credential Management & Identity Proofing
+        checks:
+          - id: iam8_credentials
+            event_types:
+              - iam_credential_report
+              - iam_account_summary
+              - okta_users
+              - entra_users
+              - cyberark_accounts
+              - cyberark_safes
+            resource_types:
+              - iam_user
+              - iam_account
+              - okta_user
+              - entra_user
+              - cyberark_account
+              - cyberark_safe
+
+  # ===========================================================================
+  # UCF-HRS — Human Resources Security
+  # Maps to: NIST AT/PS, SOC2 CC1, ISO A.6
+  # ===========================================================================
+  HRS:
+    controls:
+      UCF-HRS-1:
+        # Personnel Screening
+        checks:
+          - id: hrs1_screening
+            event_types:
+              - workday_employees
+              - workday_background_checks
+            resource_types:
+              - hr_employee
+              - hr_background_check
+
+      UCF-HRS-2:
+        # Terms & Conditions of Employment
+        checks:
+          - id: hrs2_employment_terms
+            event_types:
+              - workday_agreements
+            resource_types:
+              - hr_agreement
+
+      UCF-HRS-3:
+        # Security Awareness & Training
+        checks:
+          - id: hrs3_training
+            event_types:
+              - sailpoint_certifications
+              - kb4_training_campaigns
+              - kb4_training_enrollments
+              - kb4_phishing_results
+            resource_types:
+              - sailpoint_certification
+              - training_campaign
+              - training_enrollment
+              - phishing_result
+
+      UCF-HRS-4:
+        # Termination & Access Revocation
+        checks:
+          - id: hrs4_termination_identity
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+              - workday_employees
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+              - hr_employee
+          - id: hrs4_termination_access
+            event_types:
+              - okta_users
+              - entra_users
+              - iam_users
+            resource_types:
+              - okta_user
+              - entra_user
+              - iam_user
+
+      UCF-HRS-5:
+        # Personnel Transfer & Role Change
+        checks:
+          - id: hrs5_transfer
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+              - okta_users
+              - entra_users
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+              - okta_user
+              - entra_user
+
+  # ===========================================================================
+  # UCF-ASM — Asset Management
+  # Maps to: NIST CM-8/MP, SOC2 A1, ISO A.5.9-A.5.13/A.7.10/A.8.6
+  # ===========================================================================
+  ASM:
+    controls:
+      UCF-ASM-1:
+        # Asset Inventory
+        checks:
+          - id: asm1_cloud_inventory
+            event_types:
+              - iam_account_summary
+              - prisma_assets
+              - wiz_graph
+            resource_types:
+              - iam_account
+              - azure_resource
+          - id: asm1_endpoint_inventory
+            event_types:
+              - falcon_device_details
+              - falcon_devices
+              - defender_machines
+              - s1_agents
+            resource_types:
+              - endpoint
+              - agent
+          - id: asm1_vuln_inventory
+            event_types:
+              - asset_export
+              - asset_inventory
+            resource_types:
+              - host
+          - id: asm1_identity_inventory
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+              - okta_users
+              - entra_users
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+              - okta_user
+              - entra_user
+
+      UCF-ASM-2:
+        # Asset Classification & Labelling
+        checks:
+          - id: asm2_classification
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      UCF-ASM-3:
+        # Acceptable Use
+        checks:
+          - id: asm3_acceptable_use
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+
+      UCF-ASM-4:
+        # Media Handling & Storage
+        checks:
+          - id: asm4_media
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      UCF-ASM-5:
+        # Capacity Management
+        checks:
+          - id: asm5_capacity
+            event_types:
+              - splunk_index_health
+              - sentinel_data_connectors
+              - prisma_assets
+              - asset_export
+              - asset_inventory
+            resource_types:
+              - splunk_index
+              - endpoint
+              - host
+
+      UCF-ASM-6:
+        # Cloud Service Management
+        checks:
+          - id: asm6_cloud_posture
+            event_types:
+              - wiz_config_findings
+              - wiz_issues
+              - prisma_compliance
+              - prisma_alerts
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+          - id: asm6_cloud_aws
+            event_types:
+              - securityhub_hub
+              - config_recorders
+              - guardduty_detectors
+            resource_types:
+              - securityhub
+              - aws_config
+              - guardduty
+          - id: asm6_cloud_azure
+            event_types:
+              - policy_compliance
+              - defender_alerts
+            resource_types:
+              - azure_resource
+              - azure_defender_alert
+          - id: asm6_cloud_gcp
+            event_types:
+              - scc_findings
+              - gcp_iam_policies
+            resource_types:
+              - gcp_iam_binding
+
+  # ===========================================================================
+  # UCF-PHY — Physical Security
+  # Maps to: NIST PE, ISO A.7
+  # ===========================================================================
+  PHY:
+    controls:
+      UCF-PHY-1:
+        # Physical Security Perimeters
+        checks:
+          - id: phy1_perimeters
+            event_types:
+              - verkada_doors
+            resource_types:
+              - physical_door
+
+      UCF-PHY-2:
+        # Physical Entry Controls
+        checks:
+          - id: phy2_monitoring
+            event_types:
+              - cyberark_recordings
+              - verkada_access_events
+            resource_types:
+              - physical_access_event
+
+      UCF-PHY-3:
+        # Equipment Protection & Off-premises Assets
+        checks:
+          - id: phy3_offpremises
+            event_types:
+              - falcon_device_details
+              - s1_agents
+            resource_types:
+              - endpoint
+              - agent
+
+      UCF-PHY-4:
+        # Environmental Controls
+        checks:
+          - id: phy4_environmental_protection
+            event_types:
+              - policy_compliance
+              - config_recorders
+            resource_types:
+              - azure_resource
+              - aws_config
+
+  # ===========================================================================
+  # UCF-NET — Network Security
+  # Maps to: NIST AC-17/SC-7, SOC2 CC6.6, ISO A.8.20-A.8.23
+  # ===========================================================================
+  NET:
+    controls:
+      UCF-NET-1:
+        # Boundary Protection
+        checks:
+          - id: net1_boundary_aws
+            event_types:
+              - ec2_security_groups
+              - ec2_network_acls
+            resource_types:
+              - ec2_security_group
+              - ec2_network_acl
+          - id: net1_boundary_azure
+            event_types:
+              - network_security_groups
+            resource_types:
+              - network_security_group
+          - id: net1_boundary_gcp
+            event_types:
+              - compute_firewall_rules
+            resource_types:
+              - compute_firewall_rule
+
+      UCF-NET-2:
+        # Network Segmentation
+        checks:
+          - id: net2_segmentation
+            event_types:
+              - ec2_network_acls
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+            resource_types:
+              - ec2_network_acl
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+
+      UCF-NET-3:
+        # Firewall Management
+        checks:
+          - id: net3_firewall
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+
+      UCF-NET-4:
+        # Wireless Security
+        checks:
+          - id: net4_wireless_security
+            event_types:
+              - policy_compliance
+              - config_recorders
+              - wiz_config_findings
+            resource_types:
+              - azure_resource
+              - aws_config
+
+      UCF-NET-5:
+        # Remote Access & VPN
+        checks:
+          - id: net5_remote_access
+            event_types:
+              - entra_conditional_access_policies
+              - okta_policies
+              - falcon_zero_trust
+            resource_types:
+              - entra_conditional_access_policy
+              - okta_policy
+
+      UCF-NET-6:
+        # Network Monitoring
+        checks:
+          - id: net6_monitoring
+            event_types:
+              - guardduty_detectors
+              - scc_findings
+              - wiz_config_findings
+              - monitor_alerts
+            resource_types:
+              - guardduty
+              - azure_monitor
+
+      UCF-NET-7:
+        # DNS & DDoS Protection
+        checks:
+          - id: net7_web_filtering
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - falcon_zero_trust
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+
+  # ===========================================================================
+  # UCF-EPP — Endpoint Protection
+  # Maps to: NIST SI-3/AC-19, SOC2 CC6.8, ISO A.8.1/A.8.7
+  # ===========================================================================
+  EPP:
+    controls:
+      UCF-EPP-1:
+        # Endpoint Device Management
+        checks:
+          - id: epp1_endpoint_edr
+            event_types:
+              - falcon_device_details
+              - falcon_devices
+              - s1_agents
+              - defender_machines
+            resource_types:
+              - endpoint
+              - agent
+          - id: epp1_endpoint_compliance
+            event_types:
+              - falcon_zero_trust
+              - s1_policies
+              - falcon_sensor_policies
+            resource_types:
+              - endpoint
+              - policy
+
+      UCF-EPP-2:
+        # Malware Protection
+        checks:
+          - id: epp2_malware_detection
+            event_types:
+              - falcon_detection_details
+              - s1_threats
+              - defender_alerts
+            resource_types:
+              - endpoint
+          - id: epp2_malware_agents
+            event_types:
+              - falcon_device_details
+              - s1_agents
+              - elastic_agent_status
+            resource_types:
+              - agent
+              - endpoint_fleet
+
+      UCF-EPP-3:
+        # Agent Health & Coverage
+        checks:
+          - id: epp3_agent_health
+            event_types:
+              - falcon_device_details
+              - falcon_devices
+              - s1_agents
+              - elastic_agent_status
+              - agent_status
+            resource_types:
+              - agent
+              - endpoint
+              - endpoint_fleet
+
+      UCF-EPP-4:
+        # Mobile Device Management
+        checks:
+          - id: epp4_mobile
+            event_types:
+              - falcon_zero_trust
+              - entra_conditional_access_policies
+              - intune_devices
+              - intune_compliance_states
+            resource_types:
+              - entra_conditional_access_policy
+              - mdm_device
+              - mdm_compliance_state
+
+      UCF-EPP-5:
+        # Application Control & Software Restrictions
+        checks:
+          - id: epp5_app_control
+            event_types:
+              - s1_applications
+              - falcon_device_details
+            resource_types:
+              - endpoint
+              - agent
+
+  # ===========================================================================
+  # UCF-DAT — Data Protection
+  # Maps to: NIST SC-8/SC-12/SC-28, SOC2 C1, ISO A.8.10-A.8.12/A.8.24
+  # ===========================================================================
+  DAT:
+    controls:
+      UCF-DAT-1:
+        # Encryption at Rest
+        checks:
+          - id: dat1_encryption_rest
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      UCF-DAT-2:
+        # Encryption in Transit
+        checks:
+          - id: dat2_encryption_transit
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - s3_buckets
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+              - s3_bucket
+
+      UCF-DAT-3:
+        # Key Management
+        checks:
+          - id: dat3_key_mgmt
+            event_types:
+              - key_vault
+            resource_types:
+              - key_vault
+
+      UCF-DAT-4:
+        # Data Classification
+        checks:
+          - id: dat4_classification
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+              - prisma_assets
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      UCF-DAT-5:
+        # Data Retention
+        checks:
+          - id: dat5_retention
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      UCF-DAT-6:
+        # Data Disposal & Deletion
+        checks:
+          - id: dat6_disposal
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - key_vault
+
+      UCF-DAT-7:
+        # Data Loss Prevention
+        checks:
+          - id: dat7_dlp
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - s3_buckets
+              - wiz_config_findings
+              - purview_dlp_alerts
+              - purview_dlp_policies
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+              - s3_bucket
+              - dlp_alert
+              - dlp_policy
+
+  # ===========================================================================
+  # UCF-LOG — Logging & Monitoring
+  # Maps to: NIST AU, SOC2 CC7.1-CC7.3, ISO A.8.15-A.8.17
+  # ===========================================================================
+  LOG:
+    controls:
+      UCF-LOG-1:
+        # Audit Logging
+        checks:
+          - id: log1_cloud_logging
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+          - id: log1_idp_logging
+            event_types:
+              - okta_system_log
+              - entra_sign_ins
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_sign_in
+              - entra_audit
+
+      UCF-LOG-2:
+        # Log Review & Analysis
+        checks:
+          - id: log2_siem_analysis
+            event_types:
+              - sentinel_incidents
+              - sentinel_analytics_rules
+              - splunk_notable_events
+              - splunk_correlation_rules
+              - elastic_security_alerts
+              - elastic_detection_rules
+            resource_types:
+              - sentinel_incident
+              - sentinel_analytics_rule
+              - splunk_notable_event
+              - splunk_correlation_rule
+              - elastic_security_alert
+              - elastic_detection_rule
+
+      UCF-LOG-3:
+        # Log Protection & Integrity
+        checks:
+          - id: log3_protection
+            event_types:
+              - cloudtrail_trails
+              - s3_buckets
+              - config_recorders
+            resource_types:
+              - cloudtrail
+              - s3_bucket
+              - aws_config
+
+      UCF-LOG-4:
+        # Time Synchronization
+        checks:
+          - id: log4_clock_sync
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+
+      UCF-LOG-5:
+        # Continuous Monitoring
+        checks:
+          - id: log5_monitoring
+            event_types:
+              - config_recorders
+              - securityhub_hub
+              - guardduty_detectors
+              - policy_compliance
+              - scc_findings
+              - prisma_compliance
+              - wiz_config_findings
+            resource_types:
+              - aws_config
+              - securityhub
+              - guardduty
+              - compliance_standard
+
+      UCF-LOG-6:
+        # SIEM Operations
+        checks:
+          - id: log6_siem_health
+            event_types:
+              - sentinel_data_connectors
+              - splunk_index_health
+              - elastic_agent_status
+            resource_types:
+              - splunk_index
+          - id: log6_siem_cspm
+            event_types:
+              - wiz_issues
+              - prisma_alerts
+              - scc_findings
+              - securityhub_hub
+              - monitor_alerts
+            resource_types:
+              - securityhub
+              - azure_monitor
+
+  # ===========================================================================
+  # UCF-VLN — Vulnerability Management
+  # Maps to: NIST RA-5/SI-2, SOC2 CC3.1/CC9.1, ISO A.5.7/A.8.8
+  # ===========================================================================
+  VLN:
+    controls:
+      UCF-VLN-1:
+        # Vulnerability Scanning
+        checks:
+          - id: vln1_scanners
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+            resource_types:
+              - vulnerability
+              - host
+          - id: vln1_cspm
+            event_types:
+              - wiz_vuln_findings
+              - prisma_alerts
+              - scc_findings
+            resource_types:
+              - vulnerability
+
+      UCF-VLN-2:
+        # Flaw Remediation
+        checks:
+          - id: vln2_remediation
+            event_types:
+              - defender_recommendations
+              - knowledge_base
+              - wiz_issues
+            resource_types:
+              - recommendation
+              - knowledge_base
+
+      UCF-VLN-3:
+        # Patch Management
+        checks:
+          - id: vln3_patching
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+              - defender_recommendations
+            resource_types:
+              - vulnerability
+              - host
+              - recommendation
+
+      UCF-VLN-4:
+        # Penetration Testing
+        checks:
+          - id: vln4_pen_testing
+            event_types:
+              - vuln_export
+              - host_detections
+              - wiz_vuln_findings
+            resource_types:
+              - vulnerability
+              - host
+
+      UCF-VLN-5:
+        # Threat Intelligence
+        checks:
+          - id: vln5_threat_intel_cloud
+            event_types:
+              - guardduty_detectors
+              - securityhub_hub
+              - scc_findings
+            resource_types:
+              - guardduty
+              - securityhub
+          - id: vln5_threat_intel_cspm
+            event_types:
+              - defender_alerts
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - azure_defender_alert
+              - vulnerability
+          - id: vln5_threat_intel_edr
+            event_types:
+              - falcon_detection_details
+              - s1_threats
+              - defender_alerts
+            resource_types:
+              - endpoint
+
+  # ===========================================================================
+  # UCF-THR — Threat Detection & Response
+  # Maps to: NIST IR/SI-4, SOC2 CC7.4-CC7.5, ISO A.5.24-A.5.28
+  # ===========================================================================
+  THR:
+    controls:
+      UCF-THR-1:
+        # Threat Detection
+        checks:
+          - id: thr1_siem_detection
+            event_types:
+              - guardduty_detectors
+              - securityhub_hub
+              - splunk_notable_events
+              - splunk_correlation_rules
+              - sentinel_analytics_rules
+              - elastic_detection_rules
+              - scc_findings
+            resource_types:
+              - guardduty
+              - securityhub
+              - splunk_notable_event
+              - splunk_correlation_rule
+              - sentinel_analytics_rule
+              - elastic_detection_rule
+          - id: thr1_edr_detection
+            event_types:
+              - falcon_detection_details
+              - defender_alerts
+              - s1_threats
+            resource_types:
+              - endpoint
+
+      UCF-THR-2:
+        # Incident Handling & Response
+        checks:
+          - id: thr2_incident_response
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - elastic_security_alerts
+              - falcon_detection_details
+              - s1_threats
+              - defender_alerts
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+              - elastic_security_alert
+              - endpoint
+
+      UCF-THR-3:
+        # Incident Reporting & Notification
+        checks:
+          - id: thr3_reporting
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - elastic_security_alerts
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+              - elastic_security_alert
+
+      UCF-THR-4:
+        # Incident Recovery
+        checks:
+          - id: thr4_recovery
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+
+      UCF-THR-5:
+        # Digital Forensics & Evidence Collection
+        checks:
+          - id: thr5_forensics
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - okta_event
+              - entra_audit
+
+      UCF-THR-6:
+        # Lessons Learned
+        checks:
+          - id: thr6_lessons_learned
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - sentinel_hunting_queries
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+
+  # ===========================================================================
+  # UCF-CFG — Configuration Management
+  # Maps to: NIST CM, SOC2 CC8.1, ISO A.8.9/A.8.19/A.8.32
+  # ===========================================================================
+  CFG:
+    controls:
+      UCF-CFG-1:
+        # Baseline Configuration
+        checks:
+          - id: cfg1_baseline_aws
+            event_types:
+              - config_recorders
+              - securityhub_hub
+            resource_types:
+              - aws_config
+              - securityhub
+          - id: cfg1_baseline_azure
+            event_types:
+              - policy_compliance
+            resource_types:
+              - azure_resource
+          - id: cfg1_baseline_cspm
+            event_types:
+              - wiz_config_findings
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      UCF-CFG-2:
+        # Change Management
+        checks:
+          - id: cfg2_change_cloud
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+          - id: cfg2_change_config
+            event_types:
+              - config_recorders
+              - policy_compliance
+            resource_types:
+              - aws_config
+              - azure_resource
+          - id: cfg2_change_idp
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+          - id: cfg2_change_itsm
+            event_types:
+              - snow_change_requests
+            resource_types:
+              - itsm_change_request
+
+      UCF-CFG-3:
+        # Least Functionality & Hardening
+        checks:
+          - id: cfg3_hardening
+            event_types:
+              - config_recorders
+              - policy_compliance
+              - prisma_compliance
+              - wiz_config_findings
+            resource_types:
+              - aws_config
+              - azure_resource
+              - compliance_standard
+
+      UCF-CFG-4:
+        # Software Restrictions
+        checks:
+          - id: cfg4_software
+            event_types:
+              - s1_applications
+              - falcon_device_details
+            resource_types:
+              - endpoint
+              - agent
+
+      UCF-CFG-5:
+        # Configuration Monitoring & Drift Detection
+        checks:
+          - id: cfg5_drift
+            event_types:
+              - config_recorders
+              - cloudtrail_trails
+              - entra_directory_audits
+              - okta_system_log
+            resource_types:
+              - aws_config
+              - cloudtrail
+              - entra_audit
+              - okta_event
+
+      UCF-CFG-6:
+        # CMDB & Configuration Documentation
+        checks:
+          - id: cfg6_cmdb
+            event_types:
+              - prisma_assets
+              - asset_export
+              - asset_inventory
+              - wiz_graph
+            resource_types:
+              - endpoint
+              - host
+              - azure_resource
+
+  # ===========================================================================
+  # UCF-BCP — Business Continuity
+  # Maps to: NIST CP, SOC2 A1, ISO A.5.29-A.5.30/A.8.13-A.8.14
+  # ===========================================================================
+  BCP:
+    controls:
+      UCF-BCP-1:
+        # Contingency Planning
+        checks:
+          - id: bcp1_contingency_planning
+            event_types:
+              - confluence_pages
+              - snow_policies
+              - veeam_backup_jobs
+            resource_types:
+              - grc_document
+              - itsm_policy
+              - backup_job
+
+      UCF-BCP-2:
+        # Backup Management
+        checks:
+          - id: bcp2_backup
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - veeam_backup_jobs
+              - veeam_backup_sessions
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - backup_job
+              - backup_session
+
+      UCF-BCP-3:
+        # Recovery Procedures
+        checks:
+          - id: bcp3_recovery
+            event_types:
+              - config_recorders
+              - policy_compliance
+            resource_types:
+              - aws_config
+              - azure_resource
+
+      UCF-BCP-4:
+        # Recovery Testing
+        checks:
+          - id: bcp4_testing
+            event_types:
+              - config_recorders
+              - policy_compliance
+              - compliance_audits
+            resource_types:
+              - aws_config
+              - azure_resource
+              - compliance_standard
+
+      UCF-BCP-5:
+        # Redundancy & High Availability
+        checks:
+          - id: bcp5_redundancy
+            event_types:
+              - sentinel_data_connectors
+              - splunk_index_health
+              - elastic_agent_status
+              - falcon_device_details
+              - s1_agents
+            resource_types:
+              - splunk_index
+              - endpoint
+              - agent
+
+  # ===========================================================================
+  # UCF-DEV — Secure Development
+  # Maps to: NIST SA, ISO A.8.25-A.8.31
+  # ===========================================================================
+  DEV:
+    controls:
+      UCF-DEV-1:
+        # Secure Development Lifecycle (SDLC)
+        checks:
+          - id: dev1_sdlc
+            event_types:
+              - wiz_config_findings
+              - prisma_compliance
+            resource_types:
+              - compliance_standard
+
+      UCF-DEV-2:
+        # Secure Coding Standards
+        checks:
+          - id: dev2_secure_coding
+            event_types:
+              - wiz_vuln_findings
+              - prisma_alerts
+              - snyk_issues
+            resource_types:
+              - vulnerability
+              - code_vulnerability
+
+      UCF-DEV-3:
+        # Code Review & Application Security
+        checks:
+          - id: dev3_app_security
+            event_types:
+              - wiz_vuln_findings
+              - prisma_alerts
+              - snyk_issues
+              - snyk_projects
+            resource_types:
+              - vulnerability
+              - code_vulnerability
+              - code_project
+
+      UCF-DEV-4:
+        # Security Testing
+        checks:
+          - id: dev4_testing
+            event_types:
+              - vuln_export
+              - host_detections
+              - wiz_vuln_findings
+            resource_types:
+              - vulnerability
+              - host
+
+      UCF-DEV-5:
+        # Separation of Environments
+        checks:
+          - id: dev5_env_separation
+            event_types:
+              - config_recorders
+              - wiz_config_findings
+              - prisma_assets
+            resource_types:
+              - aws_config
+              - azure_resource
+
+      UCF-DEV-6:
+        # Outsourced Development
+        checks:
+          - id: dev6_outsourced
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+
+  # ===========================================================================
+  # UCF-TPM — Third-Party Management
+  # Maps to: NIST SA-9/SR, SOC2 CC9.2, ISO A.5.19-A.5.23
+  # ===========================================================================
+  TPM:
+    controls:
+      UCF-TPM-1:
+        # Supplier Assessment
+        checks:
+          - id: tpm1_supplier
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+              - okta_applications
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+              - okta_application
+
+      UCF-TPM-2:
+        # Supplier Agreements
+        checks:
+          - id: tpm2_agreements
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+
+      UCF-TPM-3:
+        # Supplier Monitoring
+        checks:
+          - id: tpm3_monitoring
+            event_types:
+              - entra_directory_audits
+              - okta_system_log
+            resource_types:
+              - entra_audit
+              - okta_event
+
+      UCF-TPM-4:
+        # Cloud Provider Management
+        checks:
+          - id: tpm4_cloud_provider
+            event_types:
+              - wiz_config_findings
+              - wiz_issues
+              - prisma_compliance
+              - prisma_alerts
+              - securityhub_hub
+              - config_recorders
+              - guardduty_detectors
+              - policy_compliance
+              - scc_findings
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+              - securityhub
+              - aws_config
+              - guardduty
+              - azure_resource
+
+      UCF-TPM-5:
+        # Supply Chain Security
+        checks:
+          - id: tpm5_supply_chain
+            event_types:
+              - entra_service_principals
+              - okta_applications
+              - wiz_config_findings
+              - sailpoint_accounts
+            resource_types:
+              - entra_service_principal
+              - okta_application
+              - sailpoint_account
+
+  # ===========================================================================
+  # UCF-PRV — Privacy
+  # Maps to: NIST PT, SOC2 P1, ISO27701 A.7/B.8
+  # ===========================================================================
+  PRV:
+    controls:
+      UCF-PRV-1:
+        # Purpose Limitation & Lawful Basis
+        checks:
+          - id: prv1_purpose
+            event_types:
+              - prisma_policies
+              - policy_compliance
+              - compliance_audits
+            resource_types:
+              - policy
+              - compliance_standard
+
+      UCF-PRV-2:
+        # Consent Management
+        checks:
+          - id: prv2_consent
+            event_types:
+              - prisma_policies
+              - policy_compliance
+            resource_types:
+              - policy
+
+      UCF-PRV-3:
+        # Data Subject Rights
+        checks:
+          - id: prv3_data_subject_rights
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+              - onetrust_dsar_requests
+            resource_types:
+              - okta_event
+              - entra_audit
+              - privacy_dsar
+
+      UCF-PRV-4:
+        # Privacy Impact Assessment
+        checks:
+          - id: prv4_pia
+            event_types:
+              - wiz_issues
+              - prisma_compliance
+              - compliance_audits
+              - onetrust_assessments
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+              - privacy_assessment
+
+      UCF-PRV-5:
+        # PII Minimization & Collection Limitation
+        checks:
+          - id: prv5_minimization
+            event_types:
+              - prisma_policies
+              - wiz_config_findings
+              - policy_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      UCF-PRV-6:
+        # De-identification & Anonymization
+        checks:
+          - id: prv6_deidentification
+            event_types:
+              - onetrust_assessments
+              - purview_sensitivity_labels
+            resource_types:
+              - privacy_assessment
+              - dlp_label
+
+      UCF-PRV-7:
+        # PII Transfer & Cross-border Data Flows
+        checks:
+          - id: prv7_transfer
+            event_types:
+              - policy_compliance
+              - prisma_policies
+              - prisma_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+          - id: prv7_transfer_controls
+            event_types:
+              - key_vault
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - key_vault
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+              - s3_bucket
+              - storage_account
+
+      UCF-PRV-8:
+        # Processor & Controller Obligations
+        checks:
+          - id: prv8_obligations
+            event_types:
+              - compliance_audits
+              - prisma_compliance
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+
+  # ===========================================================================
+  # UCF-AIM — AI Management
+  # Maps to: ISO42001 A.2-A.10
+  # ===========================================================================
+  AIM:
+    controls:
+      UCF-AIM-1:
+        # AI Policy & Governance
+        checks:
+          - id: aim1_ai_policy
+            event_types:
+              - prisma_policies
+            resource_types:
+              - policy
+
+      UCF-AIM-2:
+        # AI Impact Assessment
+        checks:
+          - id: aim2_impact
+            event_types:
+              - scc_findings
+              - wiz_issues
+              - prisma_alerts
+              - monitor_alerts
+              - defender_alerts
+            resource_types:
+              - recommendation
+              - azure_monitor
+              - azure_defender_alert
+
+      UCF-AIM-3:
+        # AI System Lifecycle
+        checks:
+          - id: aim3_lifecycle_deploy
+            event_types:
+              - config_recorders
+              - policy_compliance
+              - cloudtrail_trails
+              - audit_logs
+            resource_types:
+              - aws_config
+              - azure_resource
+              - cloudtrail
+              - gcp_audit
+          - id: aim3_lifecycle_monitor
+            event_types:
+              - monitor_alerts
+              - splunk_notable_events
+              - sentinel_incidents
+              - elastic_security_alerts
+              - scc_findings
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - azure_monitor
+              - splunk_notable_event
+              - sentinel_incident
+              - elastic_security_alert
+
+      UCF-AIM-4:
+        # Data for AI Systems
+        checks:
+          - id: aim4_data_management
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - key_vault
+          - id: aim4_data_provenance
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+
+      UCF-AIM-5:
+        # Human Oversight of AI
+        checks:
+          - id: aim5_human_oversight
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+              - entra_sign_ins
+              - cyberark_recordings
+              - cyberark_accounts
+            resource_types:
+              - okta_event
+              - entra_audit
+              - entra_sign_in
+              - cyberark_account
+
+      UCF-AIM-6:
+        # AI Transparency & Explainability
+        checks:
+          - id: aim6_transparency
+            event_types:
+              - mlflow_registered_models
+              - mlflow_model_versions
+            resource_types:
+              - ai_model
+              - ai_model_version
+
+  # ===========================================================================
+  # UCF-CMP — Compliance & Audit
+  # Maps to: NIST CA, SOC2 CC4/CC5, ISO A.5.35-A.5.36
+  # ===========================================================================
+  CMP:
+    controls:
+      UCF-CMP-1:
+        # Control Assessments
+        checks:
+          - id: cmp1_assessment
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      UCF-CMP-2:
+        # Independent Review & Audit
+        checks:
+          - id: cmp2_review
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      UCF-CMP-3:
+        # Continuous Compliance Monitoring
+        checks:
+          - id: cmp3_continuous
+            event_types:
+              - config_recorders
+              - securityhub_hub
+              - guardduty_detectors
+              - policy_compliance
+              - scc_findings
+              - prisma_compliance
+              - wiz_config_findings
+              - compliance_posture
+            resource_types:
+              - aws_config
+              - securityhub
+              - guardduty
+              - compliance_standard
+              - compliance_requirement
+
+      UCF-CMP-4:
+        # Plan of Action & Milestones (POA&M)
+        checks:
+          - id: cmp4_poam
+            event_types:
+              - defender_recommendations
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - recommendation
+
+      UCF-CMP-5:
+        # Compliance Reporting
+        checks:
+          - id: cmp5_reporting
+            event_types:
+              - policy_compliance
+              - prisma_compliance
+              - wiz_config_findings
+              - compliance_posture
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+              - policy
+
+  # ===========================================================================
+  # UCF-COM — Communication
+  # Maps to: NIST PM/SI-5, SOC2 CC2, ISO A.5.5-A.5.6
+  # ===========================================================================
+  COM:
+    controls:
+      UCF-COM-1:
+        # Internal Communication
+        checks:
+          - id: com1_internal
+            event_types:
+              - splunk_notable_events
+              - sentinel_incidents
+              - proofpoint_blocked_messages
+              - proofpoint_delivered_threats
+            resource_types:
+              - splunk_notable_event
+              - sentinel_incident
+              - email_blocked
+              - email_threat
+
+      UCF-COM-2:
+        # External Communication
+        checks:
+          - id: com2_external_communication
+            event_types:
+              - confluence_pages
+              - proofpoint_blocked_messages
+            resource_types:
+              - grc_document
+              - email_blocked
+
+      UCF-COM-3:
+        # Information Sharing & Threat Feeds
+        checks:
+          - id: com3_sharing
+            event_types:
+              - guardduty_detectors
+              - securityhub_hub
+              - falcon_detection_details
+              - s1_threats
+            resource_types:
+              - guardduty
+              - securityhub
+              - endpoint

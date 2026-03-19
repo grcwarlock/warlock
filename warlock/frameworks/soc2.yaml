@@ -24,6 +24,30 @@ control_families:
             resource_types:
               - sailpoint_certification
 
+      CC1.3:
+        checks:
+          - id: cc1_3_management_structure
+            event_types:
+              - workday_employees
+            resource_types:
+              - hr_employee
+
+      CC1.4:
+        checks:
+          - id: cc1_4_competence
+            event_types:
+              - kb4_training_enrollments
+            resource_types:
+              - training_enrollment
+
+      CC1.5:
+        checks:
+          - id: cc1_5_enforcement
+            event_types:
+              - workday_disciplinary
+            resource_types:
+              - hr_disciplinary_action
+
   # ---------------------------------------------------------------------------
   # CC2 — Communication and Information
   # ---------------------------------------------------------------------------
@@ -38,6 +62,28 @@ control_families:
             resource_types:
               - splunk_notable_event
               - sentinel_incident
+
+      CC2.2:
+        checks:
+          - id: cc2_2_internal_communication
+            event_types:
+              - confluence_pages
+              - snow_knowledge_articles
+              - okta_system_log
+            resource_types:
+              - grc_document
+              - itsm_knowledge_article
+              - okta_event
+
+      CC2.3:
+        checks:
+          - id: cc2_3_external_communication
+            event_types:
+              - confluence_pages
+              - snow_policies
+            resource_types:
+              - grc_document
+              - itsm_policy
 
   # ---------------------------------------------------------------------------
   # CC3 — Risk Assessment
@@ -69,6 +115,32 @@ control_families:
               - scc_findings
             resource_types:
               - recommendation
+
+      CC3.3:
+        checks:
+          - id: cc3_3_risk_estimation
+            event_types:
+              - snow_risks
+              - wiz_issues
+              - prisma_alerts
+              - scc_findings
+            resource_types:
+              - itsm_risk
+              - recommendation
+
+      CC3.4:
+        checks:
+          - id: cc3_4_fraud_risk
+            event_types:
+              - entra_risky_users
+              - okta_system_log
+              - sentinel_incidents
+              - splunk_notable_events
+            resource_types:
+              - entra_user
+              - okta_event
+              - sentinel_incident
+              - splunk_notable_event
 
   # ---------------------------------------------------------------------------
   # CC4 — Monitoring Activities
@@ -130,6 +202,24 @@ control_families:
               - azure_resource
               - policy
 
+      CC5.3:
+        checks:
+          - id: cc5_3_segregation_of_duties
+            event_types:
+              - iam_policies
+              - gcp_iam_policies
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - cyberark_accounts
+              - cyberark_safes
+            resource_types:
+              - iam_policy
+              - gcp_iam_binding
+              - sailpoint_role
+              - sailpoint_entitlement
+              - cyberark_account
+              - cyberark_safe
+
   # ---------------------------------------------------------------------------
   # CC6 — Logical and Physical Access Controls
   # ---------------------------------------------------------------------------
@@ -190,6 +280,38 @@ control_families:
               - sailpoint_role
               - sailpoint_entitlement
               - cyberark_account
+
+      CC6.4:
+        checks:
+          - id: cc6_4_credential_management
+            event_types:
+              - iam_credential_report
+              - iam_account_summary
+              - okta_users
+              - entra_users
+              - cyberark_accounts
+              - cyberark_safes
+            resource_types:
+              - iam_user
+              - iam_account
+              - okta_user
+              - entra_user
+              - cyberark_account
+              - cyberark_safe
+
+      CC6.5:
+        checks:
+          - id: cc6_5_authentication_mechanisms
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+              - iam_credential_report
+              - iam_account_summary
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+              - iam_user
+              - iam_account
 
       CC6.6:
         checks:
@@ -331,12 +453,14 @@ control_families:
               - audit_logs
               - activity_log
               - entra_directory_audits
+              - snow_change_requests
             resource_types:
               - aws_config
               - cloudtrail
               - gcp_audit
               - azure_activity
               - entra_audit
+              - itsm_change_request
 
   # ---------------------------------------------------------------------------
   # CC9 — Risk Mitigation
@@ -359,6 +483,18 @@ control_families:
               - endpoint
               - vulnerability
               - recommendation
+
+      CC9.2:
+        checks:
+          - id: cc9_2_vendor_risk_acceptance
+            event_types:
+              - snow_risks
+              - ssc_companies
+              - ssc_factors
+            resource_types:
+              - itsm_risk
+              - vendor_company
+              - vendor_risk_factor
 
   # ---------------------------------------------------------------------------
   # A1 — Availability
@@ -387,9 +523,25 @@ control_families:
             event_types:
               - config_recorders
               - policy_compliance
+              - veeam_backup_sessions
             resource_types:
               - aws_config
               - azure_resource
+              - backup_session
+
+      A1.3:
+        checks:
+          - id: a1_3_recovery_testing
+            event_types:
+              - config_recorders
+              - policy_compliance
+              - compliance_audits
+              - veeam_restore_points
+            resource_types:
+              - aws_config
+              - azure_resource
+              - compliance_standard
+              - backup_restore_point
 
   # ---------------------------------------------------------------------------
   # C1 — Confidentiality
@@ -447,3 +599,80 @@ control_families:
             resource_types:
               - aws_config
               - azure_resource
+
+      PI1.3:
+        checks:
+          - id: pi1_3_system_processing
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - config_recorders
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - aws_config
+
+      PI1.4:
+        checks:
+          - id: pi1_4_system_output
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - config_recorders
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - aws_config
+
+      PI1.5:
+        checks:
+          - id: pi1_5_stored_information
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - key_vault
+
+  # ---------------------------------------------------------------------------
+  # P1 — Privacy
+  # ---------------------------------------------------------------------------
+  P1:
+    controls:
+      P1.0:
+        checks:
+          - id: p1_0_privacy_notice
+            event_types:
+              - onetrust_consent_records
+              - onetrust_data_maps
+              - confluence_pages
+            resource_types:
+              - privacy_consent
+              - privacy_data_map
+              - grc_document
+
+      P1.1:
+        checks:
+          - id: p1_1_privacy_notice
+            event_types:
+              - prisma_policies
+              - policy_compliance
+              - compliance_audits
+            resource_types:
+              - policy
+              - compliance_standard
+
+      P1.2:
+        checks:
+          - id: p1_2_choice_and_consent
+            event_types:
+              - prisma_policies
+              - policy_compliance
+            resource_types:
+              - policy

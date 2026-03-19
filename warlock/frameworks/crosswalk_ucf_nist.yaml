@@ -1,0 +1,5676 @@
+# UCF → NIST 800-53 Crosswalk Edges (Missing Controls)
+# Auto-generated crosswalk mapping ~1057 NIST controls to UCF controls
+#
+# Confidence values:
+#   0.90 — direct mapping (base control to UCF domain)
+#   0.85 — enhancement follows parent theme
+#   0.80 — looser/indirect fit
+
+crosswalks:
+
+  # --- AC family ---
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-2(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-3(15)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(15)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(16)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(17)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(18)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(19)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(20)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(21)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(22)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(23)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(24)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(25)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(26)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(27)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(28)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(29)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(30)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(31)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: AC-4(32)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-6(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-7(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-7(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-12
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-12(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-12(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-13
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-14
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-14(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: AC-15
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-4
+    target_framework: nist_800_53
+    target_control: AC-16(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: nist_800_53
+    target_control: AC-17(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-4
+    target_framework: nist_800_53
+    target_control: AC-18(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-4
+    target_framework: nist_800_53
+    target_control: AC-18(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-4
+    target_framework: nist_800_53
+    target_control: AC-18(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-4
+    target_framework: nist_800_53
+    target_control: AC-18(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-4
+    target_framework: nist_800_53
+    target_control: AC-18(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-4
+    target_framework: nist_800_53
+    target_control: AC-19(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-4
+    target_framework: nist_800_53
+    target_control: AC-19(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-4
+    target_framework: nist_800_53
+    target_control: AC-19(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-4
+    target_framework: nist_800_53
+    target_control: AC-19(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-4
+    target_framework: nist_800_53
+    target_control: AC-19(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-3
+    target_framework: nist_800_53
+    target_control: AC-20
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-3
+    target_framework: nist_800_53
+    target_control: AC-20(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-3
+    target_framework: nist_800_53
+    target_control: AC-20(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-3
+    target_framework: nist_800_53
+    target_control: AC-20(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-3
+    target_framework: nist_800_53
+    target_control: AC-20(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-22
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-22(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-23
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-24
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-24(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-24(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_800_53
+    target_control: AC-25
+    confidence: 0.9
+
+  # --- AT family ---
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-2(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-6(2)
+    confidence: 0.85
+
+  # --- AU family ---
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-2
+    target_framework: nist_800_53
+    target_control: AU-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-2
+    target_framework: nist_800_53
+    target_control: AU-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-2
+    target_framework: nist_800_53
+    target_control: AU-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-5(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-5(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-6(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: AU-9(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_800_53
+    target_control: AU-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_800_53
+    target_control: AU-10(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_800_53
+    target_control: AU-10(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_800_53
+    target_control: AU-10(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_800_53
+    target_control: AU-10(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: nist_800_53
+    target_control: AU-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-12(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-12(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-12(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: AU-13
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-14
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-14(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-14(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-14(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: nist_800_53
+    target_control: AU-15
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_800_53
+    target_control: AU-16
+    confidence: 0.9
+
+  # --- CA family ---
+  - source_framework: ucf
+    source_control: UCF-CMP-1
+    target_framework: nist_800_53
+    target_control: CA-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-3(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-4
+    target_framework: nist_800_53
+    target_control: CA-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-7(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-7(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-7(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-2
+    target_framework: nist_800_53
+    target_control: CA-7(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-4
+    target_framework: nist_800_53
+    target_control: CA-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-4
+    target_framework: nist_800_53
+    target_control: CA-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-4
+    target_framework: nist_800_53
+    target_control: CA-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CMP-3
+    target_framework: nist_800_53
+    target_control: CA-9(1)
+    confidence: 0.85
+
+  # --- CM family ---
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-2(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-3(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: CM-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-3
+    target_framework: nist_800_53
+    target_control: CM-5(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-6(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-7(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-1
+    target_framework: nist_800_53
+    target_control: CM-8(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-4
+    target_framework: nist_800_53
+    target_control: CM-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-11(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-5
+    target_framework: nist_800_53
+    target_control: CM-11(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-12
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_800_53
+    target_control: CM-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-6
+    target_framework: nist_800_53
+    target_control: CM-13
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-6
+    target_framework: nist_800_53
+    target_control: CM-14
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-6
+    target_framework: nist_800_53
+    target_control: CM-14(1)
+    confidence: 0.85
+
+  # --- CP family ---
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-2(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-3
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_800_53
+    target_control: CP-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: nist_800_53
+    target_control: CP-5
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-7(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-7(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-7(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-7(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-4
+    target_framework: nist_800_53
+    target_control: CP-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-BCP-4
+    target_framework: nist_800_53
+    target_control: CP-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-4
+    target_framework: nist_800_53
+    target_control: CP-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-4
+    target_framework: nist_800_53
+    target_control: CP-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-4
+    target_framework: nist_800_53
+    target_control: CP-8(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-4
+    target_framework: nist_800_53
+    target_control: CP-8(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_800_53
+    target_control: CP-9(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-10(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-10(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-10(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-10(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-10(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-12
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-13
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-BCP-5
+    target_framework: nist_800_53
+    target_control: CP-13(1)
+    confidence: 0.85
+
+  # --- IA family ---
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-2(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-3
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-4(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(15)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(16)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(17)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-5(18)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-8(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-8(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-8(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: nist_800_53
+    target_control: IA-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-12(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-12(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-12(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-12(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: IA-12(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-13
+    confidence: 0.9
+
+  # --- IR family ---
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-1(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: nist_800_53
+    target_control: IR-2
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: nist_800_53
+    target_control: IR-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: nist_800_53
+    target_control: IR-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: nist_800_53
+    target_control: IR-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: IR-3
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: IR-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: IR-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: IR-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-4(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-4
+    target_framework: nist_800_53
+    target_control: IR-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-5
+    target_framework: nist_800_53
+    target_control: IR-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-5
+    target_framework: nist_800_53
+    target_control: IR-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-5
+    target_framework: nist_800_53
+    target_control: IR-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: IR-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-9(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-9(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-THR-6
+    target_framework: nist_800_53
+    target_control: IR-10(1)
+    confidence: 0.85
+
+  # --- MA family ---
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-2
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-3(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: MA-4(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-5(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-5(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-7
+    confidence: 0.9
+
+  # --- MP family ---
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-5(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-6
+    target_framework: nist_800_53
+    target_control: MP-6(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-ASM-4
+    target_framework: nist_800_53
+    target_control: MP-8(4)
+    confidence: 0.85
+
+  # --- PE family ---
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-3(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: nist_800_53
+    target_control: PE-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-6(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-7
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: nist_800_53
+    target_control: PE-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-11(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-12
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-13(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-13(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-13(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-13(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-14(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-14(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-3
+    target_framework: nist_800_53
+    target_control: PE-15(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-16
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-16(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-17
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-17(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-18
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-18(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-19
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-19(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-20
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-21
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-22
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-23
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PHY-4
+    target_framework: nist_800_53
+    target_control: PE-23(1)
+    confidence: 0.85
+
+  # --- PL family ---
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-3
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-5
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-6
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-9
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-11
+    confidence: 0.85
+
+  # --- PM family ---
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-4
+    target_framework: nist_800_53
+    target_control: PM-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-12
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-13
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-14
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-14(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-COM-1
+    target_framework: nist_800_53
+    target_control: PM-15(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: PM-16(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-17
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-18
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-19
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-20
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-20(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-21
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-22
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-23
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-24
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-25
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-25(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-26
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-27
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-28(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: PM-29
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: PM-30
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: PM-30(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-31(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_800_53
+    target_control: PM-32
+    confidence: 0.9
+
+  # --- PS family ---
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: nist_800_53
+    target_control: PS-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: nist_800_53
+    target_control: PS-2
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-2
+    target_framework: nist_800_53
+    target_control: PS-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-2
+    target_framework: nist_800_53
+    target_control: PS-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-2
+    target_framework: nist_800_53
+    target_control: PS-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-2
+    target_framework: nist_800_53
+    target_control: PS-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-4
+    target_framework: nist_800_53
+    target_control: PS-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-4
+    target_framework: nist_800_53
+    target_control: PS-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-4
+    target_framework: nist_800_53
+    target_control: PS-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-4
+    target_framework: nist_800_53
+    target_control: PS-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-4
+    target_framework: nist_800_53
+    target_control: PS-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: nist_800_53
+    target_control: PS-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: nist_800_53
+    target_control: PS-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: nist_800_53
+    target_control: PS-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: nist_800_53
+    target_control: PS-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-5
+    target_framework: nist_800_53
+    target_control: PS-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-5
+    target_framework: nist_800_53
+    target_control: PS-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-HRS-5
+    target_framework: nist_800_53
+    target_control: PS-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-HRS-5
+    target_framework: nist_800_53
+    target_control: PS-9(2)
+    confidence: 0.85
+
+  # --- PT family ---
+  - source_framework: ucf
+    source_control: UCF-PRV-1
+    target_framework: nist_800_53
+    target_control: PT-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PRV-2
+    target_framework: nist_800_53
+    target_control: PT-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: PT-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: PT-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-4
+    target_framework: nist_800_53
+    target_control: PT-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-4
+    target_framework: nist_800_53
+    target_control: PT-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-4
+    target_framework: nist_800_53
+    target_control: PT-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-5
+    target_framework: nist_800_53
+    target_control: PT-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-5
+    target_framework: nist_800_53
+    target_control: PT-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-6
+    target_framework: nist_800_53
+    target_control: PT-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-6
+    target_framework: nist_800_53
+    target_control: PT-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-7
+    target_framework: nist_800_53
+    target_control: PT-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-7
+    target_framework: nist_800_53
+    target_control: PT-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-8
+    target_framework: nist_800_53
+    target_control: PT-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-PRV-8
+    target_framework: nist_800_53
+    target_control: PT-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-8
+    target_framework: nist_800_53
+    target_control: PT-8(2)
+    confidence: 0.85
+
+  # --- RA family ---
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: nist_800_53
+    target_control: RA-5(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-3
+    target_framework: nist_800_53
+    target_control: RA-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-RSK-4
+    target_framework: nist_800_53
+    target_control: RA-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-RSK-4
+    target_framework: nist_800_53
+    target_control: RA-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-4
+    target_framework: nist_800_53
+    target_control: RA-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-4
+    target_framework: nist_800_53
+    target_control: RA-9(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-4
+    target_framework: nist_800_53
+    target_control: RA-9(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: RA-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: RA-10(1)
+    confidence: 0.85
+
+  # --- SA family ---
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-2
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-4(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: nist_800_53
+    target_control: SA-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-6
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-7
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(6)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(7)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(8)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(9)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(10)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(11)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(12)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(13)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(14)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(15)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(16)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(17)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(18)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(19)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(20)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(21)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(22)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(23)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(24)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(25)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(26)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(27)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(28)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(29)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(30)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(31)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(32)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-3
+    target_framework: nist_800_53
+    target_control: SA-8(33)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-1
+    target_framework: nist_800_53
+    target_control: SA-9(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-10(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-11(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(6)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(7)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(8)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(9)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(10)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(11)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(12)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(13)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(14)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-12(15)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-4
+    target_framework: nist_800_53
+    target_control: SA-13
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-14
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(6)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(7)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(8)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(9)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(10)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(11)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(12)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(13)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-15(14)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-16
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(6)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(7)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(8)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-17(9)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-18
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-18(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-18(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-19
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-19(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-19(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-19(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-19(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-6
+    target_framework: nist_800_53
+    target_control: SA-20
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-21
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-21(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-22
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-22(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DEV-5
+    target_framework: nist_800_53
+    target_control: SA-23
+    confidence: 0.85
+
+  # --- SC family ---
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-2
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-3
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_800_53
+    target_control: SC-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-5
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-5(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: nist_800_53
+    target_control: SC-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(15)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(16)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(17)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(18)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(19)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(20)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(21)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(22)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(23)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(24)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(25)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(26)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(27)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(28)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: nist_800_53
+    target_control: SC-7(29)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: nist_800_53
+    target_control: SC-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: nist_800_53
+    target_control: SC-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: nist_800_53
+    target_control: SC-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: nist_800_53
+    target_control: SC-8(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: nist_800_53
+    target_control: SC-8(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-5
+    target_framework: nist_800_53
+    target_control: SC-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-5
+    target_framework: nist_800_53
+    target_control: SC-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-5
+    target_framework: nist_800_53
+    target_control: SC-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-5
+    target_framework: nist_800_53
+    target_control: SC-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-5
+    target_framework: nist_800_53
+    target_control: SC-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_800_53
+    target_control: SC-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_800_53
+    target_control: SC-12(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_800_53
+    target_control: SC-12(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_800_53
+    target_control: SC-12(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_800_53
+    target_control: SC-12(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_800_53
+    target_control: SC-12(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: nist_800_53
+    target_control: SC-13
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: nist_800_53
+    target_control: SC-13(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: nist_800_53
+    target_control: SC-13(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: nist_800_53
+    target_control: SC-13(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: nist_800_53
+    target_control: SC-13(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-14
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-15
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-15(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-15(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-15(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-15(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-16
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-16(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-16(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-16(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-17
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-18
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-18(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-18(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-18(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-18(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-18(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-19
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-19(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-6
+    target_framework: nist_800_53
+    target_control: SC-19(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-20
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-20(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-20(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-21
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-21(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-22
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-23
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-23(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-23(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-23(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-23(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-23(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-24
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-25
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-26
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-27
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-28(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-28(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-28(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-29
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-29(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-30
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-30(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-30(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-30(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-30(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-30(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-31
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-31(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-31(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-31(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-32
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-32(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-33
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-34
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-34(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-34(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-34(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-35
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-36
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-36(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SC-36(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-37
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-37(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-38
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-39
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-39(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-39(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-40
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-40(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-40(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-40(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-40(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-41
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-42
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-42(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-42(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-42(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-43
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-44
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-45
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-45(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SC-45(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-46
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-47
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-48
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-48(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-49
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-50
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-NET-7
+    target_framework: nist_800_53
+    target_control: SC-51
+    confidence: 0.85
+
+  # --- SI family ---
+  - source_framework: ucf
+    source_control: UCF-EPP-1
+    target_framework: nist_800_53
+    target_control: SI-1
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-VLN-2
+    target_framework: nist_800_53
+    target_control: SI-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-2
+    target_framework: nist_800_53
+    target_control: SI-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-2
+    target_framework: nist_800_53
+    target_control: SI-2(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-2
+    target_framework: nist_800_53
+    target_control: SI-2(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-2
+    target_framework: nist_800_53
+    target_control: SI-2(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-2
+    target_framework: nist_800_53
+    target_control: SI-2(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-3(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(15)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(16)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(17)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(18)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(19)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(20)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(21)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(22)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(23)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(24)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: nist_800_53
+    target_control: SI-4(25)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-COM-2
+    target_framework: nist_800_53
+    target_control: SI-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-6
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-6(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-6(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(7)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(8)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(9)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(10)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(11)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(12)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(13)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(14)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(15)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(16)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-7(17)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-8(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-8(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-9
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10(5)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-3
+    target_framework: nist_800_53
+    target_control: SI-10(6)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-5
+    target_framework: nist_800_53
+    target_control: SI-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-EPP-5
+    target_framework: nist_800_53
+    target_control: SI-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SI-12(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SI-12(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-7
+    target_framework: nist_800_53
+    target_control: SI-12(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: SI-13
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: SI-13(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: SI-13(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: SI-13(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: SI-13(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-LOG-4
+    target_framework: nist_800_53
+    target_control: SI-13(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-3
+    target_framework: nist_800_53
+    target_control: SI-14
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-3
+    target_framework: nist_800_53
+    target_control: SI-14(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-3
+    target_framework: nist_800_53
+    target_control: SI-14(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-3
+    target_framework: nist_800_53
+    target_control: SI-14(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-3
+    target_framework: nist_800_53
+    target_control: SI-15
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-3
+    target_framework: nist_800_53
+    target_control: SI-15(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-EPP-5
+    target_framework: nist_800_53
+    target_control: SI-16
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-5
+    target_framework: nist_800_53
+    target_control: SI-17
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-18
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-18(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-18(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-18(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-18(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-18(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(1)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(2)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(3)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(4)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(5)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(6)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(7)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: SI-19(8)
+    confidence: 0.8
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-20
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-21
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-22
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-VLN-5
+    target_framework: nist_800_53
+    target_control: SI-23
+    confidence: 0.85
+
+  # --- SR family ---
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-1(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-1(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-3(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-3(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-3(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-4
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-4(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-4(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-4(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-4(4)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-5(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-5(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-6(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-7
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-8
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-9
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-9(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-10
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-11
+    confidence: 0.9
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-11(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-11(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-11(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-TPM-5
+    target_framework: nist_800_53
+    target_control: SR-12
+    confidence: 0.9
+
+  # --- Final gap-fill: 28 NIST controls ---
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_800_53
+    target_control: AC-7
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_800_53
+    target_control: AT-1
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CMP-1
+    target_framework: nist_800_53
+    target_control: CA-4
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-8
+    target_framework: nist_800_53
+    target_control: IA-8
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-7(1)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: nist_800_53
+    target_control: MA-7(2)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-GOV-5
+    target_framework: nist_800_53
+    target_control: PL-7(2)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: nist_800_53
+    target_control: PT-8(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-4
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_800_53
+    target_control: RA-6
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-2(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-2(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-5(2)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-5(3)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-5(4)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-DEV-1
+    target_framework: nist_800_53
+    target_control: SA-5(5)
+    confidence: 0.80
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_800_53
+    target_control: SC-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: nist_800_53
+    target_control: SC-17(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_800_53
+    target_control: SC-26(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-16(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-16(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_800_53
+    target_control: SI-16(3)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SI-20(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-5
+    target_framework: nist_800_53
+    target_control: SI-20(2)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: SI-21(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: nist_800_53
+    target_control: SI-23(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-10(1)
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_800_53
+    target_control: SR-12(1)
+    confidence: 0.85

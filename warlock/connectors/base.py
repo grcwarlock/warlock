@@ -31,6 +31,16 @@ class SourceType(str, Enum):
     SCANNER = "scanner"    # Tenable, Qualys, Wiz
     SIEM = "siem"          # Sentinel, Splunk, Elastic
     CSPM = "cspm"          # Prisma Cloud (also fits here)
+    HRIS = "hris"          # Workday, BambooHR
+    ITSM = "itsm"          # ServiceNow, Jira
+    TRAINING = "training"  # KnowBe4
+    PHYSICAL = "physical"  # Verkada, Brivo
+    CODE = "code"          # Snyk, GitHub Advanced Security
+    DLP = "dlp"            # Microsoft Purview
+    BACKUP = "backup"      # Veeam, AWS Backup
+    MDM = "mdm"            # Intune, Jamf
+    GRC = "grc"            # OneTrust, Drata, Confluence
+    EMAIL = "email"        # Proofpoint, Mimecast
     CUSTOM = "custom"
 
 

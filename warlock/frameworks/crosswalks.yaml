@@ -1,12 +1,18 @@
 crosswalks:
-  # ---------------------------------------------------------------------------
-  # NIST 800-53 → SOC 2
-  # ---------------------------------------------------------------------------
+  # ===========================================================================
+  # 1. NIST 800-53 → SOC 2
+  # ===========================================================================
   - source_framework: nist_800_53
     source_control: AC-2
     target_framework: soc2
     target_control: CC6.1
     confidence: 0.95
+
+  - source_framework: nist_800_53
+    source_control: AC-2
+    target_framework: soc2
+    target_control: CC6.2
+    confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: AC-3
@@ -33,16 +39,34 @@ crosswalks:
     confidence: 0.85
 
   - source_framework: nist_800_53
+    source_control: AC-17
+    target_framework: soc2
+    target_control: CC6.7
+    confidence: 0.8
+
+  - source_framework: nist_800_53
     source_control: AU-2
     target_framework: soc2
     target_control: CC7.2
     confidence: 0.9
 
   - source_framework: nist_800_53
+    source_control: AU-3
+    target_framework: soc2
+    target_control: CC7.2
+    confidence: 0.85
+
+  - source_framework: nist_800_53
     source_control: AU-6
     target_framework: soc2
     target_control: CC7.1
     confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AU-6
+    target_framework: soc2
+    target_control: CC7.3
+    confidence: 0.8
 
   - source_framework: nist_800_53
     source_control: AU-12
@@ -81,10 +105,28 @@ crosswalks:
     confidence: 0.85
 
   - source_framework: nist_800_53
+    source_control: IA-8
+    target_framework: soc2
+    target_control: CC6.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
     source_control: SC-7
     target_framework: soc2
     target_control: CC6.6
     confidence: 0.95
+
+  - source_framework: nist_800_53
+    source_control: SC-8
+    target_framework: soc2
+    target_control: C1.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: SC-12
+    target_framework: soc2
+    target_control: C1.1
+    confidence: 0.8
 
   - source_framework: nist_800_53
     source_control: SC-28
@@ -111,10 +153,22 @@ crosswalks:
     confidence: 0.95
 
   - source_framework: nist_800_53
+    source_control: SI-5
+    target_framework: soc2
+    target_control: CC7.1
+    confidence: 0.75
+
+  - source_framework: nist_800_53
     source_control: RA-5
     target_framework: soc2
     target_control: CC3.1
     confidence: 0.9
+
+  - source_framework: nist_800_53
+    source_control: RA-5
+    target_framework: soc2
+    target_control: CC3.2
+    confidence: 0.8
 
   - source_framework: nist_800_53
     source_control: IR-4
@@ -122,119 +176,1035 @@ crosswalks:
     target_control: CC7.4
     confidence: 0.95
 
-  # ---------------------------------------------------------------------------
-  # NIST 800-53 → ISO 27001 (Annex A)
-  # ---------------------------------------------------------------------------
+  - source_framework: nist_800_53
+    source_control: IR-5
+    target_framework: soc2
+    target_control: CC7.3
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: IR-6
+    target_framework: soc2
+    target_control: CC7.4
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: IR-6
+    target_framework: soc2
+    target_control: CC7.5
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: CA-2
+    target_framework: soc2
+    target_control: CC4.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: CA-7
+    target_framework: soc2
+    target_control: CC4.2
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AT-2
+    target_framework: soc2
+    target_control: CC1.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AT-2
+    target_framework: soc2
+    target_control: CC2.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PE-3
+    target_framework: soc2
+    target_control: CC6.7
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PS-4
+    target_framework: soc2
+    target_control: CC6.2
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: PS-5
+    target_framework: soc2
+    target_control: CC6.2
+    confidence: 0.8
+
+  # ===========================================================================
+  # 2. NIST 800-53 → ISO 27001:2022 (new Annex A numbering)
+  # ===========================================================================
   - source_framework: nist_800_53
     source_control: AC-2
     target_framework: iso_27001
-    target_control: A.9.2.1
+    target_control: A.5.16
     confidence: 0.9
 
   - source_framework: nist_800_53
     source_control: AC-3
     target_framework: iso_27001
-    target_control: A.9.4.1
+    target_control: A.5.15
     confidence: 0.9
+
+  - source_framework: nist_800_53
+    source_control: AC-3
+    target_framework: iso_27001
+    target_control: A.8.3
+    confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: AC-6
     target_framework: iso_27001
-    target_control: A.9.2.3
+    target_control: A.8.2
     confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AC-7
+    target_framework: iso_27001
+    target_control: A.8.5
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AC-17
+    target_framework: iso_27001
+    target_control: A.8.20
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AC-17
+    target_framework: iso_27001
+    target_control: A.8.22
+    confidence: 0.8
 
   - source_framework: nist_800_53
     source_control: AU-2
     target_framework: iso_27001
-    target_control: A.12.4.1
+    target_control: A.8.15
     confidence: 0.9
+
+  - source_framework: nist_800_53
+    source_control: AU-3
+    target_framework: iso_27001
+    target_control: A.8.15
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AU-6
+    target_framework: iso_27001
+    target_control: A.8.16
+    confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: AU-12
     target_framework: iso_27001
-    target_control: A.12.4.1
+    target_control: A.8.15
     confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: CM-2
     target_framework: iso_27001
-    target_control: A.12.1.2
+    target_control: A.8.9
     confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: CM-6
+    target_framework: iso_27001
+    target_control: A.8.9
+    confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: CM-8
     target_framework: iso_27001
-    target_control: A.8.1.1
+    target_control: A.5.9
     confidence: 0.9
 
   - source_framework: nist_800_53
     source_control: IA-2
     target_framework: iso_27001
-    target_control: A.9.2.1
+    target_control: A.8.5
     confidence: 0.9
 
   - source_framework: nist_800_53
     source_control: IA-5
     target_framework: iso_27001
-    target_control: A.9.3.1
+    target_control: A.5.17
     confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: IA-8
+    target_framework: iso_27001
+    target_control: A.5.16
+    confidence: 0.8
 
   - source_framework: nist_800_53
     source_control: SC-7
     target_framework: iso_27001
-    target_control: A.13.1.1
+    target_control: A.8.20
     confidence: 0.9
+
+  - source_framework: nist_800_53
+    source_control: SC-7
+    target_framework: iso_27001
+    target_control: A.8.22
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: SC-8
+    target_framework: iso_27001
+    target_control: A.8.24
+    confidence: 0.9
+
+  - source_framework: nist_800_53
+    source_control: SC-12
+    target_framework: iso_27001
+    target_control: A.8.24
+    confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: SC-28
     target_framework: iso_27001
-    target_control: A.10.1.1
+    target_control: A.8.24
     confidence: 0.9
 
   - source_framework: nist_800_53
     source_control: SI-2
     target_framework: iso_27001
-    target_control: A.12.6.1
+    target_control: A.8.8
     confidence: 0.9
 
   - source_framework: nist_800_53
     source_control: SI-3
     target_framework: iso_27001
-    target_control: A.12.2.1
+    target_control: A.8.7
     confidence: 0.9
 
   - source_framework: nist_800_53
     source_control: SI-4
     target_framework: iso_27001
-    target_control: A.12.4.1
+    target_control: A.8.16
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: SI-5
+    target_framework: iso_27001
+    target_control: A.5.7
     confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: RA-5
     target_framework: iso_27001
-    target_control: A.12.6.1
+    target_control: A.8.8
     confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: RA-7
+    target_framework: iso_27001
+    target_control: A.8.8
+    confidence: 0.75
 
   - source_framework: nist_800_53
     source_control: IR-4
     target_framework: iso_27001
-    target_control: A.16.1.5
+    target_control: A.5.26
     confidence: 0.9
+
+  - source_framework: nist_800_53
+    source_control: IR-5
+    target_framework: iso_27001
+    target_control: A.5.25
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: IR-6
+    target_framework: iso_27001
+    target_control: A.5.26
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: CA-2
+    target_framework: iso_27001
+    target_control: A.5.35
+    confidence: 0.85
 
   - source_framework: nist_800_53
     source_control: CA-7
     target_framework: iso_27001
-    target_control: A.18.2.3
+    target_control: A.5.36
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AT-2
+    target_framework: iso_27001
+    target_control: A.6.3
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PE-3
+    target_framework: iso_27001
+    target_control: A.7.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PE-3
+    target_framework: iso_27001
+    target_control: A.7.2
     confidence: 0.8
 
   - source_framework: nist_800_53
     source_control: PS-4
     target_framework: iso_27001
-    target_control: A.7.3.1
+    target_control: A.6.5
     confidence: 0.85
 
   - source_framework: nist_800_53
-    source_control: AT-2
+    source_control: PS-5
     target_framework: iso_27001
-    target_control: A.7.2.2
+    target_control: A.6.5
+    confidence: 0.8
+
+  # ===========================================================================
+  # 3. NIST 800-53 → ISO 27701 (privacy-relevant controls)
+  # ===========================================================================
+  - source_framework: nist_800_53
+    source_control: AC-2
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AC-3
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AC-6
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AU-2
+    target_framework: iso_27701
+    target_control: CL6.6.2.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: AU-6
+    target_framework: iso_27701
+    target_control: CL6.6.2.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AU-12
+    target_framework: iso_27701
+    target_control: CL6.6.2.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: SC-8
+    target_framework: iso_27701
+    target_control: CL6.5.3.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: SC-12
+    target_framework: iso_27701
+    target_control: CL6.5.3.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: SC-28
+    target_framework: iso_27701
+    target_control: CL6.5.3.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: SI-2
+    target_framework: iso_27701
+    target_control: CL5.4.1.2
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: RA-5
+    target_framework: iso_27701
+    target_control: CL5.4.1.2
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: CM-8
+    target_framework: iso_27701
+    target_control: CL5.2.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: IR-4
+    target_framework: iso_27701
+    target_control: CL6.9.4.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: IR-6
+    target_framework: iso_27701
+    target_control: CL6.9.4.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: PS-4
+    target_framework: iso_27701
+    target_control: A.7.3.6
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PS-5
+    target_framework: iso_27701
+    target_control: A.7.3.6
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AT-2
+    target_framework: iso_27701
+    target_control: CL7.2.1
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: IA-5
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.75
+
+  # ===========================================================================
+  # 4. NIST 800-53 → ISO 42001 (AI-relevant controls)
+  # ===========================================================================
+  - source_framework: nist_800_53
+    source_control: CM-8
+    target_framework: iso_42001
+    target_control: A.4.6
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AU-2
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: AU-6
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: AU-12
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: RA-5
+    target_framework: iso_42001
+    target_control: A.5.2
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: RA-7
+    target_framework: iso_42001
+    target_control: A.5.2
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: AC-6
+    target_framework: iso_42001
+    target_control: A.9.3
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: SI-4
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.8
+
+  - source_framework: nist_800_53
+    source_control: CA-2
+    target_framework: iso_42001
+    target_control: A.5.2
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: CA-7
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.7
+
+  - source_framework: nist_800_53
+    source_control: AT-2
+    target_framework: iso_42001
+    target_control: A.4.5
+    confidence: 0.75
+
+  - source_framework: nist_800_53
+    source_control: IR-4
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.7
+
+  - source_framework: nist_800_53
+    source_control: CM-6
+    target_framework: iso_42001
+    target_control: A.4.6
+    confidence: 0.7
+
+  - source_framework: nist_800_53
+    source_control: SC-7
+    target_framework: iso_42001
+    target_control: A.9.3
+    confidence: 0.7
+
+  # ===========================================================================
+  # 5. ISO 27001:2022 → ISO 27701 (27701 extends 27001)
+  # ===========================================================================
+  - source_framework: iso_27001
+    source_control: A.5.15
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.9
+
+  - source_framework: iso_27001
+    source_control: A.5.16
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.85
+
+  - source_framework: iso_27001
+    source_control: A.5.17
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.5.9
+    target_framework: iso_27701
+    target_control: CL5.2.1
+    confidence: 0.85
+
+  - source_framework: iso_27001
+    source_control: A.5.34
+    target_framework: iso_27701
+    target_control: CL6.9.4.1
+    confidence: 0.9
+
+  - source_framework: iso_27001
+    source_control: A.5.26
+    target_framework: iso_27701
+    target_control: CL6.9.4.1
+    confidence: 0.85
+
+  - source_framework: iso_27001
+    source_control: A.8.15
+    target_framework: iso_27701
+    target_control: CL6.6.2.1
+    confidence: 0.9
+
+  - source_framework: iso_27001
+    source_control: A.8.16
+    target_framework: iso_27701
+    target_control: CL6.6.2.1
+    confidence: 0.85
+
+  - source_framework: iso_27001
+    source_control: A.8.24
+    target_framework: iso_27701
+    target_control: CL6.5.3.1
+    confidence: 0.9
+
+  - source_framework: iso_27001
+    source_control: A.8.8
+    target_framework: iso_27701
+    target_control: CL5.4.1.2
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.6.3
+    target_framework: iso_27701
+    target_control: CL7.2.1
+    confidence: 0.85
+
+  - source_framework: iso_27001
+    source_control: A.6.5
+    target_framework: iso_27701
+    target_control: A.7.3.6
+    confidence: 0.85
+
+  - source_framework: iso_27001
+    source_control: A.8.2
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.8.5
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.5.1
+    target_framework: iso_27701
+    target_control: CL5.2.1
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.5.35
+    target_framework: iso_27701
+    target_control: CL5.4.1.3
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.5.36
+    target_framework: iso_27701
+    target_control: CL5.4.1.3
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.8.3
+    target_framework: iso_27701
+    target_control: CL6.5.2.1
+    confidence: 0.8
+
+  # ===========================================================================
+  # 6. ISO 27001:2022 → ISO 42001 (AI-specific extensions)
+  # ===========================================================================
+  - source_framework: iso_27001
+    source_control: A.5.9
+    target_framework: iso_42001
+    target_control: A.4.6
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.8.15
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.8.16
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.8.8
+    target_framework: iso_42001
+    target_control: A.5.2
+    confidence: 0.75
+
+  - source_framework: iso_27001
+    source_control: A.8.2
+    target_framework: iso_42001
+    target_control: A.9.3
+    confidence: 0.75
+
+  - source_framework: iso_27001
+    source_control: A.6.3
+    target_framework: iso_42001
+    target_control: A.4.5
+    confidence: 0.8
+
+  - source_framework: iso_27001
+    source_control: A.5.35
+    target_framework: iso_42001
+    target_control: A.5.2
+    confidence: 0.75
+
+  - source_framework: iso_27001
+    source_control: A.5.36
+    target_framework: iso_42001
+    target_control: A.10.3
+    confidence: 0.75
+
+  - source_framework: iso_27001
+    source_control: A.8.9
+    target_framework: iso_42001
+    target_control: A.4.6
+    confidence: 0.75
+
+  - source_framework: iso_27001
+    source_control: A.5.7
+    target_framework: iso_42001
+    target_control: A.5.2
+    confidence: 0.7
+
+  - source_framework: iso_27001
+    source_control: A.5.25
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.7
+
+  - source_framework: iso_27001
+    source_control: A.5.26
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.7
+
+  - source_framework: iso_27001
+    source_control: A.8.32
+    target_framework: iso_42001
+    target_control: A.6.2.12
+    confidence: 0.7
+
+  # ===========================================================================
+  # 7. SOC 2 → ISO 27001:2022 (common audit crosswalk)
+  # ===========================================================================
+  - source_framework: soc2
+    source_control: CC1.1
+    target_framework: iso_27001
+    target_control: A.5.1
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC1.2
+    target_framework: iso_27001
+    target_control: A.5.4
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC2.1
+    target_framework: iso_27001
+    target_control: A.6.3
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC3.1
+    target_framework: iso_27001
+    target_control: A.8.8
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: CC3.2
+    target_framework: iso_27001
+    target_control: A.8.8
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC4.1
+    target_framework: iso_27001
+    target_control: A.5.35
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC4.2
+    target_framework: iso_27001
+    target_control: A.5.36
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC5.1
+    target_framework: iso_27001
+    target_control: A.5.15
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC5.2
+    target_framework: iso_27001
+    target_control: A.8.9
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC6.1
+    target_framework: iso_27001
+    target_control: A.5.15
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC6.1
+    target_framework: iso_27001
+    target_control: A.8.5
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: CC6.2
+    target_framework: iso_27001
+    target_control: A.5.16
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: CC6.3
+    target_framework: iso_27001
+    target_control: A.8.2
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC6.6
+    target_framework: iso_27001
+    target_control: A.8.20
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC6.7
+    target_framework: iso_27001
+    target_control: A.7.1
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: CC6.8
+    target_framework: iso_27001
+    target_control: A.8.7
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC7.1
+    target_framework: iso_27001
+    target_control: A.8.16
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC7.2
+    target_framework: iso_27001
+    target_control: A.8.15
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC7.3
+    target_framework: iso_27001
+    target_control: A.5.25
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: CC7.4
+    target_framework: iso_27001
+    target_control: A.5.26
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: CC7.5
+    target_framework: iso_27001
+    target_control: A.5.26
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: CC8.1
+    target_framework: iso_27001
+    target_control: A.8.32
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: CC9.1
+    target_framework: iso_27001
+    target_control: A.8.8
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: A1.1
+    target_framework: iso_27001
+    target_control: A.5.9
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: A1.2
+    target_framework: iso_27001
+    target_control: A.5.30
+    confidence: 0.8
+
+  - source_framework: soc2
+    source_control: C1.1
+    target_framework: iso_27001
+    target_control: A.8.24
+    confidence: 0.9
+
+  - source_framework: soc2
+    source_control: C1.2
+    target_framework: iso_27001
+    target_control: A.8.24
+    confidence: 0.85
+
+  - source_framework: soc2
+    source_control: PI1.1
+    target_framework: iso_27001
+    target_control: A.5.34
+    confidence: 0.75
+
+  - source_framework: soc2
+    source_control: PI1.2
+    target_framework: iso_27001
+    target_control: A.5.34
+    confidence: 0.75
+
+  # --- Mission 4: New connector crosswalks ---
+
+  # CM (Change Management) ↔ SOC 2 CC8.1 ↔ ISO A.8.32
+  - source_framework: nist_800_53
+    source_control: CM-3
+    target_framework: soc2
+    target_control: CC8.1
+    confidence: 0.95
+
+  - source_framework: nist_800_53
+    source_control: CM-4
+    target_framework: soc2
+    target_control: CC8.1
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: CM-3
+    target_framework: iso_27001
+    target_control: A.8.32
+    confidence: 0.95
+
+  - source_framework: nist_800_53
+    source_control: CM-5
+    target_framework: iso_27001
+    target_control: A.8.32
+    confidence: 0.85
+
+  # CP (Contingency Planning) ↔ SOC 2 A1 ↔ ISO A.5.29-30, A.8.13-14
+  - source_framework: nist_800_53
+    source_control: CP-9
+    target_framework: soc2
+    target_control: A1.2
+    confidence: 0.95
+
+  - source_framework: nist_800_53
+    source_control: CP-10
+    target_framework: soc2
+    target_control: A1.3
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: CP-9
+    target_framework: iso_27001
+    target_control: A.8.13
+    confidence: 0.95
+
+  - source_framework: nist_800_53
+    source_control: CP-10
+    target_framework: iso_27001
+    target_control: A.8.14
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: CP-2
+    target_framework: iso_27001
+    target_control: A.5.29
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: CP-4
+    target_framework: iso_27001
+    target_control: A.5.30
+    confidence: 0.90
+
+  # SA (Dev Security) ↔ ISO A.8.25-29
+  - source_framework: nist_800_53
+    source_control: SA-11
+    target_framework: iso_27001
+    target_control: A.8.25
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: SA-11
+    target_framework: iso_27001
+    target_control: A.8.29
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: SA-15
+    target_framework: iso_27001
+    target_control: A.8.25
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: SA-3
+    target_framework: iso_27001
+    target_control: A.8.25
+    confidence: 0.90
+
+  # DLP: SC-7(10) / SI-4(18) ↔ ISO A.8.12
+  - source_framework: nist_800_53
+    source_control: SC-7
+    target_framework: iso_27001
+    target_control: A.8.12
+    confidence: 0.80
+    notes: "SC-7(10) prevent exfiltration maps to DLP"
+
+  - source_framework: nist_800_53
+    source_control: SI-4
+    target_framework: iso_27001
+    target_control: A.8.12
+    confidence: 0.75
+    notes: "SI-4(18) analyze communications content"
+
+  # Mobile: AC-19 ↔ UCF-EPP-4
+  - source_framework: nist_800_53
+    source_control: AC-19
+    target_framework: ucf
+    target_control: UCF-EPP-4
+    confidence: 0.95
+
+  # Email: SI-8 ↔ SOC 2 CC6.8
+  - source_framework: nist_800_53
+    source_control: SI-8
+    target_framework: soc2
+    target_control: CC6.8
+    confidence: 0.85
+
+  # Physical: PE ↔ ISO A.7
+  - source_framework: nist_800_53
+    source_control: PE-6
+    target_framework: iso_27001
+    target_control: A.7.4
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: PE-2
+    target_framework: iso_27001
+    target_control: A.7.2
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: PE-9
+    target_framework: iso_27001
+    target_control: A.7.8
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PE-13
+    target_framework: iso_27001
+    target_control: A.7.5
+    confidence: 0.85
+
+  # Training: AT ↔ ISO A.6.3
+  - source_framework: nist_800_53
+    source_control: AT-3
+    target_framework: iso_27001
+    target_control: A.6.3
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: AT-4
+    target_framework: iso_27001
+    target_control: A.6.3
+    confidence: 0.80
+
+  # Personnel: PS ↔ SOC 2 CC1
+  - source_framework: nist_800_53
+    source_control: PS-3
+    target_framework: soc2
+    target_control: CC1.3
+    confidence: 0.90
+
+  - source_framework: nist_800_53
+    source_control: PS-6
+    target_framework: soc2
+    target_control: CC1.4
+    confidence: 0.85
+
+  - source_framework: nist_800_53
+    source_control: PS-8
+    target_framework: soc2
+    target_control: CC1.5
     confidence: 0.85

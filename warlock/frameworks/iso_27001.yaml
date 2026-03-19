@@ -1,0 +1,1421 @@
+framework_id: iso_27001
+
+control_families:
+  # ---------------------------------------------------------------------------
+  # A.5 — Organizational Controls (A.5.1 – A.5.37)
+  # ---------------------------------------------------------------------------
+  A5:
+    controls:
+      A.5.1:
+        # Policies for information security
+        checks:
+          - id: a51_security_policies
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+              - prisma_policies
+              - s1_policies
+              - falcon_sensor_policies
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+              - policy
+
+      A.5.2:
+        # Information security roles and responsibilities
+        checks:
+          - id: a52_security_roles
+            event_types:
+              - sailpoint_roles
+              - gcp_iam_policies
+            resource_types:
+              - sailpoint_role
+              - gcp_iam_binding
+              - iam_policy
+
+      A.5.3:
+        # Segregation of duties
+        checks:
+          - id: a53_segregation_of_duties
+            event_types:
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - gcp_iam_policies
+              - cyberark_accounts
+            resource_types:
+              - sailpoint_role
+              - sailpoint_entitlement
+              - gcp_iam_binding
+              - cyberark_account
+
+      A.5.4:
+        # Management responsibilities
+        checks:
+          - id: a54_management_responsibilities
+            event_types:
+              - sailpoint_certifications
+            resource_types:
+              - sailpoint_certification
+
+      A.5.5:
+        # Contact with authorities
+        checks:
+          - id: a55_contact_authorities
+            event_types:
+              - confluence_pages
+            resource_types:
+              - grc_document
+
+      A.5.6:
+        # Contact with special interest groups
+        checks:
+          - id: a56_contact_interest_groups
+            event_types:
+              - confluence_pages
+            resource_types:
+              - grc_document
+
+      A.5.7:
+        # Threat intelligence
+        checks:
+          - id: a57_threat_intel_aws
+            event_types:
+              - guardduty_detectors
+              - securityhub_hub
+            resource_types:
+              - guardduty
+              - securityhub
+          - id: a57_threat_intel_cloud
+            event_types:
+              - scc_findings
+              - defender_alerts
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - azure_defender_alert
+              - vulnerability
+          - id: a57_threat_intel_edr
+            event_types:
+              - falcon_detection_details
+              - s1_threats
+              - defender_alerts
+            resource_types:
+              - endpoint
+
+      A.5.8:
+        # Information security in project management
+        checks:
+          - id: a58_security_project_mgmt
+            event_types:
+              - confluence_pages
+              - snow_change_requests
+            resource_types:
+              - grc_document
+              - itsm_change_request
+
+      A.5.9:
+        # Inventory of information and other associated assets
+        checks:
+          - id: a59_asset_inventory_cloud
+            event_types:
+              - iam_account_summary
+              - prisma_assets
+              - wiz_graph
+            resource_types:
+              - iam_account
+              - azure_resource
+          - id: a59_asset_inventory_endpoints
+            event_types:
+              - falcon_device_details
+              - falcon_devices
+              - defender_machines
+              - s1_agents
+            resource_types:
+              - endpoint
+              - agent
+          - id: a59_asset_inventory_vuln
+            event_types:
+              - asset_export
+              - asset_inventory
+            resource_types:
+              - host
+          - id: a59_asset_inventory_identity
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+              - okta_users
+              - entra_users
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+              - okta_user
+              - entra_user
+
+      A.5.10:
+        # Acceptable use of information and other associated assets
+        checks:
+          - id: a510_acceptable_use
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+
+      A.5.11:
+        # Return of assets
+        checks:
+          - id: a511_return_of_assets
+            event_types:
+              - sailpoint_identities
+              - okta_users
+              - entra_users
+            resource_types:
+              - sailpoint_identity
+              - okta_user
+              - entra_user
+
+      A.5.12:
+        # Classification of information
+        checks:
+          - id: a512_classification
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      A.5.13:
+        # Labelling of information
+        checks:
+          - id: a513_labelling
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      A.5.14:
+        # Information transfer
+        checks:
+          - id: a514_info_transfer
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+
+      A.5.15:
+        # Access control
+        checks:
+          - id: a515_access_control_iam
+            event_types:
+              - iam_credential_report
+              - iam_users
+              - gcp_iam_policies
+            resource_types:
+              - iam_user
+              - iam_policy
+              - gcp_iam_binding
+          - id: a515_access_control_idp
+            event_types:
+              - okta_users
+              - okta_policies
+              - entra_users
+              - entra_conditional_access_policies
+            resource_types:
+              - okta_user
+              - okta_policy
+              - entra_user
+              - entra_conditional_access_policy
+          - id: a515_access_control_pam
+            event_types:
+              - cyberark_accounts
+              - cyberark_safes
+            resource_types:
+              - cyberark_account
+              - cyberark_safe
+
+      A.5.16:
+        # Identity management
+        checks:
+          - id: a516_identity_mgmt_cloud
+            event_types:
+              - iam_users
+              - iam_credential_report
+              - gcp_iam_policies
+            resource_types:
+              - iam_user
+              - gcp_iam_binding
+          - id: a516_identity_mgmt_idp
+            event_types:
+              - okta_users
+              - okta_groups
+              - entra_users
+            resource_types:
+              - okta_user
+              - entra_user
+          - id: a516_identity_mgmt_iga
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+
+      A.5.17:
+        # Authentication information
+        checks:
+          - id: a517_password_policy
+            event_types:
+              - iam_password_policy
+              - okta_policies
+            resource_types:
+              - iam_password_policy
+              - okta_policy
+          - id: a517_mfa
+            event_types:
+              - okta_factors
+              - entra_conditional_access_policies
+              - iam_credential_report
+            resource_types:
+              - okta_user_factors
+              - entra_conditional_access_policy
+              - iam_user
+          - id: a517_pam_passwords
+            event_types:
+              - cyberark_password_compliance
+            resource_types:
+              - cyberark_compliance
+
+      A.5.18:
+        # Access rights
+        checks:
+          - id: a518_access_rights_iga
+            event_types:
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - sailpoint_certifications
+            resource_types:
+              - sailpoint_role
+              - sailpoint_entitlement
+              - sailpoint_certification
+          - id: a518_access_rights_cloud
+            event_types:
+              - gcp_iam_policies
+              - iam_users
+            resource_types:
+              - gcp_iam_binding
+              - iam_policy
+          - id: a518_access_rights_pam
+            event_types:
+              - cyberark_accounts
+              - cyberark_safes
+            resource_types:
+              - cyberark_account
+              - cyberark_safe
+
+      A.5.19:
+        # Information security in supplier relationships
+        checks:
+          - id: a519_supplier_security
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+              - okta_applications
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+              - okta_application
+
+      A.5.20:
+        # Addressing information security within supplier agreements
+        checks:
+          - id: a520_supplier_agreements
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+
+      A.5.21:
+        # Managing information security in the ICT supply chain
+        checks:
+          - id: a521_supply_chain
+            event_types:
+              - entra_service_principals
+              - okta_applications
+              - wiz_config_findings
+            resource_types:
+              - entra_service_principal
+              - okta_application
+
+      A.5.22:
+        # Monitoring, review and change management of supplier services
+        checks:
+          - id: a522_supplier_monitoring
+            event_types:
+              - entra_directory_audits
+              - okta_system_log
+            resource_types:
+              - entra_audit
+              - okta_event
+
+      A.5.23:
+        # Information security for use of cloud services
+        checks:
+          - id: a523_cloud_security_posture
+            event_types:
+              - wiz_config_findings
+              - wiz_issues
+              - prisma_compliance
+              - prisma_alerts
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+          - id: a523_cloud_security_aws
+            event_types:
+              - securityhub_hub
+              - config_recorders
+              - guardduty_detectors
+            resource_types:
+              - securityhub
+              - aws_config
+              - guardduty
+          - id: a523_cloud_security_azure
+            event_types:
+              - policy_compliance
+              - defender_alerts
+            resource_types:
+              - azure_resource
+              - azure_defender_alert
+          - id: a523_cloud_security_gcp
+            event_types:
+              - scc_findings
+              - gcp_iam_policies
+            resource_types:
+              - gcp_iam_binding
+
+      A.5.24:
+        # Information security incident management planning and preparation
+        checks:
+          - id: a524_incident_planning_siem
+            event_types:
+              - sentinel_analytics_rules
+              - splunk_correlation_rules
+              - elastic_detection_rules
+            resource_types:
+              - sentinel_analytics_rule
+              - splunk_correlation_rule
+              - elastic_detection_rule
+          - id: a524_incident_planning_edr
+            event_types:
+              - falcon_sensor_policies
+              - s1_policies
+            resource_types:
+              - policy
+
+      A.5.25:
+        # Assessment and decision on information security events
+        checks:
+          - id: a525_event_assessment_siem
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - elastic_security_alerts
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+              - elastic_security_alert
+          - id: a525_event_assessment_edr
+            event_types:
+              - falcon_detection_details
+              - s1_threats
+              - defender_alerts
+            resource_types:
+              - endpoint
+
+      A.5.26:
+        # Response to information security incidents
+        checks:
+          - id: a526_incident_response
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - elastic_security_alerts
+              - falcon_detection_details
+              - s1_threats
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+              - elastic_security_alert
+              - endpoint
+
+      A.5.27:
+        # Learning from information security incidents
+        checks:
+          - id: a527_incident_learning
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - sentinel_hunting_queries
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+
+      A.5.28:
+        # Collection of evidence
+        checks:
+          - id: a528_evidence_collection
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - okta_event
+              - entra_audit
+
+      A.5.29:
+        # Information security during disruption
+        checks:
+          - id: a529_disruption_security
+            event_types:
+              - sentinel_data_connectors
+              - splunk_index_health
+              - elastic_agent_status
+            resource_types:
+              - splunk_index
+
+      A.5.30:
+        # ICT readiness for business continuity
+        checks:
+          - id: a530_ict_readiness
+            event_types:
+              - sentinel_data_connectors
+              - splunk_index_health
+              - elastic_agent_status
+              - falcon_device_details
+              - s1_agents
+            resource_types:
+              - splunk_index
+              - endpoint
+              - agent
+
+      A.5.31:
+        # Legal, statutory, regulatory and contractual requirements
+        checks:
+          - id: a531_legal_compliance
+            event_types:
+              - prisma_compliance
+              - policy_compliance
+              - compliance_audits
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.5.32:
+        # Intellectual property rights
+        checks:
+          - id: a532_intellectual_property
+            event_types:
+              - confluence_pages
+              - snow_policies
+            resource_types:
+              - grc_document
+              - itsm_policy
+
+      A.5.33:
+        # Protection of records
+        checks:
+          - id: a533_record_protection
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+              - key_vault
+
+      A.5.34:
+        # Privacy and protection of PII
+        checks:
+          - id: a534_pii_access_control
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+              - cyberark_accounts
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+              - cyberark_account
+          - id: a534_pii_encryption
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - key_vault
+
+      A.5.35:
+        # Independent review of information security
+        checks:
+          - id: a535_independent_review
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.5.36:
+        # Compliance with policies, rules and standards for information security
+        checks:
+          - id: a536_policy_compliance
+            event_types:
+              - policy_compliance
+              - prisma_compliance
+              - wiz_config_findings
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+              - policy
+
+      A.5.37:
+        # Documented operating procedures
+        checks:
+          - id: a537_documented_procedures
+            event_types:
+              - confluence_pages
+            resource_types:
+              - grc_document
+
+  # ---------------------------------------------------------------------------
+  # A.6 — People Controls (A.6.1 – A.6.8)
+  # ---------------------------------------------------------------------------
+  A6:
+    controls:
+      A.6.1:
+        # Screening
+        checks:
+          - id: a61_screening
+            event_types:
+              - workday_background_checks
+            resource_types:
+              - hr_background_check
+
+      A.6.2:
+        # Terms and conditions of employment
+        checks:
+          - id: a62_employment_terms
+            event_types:
+              - workday_agreements
+            resource_types:
+              - hr_agreement
+
+      A.6.3:
+        # Information security awareness, education and training
+        checks:
+          - id: a63_security_training
+            event_types:
+              - sailpoint_certifications
+              - kb4_training_enrollments
+            resource_types:
+              - sailpoint_certification
+              - training_enrollment
+
+      A.6.4:
+        # Disciplinary process
+        checks:
+          - id: a64_disciplinary
+            event_types:
+              - workday_disciplinary
+            resource_types:
+              - hr_disciplinary_action
+
+      A.6.5:
+        # Responsibilities after termination or change of employment
+        checks:
+          - id: a65_termination_identity
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+          - id: a65_termination_access
+            event_types:
+              - okta_users
+              - entra_users
+              - iam_users
+            resource_types:
+              - okta_user
+              - entra_user
+              - iam_user
+
+      A.6.6:
+        # Confidentiality or non-disclosure agreements
+        checks:
+          - id: a66_nda_agreements
+            event_types:
+              - workday_agreements
+            resource_types:
+              - hr_agreement
+
+      A.6.7:
+        # Remote working
+        checks:
+          - id: a67_remote_working
+            event_types:
+              - entra_conditional_access_policies
+              - okta_policies
+              - falcon_zero_trust
+            resource_types:
+              - entra_conditional_access_policy
+              - okta_policy
+
+      A.6.8:
+        # Information security event reporting
+        checks:
+          - id: a68_event_reporting
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+              - elastic_security_alerts
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+              - elastic_security_alert
+
+  # ---------------------------------------------------------------------------
+  # A.7 — Physical Controls (A.7.1 – A.7.14)
+  # ---------------------------------------------------------------------------
+  A7:
+    controls:
+      A.7.1:
+        # Physical security perimeters
+        checks:
+          - id: a71_physical_perimeters
+            event_types:
+              - verkada_doors
+              - verkada_access_events
+            resource_types:
+              - physical_door
+              - physical_access_event
+
+      A.7.2:
+        # Physical entry
+        checks:
+          - id: a72_physical_entry
+            event_types:
+              - verkada_access_events
+            resource_types:
+              - physical_access_event
+
+      A.7.3:
+        # Securing offices, rooms and facilities
+        checks:
+          - id: a73_securing_offices
+            event_types:
+              - verkada_doors
+            resource_types:
+              - physical_door
+
+      A.7.4:
+        # Physical security monitoring
+        checks:
+          - id: a74_physical_monitoring
+            event_types:
+              - cyberark_recordings
+            resource_types: []
+
+      A.7.5:
+        # Protecting against physical and environmental threats
+        checks:
+          - id: a75_physical_environmental
+            event_types:
+              - policy_compliance
+            resource_types:
+              - azure_resource
+
+      A.7.6:
+        # Working in secure areas
+        checks:
+          - id: a76_secure_areas
+            event_types:
+              - verkada_access_events
+            resource_types:
+              - physical_access_event
+
+      A.7.7:
+        # Clear desk and clear screen
+        checks:
+          - id: a77_clear_desk_screen
+            event_types:
+              - intune_compliance_states
+            resource_types:
+              - mdm_compliance_state
+
+      A.7.8:
+        # Equipment siting and protection
+        checks:
+          - id: a78_equipment_siting
+            event_types:
+              - prisma_assets
+              - asset_export
+            resource_types:
+              - host
+              - endpoint
+
+      A.7.9:
+        # Security of assets off-premises
+        checks:
+          - id: a79_offpremises_assets
+            event_types:
+              - falcon_device_details
+              - s1_agents
+            resource_types:
+              - endpoint
+              - agent
+
+      A.7.10:
+        # Storage media
+        checks:
+          - id: a710_storage_media
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      A.7.11:
+        # Supporting utilities
+        checks:
+          - id: a711_supporting_utilities
+            event_types:
+              - policy_compliance
+            resource_types:
+              - azure_resource
+
+      A.7.12:
+        # Cabling security
+        checks:
+          - id: a712_cabling_security
+            event_types:
+              - policy_compliance
+            resource_types:
+              - azure_resource
+
+      A.7.13:
+        # Equipment maintenance
+        checks:
+          - id: a713_equipment_maintenance
+            event_types:
+              - intune_devices
+              - falcon_device_details
+            resource_types:
+              - mdm_device
+              - endpoint
+
+      A.7.14:
+        # Secure disposal or re-use of equipment
+        checks:
+          - id: a714_secure_disposal
+            event_types:
+              - intune_devices
+            resource_types:
+              - mdm_device
+
+  # ---------------------------------------------------------------------------
+  # A.8 — Technological Controls (A.8.1 – A.8.34)
+  # ---------------------------------------------------------------------------
+  A8:
+    controls:
+      A.8.1:
+        # User endpoint devices
+        checks:
+          - id: a81_endpoint_edr
+            event_types:
+              - falcon_device_details
+              - falcon_devices
+              - s1_agents
+              - defender_machines
+            resource_types:
+              - endpoint
+              - agent
+          - id: a81_endpoint_compliance
+            event_types:
+              - falcon_zero_trust
+              - s1_policies
+              - falcon_sensor_policies
+              - intune_devices
+              - intune_compliance_states
+            resource_types:
+              - endpoint
+              - policy
+              - mdm_device
+              - mdm_compliance_state
+
+      A.8.2:
+        # Privileged access rights
+        checks:
+          - id: a82_privileged_access_pam
+            event_types:
+              - cyberark_accounts
+              - cyberark_safes
+              - cyberark_platforms
+              - cyberark_password_compliance
+            resource_types:
+              - cyberark_account
+              - cyberark_safe
+              - cyberark_compliance
+          - id: a82_privileged_access_iga
+            event_types:
+              - sailpoint_roles
+              - sailpoint_entitlements
+            resource_types:
+              - sailpoint_role
+              - sailpoint_entitlement
+          - id: a82_privileged_access_cloud
+            event_types:
+              - iam_credential_report
+              - iam_users
+              - gcp_iam_policies
+            resource_types:
+              - iam_user
+              - iam_policy
+              - gcp_iam_binding
+
+      A.8.3:
+        # Information access restriction
+        checks:
+          - id: a83_access_restriction
+            event_types:
+              - okta_policies
+              - entra_conditional_access_policies
+              - gcp_iam_policies
+            resource_types:
+              - okta_policy
+              - entra_conditional_access_policy
+              - gcp_iam_binding
+              - iam_policy
+
+      A.8.4:
+        # Access to source code
+        checks:
+          - id: a84_source_code_access
+            event_types:
+              - entra_app_registrations
+              - entra_service_principals
+            resource_types:
+              - entra_app_registration
+              - entra_service_principal
+
+      A.8.5:
+        # Secure authentication
+        checks:
+          - id: a85_mfa
+            event_types:
+              - okta_factors
+              - entra_conditional_access_policies
+              - iam_credential_report
+            resource_types:
+              - okta_user_factors
+              - entra_conditional_access_policy
+              - iam_user
+          - id: a85_password_policy
+            event_types:
+              - iam_password_policy
+              - okta_policies
+            resource_types:
+              - iam_password_policy
+              - okta_policy
+          - id: a85_sign_in_risk
+            event_types:
+              - entra_sign_ins
+              - entra_risky_users
+              - okta_system_log
+            resource_types:
+              - entra_sign_in
+              - entra_user
+              - okta_event
+
+      A.8.6:
+        # Capacity management
+        checks:
+          - id: a86_capacity
+            event_types:
+              - splunk_index_health
+              - sentinel_data_connectors
+            resource_types:
+              - splunk_index
+
+      A.8.7:
+        # Protection against malware
+        checks:
+          - id: a87_malware_edr
+            event_types:
+              - falcon_detection_details
+              - s1_threats
+              - defender_alerts
+            resource_types:
+              - endpoint
+          - id: a87_malware_agents
+            event_types:
+              - falcon_device_details
+              - s1_agents
+              - elastic_agent_status
+            resource_types:
+              - agent
+              - endpoint_fleet
+
+      A.8.8:
+        # Management of technical vulnerabilities
+        checks:
+          - id: a88_vuln_scanners
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+            resource_types:
+              - vulnerability
+              - host
+          - id: a88_vuln_cspm
+            event_types:
+              - wiz_vuln_findings
+              - prisma_alerts
+              - scc_findings
+            resource_types:
+              - vulnerability
+          - id: a88_vuln_recommendations
+            event_types:
+              - defender_recommendations
+              - knowledge_base
+            resource_types:
+              - recommendation
+              - knowledge_base
+
+      A.8.9:
+        # Configuration management
+        checks:
+          - id: a89_config_aws
+            event_types:
+              - config_recorders
+              - securityhub_hub
+            resource_types:
+              - aws_config
+              - securityhub
+          - id: a89_config_azure
+            event_types:
+              - policy_compliance
+            resource_types:
+              - azure_resource
+          - id: a89_config_cspm
+            event_types:
+              - wiz_config_findings
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.8.10:
+        # Information deletion
+        checks:
+          - id: a810_info_deletion
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      A.8.11:
+        # Data masking
+        checks:
+          - id: a811_data_masking
+            event_types:
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_account
+
+      A.8.12:
+        # Data leakage prevention
+        checks:
+          - id: a812_dlp
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - s3_buckets
+              - wiz_config_findings
+              - purview_dlp_alerts
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+              - s3_bucket
+              - dlp_alert
+
+      A.8.13:
+        # Information backup
+        checks:
+          - id: a813_backup
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - veeam_backup_sessions
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - backup_session
+
+      A.8.14:
+        # Redundancy of information processing facilities
+        checks:
+          - id: a814_redundancy
+            event_types:
+              - sentinel_data_connectors
+              - splunk_index_health
+            resource_types:
+              - splunk_index
+
+      A.8.15:
+        # Logging
+        checks:
+          - id: a815_logging_cloud
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+          - id: a815_logging_idp
+            event_types:
+              - okta_system_log
+              - entra_sign_ins
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_sign_in
+              - entra_audit
+          - id: a815_logging_siem
+            event_types:
+              - sentinel_data_connectors
+              - splunk_index_health
+              - elastic_agent_status
+            resource_types:
+              - splunk_index
+
+      A.8.16:
+        # Monitoring activities
+        checks:
+          - id: a816_monitoring_siem
+            event_types:
+              - sentinel_incidents
+              - sentinel_analytics_rules
+              - splunk_notable_events
+              - splunk_correlation_rules
+              - elastic_security_alerts
+              - elastic_detection_rules
+            resource_types:
+              - sentinel_incident
+              - sentinel_analytics_rule
+              - splunk_notable_event
+              - splunk_correlation_rule
+              - elastic_security_alert
+              - elastic_detection_rule
+          - id: a816_monitoring_cspm
+            event_types:
+              - wiz_issues
+              - prisma_alerts
+              - scc_findings
+              - securityhub_hub
+            resource_types:
+              - securityhub
+          - id: a816_monitoring_azure
+            event_types:
+              - monitor_alerts
+            resource_types:
+              - azure_monitor
+
+      A.8.17:
+        # Clock synchronisation
+        checks:
+          - id: a817_clock_sync
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+
+      A.8.18:
+        # Use of privileged utility programs
+        checks:
+          - id: a818_privileged_utilities
+            event_types:
+              - cyberark_recordings
+              - cyberark_accounts
+            resource_types:
+              - cyberark_account
+
+      A.8.19:
+        # Installation of software on operational systems
+        checks:
+          - id: a819_software_install
+            event_types:
+              - s1_applications
+              - falcon_device_details
+            resource_types:
+              - endpoint
+              - agent
+
+      A.8.20:
+        # Networks security
+        checks:
+          - id: a820_network_security_aws
+            event_types:
+              - ec2_security_groups
+              - ec2_network_acls
+            resource_types:
+              - ec2_security_group
+              - ec2_network_acl
+          - id: a820_network_security_azure
+            event_types:
+              - network_security_groups
+            resource_types:
+              - network_security_group
+          - id: a820_network_security_gcp
+            event_types:
+              - compute_firewall_rules
+            resource_types:
+              - compute_firewall_rule
+
+      A.8.21:
+        # Security of network services
+        checks:
+          - id: a821_network_services
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+
+      A.8.22:
+        # Segregation of networks
+        checks:
+          - id: a822_network_segregation
+            event_types:
+              - ec2_network_acls
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+            resource_types:
+              - ec2_network_acl
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+
+      A.8.23:
+        # Web filtering
+        checks:
+          - id: a823_web_filtering
+            event_types:
+              - ec2_security_groups
+              - network_security_groups
+              - falcon_zero_trust
+            resource_types:
+              - ec2_security_group
+              - network_security_group
+
+      A.8.24:
+        # Use of cryptography
+        checks:
+          - id: a824_cryptography_kms
+            event_types:
+              - key_vault
+            resource_types:
+              - key_vault
+          - id: a824_cryptography_storage
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      A.8.25:
+        # Secure development life cycle
+        checks:
+          - id: a825_sdlc
+            event_types:
+              - wiz_config_findings
+              - prisma_compliance
+              - snyk_projects
+            resource_types:
+              - compliance_standard
+              - code_project
+
+      A.8.26:
+        # Application security requirements
+        checks:
+          - id: a826_app_security
+            event_types:
+              - wiz_vuln_findings
+              - prisma_alerts
+            resource_types:
+              - vulnerability
+
+      A.8.27:
+        # Secure system architecture and engineering principles
+        checks:
+          - id: a827_secure_architecture
+            event_types:
+              - wiz_config_findings
+              - prisma_compliance
+              - config_recorders
+            resource_types:
+              - compliance_standard
+              - aws_config
+
+      A.8.28:
+        # Secure coding
+        checks:
+          - id: a828_secure_coding
+            event_types:
+              - wiz_vuln_findings
+              - prisma_alerts
+              - snyk_issues
+            resource_types:
+              - vulnerability
+              - code_vulnerability
+
+      A.8.29:
+        # Security testing in development and acceptance
+        checks:
+          - id: a829_security_testing
+            event_types:
+              - vuln_export
+              - host_detections
+              - wiz_vuln_findings
+              - snyk_issues
+            resource_types:
+              - vulnerability
+              - host
+              - code_vulnerability
+
+      A.8.30:
+        # Outsourced development
+        checks:
+          - id: a830_outsourced_dev
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+
+      A.8.31:
+        # Separation of development, test and production environments
+        checks:
+          - id: a831_env_separation
+            event_types:
+              - config_recorders
+              - wiz_config_findings
+              - prisma_assets
+            resource_types:
+              - aws_config
+              - azure_resource
+
+      A.8.32:
+        # Change management
+        checks:
+          - id: a832_change_mgmt_cloud
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+          - id: a832_change_mgmt_config
+            event_types:
+              - config_recorders
+              - policy_compliance
+            resource_types:
+              - aws_config
+              - azure_resource
+          - id: a832_change_mgmt_idp
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+          - id: a832_change_mgmt_itsm
+            event_types:
+              - snow_change_requests
+            resource_types:
+              - itsm_change_request
+
+      A.8.33:
+        # Test information
+        checks:
+          - id: a833_test_info
+            event_types:
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_account
+
+      A.8.34:
+        # Protection of information systems during audit testing
+        checks:
+          - id: a834_audit_protection
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - cyberark_recordings
+            resource_types:
+              - cloudtrail
+              - gcp_audit

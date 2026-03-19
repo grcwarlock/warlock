@@ -1,0 +1,481 @@
+"""Repository pattern — clean data access layer over SQLAlchemy models.
+
+Replaces raw session.query() calls with typed, reusable repository methods.
+Each repository encapsulates queries for a specific domain entity.
+"""
+
+from __future__ import annotations
+
+import re
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+from sqlalchemy import distinct, func
+from sqlalchemy.orm import Session
+
+from warlock.db.models import (
+    AuditEngagement,
+    AuditEntry,
+    ConnectorRun,
+    ControlMapping,
+    ControlResult,
+    Finding,
+    PostureSnapshot,
+    User,
+)
+
+
+# ---------------------------------------------------------------------------
+# Base Repository
+# ---------------------------------------------------------------------------
+
+
+class BaseRepository:
+    """Base repository with common CRUD operations."""
+
+    def __init__(self, session: Session, model_class: type) -> None:
+        self.session = session
+        self.model = model_class
+
+    def get(self, id: str) -> Any | None:
+        """Fetch a single record by primary key."""
+        return self.session.query(self.model).filter(self.model.id == id).first()
+
+    def list(self, limit: int = 100, offset: int = 0, **filters: Any) -> list:
+        """List records with optional column filters.
+
+        Keyword arguments are treated as equality filters on model columns.
+        """
+        query = self.session.query(self.model)
+        for col, value in filters.items():
+            if hasattr(self.model, col) and value is not None:
+                query = query.filter(getattr(self.model, col) == value)
+        return query.offset(offset).limit(limit).all()
+
+    def count(self, **filters: Any) -> int:
+        """Count records matching optional filters."""
+        query = self.session.query(func.count(self.model.id))
+        for col, value in filters.items():
+            if hasattr(self.model, col) and value is not None:
+                query = query.filter(getattr(self.model, col) == value)
+        return query.scalar() or 0
+
+    def create(self, **kwargs: Any) -> Any:
+        """Create and flush a new record."""
+        instance = self.model(**kwargs)
+        self.session.add(instance)
+        self.session.flush()
+        return instance
+
+    def update(self, id: str, **kwargs: Any) -> Any | None:
+        """Update fields on an existing record. Returns None if not found."""
+        instance = self.get(id)
+        if instance is None:
+            return None
+        for key, value in kwargs.items():
+            if hasattr(instance, key):
+                setattr(instance, key, value)
+        self.session.flush()
+        return instance
+
+    def delete(self, id: str) -> bool:
+        """Soft-delete (set is_active=False) if supported, otherwise hard-delete.
+
+        Returns True if the record existed.
+        """
+        instance = self.get(id)
+        if instance is None:
+            return False
+        if hasattr(instance, "is_active"):
+            instance.is_active = False
+            self.session.flush()
+        else:
+            self.session.delete(instance)
+            self.session.flush()
+        return True
+
+
+# ---------------------------------------------------------------------------
+# Finding Repository
+# ---------------------------------------------------------------------------
+
+
+class FindingRepository(BaseRepository):
+    """Finding-specific queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, Finding)
+
+    def by_resource(
+        self,
+        resource_type: str,
+        resource_id: str | None = None,
+        limit: int = 100,
+    ) -> list[Finding]:
+        """Findings for a specific resource type, optionally narrowed to one resource."""
+        query = self.session.query(Finding).filter(Finding.resource_type == resource_type)
+        if resource_id is not None:
+            query = query.filter(Finding.resource_id == resource_id)
+        return query.order_by(Finding.observed_at.desc()).limit(limit).all()
+
+    def by_severity(self, severity: str, limit: int = 100) -> list[Finding]:
+        """Findings at a given severity level."""
+        return (
+            self.session.query(Finding)
+            .filter(Finding.severity == severity)
+            .order_by(Finding.observed_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def by_source(
+        self,
+        source: str,
+        provider: str | None = None,
+        limit: int = 100,
+    ) -> list[Finding]:
+        """Findings from a specific source (e.g. 'aws'), optionally filtered by provider."""
+        query = self.session.query(Finding).filter(Finding.source == source)
+        if provider is not None:
+            query = query.filter(Finding.provider == provider)
+        return query.order_by(Finding.observed_at.desc()).limit(limit).all()
+
+    def by_date_range(
+        self,
+        start: datetime,
+        end: datetime,
+        limit: int = 100,
+    ) -> list[Finding]:
+        """Findings observed within a date range (inclusive)."""
+        return (
+            self.session.query(Finding)
+            .filter(Finding.observed_at >= start, Finding.observed_at <= end)
+            .order_by(Finding.observed_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def recent(self, hours: int = 24, limit: int = 100) -> list[Finding]:
+        """Findings observed in the last N hours."""
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        return (
+            self.session.query(Finding)
+            .filter(Finding.observed_at >= cutoff)
+            .order_by(Finding.observed_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Control Result Repository
+# ---------------------------------------------------------------------------
+
+
+class ControlResultRepository(BaseRepository):
+    """Control result queries with aggregation."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, ControlResult)
+
+    def by_framework(self, framework: str, limit: int = 100) -> list[ControlResult]:
+        """All results for a framework."""
+        return (
+            self.session.query(ControlResult)
+            .filter(ControlResult.framework == framework)
+            .order_by(ControlResult.assessed_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def by_control(self, framework: str, control_id: str) -> list[ControlResult]:
+        """All results for a specific control within a framework."""
+        return (
+            self.session.query(ControlResult)
+            .filter(
+                ControlResult.framework == framework,
+                ControlResult.control_id == control_id,
+            )
+            .order_by(ControlResult.assessed_at.desc())
+            .all()
+        )
+
+    def by_status(
+        self,
+        status: str,
+        framework: str | None = None,
+        limit: int = 100,
+    ) -> list[ControlResult]:
+        """Results filtered by status, optionally within a framework."""
+        query = self.session.query(ControlResult).filter(ControlResult.status == status)
+        if framework is not None:
+            query = query.filter(ControlResult.framework == framework)
+        return query.order_by(ControlResult.assessed_at.desc()).limit(limit).all()
+
+    def coverage_summary(self, framework: str | None = None) -> dict[str, Any]:
+        """Aggregate status counts, keyed by framework.
+
+        Returns::
+
+            {
+                "nist_800_53": {
+                    "total": 150,
+                    "compliant": 100,
+                    "non_compliant": 30,
+                    "partial": 10,
+                    "not_assessed": 10,
+                    "rate": 66.67,
+                },
+                ...
+            }
+        """
+        query = (
+            self.session.query(
+                ControlResult.framework,
+                ControlResult.status,
+                func.count(ControlResult.id),
+            )
+            .group_by(ControlResult.framework, ControlResult.status)
+        )
+        if framework is not None:
+            query = query.filter(ControlResult.framework == framework)
+
+        fw_stats: dict[str, dict[str, Any]] = {}
+        for fw, st, cnt in query.all():
+            if fw not in fw_stats:
+                fw_stats[fw] = {
+                    "total": 0,
+                    "compliant": 0,
+                    "non_compliant": 0,
+                    "partial": 0,
+                    "not_assessed": 0,
+                }
+            fw_stats[fw]["total"] += cnt
+            if st in ("compliant", "non_compliant", "partial", "not_assessed"):
+                fw_stats[fw][st] += cnt
+            else:
+                fw_stats[fw]["not_assessed"] += cnt
+
+        for fw, s in fw_stats.items():
+            s["rate"] = round(s["compliant"] / s["total"] * 100, 2) if s["total"] > 0 else 0.0
+
+        return fw_stats
+
+    def latest_per_control(self, framework: str) -> list[ControlResult]:
+        """Most recent result per control_id within a framework."""
+        subq = (
+            self.session.query(
+                ControlResult.control_id,
+                func.max(ControlResult.assessed_at).label("max_assessed"),
+            )
+            .filter(ControlResult.framework == framework)
+            .group_by(ControlResult.control_id)
+            .subquery()
+        )
+        return (
+            self.session.query(ControlResult)
+            .join(
+                subq,
+                (ControlResult.control_id == subq.c.control_id)
+                & (ControlResult.assessed_at == subq.c.max_assessed)
+                & (ControlResult.framework == framework),
+            )
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Posture Snapshot Repository
+# ---------------------------------------------------------------------------
+
+
+class PostureSnapshotRepository(BaseRepository):
+    """Posture trend queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, PostureSnapshot)
+
+    def latest(
+        self,
+        framework: str,
+        control_id: str | None = None,
+    ) -> PostureSnapshot | None:
+        """Get the latest snapshot for a framework (and optionally a specific control)."""
+        query = self.session.query(PostureSnapshot).filter(
+            PostureSnapshot.framework == framework
+        )
+        if control_id is not None:
+            query = query.filter(PostureSnapshot.control_id == control_id)
+        return query.order_by(PostureSnapshot.snapshot_date.desc()).first()
+
+    def history(
+        self,
+        framework: str,
+        control_id: str,
+        days: int = 90,
+    ) -> list[PostureSnapshot]:
+        """Snapshot history for a specific control over the last N days."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        return (
+            self.session.query(PostureSnapshot)
+            .filter(
+                PostureSnapshot.framework == framework,
+                PostureSnapshot.control_id == control_id,
+                PostureSnapshot.snapshot_date >= cutoff,
+            )
+            .order_by(PostureSnapshot.snapshot_date.asc())
+            .all()
+        )
+
+    def trend(self, framework: str, days: int = 30) -> list[dict[str, Any]]:
+        """Daily average posture scores for a framework over the last N days.
+
+        Returns a list of dicts: ``[{"date": "2025-06-01", "avg_score": 82.5, "controls": 50}, ...]``
+        """
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        rows = (
+            self.session.query(
+                func.date(PostureSnapshot.snapshot_date).label("day"),
+                func.avg(PostureSnapshot.posture_score).label("avg_score"),
+                func.count(PostureSnapshot.id).label("controls"),
+            )
+            .filter(
+                PostureSnapshot.framework == framework,
+                PostureSnapshot.snapshot_date >= cutoff,
+            )
+            .group_by(func.date(PostureSnapshot.snapshot_date))
+            .order_by(func.date(PostureSnapshot.snapshot_date))
+            .all()
+        )
+        return [
+            {
+                "date": str(row.day),
+                "avg_score": round(float(row.avg_score), 2),
+                "controls": int(row.controls),
+            }
+            for row in rows
+        ]
+
+
+# ---------------------------------------------------------------------------
+# User Repository
+# ---------------------------------------------------------------------------
+
+
+class UserRepository(BaseRepository):
+    """User queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, User)
+
+    def by_email(self, email: str) -> User | None:
+        """Look up a user by email address."""
+        return self.session.query(User).filter(User.email == email).first()
+
+    def active_users(self) -> list[User]:
+        """All active users."""
+        return (
+            self.session.query(User)
+            .filter(User.is_active == True)  # noqa: E712
+            .order_by(User.created_at.desc())
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Audit Engagement Repository
+# ---------------------------------------------------------------------------
+
+
+class AuditEngagementRepository(BaseRepository):
+    """Audit engagement queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, AuditEngagement)
+
+    def active_engagements(self) -> list[AuditEngagement]:
+        """All engagements with status='active'."""
+        return (
+            self.session.query(AuditEngagement)
+            .filter(AuditEngagement.status == "active")
+            .order_by(AuditEngagement.created_at.desc())
+            .all()
+        )
+
+    def by_framework(self, framework: str) -> list[AuditEngagement]:
+        """All engagements for a specific framework."""
+        return (
+            self.session.query(AuditEngagement)
+            .filter(AuditEngagement.framework == framework)
+            .order_by(AuditEngagement.created_at.desc())
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Connector Run Repository
+# ---------------------------------------------------------------------------
+
+
+class ConnectorRunRepository(BaseRepository):
+    """Connector run queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, ConnectorRun)
+
+    def latest_per_connector(self) -> list[ConnectorRun]:
+        """Most recent run per connector (by provider + source_type)."""
+        subq = (
+            self.session.query(
+                ConnectorRun.provider,
+                ConnectorRun.source_type,
+                func.max(ConnectorRun.started_at).label("max_started"),
+            )
+            .group_by(ConnectorRun.provider, ConnectorRun.source_type)
+            .subquery()
+        )
+        return (
+            self.session.query(ConnectorRun)
+            .join(
+                subq,
+                (ConnectorRun.provider == subq.c.provider)
+                & (ConnectorRun.source_type == subq.c.source_type)
+                & (ConnectorRun.started_at == subq.c.max_started),
+            )
+            .all()
+        )
+
+    def failed_runs(self, hours: int = 24) -> list[ConnectorRun]:
+        """Connector runs that failed in the last N hours."""
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        return (
+            self.session.query(ConnectorRun)
+            .filter(
+                ConnectorRun.status == "error",
+                ConnectorRun.started_at >= cutoff,
+            )
+            .order_by(ConnectorRun.started_at.desc())
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Repository factory
+# ---------------------------------------------------------------------------
+
+
+class Repositories:
+    """Pre-initialized repository instances for a session."""
+
+    def __init__(self, session: Session) -> None:
+        self.findings = FindingRepository(session)
+        self.control_results = ControlResultRepository(session)
+        self.posture = PostureSnapshotRepository(session)
+        self.users = UserRepository(session)
+        self.engagements = AuditEngagementRepository(session)
+        self.connector_runs = ConnectorRunRepository(session)
+
+
+def get_repos(session: Session) -> Repositories:
+    """Create a Repositories bundle for the given session."""
+    return Repositories(session)

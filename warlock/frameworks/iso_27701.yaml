@@ -1,0 +1,1044 @@
+framework_id: iso_27701
+
+control_families:
+  # ===========================================================================
+  # PIMS Extensions — Clauses 5-8 (extending ISO 27001 for privacy)
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # Clause 5 — PIMS-specific requirements relating to ISO 27001
+  # ---------------------------------------------------------------------------
+  CL5:
+    controls:
+      5.2.1:
+        checks:
+          - id: cl5_2_1_understanding_org_context
+            event_types:
+              - prisma_assets
+              - asset_export
+              - asset_inventory
+              - wiz_graph
+            resource_types:
+              - endpoint
+              - host
+
+      5.2.2:
+        checks:
+          - id: cl5_2_2_needs_expectations
+            event_types: []
+            resource_types: []
+
+      5.2.3:
+        checks:
+          - id: cl5_2_3_scope_determination
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      5.2.4:
+        checks:
+          - id: cl5_2_4_pims_establishment
+            event_types:
+              - prisma_compliance
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+
+      5.4.1.2:
+        checks:
+          - id: cl5_4_1_2_risk_assessment
+            event_types:
+              - vuln_export
+              - host_detections
+              - falcon_vulnerabilities
+              - defender_vulnerabilities
+              - wiz_vuln_findings
+              - wiz_issues
+            resource_types:
+              - vulnerability
+              - host
+              - endpoint
+              - recommendation
+
+      5.4.1.3:
+        checks:
+          - id: cl5_4_1_3_risk_treatment
+            event_types:
+              - defender_recommendations
+              - wiz_issues
+              - prisma_alerts
+            resource_types:
+              - recommendation
+
+  # ---------------------------------------------------------------------------
+  # Clause 6 — PIMS-specific guidance relating to ISO 27002
+  # ---------------------------------------------------------------------------
+  CL6:
+    controls:
+      6.3.1.1:
+        checks:
+          - id: cl6_3_1_1_roles_responsibilities
+            event_types:
+              - sailpoint_identities
+              - sailpoint_roles
+              - sailpoint_entitlements
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_role
+              - sailpoint_entitlement
+
+      6.5.2.1:
+        checks:
+          - id: cl6_5_2_1_access_control
+            event_types:
+              - iam_credential_report
+              - iam_users
+              - iam_policies
+              - gcp_iam_policies
+              - okta_users
+              - okta_policies
+              - entra_users
+              - entra_conditional_access_policies
+              - cyberark_accounts
+              - sailpoint_identities
+            resource_types:
+              - iam_user
+              - iam_policy
+              - gcp_iam_binding
+              - okta_user
+              - okta_policy
+              - entra_user
+              - entra_conditional_access_policy
+              - cyberark_account
+              - sailpoint_identity
+
+      6.5.2.2:
+        checks:
+          - id: cl6_5_2_2_user_access_provisioning
+            event_types:
+              - sailpoint_identities
+              - sailpoint_accounts
+              - okta_users
+              - entra_users
+              - entra_directory_audits
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_account
+              - okta_user
+              - entra_user
+              - entra_audit
+
+      6.5.2.3:
+        checks:
+          - id: cl6_5_2_3_privileged_access
+            event_types:
+              - cyberark_accounts
+              - cyberark_safes
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - iam_policies
+            resource_types:
+              - cyberark_account
+              - cyberark_safe
+              - sailpoint_role
+              - sailpoint_entitlement
+              - iam_policy
+
+      6.5.3.1:
+        checks:
+          - id: cl6_5_3_1_cryptographic_controls
+            event_types:
+              - key_vault
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - key_vault
+              - s3_bucket
+              - storage_account
+
+      6.6.2.1:
+        checks:
+          - id: cl6_6_2_1_event_logging
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - okta_system_log
+              - entra_directory_audits
+              - splunk_index_health
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - okta_event
+              - entra_audit
+              - splunk_index
+
+      6.6.2.2:
+        checks:
+          - id: cl6_6_2_2_log_protection
+            event_types:
+              - cloudtrail_trails
+              - s3_buckets
+              - config_recorders
+            resource_types:
+              - cloudtrail
+              - s3_bucket
+              - aws_config
+
+      6.8.2.7:
+        checks:
+          - id: cl6_8_2_7_network_security
+            event_types:
+              - ec2_security_groups
+              - ec2_network_acls
+              - compute_firewall_rules
+              - network_security_groups
+            resource_types:
+              - ec2_security_group
+              - ec2_network_acl
+              - compute_firewall_rule
+              - network_security_group
+
+      6.8.2.8:
+        checks:
+          - id: cl6_8_2_8_network_segmentation
+            event_types:
+              - ec2_security_groups
+              - ec2_network_acls
+              - compute_firewall_rules
+              - network_security_groups
+            resource_types:
+              - ec2_security_group
+              - ec2_network_acl
+              - compute_firewall_rule
+              - network_security_group
+
+      6.9.3.1:
+        checks:
+          - id: cl6_9_3_1_record_protection
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - key_vault
+
+      6.9.4.1:
+        checks:
+          - id: cl6_9_4_1_privacy_pii_protection
+            event_types:
+              - prisma_policies
+              - prisma_compliance
+              - wiz_config_findings
+              - policy_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+              - compliance_requirement
+
+      6.9.4.2:
+        checks:
+          - id: cl6_9_4_2_privacy_compliance_review
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+  # ---------------------------------------------------------------------------
+  # Clause 7 — Additional ISO 27002 guidance for PII Controllers
+  # ---------------------------------------------------------------------------
+  CL7:
+    controls:
+      7.2.1:
+        checks:
+          - id: cl7_2_1_conditions_collection
+            event_types:
+              - prisma_policies
+              - policy_compliance
+              - compliance_audits
+            resource_types:
+              - policy
+              - compliance_standard
+
+      7.2.2:
+        checks:
+          - id: cl7_2_2_consent_management
+            event_types:
+              - prisma_policies
+              - policy_compliance
+            resource_types:
+              - policy
+
+      7.2.3:
+        checks:
+          - id: cl7_2_3_accuracy_quality
+            event_types: []
+            resource_types: []
+
+      7.2.4:
+        checks:
+          - id: cl7_2_4_pia_obligations
+            event_types:
+              - wiz_issues
+              - prisma_compliance
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      7.2.5:
+        checks:
+          - id: cl7_2_5_contracts_with_processors
+            event_types: []
+            resource_types: []
+
+      7.2.6:
+        checks:
+          - id: cl7_2_6_joint_controller
+            event_types: []
+            resource_types: []
+
+      7.2.7:
+        checks:
+          - id: cl7_2_7_records_processing
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+
+      7.2.8:
+        checks:
+          - id: cl7_2_8_pii_transfers
+            event_types:
+              - policy_compliance
+              - prisma_policies
+            resource_types:
+              - policy
+
+      7.3.1:
+        checks:
+          - id: cl7_3_1_data_subject_rights
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+
+      7.3.2:
+        checks:
+          - id: cl7_3_2_pii_principal_info
+            event_types: []
+            resource_types: []
+
+      7.3.3:
+        checks:
+          - id: cl7_3_3_access_rectification_erasure
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+
+      7.3.4:
+        checks:
+          - id: cl7_3_4_notification_obligations
+            event_types: []
+            resource_types: []
+
+      7.3.5:
+        checks:
+          - id: cl7_3_5_automated_decisions
+            event_types: []
+            resource_types: []
+
+      7.3.6:
+        checks:
+          - id: cl7_3_6_complaints_handling
+            event_types: []
+            resource_types: []
+
+      7.4.1:
+        checks:
+          - id: cl7_4_1_limit_collection
+            event_types:
+              - prisma_policies
+              - wiz_config_findings
+              - policy_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      7.4.2:
+        checks:
+          - id: cl7_4_2_limit_processing
+            event_types:
+              - prisma_policies
+              - policy_compliance
+            resource_types:
+              - policy
+
+      7.4.3:
+        checks:
+          - id: cl7_4_3_accuracy_quality_controller
+            event_types: []
+            resource_types: []
+
+      7.4.4:
+        checks:
+          - id: cl7_4_4_minimization_objectives
+            event_types:
+              - prisma_policies
+              - wiz_config_findings
+            resource_types:
+              - policy
+
+      7.4.5:
+        checks:
+          - id: cl7_4_5_de_identification
+            event_types: []
+            resource_types: []
+
+      7.4.6:
+        checks:
+          - id: cl7_4_6_retention_disposal
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      7.4.7:
+        checks:
+          - id: cl7_4_7_pii_disposal
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      7.4.8:
+        checks:
+          - id: cl7_4_8_pii_return
+            event_types: []
+            resource_types: []
+
+      7.4.9:
+        checks:
+          - id: cl7_4_9_pii_transmission_controls
+            event_types:
+              - key_vault
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - key_vault
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+              - s3_bucket
+              - storage_account
+
+      7.5.1:
+        checks:
+          - id: cl7_5_1_identify_transfer_basis
+            event_types:
+              - policy_compliance
+              - prisma_policies
+              - prisma_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      7.5.2:
+        checks:
+          - id: cl7_5_2_countries_organizations
+            event_types: []
+            resource_types: []
+
+      7.5.3:
+        checks:
+          - id: cl7_5_3_records_of_transfers
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+
+      7.5.4:
+        checks:
+          - id: cl7_5_4_records_of_disclosure
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+
+  # ===========================================================================
+  # Annex A — PII Controller Controls
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # A.7.2 — Conditions for collection and processing
+  # ---------------------------------------------------------------------------
+  A7_2:
+    controls:
+      A.7.2.1:
+        checks:
+          - id: a721_purpose_identification
+            event_types:
+              - prisma_policies
+              - compliance_audits
+            resource_types:
+              - policy
+              - compliance_standard
+
+      A.7.2.2:
+        checks:
+          - id: a722_lawful_basis
+            event_types:
+              - policy_compliance
+              - prisma_policies
+              - prisma_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      A.7.2.3:
+        checks:
+          - id: a723_determining_applicability
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.7.2.4:
+        checks:
+          - id: a724_obtaining_consent
+            event_types: []
+            resource_types: []
+
+      A.7.2.5:
+        checks:
+          - id: a725_privacy_impact_assessment
+            event_types:
+              - wiz_issues
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.7.2.6:
+        checks:
+          - id: a726_contracts_with_processors
+            event_types: []
+            resource_types: []
+
+      A.7.2.7:
+        checks:
+          - id: a727_joint_pii_controller
+            event_types: []
+            resource_types: []
+
+      A.7.2.8:
+        checks:
+          - id: a728_records_pii_processing
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+              - okta_system_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+              - okta_event
+
+  # ---------------------------------------------------------------------------
+  # A.7.3 — Obligations to PII principals
+  # ---------------------------------------------------------------------------
+  A7_3:
+    controls:
+      A.7.3.1:
+        checks:
+          - id: a731_determine_obligations
+            event_types:
+              - entra_directory_audits
+              - okta_system_log
+              - prisma_compliance
+            resource_types:
+              - entra_audit
+              - okta_event
+              - compliance_standard
+
+      A.7.3.2:
+        checks:
+          - id: a732_determine_info_for_principals
+            event_types: []
+            resource_types: []
+
+      A.7.3.3:
+        checks:
+          - id: a733_providing_info_to_principals
+            event_types: []
+            resource_types: []
+
+      A.7.3.4:
+        checks:
+          - id: a734_provide_mechanism_modify_withdraw
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+
+      A.7.3.5:
+        checks:
+          - id: a735_provide_mechanism_object
+            event_types: []
+            resource_types: []
+
+      A.7.3.6:
+        checks:
+          - id: a736_access_correction_erasure
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+
+      A.7.3.7:
+        checks:
+          - id: a737_controller_obligations_third_parties
+            event_types: []
+            resource_types: []
+
+      A.7.3.8:
+        checks:
+          - id: a738_providing_copy_pii
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+
+      A.7.3.9:
+        checks:
+          - id: a739_handling_requests
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+
+      A.7.3.10:
+        checks:
+          - id: a7310_automated_decision_making
+            event_types: []
+            resource_types: []
+
+  # ---------------------------------------------------------------------------
+  # A.7.4 — Privacy by design and privacy by default
+  # ---------------------------------------------------------------------------
+  A7_4:
+    controls:
+      A.7.4.1:
+        checks:
+          - id: a741_limit_collection
+            event_types:
+              - prisma_policies
+              - wiz_config_findings
+              - policy_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      A.7.4.2:
+        checks:
+          - id: a742_limit_processing
+            event_types:
+              - prisma_policies
+              - policy_compliance
+            resource_types:
+              - policy
+
+      A.7.4.3:
+        checks:
+          - id: a743_accuracy_quality
+            event_types: []
+            resource_types: []
+
+      A.7.4.4:
+        checks:
+          - id: a744_minimization_objectives
+            event_types:
+              - prisma_policies
+              - wiz_config_findings
+            resource_types:
+              - policy
+
+      A.7.4.5:
+        checks:
+          - id: a745_de_identification_deletion_eol
+            event_types: []
+            resource_types: []
+
+      A.7.4.6:
+        checks:
+          - id: a746_temporary_files
+            event_types:
+              - config_recorders
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - aws_config
+              - s3_bucket
+              - storage_account
+
+      A.7.4.7:
+        checks:
+          - id: a747_pii_disposal
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      A.7.4.8:
+        checks:
+          - id: a748_pii_return_transfer
+            event_types: []
+            resource_types: []
+
+      A.7.4.9:
+        checks:
+          - id: a749_pii_transmission_controls
+            event_types:
+              - key_vault
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - key_vault
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+              - s3_bucket
+              - storage_account
+
+  # ---------------------------------------------------------------------------
+  # A.7.5 — PII sharing, transfer, and disclosure
+  # ---------------------------------------------------------------------------
+  A7_5:
+    controls:
+      A.7.5.1:
+        checks:
+          - id: a751_identify_basis_for_transfer
+            event_types:
+              - policy_compliance
+              - prisma_policies
+              - prisma_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      A.7.5.2:
+        checks:
+          - id: a752_countries_and_organizations
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.7.5.3:
+        checks:
+          - id: a753_records_of_transfer
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+
+      A.7.5.4:
+        checks:
+          - id: a754_records_of_disclosure_to_third_parties
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+
+  # ===========================================================================
+  # Annex B — PII Processor Controls
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # B.8.2 — Conditions for collection and processing
+  # ---------------------------------------------------------------------------
+  B8_2:
+    controls:
+      B.8.2.1:
+        checks:
+          - id: b821_customer_agreement
+            event_types:
+              - compliance_audits
+              - prisma_compliance
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      B.8.2.2:
+        checks:
+          - id: b822_organization_purposes
+            event_types:
+              - prisma_policies
+              - policy_compliance
+            resource_types:
+              - policy
+
+      B.8.2.3:
+        checks:
+          - id: b823_marketing_advertising
+            event_types: []
+            resource_types: []
+
+      B.8.2.4:
+        checks:
+          - id: b824_infringing_instructions
+            event_types: []
+            resource_types: []
+
+      B.8.2.5:
+        checks:
+          - id: b825_customer_obligations
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      B.8.2.6:
+        checks:
+          - id: b826_records_related_to_processing
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+              - okta_system_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+              - okta_event
+
+  # ---------------------------------------------------------------------------
+  # B.8.3 — Obligations to PII principals
+  # ---------------------------------------------------------------------------
+  B8_3:
+    controls:
+      B.8.3.1:
+        checks:
+          - id: b831_obligations_to_principals
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+            resource_types:
+              - okta_event
+              - entra_audit
+
+      B.8.3.2:
+        checks:
+          - id: b832_provide_info_to_customer
+            event_types: []
+            resource_types: []
+
+  # ---------------------------------------------------------------------------
+  # B.8.4 — Privacy by design and privacy by default
+  # ---------------------------------------------------------------------------
+  B8_4:
+    controls:
+      B.8.4.1:
+        checks:
+          - id: b841_temporary_files
+            event_types:
+              - config_recorders
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - aws_config
+              - s3_bucket
+              - storage_account
+
+      B.8.4.2:
+        checks:
+          - id: b842_return_transfer_disposal
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+
+      B.8.4.3:
+        checks:
+          - id: b843_pii_transmission_controls
+            event_types:
+              - key_vault
+              - ec2_security_groups
+              - network_security_groups
+              - compute_firewall_rules
+              - s3_buckets
+              - storage_accounts
+            resource_types:
+              - key_vault
+              - ec2_security_group
+              - network_security_group
+              - compute_firewall_rule
+              - s3_bucket
+              - storage_account
+
+  # ---------------------------------------------------------------------------
+  # B.8.5 — PII sharing, transfer, and disclosure
+  # ---------------------------------------------------------------------------
+  B8_5:
+    controls:
+      B.8.5.1:
+        checks:
+          - id: b851_identify_basis_for_transfer
+            event_types:
+              - policy_compliance
+              - prisma_policies
+              - prisma_compliance
+            resource_types:
+              - policy
+              - compliance_standard
+
+      B.8.5.2:
+        checks:
+          - id: b852_countries_and_organizations
+            event_types:
+              - prisma_compliance
+              - compliance_audits
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      B.8.5.3:
+        checks:
+          - id: b853_records_of_disclosure
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - entra_audit
+
+      B.8.5.4:
+        checks:
+          - id: b854_notification_of_disclosure_requests
+            event_types:
+              - sentinel_incidents
+              - splunk_notable_events
+            resource_types:
+              - sentinel_incident
+              - splunk_notable_event
+
+      B.8.5.5:
+        checks:
+          - id: b855_legally_binding_disclosure
+            event_types: []
+            resource_types: []
+
+      B.8.5.6:
+        checks:
+          - id: b856_disclosure_of_subcontractors
+            event_types: []
+            resource_types: []
+
+      B.8.5.7:
+        checks:
+          - id: b857_engagement_of_subcontractor
+            event_types:
+              - compliance_audits
+              - prisma_compliance
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      B.8.5.8:
+        checks:
+          - id: b858_change_of_subcontractor
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - entra_directory_audits
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - entra_audit

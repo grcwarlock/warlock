@@ -1,0 +1,418 @@
+framework_id: iso_42001
+
+control_families:
+  # ---------------------------------------------------------------------------
+  # A.2 — AI Policies
+  # ---------------------------------------------------------------------------
+  A2:
+    controls:
+      A.2.2:
+        checks:
+          - id: a22_ai_policy
+            event_types:
+              - prisma_policies
+            resource_types:
+              - policy
+
+      A.2.3:
+        checks:
+          - id: a23_internal_org_roles
+            event_types:
+              - sailpoint_identities
+              - sailpoint_roles
+              - okta_users
+              - entra_users
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_role
+              - okta_user
+              - entra_user
+
+      A.2.4:
+        checks:
+          - id: a24_ai_lifecycle_policy
+            event_types:
+              - prisma_policies
+            resource_types:
+              - policy
+
+  # ---------------------------------------------------------------------------
+  # A.3 — Internal Organization
+  # ---------------------------------------------------------------------------
+  A3:
+    controls:
+      A.3.2:
+        checks:
+          - id: a32_roles_responsibilities
+            event_types:
+              - sailpoint_identities
+              - sailpoint_roles
+              - sailpoint_entitlements
+              - okta_users
+              - okta_groups
+              - entra_users
+            resource_types:
+              - sailpoint_identity
+              - sailpoint_role
+              - sailpoint_entitlement
+              - okta_user
+              - entra_user
+
+      A.3.3:
+        checks:
+          - id: a33_reporting
+            event_types: []
+            resource_types: []
+
+  # ---------------------------------------------------------------------------
+  # A.4 — Resources for AI Systems
+  # ---------------------------------------------------------------------------
+  A4:
+    controls:
+      A.4.2:
+        checks:
+          - id: a42_resources
+            event_types: []
+            resource_types: []
+
+      A.4.3:
+        checks:
+          - id: a43_competence
+            event_types: []
+            resource_types: []
+
+      A.4.4:
+        checks:
+          - id: a44_awareness
+            event_types: []
+            resource_types: []
+
+      A.4.5:
+        checks:
+          - id: a45_communication
+            event_types: []
+            resource_types: []
+
+      A.4.6:
+        checks:
+          - id: a46_tools_frameworks
+            event_types: []
+            resource_types: []
+
+  # ---------------------------------------------------------------------------
+  # A.5 — Assessing Impacts of AI Systems
+  # ---------------------------------------------------------------------------
+  A5:
+    controls:
+      A.5.2:
+        checks:
+          - id: a52_impact_assessment
+            event_types: []
+            resource_types: []
+
+      A.5.3:
+        checks:
+          - id: a53_impact_documentation
+            event_types: []
+            resource_types: []
+
+      A.5.4:
+        checks:
+          - id: a54_ongoing_impact_monitoring
+            event_types:
+              - scc_findings
+              - wiz_issues
+              - prisma_alerts
+              - monitor_alerts
+              - defender_alerts
+            resource_types:
+              - recommendation
+              - azure_monitor
+              - azure_defender_alert
+
+  # ---------------------------------------------------------------------------
+  # A.6 — AI System Lifecycle
+  # ---------------------------------------------------------------------------
+  A6:
+    controls:
+      A.6.1.2:
+        checks:
+          - id: a612_responsible_ai_principles
+            event_types:
+              - prisma_policies
+            resource_types:
+              - policy
+
+      A.6.1.3:
+        checks:
+          - id: a613_ai_system_objectives
+            event_types: []
+            resource_types: []
+
+      A.6.2.2:
+        checks:
+          - id: a622_ai_system_requirements
+            event_types: []
+            resource_types: []
+
+      A.6.2.3:
+        checks:
+          - id: a623_verification_validation
+            event_types:
+              - compliance_audits
+              - prisma_compliance
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.6.2.4:
+        checks:
+          - id: a624_design_dev_documentation
+            event_types: []
+            resource_types: []
+
+      A.6.2.5:
+        checks:
+          - id: a625_data_management
+            event_types:
+              - s3_buckets
+              - storage_accounts
+              - storage_buckets
+              - key_vault
+            resource_types:
+              - s3_bucket
+              - storage_account
+              - storage_bucket
+              - key_vault
+
+      A.6.2.6:
+        checks:
+          - id: a626_data_preparation
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      A.6.2.7:
+        checks:
+          - id: a627_model_selection
+            event_types: []
+            resource_types: []
+
+      A.6.2.8:
+        checks:
+          - id: a628_model_training
+            event_types: []
+            resource_types: []
+
+      A.6.2.9:
+        checks:
+          - id: a629_model_evaluation
+            event_types: []
+            resource_types: []
+
+      A.6.2.10:
+        checks:
+          - id: a6210_system_testing
+            event_types: []
+            resource_types: []
+
+      A.6.2.11:
+        checks:
+          - id: a6211_system_deployment
+            event_types:
+              - config_recorders
+              - policy_compliance
+              - cloudtrail_trails
+              - audit_logs
+            resource_types:
+              - aws_config
+              - azure_resource
+              - cloudtrail
+              - gcp_audit
+
+      A.6.2.12:
+        checks:
+          - id: a6212_operation_monitoring
+            event_types:
+              - monitor_alerts
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+              - scc_findings
+              - wiz_issues
+              - prisma_alerts
+              - splunk_notable_events
+              - sentinel_incidents
+              - elastic_security_alerts
+            resource_types:
+              - azure_monitor
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+              - splunk_notable_event
+              - sentinel_incident
+              - elastic_security_alert
+
+      A.6.2.13:
+        checks:
+          - id: a6213_system_retirement
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+
+  # ---------------------------------------------------------------------------
+  # A.7 — Data for AI Systems
+  # ---------------------------------------------------------------------------
+  A7:
+    controls:
+      A.7.2:
+        checks:
+          - id: a72_data_quality
+            event_types:
+              - compliance_audits
+              - prisma_compliance
+              - compliance_posture
+            resource_types:
+              - compliance_standard
+              - compliance_requirement
+
+      A.7.3:
+        checks:
+          - id: a73_data_provenance
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+              - activity_log
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+              - azure_activity
+
+      A.7.4:
+        checks:
+          - id: a74_data_preparation
+            event_types:
+              - s3_buckets
+              - storage_buckets
+              - storage_accounts
+            resource_types:
+              - s3_bucket
+              - storage_bucket
+              - storage_account
+
+      A.7.5:
+        checks:
+          - id: a75_acquiring_data
+            event_types:
+              - cloudtrail_trails
+              - audit_logs
+            resource_types:
+              - cloudtrail
+              - gcp_audit
+
+  # ---------------------------------------------------------------------------
+  # A.8 — Information for Interested Parties
+  # ---------------------------------------------------------------------------
+  A8:
+    controls:
+      A.8.2:
+        checks:
+          - id: a82_disclosure_ai_interaction
+            event_types: []
+            resource_types: []
+
+      A.8.3:
+        checks:
+          - id: a83_reporting_information
+            event_types: []
+            resource_types: []
+
+      A.8.4:
+        checks:
+          - id: a84_ai_decision_information
+            event_types: []
+            resource_types: []
+
+  # ---------------------------------------------------------------------------
+  # A.9 — Use of AI Systems
+  # ---------------------------------------------------------------------------
+  A9:
+    controls:
+      A.9.2:
+        checks:
+          - id: a92_intended_use_documentation
+            event_types: []
+            resource_types: []
+
+      A.9.3:
+        checks:
+          - id: a93_misuse_prevention
+            event_types:
+              - iam_credential_report
+              - iam_users
+              - iam_policies
+              - gcp_iam_policies
+              - okta_policies
+              - entra_conditional_access_policies
+              - ec2_security_groups
+              - compute_firewall_rules
+              - network_security_groups
+            resource_types:
+              - iam_user
+              - iam_policy
+              - gcp_iam_binding
+              - okta_policy
+              - entra_conditional_access_policy
+              - ec2_security_group
+              - compute_firewall_rule
+              - network_security_group
+
+      A.9.4:
+        checks:
+          - id: a94_human_oversight
+            event_types:
+              - okta_system_log
+              - entra_directory_audits
+              - entra_sign_ins
+              - cyberark_recordings
+              - cyberark_accounts
+            resource_types:
+              - okta_event
+              - entra_audit
+              - entra_sign_in
+              - cyberark_account
+
+  # ---------------------------------------------------------------------------
+  # A.10 — Third-party and Customer Relationships
+  # ---------------------------------------------------------------------------
+  A10:
+    controls:
+      A.10.2:
+        checks:
+          - id: a102_terms_conditions
+            event_types: []
+            resource_types: []
+
+      A.10.3:
+        checks:
+          - id: a103_supplier_monitoring
+            event_types:
+              - entra_service_principals
+              - entra_app_registrations
+              - okta_applications
+              - sailpoint_accounts
+            resource_types:
+              - entra_service_principal
+              - entra_app_registration
+              - okta_application
+              - sailpoint_account
