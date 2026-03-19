@@ -168,12 +168,12 @@ class DriftDetector:
         if rt_set:
             query = query.filter(ChangeEvent.resource_type.in_(rt_set))
 
-        events = query.order_by(
-            func.abs(
-                func.julianday(ChangeEvent.occurred_at)
-                - func.julianday(detected_at)
-            )
-        ).all()
+        events = query.all()
+        # Sort by temporal proximity in Python (avoids SQLite-specific func.julianday)
+        events.sort(key=lambda e: abs(
+            (e.occurred_at.replace(tzinfo=timezone.utc) if e.occurred_at.tzinfo is None else e.occurred_at)
+            - detected_at
+        ).total_seconds())
 
         # Update drift record with correlated event IDs
         if events:

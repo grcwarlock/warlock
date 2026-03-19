@@ -1,0 +1,80 @@
+alembic==1.18.4
+    # via warlock (pyproject.toml)
+annotated-doc==0.0.4
+    # via fastapi
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.12.1
+    # via
+    #   httpx
+    #   starlette
+certifi==2026.2.25
+    # via
+    #   httpcore
+    #   httpx
+click==8.3.1
+    # via
+    #   uvicorn
+    #   warlock (pyproject.toml)
+fastapi==0.135.1
+    # via warlock (pyproject.toml)
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via warlock (pyproject.toml)
+idna==3.11
+    # via
+    #   anyio
+    #   httpx
+mako==1.3.10
+    # via alembic
+markdown-it-py==4.0.0
+    # via rich
+markupsafe==3.0.3
+    # via mako
+mdurl==0.1.2
+    # via markdown-it-py
+psycopg2-binary==2.9.11
+    # via warlock (pyproject.toml)
+pydantic==2.12.5
+    # via
+    #   fastapi
+    #   pydantic-settings
+    #   warlock (pyproject.toml)
+pydantic-core==2.41.5
+    # via pydantic
+pydantic-settings==2.13.1
+    # via warlock (pyproject.toml)
+pygments==2.19.2
+    # via rich
+python-dotenv==1.2.2
+    # via pydantic-settings
+pyyaml==6.0.3
+    # via warlock (pyproject.toml)
+rich==14.3.3
+    # via warlock (pyproject.toml)
+sqlalchemy==2.0.48
+    # via
+    #   alembic
+    #   warlock (pyproject.toml)
+starlette==0.52.1
+    # via fastapi
+typing-extensions==4.15.0
+    # via
+    #   alembic
+    #   fastapi
+    #   pydantic
+    #   pydantic-core
+    #   sqlalchemy
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via
+    #   fastapi
+    #   pydantic
+    #   pydantic-settings
+uvicorn==0.42.0
+    # via warlock (pyproject.toml)

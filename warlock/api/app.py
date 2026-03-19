@@ -372,6 +372,23 @@ app = FastAPI(
     description="Compliance telemetry pipeline REST API",
 )
 
+# Configure structured logging on module load
+from warlock.logging_config import configure_logging  # noqa: E402
+configure_logging()
+
+# CORS — configured via WLK_CORS_ORIGINS
+from warlock.config import get_settings as _get_cors_settings  # noqa: E402
+_cors_settings = _get_cors_settings()
+if _cors_settings.cors_origins:
+    from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allow_headers=["Authorization", "X-Api-Key", "Content-Type"],
+    )
+
 # Register security middleware (rate limiting, security headers, audit logging)
 from warlock.api.middleware import register_middleware  # noqa: E402
 
@@ -2380,6 +2397,14 @@ def review_attestation(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
+    attest = db.query(Attestation).filter(Attestation.id == attestation_id).first()
+    if not attest:
+        raise HTTPException(status_code=404, detail="Attestation not found")
+    if attest.prepared_by and attest.prepared_by == current_user.email:
+        raise HTTPException(
+            status_code=403,
+            detail="Separation of duties: reviewer cannot be the same as preparer",
+        )
     from warlock.workflows.attestations import AttestationManager
     mgr = AttestationManager()
     try:
@@ -2395,6 +2420,19 @@ def approve_attestation(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
+    attest = db.query(Attestation).filter(Attestation.id == attestation_id).first()
+    if not attest:
+        raise HTTPException(status_code=404, detail="Attestation not found")
+    if attest.prepared_by and attest.prepared_by == current_user.email:
+        raise HTTPException(
+            status_code=403,
+            detail="Separation of duties: approver cannot be the same as preparer",
+        )
+    if attest.reviewed_by and attest.reviewed_by == current_user.email:
+        raise HTTPException(
+            status_code=403,
+            detail="Separation of duties: approver cannot be the same as reviewer",
+        )
     from warlock.workflows.attestations import AttestationManager
     mgr = AttestationManager()
     try:

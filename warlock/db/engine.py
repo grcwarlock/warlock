@@ -21,11 +21,29 @@ def get_engine():
         connect_args = {}
         if settings.database_url.startswith("sqlite"):
             connect_args["check_same_thread"] = False
+        pool_kwargs = {}
+        if not settings.database_url.startswith("sqlite"):
+            pool_kwargs = {
+                "pool_size": 20,
+                "max_overflow": 30,
+                "pool_recycle": 1800,
+                "pool_timeout": 30,
+            }
         _engine = create_engine(
             settings.database_url,
             connect_args=connect_args,
             pool_pre_ping=True,
+            **pool_kwargs,
         )
+        # Enable FK enforcement on SQLite (it's off by default)
+        if settings.database_url.startswith("sqlite"):
+            from sqlalchemy import event
+
+            @event.listens_for(_engine, "connect")
+            def _set_sqlite_pragma(dbapi_conn, connection_record):
+                cursor = dbapi_conn.cursor()
+                cursor.execute("PRAGMA foreign_keys=ON")
+                cursor.close()
     return _engine
 
 
