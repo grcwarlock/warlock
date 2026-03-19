@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re as _re
 from datetime import datetime, timezone
 from typing import Any
@@ -45,11 +44,9 @@ from warlock.api.auth import (
     create_access_token,
     create_user,
     generate_api_key,
-    hash_password,
-    has_permission,
     PERMISSIONS,
 )
-from warlock.api.deps import get_current_user, get_db, require_permission
+from warlock.api.deps import get_db, require_permission
 from warlock.db.models import (
     APIKey,
     Attestation,
@@ -68,11 +65,9 @@ from warlock.db.models import (
     Questionnaire,
     QuestionnaireTemplate,
     RawEvent,
-    RiskAnalysis,
     SystemProfile,
     User,
     LegalHold,
-    TrustAccessRequest,
 )
 from warlock.db.repository import get_repos
 
@@ -1131,7 +1126,6 @@ def list_connectors(
 ):
     """List connectors with their last run status."""
     # Get the latest connector run per provider
-    from sqlalchemy import desc
 
     subq = (
         db.query(

@@ -475,7 +475,7 @@ def build_compliance_context(
 
     # Cadence status
     from warlock.db.models import ControlMapping
-    from sqlalchemy import func, distinct
+    from sqlalchemy import func
     from warlock.db.models import ControlResult
     freq_row = (
         session.query(ControlMapping.monitoring_frequency)

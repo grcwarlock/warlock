@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from warlock.db.models import POAM, ControlResult, Finding

@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
-from warlock.assessors.cadence import FREQUENCY_HOURS, CadenceChecker
+from warlock.assessors.cadence import CadenceChecker
 from warlock.assessors.posture import PostureTimeSeriesQuery
 from warlock.db.models import (
     ControlInheritance,

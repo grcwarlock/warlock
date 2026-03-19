@@ -8,14 +8,13 @@ Handles:
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from warlock.db.models import Personnel, User, TrustAccessRequest, AuditEntry
+from warlock.db.models import Personnel, User, TrustAccessRequest
 
 log = logging.getLogger(__name__)
 

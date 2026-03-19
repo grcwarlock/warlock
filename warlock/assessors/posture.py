@@ -10,14 +10,12 @@ import logging
 import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
 
-from sqlalchemy import distinct, func
+from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     AuditEngagement,
-    ControlMapping,
     ControlResult,
     Finding,
     PostureSnapshot,

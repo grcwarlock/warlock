@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import distinct, func
+from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
