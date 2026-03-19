@@ -51,6 +51,7 @@ def _get_auth_config() -> tuple[str, int]:
 MIN_PASSWORD_LENGTH = 12
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 30
+_PBKDF2_ITERATIONS = 600_000
 
 # Detect PyJWT availability
 try:
@@ -87,7 +88,7 @@ def hash_password(password: str) -> str:
         return f"bcrypt:{hashed.decode()}"
     # Fallback: PBKDF2 with 600k iterations (OWASP 2024 recommendation)
     salt = secrets.token_hex(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 600_000)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), _PBKDF2_ITERATIONS)
     return f"pbkdf2:{salt}:{dk.hex()}"
 
 
@@ -101,7 +102,7 @@ def verify_password(password: str, hashed: str) -> bool:
         return _bcrypt.checkpw(password.encode(), stored)
     elif hashed.startswith("pbkdf2:"):
         _, salt, expected_hex = hashed.split(":", 2)
-        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 600_000)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), _PBKDF2_ITERATIONS)
         return hmac.compare_digest(dk.hex(), expected_hex)
     else:
         # Legacy SHA-256 format — verify but log warning for migration
@@ -276,6 +277,10 @@ def authenticate_user(session: Session, email: str, password: str) -> User | Non
         user.locked_until = None
 
     if verify_password(password, user.hashed_password):
+        # Force re-hash legacy passwords on successful login
+        if not user.hashed_password.startswith(("$2b$", "pbkdf2:")):
+            log.info("Migrating legacy password hash for user %s", user.email)
+            user.hashed_password = hash_password(password)
         # Success — reset failure counter
         user.failed_login_count = 0
         user.locked_until = None

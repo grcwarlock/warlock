@@ -9,6 +9,7 @@ All calls go through httpx — no vendor SDKs required.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ class AIReasoningResult:
     assessment: str            # narrative explanation
     confidence: float          # 0.0 – 1.0
     model: str
+    prompt_hash: str = ""
     context_factors: list[str] = None  # what context influenced the assessment
 
     def __post_init__(self):
@@ -109,7 +111,7 @@ def _build_user_prompt(
             "mapping_method": mapping.mapping_method,
             "monitoring_frequency": mapping.monitoring_frequency,
         },
-        "raw_data_sample": {k: v for k, v in list(raw_data.items())[:20]} if raw_data else {},
+        "raw_data_sample": {k: v for k, v in list(raw_data.items())[:50]} if raw_data else {},
     }
 
     # Add Phase 2-5 context if available
@@ -133,6 +135,12 @@ def _build_user_prompt(
             prompt_data["compliance_context"] = compliance_context
 
     return json.dumps(prompt_data, indent=2, default=str)
+
+
+def _hash_prompt(system_prompt: str, user_prompt: str) -> str:
+    """SHA-256 hash of the full prompt for reproducibility tracking."""
+    combined = f"{system_prompt}\n---\n{user_prompt}"
+    return hashlib.sha256(combined.encode()).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +220,8 @@ class AIReasoner:
 class AnthropicReasoner(AIReasoner):
 
     def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+        user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
+        prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = "https://api.anthropic.com/v1/messages"
         headers = {
             "x-api-key": self.api_key,
@@ -221,15 +231,18 @@ class AnthropicReasoner(AIReasoner):
         payload = {
             "model": self.model,
             "max_tokens": 1024,
+            "temperature": 0,
             "system": _SYSTEM_PROMPT,
-            "messages": [{"role": "user", "content": _build_user_prompt(finding, mapping, raw_data, context)}],
+            "messages": [{"role": "user", "content": user_prompt}],
         }
         try:
             resp = httpx.post(url, headers=headers, json=payload, timeout=TIMEOUT)
             resp.raise_for_status()
             body = resp.json()
             text = body["content"][0]["text"]
-            return _parse_response(text, self.model)
+            result = _parse_response(text, self.model)
+            result.prompt_hash = prompt_hash
+            return result
         except Exception as e:
             log.exception("Anthropic API call failed")
             return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
@@ -238,6 +251,8 @@ class AnthropicReasoner(AIReasoner):
 class OpenAIReasoner(AIReasoner):
 
     def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+        user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
+        prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = f"{self.base_url or 'https://api.openai.com'}/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -246,9 +261,10 @@ class OpenAIReasoner(AIReasoner):
         payload = {
             "model": self.model,
             "max_tokens": 1024,
+            "temperature": 0,
             "messages": [
                 {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": _build_user_prompt(finding, mapping, raw_data, context)},
+                {"role": "user", "content": user_prompt},
             ],
         }
         try:
@@ -256,7 +272,9 @@ class OpenAIReasoner(AIReasoner):
             resp.raise_for_status()
             body = resp.json()
             text = body["choices"][0]["message"]["content"]
-            return _parse_response(text, self.model)
+            result = _parse_response(text, self.model)
+            result.prompt_hash = prompt_hash
+            return result
         except Exception as e:
             log.exception("OpenAI API call failed")
             return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
@@ -265,18 +283,22 @@ class OpenAIReasoner(AIReasoner):
 class GeminiReasoner(AIReasoner):
 
     def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+        user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
+        prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
         payload = {
             "system_instruction": {"parts": [{"text": _SYSTEM_PROMPT}]},
-            "contents": [{"parts": [{"text": _build_user_prompt(finding, mapping, raw_data, context)}]}],
-            "generationConfig": {"maxOutputTokens": 1024},
+            "contents": [{"parts": [{"text": user_prompt}]}],
+            "generationConfig": {"maxOutputTokens": 1024, "temperature": 0},
         }
         try:
             resp = httpx.post(url, json=payload, timeout=TIMEOUT)
             resp.raise_for_status()
             body = resp.json()
             text = body["candidates"][0]["content"]["parts"][0]["text"]
-            return _parse_response(text, self.model)
+            result = _parse_response(text, self.model)
+            result.prompt_hash = prompt_hash
+            return result
         except Exception as e:
             log.exception("Gemini API call failed")
             return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
@@ -286,15 +308,18 @@ class OllamaReasoner(AIReasoner):
     """Ollama exposes an OpenAI-compatible endpoint."""
 
     def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+        user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
+        prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = f"{self.base_url or 'http://localhost:11434'}/v1/chat/completions"
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         payload = {
             "model": self.model,
+            "temperature": 0,
             "messages": [
                 {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": _build_user_prompt(finding, mapping, raw_data, context)},
+                {"role": "user", "content": user_prompt},
             ],
         }
         try:
@@ -302,7 +327,9 @@ class OllamaReasoner(AIReasoner):
             resp.raise_for_status()
             body = resp.json()
             text = body["choices"][0]["message"]["content"]
-            return _parse_response(text, self.model)
+            result = _parse_response(text, self.model)
+            result.prompt_hash = prompt_hash
+            return result
         except Exception as e:
             log.exception("Ollama API call failed")
             return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)

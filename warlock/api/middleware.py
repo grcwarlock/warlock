@@ -24,11 +24,22 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+# Per-endpoint rate limits: path -> (requests_per_minute, burst)
+# These override the default limits for security-sensitive endpoints.
+_ENDPOINT_LIMITS: dict[str, tuple[int, int]] = {
+    "/api/v1/auth/login": (10, 5),           # stricter: 10/min + 5 burst
+    "/api/v1/auth/register": (5, 2),         # very strict: 5/min + 2 burst
+    "/api/v1/trust/request-access": (10, 3), # public endpoint, strict
+}
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Sliding window rate limiter per API key or client IP.
 
     Uses an in-memory sliding window. For multi-process deployments,
     swap the storage backend to Redis.
+
+    Per-endpoint overrides are defined in ``_ENDPOINT_LIMITS``.
     """
 
     def __init__(
@@ -44,6 +55,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # client_key -> list of request timestamps
         self._windows: dict[str, list[float]] = defaultdict(list)
         self._lock = Lock()
+
+        import multiprocessing
+        workers = multiprocessing.cpu_count()  # rough proxy for worker count
+        if workers > 1:
+            log.warning(
+                "In-memory rate limiter is per-process. With multiple workers, "
+                "effective rate limit is %dx. Use Redis-backed limiter for production.",
+                workers,
+            )
 
     def _client_key(self, request: Request) -> str:
         """Derive a rate-limit key from the request.
@@ -65,6 +85,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         key = self._client_key(request)
         now = time.monotonic()
 
+        # Apply per-endpoint limits when defined; fall back to instance defaults
+        path = request.url.path
+        if path in _ENDPOINT_LIMITS:
+            rpm, burst = _ENDPOINT_LIMITS[path]
+        else:
+            rpm, burst = self.requests_per_minute, self.burst
+
         with self._lock:
             # Prune timestamps outside the window
             window = self._windows[key]
@@ -72,7 +99,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             self._windows[key] = window = [t for t in window if t > cutoff]
 
             # Check if over limit (allow burst above steady rate)
-            max_allowed = self.requests_per_minute + self.burst
+            max_allowed = rpm + burst
             if len(window) >= max_allowed:
                 # Calculate Retry-After from oldest request in window
                 retry_after = int(self.window_seconds - (now - window[0])) + 1

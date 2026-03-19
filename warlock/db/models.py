@@ -331,6 +331,7 @@ class User(Base):
     last_login = Column(DateTime(timezone=True))
     failed_login_count = Column(Integer, default=0)
     locked_until = Column(DateTime(timezone=True))  # null = not locked
+    token_valid_after = Column(DateTime(timezone=True))  # tokens issued before this are rejected
 
     __table_args__ = (
         Index("idx_user_email", "email"),

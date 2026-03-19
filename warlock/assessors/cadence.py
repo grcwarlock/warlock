@@ -108,14 +108,64 @@ class CadenceChecker:
         session: Session,
         framework: str,
     ) -> list[MonitoringCadence]:
-        """Check cadence for all controls in a framework."""
-        control_rows = (
-            session.query(distinct(ControlResult.control_id))
-            .filter(ControlResult.framework == framework)
+        """Check cadence for all controls in a framework using batch queries."""
+        now = datetime.now(timezone.utc)
+
+        # Batch: get monitoring frequency per control
+        freq_rows = (
+            session.query(
+                ControlMapping.control_id,
+                ControlMapping.monitoring_frequency,
+            )
+            .filter(
+                ControlMapping.framework == framework,
+                ControlMapping.monitoring_frequency.isnot(None),
+            )
+            .distinct()
             .all()
         )
-        control_ids = sorted([row[0] for row in control_rows])
-        return [self.check_control(session, framework, cid) for cid in control_ids]
+        freq_map = {cid: freq for cid, freq in freq_rows}
+
+        # Batch: get latest evidence timestamp per control
+        latest_rows = (
+            session.query(
+                ControlResult.control_id,
+                func.max(ControlResult.assessed_at).label("latest"),
+            )
+            .filter(ControlResult.framework == framework)
+            .group_by(ControlResult.control_id)
+            .all()
+        )
+
+        cadences = []
+        for control_id, latest in latest_rows:
+            frequency = freq_map.get(control_id, "monthly")
+            required_hours = FREQUENCY_HOURS.get(frequency, 720.0)
+
+            if latest is None:
+                cadences.append(MonitoringCadence(
+                    framework=framework, control_id=control_id,
+                    required_frequency=frequency, required_hours=required_hours,
+                    last_evidence_at=None, hours_since=None,
+                    is_stale=True, staleness_ratio=float("inf"),
+                ))
+                continue
+
+            if latest.tzinfo is None:
+                latest = latest.replace(tzinfo=timezone.utc)
+            hours_since = (now - latest).total_seconds() / 3600
+            staleness_ratio = hours_since / required_hours if required_hours > 0 else 0.0
+
+            cadences.append(MonitoringCadence(
+                framework=framework, control_id=control_id,
+                required_frequency=frequency, required_hours=required_hours,
+                last_evidence_at=latest,
+                hours_since=round(hours_since, 2),
+                is_stale=staleness_ratio > 1.0,
+                staleness_ratio=round(staleness_ratio, 3),
+            ))
+
+        return cadences
 
     def check_all(
         self,
