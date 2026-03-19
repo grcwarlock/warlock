@@ -1,0 +1,582 @@
+{
+  "catalog": {
+    "uuid": "6c09ddae-e2df-49c1-9736-74422e283410",
+    "metadata": {
+      "title": "EU General Data Protection Regulation (2016/679)",
+      "version": "2016/679",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T20:39:37Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://gdpr.eu/"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "gdpr"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "art5",
+        "title": "Principles of Processing",
+        "controls": [
+          {
+            "id": "art5-1a",
+            "title": "Lawfulness, Fairness, and Transparency",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art5-1a"
+              },
+              {
+                "name": "sort-id",
+                "value": "art5-1a"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art5-1a_smt",
+                "name": "statement",
+                "prose": "Personal data shall be processed lawfully, fairly, and in a transparent manner."
+              },
+              {
+                "id": "art5-1a-1",
+                "name": "assessment-objective",
+                "prose": "Verify lawful basis for processing is documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art5-1b",
+            "title": "Purpose Limitation",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art5-1b"
+              },
+              {
+                "name": "sort-id",
+                "value": "art5-1b"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art5-1b_smt",
+                "name": "statement",
+                "prose": "Personal data shall be collected for specified, explicit and legitimate purposes."
+              },
+              {
+                "id": "art5-1b-1",
+                "name": "assessment-objective",
+                "prose": "Verify purpose of data collection is documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art5-1c",
+            "title": "Data Minimization",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art5-1c"
+              },
+              {
+                "name": "sort-id",
+                "value": "art5-1c"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art5-1c_smt",
+                "name": "statement",
+                "prose": "Personal data shall be adequate, relevant and limited to what is necessary."
+              },
+              {
+                "id": "art5-1c-1",
+                "name": "assessment-objective",
+                "prose": "Verify data collection is limited to necessary fields",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "data_inventory"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art5-1e",
+            "title": "Storage Limitation",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art5-1e"
+              },
+              {
+                "name": "sort-id",
+                "value": "art5-1e"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art5-1e_smt",
+                "name": "statement",
+                "prose": "Personal data shall be kept for no longer than is necessary."
+              },
+              {
+                "id": "art5-1e-1",
+                "name": "assessment-objective",
+                "prose": "Verify data retention policies are defined and enforced",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art5-1f",
+            "title": "Integrity and Confidentiality",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art5-1f"
+              },
+              {
+                "name": "sort-id",
+                "value": "art5-1f"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art5-1f_smt",
+                "name": "statement",
+                "prose": "Personal data shall be processed with appropriate security measures."
+              },
+              {
+                "id": "art5-1f-1",
+                "name": "assessment-objective",
+                "prose": "Verify encryption and access controls for personal data",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "security_config"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art6",
+        "title": "Lawful Basis for Processing",
+        "controls": [
+          {
+            "id": "art6-1",
+            "title": "Conditions for Lawful Processing",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art6-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art6-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art6-1_smt",
+                "name": "statement",
+                "prose": "Processing shall be lawful only if and to the extent that at least one legal basis applies."
+              },
+              {
+                "id": "art6-1-1",
+                "name": "assessment-objective",
+                "prose": "Document legal basis for each processing activity",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ropa"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art13",
+        "title": "Information to Data Subjects",
+        "controls": [
+          {
+            "id": "art13-1",
+            "title": "Information at Point of Collection",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art13-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art13-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art13-1_smt",
+                "name": "statement",
+                "prose": "Provide identity of controller, purposes, legal basis, recipients, and transfer info."
+              },
+              {
+                "id": "art13-1-1",
+                "name": "assessment-objective",
+                "prose": "Privacy notice contains all required information",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art15",
+        "title": "Right of Access",
+        "controls": [
+          {
+            "id": "art15-1",
+            "title": "Data Subject Access Rights",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art15-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art15-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art15-1_smt",
+                "name": "statement",
+                "prose": "Data subjects have the right to obtain confirmation and access to their personal data."
+              },
+              {
+                "id": "art15-1-1",
+                "name": "assessment-objective",
+                "prose": "Data subject access request process is documented and operational",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "procedure"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art17",
+        "title": "Right to Erasure",
+        "controls": [
+          {
+            "id": "art17-1",
+            "title": "Right to Be Forgotten",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art17-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art17-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art17-1_smt",
+                "name": "statement",
+                "prose": "Data subjects have the right to obtain erasure of personal data without undue delay."
+              },
+              {
+                "id": "art17-1-1",
+                "name": "assessment-objective",
+                "prose": "Data deletion process is documented and testable",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "procedure"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art25",
+        "title": "Data Protection by Design",
+        "controls": [
+          {
+            "id": "art25-1",
+            "title": "Data Protection by Design and Default",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art25-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art25-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art25-1_smt",
+                "name": "statement",
+                "prose": "Implement appropriate technical and organisational measures for data protection principles."
+              },
+              {
+                "id": "art25-1-1",
+                "name": "assessment-objective",
+                "prose": "Privacy impact assessments conducted for new processing activities",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "dpia"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art28",
+        "title": "Processor Requirements",
+        "controls": [
+          {
+            "id": "art28-1",
+            "title": "Processor Contracts",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art28-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art28-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art28-1_smt",
+                "name": "statement",
+                "prose": "Processing by a processor shall be governed by a contract."
+              },
+              {
+                "id": "art28-1-1",
+                "name": "assessment-objective",
+                "prose": "Data processing agreements in place with all processors",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "contract"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art30",
+        "title": "Records of Processing",
+        "controls": [
+          {
+            "id": "art30-1",
+            "title": "Records of Processing Activities",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art30-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art30-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art30-1_smt",
+                "name": "statement",
+                "prose": "Maintain a record of processing activities under controller responsibility."
+              },
+              {
+                "id": "art30-1-1",
+                "name": "assessment-objective",
+                "prose": "ROPA is maintained and up-to-date",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ropa"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art32",
+        "title": "Security of Processing",
+        "controls": [
+          {
+            "id": "art32-1",
+            "title": "Technical and Organisational Measures",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art32-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art32-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art32-1_smt",
+                "name": "statement",
+                "prose": "Implement appropriate security measures including encryption, pseudonymisation, resilience."
+              },
+              {
+                "id": "art32-1-1",
+                "name": "assessment-objective",
+                "prose": "Encryption at rest and in transit for personal data",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "security_config"
+                  }
+                ]
+              },
+              {
+                "id": "art32-1-2",
+                "name": "assessment-objective",
+                "prose": "Regular testing and evaluation of security measures",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "assessment"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art33",
+        "title": "Breach Notification",
+        "controls": [
+          {
+            "id": "art33-1",
+            "title": "Notification to Supervisory Authority",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art33-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art33-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art33-1_smt",
+                "name": "statement",
+                "prose": "Notify supervisory authority within 72 hours of becoming aware of a personal data breach."
+              },
+              {
+                "id": "art33-1-1",
+                "name": "assessment-objective",
+                "prose": "Breach notification process documented with 72-hour timeline",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "procedure"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art35",
+        "title": "Data Protection Impact Assessment",
+        "controls": [
+          {
+            "id": "art35-1",
+            "title": "DPIA Requirements",
+            "props": [
+              {
+                "name": "label",
+                "value": "Art35-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art35-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art35-1_smt",
+                "name": "statement",
+                "prose": "Carry out DPIA where processing is likely to result in high risk."
+              },
+              {
+                "id": "art35-1-1",
+                "name": "assessment-objective",
+                "prose": "DPIA conducted for high-risk processing activities",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "dpia"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,281 @@
+{
+  "catalog": {
+    "uuid": "c3d4e5f6-a7b8-9012-cdef-234567890abc",
+    "metadata": {
+      "title": "PCI DSS v4.0",
+      "version": "4.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T00:00:00Z",
+      "links": [{"rel": "source", "href": "https://www.pcisecuritystandards.org/"}],
+      "props": [
+        {"name": "framework-key", "value": "pci_dss"}
+      ]
+    },
+    "groups": [
+      {
+        "id": "req-1",
+        "title": "Build and Maintain a Secure Network and Systems",
+        "controls": [
+          {
+            "id": "1-2-1",
+            "title": "Network Security Controls Configuration",
+            "props": [{"name": "label", "value": "1.2.1"}, {"name": "sort-id", "value": "1-2-1"}],
+            "parts": [{"id": "1-2-1_smt", "name": "statement", "prose": "Configuration standards are defined and implemented for all network security controls (NSCs), including firewalls and routers."}]
+          },
+          {
+            "id": "1-3-1",
+            "title": "Inbound Traffic Restriction",
+            "props": [{"name": "label", "value": "1.3.1"}, {"name": "sort-id", "value": "1-3-1"}],
+            "parts": [{"id": "1-3-1_smt", "name": "statement", "prose": "Inbound traffic to the cardholder data environment (CDE) is restricted to only necessary traffic, and all other traffic is specifically denied."}]
+          },
+          {
+            "id": "1-3-2",
+            "title": "Outbound Traffic Restriction",
+            "props": [{"name": "label", "value": "1.3.2"}, {"name": "sort-id", "value": "1-3-2"}],
+            "parts": [{"id": "1-3-2_smt", "name": "statement", "prose": "Outbound traffic from the cardholder data environment (CDE) is restricted to only necessary traffic, and all other traffic is specifically denied."}]
+          },
+          {
+            "id": "1-4-1",
+            "title": "NSCs Between Trusted and Untrusted Networks",
+            "props": [{"name": "label", "value": "1.4.1"}, {"name": "sort-id", "value": "1-4-1"}],
+            "parts": [{"id": "1-4-1_smt", "name": "statement", "prose": "NSCs are implemented between trusted and untrusted networks to control traffic into and out of the CDE."}]
+          }
+        ]
+      },
+      {
+        "id": "req-2",
+        "title": "Apply Secure Configurations to All System Components",
+        "controls": [
+          {
+            "id": "2-2-1",
+            "title": "System Configuration Standards",
+            "props": [{"name": "label", "value": "2.2.1"}, {"name": "sort-id", "value": "2-2-1"}],
+            "parts": [{"id": "2-2-1_smt", "name": "statement", "prose": "Configuration standards are developed, implemented, and maintained to cover all system components, address all known security vulnerabilities, and be consistent with industry-accepted system hardening standards."}]
+          },
+          {
+            "id": "2-2-2",
+            "title": "Vendor Default Accounts",
+            "props": [{"name": "label", "value": "2.2.2"}, {"name": "sort-id", "value": "2-2-2"}],
+            "parts": [{"id": "2-2-2_smt", "name": "statement", "prose": "Vendor default accounts are managed: removed if not needed, or passwords changed if accounts are needed."}]
+          },
+          {
+            "id": "2-2-5",
+            "title": "Unnecessary Services Disabled",
+            "props": [{"name": "label", "value": "2.2.5"}, {"name": "sort-id", "value": "2-2-5"}],
+            "parts": [{"id": "2-2-5_smt", "name": "statement", "prose": "All unnecessary functionality is removed or disabled, including unnecessary scripts, drivers, features, subsystems, file systems, and web servers."}]
+          }
+        ]
+      },
+      {
+        "id": "req-3",
+        "title": "Protect Stored Account Data",
+        "controls": [
+          {
+            "id": "3-4-1",
+            "title": "PAN Rendered Unreadable",
+            "props": [{"name": "label", "value": "3.4.1"}, {"name": "sort-id", "value": "3-4-1"}],
+            "parts": [{"id": "3-4-1_smt", "name": "statement", "prose": "PAN is secured with strong cryptography wherever it is stored, using one-way hashes, truncation, index tokens, or strong cryptographic keys with associated key management."}]
+          },
+          {
+            "id": "3-5-1",
+            "title": "Cryptographic Key Management",
+            "props": [{"name": "label", "value": "3.5.1"}, {"name": "sort-id", "value": "3-5-1"}],
+            "parts": [{"id": "3-5-1_smt", "name": "statement", "prose": "Cryptographic keys used to protect stored account data are managed securely with documented key management processes and procedures."}]
+          },
+          {
+            "id": "3-7-1",
+            "title": "Data Retention Policy",
+            "props": [{"name": "label", "value": "3.7.1"}, {"name": "sort-id", "value": "3-7-1"}],
+            "parts": [{"id": "3-7-1_smt", "name": "statement", "prose": "A data retention and disposal policy, procedures, and processes are defined, documented, and implemented for all storage of account data."}]
+          }
+        ]
+      },
+      {
+        "id": "req-4",
+        "title": "Protect Cardholder Data with Strong Cryptography During Transmission",
+        "controls": [
+          {
+            "id": "4-2-1",
+            "title": "Strong Cryptography for PAN Transmission",
+            "props": [{"name": "label", "value": "4.2.1"}, {"name": "sort-id", "value": "4-2-1"}],
+            "parts": [{"id": "4-2-1_smt", "name": "statement", "prose": "PAN is protected with strong cryptography during transmission over open, public networks. Only trusted keys and certificates are accepted."}]
+          },
+          {
+            "id": "4-2-2",
+            "title": "PAN in End-User Messaging",
+            "props": [{"name": "label", "value": "4.2.2"}, {"name": "sort-id", "value": "4-2-2"}],
+            "parts": [{"id": "4-2-2_smt", "name": "statement", "prose": "PAN is secured with strong cryptography whenever it is sent via end-user messaging technologies (email, instant messaging, SMS, chat)."}]
+          }
+        ]
+      },
+      {
+        "id": "req-5",
+        "title": "Protect All Systems and Networks from Malicious Software",
+        "controls": [
+          {
+            "id": "5-2-1",
+            "title": "Anti-Malware Deployed",
+            "props": [{"name": "label", "value": "5.2.1"}, {"name": "sort-id", "value": "5-2-1"}],
+            "parts": [{"id": "5-2-1_smt", "name": "statement", "prose": "An anti-malware solution is deployed on all system components that are commonly affected by malware, except for system components identified and evaluated that are not at risk."}]
+          },
+          {
+            "id": "5-3-1",
+            "title": "Anti-Malware Current and Active",
+            "props": [{"name": "label", "value": "5.3.1"}, {"name": "sort-id", "value": "5-3-1"}],
+            "parts": [{"id": "5-3-1_smt", "name": "statement", "prose": "The anti-malware solution is kept current via automatic updates, performs periodic and active or real-time scans, and generates audit logs."}]
+          }
+        ]
+      },
+      {
+        "id": "req-6",
+        "title": "Develop and Maintain Secure Systems and Software",
+        "controls": [
+          {
+            "id": "6-2-1",
+            "title": "Secure Development Practices",
+            "props": [{"name": "label", "value": "6.2.1"}, {"name": "sort-id", "value": "6-2-1"}],
+            "parts": [{"id": "6-2-1_smt", "name": "statement", "prose": "Bespoke and custom software are developed securely based on industry standards and/or best practices for secure development."}]
+          },
+          {
+            "id": "6-3-1",
+            "title": "Vulnerability Identification",
+            "props": [{"name": "label", "value": "6.3.1"}, {"name": "sort-id", "value": "6-3-1"}],
+            "parts": [{"id": "6-3-1_smt", "name": "statement", "prose": "Security vulnerabilities are identified and managed through a defined process including vulnerability ranking and prioritization."}]
+          },
+          {
+            "id": "6-4-1",
+            "title": "Web Application Security",
+            "props": [{"name": "label", "value": "6.4.1"}, {"name": "sort-id", "value": "6-4-1"}],
+            "parts": [{"id": "6-4-1_smt", "name": "statement", "prose": "For public-facing web applications, new threats and vulnerabilities are addressed on an ongoing basis and applications are protected against known attacks."}]
+          }
+        ]
+      },
+      {
+        "id": "req-7",
+        "title": "Restrict Access to System Components and Cardholder Data by Business Need to Know",
+        "controls": [
+          {
+            "id": "7-2-1",
+            "title": "Access Control Model",
+            "props": [{"name": "label", "value": "7.2.1"}, {"name": "sort-id", "value": "7-2-1"}],
+            "parts": [{"id": "7-2-1_smt", "name": "statement", "prose": "An access control model is defined and includes granting access based on job classification and function, with default deny-all and allow-by-exception."}]
+          },
+          {
+            "id": "7-2-2",
+            "title": "User Access Assignment",
+            "props": [{"name": "label", "value": "7.2.2"}, {"name": "sort-id", "value": "7-2-2"}],
+            "parts": [{"id": "7-2-2_smt", "name": "statement", "prose": "Access is assigned to users based on job classification, function, and least privileges necessary."}]
+          }
+        ]
+      },
+      {
+        "id": "req-8",
+        "title": "Identify Users and Authenticate Access to System Components",
+        "controls": [
+          {
+            "id": "8-2-1",
+            "title": "Unique User IDs",
+            "props": [{"name": "label", "value": "8.2.1"}, {"name": "sort-id", "value": "8-2-1"}],
+            "parts": [{"id": "8-2-1_smt", "name": "statement", "prose": "All users are assigned a unique ID before access to system components or cardholder data is allowed."}]
+          },
+          {
+            "id": "8-3-1",
+            "title": "Strong Authentication for Users and Admins",
+            "props": [{"name": "label", "value": "8.3.1"}, {"name": "sort-id", "value": "8-3-1"}],
+            "parts": [{"id": "8-3-1_smt", "name": "statement", "prose": "All user access to system components for users and administrators is authenticated via at least one of: something you know, something you have, or something you are."}]
+          },
+          {
+            "id": "8-4-2",
+            "title": "MFA for CDE Access",
+            "props": [{"name": "label", "value": "8.4.2"}, {"name": "sort-id", "value": "8-4-2"}],
+            "parts": [{"id": "8-4-2_smt", "name": "statement", "prose": "Multi-factor authentication (MFA) is implemented for all access into the cardholder data environment (CDE)."}]
+          }
+        ]
+      },
+      {
+        "id": "req-9",
+        "title": "Restrict Physical Access to Cardholder Data",
+        "controls": [
+          {
+            "id": "9-2-1",
+            "title": "Physical Access Controls",
+            "props": [{"name": "label", "value": "9.2.1"}, {"name": "sort-id", "value": "9-2-1"}],
+            "parts": [{"id": "9-2-1_smt", "name": "statement", "prose": "Appropriate facility entry controls are in place to restrict physical access to systems in the cardholder data environment."}]
+          },
+          {
+            "id": "9-4-1",
+            "title": "Media Physical Security",
+            "props": [{"name": "label", "value": "9.4.1"}, {"name": "sort-id", "value": "9-4-1"}],
+            "parts": [{"id": "9-4-1_smt", "name": "statement", "prose": "All media with cardholder data is physically secured and access is restricted to authorized personnel."}]
+          }
+        ]
+      },
+      {
+        "id": "req-10",
+        "title": "Log and Monitor All Access to System Components and Cardholder Data",
+        "controls": [
+          {
+            "id": "10-2-1",
+            "title": "Audit Logs Enabled",
+            "props": [{"name": "label", "value": "10.2.1"}, {"name": "sort-id", "value": "10-2-1"}],
+            "parts": [{"id": "10-2-1_smt", "name": "statement", "prose": "Audit logs are enabled and active for all system components and cardholder data access, capturing all auditable events."}]
+          },
+          {
+            "id": "10-3-1",
+            "title": "Audit Log Entries",
+            "props": [{"name": "label", "value": "10.3.1"}, {"name": "sort-id", "value": "10-3-1"}],
+            "parts": [{"id": "10-3-1_smt", "name": "statement", "prose": "Audit log entries include: user identification, type of event, date and time, success/failure indication, origination of event, and identity/name of affected data, component, or resource."}]
+          },
+          {
+            "id": "10-4-1",
+            "title": "Audit Log Review",
+            "props": [{"name": "label", "value": "10.4.1"}, {"name": "sort-id", "value": "10-4-1"}],
+            "parts": [{"id": "10-4-1_smt", "name": "statement", "prose": "Audit logs are reviewed at least daily to identify anomalies or suspicious activity using automated mechanisms."}]
+          }
+        ]
+      },
+      {
+        "id": "req-11",
+        "title": "Test Security of Systems and Networks Regularly",
+        "controls": [
+          {
+            "id": "11-3-1",
+            "title": "Vulnerability Scanning",
+            "props": [{"name": "label", "value": "11.3.1"}, {"name": "sort-id", "value": "11-3-1"}],
+            "parts": [{"id": "11-3-1_smt", "name": "statement", "prose": "Internal vulnerability scans are performed at least quarterly and after significant changes. High-risk and critical vulnerabilities are resolved and rescans confirm resolution."}]
+          },
+          {
+            "id": "11-4-1",
+            "title": "Penetration Testing",
+            "props": [{"name": "label", "value": "11.4.1"}, {"name": "sort-id", "value": "11-4-1"}],
+            "parts": [{"id": "11-4-1_smt", "name": "statement", "prose": "A penetration testing methodology is defined, documented, and implemented that includes industry-accepted approaches, coverage for the entire CDE perimeter and critical systems."}]
+          }
+        ]
+      },
+      {
+        "id": "req-12",
+        "title": "Support Information Security with Organizational Policies and Programs",
+        "controls": [
+          {
+            "id": "12-1-1",
+            "title": "Information Security Policy",
+            "props": [{"name": "label", "value": "12.1.1"}, {"name": "sort-id", "value": "12-1-1"}],
+            "parts": [{"id": "12-1-1_smt", "name": "statement", "prose": "An overall information security policy is established, published, maintained, and disseminated to all relevant personnel and relevant third parties."}]
+          },
+          {
+            "id": "12-6-1",
+            "title": "Security Awareness Training",
+            "props": [{"name": "label", "value": "12.6.1"}, {"name": "sort-id", "value": "12-6-1"}],
+            "parts": [{"id": "12-6-1_smt", "name": "statement", "prose": "A formal security awareness program is implemented to make all personnel aware of the cardholder data security policy and their role in protecting cardholder data."}]
+          },
+          {
+            "id": "12-10-1",
+            "title": "Incident Response Plan",
+            "props": [{"name": "label", "value": "12.10.1"}, {"name": "sort-id", "value": "12-10-1"}],
+            "parts": [{"id": "12-10-1_smt", "name": "statement", "prose": "An incident response plan is established and ready to be activated immediately in the event of a suspected or confirmed security incident, including specific containment activities for different types of incidents."}]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#030711"/>
+      <stop offset="100%" style="stop-color:#0d1117"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#60a5fa"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Ambient glow -->
+  <ellipse cx="200" cy="150" rx="400" ry="300" fill="#3b82f6" opacity="0.06"/>
+  <ellipse cx="1000" cy="400" rx="350" ry="250" fill="#7c3aed" opacity="0.06"/>
+
+  <!-- Shield icon -->
+  <rect x="80" y="220" width="56" height="56" rx="14" fill="#2563eb"/>
+  <text x="108" y="254" text-anchor="middle" font-size="28" fill="white">⚔</text>
+
+  <!-- Brand -->
+  <text x="152" y="248" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="36" font-weight="800" fill="white">GRC </text>
+  <text x="252" y="248" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="36" font-weight="800" fill="url(#blue)">Warlock</text>
+
+  <!-- Tagline -->
+  <text x="80" y="298" font-family="Inter, system-ui, sans-serif" font-size="52" font-weight="800" fill="white">Compliance that</text>
+  <text x="80" y="358" font-family="Inter, system-ui, sans-serif" font-size="52" font-weight="800" fill="url(#blue)">actually works.</text>
+
+  <!-- Sub -->
+  <text x="80" y="410" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#94a3b8">ISO 27001 · SOC 2 · NIST 800-53 · HIPAA · CMMC L2</text>
+
+  <!-- Stat cards -->
+  <rect x="80" y="450" width="200" height="70" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="180" y="483" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="white">655+</text>
+  <text x="180" y="505" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Controls Monitored</text>
+
+  <rect x="300" y="450" width="200" height="70" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="400" y="483" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="white">22+</text>
+  <text x="400" y="505" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Integrations</text>
+
+  <rect x="520" y="450" width="200" height="70" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="620" y="483" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="white">5</text>
+  <text x="620" y="505" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Frameworks</text>
+
+  <!-- Badge -->
+  <rect x="820" y="450" width="300" height="70" rx="12" fill="rgba(16,185,129,0.1)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+  <circle cx="850" cy="485" r="5" fill="#10b981"/>
+  <text x="865" y="490" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#34d399">Real-time compliance monitoring</text>
+</svg>

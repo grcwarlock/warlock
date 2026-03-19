@@ -1,0 +1,146 @@
+{
+  "ucf-catalog": {
+    "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "metadata": {
+      "title": "Unified Controls Framework (UCF)",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T00:00:00Z",
+      "description": "A superset control taxonomy that maps controls across NIST 800-53, SOC 2, ISO 27001, HIPAA, CMMC L2, FedRAMP, GDPR, and ISO 42001. Each UCF domain represents a security/compliance concept with mappings to equivalent controls in each framework."
+    },
+    "domains": [
+      {
+        "id": "UCF-01",
+        "title": "Access Control",
+        "description": "Manage account creation, modification, disabling, and removal. Enforce least-privilege and separation of duties.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-02",
+        "title": "Audit & Accountability",
+        "description": "Generate, review, and protect audit records to enable monitoring, analysis, and reporting of unlawful or unauthorized activity.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-03",
+        "title": "Configuration Management",
+        "description": "Establish and maintain baseline configurations and inventories of organizational systems throughout their life cycles.",
+        "category": "operations"
+      },
+      {
+        "id": "UCF-04",
+        "title": "Identification & Authentication",
+        "description": "Identify and authenticate users, processes, and devices before granting access to organizational systems.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-05",
+        "title": "Incident Response",
+        "description": "Establish incident handling capabilities including preparation, detection, analysis, containment, recovery, and user response.",
+        "category": "operations"
+      },
+      {
+        "id": "UCF-06",
+        "title": "System & Communications Protection",
+        "description": "Monitor, control, and protect communications at external and key internal boundaries. Implement subnetwork isolation.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-07",
+        "title": "System & Information Integrity",
+        "description": "Identify, report, and correct system flaws in a timely manner. Provide protection from malicious code and monitor system security alerts.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-08",
+        "title": "Risk Assessment",
+        "description": "Assess risk to organizational operations, assets, and individuals resulting from the operation of information systems.",
+        "category": "governance"
+      },
+      {
+        "id": "UCF-09",
+        "title": "Personnel Security",
+        "description": "Screen individuals prior to authorizing access. Ensure personnel actions and transfers protect organizational information.",
+        "category": "governance"
+      },
+      {
+        "id": "UCF-10",
+        "title": "Physical Protection",
+        "description": "Limit physical access to systems, equipment, and operating environments. Protect and monitor the physical facility.",
+        "category": "physical"
+      },
+      {
+        "id": "UCF-11",
+        "title": "Awareness & Training",
+        "description": "Ensure personnel are trained and aware of security risks associated with their activities and applicable policies.",
+        "category": "governance"
+      },
+      {
+        "id": "UCF-12",
+        "title": "Contingency Planning",
+        "description": "Establish, maintain, and implement plans for emergency response, backup operations, and post-disaster recovery.",
+        "category": "operations"
+      },
+      {
+        "id": "UCF-13",
+        "title": "Cryptography & Key Management",
+        "description": "Establish cryptographic standards, manage keys across their lifecycle, and ensure data is encrypted in transit and at rest.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-14",
+        "title": "Data Protection & Privacy",
+        "description": "Classify, label, and safeguard sensitive data. Implement data-loss prevention and privacy controls for PII/PHI.",
+        "category": "privacy"
+      },
+      {
+        "id": "UCF-15",
+        "title": "Vulnerability Management",
+        "description": "Continuously scan for vulnerabilities, prioritize by risk, and remediate within defined SLAs.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-16",
+        "title": "Change Management",
+        "description": "Control changes to systems and software through formal approval, testing, and rollback procedures.",
+        "category": "operations"
+      },
+      {
+        "id": "UCF-17",
+        "title": "Logging & Monitoring",
+        "description": "Centralize log collection, establish alerting thresholds, and ensure real-time monitoring of security events.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-18",
+        "title": "Supply Chain Risk Management",
+        "description": "Assess third-party risk, enforce contractual security requirements, and monitor supplier compliance continuously.",
+        "category": "governance"
+      },
+      {
+        "id": "UCF-19",
+        "title": "Media Protection",
+        "description": "Control physical and digital media access, storage, transport, sanitization, and disposal.",
+        "category": "physical"
+      },
+      {
+        "id": "UCF-20",
+        "title": "Maintenance",
+        "description": "Perform controlled maintenance on systems, require authorization for non-local maintenance, and supervise maintenance personnel.",
+        "category": "operations"
+      },
+      {
+        "id": "UCF-21",
+        "title": "Network Access Control",
+        "description": "Segment networks, enforce firewall rules, and restrict network access to authorized traffic flows.",
+        "category": "security"
+      },
+      {
+        "id": "UCF-22",
+        "title": "Secure Development",
+        "description": "Embed security into the SDLC with secure coding standards, code review, SAST/DAST, and separation of environments.",
+        "category": "operations"
+      }
+    ]
+  }
+}

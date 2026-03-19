@@ -1,0 +1,944 @@
+{
+  "catalog": {
+    "uuid": "13dc6bcf-4b14-42de-8b12-2a7fe139c62b",
+    "metadata": {
+      "title": "FedRAMP Moderate Baseline (Rev 5)",
+      "version": "Rev 5",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T20:39:37Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://www.fedramp.gov/"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "fedramp_moderate"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "ac",
+        "title": "Access Control",
+        "controls": [
+          {
+            "id": "ac-1",
+            "title": "Policy and Procedures",
+            "props": [
+              {
+                "name": "label",
+                "value": "AC-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "ac-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ac-1_smt",
+                "name": "statement",
+                "prose": "Develop, document, and disseminate access control policy and procedures."
+              },
+              {
+                "id": "ac-1-fed-1",
+                "name": "assessment-objective",
+                "prose": "Access control policy reviewed at least annually",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ac-2",
+            "title": "Account Management",
+            "props": [
+              {
+                "name": "label",
+                "value": "AC-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "ac-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ac-2_smt",
+                "name": "statement",
+                "prose": "Define and manage system account types, conditions, and processes."
+              },
+              {
+                "id": "ac-2-fed-1",
+                "name": "assessment-objective",
+                "prose": "Automated account management notifications",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_config"
+                  }
+                ]
+              },
+              {
+                "id": "ac-2-fed-2",
+                "name": "assessment-objective",
+                "prose": "Account review frequency: monthly",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "review_log"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ac-2-1",
+            "title": "Account Management \u2014 Automated System Account Management",
+            "props": [
+              {
+                "name": "label",
+                "value": "AC-2-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "ac-2-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ac-2-1_smt",
+                "name": "statement",
+                "prose": "Employ automated mechanisms to support management of system accounts."
+              },
+              {
+                "id": "ac-2-1-fed-1",
+                "name": "assessment-objective",
+                "prose": "Automated provisioning and deprovisioning",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ac-3",
+            "title": "Access Enforcement",
+            "props": [
+              {
+                "name": "label",
+                "value": "AC-3"
+              },
+              {
+                "name": "sort-id",
+                "value": "ac-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ac-3_smt",
+                "name": "statement",
+                "prose": "Enforce approved authorizations for logical access."
+              },
+              {
+                "id": "ac-3-fed-1",
+                "name": "assessment-objective",
+                "prose": "RBAC enforcement verified",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ac-6",
+            "title": "Least Privilege",
+            "props": [
+              {
+                "name": "label",
+                "value": "AC-6"
+              },
+              {
+                "name": "sort-id",
+                "value": "ac-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ac-6_smt",
+                "name": "statement",
+                "prose": "Employ least privilege principle for all access."
+              },
+              {
+                "id": "ac-6-fed-1",
+                "name": "assessment-objective",
+                "prose": "No wildcard admin policies in use",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_policy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ac-17",
+            "title": "Remote Access",
+            "props": [
+              {
+                "name": "label",
+                "value": "AC-17"
+              },
+              {
+                "name": "sort-id",
+                "value": "ac-17"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ac-17_smt",
+                "name": "statement",
+                "prose": "Establish and document usage restrictions for remote access."
+              },
+              {
+                "id": "ac-17-fed-1",
+                "name": "assessment-objective",
+                "prose": "Remote access via VPN or zero-trust network",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "network_config"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "au",
+        "title": "Audit and Accountability",
+        "controls": [
+          {
+            "id": "au-2",
+            "title": "Event Logging",
+            "props": [
+              {
+                "name": "label",
+                "value": "AU-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "au-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "au-2_smt",
+                "name": "statement",
+                "prose": "Identify and log security-relevant events."
+              },
+              {
+                "id": "au-2-fed-1",
+                "name": "assessment-objective",
+                "prose": "All FedRAMP-required event types are logged",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "logging_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "au-3",
+            "title": "Content of Audit Records",
+            "props": [
+              {
+                "name": "label",
+                "value": "AU-3"
+              },
+              {
+                "name": "sort-id",
+                "value": "au-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "au-3_smt",
+                "name": "statement",
+                "prose": "Audit records contain required information fields."
+              },
+              {
+                "id": "au-3-fed-1",
+                "name": "assessment-objective",
+                "prose": "Audit records include who, what, when, where, outcome",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "log_sample"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "au-6",
+            "title": "Audit Record Review",
+            "props": [
+              {
+                "name": "label",
+                "value": "AU-6"
+              },
+              {
+                "name": "sort-id",
+                "value": "au-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "au-6_smt",
+                "name": "statement",
+                "prose": "Review and analyze audit records at least weekly."
+              },
+              {
+                "id": "au-6-fed-1",
+                "name": "assessment-objective",
+                "prose": "Weekly audit log review documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "review_log"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "au-12",
+            "title": "Audit Record Generation",
+            "props": [
+              {
+                "name": "label",
+                "value": "AU-12"
+              },
+              {
+                "name": "sort-id",
+                "value": "au-12"
+              }
+            ],
+            "parts": [
+              {
+                "id": "au-12_smt",
+                "name": "statement",
+                "prose": "Provide audit record generation capability."
+              },
+              {
+                "id": "au-12-fed-1",
+                "name": "assessment-objective",
+                "prose": "Centralized log aggregation active",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "logging_config"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ca",
+        "title": "Assessment, Authorization, and Monitoring",
+        "controls": [
+          {
+            "id": "ca-2",
+            "title": "Control Assessments",
+            "props": [
+              {
+                "name": "label",
+                "value": "CA-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "ca-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ca-2_smt",
+                "name": "statement",
+                "prose": "Assess security and privacy controls annually."
+              },
+              {
+                "id": "ca-2-fed-1",
+                "name": "assessment-objective",
+                "prose": "Annual assessment conducted by 3PAO",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "assessment_report"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ca-7",
+            "title": "Continuous Monitoring",
+            "props": [
+              {
+                "name": "label",
+                "value": "CA-7"
+              },
+              {
+                "name": "sort-id",
+                "value": "ca-7"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ca-7_smt",
+                "name": "statement",
+                "prose": "Develop and implement continuous monitoring strategy."
+              },
+              {
+                "id": "ca-7-fed-1",
+                "name": "assessment-objective",
+                "prose": "ConMon plan documented and operational",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "conmon_plan"
+                  }
+                ]
+              },
+              {
+                "id": "ca-7-fed-2",
+                "name": "assessment-objective",
+                "prose": "Monthly OS/infrastructure scans",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "scan_report"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cm",
+        "title": "Configuration Management",
+        "controls": [
+          {
+            "id": "cm-2",
+            "title": "Baseline Configuration",
+            "props": [
+              {
+                "name": "label",
+                "value": "CM-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cm-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cm-2_smt",
+                "name": "statement",
+                "prose": "Develop and maintain baseline configurations."
+              },
+              {
+                "id": "cm-2-fed-1",
+                "name": "assessment-objective",
+                "prose": "Baseline configuration documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "config_baseline"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cm-6",
+            "title": "Configuration Settings",
+            "props": [
+              {
+                "name": "label",
+                "value": "CM-6"
+              },
+              {
+                "name": "sort-id",
+                "value": "cm-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cm-6_smt",
+                "name": "statement",
+                "prose": "Establish and document mandatory configuration settings."
+              },
+              {
+                "id": "cm-6-fed-1",
+                "name": "assessment-objective",
+                "prose": "CIS benchmarks or STIG applied",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "config_scan"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cm-8",
+            "title": "System Component Inventory",
+            "props": [
+              {
+                "name": "label",
+                "value": "CM-8"
+              },
+              {
+                "name": "sort-id",
+                "value": "cm-8"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cm-8_smt",
+                "name": "statement",
+                "prose": "Develop and maintain inventory of system components."
+              },
+              {
+                "id": "cm-8-fed-1",
+                "name": "assessment-objective",
+                "prose": "Complete system inventory maintained",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "asset_inventory"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ia",
+        "title": "Identification and Authentication",
+        "controls": [
+          {
+            "id": "ia-2",
+            "title": "Identification and Authentication",
+            "props": [
+              {
+                "name": "label",
+                "value": "IA-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "ia-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ia-2_smt",
+                "name": "statement",
+                "prose": "Uniquely identify and authenticate users."
+              },
+              {
+                "id": "ia-2-fed-1",
+                "name": "assessment-objective",
+                "prose": "MFA required for all users",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ia-2-1",
+            "title": "Multi-Factor Authentication to Privileged Accounts",
+            "props": [
+              {
+                "name": "label",
+                "value": "IA-2-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "ia-2-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ia-2-1_smt",
+                "name": "statement",
+                "prose": "Implement MFA for access to privileged accounts."
+              },
+              {
+                "id": "ia-2-1-fed-1",
+                "name": "assessment-objective",
+                "prose": "PIV or hardware token for privileged access",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ia-8",
+            "title": "Identification and Authentication (Non-Org Users)",
+            "props": [
+              {
+                "name": "label",
+                "value": "IA-8"
+              },
+              {
+                "name": "sort-id",
+                "value": "ia-8"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ia-8_smt",
+                "name": "statement",
+                "prose": "Uniquely identify and authenticate non-organizational users."
+              },
+              {
+                "id": "ia-8-fed-1",
+                "name": "assessment-objective",
+                "prose": "External user authentication via SAML/OIDC",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_config"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ir",
+        "title": "Incident Response",
+        "controls": [
+          {
+            "id": "ir-4",
+            "title": "Incident Handling",
+            "props": [
+              {
+                "name": "label",
+                "value": "IR-4"
+              },
+              {
+                "name": "sort-id",
+                "value": "ir-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ir-4_smt",
+                "name": "statement",
+                "prose": "Implement incident handling capability."
+              },
+              {
+                "id": "ir-4-fed-1",
+                "name": "assessment-objective",
+                "prose": "US-CERT reporting procedures documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ir_plan"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ir-6",
+            "title": "Incident Reporting",
+            "props": [
+              {
+                "name": "label",
+                "value": "IR-6"
+              },
+              {
+                "name": "sort-id",
+                "value": "ir-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ir-6_smt",
+                "name": "statement",
+                "prose": "Report incidents to appropriate authorities."
+              },
+              {
+                "id": "ir-6-fed-1",
+                "name": "assessment-objective",
+                "prose": "US-CERT reporting within required timeframes",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ir_procedure"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ra",
+        "title": "Risk Assessment",
+        "controls": [
+          {
+            "id": "ra-5",
+            "title": "Vulnerability Monitoring and Scanning",
+            "props": [
+              {
+                "name": "label",
+                "value": "RA-5"
+              },
+              {
+                "name": "sort-id",
+                "value": "ra-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ra-5_smt",
+                "name": "statement",
+                "prose": "Monitor and scan for vulnerabilities."
+              },
+              {
+                "id": "ra-5-fed-1",
+                "name": "assessment-objective",
+                "prose": "Monthly vulnerability scans conducted",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "scan_report"
+                  }
+                ]
+              },
+              {
+                "id": "ra-5-fed-2",
+                "name": "assessment-objective",
+                "prose": "High findings remediated within 30 days",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "remediation_log"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sc",
+        "title": "System and Communications Protection",
+        "controls": [
+          {
+            "id": "sc-7",
+            "title": "Boundary Protection",
+            "props": [
+              {
+                "name": "label",
+                "value": "SC-7"
+              },
+              {
+                "name": "sort-id",
+                "value": "sc-7"
+              }
+            ],
+            "parts": [
+              {
+                "id": "sc-7_smt",
+                "name": "statement",
+                "prose": "Monitor and control communications at system boundaries."
+              },
+              {
+                "id": "sc-7-fed-1",
+                "name": "assessment-objective",
+                "prose": "Network boundary protections in place",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "network_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "sc-13",
+            "title": "Cryptographic Protection",
+            "props": [
+              {
+                "name": "label",
+                "value": "SC-13"
+              },
+              {
+                "name": "sort-id",
+                "value": "sc-13"
+              }
+            ],
+            "parts": [
+              {
+                "id": "sc-13_smt",
+                "name": "statement",
+                "prose": "Implement FIPS-validated cryptography."
+              },
+              {
+                "id": "sc-13-fed-1",
+                "name": "assessment-objective",
+                "prose": "FIPS 140-2/3 validated modules in use",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "crypto_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "sc-28",
+            "title": "Protection of Information at Rest",
+            "props": [
+              {
+                "name": "label",
+                "value": "SC-28"
+              },
+              {
+                "name": "sort-id",
+                "value": "sc-28"
+              }
+            ],
+            "parts": [
+              {
+                "id": "sc-28_smt",
+                "name": "statement",
+                "prose": "Protect confidentiality and integrity of information at rest."
+              },
+              {
+                "id": "sc-28-fed-1",
+                "name": "assessment-objective",
+                "prose": "All data at rest encrypted with FIPS-validated modules",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "encryption_config"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "si",
+        "title": "System and Information Integrity",
+        "controls": [
+          {
+            "id": "si-2",
+            "title": "Flaw Remediation",
+            "props": [
+              {
+                "name": "label",
+                "value": "SI-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "si-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "si-2_smt",
+                "name": "statement",
+                "prose": "Identify, report, and correct system flaws."
+              },
+              {
+                "id": "si-2-fed-1",
+                "name": "assessment-objective",
+                "prose": "Critical patches applied within 30 days",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "patch_report"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "si-4",
+            "title": "System Monitoring",
+            "props": [
+              {
+                "name": "label",
+                "value": "SI-4"
+              },
+              {
+                "name": "sort-id",
+                "value": "si-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "si-4_smt",
+                "name": "statement",
+                "prose": "Monitor the system to detect attacks and unauthorized connections."
+              },
+              {
+                "id": "si-4-fed-1",
+                "name": "assessment-objective",
+                "prose": "IDS/IPS deployed at system boundaries",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "security_config"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

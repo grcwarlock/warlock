@@ -1,0 +1,2883 @@
+{
+  "mapping": {
+    "uuid": "1dcaac38-8710-4f7f-8db7-c68e62f63568",
+    "metadata": {
+      "title": "nist_800_53 to iso27001 Control Mapping",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T20:39:37Z"
+    },
+    "source-framework": "nist_800_53",
+    "target-framework": "iso27001",
+    "entries": [
+      {
+        "source-control-id": "ac-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Access control policies"
+      },
+      {
+        "source-control-id": "ac-2",
+        "target-control-id": "a-5-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.15"
+          }
+        ],
+        "remarks": "Access control"
+      },
+      {
+        "source-control-id": "ac-2",
+        "target-control-id": "a-5-16",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.16"
+          }
+        ],
+        "remarks": "Identity management"
+      },
+      {
+        "source-control-id": "ac-3",
+        "target-control-id": "a-5-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.15"
+          }
+        ],
+        "remarks": "Access enforcement"
+      },
+      {
+        "source-control-id": "ac-4",
+        "target-control-id": "a-8-22",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.22"
+          }
+        ],
+        "remarks": "Information flow \u2192 Network segregation"
+      },
+      {
+        "source-control-id": "ac-5",
+        "target-control-id": "a-5-3",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.3"
+          }
+        ],
+        "remarks": "Segregation of duties"
+      },
+      {
+        "source-control-id": "ac-6",
+        "target-control-id": "a-8-2",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.2"
+          }
+        ],
+        "remarks": "Privileged access rights"
+      },
+      {
+        "source-control-id": "ac-6",
+        "target-control-id": "a-5-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.15"
+          }
+        ],
+        "remarks": "Least privilege \u2192 Access control"
+      },
+      {
+        "source-control-id": "ac-7",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Unsuccessful logon \u2192 Secure authentication"
+      },
+      {
+        "source-control-id": "ac-8",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "low"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "System use notification"
+      },
+      {
+        "source-control-id": "ac-11",
+        "target-control-id": "a-8-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-11"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.1"
+          }
+        ],
+        "remarks": "Session lock \u2192 User endpoint devices"
+      },
+      {
+        "source-control-id": "ac-12",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-12"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Session termination \u2192 Authentication"
+      },
+      {
+        "source-control-id": "ac-14",
+        "target-control-id": "a-5-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-14"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.15"
+          }
+        ],
+        "remarks": "Permitted actions without auth"
+      },
+      {
+        "source-control-id": "ac-17",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-17"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Remote access \u2192 Secure authentication"
+      },
+      {
+        "source-control-id": "ac-17",
+        "target-control-id": "a-6-7",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-17"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.7"
+          }
+        ],
+        "remarks": "Remote access \u2192 Remote working"
+      },
+      {
+        "source-control-id": "ac-18",
+        "target-control-id": "a-8-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-18"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.1"
+          }
+        ],
+        "remarks": "Wireless access \u2192 User endpoints"
+      },
+      {
+        "source-control-id": "ac-19",
+        "target-control-id": "a-8-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-19"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.1"
+          }
+        ],
+        "remarks": "Mobile devices \u2192 User endpoint devices"
+      },
+      {
+        "source-control-id": "ac-20",
+        "target-control-id": "a-5-19",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-20"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.19"
+          }
+        ],
+        "remarks": "External systems \u2192 Supplier relationships"
+      },
+      {
+        "source-control-id": "ac-22",
+        "target-control-id": "a-5-14",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AC-22"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.14"
+          }
+        ],
+        "remarks": "Publicly accessible content \u2192 Information transfer"
+      },
+      {
+        "source-control-id": "at-1",
+        "target-control-id": "a-6-3",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AT-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.3"
+          }
+        ],
+        "remarks": "Training policy \u2192 Awareness program"
+      },
+      {
+        "source-control-id": "at-2",
+        "target-control-id": "a-6-3",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AT-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.3"
+          }
+        ],
+        "remarks": "Awareness training"
+      },
+      {
+        "source-control-id": "at-3",
+        "target-control-id": "a-6-3",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AT-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.3"
+          }
+        ],
+        "remarks": "Role-based training"
+      },
+      {
+        "source-control-id": "at-4",
+        "target-control-id": "a-6-3",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AT-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.3"
+          }
+        ],
+        "remarks": "Training records"
+      },
+      {
+        "source-control-id": "au-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Audit policy \u2192 Information security policies"
+      },
+      {
+        "source-control-id": "au-2",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Event logging \u2192 Logging"
+      },
+      {
+        "source-control-id": "au-3",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Audit record content \u2192 Logging"
+      },
+      {
+        "source-control-id": "au-4",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Audit log storage capacity"
+      },
+      {
+        "source-control-id": "au-5",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Response to audit failures"
+      },
+      {
+        "source-control-id": "au-6",
+        "target-control-id": "a-8-16",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.16"
+          }
+        ],
+        "remarks": "Audit review \u2192 Monitoring activities"
+      },
+      {
+        "source-control-id": "au-7",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Audit reduction and reporting"
+      },
+      {
+        "source-control-id": "au-8",
+        "target-control-id": "a-8-17",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.17"
+          }
+        ],
+        "remarks": "Time stamps \u2192 Clock synchronization"
+      },
+      {
+        "source-control-id": "au-9",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Protection of audit information"
+      },
+      {
+        "source-control-id": "au-11",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-11"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Audit record retention"
+      },
+      {
+        "source-control-id": "au-12",
+        "target-control-id": "a-8-15",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "AU-12"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.15"
+          }
+        ],
+        "remarks": "Audit record generation"
+      },
+      {
+        "source-control-id": "ca-1",
+        "target-control-id": "a-5-35",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CA-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.35"
+          }
+        ],
+        "remarks": "Assessment policy \u2192 Independent review"
+      },
+      {
+        "source-control-id": "ca-2",
+        "target-control-id": "a-5-35",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CA-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.35"
+          }
+        ],
+        "remarks": "Control assessments \u2192 Independent review"
+      },
+      {
+        "source-control-id": "ca-3",
+        "target-control-id": "a-5-14",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CA-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.14"
+          }
+        ],
+        "remarks": "Information exchange \u2192 Information transfer"
+      },
+      {
+        "source-control-id": "ca-5",
+        "target-control-id": "a-5-35",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "CA-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.35"
+          }
+        ],
+        "remarks": "POA&M \u2192 Review findings"
+      },
+      {
+        "source-control-id": "ca-7",
+        "target-control-id": "a-5-35",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CA-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.35"
+          }
+        ],
+        "remarks": "Continuous monitoring \u2192 Independent review"
+      },
+      {
+        "source-control-id": "ca-8",
+        "target-control-id": "a-8-34",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CA-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.34"
+          }
+        ],
+        "remarks": "Penetration testing"
+      },
+      {
+        "source-control-id": "cm-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Configuration policy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "cm-2",
+        "target-control-id": "a-8-9",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.9"
+          }
+        ],
+        "remarks": "Baseline configuration \u2192 Configuration management"
+      },
+      {
+        "source-control-id": "cm-3",
+        "target-control-id": "a-8-32",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.32"
+          }
+        ],
+        "remarks": "Change control \u2192 Change management"
+      },
+      {
+        "source-control-id": "cm-4",
+        "target-control-id": "a-8-32",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.32"
+          }
+        ],
+        "remarks": "Impact analysis \u2192 Change management"
+      },
+      {
+        "source-control-id": "cm-5",
+        "target-control-id": "a-8-32",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.32"
+          }
+        ],
+        "remarks": "Access restrictions for change"
+      },
+      {
+        "source-control-id": "cm-6",
+        "target-control-id": "a-8-9",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.9"
+          }
+        ],
+        "remarks": "Configuration settings"
+      },
+      {
+        "source-control-id": "cm-7",
+        "target-control-id": "a-8-19",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.19"
+          }
+        ],
+        "remarks": "Least functionality \u2192 Software installation"
+      },
+      {
+        "source-control-id": "cm-8",
+        "target-control-id": "a-5-9",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.9"
+          }
+        ],
+        "remarks": "System inventory \u2192 Inventory of assets"
+      },
+      {
+        "source-control-id": "cm-9",
+        "target-control-id": "a-8-9",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.9"
+          }
+        ],
+        "remarks": "Configuration management plan"
+      },
+      {
+        "source-control-id": "cm-10",
+        "target-control-id": "a-8-19",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-10"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.19"
+          }
+        ],
+        "remarks": "Software usage restrictions"
+      },
+      {
+        "source-control-id": "cm-11",
+        "target-control-id": "a-8-19",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "CM-11"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.19"
+          }
+        ],
+        "remarks": "User-installed software"
+      },
+      {
+        "source-control-id": "cp-1",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "Contingency policy \u2192 ICT readiness for BC"
+      },
+      {
+        "source-control-id": "cp-2",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "Contingency plan \u2192 Business continuity"
+      },
+      {
+        "source-control-id": "cp-3",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "Contingency training"
+      },
+      {
+        "source-control-id": "cp-4",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "Contingency plan testing"
+      },
+      {
+        "source-control-id": "cp-6",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "Alternate storage site"
+      },
+      {
+        "source-control-id": "cp-7",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "Alternate processing site"
+      },
+      {
+        "source-control-id": "cp-9",
+        "target-control-id": "a-8-13",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.13"
+          }
+        ],
+        "remarks": "System backup \u2192 Information backup"
+      },
+      {
+        "source-control-id": "cp-10",
+        "target-control-id": "a-5-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "CP-10"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.29"
+          }
+        ],
+        "remarks": "System recovery \u2192 Business continuity"
+      },
+      {
+        "source-control-id": "ia-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "I&A policy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "ia-2",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "User identification \u2192 Secure authentication"
+      },
+      {
+        "source-control-id": "ia-3",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Device identification \u2192 Authentication"
+      },
+      {
+        "source-control-id": "ia-4",
+        "target-control-id": "a-5-16",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.16"
+          }
+        ],
+        "remarks": "Identifier management \u2192 Identity management"
+      },
+      {
+        "source-control-id": "ia-5",
+        "target-control-id": "a-5-17",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.17"
+          }
+        ],
+        "remarks": "Authenticator management \u2192 Authentication info"
+      },
+      {
+        "source-control-id": "ia-6",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Authentication feedback"
+      },
+      {
+        "source-control-id": "ia-7",
+        "target-control-id": "a-8-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.24"
+          }
+        ],
+        "remarks": "Cryptographic module authentication \u2192 Use of crypto"
+      },
+      {
+        "source-control-id": "ia-8",
+        "target-control-id": "a-5-16",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.16"
+          }
+        ],
+        "remarks": "Non-org user identification"
+      },
+      {
+        "source-control-id": "ia-11",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-11"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Re-authentication"
+      },
+      {
+        "source-control-id": "ia-12",
+        "target-control-id": "a-5-16",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IA-12"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.16"
+          }
+        ],
+        "remarks": "Identity proofing"
+      },
+      {
+        "source-control-id": "ir-1",
+        "target-control-id": "a-5-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.24"
+          }
+        ],
+        "remarks": "IR policy \u2192 Incident management planning"
+      },
+      {
+        "source-control-id": "ir-2",
+        "target-control-id": "a-6-3",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.3"
+          }
+        ],
+        "remarks": "IR training \u2192 Awareness"
+      },
+      {
+        "source-control-id": "ir-3",
+        "target-control-id": "a-5-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.24"
+          }
+        ],
+        "remarks": "IR testing"
+      },
+      {
+        "source-control-id": "ir-4",
+        "target-control-id": "a-5-26",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.26"
+          }
+        ],
+        "remarks": "Incident handling \u2192 Response to incidents"
+      },
+      {
+        "source-control-id": "ir-5",
+        "target-control-id": "a-5-25",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.25"
+          }
+        ],
+        "remarks": "Incident monitoring \u2192 Assessment"
+      },
+      {
+        "source-control-id": "ir-6",
+        "target-control-id": "a-5-26",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.26"
+          }
+        ],
+        "remarks": "Incident reporting \u2192 Response to incidents"
+      },
+      {
+        "source-control-id": "ir-7",
+        "target-control-id": "a-5-26",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.26"
+          }
+        ],
+        "remarks": "IR assistance \u2192 Response"
+      },
+      {
+        "source-control-id": "ir-8",
+        "target-control-id": "a-5-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "IR-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.24"
+          }
+        ],
+        "remarks": "IR plan \u2192 Planning and preparation"
+      },
+      {
+        "source-control-id": "ma-1",
+        "target-control-id": "a-7-13",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MA-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.13"
+          }
+        ],
+        "remarks": "Maintenance policy \u2192 Equipment maintenance"
+      },
+      {
+        "source-control-id": "ma-2",
+        "target-control-id": "a-7-13",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MA-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.13"
+          }
+        ],
+        "remarks": "Controlled maintenance \u2192 Equipment maintenance"
+      },
+      {
+        "source-control-id": "ma-3",
+        "target-control-id": "a-7-13",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "MA-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.13"
+          }
+        ],
+        "remarks": "Maintenance tools"
+      },
+      {
+        "source-control-id": "ma-4",
+        "target-control-id": "a-7-13",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "MA-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.13"
+          }
+        ],
+        "remarks": "Nonlocal maintenance"
+      },
+      {
+        "source-control-id": "ma-5",
+        "target-control-id": "a-6-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "MA-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.1"
+          }
+        ],
+        "remarks": "Maintenance personnel \u2192 Screening"
+      },
+      {
+        "source-control-id": "mp-1",
+        "target-control-id": "a-7-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MP-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.10"
+          }
+        ],
+        "remarks": "Media protection policy \u2192 Storage media"
+      },
+      {
+        "source-control-id": "mp-2",
+        "target-control-id": "a-7-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MP-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.10"
+          }
+        ],
+        "remarks": "Media access \u2192 Storage media"
+      },
+      {
+        "source-control-id": "mp-4",
+        "target-control-id": "a-7-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MP-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.10"
+          }
+        ],
+        "remarks": "Media storage"
+      },
+      {
+        "source-control-id": "mp-5",
+        "target-control-id": "a-7-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MP-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.10"
+          }
+        ],
+        "remarks": "Media transport"
+      },
+      {
+        "source-control-id": "mp-6",
+        "target-control-id": "a-7-14",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "MP-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.14"
+          }
+        ],
+        "remarks": "Media sanitization \u2192 Secure disposal"
+      },
+      {
+        "source-control-id": "mp-7",
+        "target-control-id": "a-7-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "MP-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.10"
+          }
+        ],
+        "remarks": "Media use"
+      },
+      {
+        "source-control-id": "pe-1",
+        "target-control-id": "a-7-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.1"
+          }
+        ],
+        "remarks": "Physical security policy \u2192 Physical perimeters"
+      },
+      {
+        "source-control-id": "pe-2",
+        "target-control-id": "a-7-2",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.2"
+          }
+        ],
+        "remarks": "Physical access authorizations \u2192 Physical entry"
+      },
+      {
+        "source-control-id": "pe-3",
+        "target-control-id": "a-7-2",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.2"
+          }
+        ],
+        "remarks": "Physical access control \u2192 Physical entry"
+      },
+      {
+        "source-control-id": "pe-6",
+        "target-control-id": "a-7-4",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.4"
+          }
+        ],
+        "remarks": "Physical access monitoring"
+      },
+      {
+        "source-control-id": "pe-8",
+        "target-control-id": "a-7-2",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.2"
+          }
+        ],
+        "remarks": "Visitor access records"
+      },
+      {
+        "source-control-id": "pe-9",
+        "target-control-id": "a-7-11",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.11"
+          }
+        ],
+        "remarks": "Power equipment \u2192 Supporting utilities"
+      },
+      {
+        "source-control-id": "pe-11",
+        "target-control-id": "a-7-11",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-11"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.11"
+          }
+        ],
+        "remarks": "Emergency power \u2192 Supporting utilities"
+      },
+      {
+        "source-control-id": "pe-13",
+        "target-control-id": "a-7-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-13"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.5"
+          }
+        ],
+        "remarks": "Fire protection \u2192 Physical threats"
+      },
+      {
+        "source-control-id": "pe-14",
+        "target-control-id": "a-7-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-14"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.5"
+          }
+        ],
+        "remarks": "Environmental controls \u2192 Physical threats"
+      },
+      {
+        "source-control-id": "pe-16",
+        "target-control-id": "a-7-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "PE-16"
+          },
+          {
+            "name": "label-target",
+            "value": "A.7.10"
+          }
+        ],
+        "remarks": "Delivery and removal \u2192 Storage media"
+      },
+      {
+        "source-control-id": "pl-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PL-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Planning policy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "pl-2",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PL-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Security plan \u2192 Security policies"
+      },
+      {
+        "source-control-id": "pl-4",
+        "target-control-id": "a-5-10",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PL-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.10"
+          }
+        ],
+        "remarks": "Rules of behavior \u2192 Acceptable use"
+      },
+      {
+        "source-control-id": "pm-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PM-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Info security program plan \u2192 Security policies"
+      },
+      {
+        "source-control-id": "pm-2",
+        "target-control-id": "a-5-2",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PM-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.2"
+          }
+        ],
+        "remarks": "Senior officer \u2192 Roles and responsibilities"
+      },
+      {
+        "source-control-id": "pm-3",
+        "target-control-id": "a-5-4",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "PM-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.4"
+          }
+        ],
+        "remarks": "Resources \u2192 Management responsibilities"
+      },
+      {
+        "source-control-id": "pm-5",
+        "target-control-id": "a-5-9",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "PM-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.9"
+          }
+        ],
+        "remarks": "System inventory \u2192 Inventory of assets"
+      },
+      {
+        "source-control-id": "pm-9",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PM-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Risk management strategy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "ps-1",
+        "target-control-id": "a-6-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.1"
+          }
+        ],
+        "remarks": "Personnel security policy \u2192 Screening"
+      },
+      {
+        "source-control-id": "ps-2",
+        "target-control-id": "a-6-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.1"
+          }
+        ],
+        "remarks": "Position risk designation"
+      },
+      {
+        "source-control-id": "ps-3",
+        "target-control-id": "a-6-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.1"
+          }
+        ],
+        "remarks": "Personnel screening"
+      },
+      {
+        "source-control-id": "ps-4",
+        "target-control-id": "a-6-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.5"
+          }
+        ],
+        "remarks": "Personnel termination \u2192 Responsibilities after termination"
+      },
+      {
+        "source-control-id": "ps-5",
+        "target-control-id": "a-6-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.5"
+          }
+        ],
+        "remarks": "Personnel transfer \u2192 Responsibilities after termination"
+      },
+      {
+        "source-control-id": "ps-6",
+        "target-control-id": "a-6-2",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.2"
+          }
+        ],
+        "remarks": "Access agreements \u2192 Terms of employment"
+      },
+      {
+        "source-control-id": "ps-7",
+        "target-control-id": "a-6-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "PS-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.6.1"
+          }
+        ],
+        "remarks": "External personnel security"
+      },
+      {
+        "source-control-id": "pt-1",
+        "target-control-id": "a-5-34",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PT-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.34"
+          }
+        ],
+        "remarks": "PII policy \u2192 Privacy legislation"
+      },
+      {
+        "source-control-id": "pt-2",
+        "target-control-id": "a-5-34",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PT-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.34"
+          }
+        ],
+        "remarks": "Authority to process PII \u2192 Privacy"
+      },
+      {
+        "source-control-id": "pt-3",
+        "target-control-id": "a-5-34",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "PT-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.34"
+          }
+        ],
+        "remarks": "PII processing purposes \u2192 Privacy"
+      },
+      {
+        "source-control-id": "ra-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "RA-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Risk assessment policy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "ra-2",
+        "target-control-id": "a-5-12",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "RA-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.12"
+          }
+        ],
+        "remarks": "Security categorization \u2192 Classification of info"
+      },
+      {
+        "source-control-id": "ra-3",
+        "target-control-id": "a-5-12",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "RA-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.12"
+          }
+        ],
+        "remarks": "Risk assessment \u2192 Classification"
+      },
+      {
+        "source-control-id": "ra-5",
+        "target-control-id": "a-8-8",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "RA-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.8"
+          }
+        ],
+        "remarks": "Vulnerability monitoring \u2192 Technical vulnerability management"
+      },
+      {
+        "source-control-id": "ra-7",
+        "target-control-id": "a-5-12",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "RA-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.12"
+          }
+        ],
+        "remarks": "Risk response"
+      },
+      {
+        "source-control-id": "sa-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "Acquisition policy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "sa-3",
+        "target-control-id": "a-8-25",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.25"
+          }
+        ],
+        "remarks": "System dev lifecycle \u2192 Secure development lifecycle"
+      },
+      {
+        "source-control-id": "sa-4",
+        "target-control-id": "a-5-20",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.20"
+          }
+        ],
+        "remarks": "Acquisition \u2192 Supplier agreements"
+      },
+      {
+        "source-control-id": "sa-8",
+        "target-control-id": "a-8-27",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.27"
+          }
+        ],
+        "remarks": "Security engineering \u2192 Secure system architecture"
+      },
+      {
+        "source-control-id": "sa-9",
+        "target-control-id": "a-5-19",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.19"
+          }
+        ],
+        "remarks": "External services \u2192 Supplier relationships"
+      },
+      {
+        "source-control-id": "sa-9",
+        "target-control-id": "a-5-21",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-9"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.21"
+          }
+        ],
+        "remarks": "External services \u2192 ICT supply chain"
+      },
+      {
+        "source-control-id": "sa-10",
+        "target-control-id": "a-8-32",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-10"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.32"
+          }
+        ],
+        "remarks": "Developer config management \u2192 Change management"
+      },
+      {
+        "source-control-id": "sa-11",
+        "target-control-id": "a-8-29",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SA-11"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.29"
+          }
+        ],
+        "remarks": "Developer testing \u2192 Security testing"
+      },
+      {
+        "source-control-id": "sc-5",
+        "target-control-id": "a-8-6",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.6"
+          }
+        ],
+        "remarks": "DoS protection \u2192 Capacity management"
+      },
+      {
+        "source-control-id": "sc-7",
+        "target-control-id": "a-8-20",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.20"
+          }
+        ],
+        "remarks": "Network boundary \u2192 Network security"
+      },
+      {
+        "source-control-id": "sc-7",
+        "target-control-id": "a-8-21",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.21"
+          }
+        ],
+        "remarks": "Boundary protection \u2192 Network services security"
+      },
+      {
+        "source-control-id": "sc-8",
+        "target-control-id": "a-8-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-8"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.24"
+          }
+        ],
+        "remarks": "Transmission confidentiality \u2192 Use of cryptography"
+      },
+      {
+        "source-control-id": "sc-12",
+        "target-control-id": "a-8-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-12"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.24"
+          }
+        ],
+        "remarks": "Key management \u2192 Use of cryptography"
+      },
+      {
+        "source-control-id": "sc-13",
+        "target-control-id": "a-8-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-13"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.24"
+          }
+        ],
+        "remarks": "Cryptographic protection \u2192 Use of cryptography"
+      },
+      {
+        "source-control-id": "sc-17",
+        "target-control-id": "a-8-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-17"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.24"
+          }
+        ],
+        "remarks": "PKI certificates \u2192 Use of cryptography"
+      },
+      {
+        "source-control-id": "sc-23",
+        "target-control-id": "a-8-5",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-23"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.5"
+          }
+        ],
+        "remarks": "Session authenticity \u2192 Secure authentication"
+      },
+      {
+        "source-control-id": "sc-28",
+        "target-control-id": "a-8-24",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SC-28"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.24"
+          }
+        ],
+        "remarks": "Data at rest protection \u2192 Use of cryptography"
+      },
+      {
+        "source-control-id": "si-1",
+        "target-control-id": "a-5-1",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.1"
+          }
+        ],
+        "remarks": "SI policy \u2192 Security policies"
+      },
+      {
+        "source-control-id": "si-2",
+        "target-control-id": "a-8-8",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.8"
+          }
+        ],
+        "remarks": "Flaw remediation \u2192 Technical vulnerability management"
+      },
+      {
+        "source-control-id": "si-3",
+        "target-control-id": "a-8-7",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.7"
+          }
+        ],
+        "remarks": "Malicious code \u2192 Protection against malware"
+      },
+      {
+        "source-control-id": "si-4",
+        "target-control-id": "a-8-16",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-4"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.16"
+          }
+        ],
+        "remarks": "System monitoring \u2192 Monitoring activities"
+      },
+      {
+        "source-control-id": "si-5",
+        "target-control-id": "a-5-7",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.7"
+          }
+        ],
+        "remarks": "Security alerts \u2192 Threat intelligence"
+      },
+      {
+        "source-control-id": "si-7",
+        "target-control-id": "a-8-7",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-7"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.7"
+          }
+        ],
+        "remarks": "Software integrity \u2192 Malware protection"
+      },
+      {
+        "source-control-id": "si-10",
+        "target-control-id": "a-8-28",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-10"
+          },
+          {
+            "name": "label-target",
+            "value": "A.8.28"
+          }
+        ],
+        "remarks": "Input validation \u2192 Secure coding"
+      },
+      {
+        "source-control-id": "si-12",
+        "target-control-id": "a-5-33",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SI-12"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.33"
+          }
+        ],
+        "remarks": "Information management \u2192 Records protection"
+      },
+      {
+        "source-control-id": "sr-1",
+        "target-control-id": "a-5-19",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SR-1"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.19"
+          }
+        ],
+        "remarks": "Supply chain policy \u2192 Supplier relationships"
+      },
+      {
+        "source-control-id": "sr-2",
+        "target-control-id": "a-5-21",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SR-2"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.21"
+          }
+        ],
+        "remarks": "Supply chain plan \u2192 ICT supply chain"
+      },
+      {
+        "source-control-id": "sr-3",
+        "target-control-id": "a-5-21",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SR-3"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.21"
+          }
+        ],
+        "remarks": "Supply chain controls \u2192 ICT supply chain"
+      },
+      {
+        "source-control-id": "sr-5",
+        "target-control-id": "a-5-20",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "medium"
+          },
+          {
+            "name": "label-source",
+            "value": "SR-5"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.20"
+          }
+        ],
+        "remarks": "Acquisition strategies \u2192 Supplier agreements"
+      },
+      {
+        "source-control-id": "sr-6",
+        "target-control-id": "a-5-22",
+        "props": [
+          {
+            "name": "confidence",
+            "value": "high"
+          },
+          {
+            "name": "label-source",
+            "value": "SR-6"
+          },
+          {
+            "name": "label-target",
+            "value": "A.5.22"
+          }
+        ],
+        "remarks": "Supplier assessments \u2192 Monitoring suppliers"
+      }
+    ]
+  }
+}
