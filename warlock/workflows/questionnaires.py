@@ -1,0 +1,643 @@
+"""Vendor questionnaire management — templates, lifecycle, scoring, AI suggestions."""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from warlock.db.models import (
+    ControlResult,
+    Finding,
+    Questionnaire,
+    QuestionnaireTemplate,
+)
+
+
+class QuestionnaireManager:
+    """Manages vendor security questionnaire lifecycle."""
+
+    # Built-in SIG Lite core security questions
+    SIG_LITE_QUESTIONS = [
+        {
+            "id": "SL-01", "category": "Information Security Program",
+            "text": "Does your organization have a formal information security program?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Looking for documented security policies and dedicated security personnel.",
+            "mapped_controls": ["NIST AC-1", "SOC2 CC1.1", "ISO A.5.1.1"],
+        },
+        {
+            "id": "SL-02", "category": "Information Security Program",
+            "text": "Do you have a dedicated information security team or officer (CISO)?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "CISO or equivalent security leadership role.",
+            "mapped_controls": ["NIST PM-2", "SOC2 CC1.2"],
+        },
+        {
+            "id": "SL-03", "category": "Access Control",
+            "text": "Do you enforce multi-factor authentication for all user accounts?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "MFA on VPN, email, admin consoles, and production systems.",
+            "mapped_controls": ["NIST IA-2", "SOC2 CC6.1"],
+        },
+        {
+            "id": "SL-04", "category": "Access Control",
+            "text": "Do you perform periodic access reviews (at least quarterly)?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Regular review and recertification of user access rights.",
+            "mapped_controls": ["NIST AC-2", "SOC2 CC6.2", "ISO A.9.2.5"],
+        },
+        {
+            "id": "SL-05", "category": "Access Control",
+            "text": "Is the principle of least privilege enforced across systems?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Users receive minimum access needed for their role.",
+            "mapped_controls": ["NIST AC-6", "SOC2 CC6.3"],
+        },
+        {
+            "id": "SL-06", "category": "Data Protection",
+            "text": "Is data encrypted at rest and in transit?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "AES-256 at rest, TLS 1.2+ in transit.",
+            "mapped_controls": ["NIST SC-8", "NIST SC-28", "SOC2 CC6.1"],
+        },
+        {
+            "id": "SL-07", "category": "Data Protection",
+            "text": "Do you have a data classification policy?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Formal classification scheme (public, internal, confidential, restricted).",
+            "mapped_controls": ["NIST RA-2", "ISO A.8.2.1"],
+        },
+        {
+            "id": "SL-08", "category": "Data Protection",
+            "text": "Do you have a data retention and disposal policy?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Defined retention periods and secure disposal procedures.",
+            "mapped_controls": ["NIST SI-12", "ISO A.8.3.2"],
+        },
+        {
+            "id": "SL-09", "category": "Vulnerability Management",
+            "text": "Do you perform regular vulnerability scanning (at least monthly)?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Automated scanning of infrastructure and applications.",
+            "mapped_controls": ["NIST RA-5", "SOC2 CC7.1"],
+        },
+        {
+            "id": "SL-10", "category": "Vulnerability Management",
+            "text": "Do you have a patch management program with defined SLAs?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Critical patches within 72 hours, high within 30 days.",
+            "mapped_controls": ["NIST SI-2", "SOC2 CC7.1"],
+        },
+        {
+            "id": "SL-11", "category": "Incident Response",
+            "text": "Do you have a documented incident response plan?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Written IR plan with roles, escalation, and communication procedures.",
+            "mapped_controls": ["NIST IR-1", "SOC2 CC7.3", "ISO A.16.1.1"],
+        },
+        {
+            "id": "SL-12", "category": "Incident Response",
+            "text": "Do you notify customers of security breaches within 72 hours?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Contractual or regulatory breach notification timeline.",
+            "mapped_controls": ["NIST IR-6", "SOC2 CC7.4"],
+        },
+        {
+            "id": "SL-13", "category": "Business Continuity",
+            "text": "Do you have documented business continuity and disaster recovery plans?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "BCP/DR plans tested at least annually.",
+            "mapped_controls": ["NIST CP-2", "SOC2 A1.2", "ISO A.17.1.1"],
+        },
+        {
+            "id": "SL-14", "category": "Business Continuity",
+            "text": "What are your Recovery Time Objective (RTO) and Recovery Point Objective (RPO)?",
+            "response_type": "text", "required": True,
+            "help_text": "Specify RTO and RPO for critical systems.",
+            "mapped_controls": ["NIST CP-10", "SOC2 A1.2"],
+        },
+        {
+            "id": "SL-15", "category": "Third-Party Risk",
+            "text": "Do you assess the security posture of your third-party vendors?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Vendor risk management program with periodic assessments.",
+            "mapped_controls": ["NIST SA-9", "SOC2 CC9.2", "ISO A.15.1.1"],
+        },
+        {
+            "id": "SL-16", "category": "Compliance",
+            "text": "What compliance certifications do you hold? (Select all that apply)",
+            "response_type": "text", "required": True,
+            "help_text": "SOC 2 Type II, ISO 27001, PCI DSS, HIPAA, FedRAMP, etc.",
+            "mapped_controls": ["NIST CA-2", "SOC2 CC4.1"],
+        },
+        {
+            "id": "SL-17", "category": "Compliance",
+            "text": "Do you undergo regular third-party security audits?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Annual penetration testing and/or independent audits.",
+            "mapped_controls": ["NIST CA-7", "SOC2 CC4.1"],
+        },
+        {
+            "id": "SL-18", "category": "Personnel Security",
+            "text": "Do you perform background checks on employees with access to customer data?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Pre-employment screening for roles handling sensitive data.",
+            "mapped_controls": ["NIST PS-3", "SOC2 CC1.4", "ISO A.7.1.1"],
+        },
+        {
+            "id": "SL-19", "category": "Personnel Security",
+            "text": "Do you require security awareness training for all employees?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Annual security awareness training with phishing simulations.",
+            "mapped_controls": ["NIST AT-2", "SOC2 CC1.4", "ISO A.7.2.2"],
+        },
+        {
+            "id": "SL-20", "category": "Network Security",
+            "text": "Do you segment your network and restrict access between zones?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "Network segmentation between production, corporate, and DMZ.",
+            "mapped_controls": ["NIST SC-7", "SOC2 CC6.6", "ISO A.13.1.3"],
+        },
+    ]
+
+    DDQ_QUESTIONS = [
+        {
+            "id": "DDQ-01", "category": "General",
+            "text": "Provide a brief description of your company and the services you provide.",
+            "response_type": "text", "required": True,
+            "help_text": "Company overview, services, and scope of engagement.",
+            "mapped_controls": [],
+        },
+        {
+            "id": "DDQ-02", "category": "General",
+            "text": "How many employees does your organization have?",
+            "response_type": "text", "required": True,
+            "help_text": "Total headcount.",
+            "mapped_controls": [],
+        },
+        {
+            "id": "DDQ-03", "category": "Data Handling",
+            "text": "What types of customer data will you process, store, or transmit?",
+            "response_type": "text", "required": True,
+            "help_text": "PII, PHI, financial data, credentials, etc.",
+            "mapped_controls": ["NIST RA-2"],
+        },
+        {
+            "id": "DDQ-04", "category": "Data Handling",
+            "text": "Where will customer data be stored? Specify geographic locations.",
+            "response_type": "text", "required": True,
+            "help_text": "Data residency requirements.",
+            "mapped_controls": ["NIST PE-18"],
+        },
+        {
+            "id": "DDQ-05", "category": "Data Handling",
+            "text": "Do you use sub-processors to handle customer data? If so, list them.",
+            "response_type": "text", "required": True,
+            "help_text": "Sub-processor disclosure for GDPR/privacy compliance.",
+            "mapped_controls": ["NIST SA-9"],
+        },
+        {
+            "id": "DDQ-06", "category": "Security Architecture",
+            "text": "Describe your cloud infrastructure and hosting environment.",
+            "response_type": "text", "required": True,
+            "help_text": "AWS, Azure, GCP, on-premise, hybrid.",
+            "mapped_controls": ["NIST SC-7"],
+        },
+        {
+            "id": "DDQ-07", "category": "Security Architecture",
+            "text": "Do you have a SOC 2 Type II report? If so, provide the audit period.",
+            "response_type": "text", "required": True,
+            "help_text": "Most recent SOC 2 Type II report details.",
+            "mapped_controls": ["NIST CA-2", "SOC2 CC4.1"],
+        },
+        {
+            "id": "DDQ-08", "category": "Security Architecture",
+            "text": "Describe your logging and monitoring capabilities.",
+            "response_type": "text", "required": True,
+            "help_text": "SIEM, log retention, alerting, and monitoring coverage.",
+            "mapped_controls": ["NIST AU-6", "SOC2 CC7.2"],
+        },
+        {
+            "id": "DDQ-09", "category": "Privacy",
+            "text": "Do you have a privacy policy? Provide a link.",
+            "response_type": "text", "required": True,
+            "help_text": "Public privacy policy URL.",
+            "mapped_controls": [],
+        },
+        {
+            "id": "DDQ-10", "category": "Privacy",
+            "text": "Are you GDPR compliant? Do you support data subject access requests (DSARs)?",
+            "response_type": "yes_no", "required": True,
+            "help_text": "GDPR compliance and DSAR handling process.",
+            "mapped_controls": [],
+        },
+    ]
+
+    def create_template(
+        self,
+        session: Session,
+        name: str,
+        template_type: str,
+        questions: list[dict],
+        description: str = "",
+        version: str = "1.0",
+    ) -> QuestionnaireTemplate:
+        """Create a new questionnaire template."""
+        template = QuestionnaireTemplate(
+            name=name,
+            template_type=template_type,
+            version=version,
+            description=description,
+            questions=questions,
+            total_questions=len(questions),
+            is_active=True,
+        )
+        session.add(template)
+        session.flush()
+        return template
+
+    def seed_default_templates(self, session: Session) -> list[QuestionnaireTemplate]:
+        """Create SIG Lite and basic DDQ templates if they don't exist."""
+        templates = []
+
+        # SIG Lite
+        existing = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.template_type == "sig_lite")
+            .first()
+        )
+        if not existing:
+            t = self.create_template(
+                session,
+                name="SIG Lite",
+                template_type="sig_lite",
+                questions=self.SIG_LITE_QUESTIONS,
+                description="Standardized Information Gathering (SIG) Lite questionnaire - "
+                "20 core security questions for vendor assessment.",
+                version="1.0",
+            )
+            templates.append(t)
+
+        # DDQ
+        existing = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.template_type == "ddq")
+            .first()
+        )
+        if not existing:
+            t = self.create_template(
+                session,
+                name="Security Due Diligence Questionnaire",
+                template_type="ddq",
+                questions=self.DDQ_QUESTIONS,
+                description="Standard security due diligence questionnaire for vendor onboarding.",
+                version="1.0",
+            )
+            templates.append(t)
+
+        return templates
+
+    def create_questionnaire(
+        self,
+        session: Session,
+        template_id: str,
+        vendor_name: str,
+        vendor_email: str | None = None,
+        due_days: int = 30,
+        created_by: str = "",
+    ) -> Questionnaire:
+        """Create a new questionnaire for a vendor from a template."""
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == template_id)
+            .first()
+        )
+        if not template:
+            raise ValueError(f"Template not found: {template_id}")
+
+        now = datetime.now(timezone.utc)
+        q = Questionnaire(
+            template_id=template_id,
+            vendor_name=vendor_name,
+            vendor_contact_email=vendor_email,
+            status="draft",
+            responses={},
+            completion_pct=0.0,
+            due_date=now + timedelta(days=due_days),
+            created_by=created_by,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(q)
+        session.flush()
+        return q
+
+    def submit_response(
+        self,
+        session: Session,
+        questionnaire_id: str,
+        question_id: str,
+        answer: Any,
+        notes: str = "",
+    ) -> Questionnaire:
+        """Submit a single response to a questionnaire question."""
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        responses = dict(q.responses or {})
+        responses[question_id] = {
+            "answer": answer,
+            "notes": notes,
+            "answered_at": datetime.now(timezone.utc).isoformat(),
+        }
+        q.responses = responses
+
+        # Recalculate completion
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if template and template.total_questions > 0:
+            q.completion_pct = round(len(responses) / template.total_questions * 100, 1)
+
+        q.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return q
+
+    def submit_bulk_responses(
+        self,
+        session: Session,
+        questionnaire_id: str,
+        responses: dict,
+    ) -> Questionnaire:
+        """Submit multiple responses at once. responses = {question_id: {answer, notes}}."""
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        existing = dict(q.responses or {})
+        now = datetime.now(timezone.utc).isoformat()
+
+        for qid, resp in responses.items():
+            if isinstance(resp, dict):
+                existing[qid] = {
+                    "answer": resp.get("answer"),
+                    "notes": resp.get("notes", ""),
+                    "answered_at": now,
+                }
+            else:
+                existing[qid] = {"answer": resp, "notes": "", "answered_at": now}
+
+        q.responses = existing
+
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if template and template.total_questions > 0:
+            q.completion_pct = round(len(existing) / template.total_questions * 100, 1)
+
+        q.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return q
+
+    def score_responses(self, session: Session, questionnaire_id: str) -> Questionnaire:
+        """Score completed questionnaire: compute risk_score and risk_findings.
+
+        Scoring logic:
+        - yes_no questions: 'no' on security controls = high risk
+        - Missing required responses = medium risk
+        - Risk score is 0-100 (lower = better)
+        """
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if not template:
+            raise ValueError(f"Template not found: {q.template_id}")
+
+        responses = q.responses or {}
+        risk_findings: list[dict] = []
+        total_weight = 0
+        risk_weight = 0
+
+        for question in template.questions:
+            qid = question["id"]
+            required = question.get("required", False)
+            resp = responses.get(qid)
+            weight = 5 if required else 3
+
+            total_weight += weight
+
+            if resp is None:
+                if required:
+                    risk_findings.append({
+                        "question_id": qid,
+                        "finding": f"Required question unanswered: {question['text'][:80]}",
+                        "severity": "medium",
+                    })
+                    risk_weight += weight
+            else:
+                answer = resp.get("answer") if isinstance(resp, dict) else resp
+                if question.get("response_type") == "yes_no":
+                    # For security controls, "no" is a risk finding
+                    if str(answer).lower() in ("no", "false", "n"):
+                        severity = "high" if required else "medium"
+                        risk_findings.append({
+                            "question_id": qid,
+                            "finding": f"Negative response: {question['text'][:80]}",
+                            "severity": severity,
+                        })
+                        risk_weight += weight
+
+        q.risk_score = round((risk_weight / total_weight * 100) if total_weight > 0 else 0, 1)
+        q.risk_findings = risk_findings
+        q.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return q
+
+    def ai_suggest_answers(self, session: Session, questionnaire_id: str) -> Questionnaire:
+        """Use existing compliance evidence to suggest answers.
+
+        Queries ControlResult + Finding data to find evidence that answers each question.
+        Populates ai_suggested_answers with {answer, confidence, source}.
+        """
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if not template:
+            raise ValueError(f"Template not found: {q.template_id}")
+
+        suggestions: dict[str, dict] = {}
+
+        # Build a lookup of compliant controls
+        compliant_controls: set[str] = set()
+        non_compliant_controls: set[str] = set()
+        results = session.query(ControlResult).all()
+        for r in results:
+            key = f"{r.framework} {r.control_id}"
+            if r.status == "compliant":
+                compliant_controls.add(key)
+            elif r.status == "non_compliant":
+                non_compliant_controls.add(key)
+
+        for question in template.questions:
+            qid = question["id"]
+            mapped = question.get("mapped_controls", [])
+
+            if not mapped:
+                continue
+
+            # Check if we have evidence for the mapped controls
+            matched_compliant = 0
+            matched_non_compliant = 0
+            source_controls: list[str] = []
+
+            for control_ref in mapped:
+                # Try matching against our control results
+                for key in compliant_controls:
+                    if control_ref.replace(" ", "") in key.replace(" ", "").replace("-", ""):
+                        matched_compliant += 1
+                        source_controls.append(key)
+                        break
+                for key in non_compliant_controls:
+                    if control_ref.replace(" ", "") in key.replace(" ", "").replace("-", ""):
+                        matched_non_compliant += 1
+                        break
+
+            if matched_compliant > 0 or matched_non_compliant > 0:
+                total_matched = matched_compliant + matched_non_compliant
+                if question.get("response_type") == "yes_no":
+                    answer = "Yes" if matched_compliant > matched_non_compliant else "No"
+                else:
+                    answer = (
+                        f"Based on {matched_compliant} compliant control(s): "
+                        f"{', '.join(source_controls[:3])}"
+                    )
+
+                confidence = round(matched_compliant / max(len(mapped), 1) * 100, 1)
+                suggestions[qid] = {
+                    "answer": answer,
+                    "confidence": min(confidence, 100.0),
+                    "source": f"Control results: {', '.join(source_controls[:5])}",
+                }
+
+        q.ai_suggested_answers = suggestions
+        q.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return q
+
+    def transition(
+        self,
+        session: Session,
+        questionnaire_id: str,
+        new_status: str,
+        actor: str = "",
+    ) -> Questionnaire:
+        """Transition questionnaire status."""
+        valid_statuses = {
+            "draft", "sent", "in_progress", "completed",
+            "reviewed", "accepted", "rejected",
+        }
+        valid_transitions = {
+            "draft": {"sent", "in_progress"},
+            "sent": {"in_progress", "draft"},
+            "in_progress": {"completed", "draft"},
+            "completed": {"reviewed", "in_progress"},
+            "reviewed": {"accepted", "rejected", "completed"},
+            "accepted": {"reviewed"},
+            "rejected": {"reviewed", "in_progress"},
+        }
+
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        if new_status not in valid_statuses:
+            raise ValueError(f"Invalid status: {new_status}")
+
+        allowed = valid_transitions.get(q.status, set())
+        if new_status not in allowed:
+            raise ValueError(
+                f"Cannot transition from '{q.status}' to '{new_status}'. "
+                f"Allowed: {allowed}"
+            )
+
+        now = datetime.now(timezone.utc)
+        q.status = new_status
+
+        if new_status == "sent":
+            q.sent_at = now
+        elif new_status == "completed":
+            q.completed_at = now
+        elif new_status in ("accepted", "rejected"):
+            q.reviewed_by = actor
+            q.reviewed_at = now
+
+        q.updated_at = now
+        session.flush()
+        return q
+
+    def overdue(self, session: Session) -> list[Questionnaire]:
+        """Return questionnaires past due_date that aren't completed."""
+        now = datetime.now(timezone.utc)
+        return (
+            session.query(Questionnaire)
+            .filter(
+                Questionnaire.due_date < now,
+                Questionnaire.status.notin_(["completed", "reviewed", "accepted", "rejected"]),
+            )
+            .order_by(Questionnaire.due_date.asc())
+            .all()
+        )
+
+    def summary(self, session: Session) -> dict:
+        """Return questionnaire stats."""
+        total = session.query(func.count(Questionnaire.id)).scalar() or 0
+
+        status_rows = (
+            session.query(Questionnaire.status, func.count(Questionnaire.id))
+            .group_by(Questionnaire.status)
+            .all()
+        )
+        by_status = {s: c for s, c in status_rows}
+
+        overdue_count = len(self.overdue(session))
+
+        template_count = (
+            session.query(func.count(QuestionnaireTemplate.id))
+            .filter(QuestionnaireTemplate.is_active == True)  # noqa: E712
+            .scalar() or 0
+        )
+
+        # Average risk score of scored questionnaires
+        avg_risk = (
+            session.query(func.avg(Questionnaire.risk_score))
+            .filter(Questionnaire.risk_score != None)  # noqa: E711
+            .scalar()
+        )
+
+        return {
+            "total": total,
+            "by_status": by_status,
+            "overdue": overdue_count,
+            "templates": template_count,
+            "avg_risk_score": round(float(avg_risk), 1) if avg_risk else None,
+        }

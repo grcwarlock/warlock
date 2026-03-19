@@ -35,7 +35,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -59,14 +59,20 @@ from warlock.db.models import (
     ConnectorRun,
     ControlMapping,
     ControlResult,
+    DataSilo,
     Finding,
     Issue,
     IssueComment,
+    Personnel,
     PostureSnapshot,
+    Questionnaire,
+    QuestionnaireTemplate,
     RawEvent,
     RiskAnalysis,
     SystemProfile,
     User,
+    LegalHold,
+    TrustAccessRequest,
 )
 from warlock.db.repository import get_repos
 
@@ -376,6 +382,28 @@ app = FastAPI(
 from warlock.api.middleware import register_middleware  # noqa: E402
 
 register_middleware(app)
+
+# Register trust portal (public, no auth)
+from warlock.api.trust_portal import router as trust_router  # noqa: E402
+
+app.include_router(trust_router)
+
+# Register OPA policy gate as optional middleware (only if OPA URL is configured)
+from warlock.api.policy_gate import get_policy_gate  # noqa: E402
+
+_policy_gate = get_policy_gate()
+if _policy_gate.enabled:
+
+    @app.middleware("http")
+    async def opa_policy_middleware(request: Request, call_next):
+        # Skip trust portal (public) and health endpoints
+        path = request.url.path
+        if path.startswith("/trust") or path.endswith("/health"):
+            return await call_next(request)
+        # OPA evaluation happens via dependency injection, not middleware
+        # This middleware just attaches the gate to request state
+        request.state.policy_gate = _policy_gate
+        return await call_next(request)
 
 PREFIX = "/api/v1"
 
@@ -2540,6 +2568,941 @@ def system_ssp_header(
     if not sp:
         raise HTTPException(status_code=404, detail="System profile not found")
     return mgr.generate_ssp_header(sp)
+
+
+# =========================================================================
+# Retention Policies
+# =========================================================================
+
+
+class RetentionReportResponse(BaseModel):
+    total_raw_events: int
+    age_buckets: dict[str, int]
+    purgeable: dict[str, int]
+    active_holds: list[dict[str, Any]]
+    active_hold_count: int
+    framework_retention: dict[str, int]
+
+
+class PurgeRequest(BaseModel):
+    dry_run: bool = True
+    framework: str | None = None
+
+
+class LegalHoldCreateRequest(BaseModel):
+    reason: str
+    start_date: str
+    end_date: str | None = None
+
+
+class LegalHoldResponse(BaseModel):
+    id: str
+    reason: str
+    start_date: str | None
+    end_date: str | None
+    created_by: str | None
+    is_active: bool
+    created_at: str | None
+
+
+@app.get(PREFIX + "/retention/report", response_model=RetentionReportResponse)
+def retention_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.retention import RetentionManager
+    mgr = RetentionManager()
+    report = mgr.retention_report(db)
+    return RetentionReportResponse(**report)
+
+
+@app.post(PREFIX + "/retention/purge")
+def retention_purge(
+    body: PurgeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("delete")),
+):
+    from warlock.workflows.retention import RetentionManager
+    mgr = RetentionManager()
+    result = mgr.purge_expired(db, dry_run=body.dry_run, framework=body.framework)
+    return result
+
+
+@app.post(PREFIX + "/retention/legal-hold", response_model=LegalHoldResponse, status_code=201)
+def create_legal_hold(
+    body: LegalHoldCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.retention import RetentionManager
+    mgr = RetentionManager()
+    hold_id = mgr.set_legal_hold(
+        db,
+        reason=body.reason,
+        start_date=body.start_date,
+        end_date=body.end_date,
+        actor=current_user.email,
+    )
+    hold = db.query(LegalHold).filter(LegalHold.id == hold_id).first()
+    return LegalHoldResponse(
+        id=hold.id,
+        reason=hold.reason,
+        start_date=_dt_str(hold.start_date),
+        end_date=_dt_str(hold.end_date),
+        created_by=hold.created_by,
+        is_active=hold.is_active,
+        created_at=_dt_str(hold.created_at),
+    )
+
+
+@app.get(PREFIX + "/retention/legal-holds", response_model=list[LegalHoldResponse])
+def list_legal_holds(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.retention import RetentionManager
+    mgr = RetentionManager()
+    holds = mgr.active_holds(db)
+    return [
+        LegalHoldResponse(
+            id=h["id"],
+            reason=h["reason"],
+            start_date=h["start_date"],
+            end_date=h["end_date"],
+            created_by=h["created_by"],
+            is_active=h["is_active"],
+            created_at=h["created_at"],
+        )
+        for h in holds
+    ]
+
+
+@app.delete(PREFIX + "/retention/legal-holds/{hold_id}", response_model=MessageResponse)
+def remove_legal_hold(
+    hold_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.retention import RetentionManager
+    mgr = RetentionManager()
+    removed = mgr.remove_legal_hold(db, hold_id, actor=current_user.email)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Legal hold not found")
+    return MessageResponse(message="Legal hold removed")
+
+
+# =========================================================================
+# Scheduler
+# =========================================================================
+
+
+class SchedulerStatusResponse(BaseModel):
+    running: bool
+    interval_minutes: int
+    interval_seconds: int
+    last_run: str | None
+    next_run: str | None
+    run_count: int
+    last_error: str | None
+
+
+class SchedulerStartRequest(BaseModel):
+    interval_minutes: int = 60
+
+
+@app.get(PREFIX + "/scheduler/status", response_model=SchedulerStatusResponse)
+def scheduler_status(
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.pipeline.scheduler import get_scheduler
+    sched = get_scheduler()
+    return SchedulerStatusResponse(**sched.status)
+
+
+@app.post(PREFIX + "/scheduler/start", response_model=SchedulerStatusResponse)
+def scheduler_start(
+    body: SchedulerStartRequest | None = None,
+    current_user: User = Depends(require_permission("run_pipeline")),
+):
+    from warlock.pipeline.scheduler import get_scheduler
+    interval = body.interval_minutes if body else 60
+    sched = get_scheduler(interval_minutes=interval)
+    sched.interval = interval * 60
+    sched.start()
+    return SchedulerStatusResponse(**sched.status)
+
+
+@app.post(PREFIX + "/scheduler/stop", response_model=SchedulerStatusResponse)
+def scheduler_stop(
+    current_user: User = Depends(require_permission("run_pipeline")),
+):
+    from warlock.pipeline.scheduler import get_scheduler
+    sched = get_scheduler()
+    sched.stop()
+    return SchedulerStatusResponse(**sched.status)
+
+
+# =========================================================================
+# Tool Config Management
+# =========================================================================
+
+
+@app.get(PREFIX + "/tools", response_model=list[dict[str, Any]])
+def list_tools(
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.tool_config import ToolConfigManager
+    mgr = ToolConfigManager()
+    return mgr.list_connectors()
+
+
+@app.post(PREFIX + "/tools/{provider}/test")
+def test_tool(
+    provider: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.tool_config import ToolConfigManager
+    mgr = ToolConfigManager()
+    return mgr.test_connector(db, provider)
+
+
+@app.post(PREFIX + "/tools/test-all")
+def test_all_tools(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.tool_config import ToolConfigManager
+    mgr = ToolConfigManager()
+    return mgr.test_all(db)
+
+
+@app.get(PREFIX + "/tools/{provider}/env-vars")
+def tool_env_vars(
+    provider: str,
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.tool_config import ToolConfigManager
+    mgr = ToolConfigManager()
+    return mgr.get_required_env_vars(provider)
+
+
+@app.get(PREFIX + "/tools/{provider}/history")
+def tool_history(
+    provider: str,
+    limit: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.tool_config import ToolConfigManager
+    mgr = ToolConfigManager()
+    return mgr.connection_history(db, provider, limit=limit)
+
+
+# =========================================================================
+# Personnel Management
+# =========================================================================
+
+
+class PersonnelResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    department: str | None = None
+    title: str | None = None
+    manager_email: str | None = None
+    employee_type: str | None = None
+    hr_employee_id: str | None = None
+    hire_date: str | None = None
+    termination_date: str | None = None
+    hr_status: str | None = None
+    background_check_status: str | None = None
+    idp_provider: str | None = None
+    idp_status: str | None = None
+    idp_last_login: str | None = None
+    mfa_enabled: bool | None = None
+    idp_groups: list[str] | None = None
+    training_status: str | None = None
+    last_training_date: str | None = None
+    phishing_score: float | None = None
+    last_access_review: str | None = None
+    access_review_status: str | None = None
+    flags: list[str] | None = None
+    risk_score: float = 0.0
+    is_active: bool = True
+    last_synced: str | None = None
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class PersonnelSummaryResponse(BaseModel):
+    total: int
+    by_status: dict[str, int]
+    by_department: dict[str, int]
+    flagged: int
+    terminated_with_active_access: int
+    no_mfa: int
+
+
+class PersonnelSyncResponse(BaseModel):
+    hr: dict[str, int] | None = None
+    idp: dict[str, int] | None = None
+    training: dict[str, int] | None = None
+    total_personnel: int = 0
+
+
+def _personnel_to_response(p: Personnel) -> PersonnelResponse:
+    return PersonnelResponse(
+        id=p.id,
+        email=p.email,
+        full_name=p.full_name,
+        department=p.department,
+        title=p.title,
+        manager_email=p.manager_email,
+        employee_type=p.employee_type,
+        hr_employee_id=p.hr_employee_id,
+        hire_date=_dt_str(p.hire_date),
+        termination_date=_dt_str(p.termination_date),
+        hr_status=p.hr_status,
+        background_check_status=p.background_check_status,
+        idp_provider=p.idp_provider,
+        idp_status=p.idp_status,
+        idp_last_login=_dt_str(p.idp_last_login),
+        mfa_enabled=p.mfa_enabled,
+        idp_groups=p.idp_groups,
+        training_status=p.training_status,
+        last_training_date=_dt_str(p.last_training_date),
+        phishing_score=p.phishing_score,
+        last_access_review=_dt_str(p.last_access_review),
+        access_review_status=p.access_review_status,
+        flags=p.flags or [],
+        risk_score=p.risk_score or 0.0,
+        is_active=p.is_active or True,
+        last_synced=_dt_str(p.last_synced),
+        created_at=_dt_str(p.created_at) or "",
+    )
+
+
+@app.get(PREFIX + "/personnel", response_model=PaginatedResponse)
+def list_personnel(
+    department: str | None = Query(None),
+    hr_status: str | None = Query(None, alias="status"),
+    has_flags: bool | None = Query(None),
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    query = db.query(Personnel).filter(Personnel.is_active == True)  # noqa: E712
+    if department:
+        query = query.filter(Personnel.department == department)
+    if hr_status:
+        query = query.filter(Personnel.hr_status == hr_status)
+    if has_flags is True:
+        query = query.filter(Personnel.risk_score > 0)
+    elif has_flags is False:
+        query = query.filter(Personnel.risk_score == 0)
+
+    total = query.count()
+    rows = query.order_by(Personnel.full_name).offset(offset).limit(limit).all()
+    items = [_personnel_to_response(p) for p in rows]
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
+
+
+@app.get(PREFIX + "/personnel/flags", response_model=list[PersonnelResponse])
+def personnel_flags(
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    rows = (
+        db.query(Personnel)
+        .filter(Personnel.is_active == True, Personnel.risk_score > 0)  # noqa: E712
+        .order_by(Personnel.risk_score.desc())
+        .limit(limit)
+        .all()
+    )
+    return [_personnel_to_response(p) for p in rows]
+
+
+@app.get(PREFIX + "/personnel/terminated-active", response_model=list[PersonnelResponse])
+def personnel_terminated_active(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.personnel import PersonnelManager
+    mgr = PersonnelManager()
+    rows = mgr.terminated_with_active_access(db)
+    return [_personnel_to_response(p) for p in rows]
+
+
+@app.get(PREFIX + "/personnel/summary", response_model=PersonnelSummaryResponse)
+def personnel_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.personnel import PersonnelManager
+    mgr = PersonnelManager()
+    return PersonnelSummaryResponse(**mgr.summary(db))
+
+
+@app.post(PREFIX + "/personnel/sync", response_model=PersonnelSyncResponse)
+def personnel_sync(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.personnel import PersonnelManager
+    mgr = PersonnelManager()
+    result = mgr.sync_all(db)
+    return PersonnelSyncResponse(**result)
+
+
+@app.get(PREFIX + "/personnel/{personnel_id}", response_model=PersonnelResponse)
+def get_personnel(
+    personnel_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    p = db.query(Personnel).filter(Personnel.id == personnel_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Personnel record not found")
+    return _personnel_to_response(p)
+
+
+# =========================================================================
+# Vendor Questionnaires
+# =========================================================================
+
+
+class TemplateCreateRequest(BaseModel):
+    name: str
+    template_type: str
+    questions: list[dict[str, Any]]
+    description: str = ""
+    version: str = "1.0"
+
+
+class TemplateResponse(BaseModel):
+    id: str
+    name: str
+    template_type: str
+    version: str | None = None
+    description: str | None = None
+    total_questions: int = 0
+    is_active: bool = True
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class QuestionnaireCreateRequest(BaseModel):
+    template_id: str
+    vendor_name: str
+    vendor_email: str | None = None
+    due_days: int = 30
+
+
+class QuestionnaireResponseModel(BaseModel):
+    id: str
+    template_id: str
+    vendor_name: str
+    vendor_contact_email: str | None = None
+    status: str
+    completion_pct: float = 0.0
+    risk_score: float | None = None
+    risk_findings: list[dict[str, Any]] | None = None
+    ai_suggested_answers: dict[str, Any] | None = None
+    sent_at: str | None = None
+    due_date: str | None = None
+    completed_at: str | None = None
+    reviewed_by: str | None = None
+    reviewed_at: str | None = None
+    responses: dict[str, Any] | None = None
+    created_at: str
+    updated_at: str | None = None
+    created_by: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class QuestionnaireSubmitRequest(BaseModel):
+    responses: dict[str, Any]
+
+
+class QuestionnaireTransitionRequest(BaseModel):
+    status: str
+
+
+class QuestionnaireSummaryResponse(BaseModel):
+    total: int
+    by_status: dict[str, int]
+    overdue: int
+    templates: int
+    avg_risk_score: float | None = None
+
+
+def _template_to_response(t: QuestionnaireTemplate) -> TemplateResponse:
+    return TemplateResponse(
+        id=t.id,
+        name=t.name,
+        template_type=t.template_type,
+        version=t.version,
+        description=t.description,
+        total_questions=t.total_questions or 0,
+        is_active=t.is_active or True,
+        created_at=_dt_str(t.created_at) or "",
+    )
+
+
+def _questionnaire_to_response(q: Questionnaire) -> QuestionnaireResponseModel:
+    return QuestionnaireResponseModel(
+        id=q.id,
+        template_id=q.template_id,
+        vendor_name=q.vendor_name,
+        vendor_contact_email=q.vendor_contact_email,
+        status=q.status,
+        completion_pct=q.completion_pct or 0.0,
+        risk_score=q.risk_score,
+        risk_findings=q.risk_findings,
+        ai_suggested_answers=q.ai_suggested_answers,
+        sent_at=_dt_str(q.sent_at),
+        due_date=_dt_str(q.due_date),
+        completed_at=_dt_str(q.completed_at),
+        reviewed_by=q.reviewed_by,
+        reviewed_at=_dt_str(q.reviewed_at),
+        responses=q.responses,
+        created_at=_dt_str(q.created_at) or "",
+        updated_at=_dt_str(q.updated_at),
+        created_by=q.created_by,
+    )
+
+
+@app.get(PREFIX + "/questionnaires/templates", response_model=list[TemplateResponse])
+def list_questionnaire_templates(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    rows = (
+        db.query(QuestionnaireTemplate)
+        .filter(QuestionnaireTemplate.is_active == True)  # noqa: E712
+        .order_by(QuestionnaireTemplate.name)
+        .all()
+    )
+    return [_template_to_response(t) for t in rows]
+
+
+@app.post(PREFIX + "/questionnaires/templates", response_model=TemplateResponse, status_code=201)
+def create_questionnaire_template(
+    body: TemplateCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    t = mgr.create_template(
+        db,
+        name=body.name,
+        template_type=body.template_type,
+        questions=body.questions,
+        description=body.description,
+        version=body.version,
+    )
+    return _template_to_response(t)
+
+
+@app.post(PREFIX + "/questionnaires/templates/seed", response_model=list[TemplateResponse])
+def seed_questionnaire_templates(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    templates = mgr.seed_default_templates(db)
+    return [_template_to_response(t) for t in templates]
+
+
+@app.get(PREFIX + "/questionnaires/overdue", response_model=list[QuestionnaireResponseModel])
+def overdue_questionnaires(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    rows = mgr.overdue(db)
+    return [_questionnaire_to_response(q) for q in rows]
+
+
+@app.get(PREFIX + "/questionnaires", response_model=PaginatedResponse)
+def list_questionnaires(
+    vendor_name: str | None = Query(None),
+    q_status: str | None = Query(None, alias="status"),
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    query = db.query(Questionnaire)
+    if vendor_name:
+        query = query.filter(Questionnaire.vendor_name == vendor_name)
+    if q_status:
+        query = query.filter(Questionnaire.status == q_status)
+    total = query.count()
+    rows = query.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
+    items = [_questionnaire_to_response(q) for q in rows]
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
+
+
+@app.post(PREFIX + "/questionnaires", response_model=QuestionnaireResponseModel, status_code=201)
+def create_questionnaire_endpoint(
+    body: QuestionnaireCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    try:
+        q = mgr.create_questionnaire(
+            db,
+            template_id=body.template_id,
+            vendor_name=body.vendor_name,
+            vendor_email=body.vendor_email,
+            due_days=body.due_days,
+            created_by=current_user.email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _questionnaire_to_response(q)
+
+
+@app.get(PREFIX + "/questionnaires/{questionnaire_id}", response_model=QuestionnaireResponseModel)
+def get_questionnaire(
+    questionnaire_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    q = db.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Questionnaire not found")
+    return _questionnaire_to_response(q)
+
+
+@app.post(PREFIX + "/questionnaires/{questionnaire_id}/responses", response_model=QuestionnaireResponseModel)
+def submit_questionnaire_responses(
+    questionnaire_id: str,
+    body: QuestionnaireSubmitRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    try:
+        q = mgr.submit_bulk_responses(db, questionnaire_id, body.responses)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _questionnaire_to_response(q)
+
+
+@app.post(PREFIX + "/questionnaires/{questionnaire_id}/score", response_model=QuestionnaireResponseModel)
+def score_questionnaire(
+    questionnaire_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    try:
+        q = mgr.score_responses(db, questionnaire_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _questionnaire_to_response(q)
+
+
+@app.post(PREFIX + "/questionnaires/{questionnaire_id}/ai-suggest", response_model=QuestionnaireResponseModel)
+def ai_suggest_questionnaire(
+    questionnaire_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    try:
+        q = mgr.ai_suggest_answers(db, questionnaire_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _questionnaire_to_response(q)
+
+
+@app.post(PREFIX + "/questionnaires/{questionnaire_id}/transition", response_model=QuestionnaireResponseModel)
+def transition_questionnaire(
+    questionnaire_id: str,
+    body: QuestionnaireTransitionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.questionnaires import QuestionnaireManager
+    mgr = QuestionnaireManager()
+    try:
+        q = mgr.transition(db, questionnaire_id, body.status, actor=current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _questionnaire_to_response(q)
+
+
+# =========================================================================
+# Data Silos
+# =========================================================================
+
+
+class DataSiloCreateRequest(BaseModel):
+    name: str
+    silo_type: str
+    provider: str | None = None
+    location: str | None = None
+    data_classification: str = "unknown"
+    contains_pii: bool = False
+    contains_phi: bool = False
+    contains_pci: bool = False
+    owner: str | None = None
+    team: str | None = None
+
+
+class DataSiloUpdateRequest(BaseModel):
+    data_classification: str | None = None
+    contains_pii: bool | None = None
+    contains_phi: bool | None = None
+    contains_pci: bool | None = None
+    contains_credentials: bool | None = None
+    encrypted_at_rest: bool | None = None
+    encrypted_in_transit: bool | None = None
+    access_logging_enabled: bool | None = None
+    backup_enabled: bool | None = None
+    owner: str | None = None
+    team: str | None = None
+    remediation_status: str | None = None
+    remediation_notes: str | None = None
+
+
+class DataSiloResponse(BaseModel):
+    id: str
+    name: str
+    silo_type: str
+    provider: str | None = None
+    location: str | None = None
+    data_classification: str = "unknown"
+    contains_pii: bool = False
+    contains_phi: bool = False
+    contains_pci: bool = False
+    contains_credentials: bool = False
+    last_scan_date: str | None = None
+    scan_status: str | None = None
+    sensitive_field_count: int = 0
+    total_records: int | None = None
+    scan_findings: list[dict[str, Any]] | None = None
+    encrypted_at_rest: bool | None = None
+    encrypted_in_transit: bool | None = None
+    access_logging_enabled: bool | None = None
+    backup_enabled: bool | None = None
+    retention_days: int | None = None
+    owner: str | None = None
+    team: str | None = None
+    applicable_frameworks: list[str] | None = None
+    remediation_status: str | None = None
+    remediation_notes: str | None = None
+    is_active: bool = True
+    created_at: str
+    updated_at: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class DataSiloSummaryResponse(BaseModel):
+    total: int
+    by_type: dict[str, int]
+    by_classification: dict[str, int]
+    by_provider: dict[str, int]
+    pii_count: int
+    phi_count: int
+    pci_count: int
+    unprotected: int
+    unclassified: int
+
+
+def _data_silo_to_response(s: DataSilo) -> DataSiloResponse:
+    return DataSiloResponse(
+        id=s.id,
+        name=s.name,
+        silo_type=s.silo_type,
+        provider=s.provider,
+        location=s.location,
+        data_classification=s.data_classification or "unknown",
+        contains_pii=s.contains_pii or False,
+        contains_phi=s.contains_phi or False,
+        contains_pci=s.contains_pci or False,
+        contains_credentials=s.contains_credentials or False,
+        last_scan_date=_dt_str(s.last_scan_date),
+        scan_status=s.scan_status,
+        sensitive_field_count=s.sensitive_field_count or 0,
+        total_records=s.total_records,
+        scan_findings=s.scan_findings,
+        encrypted_at_rest=s.encrypted_at_rest,
+        encrypted_in_transit=s.encrypted_in_transit,
+        access_logging_enabled=s.access_logging_enabled,
+        backup_enabled=s.backup_enabled,
+        retention_days=s.retention_days,
+        owner=s.owner,
+        team=s.team,
+        applicable_frameworks=s.applicable_frameworks,
+        remediation_status=s.remediation_status,
+        remediation_notes=s.remediation_notes,
+        is_active=s.is_active or True,
+        created_at=_dt_str(s.created_at) or "",
+        updated_at=_dt_str(s.updated_at),
+    )
+
+
+@app.get(PREFIX + "/data-silos", response_model=PaginatedResponse)
+def list_data_silos(
+    silo_type: str | None = Query(None, alias="type"),
+    classification: str | None = Query(None),
+    provider: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    query = db.query(DataSilo).filter(DataSilo.is_active == True)  # noqa: E712
+    if silo_type:
+        query = query.filter(DataSilo.silo_type == silo_type)
+    if classification:
+        query = query.filter(DataSilo.data_classification == classification)
+    if provider:
+        query = query.filter(DataSilo.provider == provider)
+    total = query.count()
+    rows = query.order_by(DataSilo.name).offset(offset).limit(limit).all()
+    items = [_data_silo_to_response(s) for s in rows]
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
+
+
+@app.post(PREFIX + "/data-silos", response_model=DataSiloResponse, status_code=201)
+def create_data_silo(
+    body: DataSiloCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    now = datetime.now(timezone.utc)
+    silo = DataSilo(
+        name=body.name,
+        silo_type=body.silo_type,
+        provider=body.provider,
+        location=body.location,
+        data_classification=body.data_classification,
+        contains_pii=body.contains_pii,
+        contains_phi=body.contains_phi,
+        contains_pci=body.contains_pci,
+        owner=body.owner,
+        team=body.team,
+        is_active=True,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(silo)
+    db.flush()
+    return _data_silo_to_response(silo)
+
+
+@app.get(PREFIX + "/data-silos/unclassified", response_model=list[DataSiloResponse])
+def unclassified_data_silos(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.data_silos import DataSiloManager
+    mgr = DataSiloManager()
+    rows = mgr.unclassified(db)
+    return [_data_silo_to_response(s) for s in rows]
+
+
+@app.get(PREFIX + "/data-silos/unprotected", response_model=list[DataSiloResponse])
+def unprotected_data_silos(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.data_silos import DataSiloManager
+    mgr = DataSiloManager()
+    rows = mgr.unprotected(db)
+    return [_data_silo_to_response(s) for s in rows]
+
+
+@app.get(PREFIX + "/data-silos/summary", response_model=DataSiloSummaryResponse)
+def data_silo_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.data_silos import DataSiloManager
+    mgr = DataSiloManager()
+    return DataSiloSummaryResponse(**mgr.summary(db))
+
+
+@app.post(PREFIX + "/data-silos/discover", response_model=MessageResponse)
+def discover_data_silos(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.data_silos import DataSiloManager
+    mgr = DataSiloManager()
+    result = mgr.discover_from_findings(db)
+    return MessageResponse(
+        message=f"Discovery complete: {result['created']} created, "
+        f"{result['updated']} updated, {result['total']} total"
+    )
+
+
+@app.get(PREFIX + "/data-silos/{silo_id}", response_model=DataSiloResponse)
+def get_data_silo(
+    silo_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    s = db.query(DataSilo).filter(DataSilo.id == silo_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="Data silo not found")
+    return _data_silo_to_response(s)
+
+
+@app.patch(PREFIX + "/data-silos/{silo_id}", response_model=DataSiloResponse)
+def update_data_silo(
+    silo_id: str,
+    body: DataSiloUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    silo = db.query(DataSilo).filter(DataSilo.id == silo_id).first()
+    if not silo:
+        raise HTTPException(status_code=404, detail="Data silo not found")
+
+    update_data = body.model_dump(exclude_none=True)
+    for key, value in update_data.items():
+        if hasattr(silo, key):
+            setattr(silo, key, value)
+
+    # If classification changed, use the manager to auto-assign frameworks
+    if body.data_classification is not None or any(
+        k in update_data for k in ("contains_pii", "contains_phi", "contains_pci")
+    ):
+        from warlock.workflows.data_silos import DataSiloManager
+        mgr = DataSiloManager()
+        mgr.classify_silo(
+            db, silo_id,
+            classification=silo.data_classification or "unknown",
+            contains_pii=silo.contains_pii,
+            contains_phi=silo.contains_phi,
+            contains_pci=silo.contains_pci,
+        )
+    else:
+        silo.updated_at = datetime.now(timezone.utc)
+        db.flush()
+
+    return _data_silo_to_response(silo)
 
 
 # =========================================================================
