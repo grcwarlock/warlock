@@ -7,7 +7,7 @@ Evidence flows through 4 immutable stages with SHA-256 integrity hashing at ever
 ```
 Stage 1: Connectors (40 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (41 parsers) → FindingData       → transform to universal findings
-Stage 3: Control Mapper           → ControlMappingData → map to 1,564 controls across 6 frameworks
+Stage 3: Control Mapper           → ControlMappingData → map to 1,779 controls across 10 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
 
@@ -23,7 +23,11 @@ Every finding traces back to its raw API response. Every control result traces b
 | ISO 42001:2023 | 39 | | AI Management System |
 | SOC 2 (TSC) | 46 | | CC1-CC9, A1, C1, PI1, P1 |
 | UCF (Unified) | 115 | | 20 domains, maps to all frameworks |
-| **Total** | **1,564** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
+| FedRAMP Moderate | 26 | | NIST 800-53 overlay for cloud systems |
+| HIPAA Security Rule | 64 | | Administrative, Physical, Technical safeguards |
+| CMMC Level 2 | 110 | | 14 families aligned with NIST 800-171 |
+| GDPR | 15 | | EU data protection regulation |
+| **Total** | **1,779** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
 ## Connectors (40)
 

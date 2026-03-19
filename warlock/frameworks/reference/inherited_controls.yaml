@@ -1,0 +1,99 @@
+cloud_inherited:
+  aws:
+    fully_inherited:
+      - PE-1
+      - PE-2
+      - PE-3
+      - PE-6
+      - PE-8
+      - PE-9
+      - PE-10
+      - PE-11
+      - PE-12
+      - PE-13
+      - PE-14
+      - PE-15
+      - PE-16
+      - PE-17
+      - PE-18
+    shared:
+      - AC-2
+      - AC-3
+      - AU-2
+      - SC-7
+      - SC-8
+      - SC-12
+      - SC-13
+      - SC-28
+      - CM-2
+      - CM-6
+      - IA-2
+      - IA-5
+      - SI-4
+    reference: "AWS FedRAMP Package — https://aws.amazon.com/compliance/fedramp/"
+
+  azure:
+    fully_inherited:
+      - PE-1
+      - PE-2
+      - PE-3
+      - PE-6
+      - PE-8
+      - PE-9
+      - PE-10
+      - PE-11
+      - PE-12
+      - PE-13
+      - PE-14
+      - PE-15
+      - PE-16
+      - PE-17
+      - PE-18
+    shared:
+      - AC-2
+      - AC-3
+      - AU-2
+      - SC-7
+      - SC-8
+      - SC-12
+      - SC-13
+      - SC-28
+      - CM-2
+      - CM-6
+      - IA-2
+      - IA-5
+      - SI-4
+    reference: "Microsoft Azure FedRAMP Package"
+
+  gcp:
+    fully_inherited:
+      - PE-1
+      - PE-2
+      - PE-3
+      - PE-6
+      - PE-8
+      - PE-9
+      - PE-10
+      - PE-11
+      - PE-12
+      - PE-13
+      - PE-14
+      - PE-15
+      - PE-16
+      - PE-17
+      - PE-18
+    shared:
+      - AC-2
+      - AC-3
+      - AU-2
+      - SC-7
+      - SC-8
+      - SC-12
+      - SC-13
+      - SC-28
+      - CM-2
+      - CM-6
+      - IA-2
+      - IA-5
+      - SI-4
+    reference: "Google Cloud FedRAMP Package"

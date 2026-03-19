@@ -1,0 +1,895 @@
+framework_id: cmmc_l2
+control_families:
+  AC:
+    controls:
+      AC.L2-3.1.1:
+        checks:
+        - id: ac_l2_3_1_1
+          description: Limit system access to authorized users, processes acting on
+            behalf of authorized users, and devices (including other systems). Ensure
+            that only authenticated and approved entities can connect to organizational
+            systems processing, storing, or transmitting CUI.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.2:
+        checks:
+        - id: ac_l2_3_1_2
+          description: Limit system access to the types of transactions and functions
+            that authorized users are permitted to execute. Enforce approved authorizations
+            for logical access to information and system resources in accordance with
+            applicable access-control policies.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.3:
+        checks:
+        - id: ac_l2_3_1_3
+          description: Control the flow of CUI in accordance with approved authorizations.
+            Information flow control regulates where CUI is allowed to travel within
+            a system and between interconnected systems, enforcing approved paths
+            and preventing unauthorized disclosure.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.4:
+        checks:
+        - id: ac_l2_3_1_4
+          description: Separate the duties of individuals to reduce the risk of malicious
+            activity without collusion. Assign different people to authorize, execute,
+            and review critical functions so that no single individual can complete
+            a sensitive transaction alone.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.5:
+        checks:
+        - id: ac_l2_3_1_5
+          description: Employ the principle of least privilege, including for specific
+            security functions and privileged accounts. Grant only the minimum access
+            rights necessary for users to perform their assigned duties and revoke
+            access promptly when no longer required.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.6:
+        checks:
+        - id: ac_l2_3_1_6
+          description: Use non-privileged accounts or roles when accessing non-security
+            functions. Require administrators to use separate non-privileged accounts
+            for routine tasks such as email, web browsing, and general office work
+            to reduce the attack surface.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.7:
+        checks:
+        - id: ac_l2_3_1_7
+          description: Prevent non-privileged users from executing privileged functions
+            and capture the execution of such functions in audit logs. Ensure that
+            elevated operations are restricted to authorized personnel and are fully
+            traceable.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.8:
+        checks:
+        - id: ac_l2_3_1_8
+          description: Limit unsuccessful logon attempts by enforcing account lockout
+            policies after a defined number of consecutive invalid access attempts.
+            Protect systems from brute-force and credential-stuffing attacks through
+            automatic lockout or delay mechanisms.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.9:
+        checks:
+        - id: ac_l2_3_1_9
+          description: Provide privacy and security notices consistent with applicable
+            CUI rules. Display system use notification messages or banners before
+            granting access that describe conditions of use, monitoring policies,
+            and potential legal consequences of unauthorized access.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.10:
+        checks:
+        - id: ac_l2_3_1_10
+          description: Use session lock with pattern-hiding displays to prevent access
+            and viewing of data after a period of inactivity. Automatically activate
+            a screen lock or session timeout after a configurable idle period to protect
+            unattended workstations and terminals.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.11:
+        checks:
+        - id: ac_l2_3_1_11
+          description: Terminate (automatically) a user session after a defined condition
+            such as a period of inactivity, exceeding a maximum session duration,
+            or when a user explicitly logs out. Ensure that session tokens are invalidated
+            and resources are released.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.12:
+        checks:
+        - id: ac_l2_3_1_12
+          description: Monitor and control remote access sessions. Employ automated
+            mechanisms to monitor and record remote access methods, detect anomalous
+            behavior, and alert administrators to unauthorized remote connection attempts.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.13:
+        checks:
+        - id: ac_l2_3_1_13
+          description: Employ cryptographic mechanisms to protect the confidentiality
+            of remote access sessions. Use VPN tunnels or other encrypted channels
+            (e.g., TLS 1.2+, IPsec) for all remote connections to systems processing
+            CUI.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.14:
+        checks:
+        - id: ac_l2_3_1_14
+          description: Route remote access via managed access control points. Direct
+            all remote connections through a limited number of monitored and controlled
+            network access points to enable consistent enforcement of security policies.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.15:
+        checks:
+        - id: ac_l2_3_1_15
+          description: Authorize remote execution of privileged commands and remote
+            access to security-relevant information only for compelling operational
+            needs. Document and approve all privileged remote access in advance.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.16:
+        checks:
+        - id: ac_l2_3_1_16
+          description: Authorize wireless access prior to allowing such connections.
+            Establish usage restrictions, configuration requirements, and connection
+            requirements for each type of wireless access and ensure devices are approved
+            before connecting.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.17:
+        checks:
+        - id: ac_l2_3_1_17
+          description: Protect wireless access using authentication and encryption.
+            Implement WPA3 or equivalent enterprise-grade wireless security protocols
+            to safeguard CUI transmitted over wireless networks from eavesdropping
+            and unauthorized access.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.18:
+        checks:
+        - id: ac_l2_3_1_18
+          description: Control connection of mobile devices. Establish usage restrictions,
+            configuration requirements, connection requirements, and implementation
+            guidance for organization-controlled mobile devices using mobile device
+            management (MDM) solutions.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.19:
+        checks:
+        - id: ac_l2_3_1_19
+          description: Encrypt CUI on mobile devices and mobile computing platforms.
+            Apply full-disk or container-based encryption using FIPS-validated modules
+            to protect CUI stored on laptops, tablets, smartphones, and other portable
+            devices.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.20:
+        checks:
+        - id: ac_l2_3_1_20
+          description: Verify and control or limit connections to and use of external
+            systems. Establish terms and conditions for authorized connections, continuously
+            monitor external interfaces, and restrict the types of data exchanged
+            with external systems.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.21:
+        checks:
+        - id: ac_l2_3_1_21
+          description: Limit use of portable storage devices on external systems.
+            Restrict or prohibit the use of organization-controlled portable storage
+            devices on external systems and enforce technical controls to prevent
+            data exfiltration via removable media.
+        monitoring_frequency: quarterly
+      AC.L2-3.1.22:
+        checks:
+        - id: ac_l2_3_1_22
+          description: Control information posted or processed on publicly accessible
+            systems. Ensure that CUI is not posted on publicly accessible systems,
+            designate individuals authorized to post information, and review content
+            before public release.
+        monitoring_frequency: quarterly
+    name: Access Control
+  AT:
+    controls:
+      AT.L2-3.2.1:
+        checks:
+        - id: at_l2_3_2_1
+          description: Ensure that managers, systems administrators, and users of
+            organizational systems are made aware of the security risks associated
+            with their activities and of the applicable policies, standards, and procedures
+            related to the security of those systems.
+        monitoring_frequency: quarterly
+      AT.L2-3.2.2:
+        checks:
+        - id: at_l2_3_2_2
+          description: Ensure that personnel are trained to carry out their assigned
+            information security-related duties and responsibilities. Provide initial
+            and ongoing role-based security training tied to each individual's system
+            access and responsibilities.
+        monitoring_frequency: quarterly
+      AT.L2-3.2.3:
+        checks:
+        - id: at_l2_3_2_3
+          description: Provide security awareness training on recognizing and reporting
+            potential indicators of insider threat. Educate personnel on behavioral
+            indicators, reporting procedures, and organizational policies for handling
+            suspected insider threats.
+        monitoring_frequency: quarterly
+    name: Awareness and Training
+  AU:
+    controls:
+      AU.L2-3.3.1:
+        checks:
+        - id: au_l2_3_3_1
+          description: Create and retain system audit logs and records to the extent
+            needed to enable the monitoring, analysis, investigation, and reporting
+            of unlawful or unauthorized system activity. Capture events such as logon
+            attempts, privilege changes, and data access.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.2:
+        checks:
+        - id: au_l2_3_3_2
+          description: Ensure that the actions of individual system users can be uniquely
+            traced to those users so they can be held accountable for their actions.
+            Associate audit records with unique user identifiers.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.3:
+        checks:
+        - id: au_l2_3_3_3
+          description: Review and update logged events on a regular basis. Determine
+            which events require auditing based on an ongoing assessment of risk and
+            adjust audit configurations to capture new or emerging threat indicators.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.4:
+        checks:
+        - id: au_l2_3_3_4
+          description: Alert in the event of an audit logging process failure. Configure
+            automated alerts to notify security personnel when audit mechanisms fail,
+            disk capacity for log storage is nearing limits, or log integrity is compromised.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.5:
+        checks:
+        - id: au_l2_3_3_5
+          description: Correlate audit record review, analysis, and reporting processes
+            to support organizational processes for investigation and response to
+            suspicious activities. Use SIEM or centralized log management to identify
+            patterns across multiple data sources.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.6:
+        checks:
+        - id: au_l2_3_3_6
+          description: Provide audit record reduction and report generation to support
+            on-demand analysis and reporting. Implement dashboards, automated summaries,
+            and filtering capabilities to distill actionable insights from large volumes
+            of audit data.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.7:
+        checks:
+        - id: au_l2_3_3_7
+          description: Provide a system capability that compares and synchronizes
+            internal system clocks with an authoritative source to generate time stamps
+            for audit records. Use NTP or PTP with trusted time servers to ensure
+            consistent and accurate timestamps.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.8:
+        checks:
+        - id: au_l2_3_3_8
+          description: Protect audit information and audit logging tools from unauthorized
+            access, modification, and deletion. Apply access controls, integrity checks,
+            and encryption to audit logs so they remain tamper-evident and forensically
+            reliable.
+        monitoring_frequency: quarterly
+      AU.L2-3.3.9:
+        checks:
+        - id: au_l2_3_3_9
+          description: Limit management of audit logging functionality to a subset
+            of privileged users. Restrict the ability to configure, disable, or modify
+            audit mechanisms to authorized security administrators only and log all
+            changes to audit configurations.
+        monitoring_frequency: quarterly
+    name: Audit and Accountability
+  CM:
+    controls:
+      CM.L2-3.4.1:
+        checks:
+        - id: cm_l2_3_4_1
+          description: Establish and maintain baseline configurations and inventories
+            of organizational systems (including hardware, software, firmware, and
+            documentation) throughout the respective system development life cycles.
+            Track deviations from approved baselines.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.2:
+        checks:
+        - id: cm_l2_3_4_2
+          description: Establish and enforce security configuration settings for information
+            technology products employed in organizational systems. Apply hardening
+            benchmarks (e.g., CIS, DISA STIGs) and verify configurations through automated
+            scanning.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.3:
+        checks:
+        - id: cm_l2_3_4_3
+          description: Track, review, approve or disapprove, and log changes to organizational
+            systems. Implement a formal change management process that documents requests,
+            impact assessments, approvals, and implementation verification for all
+            system modifications.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.4:
+        checks:
+        - id: cm_l2_3_4_4
+          description: Analyze the security impact of changes prior to implementation.
+            Evaluate proposed changes to determine potential effects on the security
+            posture of the system, including new vulnerabilities or degraded controls,
+            before authorizing deployment.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.5:
+        checks:
+        - id: cm_l2_3_4_5
+          description: Define, document, approve, and enforce physical and logical
+            access restrictions associated with changes to organizational systems.
+            Limit who can implement changes and ensure that change actions are logged
+            and reversible.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.6:
+        checks:
+        - id: cm_l2_3_4_6
+          description: Employ the principle of least functionality by configuring
+            organizational systems to provide only essential capabilities. Disable
+            or remove unnecessary ports, protocols, services, and software components
+            to reduce the attack surface.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.7:
+        checks:
+        - id: cm_l2_3_4_7
+          description: Restrict, disable, or prevent the use of nonessential programs,
+            functions, ports, protocols, and services. Maintain an approved software
+            and service list and block execution of unauthorized applications and
+            network services.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.8:
+        checks:
+        - id: cm_l2_3_4_8
+          description: Apply deny-by-exception (blacklisting) or allow-by-exception
+            (whitelisting) policies to prevent the use of unauthorized software. Implement
+            application control technologies to enforce organizational software execution
+            policies.
+        monitoring_frequency: quarterly
+      CM.L2-3.4.9:
+        checks:
+        - id: cm_l2_3_4_9
+          description: Control and monitor user-installed software. Establish policies
+            governing what software users may install, enforce technical restrictions
+            through endpoint management tools, and audit installed applications for
+            compliance.
+        monitoring_frequency: quarterly
+    name: Configuration Management
+  IA:
+    controls:
+      IA.L2-3.5.1:
+        checks:
+        - id: ia_l2_3_5_1
+          description: Identify system users, processes acting on behalf of users,
+            and devices. Assign unique identifiers to all entities that access organizational
+            systems to support accountability and audit traceability.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.2:
+        checks:
+        - id: ia_l2_3_5_2
+          description: Authenticate (or verify) the identities of users, processes,
+            or devices as a prerequisite to allowing access to organizational systems.
+            Validate credentials using approved authentication mechanisms before granting
+            system access.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.3:
+        checks:
+        - id: ia_l2_3_5_3
+          description: Use multifactor authentication for local and network access
+            to privileged accounts and for network access to non-privileged accounts.
+            Combine two or more factors (something you know, have, or are) to strengthen
+            identity verification.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.4:
+        checks:
+        - id: ia_l2_3_5_4
+          description: Employ replay-resistant authentication mechanisms for network
+            access to privileged and non-privileged accounts. Use protocols such as
+            Kerberos, TLS with mutual authentication, or challenge-response mechanisms
+            that prevent credential replay.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.5:
+        checks:
+        - id: ia_l2_3_5_5
+          description: Prevent reuse of identifiers for a defined period. Ensure that
+            previously assigned user IDs, device identifiers, and account names are
+            not reassigned to new entities until a sufficient time has elapsed to
+            avoid ambiguity in audit records.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.6:
+        checks:
+        - id: ia_l2_3_5_6
+          description: Disable identifiers after a defined period of inactivity. Automatically
+            disable or remove user accounts and device identifiers that have been
+            inactive for an organization-defined time period to reduce the risk of
+            unauthorized access.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.7:
+        checks:
+        - id: ia_l2_3_5_7
+          description: Enforce a minimum password complexity and change of characters
+            when new passwords are created. Require passwords to meet length, complexity,
+            and composition rules that align with current NIST guidelines (e.g., minimum
+            12 characters).
+        monitoring_frequency: quarterly
+      IA.L2-3.5.8:
+        checks:
+        - id: ia_l2_3_5_8
+          description: Prohibit password reuse for a specified number of generations.
+            Maintain a password history and prevent users from reusing any of their
+            previous passwords within the organization-defined number of password
+            changes.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.9:
+        checks:
+        - id: ia_l2_3_5_9
+          description: Allow temporary password use for system logons with an immediate
+            change to a permanent password. Issue one-time or time-limited passwords
+            for initial access or password resets and require users to set a new password
+            upon first use.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.10:
+        checks:
+        - id: ia_l2_3_5_10
+          description: Store and transmit only cryptographically-protected passwords.
+            Hash passwords using approved algorithms (e.g., bcrypt, scrypt, PBKDF2)
+            with unique salts and transmit credentials only over encrypted channels.
+        monitoring_frequency: quarterly
+      IA.L2-3.5.11:
+        checks:
+        - id: ia_l2_3_5_11
+          description: Obscure feedback of authentication information during the authentication
+            process. Mask password entry fields and avoid displaying authentication
+            credentials in plaintext on screens, in logs, or in error messages.
+        monitoring_frequency: quarterly
+    name: Identification and Authentication
+  IR:
+    controls:
+      IR.L2-3.6.1:
+        checks:
+        - id: ir_l2_3_6_1
+          description: Establish an operational incident-handling capability for organizational
+            systems that includes preparation, detection, analysis, containment, recovery,
+            and user response activities. Maintain an incident response plan that
+            is regularly tested.
+        monitoring_frequency: quarterly
+      IR.L2-3.6.2:
+        checks:
+        - id: ir_l2_3_6_2
+          description: Track, document, and report incidents to designated officials
+            and/or authorities both internal and external to the organization. Define
+            reporting timelines, escalation paths, and communication templates for
+            different incident severity levels.
+        monitoring_frequency: quarterly
+      IR.L2-3.6.3:
+        checks:
+        - id: ir_l2_3_6_3
+          description: Test the organizational incident response capability. Conduct
+            tabletop exercises, simulations, or full-scale tests at least annually
+            to validate the effectiveness of the incident response plan and identify
+            areas for improvement.
+        monitoring_frequency: quarterly
+    name: Incident Response
+  MA:
+    controls:
+      MA.L2-3.7.1:
+        checks:
+        - id: ma_l2_3_7_1
+          description: Perform maintenance on organizational systems. Schedule and
+            conduct regular preventive and corrective maintenance on hardware, software,
+            and firmware in accordance with manufacturer recommendations and organizational
+            policies.
+        monitoring_frequency: quarterly
+      MA.L2-3.7.2:
+        checks:
+        - id: ma_l2_3_7_2
+          description: Provide controls on the tools, techniques, mechanisms, and
+            personnel used to conduct system maintenance. Approve, monitor, and log
+            all maintenance activities and ensure maintenance tools are inspected
+            and authorized before use.
+        monitoring_frequency: quarterly
+      MA.L2-3.7.3:
+        checks:
+        - id: ma_l2_3_7_3
+          description: Ensure equipment removed for off-site maintenance is sanitized
+            of any CUI. Purge or destroy data on storage media before releasing hardware
+            for external repair, following NIST SP 800-88 sanitization guidelines.
+        monitoring_frequency: quarterly
+      MA.L2-3.7.4:
+        checks:
+        - id: ma_l2_3_7_4
+          description: Check media containing diagnostic and test programs for malicious
+            code before the media are used in organizational systems. Scan maintenance
+            media with up-to-date anti-malware tools before connecting to production
+            environments.
+        monitoring_frequency: quarterly
+      MA.L2-3.7.5:
+        checks:
+        - id: ma_l2_3_7_5
+          description: Require multifactor authentication to establish nonlocal maintenance
+            sessions via external network connections and terminate such connections
+            when nonlocal maintenance is complete. Log all remote maintenance sessions.
+        monitoring_frequency: quarterly
+      MA.L2-3.7.6:
+        checks:
+        - id: ma_l2_3_7_6
+          description: Supervise the maintenance activities of maintenance personnel
+            without required access authorization. Escort and monitor non-cleared
+            maintenance workers and verify that their work does not introduce vulnerabilities
+            or compromise CUI.
+        monitoring_frequency: quarterly
+    name: Maintenance
+  MP:
+    controls:
+      MP.L2-3.8.1:
+        checks:
+        - id: mp_l2_3_8_1
+          description: Protect (i.e., physically control and securely store) system
+            media containing CUI, both paper and digital. Store media in locked containers,
+            secure areas, or encrypted volumes and restrict access to authorized personnel.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.2:
+        checks:
+        - id: mp_l2_3_8_2
+          description: Limit access to CUI on system media to authorized users. Implement
+            access controls on digital media and physical safeguards on paper media
+            to prevent unauthorized individuals from viewing or copying CUI.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.3:
+        checks:
+        - id: mp_l2_3_8_3
+          description: Sanitize or destroy system media containing CUI before disposal
+            or release for reuse. Apply sanitization techniques (clear, purge, or
+            destroy) per NIST SP 800-88 based on the media type and sensitivity level.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.4:
+        checks:
+        - id: mp_l2_3_8_4
+          description: Mark media with necessary CUI markings and distribution limitations.
+            Apply appropriate CUI designation indicators, handling caveats, and dissemination
+            controls on both physical and digital media.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.5:
+        checks:
+        - id: mp_l2_3_8_5
+          description: Control access to media containing CUI and maintain accountability
+            for media during transport outside of controlled areas. Track media using
+            logs, chain-of-custody forms, or asset management systems.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.6:
+        checks:
+        - id: mp_l2_3_8_6
+          description: Implement cryptographic mechanisms to protect the confidentiality
+            of CUI stored on digital media during transport unless otherwise protected
+            by alternative physical safeguards. Use FIPS 140-validated encryption
+            for portable storage devices.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.7:
+        checks:
+        - id: mp_l2_3_8_7
+          description: Control the use of removable media on system components. Establish
+            policies restricting removable media types, enforce technical controls
+            to block unauthorized devices, and scan all approved removable media before
+            use.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.8:
+        checks:
+        - id: mp_l2_3_8_8
+          description: Prohibit the use of portable storage devices when such devices
+            have no identifiable owner. Ensure all removable media can be traced to
+            an accountable individual and block anonymous or unregistered devices.
+        monitoring_frequency: quarterly
+      MP.L2-3.8.9:
+        checks:
+        - id: mp_l2_3_8_9
+          description: Protect the confidentiality of backup CUI at storage locations.
+            Encrypt backups using FIPS-validated cryptographic modules, restrict access
+            to backup media, and store copies in physically secure off-site locations.
+        monitoring_frequency: quarterly
+    name: Media Protection
+  PS:
+    controls:
+      PS.L2-3.9.1:
+        checks:
+        - id: ps_l2_3_9_1
+          description: Screen individuals prior to authorizing access to organizational
+            systems containing CUI. Conduct background checks, verify employment eligibility,
+            and assess trustworthiness before granting system access to new personnel.
+        monitoring_frequency: quarterly
+      PS.L2-3.9.2:
+        checks:
+        - id: ps_l2_3_9_2
+          description: Ensure that organizational systems containing CUI are protected
+            during and after personnel actions such as terminations and transfers.
+            Revoke access promptly, retrieve credentials and equipment, and conduct
+            exit interviews.
+        monitoring_frequency: quarterly
+    name: Personnel Security
+  PE:
+    controls:
+      PE.L2-3.10.1:
+        checks:
+        - id: pe_l2_3_10_1
+          description: Limit physical access to organizational systems, equipment,
+            and the respective operating environments to authorized individuals. Use
+            physical barriers, badge readers, biometrics, and security guards to enforce
+            facility access controls.
+        monitoring_frequency: quarterly
+      PE.L2-3.10.2:
+        checks:
+        - id: pe_l2_3_10_2
+          description: Protect and monitor the physical facility and support infrastructure
+            for organizational systems. Deploy surveillance cameras, intrusion detection
+            sensors, and environmental monitoring to safeguard data-processing areas.
+        monitoring_frequency: quarterly
+      PE.L2-3.10.3:
+        checks:
+        - id: pe_l2_3_10_3
+          description: Escort visitors and monitor visitor activity. Require visitors
+            to sign in, wear identification badges, and be accompanied by authorized
+            personnel when in areas containing systems that process, store, or transmit
+            CUI.
+        monitoring_frequency: quarterly
+      PE.L2-3.10.4:
+        checks:
+        - id: pe_l2_3_10_4
+          description: Maintain audit logs of physical access. Record entry and exit
+            events at facility access points using electronic badge logs or sign-in
+            sheets and retain records for the organization-defined retention period.
+        monitoring_frequency: quarterly
+      PE.L2-3.10.5:
+        checks:
+        - id: pe_l2_3_10_5
+          description: Control and manage physical access devices such as keys, locks,
+            combinations, and card readers. Inventory all physical access devices,
+            change combinations and keys periodically, and deactivate lost or compromised
+            credentials immediately.
+        monitoring_frequency: quarterly
+      PE.L2-3.10.6:
+        checks:
+        - id: pe_l2_3_10_6
+          description: Enforce safeguarding measures for CUI at alternate work sites.
+            Apply physical and technical security controls at telework locations,
+            home offices, and satellite facilities equivalent to those at the primary
+            work site.
+        monitoring_frequency: quarterly
+    name: Physical Protection
+  RA:
+    controls:
+      RA.L2-3.11.1:
+        checks:
+        - id: ra_l2_3_11_1
+          description: Periodically assess the risk to organizational operations (including
+            mission, functions, image, or reputation), organizational assets, and
+            individuals resulting from the operation of organizational systems and
+            the processing, storage, or transmission of CUI.
+        monitoring_frequency: quarterly
+      RA.L2-3.11.2:
+        checks:
+        - id: ra_l2_3_11_2
+          description: Scan for vulnerabilities in organizational systems and applications
+            periodically and when new vulnerabilities affecting those systems and
+            applications are identified. Use automated scanning tools and maintain
+            current vulnerability databases.
+        monitoring_frequency: quarterly
+      RA.L2-3.11.3:
+        checks:
+        - id: ra_l2_3_11_3
+          description: Remediate vulnerabilities in accordance with risk assessments.
+            Prioritize and track remediation of identified vulnerabilities based on
+            severity, exploitability, and potential impact to CUI, and verify that
+            fixes are applied within defined timeframes.
+        monitoring_frequency: quarterly
+    name: Risk Assessment
+  CA:
+    controls:
+      CA.L2-3.12.1:
+        checks:
+        - id: ca_l2_3_12_1
+          description: Periodically assess the security controls in organizational
+            systems to determine if the controls are effective in their application.
+            Conduct assessments using agreed-upon procedures and document findings
+            for remediation.
+        monitoring_frequency: quarterly
+      CA.L2-3.12.2:
+        checks:
+        - id: ca_l2_3_12_2
+          description: Develop and implement plans of action designed to correct deficiencies
+            and reduce or eliminate vulnerabilities in organizational systems. Track
+            POA&M items to closure with defined milestones and responsible parties.
+        monitoring_frequency: quarterly
+      CA.L2-3.12.3:
+        checks:
+        - id: ca_l2_3_12_3
+          description: Monitor security controls on an ongoing basis to ensure the
+            continued effectiveness of the controls. Implement continuous monitoring
+            strategies that include automated tools, periodic assessments, and status
+            reporting.
+        monitoring_frequency: quarterly
+      CA.L2-3.12.4:
+        checks:
+        - id: ca_l2_3_12_4
+          description: Develop, document, and periodically update system security
+            plans that describe system boundaries, system environments of operation,
+            how security requirements are implemented, and the relationships with
+            or connections to other systems.
+        monitoring_frequency: quarterly
+    name: Security Assessment
+  SC:
+    controls:
+      SC.L2-3.13.1:
+        checks:
+        - id: sc_l2_3_13_1
+          description: Monitor, control, and protect communications at the external
+            boundaries and key internal boundaries of organizational systems. Deploy
+            firewalls, intrusion detection and prevention systems, and proxies at
+            network perimeters.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.2:
+        checks:
+        - id: sc_l2_3_13_2
+          description: Employ architectural designs, software development techniques,
+            and systems engineering principles that promote effective information
+            security within organizational systems. Segment networks to isolate CUI
+            processing environments.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.3:
+        checks:
+        - id: sc_l2_3_13_3
+          description: Separate user functionality from system management functionality.
+            Isolate administrative interfaces and management planes from end-user
+            interfaces to prevent unauthorized access to system internals.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.4:
+        checks:
+        - id: sc_l2_3_13_4
+          description: Prevent unauthorized and unintended information transfer via
+            shared system resources. Implement controls to clear shared memory, temporary
+            storage, and cache between user sessions to prevent information leakage.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.5:
+        checks:
+        - id: sc_l2_3_13_5
+          description: Deny network communications traffic by default and allow network
+            communications traffic by exception (i.e., deny all, permit by exception).
+            Configure firewalls and access control lists to block all traffic not
+            explicitly authorized.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.6:
+        checks:
+        - id: sc_l2_3_13_6
+          description: Deny network communications traffic by default and allow network
+            communications traffic by exception at managed interfaces. Apply a default-deny
+            posture on all network boundaries and document each permitted traffic
+            flow.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.7:
+        checks:
+        - id: sc_l2_3_13_7
+          description: Prevent remote devices from simultaneously establishing non-remote
+            connections with organizational systems and communicating via some other
+            connection to resources in external networks (i.e., split tunneling).
+        monitoring_frequency: quarterly
+      SC.L2-3.13.8:
+        checks:
+        - id: sc_l2_3_13_8
+          description: Implement cryptographic mechanisms to prevent unauthorized
+            disclosure of CUI during transmission unless otherwise protected by alternative
+            physical safeguards. Use TLS 1.2+, IPsec, or SSH for all data in transit.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.9:
+        checks:
+        - id: sc_l2_3_13_9
+          description: Terminate network connections associated with communications
+            sessions at the end of the sessions or after a defined period of inactivity.
+            Configure idle timeouts on network devices, VPN gateways, and application
+            servers.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.10:
+        checks:
+        - id: sc_l2_3_13_10
+          description: Establish and manage cryptographic keys for cryptography employed
+            in organizational systems. Implement key generation, distribution, storage,
+            rotation, revocation, and destruction procedures using hardware security
+            modules where appropriate.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.11:
+        checks:
+        - id: sc_l2_3_13_11
+          description: Employ FIPS-validated cryptography when used to protect the
+            confidentiality of CUI. Use cryptographic modules validated under FIPS
+            140-2 or FIPS 140-3 for encryption, hashing, and digital signature operations.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.12:
+        checks:
+        - id: sc_l2_3_13_12
+          description: Prohibit remote activation of collaborative computing devices
+            and provide indication of devices in use to users present at the device.
+            Disable microphones and cameras by default and provide physical or visual
+            indicators when active.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.13:
+        checks:
+        - id: sc_l2_3_13_13
+          description: Control and monitor the use of mobile code. Define acceptable
+            and unacceptable mobile code technologies, establish usage restrictions,
+            and implement controls to prevent the execution of unauthorized mobile
+            code.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.14:
+        checks:
+        - id: sc_l2_3_13_14
+          description: Control and monitor the use of Voice over Internet Protocol
+            (VoIP) technologies. Establish usage restrictions, encrypt VoIP traffic,
+            segment VoIP networks, and monitor for unauthorized use or eavesdropping.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.15:
+        checks:
+        - id: sc_l2_3_13_15
+          description: Protect the authenticity of communications sessions. Implement
+            mechanisms such as digital signatures, message authentication codes, or
+            TLS to verify the identity of communication endpoints and detect message
+            tampering.
+        monitoring_frequency: quarterly
+      SC.L2-3.13.16:
+        checks:
+        - id: sc_l2_3_13_16
+          description: Protect the confidentiality of CUI at rest. Encrypt stored
+            data using FIPS-validated cryptographic mechanisms such as AES-256, implement
+            access controls on storage systems, and manage encryption keys securely.
+        monitoring_frequency: quarterly
+    name: System and Communications Protection
+  SI:
+    controls:
+      SI.L2-3.14.1:
+        checks:
+        - id: si_l2_3_14_1
+          description: Identify, report, and correct system flaws in a timely manner.
+            Establish a patch management process that identifies applicable patches,
+            tests them in a staging environment, and deploys them within organization-defined
+            timeframes based on severity.
+        monitoring_frequency: quarterly
+      SI.L2-3.14.2:
+        checks:
+        - id: si_l2_3_14_2
+          description: Provide protection from malicious code at designated locations
+            within organizational systems. Deploy anti-malware solutions on endpoints,
+            servers, and network boundaries with real-time scanning and automated
+            quarantine capabilities.
+        monitoring_frequency: quarterly
+      SI.L2-3.14.3:
+        checks:
+        - id: si_l2_3_14_3
+          description: Monitor system security alerts and advisories and take action
+            in response. Subscribe to vulnerability feeds (e.g., CISA, NVD, vendor
+            advisories), assess applicability, and implement recommended mitigations
+            promptly.
+        monitoring_frequency: quarterly
+      SI.L2-3.14.4:
+        checks:
+        - id: si_l2_3_14_4
+          description: Update malicious code protection mechanisms when new releases
+            are available. Configure anti-malware tools for automatic signature and
+            engine updates and verify that definitions are current across all protected
+            systems.
+        monitoring_frequency: quarterly
+      SI.L2-3.14.5:
+        checks:
+        - id: si_l2_3_14_5
+          description: Perform periodic scans of organizational systems and real-time
+            scans of files from external sources as files are downloaded, opened,
+            or executed. Schedule full system scans and enable on-access scanning
+            for file operations.
+        monitoring_frequency: quarterly
+      SI.L2-3.14.6:
+        checks:
+        - id: si_l2_3_14_6
+          description: Monitor organizational systems, including inbound and outbound
+            communications traffic, to detect attacks and indicators of potential
+            attacks. Deploy network monitoring, IDS/IPS, and traffic analysis tools
+            at key network boundaries.
+        monitoring_frequency: quarterly
+      SI.L2-3.14.7:
+        checks:
+        - id: si_l2_3_14_7
+          description: Identify unauthorized use of organizational systems. Implement
+            monitoring mechanisms that detect anomalous account activity, unauthorized
+            software execution, and policy violations, and alert security personnel
+            for investigation.
+        monitoring_frequency: quarterly
+    name: System and Information Integrity

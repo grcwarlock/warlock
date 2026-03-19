@@ -1,0 +1,221 @@
+framework_id: fedramp
+control_families:
+  AC:
+    controls:
+      AC-1:
+        title: Policy and Procedures
+        description: Develop, document, and disseminate access control policy and
+          procedures.
+        checks:
+        - id: AC-1.fed.1
+          description: Access control policy reviewed at least annually
+          evidence_type: policy
+      AC-2:
+        title: Account Management
+        description: Define and manage system account types, conditions, and processes.
+        checks:
+        - id: AC-2.fed.1
+          description: Automated account management notifications
+          evidence_type: iam_config
+        - id: AC-2.fed.2
+          description: 'Account review frequency: monthly'
+          evidence_type: review_log
+      AC-2-1:
+        title: Account Management — Automated System Account Management
+        description: Employ automated mechanisms to support management of system accounts.
+        checks:
+        - id: AC-2-1.fed.1
+          description: Automated provisioning and deprovisioning
+          evidence_type: iam_config
+      AC-3:
+        title: Access Enforcement
+        description: Enforce approved authorizations for logical access.
+        checks:
+        - id: AC-3.fed.1
+          description: RBAC enforcement verified
+          evidence_type: iam_config
+      AC-6:
+        title: Least Privilege
+        description: Employ least privilege principle for all access.
+        checks:
+        - id: AC-6.fed.1
+          description: No wildcard admin policies in use
+          evidence_type: iam_policy
+      AC-17:
+        title: Remote Access
+        description: Establish and document usage restrictions for remote access.
+        checks:
+        - id: AC-17.fed.1
+          description: Remote access via VPN or zero-trust network
+          evidence_type: network_config
+    name: Access Control
+  AU:
+    controls:
+      AU-2:
+        title: Event Logging
+        description: Identify and log security-relevant events.
+        checks:
+        - id: AU-2.fed.1
+          description: All FedRAMP-required event types are logged
+          evidence_type: logging_config
+      AU-3:
+        title: Content of Audit Records
+        description: Audit records contain required information fields.
+        checks:
+        - id: AU-3.fed.1
+          description: Audit records include who, what, when, where, outcome
+          evidence_type: log_sample
+      AU-6:
+        title: Audit Record Review
+        description: Review and analyze audit records at least weekly.
+        checks:
+        - id: AU-6.fed.1
+          description: Weekly audit log review documented
+          evidence_type: review_log
+      AU-12:
+        title: Audit Record Generation
+        description: Provide audit record generation capability.
+        checks:
+        - id: AU-12.fed.1
+          description: Centralized log aggregation active
+          evidence_type: logging_config
+    name: Audit and Accountability
+  CA:
+    controls:
+      CA-2:
+        title: Control Assessments
+        description: Assess security and privacy controls annually.
+        checks:
+        - id: CA-2.fed.1
+          description: Annual assessment conducted by 3PAO
+          evidence_type: assessment_report
+      CA-7:
+        title: Continuous Monitoring
+        description: Develop and implement continuous monitoring strategy.
+        checks:
+        - id: CA-7.fed.1
+          description: ConMon plan documented and operational
+          evidence_type: conmon_plan
+        - id: CA-7.fed.2
+          description: Monthly OS/infrastructure scans
+          evidence_type: scan_report
+    name: Assessment, Authorization, and Monitoring
+  CM:
+    controls:
+      CM-2:
+        title: Baseline Configuration
+        description: Develop and maintain baseline configurations.
+        checks:
+        - id: CM-2.fed.1
+          description: Baseline configuration documented
+          evidence_type: config_baseline
+      CM-6:
+        title: Configuration Settings
+        description: Establish and document mandatory configuration settings.
+        checks:
+        - id: CM-6.fed.1
+          description: CIS benchmarks or STIG applied
+          evidence_type: config_scan
+      CM-8:
+        title: System Component Inventory
+        description: Develop and maintain inventory of system components.
+        checks:
+        - id: CM-8.fed.1
+          description: Complete system inventory maintained
+          evidence_type: asset_inventory
+    name: Configuration Management
+  IA:
+    controls:
+      IA-2:
+        title: Identification and Authentication
+        description: Uniquely identify and authenticate users.
+        checks:
+        - id: IA-2.fed.1
+          description: MFA required for all users
+          evidence_type: iam_config
+      IA-2-1:
+        title: Multi-Factor Authentication to Privileged Accounts
+        description: Implement MFA for access to privileged accounts.
+        checks:
+        - id: IA-2-1.fed.1
+          description: PIV or hardware token for privileged access
+          evidence_type: iam_config
+      IA-8:
+        title: Identification and Authentication (Non-Org Users)
+        description: Uniquely identify and authenticate non-organizational users.
+        checks:
+        - id: IA-8.fed.1
+          description: External user authentication via SAML/OIDC
+          evidence_type: iam_config
+    name: Identification and Authentication
+  IR:
+    controls:
+      IR-4:
+        title: Incident Handling
+        description: Implement incident handling capability.
+        checks:
+        - id: IR-4.fed.1
+          description: US-CERT reporting procedures documented
+          evidence_type: ir_plan
+      IR-6:
+        title: Incident Reporting
+        description: Report incidents to appropriate authorities.
+        checks:
+        - id: IR-6.fed.1
+          description: US-CERT reporting within required timeframes
+          evidence_type: ir_procedure
+    name: Incident Response
+  RA:
+    controls:
+      RA-5:
+        title: Vulnerability Monitoring and Scanning
+        description: Monitor and scan for vulnerabilities.
+        checks:
+        - id: RA-5.fed.1
+          description: Monthly vulnerability scans conducted
+          evidence_type: scan_report
+        - id: RA-5.fed.2
+          description: High findings remediated within 30 days
+          evidence_type: remediation_log
+    name: Risk Assessment
+  SC:
+    controls:
+      SC-7:
+        title: Boundary Protection
+        description: Monitor and control communications at system boundaries.
+        checks:
+        - id: SC-7.fed.1
+          description: Network boundary protections in place
+          evidence_type: network_config
+      SC-13:
+        title: Cryptographic Protection
+        description: Implement FIPS-validated cryptography.
+        checks:
+        - id: SC-13.fed.1
+          description: FIPS 140-2/3 validated modules in use
+          evidence_type: crypto_config
+      SC-28:
+        title: Protection of Information at Rest
+        description: Protect confidentiality and integrity of information at rest.
+        checks:
+        - id: SC-28.fed.1
+          description: All data at rest encrypted with FIPS-validated modules
+          evidence_type: encryption_config
+    name: System and Communications Protection
+  SI:
+    controls:
+      SI-2:
+        title: Flaw Remediation
+        description: Identify, report, and correct system flaws.
+        checks:
+        - id: SI-2.fed.1
+          description: Critical patches applied within 30 days
+          evidence_type: patch_report
+      SI-4:
+        title: System Monitoring
+        description: Monitor the system to detect attacks and unauthorized connections.
+        checks:
+        - id: SI-4.fed.1
+          description: IDS/IPS deployed at system boundaries
+          evidence_type: security_config
+    name: System and Information Integrity
