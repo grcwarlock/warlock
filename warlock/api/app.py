@@ -484,12 +484,13 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     user = authenticate_user(db, body.email, body.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    from warlock.api.auth import ACCESS_TOKEN_EXPIRE_MINUTES
+    from warlock.api.auth import _get_auth_config
 
+    _, expire_minutes = _get_auth_config()
     token = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
     return TokenResponse(
         access_token=token,
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires_in=expire_minutes * 60,
         user_id=user.id,
         role=user.role,
     )
