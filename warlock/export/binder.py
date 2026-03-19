@@ -67,7 +67,7 @@ class AuditBinderGenerator:
         Raises:
             ValueError: If engagement not found.
         """
-        engagement = session.query(AuditEngagement).get(engagement_id)
+        engagement = session.get(AuditEngagement,engagement_id)
         if not engagement:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
@@ -224,7 +224,7 @@ class AuditBinderGenerator:
 
             # Attach finding detail
             if cr.finding_id:
-                finding = session.query(Finding).get(cr.finding_id)
+                finding = session.get(Finding,cr.finding_id)
                 if finding:
                     entry["finding"] = {
                         "id": finding.id,
