@@ -106,6 +106,99 @@ runs it through the full pipeline (collect, normalize, map, assess) across all
 To run against real sources instead, configure connectors via environment
 variables (see [Configuration](#configuration)) and use `warlock collect`.
 
+## CLI Commands
+
+### Pipeline
+
+| Command | Description |
+|---|---|
+| `warlock init` | Initialize the database (creates tables) |
+| `warlock collect` | Run the full pipeline: collect → normalize → map → assess |
+| `warlock collect -s aws` | Limit collection to specific source(s) |
+| `warlock ingest -s webhook -p crowdstrike -t falcon_detections -f data.json` | Ingest a JSON file through the pipeline |
+
+### Query & Inspect
+
+| Command | Description |
+|---|---|
+| `warlock results` | Show control results from the last pipeline run |
+| `warlock results -f nist_800_53 --status non_compliant` | Filter by framework and/or status |
+| `warlock coverage` | Compliance coverage summary by framework |
+| `warlock findings` | Show recent normalized findings |
+| `warlock connectors` | List registered connector types |
+| `warlock sources` | List all connectors and normalizers |
+
+### Export
+
+| Command | Description |
+|---|---|
+| `warlock oscal` | Export assessment results as OSCAL JSON (stdout) |
+| `warlock oscal --format ar -f nist_800_53 -o report.json` | Assessment Results for a framework |
+| `warlock oscal --format ssp -f iso_27001 -o ssp.json` | System Security Plan (requires `--framework`) |
+| `warlock oscal --format poam -f soc2 -o poam.json` | Plan of Action & Milestones |
+| `warlock oscal --format ssp -f nist_800_53 --ai` | Add AI-generated narratives (needs `WLK_AI_*` env vars) |
+
+### Risk & Vendors
+
+| Command | Description |
+|---|---|
+| `warlock risk -f nist_800_53` | FAIR Monte Carlo risk quantification |
+| `warlock vendors` | Vendor risk scores |
+| `warlock policy-coverage -f iso_27001` | Policy documentation coverage analysis |
+
+### Issues & Systems
+
+| Command | Description |
+|---|---|
+| `warlock issues` | List open compliance issues |
+| `warlock issues -s open -p critical` | Filter by status and priority |
+| `warlock issues-auto-create` | Auto-create issues from non-compliant results |
+| `warlock systems` | List system profiles |
+| `warlock systems-create -n "Prod" -f nist_800_53 -f soc2` | Create a system profile |
+
+### Personnel
+
+| Command | Description |
+|---|---|
+| `warlock personnel` | List personnel with HR/IdP/training cross-reference |
+| `warlock personnel --flagged` | Show only flagged personnel |
+| `warlock personnel-sync` | Sync records from HR, IdP, and training findings |
+
+### Vendor Questionnaires
+
+| Command | Description |
+|---|---|
+| `warlock questionnaires` | List vendor questionnaires |
+| `warlock questionnaires-seed` | Seed default templates (SIG Lite, DDQ, CAIQ) |
+
+### Data Silos
+
+| Command | Description |
+|---|---|
+| `warlock data-silos` | List discovered data silos |
+| `warlock data-silos-discover` | Auto-discover data silos from findings |
+
+### Subcommand Groups
+
+Some commands are grouped under a parent:
+
+```
+warlock retention report          # Show retention report (record ages, purgeable counts)
+warlock retention purge           # Purge expired records (dry-run by default)
+warlock retention purge --execute # Actually delete expired records
+
+warlock scheduler start           # Start continuous pipeline scheduler
+warlock scheduler start -i 30    # Custom interval (minutes)
+warlock scheduler status          # Show scheduler status
+```
+
+### Global Options
+
+```
+warlock --verbose <command>       # Enable debug logging for any command
+warlock <command> --help          # Show help for any command
+```
+
 ## REST API
 
 ```bash
