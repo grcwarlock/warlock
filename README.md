@@ -357,7 +357,7 @@ warlock/
 
 ```bash
 make install    # Install dev dependencies
-make test       # Run 135 tests
+make test       # Run 172 tests
 make lint       # Run ruff linter
 make migrate    # Run Alembic migrations
 make seed       # Populate demo data

@@ -6,15 +6,13 @@ feature to verify interoperability. Runs against a fresh in-memory database.
 """
 
 import json
-import os
 import sys
-import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 import yaml
-from sqlalchemy import create_engine, func, distinct
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Ensure we import from the project
@@ -22,9 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from warlock.db.models import (
     Base, ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult,
-    PostureSnapshot, POAM, CompensatingControl, RiskAcceptance,
-    ControlInheritance, SystemDependency, ChangeEvent, ComplianceDrift,
-    SystemProfile, AuditEngagement, Issue, ExternalAuditor,
+    PostureSnapshot, POAM, CompensatingControl, SystemDependency, ChangeEvent, SystemProfile, AuditEngagement, ExternalAuditor,
     AuditorEngagementAssignment, EvidenceRequest, PolicyOverride,
     User, LegalHold,
 )
@@ -293,7 +289,7 @@ class TestPhase2Integration:
         mgr = CompensatingControlManager()
 
         # Create compensating control for non-compliant AC-6
-        cc = mgr.create(session,
+        mgr.create(session,
             original_framework="nist_800_53",
             original_control_id="AC-6",
             title="Quarterly privileged access review",
@@ -316,7 +312,7 @@ class TestPhase2Integration:
         from warlock.workflows.risk_acceptance import RiskAcceptanceManager
         mgr = RiskAcceptanceManager()
 
-        ra = mgr.create(session,
+        mgr.create(session,
             framework="nist_800_53",
             control_id="IA-2",
             risk_description="Legacy system cannot support MFA, decommission planned",
@@ -365,7 +361,7 @@ class TestPhase3Integration:
         mgr = InheritanceManager()
 
         # PE-1 is inherited from cloud provider
-        ci = mgr.set_inheritance(
+        mgr.set_inheritance(
             session, system_profile_id="sys-prod",
             framework="nist_800_53", control_id="PE-1",
             inheritance_type="inherited",
@@ -376,7 +372,7 @@ class TestPhase3Integration:
         session.flush()
 
         # AC-2 is shared with corporate IdP
-        ci2 = mgr.set_inheritance(
+        mgr.set_inheritance(
             session, system_profile_id="sys-prod",
             framework="nist_800_53", control_id="AC-2",
             inheritance_type="shared",
@@ -473,7 +469,7 @@ class TestPhase4Integration:
 
         # Detect drift
         detector = DriftDetector()
-        drifts = detector.detect(session, framework="nist_800_53")
+        detector.detect(session, framework="nist_800_53")
 
         # Should find at least AC-2 drift
         # (may or may not depending on whether posture score changed)

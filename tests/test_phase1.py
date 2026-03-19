@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from warlock.db.models import Base, ControlMapping, ControlResult, Finding, RawEvent, ConnectorRun, PostureSnapshot
+from warlock.db.models import Base, ControlMapping, ControlResult, Finding, RawEvent, ConnectorRun
 
 
 @pytest.fixture

@@ -9,10 +9,8 @@ from sqlalchemy.orm import sessionmaker
 
 from warlock.db.models import (
     Base, ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult,
-    PostureSnapshot, POAM, CompensatingControl, RiskAcceptance,
-    ControlInheritance, SystemDependency, ChangeEvent, ComplianceDrift,
-    SystemProfile, ExternalAuditor, AuditorEngagementAssignment,
-    EvidenceRequest, PolicyOverride,
+    POAM, RiskAcceptance,
+    SystemProfile,
 )
 
 
@@ -223,7 +221,7 @@ class TestInheritance:
         from warlock.workflows.inheritance import InheritanceManager
         mgr = InheritanceManager()
 
-        ci = mgr.set_inheritance(
+        mgr.set_inheritance(
             seeded, system_profile_id="sys-1", framework="nist_800_53",
             control_id="PE-1", inheritance_type="inherited",
             provider_system_id="sys-2",
