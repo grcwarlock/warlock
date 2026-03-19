@@ -14,7 +14,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. Python 
 .venv/bin/pytest tests/ --tb=short -q
 ```
 
-There are currently 172 tests across 8 test files. ALL must pass. Zero failures tolerated. Always check the actual count — run `pytest --collect-only -q | tail -1` to confirm. If you add features or fix bugs, you should be ADDING tests too, not just running the existing ones.
+There are currently 190 tests across 9 test files. ALL must pass. Zero failures tolerated. Always check the actual count — run `pytest --collect-only -q | tail -1` to confirm. If you add features or fix bugs, you should be ADDING tests too, not just running the existing ones.
 
 ### 2. Run OPA policy tests (if policies/ was touched)
 
@@ -22,7 +22,7 @@ There are currently 172 tests across 8 test files. ALL must pass. Zero failures 
 opa check policies/ && opa test policies/
 ```
 
-All 599+ OPA tests must pass.
+All 631+ OPA tests must pass.
 
 ### 3. Run Terraform validation (if terraform/ was touched)
 
@@ -42,7 +42,82 @@ rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/d
 
 Seed must complete without errors.
 
-### 5. Update ALL files in the dependency chain
+### 5. Import smoke test
+
+```bash
+.venv/bin/python -c "import warlock; print('OK')"
+```
+
+Catches circular imports and missing modules that pytest might not cover.
+
+### 6. Verify the package installs cleanly
+
+```bash
+.venv/bin/pip install -e ".[dev,ai]" --quiet && echo "INSTALL OK"
+```
+
+If you added a dependency anywhere, this catches it missing from `pyproject.toml`.
+
+### 7. Secrets scan — NEVER commit credentials
+
+Before staging files, check that NONE of these are being committed:
+- `.env` files (only `.env.example` is safe)
+- API keys, tokens, passwords, or secrets in any file
+- Hardcoded credentials in config or test files
+
+```bash
+git diff --cached --name-only | xargs grep -l -i -E "(api_key|secret|password|token|credential)=" 2>/dev/null
+```
+
+If that returns hits, inspect every one. False positives from variable names are fine. Actual values are NOT.
+
+### 8. Dependency vulnerability scan
+
+```bash
+.venv/bin/pip audit 2>&1 || echo "VULNERABILITIES FOUND — review before pushing"
+```
+
+If vulnerabilities are found in dependencies, flag them to me. Don't silently push known-vulnerable code.
+
+### 9. Migration reversibility (if migrations changed)
+
+```bash
+rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/alembic downgrade -1 && echo "DOWNGRADE OK"
+```
+
+If you can't roll back, the migration is not production-safe. Fix the downgrade path.
+
+### 10. OSCAL JSON validation (if frameworks-oscal/ was touched)
+
+```bash
+python -c "
+import json, pathlib
+errors = []
+for f in pathlib.Path('frameworks-oscal').rglob('*.json'):
+    try: json.loads(f.read_text())
+    except Exception as e: errors.append(f'{f}: {e}')
+print(f'{len(errors)} invalid JSON files') if errors else print('All OSCAL JSON valid')
+for e in errors: print(f'  BROKEN: {e}')
+"
+```
+
+All 275+ OSCAL JSON files must parse without errors.
+
+### 11. API backwards compatibility check
+
+If you renamed, removed, or changed the signature of any API endpoint:
+- **Don't do it without asking me first.**
+- If approved: update the OpenAPI schema, update any CLI commands that call the endpoint, update DEMO.md if demo curl commands changed.
+
+### 12. Test coverage direction
+
+```bash
+.venv/bin/pytest tests/ --tb=short -q | tail -1
+```
+
+Test count must be **equal to or greater than** the last known count. If you added code and the test count didn't go up, you forgot to write tests. Current baseline: **190 tests** (update this number when tests are added).
+
+### 13. Update ALL files in the dependency chain
 
 When you change one file, you MUST update every file that depends on it. This is not optional. This is not "check if maybe something needs updating." These are hard dependencies — if you touch the left column, you MUST update every file in the right column:
 
@@ -63,7 +138,7 @@ When you change one file, you MUST update every file that depends on it. This is
 
 **Do NOT just "think about what might break." Walk the table above for every file you touched.**
 
-### 6. Update documentation
+### 14. Update documentation
 
 If your changes affect any of the following, update the corresponding docs:
 - **README.md** — connector counts, framework counts, feature descriptions, quick start instructions
@@ -71,7 +146,7 @@ If your changes affect any of the following, update the corresponding docs:
 - **docs/** — if architectural decisions, integration patterns, or audit findings changed
 - **docstrings/comments** — only in files you modified, only where behavior changed
 
-### 7. ASK before pushing
+### 15. ASK before pushing
 
 **NEVER push to remote (git push) without explicitly asking me first.** Present:
 - What changed (summary)
@@ -81,13 +156,29 @@ If your changes affect any of the following, update the corresponding docs:
 
 Wait for my confirmation before running `git push`.
 
+## MANDATORY: Branch Hygiene
+
+**Do NOT commit directly to `main` for non-trivial changes.** Create a feature branch:
+
+```bash
+git checkout -b feat/description-of-change
+```
+
+Only push to `main` after all QA checks pass AND I approve. This way if something goes wrong, `main` is still clean.
+
+Exception: typo fixes, single-line config changes, and doc-only updates can go directly to `main` if all tests pass.
+
 ## MANDATORY: Pre-Commit Checklist
 
 Before every `git commit`:
 - [ ] All Python tests pass (`pytest tests/`)
 - [ ] No new lint errors (`ruff check warlock/ tests/`)
-- [ ] If DB models changed: migration exists and `alembic upgrade head` works on fresh DB
+- [ ] Import smoke test passes (`python -c "import warlock"`)
+- [ ] No secrets/credentials in staged files
+- [ ] If DB models changed: migration exists, upgrade works on fresh DB, downgrade works
 - [ ] If adding new files: they are properly imported/registered (not orphaned)
+- [ ] If adding dependencies: they are in `pyproject.toml` and `pip install -e ".[dev,ai]"` works
+- [ ] Test count has not decreased
 - [ ] Commit message describes the WHY, not just the WHAT
 
 ## Things Claude Keeps Forgetting (DO NOT SKIP THESE)
@@ -100,7 +191,7 @@ Before every `git commit`:
 6. **When dispatching sub-agents, verify their work.** Sub-agents make mistakes (e.g., claiming normalizers don't exist when they do). Cross-check findings before acting on them.
 7. **Migrations must cover ALL model changes.** If Agent A changes models and Agent B changes models, the migration must include both. Don't let parallel agent work create migration gaps.
 8. **Write new tests when you write new code.** Fixing 92 bugs without adding a single test is not QA — it's wishful thinking. Every fix should have a regression test. Every new feature should have coverage. If the plan says "expand to 300+ tests," actually do it.
-9. **Verify claims with real output.** Don't say "all tests pass" without pasting the actual pytest output. Don't say "expanded to 300 tests" when `pytest --collect-only` still shows 172. Evidence, not assertions.
+9. **Verify claims with real output.** Don't say "all tests pass" without pasting the actual pytest output. Don't say "expanded to 300 tests" when `pytest --collect-only` still shows 190. Evidence, not assertions.
 
 ## Development Environment
 
@@ -137,8 +228,8 @@ warlock/
   db/            — SQLAlchemy models + Alembic migrations
   export/        — OSCAL, reports, temporal exports
   workflows/     — POA&M, risk acceptance, compensating controls
-tests/           — 172+ pytest tests (8 files)
-policies/        — 592 OPA/Rego policy files (599 tests)
+tests/           — 190 pytest tests (9 files)
+policies/        — 604 OPA/Rego policy files (631 tests)
 frameworks-oscal/ — 275 OSCAL catalog/profile JSON files
 terraform/       — 5 IaC modules (AWS, Azure, GCP)
 ```
@@ -189,3 +280,66 @@ If any connector fails or counts drop, you broke something. Fix it before moving
 - Gemini API key goes in HEADER, not URL query params (audit fix A-4). Don't regress.
 - Untrusted connector data flows into LLM prompts — any change to prompt construction must preserve sanitization.
 - `ai_provider` supports: `anthropic`, `openai`, `gemini`, `ollama`. If adding a new provider, follow the same sanitization pattern.
+
+## MANDATORY: Agent Swarm QA Gate
+
+Before any push, dispatch these agents in parallel for a full validation sweep. This is NOT optional for non-trivial changes (anything touching more than 3 files or any security/DB/pipeline/config change).
+
+### Tier 1 — Always run (every push)
+
+Dispatch ALL of these in parallel:
+
+| Agent | Task | What it checks |
+|---|---|---|
+| `python-pro` | Review all changed Python files | Type safety, Pythonic patterns, async correctness, error handling |
+| `code-reviewer` | Review all changed files for quality | Logic bugs, dead code, complexity, missing error handling |
+| `security-auditor` | Security audit of changed files | SQL injection, auth bypass, secrets exposure, OWASP top 10 |
+| `test-automator` | Verify test coverage for changes | Missing tests, coverage gaps, test quality, flaky test risk |
+| `dependency-manager` | Audit dependencies | Vulnerabilities, version conflicts, unused deps, license compliance |
+
+### Tier 2 — Run when relevant domain is touched
+
+| Agent | When to dispatch | What it checks |
+|---|---|---|
+| `database-optimizer` | DB models, migrations, queries changed | Missing indexes, N+1 queries, migration safety, schema drift |
+| `terraform-engineer` | `terraform/` changed | Module validation, security best practices, provider version pins |
+| `compliance-auditor` | Policies, OSCAL, frameworks, assessors changed | Framework coverage gaps, control mapping accuracy, evidence chain |
+| `security-engineer` | API routes, auth, ABAC, JWT, encryption changed | Auth enforcement, ABAC applied, secrets management, CORS |
+| `architect-reviewer` | New modules, major refactors, pipeline changes | Design patterns, coupling, scalability, breaking changes |
+| `performance-engineer` | Pipeline, DB queries, API endpoints changed | N+1 queries, slow paths, resource leaks, batch size issues |
+| `documentation-engineer` | Any user-facing change | README accuracy, DEMO.md accuracy, API docs, config docs |
+| `risk-manager` | Compliance logic, assessment, policy gate changed | Control effectiveness, risk scoring accuracy, fail-mode safety |
+
+### Tier 3 — Run periodically (weekly or before releases)
+
+| Agent | Task |
+|---|---|
+| `penetration-tester` | Full offensive security test of API + auth |
+| `qa-expert` | Full test strategy review — coverage gaps, test quality, missing edge cases |
+| `error-detective` | Error pattern analysis across all modules |
+| `refactoring-specialist` | Code smell detection, complexity hotspots, duplication |
+| `database-administrator` | Full DB health — replication readiness, backup strategy, HA config |
+
+### How to dispatch the swarm
+
+For Tier 1 (always run), use a single message with all 5 agent calls in parallel:
+
+```
+Launch agents in parallel:
+  - python-pro: "Review all files changed in this branch for type safety, async patterns, error handling"
+  - code-reviewer: "Review all changed files for logic bugs, dead code, missing error handling"
+  - security-auditor: "Security audit all changed files for OWASP top 10, auth bypass, secrets"
+  - test-automator: "Check test coverage for all changed code, identify missing tests"
+  - dependency-manager: "Audit pyproject.toml and all imports for vulnerabilities and conflicts"
+```
+
+For Tier 2, add the relevant agents based on what changed. The swarm runs in parallel — all agents at once, not sequentially.
+
+### After the swarm completes
+
+1. **Read every agent's findings.** Don't skim. Don't dismiss.
+2. **Cross-check findings against each other.** If the code-reviewer says a function is fine but the security-auditor flags it, investigate.
+3. **Fix all CRITICAL and HIGH findings before committing.**
+4. **Present MEDIUM findings to me** — I'll decide which to fix now vs. later.
+5. **Re-run pytest after fixing** to make sure fixes didn't break anything.
+6. **Only then proceed to the Pre-Push QA Gate steps** (tests, seed, docs, ask me).

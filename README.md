@@ -311,10 +311,11 @@ warlock/
 
 ```bash
 make install    # Install dev dependencies
-make test       # Run 172 tests
+make test       # Run 190 tests
 make lint       # Run ruff linter
 make migrate    # Run Alembic migrations
 make seed       # Populate demo data
+make demo       # One-command full demo (DB + OPA + API + seed)
 make dev        # Start docker-compose (postgres + redis + api)
 make clean      # Tear down and clean up
 ```
