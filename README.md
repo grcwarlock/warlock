@@ -89,6 +89,9 @@ warlock-api                            # start REST API on :8000
 |---|---|
 | `warlock poams` | List Plans of Action & Milestones |
 | `warlock poams --overdue` | Show overdue POA&Ms |
+| `warlock remediate <id>` | Show full remediation plan (manual steps + CLI actions) |
+| `warlock remediate <id> -a transition --to in_progress` | Change issue/POA&M status |
+| `warlock remediate <id> -a assign --to user@acme.com` | Assign to someone |
 | `warlock compensating-controls` | List compensating controls |
 | `warlock risk-acceptances` | List risk acceptances |
 | `warlock risk-acceptances --expiring-soon 30` | Expiring within 30 days |

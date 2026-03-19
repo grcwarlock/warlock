@@ -51,6 +51,8 @@ warlock systems                        # system profiles
 warlock vendors                        # vendor risk
 warlock retention report               # data retention
 warlock inheritance --system APP       # control inheritance
+warlock remediate <id>                 # show remediation plan (use warlock issues to get IDs)
+warlock remediate <id> -a transition --to in_progress
 warlock architecture                  # live architecture diagram (terminal)
 warlock architecture --format svg     # export as SVG (opens in browser)
 ```
