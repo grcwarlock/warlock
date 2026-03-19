@@ -657,7 +657,9 @@ def test_framework_loading():
     from warlock.pipeline.loader import load_framework_configs
 
     mapper = ControlMapper()
-    load_framework_configs("/Users/jsn/warlock-v2/warlock/frameworks", mapper)
+    from pathlib import Path
+    framework_dir = str(Path(__file__).resolve().parent.parent / "warlock" / "frameworks")
+    load_framework_configs(framework_dir, mapper)
 
     check("explicit rules loaded", len(mapper._explicit_rules) > 100)
     check("resource rules loaded", len(mapper._resource_rules) > 100)

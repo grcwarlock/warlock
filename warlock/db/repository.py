@@ -14,13 +14,18 @@ from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
+    Attestation,
+    AuditComment,
     AuditEngagement,
     AuditEntry,
     ConnectorRun,
     ControlMapping,
     ControlResult,
     Finding,
+    Issue,
+    IssueComment,
     PostureSnapshot,
+    SystemProfile,
     User,
 )
 
@@ -460,6 +465,163 @@ class ConnectorRunRepository(BaseRepository):
 
 
 # ---------------------------------------------------------------------------
+# Issue Repository
+# ---------------------------------------------------------------------------
+
+
+class IssueRepository(BaseRepository):
+    """Issue tracking queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, Issue)
+
+    def by_status(self, status: str, limit: int = 100) -> list[Issue]:
+        """Issues filtered by status."""
+        return (
+            self.session.query(Issue)
+            .filter(Issue.status == status)
+            .order_by(Issue.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def by_framework(self, framework: str, limit: int = 100) -> list[Issue]:
+        """Issues for a specific framework."""
+        return (
+            self.session.query(Issue)
+            .filter(Issue.framework == framework)
+            .order_by(Issue.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def by_assigned_to(self, assigned_to: str, limit: int = 100) -> list[Issue]:
+        """Issues assigned to a specific person."""
+        return (
+            self.session.query(Issue)
+            .filter(Issue.assigned_to == assigned_to)
+            .order_by(Issue.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def overdue(self, limit: int = 100) -> list[Issue]:
+        """Issues past their due date that are not closed/accepted."""
+        now = datetime.now(timezone.utc)
+        return (
+            self.session.query(Issue)
+            .filter(
+                Issue.due_date < now,
+                Issue.status.notin_(["closed", "risk_accepted", "verified"]),
+            )
+            .order_by(Issue.due_date.asc())
+            .limit(limit)
+            .all()
+        )
+
+    def comments_for_issue(self, issue_id: str) -> list[IssueComment]:
+        """All comments for an issue."""
+        return (
+            self.session.query(IssueComment)
+            .filter(IssueComment.issue_id == issue_id)
+            .order_by(IssueComment.created_at.asc())
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Attestation Repository
+# ---------------------------------------------------------------------------
+
+
+class AttestationRepository(BaseRepository):
+    """Attestation queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, Attestation)
+
+    def by_engagement(self, engagement_id: str) -> list[Attestation]:
+        """Attestations for a specific engagement."""
+        return (
+            self.session.query(Attestation)
+            .filter(Attestation.engagement_id == engagement_id)
+            .order_by(Attestation.created_at.desc())
+            .all()
+        )
+
+    def by_framework(self, framework: str, limit: int = 100) -> list[Attestation]:
+        """Attestations for a framework."""
+        return (
+            self.session.query(Attestation)
+            .filter(Attestation.framework == framework)
+            .order_by(Attestation.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def by_status(self, status: str, limit: int = 100) -> list[Attestation]:
+        """Attestations filtered by status."""
+        return (
+            self.session.query(Attestation)
+            .filter(Attestation.status == status)
+            .order_by(Attestation.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# System Profile Repository
+# ---------------------------------------------------------------------------
+
+
+class SystemProfileRepository(BaseRepository):
+    """System profile queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, SystemProfile)
+
+    def active(self) -> list[SystemProfile]:
+        """All active system profiles."""
+        return (
+            self.session.query(SystemProfile)
+            .filter(SystemProfile.is_active == True)  # noqa: E712
+            .order_by(SystemProfile.name)
+            .all()
+        )
+
+    def by_authorization_status(
+        self,
+        status: str,
+        limit: int = 100,
+    ) -> list[SystemProfile]:
+        """Profiles filtered by authorization status."""
+        return (
+            self.session.query(SystemProfile)
+            .filter(SystemProfile.authorization_status == status)
+            .order_by(SystemProfile.name)
+            .limit(limit)
+            .all()
+        )
+
+    def expiring(self, days: int = 90) -> list[SystemProfile]:
+        """Profiles with authorization expiring within N days."""
+        now = datetime.now(timezone.utc)
+        cutoff = now + timedelta(days=days)
+        return (
+            self.session.query(SystemProfile)
+            .filter(
+                SystemProfile.is_active == True,  # noqa: E712
+                SystemProfile.authorization_status == "authorized",
+                SystemProfile.authorization_expiry != None,  # noqa: E711
+                SystemProfile.authorization_expiry <= cutoff,
+            )
+            .order_by(SystemProfile.authorization_expiry.asc())
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
 # Repository factory
 # ---------------------------------------------------------------------------
 
@@ -474,6 +636,9 @@ class Repositories:
         self.users = UserRepository(session)
         self.engagements = AuditEngagementRepository(session)
         self.connector_runs = ConnectorRunRepository(session)
+        self.issues = IssueRepository(session)
+        self.attestations = AttestationRepository(session)
+        self.system_profiles = SystemProfileRepository(session)
 
 
 def get_repos(session: Session) -> Repositories:
