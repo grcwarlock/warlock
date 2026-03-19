@@ -36,16 +36,13 @@ router = APIRouter(prefix="/trust", tags=["Trust Portal"])
 
 class FrameworkStatus(BaseModel):
     framework: str
-    posture_score: float
+    posture_rating: str          # "Strong", "Moderate", "Needs Improvement"
     total_controls: int
-    compliant: int
-    non_compliant: int
-    partial: int
-    compliance_rate: float
+    compliance_rate_band: str    # "90-100%", "70-89%", "50-69%", "Below 50%"
 
 
 class TrustStatusResponse(BaseModel):
-    overall_posture_score: float
+    overall_rating: str          # "Strong", "Moderate", "Needs Improvement"
     frameworks: list[FrameworkStatus]
     last_assessment: str | None
     assessed_frameworks_count: int
@@ -138,15 +135,27 @@ async def trust_status(db: Session = Depends(get_db)):
                 (data["compliant"] / data["total"] * 100) if data["total"] else 0
             )
             overall_scores.append(avg_score)
+
+            # Bin scores for public consumption — no exact counts
+            if compliance_rate >= 90:
+                rating = "Strong"
+                band = "90-100%"
+            elif compliance_rate >= 70:
+                rating = "Moderate"
+                band = "70-89%"
+            elif compliance_rate >= 50:
+                rating = "Needs Improvement"
+                band = "50-69%"
+            else:
+                rating = "Needs Improvement"
+                band = "Below 50%"
+
             frameworks.append(
                 FrameworkStatus(
                     framework=fw,
-                    posture_score=round(avg_score, 1),
+                    posture_rating=rating,
                     total_controls=data["total"],
-                    compliant=data["compliant"],
-                    non_compliant=data["non_compliant"],
-                    partial=data["partial"],
-                    compliance_rate=round(compliance_rate, 1),
+                    compliance_rate_band=band,
                 )
             )
 
@@ -165,8 +174,16 @@ async def trust_status(db: Session = Depends(get_db)):
             dt = dt.replace(tzinfo=timezone.utc)
         last_assessment = dt.isoformat()
 
+    # Bin overall score for public view
+    if overall >= 80:
+        overall_rating = "Strong"
+    elif overall >= 60:
+        overall_rating = "Moderate"
+    else:
+        overall_rating = "Needs Improvement"
+
     return TrustStatusResponse(
-        overall_posture_score=overall,
+        overall_rating=overall_rating,
         frameworks=frameworks,
         last_assessment=last_assessment,
         assessed_frameworks_count=len(frameworks),

@@ -65,7 +65,7 @@ class POAMManager:
         # Build weakness description from finding + assertion failures
         weakness_parts: list[str] = []
         if control_result.finding_id:
-            finding = session.query(Finding).get(control_result.finding_id)
+            finding = session.get(Finding,control_result.finding_id)
             if finding:
                 weakness_parts.append(finding.title)
         if control_result.assertion_findings:
@@ -123,7 +123,7 @@ class POAMManager:
         Raises:
             ValueError: If POA&M not found or in a terminal status.
         """
-        poam = session.query(POAM).get(poam_id)
+        poam = session.get(POAM,poam_id)
         if not poam:
             raise ValueError(f"POA&M not found: {poam_id}")
         if poam.status in _CLOSED_STATUSES:

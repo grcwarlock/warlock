@@ -39,6 +39,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from warlock import __version__ as _VERSION
 from warlock.api.auth import (
     authenticate_user,
     create_access_token,
@@ -84,7 +85,7 @@ log = logging.getLogger(__name__)
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    version: str = "2.0.0a1"
+    version: str = _VERSION
     timestamp: str
 
 
@@ -368,7 +369,7 @@ _alert_config: dict[str, Any] = {"alert_rules": []}
 
 app = FastAPI(
     title="Warlock GRC API",
-    version="2.0.0a1",
+    version=_VERSION,
     description="Compliance telemetry pipeline REST API",
 )
 
@@ -428,7 +429,7 @@ PREFIX = "/api/v1"
 def health():
     return HealthResponse(
         status="ok",
-        version="2.0.0a1",
+        version=_VERSION,
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
 

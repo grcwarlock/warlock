@@ -88,6 +88,20 @@ class EngagementSufficiency:
 
 # ---------------------------------------------------------------------------
 # Severity weights for posture scoring
+#
+# Rationale: Weights follow CVSS severity tiers (Critical > High > Medium >
+# Low > Informational) with a 5:1 ratio between critical and info. This
+# ensures a single critical non-compliance outweighs five informational
+# findings in the posture score. The 50% weight for "partial" compliance
+# reflects that partial implementations provide some risk reduction.
+#
+# These weights are used by PostureAggregator.aggregate_control() to compute
+# a weighted compliance percentage (0-100). A posture score of 100 means all
+# assessed controls are fully compliant weighted by severity.
+#
+# To customize: override via framework-specific config or system profile
+# settings in a future release. Current values are aligned with common
+# GRC scoring methodologies (NIST CSF, CIS RAM).
 # ---------------------------------------------------------------------------
 
 _SEVERITY_WEIGHTS: dict[str, float] = {
