@@ -51,6 +51,8 @@ warlock systems                        # system profiles
 warlock vendors                        # vendor risk
 warlock retention report               # data retention
 warlock inheritance --system APP       # control inheritance
+warlock architecture                  # live architecture diagram (terminal)
+warlock architecture --format svg     # export as SVG (opens in browser)
 ```
 
 ## API
