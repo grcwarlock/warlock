@@ -3666,6 +3666,292 @@ def update_data_silo(
 
 
 # =========================================================================
+# Phase 2: POA&Ms, Compensating Controls, Risk Acceptance
+# =========================================================================
+
+
+class POAMResponse(BaseModel):
+    id: str
+    framework: str
+    control_id: str
+    weakness_description: str
+    severity: str
+    status: str
+    scheduled_completion: str | None
+    delay_count: int
+    milestones: list[dict] | None
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class POAMExtendRequest(BaseModel):
+    justification: str
+    new_completion_date: str
+    approved_by: str
+
+
+class CompensatingControlResponse(BaseModel):
+    id: str
+    original_framework: str
+    original_control_id: str
+    title: str
+    status: str
+    effectiveness_score: float | None
+    expiry_date: str | None
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class RiskAcceptanceResponse(BaseModel):
+    id: str
+    framework: str
+    control_id: str
+    risk_level: str
+    status: str
+    approved_by: str | None
+    expiry_date: str
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+@app.get(PREFIX + "/poams")
+def list_poams(
+    framework: str | None = Query(None),
+    status: str | None = Query(None),
+    overdue: bool = Query(False),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """List Plans of Action & Milestones."""
+    from warlock.workflows.poam import POAMManager
+    mgr = POAMManager()
+    if overdue:
+        rows = mgr.get_overdue(db)
+    else:
+        rows = mgr.list_poams(db, framework=framework, status=status)
+    return [
+        {
+            "id": p.id, "framework": p.framework, "control_id": p.control_id,
+            "weakness_description": p.weakness_description, "severity": p.severity,
+            "status": p.status, "delay_count": p.delay_count or 0,
+            "scheduled_completion": p.scheduled_completion.isoformat() if p.scheduled_completion else None,
+            "milestones": p.milestones,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in rows
+    ]
+
+
+@app.post(PREFIX + "/poams/{poam_id}/extend")
+def extend_poam(
+    poam_id: str,
+    req: POAMExtendRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    """Extend a POA&M's scheduled completion date."""
+    from warlock.workflows.poam import POAMManager
+    from datetime import datetime as dt
+    mgr = POAMManager()
+    new_date = dt.fromisoformat(req.new_completion_date)
+    poam = mgr.extend(db, poam_id, req.justification, new_date, req.approved_by)
+    return {"id": poam.id, "status": poam.status, "delay_count": poam.delay_count}
+
+
+@app.get(PREFIX + "/compensating-controls")
+def list_compensating_controls(
+    framework: str | None = Query(None),
+    status: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """List compensating controls."""
+    from warlock.workflows.compensating import CompensatingControlManager
+    mgr = CompensatingControlManager()
+    rows = mgr.list_controls(db, framework=framework, status=status)
+    return [
+        {
+            "id": c.id, "original_framework": c.original_framework,
+            "original_control_id": c.original_control_id, "title": c.title,
+            "status": c.status, "effectiveness_score": c.effectiveness_score,
+            "expiry_date": c.expiry_date.isoformat() if c.expiry_date else None,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+        }
+        for c in rows
+    ]
+
+
+@app.get(PREFIX + "/risk-acceptances")
+def list_risk_acceptances(
+    framework: str | None = Query(None),
+    status: str | None = Query(None),
+    expiring_days: int | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """List risk acceptances."""
+    from warlock.workflows.risk_acceptance import RiskAcceptanceManager
+    mgr = RiskAcceptanceManager()
+    rows = mgr.list_acceptances(db, framework=framework, status=status, expiring_days=expiring_days)
+    return [
+        {
+            "id": r.id, "framework": r.framework, "control_id": r.control_id,
+            "risk_level": r.risk_level, "status": r.status,
+            "approved_by": r.approved_by,
+            "expiry_date": r.expiry_date.isoformat() if r.expiry_date else None,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in rows
+    ]
+
+
+# =========================================================================
+# Phase 4: Drift & Simulation
+# =========================================================================
+
+
+@app.get(PREFIX + "/drift")
+def get_drift(
+    framework: str | None = Query(None),
+    days: int = Query(30),
+    direction: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Get compliance drift events."""
+    from warlock.assessors.drift import DriftDetector
+    detector = DriftDetector()
+    drifts = detector.get_drifts(db, framework=framework, days=days, direction=direction)
+    return [
+        {
+            "id": d.id, "framework": d.framework, "control_id": d.control_id,
+            "drift_direction": d.drift_direction,
+            "previous_status": d.previous_status, "new_status": d.new_status,
+            "correlated_changes": len(d.correlated_change_event_ids or []),
+            "detected_at": d.detected_at.isoformat() if d.detected_at else None,
+        }
+        for d in drifts
+    ]
+
+
+class AuditSimulationRequest(BaseModel):
+    framework: str
+    target_date: str
+    system_id: str | None = None
+
+
+@app.post(PREFIX + "/audit-simulation")
+def run_audit_simulation(
+    req: AuditSimulationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Simulate what an auditor would see at a future date."""
+    from warlock.assessors.simulation import AuditSimulator
+    from datetime import datetime as dt, timezone as tz
+    sim = AuditSimulator()
+    target = dt.fromisoformat(req.target_date).replace(tzinfo=tz.utc)
+    result = sim.simulate(db, req.framework, target, system_id=req.system_id)
+    return {
+        "projected_coverage": result.projected_coverage,
+        "total_controls": result.total_controls,
+        "stale_controls": result.stale_controls,
+        "overdue_poams": result.overdue_poams,
+        "expiring_acceptances": result.expiring_acceptances,
+        "at_risk_controls": result.at_risk_controls,
+    }
+
+
+@app.get(PREFIX + "/effectiveness")
+def get_effectiveness(
+    framework: str | None = Query(None),
+    days: int = Query(365),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Control effectiveness scores over time."""
+    from datetime import timedelta
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    q = db.query(PostureSnapshot).filter(
+        PostureSnapshot.snapshot_date >= cutoff,
+        PostureSnapshot.uptime_pct.isnot(None),
+    )
+    if framework:
+        q = q.filter(PostureSnapshot.framework == framework)
+
+    latest = q.order_by(PostureSnapshot.snapshot_date.desc()).all()
+    seen = set()
+    rows = []
+    for s in latest:
+        key = (s.framework, s.control_id)
+        if key not in seen:
+            seen.add(key)
+            rows.append(s)
+
+    return [
+        {
+            "framework": s.framework, "control_id": s.control_id,
+            "uptime_pct": s.uptime_pct, "mttr_hours": s.mttr_hours,
+            "drift_count": s.drift_count,
+        }
+        for s in rows
+    ]
+
+
+# =========================================================================
+# Phase 5: Framework Diff & Impact Check
+# =========================================================================
+
+
+class FrameworkDiffRequest(BaseModel):
+    old_version: str
+    new_version: str
+
+
+@app.post(PREFIX + "/frameworks/diff")
+def framework_diff_endpoint(
+    req: FrameworkDiffRequest,
+    current_user: User = Depends(require_permission("read")),
+):
+    """Compare two framework versions."""
+    from warlock.frameworks.diff import FrameworkDiff
+    differ = FrameworkDiff()
+    result = differ.diff(req.old_version, req.new_version)
+    return {
+        "added": sorted(result.added_controls),
+        "removed": sorted(result.removed_controls),
+        "modified": sorted(result.modified_controls),
+        "unchanged_count": len(result.unchanged_controls),
+    }
+
+
+class ImpactCheckRequest(BaseModel):
+    changed_files: list[str]
+
+
+@app.post(PREFIX + "/impact-check")
+def impact_check_endpoint(
+    req: ImpactCheckRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Check compliance impact of changed assertion/policy files."""
+    from warlock.assessors.impact import ComplianceImpactAnalyzer
+    analyzer = ComplianceImpactAnalyzer()
+    result = analyzer.analyze(db, req.changed_files)
+    return {
+        "affected_controls": result.affected_controls,
+        "predicted_flips": [
+            {"control": f.control, "framework": f.framework, "from_status": f.from_status, "to_status": f.to_status}
+            for f in result.predicted_flips
+        ],
+    }
+
+
+# =========================================================================
 # Server entry point
 # =========================================================================
 

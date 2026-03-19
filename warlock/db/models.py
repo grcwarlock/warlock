@@ -103,6 +103,7 @@ class Finding(Base):
     resource_name = Column(Text)
     account_id = Column(String(100))
     region = Column(String(50))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))  # Phase 3: multi-system scoping
 
     # Source lineage
     source = Column(String(50), nullable=False)
@@ -172,8 +173,10 @@ class ControlResult(Base):
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50), nullable=False)
 
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))  # Phase 3
+
     # Determination
-    status = Column(String(20), nullable=False)         # compliant, non_compliant, partial, not_assessed, not_applicable
+    status = Column(String(20), nullable=False)         # compliant, non_compliant, partial, not_assessed, not_applicable, risk_accepted, inherited_compliant, inherited_at_risk
     severity = Column(String(20), nullable=False)
 
     # Tier 1: deterministic assertion
@@ -195,6 +198,10 @@ class ControlResult(Base):
     evidence_ids = Column(SQLiteJSON)                    # [raw_event UUIDs] that informed this
     assessed_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     assessor = Column(String(100), nullable=False)       # "assertion:mfa_check" or "ai:claude"
+
+    # Phase 5b: Auditor examination
+    examined_at = Column(DateTime(timezone=True))
+    examined_by = Column(String(255))
 
     control_mapping = relationship("ControlMapping", back_populates="control_results")
 
@@ -282,6 +289,14 @@ class PostureSnapshot(Base):
     sufficiency_score = Column(Float, default=0.0)  # 0.0-100.0
     sufficiency_details = Column(SQLiteJSON, default=dict)
 
+    # Phase 3: multi-system scoping
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+
+    # Phase 4: effectiveness scoring
+    uptime_pct = Column(Float)           # % of time compliant over trailing window
+    mttr_hours = Column(Float)           # mean time to remediate
+    drift_count = Column(Integer)        # number of status changes in window
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
     __table_args__ = (
@@ -309,6 +324,8 @@ class User(Base):
     # Scoping — for 'owner' role, which system boundaries they can see
     allowed_frameworks = Column(SQLiteJSON, default=list)  # empty = all
     allowed_sources = Column(SQLiteJSON, default=list)  # empty = all
+    allowed_control_families = Column(SQLiteJSON, default=list)  # Phase 5a: ABAC — empty = all
+    allowed_actions = Column(SQLiteJSON, default=list)  # Phase 5a: overrides role defaults
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     last_login = Column(DateTime(timezone=True))
@@ -397,6 +414,134 @@ class AuditEngagement(Base):
 
 
 # ---------------------------------------------------------------------------
+# POA&M — Plan of Action & Milestones
+# ---------------------------------------------------------------------------
+
+
+class POAM(Base):
+    """First-class POA&M entity for tracking remediation plans."""
+    __tablename__ = "poams"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    finding_id = Column(String(36), ForeignKey("findings.id"))
+    control_result_id = Column(String(36), ForeignKey("control_results.id"))
+    framework = Column(String(50), nullable=False)
+    control_id = Column(String(50), nullable=False)
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+
+    weakness_description = Column(Text, nullable=False)
+    severity = Column(String(20), nullable=False)
+    risk_level = Column(String(20), default="moderate")
+
+    # Lifecycle: draft -> open -> in_progress -> completed -> verified -> closed
+    status = Column(String(20), nullable=False, default="draft")
+
+    milestones = Column(SQLiteJSON, default=list)  # [{description, due_date, completed_date, status}]
+    scheduled_completion = Column(DateTime(timezone=True))
+    actual_completion = Column(DateTime(timezone=True))
+    delay_count = Column(Integer, default=0)
+    delay_justifications = Column(SQLiteJSON, default=list)  # [{date, justification, approved_by}]
+    resources_required = Column(Text)
+
+    created_by = Column(String(255))
+    updated_by = Column(String(255))
+    approved_by = Column(String(255))
+    approved_at = Column(DateTime(timezone=True))
+    vendor_dependency = Column(String(255))
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_poam_framework", "framework", "control_id"),
+        Index("idx_poam_status", "status"),
+        Index("idx_poam_completion", "scheduled_completion"),
+        Index("idx_poam_system", "system_profile_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Compensating Controls
+# ---------------------------------------------------------------------------
+
+
+class CompensatingControl(Base):
+    """Documents alternative controls when primary control is non-compliant."""
+    __tablename__ = "compensating_controls"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    original_framework = Column(String(50), nullable=False)
+    original_control_id = Column(String(50), nullable=False)
+    poam_id = Column(String(36), ForeignKey("poams.id"))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    implementation_details = Column(Text)
+    evidence_references = Column(SQLiteJSON, default=list)  # [{type, description, url, finding_id}]
+
+    # Lifecycle: proposed -> approved -> active -> expired | revoked
+    status = Column(String(20), nullable=False, default="proposed")
+
+    approved_by = Column(String(255))
+    approved_at = Column(DateTime(timezone=True))
+    expiry_date = Column(DateTime(timezone=True))
+    review_frequency = Column(String(20), default="quarterly")
+    last_reviewed = Column(DateTime(timezone=True))
+    effectiveness_score = Column(Float)  # 0-100
+
+    created_by = Column(String(255))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_cc_control", "original_framework", "original_control_id"),
+        Index("idx_cc_status", "status"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Risk Acceptance
+# ---------------------------------------------------------------------------
+
+
+class RiskAcceptance(Base):
+    """Formal risk acceptance with AO-level approval and expiry."""
+    __tablename__ = "risk_acceptances"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    framework = Column(String(50), nullable=False)
+    control_id = Column(String(50), nullable=False)
+    poam_id = Column(String(36), ForeignKey("poams.id"))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+
+    risk_description = Column(Text, nullable=False)
+    risk_level = Column(String(20), nullable=False)  # critical, high, moderate, low
+    residual_risk_level = Column(String(20))
+    conditions = Column(SQLiteJSON, default=list)  # [{condition, met: bool}]
+
+    # Lifecycle: requested -> reviewed -> approved -> active -> expired | revoked
+    status = Column(String(20), nullable=False, default="requested")
+
+    requested_by = Column(String(255), nullable=False)
+    reviewed_by = Column(String(255))
+    reviewed_at = Column(DateTime(timezone=True))
+    approved_by = Column(String(255))  # Must be AO-level
+    approved_at = Column(DateTime(timezone=True))
+    expiry_date = Column(DateTime(timezone=True), nullable=False)
+    auto_reeval_triggers = Column(SQLiteJSON, default=dict)  # {"severity_change": true, "new_finding": true}
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_ra_control", "framework", "control_id"),
+        Index("idx_ra_status", "status"),
+        Index("idx_ra_expiry", "expiry_date"),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Issue Tracking & Remediation
 # ---------------------------------------------------------------------------
 
@@ -412,6 +557,7 @@ class Issue(Base):
     # Linked to compliance data
     finding_id = Column(String(36), ForeignKey("findings.id"))
     control_result_id = Column(String(36), ForeignKey("control_results.id"))
+    poam_id = Column(String(36), ForeignKey("poams.id"))
     framework = Column(String(50))
     control_id = Column(String(50))
 
@@ -535,6 +681,7 @@ class AuditComment(Base):
     # Content
     author = Column(String(255), nullable=False)
     author_role = Column(String(20))  # "auditor", "practitioner", "management"
+    external_auditor_id = Column(String(36), ForeignKey("external_auditors.id"))  # Phase 5b
     content = Column(Text, nullable=False)
 
     # Thread support
@@ -652,6 +799,9 @@ class SystemProfile(Base):
     # Deployment
     deployment_model = Column(String(30))  # cloud, on-premise, hybrid
     service_model = Column(String(20))  # IaaS, PaaS, SaaS
+
+    # Phase 5g: Retention
+    retention_policy_days = Column(Integer, default=2555)  # 7 years
 
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
@@ -849,3 +999,194 @@ class DataSilo(Base):
         Index("idx_silo_provider", "provider"),
         Index("idx_silo_pii", "contains_pii"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: Control Inheritance
+# ---------------------------------------------------------------------------
+
+
+class ControlInheritance(Base):
+    """Maps control responsibility: inherited, shared, common, or system-specific."""
+    __tablename__ = "control_inheritances"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"), nullable=False)
+    framework = Column(String(50), nullable=False)
+    control_id = Column(String(50), nullable=False)
+
+    # Per NIST SP 800-53A / FedRAMP CRM
+    inheritance_type = Column(String(20), nullable=False)  # inherited, shared, common, system_specific
+    provider_system_id = Column(String(36), ForeignKey("system_profiles.id"))
+    provider_description = Column(Text)
+    responsibility_description = Column(Text)
+    evidence_requirement = Column(String(20), default="both")  # provider_only, consumer_only, both
+
+    status = Column(String(20), default="active")  # active, under_review, deprecated
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_ci_system_control", "system_profile_id", "framework", "control_id", unique=True),
+        Index("idx_ci_provider", "provider_system_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: System Dependencies
+# ---------------------------------------------------------------------------
+
+
+class SystemDependency(Base):
+    """Models cross-system control inheritance dependencies."""
+    __tablename__ = "system_dependencies"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    consumer_system_id = Column(String(36), ForeignKey("system_profiles.id"), nullable=False)
+    provider_system_id = Column(String(36), ForeignKey("system_profiles.id"), nullable=False)
+
+    shared_controls = Column(SQLiteJSON, default=list)  # ["nist_800_53:AC-2", "soc2:CC6.1"]
+    dependency_type = Column(String(30), nullable=False)  # infrastructure, identity, network, application
+    description = Column(Text)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_sd_consumer", "consumer_system_id"),
+        Index("idx_sd_provider", "provider_system_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Change Events
+# ---------------------------------------------------------------------------
+
+
+class ChangeEvent(Base):
+    """Generic change event from cloud audit logs, CI/CD, ITSM, IaC."""
+    __tablename__ = "change_events"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    source = Column(String(50), nullable=False)       # cloudtrail, github, servicenow, terraform
+    source_type = Column(String(30), nullable=False)   # cloud_audit, ci_cd, itsm, iac
+    event_type = Column(String(100), nullable=False)
+    actor = Column(String(255))
+    action = Column(String(255), nullable=False)
+    resource_id = Column(Text)
+    resource_type = Column(String(100))
+    detail = Column(SQLiteJSON)
+    occurred_at = Column(DateTime(timezone=True), nullable=False)
+    ingested_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    sha256 = Column(String(64), nullable=False)
+
+    __table_args__ = (
+        Index("idx_ce_source", "source", "source_type"),
+        Index("idx_ce_occurred", "occurred_at"),
+        Index("idx_ce_resource", "resource_id"),
+        Index("idx_ce_sha256", "sha256"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Compliance Drift
+# ---------------------------------------------------------------------------
+
+
+class ComplianceDrift(Base):
+    """Records compliance status changes with correlated change events."""
+    __tablename__ = "compliance_drifts"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    framework = Column(String(50), nullable=False)
+    control_id = Column(String(50), nullable=False)
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id"))
+
+    previous_status = Column(String(20), nullable=False)
+    new_status = Column(String(20), nullable=False)
+    drift_direction = Column(String(20), nullable=False)  # improved, degraded
+    previous_posture_score = Column(Float)
+    new_posture_score = Column(Float)
+
+    correlated_change_event_ids = Column(SQLiteJSON, default=list)
+    root_cause_summary = Column(Text)
+    correlation_confidence = Column(Float)
+
+    detected_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    snapshot_id = Column(String(36))
+
+    __table_args__ = (
+        Index("idx_drift_control", "framework", "control_id"),
+        Index("idx_drift_detected", "detected_at"),
+        Index("idx_drift_direction", "drift_direction"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 5a: Policy Overrides (OPA)
+# ---------------------------------------------------------------------------
+
+
+class PolicyOverride(Base):
+    """Custom Rego policies for ABAC escalation via OPA."""
+    __tablename__ = "policy_overrides"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    policy_rego = Column(Text, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_by = Column(String(255))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Phase 5b: External Auditors
+# ---------------------------------------------------------------------------
+
+
+class ExternalAuditor(Base):
+    """Lightweight auditor account with magic-link authentication."""
+    __tablename__ = "external_auditors"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    email = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
+    firm = Column(String(255))
+
+    magic_link_hash = Column(String(64))
+    token_expires_at = Column(DateTime(timezone=True))
+    last_accessed = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+
+class AuditorEngagementAssignment(Base):
+    """Junction table: auditor ↔ engagement (many-to-many)."""
+    __tablename__ = "auditor_engagement_assignments"
+
+    auditor_id = Column(String(36), ForeignKey("external_auditors.id"), primary_key=True)
+    engagement_id = Column(String(36), ForeignKey("audit_engagements.id"), primary_key=True)
+    assigned_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+
+class EvidenceRequest(Base):
+    """Auditor request for additional evidence during an engagement."""
+    __tablename__ = "evidence_requests"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    engagement_id = Column(String(36), ForeignKey("audit_engagements.id"), nullable=False)
+    auditor_id = Column(String(36), ForeignKey("external_auditors.id"), nullable=False)
+    framework = Column(String(50))
+    control_id = Column(String(50))
+    description = Column(Text, nullable=False)
+
+    status = Column(String(20), default="requested")  # requested -> in_progress -> fulfilled -> closed
+    fulfilled_by = Column(String(255))
+    fulfilled_at = Column(DateTime(timezone=True))
+    fulfillment_notes = Column(Text)
+    evidence_ids = Column(SQLiteJSON, default=list)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
