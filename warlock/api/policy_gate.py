@@ -34,6 +34,13 @@ class PolicyGate:
         settings = get_settings()
         self.opa_url = opa_url or settings.opa_url
         self.fail_mode = fail_mode or settings.opa_fail_mode
+        # In production, default to fail-closed for security
+        if settings.env == "production" and self.fail_mode == "open" and bool(self.opa_url):
+            log.warning(
+                "OPA policy gate is set to fail-open in production. "
+                "This means OPA outages will bypass all policy enforcement. "
+                "Set WLK_OPA_FAIL_MODE=closed for production."
+            )
         self.enabled = bool(self.opa_url)
         self._session = None
 

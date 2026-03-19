@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from fastapi import Depends, HTTPException, Header, status
 from sqlalchemy.orm import Session
@@ -14,6 +15,8 @@ from warlock.api.auth import (
     has_permission,
     PERMISSIONS,
 )
+
+log = logging.getLogger(__name__)
 
 
 def get_db():
@@ -52,8 +55,12 @@ def get_current_user(
         if user:
             role_perms = PERMISSIONS.get(user.role, set())
             # Intersect with API key scopes if scopes are defined
-            if api_key and api_key.scopes:
-                effective = role_perms & set(api_key.scopes)
+            if api_key:
+                if api_key.scopes:  # Non-empty scopes: intersect with role
+                    effective = role_perms & set(api_key.scopes)
+                else:  # Empty scopes list: no permissions (not full permissions)
+                    effective = set()
+                    log.warning("API key %s has empty scopes — no permissions granted", api_key.id[:8])
             else:
                 effective = role_perms
             return AuthContext(
@@ -85,6 +92,17 @@ def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found or inactive",
             )
+        # Token revocation check
+        if user.token_valid_after:
+            token_iat = payload.get("iat", 0)
+            valid_after = user.token_valid_after
+            if valid_after.tzinfo is None:
+                valid_after = valid_after.replace(tzinfo=__import__("datetime").timezone.utc)
+            if token_iat < valid_after.timestamp():
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been revoked",
+                )
         return AuthContext(
             user=user,
             effective_permissions=PERMISSIONS.get(user.role, set()),

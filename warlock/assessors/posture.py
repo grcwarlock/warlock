@@ -238,26 +238,111 @@ class PostureAggregator:
         session: Session,
         framework: str,
     ) -> list[ControlPosture]:
-        """Aggregate all controls in a framework.
-
-        Args:
-            session: SQLAlchemy session.
-            framework: Framework identifier.
-
-        Returns:
-            List of ControlPosture, one per control.
-        """
-        # Get all distinct control_ids for this framework
-        control_rows = (
-            session.query(distinct(ControlResult.control_id))
+        """Aggregate all controls in a framework using batch queries."""
+        # Single query: all results for this framework
+        results: list[ControlResult] = (
+            session.query(ControlResult)
             .filter(ControlResult.framework == framework)
             .all()
         )
-        control_ids = sorted([row[0] for row in control_rows])
 
+        if not results:
+            return []
+
+        # Group by control_id
+        by_control: dict[str, list[ControlResult]] = {}
+        for r in results:
+            by_control.setdefault(r.control_id, []).append(r)
+
+        # Batch fetch provider diversity for all findings at once
+        all_finding_ids = list({r.finding_id for r in results})
+        provider_map: dict[str, set[str]] = {}  # finding_id -> set of providers
+        if all_finding_ids:
+            # Query in chunks to avoid SQLite variable limit
+            chunk_size = 500
+            for i in range(0, len(all_finding_ids), chunk_size):
+                chunk = all_finding_ids[i:i + chunk_size]
+                rows = (
+                    session.query(Finding.id, Finding.provider)
+                    .filter(Finding.id.in_(chunk))
+                    .all()
+                )
+                for fid, provider in rows:
+                    if provider:
+                        provider_map.setdefault(fid, set()).add(provider)
+
+        # Compute posture per control
+        now = datetime.now(timezone.utc)
         postures = []
-        for control_id in control_ids:
-            postures.append(self.aggregate_control(session, framework, control_id))
+        for control_id in sorted(by_control.keys()):
+            ctrl_results = by_control[control_id]
+            compliant = non_compliant = partial = not_assessed = 0
+            weighted_compliant = 0.0
+            weighted_total = 0.0
+
+            for r in ctrl_results:
+                weight = _severity_weight(r.severity)
+                weighted_total += weight
+                if r.status == "compliant":
+                    compliant += 1
+                    weighted_compliant += weight
+                elif r.status == "non_compliant":
+                    non_compliant += 1
+                elif r.status == "partial":
+                    partial += 1
+                    weighted_compliant += weight * 0.5
+                elif r.status == "not_assessed":
+                    not_assessed += 1
+
+            posture_score = (
+                round((weighted_compliant / weighted_total) * 100, 2)
+                if weighted_total > 0 else 0.0
+            )
+
+            if non_compliant > 0:
+                status = "non_compliant"
+            elif partial > 0:
+                status = "partial"
+            elif compliant > 0:
+                status = "compliant"
+            else:
+                status = "not_assessed"
+
+            # Evidence sources from batch map
+            sources = set()
+            for r in ctrl_results:
+                if r.finding_id in provider_map:
+                    sources.update(provider_map[r.finding_id])
+
+            # Evidence freshness
+            assessed_times = [r.assessed_at for r in ctrl_results if r.assessed_at]
+            freshness_hours = None
+            oldest_hours = None
+            if assessed_times:
+                newest = max(assessed_times)
+                oldest = min(assessed_times)
+                if newest.tzinfo is None:
+                    newest = newest.replace(tzinfo=timezone.utc)
+                if oldest.tzinfo is None:
+                    oldest = oldest.replace(tzinfo=timezone.utc)
+                freshness_hours = round((now - newest).total_seconds() / 3600, 2)
+                oldest_hours = round((now - oldest).total_seconds() / 3600, 2)
+
+            postures.append(ControlPosture(
+                framework=framework,
+                control_id=control_id,
+                status=status,
+                posture_score=posture_score,
+                total_findings=len(ctrl_results),
+                compliant_count=compliant,
+                non_compliant_count=non_compliant,
+                partial_count=partial,
+                not_assessed_count=not_assessed,
+                evidence_sources=sorted(sources),
+                evidence_freshness_hours=freshness_hours,
+                oldest_evidence_hours=oldest_hours,
+            ))
+
         return postures
 
     def aggregate_all(

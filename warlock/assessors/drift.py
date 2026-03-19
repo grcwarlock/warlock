@@ -37,54 +37,55 @@ class DriftDetector:
         session: Session,
         framework: str | None = None,
     ) -> list[ComplianceDrift]:
-        """Compare the latest two snapshots per control, create drift rows.
-
-        For each (framework, control_id), finds the two most recent snapshots.
-        If the status changed, creates a ComplianceDrift record.
-
-        Args:
-            session: SQLAlchemy session.
-            framework: Optional framework filter.
-
-        Returns:
-            List of newly created ComplianceDrift rows.
-        """
-        # Get distinct (framework, control_id) pairs from snapshots
-        pairs_query = session.query(
-            PostureSnapshot.framework,
-            PostureSnapshot.control_id,
-        ).distinct()
-
+        """Compare the latest two snapshots per control using batch queries."""
+        # Get the two most recent distinct snapshot dates
+        date_query = (
+            session.query(PostureSnapshot.snapshot_date)
+            .distinct()
+            .order_by(PostureSnapshot.snapshot_date.desc())
+        )
         if framework:
-            pairs_query = pairs_query.filter(
-                PostureSnapshot.framework == framework
-            )
+            date_query = date_query.filter(PostureSnapshot.framework == framework)
+        dates = [row[0] for row in date_query.limit(2).all()]
 
-        pairs = pairs_query.all()
+        if len(dates) < 2:
+            return []
+
+        current_date, previous_date = dates[0], dates[1]
+
+        # Batch fetch current and previous snapshots
+        current_snaps = {
+            (s.framework, s.control_id): s
+            for s in session.query(PostureSnapshot)
+            .filter(PostureSnapshot.snapshot_date == current_date)
+            .all()
+        }
+        previous_snaps = {
+            (s.framework, s.control_id): s
+            for s in session.query(PostureSnapshot)
+            .filter(PostureSnapshot.snapshot_date == previous_date)
+            .all()
+        }
+
+        # Batch check existing drift records for current snapshot
+        existing_drift_keys = set()
+        for d in (
+            session.query(ComplianceDrift.framework, ComplianceDrift.control_id)
+            .filter(ComplianceDrift.detected_at >= current_date)
+            .all()
+        ):
+            existing_drift_keys.add((d.framework, d.control_id))
+
         drifts: list[ComplianceDrift] = []
 
-        for fw, cid in pairs:
-            # Get the two most recent snapshots
-            latest_two = (
-                session.query(PostureSnapshot)
-                .filter(
-                    PostureSnapshot.framework == fw,
-                    PostureSnapshot.control_id == cid,
-                )
-                .order_by(PostureSnapshot.snapshot_date.desc())
-                .limit(2)
-                .all()
-            )
-
-            if len(latest_two) < 2:
+        for key, current in current_snaps.items():
+            previous = previous_snaps.get(key)
+            if not previous or current.status == previous.status:
+                continue
+            if key in existing_drift_keys:
                 continue
 
-            current, previous = latest_two[0], latest_two[1]
-
-            if current.status == previous.status:
-                continue
-
-            # Determine drift direction
+            fw, cid = key
             curr_compliant = current.status in _COMPLIANT_STATUSES
             prev_compliant = previous.status in _COMPLIANT_STATUSES
             if curr_compliant and not prev_compliant:
@@ -96,25 +97,10 @@ class DriftDetector:
             else:
                 direction = "degraded"
 
-            # Check for existing drift record for this exact transition
-            existing = (
-                session.query(ComplianceDrift)
-                .filter(
-                    ComplianceDrift.framework == fw,
-                    ComplianceDrift.control_id == cid,
-                    ComplianceDrift.snapshot_id == current.id,
-                )
-                .first()
-            )
-            if existing:
-                continue
-
             drift = ComplianceDrift(
-                framework=fw,
-                control_id=cid,
+                framework=fw, control_id=cid,
                 system_profile_id=current.system_profile_id,
-                previous_status=previous.status,
-                new_status=current.status,
+                previous_status=previous.status, new_status=current.status,
                 drift_direction=direction,
                 previous_posture_score=previous.posture_score,
                 new_posture_score=current.posture_score,
@@ -122,15 +108,7 @@ class DriftDetector:
             )
             session.add(drift)
             drifts.append(drift)
-
-            log.info(
-                "Drift detected: %s/%s %s -> %s (%s)",
-                fw,
-                cid,
-                previous.status,
-                current.status,
-                direction,
-            )
+            log.info("Drift: %s/%s %s -> %s (%s)", fw, cid, previous.status, current.status, direction)
 
         if drifts:
             session.flush()

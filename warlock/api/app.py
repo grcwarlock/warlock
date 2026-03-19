@@ -31,7 +31,6 @@ import json
 import logging
 import os
 import re as _re
-import threading
 from datetime import datetime, timezone
 from typing import Any
 
@@ -359,11 +358,6 @@ def _parse_dt(s: str | None) -> datetime | None:
         raise HTTPException(status_code=400, detail=f"Invalid date format: {s}")
 
 
-# Pipeline run tracking
-_pipeline_lock = threading.Lock()
-_pipeline_running = False
-_pipeline_run_id: str | None = None
-
 # In-memory alert config (persisted per-process; swap to DB/file in prod)
 _alert_config: dict[str, Any] = {"alert_rules": []}
 
@@ -419,6 +413,51 @@ def health():
         status="ok",
         version="2.0.0a1",
         timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+
+
+@app.get(PREFIX + "/health/live")
+def health_live():
+    """Liveness probe — process is alive."""
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@app.get(PREFIX + "/health/ready")
+def health_ready(db: Session = Depends(get_db)):
+    """Readiness probe — checks DB connectivity and scheduler state."""
+    from fastapi.responses import JSONResponse
+
+    checks: dict[str, str] = {}
+    all_ok = True
+
+    # DB check
+    try:
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
+        checks["database"] = "ok"
+    except Exception as e:
+        checks["database"] = f"failed: {e}"
+        all_ok = False
+
+    # Scheduler check
+    try:
+        from warlock.pipeline.scheduler import get_scheduler
+        sched = get_scheduler()
+        sched_status = sched.status
+        checks["scheduler"] = "running" if sched_status.get("running") else "stopped"
+        if not sched_status.get("running"):
+            all_ok = False
+    except Exception:
+        checks["scheduler"] = "unknown"
+
+    status_code = 200 if all_ok else 503
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "ok" if all_ok else "degraded",
+            "checks": checks,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
     )
 
 
@@ -523,14 +562,29 @@ def revoke_api_key(
     return MessageResponse(message="API key revoked")
 
 
+@app.post(PREFIX + "/auth/logout")
+def logout(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Revoke all tokens for the current user."""
+    from datetime import datetime, timezone
+    current_user.token_valid_after = datetime.now(timezone.utc)
+    db.flush()
+    return {"message": "All tokens revoked"}
+
+
 # =========================================================================
 # Pipeline
 # =========================================================================
 
 
-def _run_pipeline_background(run_id: str):
-    """Execute the pipeline in a background thread."""
-    global _pipeline_running, _pipeline_run_id
+def _run_pipeline_background(run_id: str, source: list[str] | None = None):
+    """Execute the pipeline in a background thread.
+
+    ConnectorRun rows written by the pipeline orchestrator track status;
+    no in-memory flags are needed here.
+    """
     try:
         from warlock.db.engine import get_session
         from warlock.connectors.base import registry as connector_registry
@@ -552,58 +606,65 @@ def _run_pipeline_background(run_id: str):
             bus=bus,
         )
         with get_session() as session:
-            pipeline.run(session)
+            pipeline.run(session, source_filter=source)
     except Exception:
         log.exception("Background pipeline run failed (run_id=%s)", run_id)
-    finally:
-        with _pipeline_lock:
-            _pipeline_running = False
 
 
-@app.post(PREFIX + "/pipeline/collect", response_model=PipelineCollectResponse)
+@app.post(PREFIX + "/pipeline/collect", status_code=202)
 def pipeline_collect(
     background_tasks: BackgroundTasks,
+    source: list[str] | None = Query(None),
+    db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("run_pipeline")),
 ):
-    global _pipeline_running, _pipeline_run_id
-    with _pipeline_lock:
-        if _pipeline_running:
-            raise HTTPException(status_code=409, detail="Pipeline is already running")
-        _pipeline_running = True
-        import uuid
+    """Trigger a full pipeline run in the background."""
+    # Check for already-running pipeline via database (multi-worker safe)
+    running = db.query(ConnectorRun).filter(ConnectorRun.status == "running").first()
+    if running:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Pipeline already running (run {running.id[:8]}, started {running.started_at})",
+        )
 
-        _pipeline_run_id = str(uuid.uuid4())
-        run_id = _pipeline_run_id
+    import uuid
+    run_id = str(uuid.uuid4())
+    background_tasks.add_task(_run_pipeline_background, run_id, source)
+    return {"status": "started", "run_id": run_id}
 
-    background_tasks.add_task(_run_pipeline_background, run_id)
-    return PipelineCollectResponse(message="Pipeline collection started", run_id=run_id)
 
-
-@app.get(PREFIX + "/pipeline/status", response_model=PipelineStatusResponse)
+@app.get(PREFIX + "/pipeline/status")
 def pipeline_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    last_run = (
+    """Pipeline run status."""
+    latest_run = (
         db.query(ConnectorRun)
         .order_by(ConnectorRun.started_at.desc())
         .first()
     )
+    is_running = db.query(ConnectorRun).filter(ConnectorRun.status == "running").count() > 0
 
     raw_count = db.query(func.count(RawEvent.id)).scalar() or 0
     finding_count = db.query(func.count(Finding.id)).scalar() or 0
     result_count = db.query(func.count(ControlResult.id)).scalar() or 0
 
-    return PipelineStatusResponse(
-        running=_pipeline_running,
-        last_run_id=last_run.id if last_run else None,
-        last_status=last_run.status if last_run else None,
-        last_started=_dt_str(last_run.started_at) if last_run else None,
-        last_completed=_dt_str(last_run.completed_at) if last_run else None,
-        raw_events=raw_count,
-        findings=finding_count,
-        results=result_count,
-    )
+    return {
+        "running": is_running,
+        "last_run": {
+            "id": latest_run.id if latest_run else None,
+            "status": latest_run.status if latest_run else None,
+            "started_at": latest_run.started_at.isoformat() if latest_run and latest_run.started_at else None,
+            "completed_at": latest_run.completed_at.isoformat() if latest_run and latest_run.completed_at else None,
+            "duration_seconds": latest_run.duration_seconds if latest_run else None,
+        } if latest_run else None,
+        "totals": {
+            "raw_events": raw_count,
+            "findings": finding_count,
+            "control_results": result_count,
+        },
+    }
 
 
 # =========================================================================

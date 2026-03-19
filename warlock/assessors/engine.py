@@ -208,6 +208,16 @@ class Assessor:
                 result.ai_model = ai_result.model
                 result.status = ai_result.status
                 result.assessor = f"ai:{ai_result.model}"
+                # Confidence floor — reject low-confidence AI assessments
+                from warlock.config import get_settings
+                floor = get_settings().ai_confidence_floor
+                if ai_result.confidence < floor:
+                    log.info(
+                        "AI confidence %.2f below floor %.2f for %s/%s — keeping not_assessed",
+                        ai_result.confidence, floor, mapping.framework, mapping.control_id,
+                    )
+                    result.status = "not_assessed"
+                    result.assessor = f"ai:low_confidence:{ai_result.model}"
             except Exception:
                 log.exception("Tier 2 AI reasoning failed for %s/%s", mapping.framework, mapping.control_id)
 
