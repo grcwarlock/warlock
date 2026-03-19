@@ -1,0 +1,16 @@
+package nist.pt.pt_7_test
+
+import rego.v1
+
+import data.nist.pt.pt_7
+
+test_compliant if {
+	result := pt_7.result with input as {"normalized_data": {"pii_categories": {"data_classification_applied": true, "last_review_days": 100, "categories": [{"name": "email", "sensitivity": "low", "type": "email", "additional_protections_applied": true, "use_minimized": true}]}}}
+	result.compliant == true
+	count(result.findings) == 0
+}
+
+test_noncompliant if {
+	result := pt_7.result with input as {"normalized_data": {}}
+	result.compliant == false
+}

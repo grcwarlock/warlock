@@ -1,0 +1,921 @@
+{
+  "catalog": {
+    "uuid": "e75ab3c9-60ef-4124-bae5-b685fc38fe5c",
+    "metadata": {
+      "title": "ISO/IEC 42001:2023 AI Management System",
+      "version": "2023",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T20:39:37Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://www.iso.org/standard/81230.html"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "iso_42001"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "a5",
+        "title": "AI Policies",
+        "controls": [
+          {
+            "id": "a5-1",
+            "title": "AI Policy",
+            "props": [
+              {
+                "name": "label",
+                "value": "A5-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a5-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a5-1_smt",
+                "name": "statement",
+                "prose": "Establish and maintain an AI policy appropriate to the organization's purpose."
+              },
+              {
+                "id": "a5-1-1",
+                "name": "assessment-objective",
+                "prose": "AI policy is documented, approved, and communicated",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a5-2",
+            "title": "AI Roles and Responsibilities",
+            "props": [
+              {
+                "name": "label",
+                "value": "A5-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a5-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a5-2_smt",
+                "name": "statement",
+                "prose": "Define and assign roles and responsibilities for AI management."
+              },
+              {
+                "id": "a5-2-1",
+                "name": "assessment-objective",
+                "prose": "AI governance roles are clearly defined",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "org_chart"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a6",
+        "title": "Planning",
+        "controls": [
+          {
+            "id": "a6-1",
+            "title": "AI Risk Assessment",
+            "props": [
+              {
+                "name": "label",
+                "value": "A6-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a6-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a6-1_smt",
+                "name": "statement",
+                "prose": "Establish process to identify and assess AI-related risks."
+              },
+              {
+                "id": "a6-1-1",
+                "name": "assessment-objective",
+                "prose": "AI risk assessment methodology documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "risk_assessment"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a6-2",
+            "title": "AI Impact Assessment",
+            "props": [
+              {
+                "name": "label",
+                "value": "A6-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a6-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a6-2_smt",
+                "name": "statement",
+                "prose": "Conduct impact assessments for AI systems on individuals and groups."
+              },
+              {
+                "id": "a6-2-1",
+                "name": "assessment-objective",
+                "prose": "AI impact assessments completed for deployed AI systems",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "impact_assessment"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a6-3",
+            "title": "AI Objectives",
+            "props": [
+              {
+                "name": "label",
+                "value": "A6-3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a6-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a6-3_smt",
+                "name": "statement",
+                "prose": "Establish measurable AI objectives consistent with AI policy."
+              },
+              {
+                "id": "a6-3-1",
+                "name": "assessment-objective",
+                "prose": "AI objectives are defined and measurable",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "objectives"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a7",
+        "title": "Support",
+        "controls": [
+          {
+            "id": "a7-1",
+            "title": "Resources for AI",
+            "props": [
+              {
+                "name": "label",
+                "value": "A7-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a7-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a7-1_smt",
+                "name": "statement",
+                "prose": "Determine and provide resources needed for AI management system."
+              },
+              {
+                "id": "a7-1-1",
+                "name": "assessment-objective",
+                "prose": "AI resources are allocated and documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "resource_plan"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a7-2",
+            "title": "AI Competence",
+            "props": [
+              {
+                "name": "label",
+                "value": "A7-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a7-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a7-2_smt",
+                "name": "statement",
+                "prose": "Ensure persons doing work affecting AI system performance are competent."
+              },
+              {
+                "id": "a7-2-1",
+                "name": "assessment-objective",
+                "prose": "AI team competency requirements defined and verified",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "training_records"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a7-3",
+            "title": "AI Awareness",
+            "props": [
+              {
+                "name": "label",
+                "value": "A7-3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a7-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a7-3_smt",
+                "name": "statement",
+                "prose": "Ensure persons are aware of AI policy, their contribution, and implications."
+              },
+              {
+                "id": "a7-3-1",
+                "name": "assessment-objective",
+                "prose": "AI awareness training completed by relevant personnel",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "training_records"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a7-4",
+            "title": "Communication",
+            "props": [
+              {
+                "name": "label",
+                "value": "A7-4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a7-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a7-4_smt",
+                "name": "statement",
+                "prose": "Determine internal and external communications relevant to AI management."
+              },
+              {
+                "id": "a7-4-1",
+                "name": "assessment-objective",
+                "prose": "AI communication plan established",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "communication_plan"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a8",
+        "title": "Operation",
+        "controls": [
+          {
+            "id": "a8-1",
+            "title": "AI System Lifecycle",
+            "props": [
+              {
+                "name": "label",
+                "value": "A8-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a8-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a8-1_smt",
+                "name": "statement",
+                "prose": "Plan, implement, and control processes for AI system lifecycle."
+              },
+              {
+                "id": "a8-1-1",
+                "name": "assessment-objective",
+                "prose": "AI development lifecycle documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sdlc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a8-2",
+            "title": "Data Management for AI",
+            "props": [
+              {
+                "name": "label",
+                "value": "A8-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a8-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a8-2_smt",
+                "name": "statement",
+                "prose": "Establish processes for data used in AI systems."
+              },
+              {
+                "id": "a8-2-1",
+                "name": "assessment-objective",
+                "prose": "AI training data governance documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "data_governance"
+                  }
+                ]
+              },
+              {
+                "id": "a8-2-2",
+                "name": "assessment-objective",
+                "prose": "Data quality and bias monitoring in place",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a8-3",
+            "title": "AI System Design and Development",
+            "props": [
+              {
+                "name": "label",
+                "value": "A8-3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a8-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a8-3_smt",
+                "name": "statement",
+                "prose": "Plan and execute AI system design and development activities."
+              },
+              {
+                "id": "a8-3-1",
+                "name": "assessment-objective",
+                "prose": "AI model development follows documented procedures",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "development_docs"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a8-4",
+            "title": "AI System Testing and Validation",
+            "props": [
+              {
+                "name": "label",
+                "value": "A8-4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a8-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a8-4_smt",
+                "name": "statement",
+                "prose": "Test and validate AI systems prior to deployment."
+              },
+              {
+                "id": "a8-4-1",
+                "name": "assessment-objective",
+                "prose": "AI model testing includes fairness, accuracy, and robustness",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "test_results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a8-5",
+            "title": "AI System Deployment",
+            "props": [
+              {
+                "name": "label",
+                "value": "A8-5"
+              },
+              {
+                "name": "sort-id",
+                "value": "a8-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a8-5_smt",
+                "name": "statement",
+                "prose": "Plan and manage deployment of AI systems."
+              },
+              {
+                "id": "a8-5-1",
+                "name": "assessment-objective",
+                "prose": "AI deployment checklist completed before production",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "deployment_checklist"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a8-6",
+            "title": "AI System Monitoring",
+            "props": [
+              {
+                "name": "label",
+                "value": "A8-6"
+              },
+              {
+                "name": "sort-id",
+                "value": "a8-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a8-6_smt",
+                "name": "statement",
+                "prose": "Monitor AI system performance, output, and impact post-deployment."
+              },
+              {
+                "id": "a8-6-1",
+                "name": "assessment-objective",
+                "prose": "AI model drift monitoring active",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  }
+                ]
+              },
+              {
+                "id": "a8-6-2",
+                "name": "assessment-objective",
+                "prose": "AI output quality metrics tracked",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_dashboard"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a9",
+        "title": "Performance Evaluation",
+        "controls": [
+          {
+            "id": "a9-1",
+            "title": "Monitoring and Measurement",
+            "props": [
+              {
+                "name": "label",
+                "value": "A9-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a9-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a9-1_smt",
+                "name": "statement",
+                "prose": "Determine what needs to be monitored and measured for AI management."
+              },
+              {
+                "id": "a9-1-1",
+                "name": "assessment-objective",
+                "prose": "AI KPIs defined and regularly measured",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "metrics"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a9-2",
+            "title": "Internal Audit",
+            "props": [
+              {
+                "name": "label",
+                "value": "A9-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a9-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a9-2_smt",
+                "name": "statement",
+                "prose": "Conduct internal audits of AI management system at planned intervals."
+              },
+              {
+                "id": "a9-2-1",
+                "name": "assessment-objective",
+                "prose": "Annual AI management system audit conducted",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "audit_report"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a9-3",
+            "title": "Management Review",
+            "props": [
+              {
+                "name": "label",
+                "value": "A9-3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a9-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a9-3_smt",
+                "name": "statement",
+                "prose": "Top management reviews AI management system at planned intervals."
+              },
+              {
+                "id": "a9-3-1",
+                "name": "assessment-objective",
+                "prose": "Management review of AI program conducted",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "review_minutes"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a10",
+        "title": "Improvement",
+        "controls": [
+          {
+            "id": "a10-1",
+            "title": "Continual Improvement",
+            "props": [
+              {
+                "name": "label",
+                "value": "A10-1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a10-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a10-1_smt",
+                "name": "statement",
+                "prose": "Continually improve the suitability, adequacy, and effectiveness of AI management."
+              },
+              {
+                "id": "a10-1-1",
+                "name": "assessment-objective",
+                "prose": "AI improvement process documented with lessons learned",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "improvement_log"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a10-2",
+            "title": "Nonconformity and Corrective Action",
+            "props": [
+              {
+                "name": "label",
+                "value": "A10-2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a10-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a10-2_smt",
+                "name": "statement",
+                "prose": "React to nonconformities and take corrective action."
+              },
+              {
+                "id": "a10-2-1",
+                "name": "assessment-objective",
+                "prose": "AI incident and nonconformity tracking process established",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ncr_log"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "annexb",
+        "title": "AI Controls Reference (Annex B)",
+        "controls": [
+          {
+            "id": "b1-transparency",
+            "title": "Transparency",
+            "props": [
+              {
+                "name": "label",
+                "value": "B1-Transparency"
+              },
+              {
+                "name": "sort-id",
+                "value": "b1-transparency"
+              }
+            ],
+            "parts": [
+              {
+                "id": "b1-transparency_smt",
+                "name": "statement",
+                "prose": "Ensure transparency of AI system decisions and processes."
+              },
+              {
+                "id": "b1-1",
+                "name": "assessment-objective",
+                "prose": "AI system decisions are explainable to stakeholders",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "explainability_docs"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b2-accountability",
+            "title": "Accountability",
+            "props": [
+              {
+                "name": "label",
+                "value": "B2-Accountability"
+              },
+              {
+                "name": "sort-id",
+                "value": "b2-accountability"
+              }
+            ],
+            "parts": [
+              {
+                "id": "b2-accountability_smt",
+                "name": "statement",
+                "prose": "Ensure accountability for AI system outcomes."
+              },
+              {
+                "id": "b2-1",
+                "name": "assessment-objective",
+                "prose": "Accountability chain documented for AI decisions",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "raci_matrix"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b3-fairness",
+            "title": "Fairness and Bias",
+            "props": [
+              {
+                "name": "label",
+                "value": "B3-Fairness"
+              },
+              {
+                "name": "sort-id",
+                "value": "b3-fairness"
+              }
+            ],
+            "parts": [
+              {
+                "id": "b3-fairness_smt",
+                "name": "statement",
+                "prose": "Prevent and mitigate unfair bias in AI systems."
+              },
+              {
+                "id": "b3-1",
+                "name": "assessment-objective",
+                "prose": "Bias testing conducted on AI models",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "bias_assessment"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b4-privacy",
+            "title": "Privacy in AI",
+            "props": [
+              {
+                "name": "label",
+                "value": "B4-Privacy"
+              },
+              {
+                "name": "sort-id",
+                "value": "b4-privacy"
+              }
+            ],
+            "parts": [
+              {
+                "id": "b4-privacy_smt",
+                "name": "statement",
+                "prose": "Protect privacy in AI data processing and outputs."
+              },
+              {
+                "id": "b4-1",
+                "name": "assessment-objective",
+                "prose": "Privacy impact assessment for AI systems",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "pia"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b5-safety",
+            "title": "AI Safety",
+            "props": [
+              {
+                "name": "label",
+                "value": "B5-Safety"
+              },
+              {
+                "name": "sort-id",
+                "value": "b5-safety"
+              }
+            ],
+            "parts": [
+              {
+                "id": "b5-safety_smt",
+                "name": "statement",
+                "prose": "Ensure AI systems operate safely and reliably."
+              },
+              {
+                "id": "b5-1",
+                "name": "assessment-objective",
+                "prose": "AI safety testing and red-teaming conducted",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "safety_report"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b6-security",
+            "title": "AI Security",
+            "props": [
+              {
+                "name": "label",
+                "value": "B6-Security"
+              },
+              {
+                "name": "sort-id",
+                "value": "b6-security"
+              }
+            ],
+            "parts": [
+              {
+                "id": "b6-security_smt",
+                "name": "statement",
+                "prose": "Protect AI systems from adversarial attacks and manipulation."
+              },
+              {
+                "id": "b6-1",
+                "name": "assessment-objective",
+                "prose": "AI-specific security controls implemented (model poisoning, evasion)",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "security_assessment"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

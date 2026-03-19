@@ -1,0 +1,3360 @@
+{
+  "catalog": {
+    "uuid": "9d6762fd-85b4-4f56-8e1c-7b63be5c74e0",
+    "metadata": {
+      "title": "SOC 2 Type II Trust Services Criteria",
+      "version": "2022",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T20:39:37Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://www.aicpa.org/soc2"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "soc2"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "cc1",
+        "title": "Control Environment",
+        "controls": [
+          {
+            "id": "cc1-1",
+            "title": "COSO Principle 1: Demonstrates Commitment to Integrity and Ethical Values",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC1.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc1-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc1-1_smt",
+                "name": "statement",
+                "prose": "The entity demonstrates a commitment to integrity and ethical values through a code of conduct, ethics training, and management oversight that sets the tone at the top for internal controls.\n"
+              },
+              {
+                "id": "cc1-1-a_guidance",
+                "name": "guidance",
+                "prose": "Establish and distribute a code of conduct with annual employee acknowledgment tracking.",
+                "parts": [
+                  {
+                    "id": "cc1-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store the code of conduct in a versioned S3 bucket: aws s3 cp code-of-conduct.pdf s3://<policy-bucket>/policies/code-of-conduct.pdf\n- Enable versioning on the bucket: aws s3api put-bucket-versioning --bucket <policy-bucket> --versioning-configuration Status=Enabled\n- Use AWS WorkDocs or an HRIS system to track employee acknowledgments\n- Create an EventBridge scheduled rule to trigger annual re-acknowledgment reminders"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify a code of conduct or ethics policy exists, is current, and has been acknowledged by all personnel",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"code_of_conduct_document_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-1-b_guidance",
+                "name": "guidance",
+                "prose": "Implement annual ethics training with completion tracking via LMS or HR system.",
+                "parts": [
+                  {
+                    "id": "cc1-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store training completion records in DynamoDB: aws dynamodb put-item --table-name TrainingRecords --item '{\"employee_id\":{\"S\":\"<id>\"},\"training\":{\"S\":\"ethics\"},\"completed_date\":{\"S\":\"<date>\"}}'\n- Query incomplete trainings: aws dynamodb scan --table-name TrainingRecords --filter-expression 'completed_date < :cutoff' --expression-attribute-values '{\":cutoff\":{\"S\":\"<one-year-ago>\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify ethics training is completed annually by all employees",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "training_records"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"scan\", \"assertion\": \"all_employees_completed_ethics_training\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc1-2",
+            "title": "COSO Principle 2: Exercises Oversight Responsibility",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC1.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc1-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc1-2_smt",
+                "name": "statement",
+                "prose": "The board of directors demonstrates independence from management and exercises oversight of the development and performance of internal controls through governance structures such as audit committees.\n"
+              },
+              {
+                "id": "cc1-2-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain a board or audit committee charter documenting oversight responsibilities and meeting cadence.",
+                "parts": [
+                  {
+                    "id": "cc1-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store governance documents in versioned S3: aws s3 cp audit-committee-charter.pdf s3://<policy-bucket>/governance/audit-committee-charter.pdf\n- Tag with review date: aws s3api put-object-tagging --bucket <policy-bucket> --key governance/audit-committee-charter.pdf --tagging 'TagSet=[{Key=ReviewDate,Value=<date>}]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify board or audit committee charter exists with defined oversight responsibilities",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"audit_committee_charter_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-2-b_guidance",
+                "name": "guidance",
+                "prose": "Document quarterly board and audit committee meetings with minutes stored centrally.",
+                "parts": [
+                  {
+                    "id": "cc1-2-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Upload meeting minutes: aws s3 cp meeting-minutes-Q1.pdf s3://<policy-bucket>/governance/minutes/\n- List available minutes: aws s3 ls s3://<policy-bucket>/governance/minutes/ --recursive"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-2-b",
+                "name": "assessment-objective",
+                "prose": "Verify regular board or audit committee meetings are held and documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "meeting_minutes"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"quarterly_meeting_minutes_exist\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc1-3",
+            "title": "COSO Principle 3: Establishes Structure, Authority, and Responsibility",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC1.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc1-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc1-3_smt",
+                "name": "statement",
+                "prose": "Management establishes, with board oversight, structures, reporting lines, and appropriate authorities and responsibilities in the pursuit of objectives.\n"
+              },
+              {
+                "id": "cc1-3-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain an up-to-date organizational chart with clearly defined security roles and reporting lines.",
+                "parts": [
+                  {
+                    "id": "cc1-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store org chart in S3: aws s3 cp org-chart.pdf s3://<policy-bucket>/governance/org-chart.pdf\n- Use AWS IAM to mirror organizational structure with groups: aws iam create-group --group-name SecurityTeam\n- List IAM groups to verify structure: aws iam list-groups --query 'Groups[*].GroupName'"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify organizational chart with defined reporting lines and security responsibilities exists",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "org_chart"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_groups\", \"assertion\": \"security_groups_defined\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-3-b_guidance",
+                "name": "guidance",
+                "prose": "Create and maintain a RACI matrix for security responsibilities.",
+                "parts": [
+                  {
+                    "id": "cc1-3-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store RACI matrix: aws s3 cp raci-matrix.xlsx s3://<policy-bucket>/governance/raci-matrix.xlsx\n- Verify IAM roles match documented responsibilities: aws iam list-roles --query 'Roles[*].[RoleName,Description]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-3-b",
+                "name": "assessment-objective",
+                "prose": "Verify roles and responsibilities for security functions are documented and assigned",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "raci_matrix"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"raci_matrix_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc1-4",
+            "title": "COSO Principle 4: Demonstrates Commitment to Competence",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC1.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc1-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc1-4_smt",
+                "name": "statement",
+                "prose": "The entity demonstrates a commitment to attract, develop, and retain competent individuals in alignment with objectives, including security awareness training and professional development programs.\n"
+              },
+              {
+                "id": "cc1-4-a_guidance",
+                "name": "guidance",
+                "prose": "Implement a security awareness training program with tracked completion and annual refresher.",
+                "parts": [
+                  {
+                    "id": "cc1-4-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Track training in DynamoDB: aws dynamodb create-table --table-name SecurityTraining --attribute-definitions AttributeName=employee_id,AttributeType=S --key-schema AttributeName=employee_id,KeyType=HASH --billing-mode PAY_PER_REQUEST\n- Record completion: aws dynamodb put-item --table-name SecurityTraining --item '{\"employee_id\":{\"S\":\"<id>\"},\"module\":{\"S\":\"security-awareness\"},\"completed\":{\"S\":\"<date>\"},\"score\":{\"N\":\"<score>\"}}'\n- Audit overdue trainings: aws dynamodb scan --table-name SecurityTraining --filter-expression 'completed < :cutoff' --expression-attribute-values '{\":cutoff\":{\"S\":\"<one-year-ago>\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-4-a",
+                "name": "assessment-objective",
+                "prose": "Verify security awareness training program exists and completion records are maintained",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "training_records"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"scan\", \"assertion\": \"all_employees_completed_security_training\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-4-b_guidance",
+                "name": "guidance",
+                "prose": "Ensure all job descriptions include relevant security responsibilities and are stored centrally.",
+                "parts": [
+                  {
+                    "id": "cc1-4-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store job descriptions: aws s3 sync ./job-descriptions/ s3://<policy-bucket>/hr/job-descriptions/\n- List stored descriptions: aws s3 ls s3://<policy-bucket>/hr/job-descriptions/"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-4-b",
+                "name": "assessment-objective",
+                "prose": "Verify job descriptions include security responsibilities",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"job_descriptions_with_security_responsibilities_exist\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc1-5",
+            "title": "COSO Principle 5: Enforces Accountability",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC1.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc1-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc1-5_smt",
+                "name": "statement",
+                "prose": "The entity holds individuals accountable for their internal control responsibilities in the pursuit of objectives through performance evaluations, disciplinary processes, and escalation procedures.\n"
+              },
+              {
+                "id": "cc1-5-a_guidance",
+                "name": "guidance",
+                "prose": "Include security accountability metrics in performance evaluations and document the process.",
+                "parts": [
+                  {
+                    "id": "cc1-5-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store performance review policy: aws s3 cp performance-review-policy.pdf s3://<policy-bucket>/hr/performance-review-policy.pdf\n- Tag with effective date: aws s3api put-object-tagging --bucket <policy-bucket> --key hr/performance-review-policy.pdf --tagging 'TagSet=[{Key=EffectiveDate,Value=<date>}]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-5-a",
+                "name": "assessment-objective",
+                "prose": "Verify performance evaluation process includes security accountability metrics",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"performance_review_policy_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-5-b_guidance",
+                "name": "guidance",
+                "prose": "Document and maintain a disciplinary action policy for security violations.",
+                "parts": [
+                  {
+                    "id": "cc1-5-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store disciplinary policy: aws s3 cp disciplinary-policy.pdf s3://<policy-bucket>/hr/disciplinary-policy.pdf\n- Verify policy exists: aws s3api head-object --bucket <policy-bucket> --key hr/disciplinary-policy.pdf"
+                  }
+                ]
+              },
+              {
+                "id": "cc1-5-b",
+                "name": "assessment-objective",
+                "prose": "Verify disciplinary process for security policy violations is documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"disciplinary_policy_exists\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc2",
+        "title": "Communication and Information",
+        "controls": [
+          {
+            "id": "cc2-1",
+            "title": "COSO Principle 13: Obtains or Generates Relevant Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC2.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc2-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc2-1_smt",
+                "name": "statement",
+                "prose": "The entity obtains or generates and uses relevant, quality information to support the functioning of internal controls, including information about security events, incidents, and system changes.\n"
+              },
+              {
+                "id": "cc2-1-a_guidance",
+                "name": "guidance",
+                "prose": "Enable centralized logging via CloudTrail, CloudWatch, and Security Hub to capture security-relevant information.",
+                "parts": [
+                  {
+                    "id": "cc2-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable CloudTrail: aws cloudtrail create-trail --name soc2-trail --s3-bucket-name <bucket> --is-multi-region-trail --enable-log-file-validation\n- Start logging: aws cloudtrail start-logging --name soc2-trail\n- Enable Security Hub: aws securityhub enable-security-hub --enable-default-standards\n- Create CloudWatch log group: aws logs create-log-group --log-group-name /soc2/security-events --retention-in-days 365\n- Verify trail status: aws cloudtrail get-trail-status --name soc2-trail"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify centralized logging and monitoring captures relevant security information",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "logging_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudtrail\", \"method\": \"describe_trails\", \"assertion\": \"cloudtrail_enabled_all_regions\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"securityhub\", \"method\": \"describe_hub\", \"assertion\": \"security_hub_enabled\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-1-b_guidance",
+                "name": "guidance",
+                "prose": "Enable CloudTrail log file validation and S3 object lock for log integrity.",
+                "parts": [
+                  {
+                    "id": "cc2-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Verify log validation: aws cloudtrail get-trail --name soc2-trail --query 'Trail.LogFileValidationEnabled'\n- Enable S3 object lock on log bucket: aws s3api put-object-lock-configuration --bucket <log-bucket> --object-lock-configuration '{\"ObjectLockEnabled\":\"Enabled\",\"Rule\":{\"DefaultRetention\":{\"Mode\":\"COMPLIANCE\",\"Days\":365}}}'\n- Validate log digest: aws cloudtrail validate-logs --trail-arn <trail-arn> --start-time <start>"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify information quality controls are in place for security data",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "logging_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudtrail\", \"method\": \"get_trail\", \"assertion\": \"log_file_validation_enabled\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc2-2",
+            "title": "COSO Principle 14: Communicates Internally",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC2.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc2-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc2-2_smt",
+                "name": "statement",
+                "prose": "The entity internally communicates information, including objectives and responsibilities for internal control, necessary to support the functioning of internal controls.\n"
+              },
+              {
+                "id": "cc2-2-a_guidance",
+                "name": "guidance",
+                "prose": "Establish internal communication channels for security policies, responsibilities, and incident notifications.",
+                "parts": [
+                  {
+                    "id": "cc2-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Create SNS topic for internal security communications: aws sns create-topic --name security-announcements\n- Subscribe stakeholders: aws sns subscribe --topic-arn <topic-arn> --protocol email --notification-endpoint <email>\n- Store communication policy: aws s3 cp internal-comms-policy.pdf s3://<policy-bucket>/policies/internal-comms-policy.pdf"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify internal communication of security policies, responsibilities, and incidents",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"sns\", \"method\": \"list_topics\", \"assertion\": \"security_announcement_topic_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-2-b_guidance",
+                "name": "guidance",
+                "prose": "Track employee acknowledgment of security policies with dated records.",
+                "parts": [
+                  {
+                    "id": "cc2-2-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Record acknowledgments: aws dynamodb put-item --table-name PolicyAcknowledgments --item '{\"employee_id\":{\"S\":\"<id>\"},\"policy\":{\"S\":\"information-security\"},\"acknowledged_date\":{\"S\":\"<date>\"}}'\n- Audit missing acknowledgments: aws dynamodb scan --table-name PolicyAcknowledgments --filter-expression 'acknowledged_date < :cutoff' --expression-attribute-values '{\":cutoff\":{\"S\":\"<one-year-ago>\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-2-b",
+                "name": "assessment-objective",
+                "prose": "Verify security policy acknowledgment process exists for employees",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "training_records"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"scan\", \"assertion\": \"all_employees_acknowledged_security_policy\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc2-3",
+            "title": "COSO Principle 15: Communicates Externally",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC2.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc2-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc2-3_smt",
+                "name": "statement",
+                "prose": "The entity communicates with external parties regarding matters affecting the functioning of internal controls, including commitments, system descriptions, and security incident notifications.\n"
+              },
+              {
+                "id": "cc2-3-a_guidance",
+                "name": "guidance",
+                "prose": "Document external communication procedures for security incidents, breaches, and regulatory notifications.",
+                "parts": [
+                  {
+                    "id": "cc2-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store incident communication plan: aws s3 cp external-comms-plan.pdf s3://<policy-bucket>/policies/external-comms-plan.pdf\n- Create SNS topic for external notifications: aws sns create-topic --name security-external-notifications\n- Configure SES for incident notification emails: aws ses verify-email-identity --email-address security@<domain>"
+                  }
+                ]
+              },
+              {
+                "id": "cc2-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify external communication processes for security incidents and obligations",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"external_communication_plan_exists\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc3",
+        "title": "Risk Assessment",
+        "controls": [
+          {
+            "id": "cc3-1",
+            "title": "COSO Principle 6: Specifies Suitable Objectives",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC3.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc3-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc3-1_smt",
+                "name": "statement",
+                "prose": "The entity specifies objectives with sufficient clarity to enable the identification and assessment of risks relating to objectives, including security, availability, processing integrity, confidentiality, and privacy.\n"
+              },
+              {
+                "id": "cc3-1-a_guidance",
+                "name": "guidance",
+                "prose": "Document and maintain security objectives that align with business goals and Trust Services Criteria.",
+                "parts": [
+                  {
+                    "id": "cc3-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store security objectives document: aws s3 cp security-objectives.pdf s3://<policy-bucket>/governance/security-objectives.pdf\n- Tag with review period: aws s3api put-object-tagging --bucket <policy-bucket> --key governance/security-objectives.pdf --tagging 'TagSet=[{Key=ReviewDate,Value=<date>},{Key=Owner,Value=CISO}]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc3-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify documented security objectives aligned with business goals",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"security_objectives_document_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc3-2",
+            "title": "COSO Principle 7: Identifies and Analyzes Risk",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC3.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc3-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc3-2_smt",
+                "name": "statement",
+                "prose": "The entity identifies risks to the achievement of its objectives across the entity and analyzes risks as a basis for determining how the risks should be managed, including threats and vulnerabilities.\n"
+              },
+              {
+                "id": "cc3-2-a_guidance",
+                "name": "guidance",
+                "prose": "Conduct annual risk assessments and maintain a risk register with identified threats and vulnerabilities.",
+                "parts": [
+                  {
+                    "id": "cc3-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store risk register: aws s3 cp risk-register.xlsx s3://<policy-bucket>/risk/risk-register.xlsx\n- Enable AWS Inspector for vulnerability assessment: aws inspector2 enable --resource-types EC2 ECR LAMBDA\n- List Inspector findings: aws inspector2 list-findings --filter-criteria '{\"findingStatus\":[{\"comparison\":\"EQUALS\",\"value\":\"ACTIVE\"}]}'\n- Enable Trusted Advisor checks: aws support describe-trusted-advisor-checks --language en"
+                  }
+                ]
+              },
+              {
+                "id": "cc3-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify a formal risk assessment has been performed and documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "risk_register"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"inspector2\", \"method\": \"batch_get_account_status\", \"assertion\": \"inspector_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"risk_register_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc3-2-b_guidance",
+                "name": "guidance",
+                "prose": "Enable continuous vulnerability scanning via AWS Inspector and review findings weekly.",
+                "parts": [
+                  {
+                    "id": "cc3-2-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Verify Inspector is enabled: aws inspector2 batch-get-account-status\n- List active findings: aws inspector2 list-findings --filter-criteria '{\"severity\":[{\"comparison\":\"EQUALS\",\"value\":\"HIGH\"},{\"comparison\":\"EQUALS\",\"value\":\"CRITICAL\"}]}'\n- Export findings to S3: aws inspector2 create-findings-report --report-format CSV --s3-destination '{\"bucketName\":\"<bucket>\",\"keyPrefix\":\"inspector-reports/\"}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc3-2-b",
+                "name": "assessment-objective",
+                "prose": "Verify vulnerability scanning is performed regularly",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "scan_report"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"inspector2\", \"method\": \"list_findings\", \"assertion\": \"no_critical_unresolved_findings\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc3-3",
+            "title": "COSO Principle 8: Assesses Fraud Risk",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC3.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc3-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc3-3_smt",
+                "name": "statement",
+                "prose": "The entity considers the potential for fraud in assessing risks to the achievement of objectives, including unauthorized access, data manipulation, and misappropriation of assets.\n"
+              },
+              {
+                "id": "cc3-3-a_guidance",
+                "name": "guidance",
+                "prose": "Include fraud risk scenarios in the risk register and enable anomaly detection controls.",
+                "parts": [
+                  {
+                    "id": "cc3-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store fraud risk assessment: aws s3 cp fraud-risk-assessment.pdf s3://<policy-bucket>/risk/fraud-risk-assessment.pdf\n- Enable GuardDuty for anomaly detection: aws guardduty create-detector --enable --finding-publishing-frequency FIFTEEN_MINUTES\n- Enable CloudTrail Insights: aws cloudtrail put-insight-selectors --trail-name soc2-trail --insight-selectors '[{\"InsightType\":\"ApiCallRateInsight\"},{\"InsightType\":\"ApiErrorRateInsight\"}]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc3-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify fraud risk assessment is performed and documented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "risk_register"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"guardduty\", \"method\": \"list_detectors\", \"assertion\": \"guardduty_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudtrail\", \"method\": \"get_insight_selectors\", \"assertion\": \"insight_selectors_enabled\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc3-4",
+            "title": "COSO Principle 9: Identifies and Analyzes Significant Change",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC3.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc3-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc3-4_smt",
+                "name": "statement",
+                "prose": "The entity identifies and assesses changes that could significantly impact the system of internal controls, including infrastructure changes, personnel changes, and regulatory changes.\n"
+              },
+              {
+                "id": "cc3-4-a_guidance",
+                "name": "guidance",
+                "prose": "Document change management procedures that include impact assessment for significant changes.",
+                "parts": [
+                  {
+                    "id": "cc3-4-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store change management policy: aws s3 cp change-management-policy.pdf s3://<policy-bucket>/policies/change-management-policy.pdf\n- Enable AWS Config to track configuration changes: aws configservice put-configuration-recorder --configuration-recorder name=default,roleARN=<role-arn> --recording-group allSupported=true\n- Start recorder: aws configservice start-configuration-recorder --configuration-recorder-name default"
+                  }
+                ]
+              },
+              {
+                "id": "cc3-4-a",
+                "name": "assessment-objective",
+                "prose": "Verify change impact assessment process is documented and followed",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"config\", \"method\": \"describe_configuration_recorders\", \"assertion\": \"config_recorder_enabled\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc4",
+        "title": "Monitoring Activities",
+        "controls": [
+          {
+            "id": "cc4-1",
+            "title": "COSO Principle 16: Selects, Develops, and Performs Ongoing and Separate Evaluations",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC4.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc4-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc4-1_smt",
+                "name": "statement",
+                "prose": "The entity selects, develops, and performs ongoing and/or separate evaluations to ascertain whether the components of internal control are present and functioning, including continuous monitoring and periodic assessments.\n"
+              },
+              {
+                "id": "cc4-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement continuous monitoring via AWS Config rules, Security Hub, and CloudWatch alarms.",
+                "parts": [
+                  {
+                    "id": "cc4-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable Security Hub with CIS benchmark: aws securityhub enable-security-hub --enable-default-standards\n- Create Config rules for compliance: aws configservice put-config-rule --config-rule '{\"ConfigRuleName\":\"iam-password-policy\",\"Source\":{\"Owner\":\"AWS\",\"SourceIdentifier\":\"IAM_PASSWORD_POLICY\"}}'\n- Create CloudWatch alarm for unauthorized API calls: aws cloudwatch put-metric-alarm --alarm-name unauthorized-api-calls --metric-name UnauthorizedAttemptCount --namespace CloudTrailMetrics --statistic Sum --period 300 --threshold 5 --comparison-operator GreaterThanThreshold --alarm-actions <sns-arn>\n- Verify Security Hub compliance: aws securityhub get-findings --filters '{\"ComplianceStatus\":[{\"Value\":\"FAILED\",\"Comparison\":\"EQUALS\"}]}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc4-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify continuous monitoring controls are implemented and operational",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"securityhub\", \"method\": \"describe_hub\", \"assertion\": \"security_hub_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"config\", \"method\": \"describe_config_rules\", \"assertion\": \"config_rules_active\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc4-1-b_guidance",
+                "name": "guidance",
+                "prose": "Schedule and document periodic internal audits of security controls.",
+                "parts": [
+                  {
+                    "id": "cc4-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store audit reports: aws s3 cp internal-audit-report.pdf s3://<policy-bucket>/audits/internal-audit-<date>.pdf\n- Run AWS Audit Manager assessment: aws auditmanager create-assessment --name soc2-assessment --framework-id <framework-id> --assessment-reports-destination '{\"destinationType\":\"S3\",\"destination\":\"s3://<bucket>/audit-reports/\"}' --roles '[{\"roleType\":\"PROCESS_OWNER\",\"roleArn\":\"<role-arn>\"}]' --scope '{\"awsAccounts\":[{\"id\":\"<account-id>\"}]}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc4-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify periodic internal assessments or audits are performed",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "audit_report"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"auditmanager\", \"method\": \"list_assessments\", \"assertion\": \"active_assessment_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc4-2",
+            "title": "COSO Principle 17: Evaluates and Communicates Deficiencies",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC4.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc4-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc4-2_smt",
+                "name": "statement",
+                "prose": "The entity evaluates and communicates internal control deficiencies in a timely manner to those parties responsible for taking corrective action, including senior management and the board of directors.\n"
+              },
+              {
+                "id": "cc4-2-a_guidance",
+                "name": "guidance",
+                "prose": "Track control deficiencies in a centralized system with assigned owners and remediation timelines.",
+                "parts": [
+                  {
+                    "id": "cc4-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Export Security Hub findings as deficiency list: aws securityhub get-findings --filters '{\"ComplianceStatus\":[{\"Value\":\"FAILED\",\"Comparison\":\"EQUALS\"}],\"SeverityLabel\":[{\"Value\":\"HIGH\",\"Comparison\":\"EQUALS\"},{\"Value\":\"CRITICAL\",\"Comparison\":\"EQUALS\"}]}'\n- Store deficiency tracking spreadsheet: aws s3 cp deficiency-tracker.xlsx s3://<policy-bucket>/risk/deficiency-tracker.xlsx\n- Set up SNS notification for new critical findings: aws events put-rule --name critical-deficiency-alert --event-pattern '{\"source\":[\"aws.securityhub\"],\"detail\":{\"findings\":{\"Severity\":{\"Label\":[\"CRITICAL\",\"HIGH\"]}}}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc4-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify deficiency tracking and remediation process is documented and followed",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "risk_register"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"securityhub\", \"method\": \"get_findings\", \"assertion\": \"critical_findings_have_remediation_plan\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc5",
+        "title": "Control Activities",
+        "controls": [
+          {
+            "id": "cc5-1",
+            "title": "COSO Principle 10: Selects and Develops Control Activities",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC5.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc5-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc5-1_smt",
+                "name": "statement",
+                "prose": "The entity selects and develops control activities that contribute to the mitigation of risks to the achievement of objectives to acceptable levels, including IT general controls and application controls.\n"
+              },
+              {
+                "id": "cc5-1-a_guidance",
+                "name": "guidance",
+                "prose": "Document IT general controls and map them to risks in the risk register.",
+                "parts": [
+                  {
+                    "id": "cc5-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store ITGC documentation: aws s3 cp itgc-control-matrix.xlsx s3://<policy-bucket>/controls/itgc-control-matrix.xlsx\n- Enable AWS Config conformance packs: aws configservice put-conformance-pack --conformance-pack-name Operational-Best-Practices-for-SOC2 --template-s3-uri s3://aws-config-conformance-pack-templates/Operational-Best-Practices-for-SOC2.yaml"
+                  }
+                ]
+              },
+              {
+                "id": "cc5-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify IT general controls are documented and mapped to identified risks",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"config\", \"method\": \"describe_conformance_packs\", \"assertion\": \"soc2_conformance_pack_deployed\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc5-1-b_guidance",
+                "name": "guidance",
+                "prose": "Implement automated controls using AWS Config rules and remediation actions.",
+                "parts": [
+                  {
+                    "id": "cc5-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List active Config rules: aws configservice describe-config-rules --query 'ConfigRules[*].[ConfigRuleName,ConfigRuleState]'\n- Create auto-remediation: aws configservice put-remediation-configurations --remediation-configurations '[{\"ConfigRuleName\":\"<rule>\",\"TargetType\":\"SSM_DOCUMENT\",\"TargetId\":\"<ssm-doc>\",\"Automatic\":true}]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc5-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify automated controls are implemented where feasible",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "automation_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"config\", \"method\": \"describe_config_rules\", \"assertion\": \"automated_config_rules_active\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc5-2",
+            "title": "COSO Principle 11: Selects and Develops General Controls over Technology",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC5.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc5-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc5-2_smt",
+                "name": "statement",
+                "prose": "The entity selects and develops general control activities over technology to support the achievement of objectives, including access management, change management, and operations controls.\n"
+              },
+              {
+                "id": "cc5-2-a_guidance",
+                "name": "guidance",
+                "prose": "Implement technology general controls across access management, change management, and operations.",
+                "parts": [
+                  {
+                    "id": "cc5-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Verify IAM password policy: aws iam get-account-password-policy\n- Enforce strong password policy: aws iam update-account-password-policy --minimum-password-length 14 --require-symbols --require-numbers --require-uppercase-characters --require-lowercase-characters --max-password-age 90 --password-reuse-prevention 24\n- Enable AWS Config rules for technology controls: aws configservice put-config-rule --config-rule '{\"ConfigRuleName\":\"iam-password-policy\",\"Source\":{\"Owner\":\"AWS\",\"SourceIdentifier\":\"IAM_PASSWORD_POLICY\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc5-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify technology controls cover access management, change management, and operations",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"get_account_password_policy\", \"assertion\": \"password_policy_meets_requirements\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc5-3",
+            "title": "COSO Principle 12: Deploys Through Policies and Procedures",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC5.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc5-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc5-3_smt",
+                "name": "statement",
+                "prose": "The entity deploys control activities through policies that establish what is expected and procedures that put policies into action, with regular review and updates.\n"
+              },
+              {
+                "id": "cc5-3-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain a policy library with version control, approval records, and annual review dates.",
+                "parts": [
+                  {
+                    "id": "cc5-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List all policies in S3: aws s3 ls s3://<policy-bucket>/policies/ --recursive\n- Check policy metadata for review dates: aws s3api get-object-tagging --bucket <policy-bucket> --key policies/<policy-name>\n- Enable S3 versioning for policy change tracking: aws s3api put-bucket-versioning --bucket <policy-bucket> --versioning-configuration Status=Enabled"
+                  }
+                ]
+              },
+              {
+                "id": "cc5-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify security policies are documented, approved, and reviewed on a regular cadence",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"policy_documents_exist_and_current\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc6",
+        "title": "Logical and Physical Access Controls",
+        "controls": [
+          {
+            "id": "cc6-1",
+            "title": "Logical Access Security Software, Infrastructure, and Architectures",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-1_smt",
+                "name": "statement",
+                "prose": "The entity implements logical access security software, infrastructure, and architectures over protected information assets to protect them from security events to meet the entity's objectives.\n"
+              },
+              {
+                "id": "cc6-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement centralized identity management with SSO and federated access.",
+                "parts": [
+                  {
+                    "id": "cc6-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable AWS IAM Identity Center (SSO): aws sso-admin list-instances\n- List permission sets: aws sso-admin list-permission-sets --instance-arn <instance-arn>\n- Verify SAML providers: aws iam list-saml-providers\n- Ensure no console passwords for service accounts: aws iam get-credential-report"
+                  },
+                  {
+                    "id": "cc6-1-a_guidance_azure",
+                    "name": "remediation-azure",
+                    "prose": "- Verify Entra ID SSO apps: az ad app list --query '[].{Name:displayName,SignOnUrl:web.homePageUrl}'\n- List conditional access policies: az rest --method get --url 'https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies'"
+                  },
+                  {
+                    "id": "cc6-1-a_guidance_gcp",
+                    "name": "remediation-gcp",
+                    "prose": "- List identity-aware proxy settings: gcloud iap web get-iam-policy\n- Verify workspace SSO: gcloud identity groups list"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify identity provider and SSO are configured for centralized authentication",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_policy"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"sso-admin\", \"method\": \"list_instances\", \"assertion\": \"sso_instance_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_saml_providers\", \"assertion\": \"identity_federation_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-azure",
+                    "value": "{\"service\": \"entra_id\", \"method\": \"list_applications\", \"assertion\": \"sso_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-gcp",
+                    "value": "{\"service\": \"iap\", \"method\": \"list_tunnel_instances\", \"assertion\": \"identity_aware_proxy_enabled\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-1-b_guidance",
+                "name": "guidance",
+                "prose": "Enforce MFA for all IAM users and console access.",
+                "parts": [
+                  {
+                    "id": "cc6-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Generate credential report: aws iam generate-credential-report && sleep 5 && aws iam get-credential-report --output text --query Content | base64 -d\n- Identify users without MFA and enable it: aws iam create-virtual-mfa-device --virtual-mfa-device-name <user>-mfa --outfile qr.png --bootstrap-method QRCodePNG\n- Enable MFA device: aws iam enable-mfa-device --user-name <user> --serial-number <mfa-arn> --authentication-code1 <code1> --authentication-code2 <code2>\n- Create Config rule: aws configservice put-config-rule --config-rule '{\"ConfigRuleName\":\"iam-user-mfa-enabled\",\"Source\":{\"Owner\":\"AWS\",\"SourceIdentifier\":\"IAM_USER_MFA_ENABLED\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify MFA is enforced for all user access",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_policy"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"get_credential_report\", \"assertion\": \"all_users_have_mfa\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"get_account_summary\", \"assertion\": \"no_root_access_keys\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-2",
+            "title": "User Registration and Authorization",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-2_smt",
+                "name": "statement",
+                "prose": "Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity.\n"
+              },
+              {
+                "id": "cc6-2-a_guidance",
+                "name": "guidance",
+                "prose": "Implement an access request and approval workflow for user provisioning.",
+                "parts": [
+                  {
+                    "id": "cc6-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List all IAM users: aws iam list-users --query 'Users[*].[UserName,CreateDate]' --output table\n- Check for users created without tagging (approval evidence): aws iam list-user-tags --user-name <user>\n- Tag users with approval ticket: aws iam tag-user --user-name <user> --tags Key=ApprovalTicket,Value=<ticket-id>\n- Create SCP to require tags on user creation: aws organizations create-policy --name require-approval-tag --type SERVICE_CONTROL_POLICY --content '{\"Version\":\"2012-10-17\",\"Statement\":[]}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify user provisioning process requires approval prior to access grant",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_policy"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_users\", \"assertion\": \"all_users_have_approval_tags\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-2-b_guidance",
+                "name": "guidance",
+                "prose": "Perform quarterly access reviews and document findings and remediation actions.",
+                "parts": [
+                  {
+                    "id": "cc6-2-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Generate credential report for review: aws iam generate-credential-report && sleep 5 && aws iam get-credential-report --output text --query Content | base64 -d > access-review.csv\n- List all user policies: for user in $(aws iam list-users --query 'Users[*].UserName' --output text); do echo \"=== $user ===\"; aws iam list-attached-user-policies --user-name $user; done\n- Identify stale access keys (>90 days): aws iam get-credential-report --output text --query Content | base64 -d | awk -F, '$10 != \"N/A\" && $10 < \"<90-days-ago>\"'\n- Store access review: aws s3 cp access-review.csv s3://<policy-bucket>/audits/access-reviews/access-review-<date>.csv"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-2-b",
+                "name": "assessment-objective",
+                "prose": "Verify access reviews are performed periodically",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "access_review"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"get_credential_report\", \"assertion\": \"no_stale_access_keys\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-3",
+            "title": "Role-Based Access and Least Privilege",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-3_smt",
+                "name": "statement",
+                "prose": "The entity authorizes, modifies, or removes access to data, software, functions, and other protected information assets based on roles, responsibilities, or the system design and changes, giving consideration to the concepts of least privilege and segregation of duties.\n"
+              },
+              {
+                "id": "cc6-3-a_guidance",
+                "name": "guidance",
+                "prose": "Implement RBAC using IAM groups and roles instead of direct user policy attachments.",
+                "parts": [
+                  {
+                    "id": "cc6-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Identify users with inline or directly attached policies: aws iam list-users --query 'Users[*].UserName' --output text | xargs -I{} sh -c 'echo \"User: {}\"; aws iam list-user-policies --user-name {}; aws iam list-attached-user-policies --user-name {}'\n- Create IAM groups for roles: aws iam create-group --group-name Developers && aws iam create-group --group-name Operators && aws iam create-group --group-name ReadOnly\n- Attach scoped policies to groups: aws iam attach-group-policy --group-name ReadOnly --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess\n- Move users from direct policies to groups: aws iam add-user-to-group --user-name <user> --group-name <group>\n- Use IAM Access Analyzer to generate least-privilege policies: aws accessanalyzer start-policy-generation --policy-generation-details '{\"principalArn\":\"<user-arn>\"}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify role-based access control (RBAC) is implemented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_roles"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_users\", \"assertion\": \"no_direct_user_policies\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_groups\", \"assertion\": \"rbac_groups_defined\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-3-b_guidance",
+                "name": "guidance",
+                "prose": "Enforce segregation of duties by separating admin, developer, and audit roles.",
+                "parts": [
+                  {
+                    "id": "cc6-3-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Verify no user has both admin and audit roles: aws iam list-groups-for-user --user-name <user>\n- Create SCP to prevent role conflicts: aws organizations create-policy --name sod-policy --type SERVICE_CONTROL_POLICY --content <policy-json>\n- Use permission boundaries: aws iam put-user-permissions-boundary --user-name <user> --permissions-boundary arn:aws:iam::<account>:policy/DeveloperBoundary"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-3-b",
+                "name": "assessment-objective",
+                "prose": "Verify segregation of duties is enforced for critical functions",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_policy"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_users\", \"assertion\": \"segregation_of_duties_enforced\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-4",
+            "title": "Physical Access Restrictions",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-4_smt",
+                "name": "statement",
+                "prose": "The entity restricts physical access to facilities and protected information assets to authorized personnel to meet the entity's objectives.\n"
+              },
+              {
+                "id": "cc6-4-a_guidance",
+                "name": "guidance",
+                "prose": "Document physical security controls and validate cloud provider SOC 2 compliance for data centers.",
+                "parts": [
+                  {
+                    "id": "cc6-4-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Download AWS SOC 2 report via Artifact: aws artifact get-report-metadata (or access via console)\n- Store physical security policy: aws s3 cp physical-security-policy.pdf s3://<policy-bucket>/policies/physical-security-policy.pdf\n- Document data center locations: aws ec2 describe-regions --query 'Regions[*].RegionName'"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-4-a",
+                "name": "assessment-objective",
+                "prose": "Verify physical access controls are documented and cloud provider compliance is validated",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"physical_security_policy_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-5",
+            "title": "Logical Access Disposal",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-5_smt",
+                "name": "statement",
+                "prose": "The entity discontinues logical and physical protections over physical assets only after the ability to read or recover data and software from those assets has been diminished and is no longer required to meet the entity's objectives.\n"
+              },
+              {
+                "id": "cc6-5-a_guidance",
+                "name": "guidance",
+                "prose": "Implement data disposal procedures including encryption key destruction and media sanitization.",
+                "parts": [
+                  {
+                    "id": "cc6-5-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store data disposal policy: aws s3 cp data-disposal-policy.pdf s3://<policy-bucket>/policies/data-disposal-policy.pdf\n- Verify EBS volumes are encrypted: aws ec2 describe-volumes --query 'Volumes[?!Encrypted].[VolumeId,State]'\n- Schedule KMS key deletion for disposed data: aws kms schedule-key-deletion --key-id <key-id> --pending-window-in-days 7\n- Verify S3 bucket lifecycle rules for data expiration: aws s3api get-bucket-lifecycle-configuration --bucket <bucket>"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-5-a",
+                "name": "assessment-objective",
+                "prose": "Verify data disposal and media sanitization procedures are documented and followed",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"ec2\", \"method\": \"describe_volumes\", \"assertion\": \"all_volumes_encrypted\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"kms\", \"method\": \"list_keys\", \"assertion\": \"key_rotation_enabled\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-6",
+            "title": "Security Measures Against Threats Outside System Boundaries",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-6_smt",
+                "name": "statement",
+                "prose": "The entity implements logical access security measures to protect against threats from sources outside its system boundaries, including firewalls, intrusion detection, and DDoS protection.\n"
+              },
+              {
+                "id": "cc6-6-a_guidance",
+                "name": "guidance",
+                "prose": "Implement WAF, Shield, and network firewalls to protect against external threats.",
+                "parts": [
+                  {
+                    "id": "cc6-6-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List WAF web ACLs: aws wafv2 list-web-acls --scope REGIONAL\n- Create WAF web ACL: aws wafv2 create-web-acl --name soc2-waf --scope REGIONAL --default-action '{\"Block\":{}}' --visibility-config '{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"soc2-waf\"}' --rules '[]'\n- Enable Shield Advanced: aws shield create-subscription\n- Enable GuardDuty: aws guardduty create-detector --enable\n- Check for open security groups: aws ec2 describe-security-groups --filters Name=ip-permission.cidr,Values=0.0.0.0/0 --query 'SecurityGroups[*].[GroupId,GroupName]'"
+                  },
+                  {
+                    "id": "cc6-6-a_guidance_azure",
+                    "name": "remediation-azure",
+                    "prose": "- List WAF policies: az network application-gateway waf-policy list\n- Enable DDoS protection: az network ddos-protection create --name ddos-plan --resource-group <rg>"
+                  },
+                  {
+                    "id": "cc6-6-a_guidance_gcp",
+                    "name": "remediation-gcp",
+                    "prose": "- List Cloud Armor policies: gcloud compute security-policies list\n- Create security policy: gcloud compute security-policies create soc2-policy"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-6-a",
+                "name": "assessment-objective",
+                "prose": "Verify network perimeter security controls are implemented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "network_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"wafv2\", \"method\": \"list_web_acls\", \"assertion\": \"waf_web_acl_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"shield\", \"method\": \"describe_subscription\", \"assertion\": \"shield_advanced_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"ec2\", \"method\": \"describe_security_groups\", \"assertion\": \"no_unrestricted_ingress\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-6-b_guidance",
+                "name": "guidance",
+                "prose": "Enable GuardDuty and Network Firewall for intrusion detection and prevention.",
+                "parts": [
+                  {
+                    "id": "cc6-6-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Verify GuardDuty is enabled: aws guardduty list-detectors\n- Check GuardDuty findings: aws guardduty list-findings --detector-id <detector-id> --finding-criteria '{\"Criterion\":{\"severity\":{\"Gte\":7}}}'\n- Create Network Firewall: aws network-firewall create-firewall --firewall-name soc2-firewall --vpc-id <vpc-id> --subnet-mappings '[{\"SubnetId\":\"<subnet-id>\"}]' --firewall-policy-arn <policy-arn>"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-6-b",
+                "name": "assessment-objective",
+                "prose": "Verify intrusion detection and prevention systems are active",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "network_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"guardduty\", \"method\": \"list_detectors\", \"assertion\": \"guardduty_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"network-firewall\", \"method\": \"list_firewalls\", \"assertion\": \"network_firewall_deployed\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-7",
+            "title": "Restrict Data Transmission, Movement, and Removal",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-7"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-7_smt",
+                "name": "statement",
+                "prose": "The entity restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission to meet the entity's objectives.\n"
+              },
+              {
+                "id": "cc6-7-a_guidance",
+                "name": "guidance",
+                "prose": "Enforce TLS/SSL for all data in transit using ACM certificates and security policies.",
+                "parts": [
+                  {
+                    "id": "cc6-7-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List ACM certificates: aws acm list-certificates --query 'CertificateSummaryList[*].[DomainName,Status]'\n- Verify ALB uses HTTPS: aws elbv2 describe-listeners --load-balancer-arn <alb-arn> --query 'Listeners[*].[Protocol,SslPolicy]'\n- Enforce S3 bucket policy requiring TLS: aws s3api put-bucket-policy --bucket <bucket> --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Principal\":\"*\",\"Action\":\"s3:*\",\"Resource\":[\"arn:aws:s3:::<bucket>\",\"arn:aws:s3:::<bucket>/*\"],\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}}}]}'\n- Create Config rule: aws configservice put-config-rule --config-rule '{\"ConfigRuleName\":\"s3-bucket-ssl-requests-only\",\"Source\":{\"Owner\":\"AWS\",\"SourceIdentifier\":\"S3_BUCKET_SSL_REQUESTS_ONLY\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-7-a",
+                "name": "assessment-objective",
+                "prose": "Verify encryption in transit is enforced for all data transmissions",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "encryption_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"elbv2\", \"method\": \"describe_listeners\", \"assertion\": \"all_listeners_use_https\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"get_bucket_policy\", \"assertion\": \"ssl_required_on_all_buckets\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-7-b_guidance",
+                "name": "guidance",
+                "prose": "Implement DLP controls using Macie, S3 Block Public Access, and VPC endpoints.",
+                "parts": [
+                  {
+                    "id": "cc6-7-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable Macie: aws macie2 enable-macie\n- Create Macie classification job: aws macie2 create-classification-job --job-type SCHEDULED --s3-job-definition '{\"bucketDefinitions\":[{\"accountId\":\"<account-id>\",\"buckets\":[\"<bucket>\"]}]}' --schedule-frequency-expression 'cron(0 12 ? * MON *)' --name sensitive-data-scan\n- Enable S3 Block Public Access: aws s3control put-public-access-block --account-id <account-id> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true\n- Create VPC endpoint for S3: aws ec2 create-vpc-endpoint --vpc-id <vpc-id> --service-name com.amazonaws.<region>.s3 --route-table-ids <rtb-id>"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-7-b",
+                "name": "assessment-objective",
+                "prose": "Verify data loss prevention controls restrict unauthorized data movement",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "dlp_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"macie2\", \"method\": \"get_macie_session\", \"assertion\": \"macie_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3control\", \"method\": \"get_public_access_block\", \"assertion\": \"public_access_blocked\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc6-8",
+            "title": "Prevention and Detection of Unauthorized or Malicious Software",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC6.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc6-8"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc6-8_smt",
+                "name": "statement",
+                "prose": "The entity implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software to meet the entity's objectives.\n"
+              },
+              {
+                "id": "cc6-8-a_guidance",
+                "name": "guidance",
+                "prose": "Deploy GuardDuty malware protection and SSM for endpoint management.",
+                "parts": [
+                  {
+                    "id": "cc6-8-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable GuardDuty malware protection: aws guardduty update-detector --detector-id <id> --features '[{\"Name\":\"EBS_MALWARE_PROTECTION\",\"Status\":\"ENABLED\"}]'\n- Verify SSM agent on all instances: aws ssm describe-instance-information --query 'InstanceInformationList[*].[InstanceId,PingStatus,PlatformType]'\n- Run SSM patch compliance scan: aws ssm start-automation-execution --document-name AWS-RunPatchBaseline --parameters '{\"Operation\":[\"Scan\"]}'\n- Check ECR image scan findings: aws ecr describe-image-scan-findings --repository-name <repo> --image-id imageTag=latest"
+                  }
+                ]
+              },
+              {
+                "id": "cc6-8-a",
+                "name": "assessment-objective",
+                "prose": "Verify malware protection and endpoint security controls are deployed",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "endpoint_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"guardduty\", \"method\": \"get_detector\", \"assertion\": \"malware_protection_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"ssm\", \"method\": \"describe_instance_information\", \"assertion\": \"all_instances_managed_by_ssm\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc7",
+        "title": "System Operations",
+        "controls": [
+          {
+            "id": "cc7-1",
+            "title": "Detection and Monitoring of Security Events",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC7.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc7-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc7-1_smt",
+                "name": "statement",
+                "prose": "To meet its objectives, the entity uses detection and monitoring procedures to identify changes to configurations that result in the introduction of new vulnerabilities and susceptibilities to newly discovered vulnerabilities.\n"
+              },
+              {
+                "id": "cc7-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement security monitoring using GuardDuty, Security Hub, and CloudWatch alarms.",
+                "parts": [
+                  {
+                    "id": "cc7-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable GuardDuty: aws guardduty create-detector --enable --finding-publishing-frequency FIFTEEN_MINUTES\n- Enable Security Hub: aws securityhub enable-security-hub --enable-default-standards\n- Create CloudWatch alarm for root login: aws cloudwatch put-metric-alarm --alarm-name root-login --namespace CloudTrailMetrics --metric-name RootLoginEventCount --statistic Sum --period 300 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold --alarm-actions <sns-arn>\n- Create metric filter for unauthorized API calls: aws logs put-metric-filter --log-group-name CloudTrail/logs --filter-name UnauthorizedAPICalls --filter-pattern '{($.errorCode=\"*UnauthorizedAccess*\")||($.errorCode=\"AccessDenied*\")}' --metric-transformations metricName=UnauthorizedAttemptCount,metricNamespace=CloudTrailMetrics,metricValue=1"
+                  },
+                  {
+                    "id": "cc7-1-a_guidance_azure",
+                    "name": "remediation-azure",
+                    "prose": "- Enable Microsoft Defender for Cloud: az security pricing create --name VirtualMachines --tier Standard\n- Enable Azure Sentinel: az sentinel alert-rule list --workspace-name <ws>"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify continuous security monitoring and alerting is configured",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"guardduty\", \"method\": \"list_detectors\", \"assertion\": \"guardduty_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"securityhub\", \"method\": \"describe_hub\", \"assertion\": \"security_hub_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudwatch\", \"method\": \"describe_alarms\", \"assertion\": \"security_alarms_configured\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-1-b_guidance",
+                "name": "guidance",
+                "prose": "Enable AWS Config to detect and record configuration changes.",
+                "parts": [
+                  {
+                    "id": "cc7-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable Config recorder: aws configservice put-configuration-recorder --configuration-recorder name=default,roleARN=<role-arn> --recording-group allSupported=true\n- Start recording: aws configservice start-configuration-recorder --configuration-recorder-name default\n- Set delivery channel: aws configservice put-delivery-channel --delivery-channel '{\"name\":\"default\",\"s3BucketName\":\"<config-bucket>\",\"snsTopicARN\":\"<sns-arn>\",\"configSnapshotDeliveryProperties\":{\"deliveryFrequency\":\"Six_Hours\"}}'\n- Verify status: aws configservice describe-configuration-recorder-status"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify configuration change detection is enabled",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"config\", \"method\": \"describe_configuration_recorder_status\", \"assertion\": \"config_recorder_active\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc7-2",
+            "title": "Monitoring System Components for Anomalous Behavior",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC7.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc7-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc7-2_smt",
+                "name": "statement",
+                "prose": "The entity monitors system components and the operation of those components for anomalies that are indicative of malicious acts, natural disasters, and errors affecting the entity's ability to meet its objectives.\n"
+              },
+              {
+                "id": "cc7-2-a_guidance",
+                "name": "guidance",
+                "prose": "Enable anomaly detection using CloudWatch Anomaly Detection and GuardDuty.",
+                "parts": [
+                  {
+                    "id": "cc7-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable CloudWatch anomaly detection: aws cloudwatch put-anomaly-detector --namespace AWS/EC2 --metric-name CPUUtilization --stat Average\n- Create anomaly alarm: aws cloudwatch put-metric-alarm --alarm-name cpu-anomaly --namespace AWS/EC2 --metric-name CPUUtilization --threshold-metric-id ad1 --comparison-operator LessThanLowerOrGreaterThanUpperThreshold --evaluation-periods 3 --alarm-actions <sns-arn> --metrics '[{\"Id\":\"m1\",\"MetricStat\":{\"Metric\":{\"Namespace\":\"AWS/EC2\",\"MetricName\":\"CPUUtilization\"},\"Period\":300,\"Stat\":\"Average\"}},{\"Id\":\"ad1\",\"Expression\":\"ANOMALY_DETECTION_BAND(m1,2)\"}]'\n- Review GuardDuty anomaly findings: aws guardduty list-findings --detector-id <id> --finding-criteria '{\"Criterion\":{\"type\":{\"Eq\":[\"UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS\"]}}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify anomaly detection is enabled for system components",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudwatch\", \"method\": \"describe_anomaly_detectors\", \"assertion\": \"anomaly_detection_configured\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc7-3",
+            "title": "Incident Response Procedures",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC7.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc7-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc7-3_smt",
+                "name": "statement",
+                "prose": "The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives (security incidents) and, if so, takes actions to prevent or address such failures.\n"
+              },
+              {
+                "id": "cc7-3-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain an incident response plan with defined roles, escalation procedures, and annual testing.",
+                "parts": [
+                  {
+                    "id": "cc7-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store incident response plan: aws s3 cp incident-response-plan.pdf s3://<policy-bucket>/policies/incident-response-plan.pdf\n- Create incident response SNS topic: aws sns create-topic --name incident-response\n- Subscribe on-call team: aws sns subscribe --topic-arn <topic-arn> --protocol email --notification-endpoint oncall@<domain>\n- Create EventBridge rule for critical events: aws events put-rule --name critical-security-events --event-pattern '{\"source\":[\"aws.guardduty\"],\"detail\":{\"severity\":[{\"numeric\":[\">\",7]}]}}'\n- Set rule target to SNS: aws events put-targets --rule critical-security-events --targets '[{\"Id\":\"ir-notify\",\"Arn\":\"<sns-topic-arn>\"}]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify incident response plan is documented, tested, and current",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"incident_response_plan_exists\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"sns\", \"method\": \"list_topics\", \"assertion\": \"incident_response_topic_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-3-b_guidance",
+                "name": "guidance",
+                "prose": "Automate incident detection and triage using GuardDuty and EventBridge.",
+                "parts": [
+                  {
+                    "id": "cc7-3-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List GuardDuty findings by severity: aws guardduty list-findings --detector-id <id> --sort-criteria '{\"AttributeName\":\"severity\",\"OrderBy\":\"DESC\"}'\n- Create automated remediation via SSM: aws ssm create-document --name IsolateCompromisedInstance --document-type Automation --content '{\"schemaVersion\":\"0.3\",\"mainSteps\":[{\"name\":\"isolateInstance\",\"action\":\"aws:changeInstanceState\",\"inputs\":{\"InstanceIds\":[\"{{InstanceId}}\"],\"DesiredState\":\"stopped\"}}]}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-3-b",
+                "name": "assessment-objective",
+                "prose": "Verify incident detection and triage procedures are automated",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "automation_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"events\", \"method\": \"list_rules\", \"assertion\": \"incident_response_rules_configured\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc7-4",
+            "title": "Incident Response and Recovery",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC7.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc7-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc7-4_smt",
+                "name": "statement",
+                "prose": "The entity responds to identified security incidents by executing a defined incident response program to understand, contain, remediate, and communicate security incidents, as appropriate.\n"
+              },
+              {
+                "id": "cc7-4-a_guidance",
+                "name": "guidance",
+                "prose": "Document and test incident containment, eradication, and recovery procedures at least annually.",
+                "parts": [
+                  {
+                    "id": "cc7-4-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store IR playbooks: aws s3 sync ./playbooks/ s3://<policy-bucket>/incident-response/playbooks/\n- Create isolation security group: aws ec2 create-security-group --group-name incident-isolation --description 'No inbound/outbound for incident isolation' --vpc-id <vpc-id>\n- Revoke all rules from isolation SG: aws ec2 revoke-security-group-egress --group-id <sg-id> --ip-permissions '[{\"IpProtocol\":\"-1\",\"IpRanges\":[{\"CidrIp\":\"0.0.0.0/0\"}]}]'\n- Create forensic snapshot automation: aws ssm create-document --name CreateForensicSnapshot --document-type Automation --content <automation-doc>"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-4-a",
+                "name": "assessment-objective",
+                "prose": "Verify incident containment, eradication, and recovery procedures are defined and tested",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"ir_playbooks_exist\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"ec2\", \"method\": \"describe_security_groups\", \"assertion\": \"isolation_security_group_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc7-5",
+            "title": "Post-Incident Analysis and Improvement",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC7.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc7-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc7-5_smt",
+                "name": "statement",
+                "prose": "The entity identifies, develops, and implements activities to recover from identified security incidents and uses information from the incidents to learn and improve.\n"
+              },
+              {
+                "id": "cc7-5-a_guidance",
+                "name": "guidance",
+                "prose": "Conduct post-incident reviews within 72 hours and store lessons learned for continuous improvement.",
+                "parts": [
+                  {
+                    "id": "cc7-5-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store post-incident reports: aws s3 cp post-incident-report-<incident-id>.pdf s3://<policy-bucket>/incident-response/post-incident/\n- List historical incident reports: aws s3 ls s3://<policy-bucket>/incident-response/post-incident/\n- Track improvement actions in DynamoDB: aws dynamodb put-item --table-name IncidentImprovements --item '{\"incident_id\":{\"S\":\"<id>\"},\"improvement\":{\"S\":\"<action>\"},\"status\":{\"S\":\"open\"},\"due_date\":{\"S\":\"<date>\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc7-5-a",
+                "name": "assessment-objective",
+                "prose": "Verify post-incident review (lessons learned) process is documented and followed",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"post_incident_reports_exist\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc8",
+        "title": "Change Management",
+        "controls": [
+          {
+            "id": "cc8-1",
+            "title": "Changes to Infrastructure, Data, Software, and Procedures",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC8.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc8-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc8-1_smt",
+                "name": "statement",
+                "prose": "The entity authorizes, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures to meet its objectives.\n"
+              },
+              {
+                "id": "cc8-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement a formal change management process with approval, testing, and rollback procedures.",
+                "parts": [
+                  {
+                    "id": "cc8-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store change management policy: aws s3 cp change-management-policy.pdf s3://<policy-bucket>/policies/change-management-policy.pdf\n- Enable AWS Config for change tracking: aws configservice start-configuration-recorder --configuration-recorder-name default\n- Use CodePipeline for approved deployments: aws codepipeline list-pipelines\n- Add manual approval stage: aws codepipeline update-pipeline --pipeline '{\"name\":\"<pipeline>\",\"stages\":[{\"name\":\"Approval\",\"actions\":[{\"name\":\"ManualApproval\",\"actionTypeId\":{\"category\":\"Approval\",\"owner\":\"AWS\",\"provider\":\"Manual\",\"version\":\"1\"},\"configuration\":{\"NotificationArn\":\"<sns-arn>\"}}]}]}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc8-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify change management process with documented approval workflows",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"codepipeline\", \"method\": \"list_pipelines\", \"assertion\": \"deployment_pipelines_exist\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"config\", \"method\": \"describe_configuration_recorder_status\", \"assertion\": \"config_recorder_active\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc8-1-b_guidance",
+                "name": "guidance",
+                "prose": "Implement pre-production testing stages in CI/CD pipelines.",
+                "parts": [
+                  {
+                    "id": "cc8-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List CodeBuild projects: aws codebuild list-projects\n- Verify test stage in pipeline: aws codepipeline get-pipeline --name <pipeline> --query 'pipeline.stages[?name==`Test`]'\n- Create CodeBuild test project: aws codebuild create-project --name unit-tests --source '{\"type\":\"CODEPIPELINE\"}' --artifacts '{\"type\":\"CODEPIPELINE\"}' --environment '{\"type\":\"LINUX_CONTAINER\",\"image\":\"aws/codebuild/standard:7.0\",\"computeType\":\"BUILD_GENERAL1_SMALL\"}'\n- Verify separate staging environment: aws ec2 describe-instances --filters Name=tag:Environment,Values=staging --query 'Reservations[*].Instances[*].[InstanceId,Tags]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc8-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify changes are tested prior to deployment to production",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "deployment_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"codepipeline\", \"method\": \"get_pipeline\", \"assertion\": \"test_stage_in_pipeline\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"codebuild\", \"method\": \"list_projects\", \"assertion\": \"test_projects_exist\"}"
+                  }
+                ]
+              },
+              {
+                "id": "cc8-1-c_guidance",
+                "name": "guidance",
+                "prose": "Implement automated rollback capabilities in deployment pipelines.",
+                "parts": [
+                  {
+                    "id": "cc8-1-c_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Verify CloudFormation rollback: aws cloudformation describe-stacks --query 'Stacks[*].[StackName,RollbackConfiguration]'\n- Enable CodeDeploy automatic rollback: aws deploy update-deployment-group --application-name <app> --deployment-group-name <group> --auto-rollback-configuration '{\"enabled\":true,\"events\":[\"DEPLOYMENT_FAILURE\",\"DEPLOYMENT_STOP_ON_ALARM\"]}'\n- List RDS automated backups for database rollback: aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,BackupRetentionPeriod]'"
+                  }
+                ]
+              },
+              {
+                "id": "cc8-1-c",
+                "name": "assessment-objective",
+                "prose": "Verify rollback procedures exist and are tested",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "deployment_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"deploy\", \"method\": \"get_deployment_group\", \"assertion\": \"auto_rollback_enabled\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cc9",
+        "title": "Risk Mitigation",
+        "controls": [
+          {
+            "id": "cc9-1",
+            "title": "Risk Identification and Mitigation",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC9.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc9-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc9-1_smt",
+                "name": "statement",
+                "prose": "The entity identifies, selects, and develops risk mitigation activities for risks arising from potential business disruptions, including vendor and business partner dependencies.\n"
+              },
+              {
+                "id": "cc9-1-a_guidance",
+                "name": "guidance",
+                "prose": "Document risk mitigation strategies in the risk register and implement technical controls.",
+                "parts": [
+                  {
+                    "id": "cc9-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store risk treatment plan: aws s3 cp risk-treatment-plan.xlsx s3://<policy-bucket>/risk/risk-treatment-plan.xlsx\n- Review Security Hub compliance score: aws securityhub get-findings --filters '{\"ComplianceStatus\":[{\"Value\":\"FAILED\",\"Comparison\":\"EQUALS\"}]}' --query 'Findings | length(@)'\n- Enable AWS Backup for data protection: aws backup create-backup-plan --backup-plan '{\"BackupPlanName\":\"soc2-backup\",\"Rules\":[{\"RuleName\":\"daily-backup\",\"TargetBackupVaultName\":\"Default\",\"ScheduleExpression\":\"cron(0 5 ? * * *)\",\"Lifecycle\":{\"DeleteAfterDays\":90}}]}'"
+                  }
+                ]
+              },
+              {
+                "id": "cc9-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify risk mitigation strategies are documented and implemented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "risk_register"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"backup\", \"method\": \"list_backup_plans\", \"assertion\": \"backup_plan_exists\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"risk_treatment_plan_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cc9-2",
+            "title": "Vendor and Business Partner Risk Management",
+            "props": [
+              {
+                "name": "label",
+                "value": "CC9.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "cc9-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "cc9-2_smt",
+                "name": "statement",
+                "prose": "The entity assesses and manages risks associated with vendors and business partners, including due diligence, contractual requirements, and ongoing monitoring.\n"
+              },
+              {
+                "id": "cc9-2-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain a vendor risk management program with documented assessments and contractual security requirements.",
+                "parts": [
+                  {
+                    "id": "cc9-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store vendor management policy: aws s3 cp vendor-management-policy.pdf s3://<policy-bucket>/policies/vendor-management-policy.pdf\n- Store vendor risk assessments: aws s3 sync ./vendor-assessments/ s3://<policy-bucket>/risk/vendor-assessments/\n- List third-party IAM roles (vendor access): aws iam list-roles --query 'Roles[?contains(AssumeRolePolicyDocument | to_string(@), `arn:aws:iam::`) && !contains(Arn, `aws-service-role`)].[RoleName,Description]'\n- Review cross-account access: aws iam get-role --role-name <vendor-role> --query 'Role.AssumeRolePolicyDocument'"
+                  }
+                ]
+              },
+              {
+                "id": "cc9-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify vendor risk management program with due diligence and ongoing monitoring",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"vendor_assessments_exist\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"iam\", \"method\": \"list_roles\", \"assertion\": \"vendor_roles_have_conditions\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "a1",
+        "title": "Availability",
+        "controls": [
+          {
+            "id": "a1-1",
+            "title": "Availability Commitments and System Performance Monitoring",
+            "props": [
+              {
+                "name": "label",
+                "value": "A1.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "a1-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a1-1_smt",
+                "name": "statement",
+                "prose": "The entity maintains, monitors, and evaluates current processing capacity and use of system components (infrastructure, data, and software) to manage capacity demand and to enable the implementation of additional capacity to help meet its availability commitments.\n"
+              },
+              {
+                "id": "a1-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement capacity monitoring and auto-scaling to meet availability commitments.",
+                "parts": [
+                  {
+                    "id": "a1-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List Auto Scaling groups: aws autoscaling describe-auto-scaling-groups --query 'AutoScalingGroups[*].[AutoScalingGroupName,MinSize,MaxSize,DesiredCapacity]'\n- Create scaling policy: aws autoscaling put-scaling-policy --auto-scaling-group-name <asg> --policy-name cpu-scale-out --policy-type TargetTrackingScaling --target-tracking-configuration '{\"TargetValue\":70.0,\"PredefinedMetricSpecification\":{\"PredefinedMetricType\":\"ASGAverageCPUUtilization\"}}'\n- Create CloudWatch alarms for capacity: aws cloudwatch put-metric-alarm --alarm-name high-cpu --namespace AWS/EC2 --metric-name CPUUtilization --statistic Average --period 300 --threshold 85 --comparison-operator GreaterThanThreshold --alarm-actions <sns-arn>\n- Check RDS capacity: aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,DBInstanceClass,AllocatedStorage]'"
+                  },
+                  {
+                    "id": "a1-1-a_guidance_azure",
+                    "name": "remediation-azure",
+                    "prose": "- List VM scale sets: az vmss list --query '[].{Name:name,Capacity:sku.capacity}'\n- Enable autoscale: az monitor autoscale create --resource-group <rg> --resource <vmss-id> --resource-type Microsoft.Compute/virtualMachineScaleSets --min-count 2 --max-count 10 --count 2"
+                  },
+                  {
+                    "id": "a1-1-a_guidance_gcp",
+                    "name": "remediation-gcp",
+                    "prose": "- List instance groups: gcloud compute instance-groups managed list\n- Set autoscaling: gcloud compute instance-groups managed set-autoscaling <group> --max-num-replicas 10 --target-cpu-utilization 0.7 --zone <zone>"
+                  }
+                ]
+              },
+              {
+                "id": "a1-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify capacity monitoring and auto-scaling is configured",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"autoscaling\", \"method\": \"describe_auto_scaling_groups\", \"assertion\": \"auto_scaling_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudwatch\", \"method\": \"describe_alarms\", \"assertion\": \"capacity_alarms_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-azure",
+                    "value": "{\"service\": \"compute\", \"method\": \"list_virtual_machine_scale_sets\", \"assertion\": \"autoscale_configured\"}"
+                  }
+                ]
+              },
+              {
+                "id": "a1-1-b_guidance",
+                "name": "guidance",
+                "prose": "Document SLA commitments and implement uptime monitoring dashboards.",
+                "parts": [
+                  {
+                    "id": "a1-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store SLA documentation: aws s3 cp sla-commitments.pdf s3://<policy-bucket>/policies/sla-commitments.pdf\n- Create CloudWatch dashboard: aws cloudwatch put-dashboard --dashboard-name availability-dashboard --dashboard-body '{\"widgets\":[{\"type\":\"metric\",\"properties\":{\"metrics\":[[\"AWS/ELB\",\"HealthyHostCount\"],[\"AWS/ELB\",\"UnHealthyHostCount\"]],\"period\":300,\"title\":\"Load Balancer Health\"}}]}'\n- Create Route 53 health check: aws route53 create-health-check --caller-reference <ref> --health-check-config '{\"IPAddress\":\"<ip>\",\"Port\":443,\"Type\":\"HTTPS\",\"ResourcePath\":\"/health\",\"RequestInterval\":30,\"FailureThreshold\":3}'"
+                  }
+                ]
+              },
+              {
+                "id": "a1-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify SLA and availability targets are documented and monitored",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"route53\", \"method\": \"list_health_checks\", \"assertion\": \"health_checks_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudwatch\", \"method\": \"list_dashboards\", \"assertion\": \"availability_dashboard_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a1-2",
+            "title": "Environmental Protections and Recovery Infrastructure",
+            "props": [
+              {
+                "name": "label",
+                "value": "A1.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "a1-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a1-2_smt",
+                "name": "statement",
+                "prose": "The entity authorizes, designs, develops or acquires, implements, operates, approves, maintains, and monitors environmental protections, software, data back-up processes, and recovery infrastructure to meet its objectives.\n"
+              },
+              {
+                "id": "a1-2-a_guidance",
+                "name": "guidance",
+                "prose": "Implement automated backup with cross-region replication and regular recovery testing.",
+                "parts": [
+                  {
+                    "id": "a1-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Create backup plan: aws backup create-backup-plan --backup-plan '{\"BackupPlanName\":\"soc2-backup\",\"Rules\":[{\"RuleName\":\"daily\",\"TargetBackupVaultName\":\"Default\",\"ScheduleExpression\":\"cron(0 5 ? * * *)\",\"StartWindowMinutes\":60,\"CompletionWindowMinutes\":180,\"Lifecycle\":{\"DeleteAfterDays\":90},\"CopyActions\":[{\"DestinationBackupVaultArn\":\"arn:aws:backup:<dr-region>:<account>:backup-vault:Default\",\"Lifecycle\":{\"DeleteAfterDays\":90}}]}]}'\n- Assign resources to backup plan: aws backup create-backup-selection --backup-plan-id <plan-id> --backup-selection '{\"SelectionName\":\"all-tagged\",\"IamRoleArn\":\"<role-arn>\",\"ListOfTags\":[{\"ConditionType\":\"STRINGEQUALS\",\"ConditionKey\":\"Backup\",\"ConditionValue\":\"true\"}]}'\n- List recovery points: aws backup list-recovery-points-by-backup-vault --backup-vault-name Default --query 'RecoveryPoints[*].[ResourceArn,CreationDate,Status]'\n- Verify RDS automated backups: aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,BackupRetentionPeriod,MultiAZ]'"
+                  },
+                  {
+                    "id": "a1-2-a_guidance_azure",
+                    "name": "remediation-azure",
+                    "prose": "- Create Recovery Services vault: az backup vault create --name soc2-vault --resource-group <rg> --location <loc>\n- Enable VM backup: az backup protection enable-for-vm --resource-group <rg> --vault-name soc2-vault --vm <vm-name> --policy-name DefaultPolicy"
+                  },
+                  {
+                    "id": "a1-2-a_guidance_gcp",
+                    "name": "remediation-gcp",
+                    "prose": "- Create snapshot schedule: gcloud compute resource-policies create snapshot-schedule soc2-schedule --max-retention-days 90 --daily-schedule --start-time 04:00"
+                  }
+                ]
+              },
+              {
+                "id": "a1-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify backup and recovery procedures are implemented and tested",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "backup_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"backup\", \"method\": \"list_backup_plans\", \"assertion\": \"backup_plan_exists\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"rds\", \"method\": \"describe_db_instances\", \"assertion\": \"automated_backups_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-azure",
+                    "value": "{\"service\": \"recoveryservices\", \"method\": \"list_vaults\", \"assertion\": \"recovery_vault_exists\"}"
+                  }
+                ]
+              },
+              {
+                "id": "a1-2-b_guidance",
+                "name": "guidance",
+                "prose": "Deploy critical systems across multiple availability zones or regions for resilience.",
+                "parts": [
+                  {
+                    "id": "a1-2-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Check RDS Multi-AZ: aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,MultiAZ,AvailabilityZone]'\n- Enable Multi-AZ for RDS: aws rds modify-db-instance --db-instance-identifier <db-id> --multi-az --apply-immediately\n- Check ELB cross-zone: aws elbv2 describe-load-balancers --query 'LoadBalancers[*].[LoadBalancerName,AvailabilityZones[*].ZoneName]'\n- Verify ASG spans multiple AZs: aws autoscaling describe-auto-scaling-groups --query 'AutoScalingGroups[*].[AutoScalingGroupName,AvailabilityZones]'"
+                  }
+                ]
+              },
+              {
+                "id": "a1-2-b",
+                "name": "assessment-objective",
+                "prose": "Verify multi-AZ or multi-region deployment for critical systems",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "architecture_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"rds\", \"method\": \"describe_db_instances\", \"assertion\": \"critical_databases_multi_az\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"elbv2\", \"method\": \"describe_load_balancers\", \"assertion\": \"load_balancers_multi_az\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a1-3",
+            "title": "Business Continuity and Disaster Recovery",
+            "props": [
+              {
+                "name": "label",
+                "value": "A1.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "a1-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a1-3_smt",
+                "name": "statement",
+                "prose": "The entity tests recovery plan procedures supporting system recovery to meet its objectives, including BCP and DR plan testing on at least an annual basis.\n"
+              },
+              {
+                "id": "a1-3-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain BCP/DR plans and conduct annual testing with documented results.",
+                "parts": [
+                  {
+                    "id": "a1-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store BCP/DR plan: aws s3 cp bcp-dr-plan.pdf s3://<policy-bucket>/policies/bcp-dr-plan.pdf\n- Store DR test results: aws s3 cp dr-test-results-<date>.pdf s3://<policy-bucket>/audits/dr-tests/\n- Use AWS Resilience Hub for resilience assessment: aws resiliencehub create-app --name soc2-app --assessment-schedule Disabled\n- Run resilience assessment: aws resiliencehub start-app-assessment --app-arn <app-arn> --app-version <version> --assessment-name annual-dr-test\n- List assessment results: aws resiliencehub list-app-assessments --app-arn <app-arn>"
+                  }
+                ]
+              },
+              {
+                "id": "a1-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify business continuity and disaster recovery plans are documented and tested",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"resiliencehub\", \"method\": \"list_apps\", \"assertion\": \"resilience_assessment_exists\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"dr_test_results_exist\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "c1",
+        "title": "Confidentiality",
+        "controls": [
+          {
+            "id": "c1-1",
+            "title": "Identification and Maintenance of Confidential Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "C1.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "c1-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "c1-1_smt",
+                "name": "statement",
+                "prose": "The entity identifies and maintains confidential information to meet the entity's objectives related to confidentiality, including data classification, labeling, and handling procedures.\n"
+              },
+              {
+                "id": "c1-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement data classification policy and use Macie for automated sensitive data discovery.",
+                "parts": [
+                  {
+                    "id": "c1-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store data classification policy: aws s3 cp data-classification-policy.pdf s3://<policy-bucket>/policies/data-classification-policy.pdf\n- Enable Macie for sensitive data discovery: aws macie2 enable-macie\n- Create classification job: aws macie2 create-classification-job --job-type ONE_TIME --s3-job-definition '{\"bucketDefinitions\":[{\"accountId\":\"<account>\",\"buckets\":[\"<bucket>\"]}]}' --name data-classification-scan\n- List Macie findings: aws macie2 list-findings --finding-criteria '{\"criterion\":{\"severity.description\":{\"eq\":[\"High\"]}}}'\n- Tag S3 buckets with classification level: aws s3api put-bucket-tagging --bucket <bucket> --tagging 'TagSet=[{Key=DataClassification,Value=Confidential}]'"
+                  },
+                  {
+                    "id": "c1-1-a_guidance_azure",
+                    "name": "remediation-azure",
+                    "prose": "- Create sensitivity labels: az security setting list\n- Enable Azure Purview for data classification: az purview account create --name <account> --resource-group <rg>"
+                  },
+                  {
+                    "id": "c1-1-a_guidance_gcp",
+                    "name": "remediation-gcp",
+                    "prose": "- Enable DLP API: gcloud services enable dlp.googleapis.com\n- Run DLP scan: gcloud dlp content inspect --content '<sample>' --info-types CREDIT_CARD_NUMBER EMAIL_ADDRESS"
+                  }
+                ]
+              },
+              {
+                "id": "c1-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify data classification policy and confidential data identification procedures exist",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"macie2\", \"method\": \"get_macie_session\", \"assertion\": \"macie_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"macie2\", \"method\": \"list_classification_jobs\", \"assertion\": \"classification_jobs_active\"}"
+                  },
+                  {
+                    "name": "cloud-check-azure",
+                    "value": "{\"service\": \"purview\", \"method\": \"list_accounts\", \"assertion\": \"purview_enabled\"}"
+                  }
+                ]
+              },
+              {
+                "id": "c1-1-b_guidance",
+                "name": "guidance",
+                "prose": "Enable encryption at rest for all data stores containing confidential information.",
+                "parts": [
+                  {
+                    "id": "c1-1-b_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Check S3 bucket encryption: aws s3api get-bucket-encryption --bucket <bucket>\n- Enable default S3 encryption: aws s3api put-bucket-encryption --bucket <bucket> --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"aws:kms\",\"KMSMasterKeyID\":\"<key-id>\"},\"BucketKeyEnabled\":true}]}'\n- Check RDS encryption: aws rds describe-db-instances --query 'DBInstances[?!StorageEncrypted].[DBInstanceIdentifier]'\n- Check EBS encryption: aws ec2 describe-volumes --query 'Volumes[?!Encrypted].[VolumeId,State]'\n- Enable default EBS encryption: aws ec2 enable-ebs-encryption-by-default\n- Create Config rule: aws configservice put-config-rule --config-rule '{\"ConfigRuleName\":\"encrypted-volumes\",\"Source\":{\"Owner\":\"AWS\",\"SourceIdentifier\":\"ENCRYPTED_VOLUMES\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "c1-1-b",
+                "name": "assessment-objective",
+                "prose": "Verify encryption at rest is enabled for all confidential data stores",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "encryption_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"get_bucket_encryption\", \"assertion\": \"all_buckets_encrypted\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"rds\", \"method\": \"describe_db_instances\", \"assertion\": \"all_databases_encrypted\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"ec2\", \"method\": \"describe_volumes\", \"assertion\": \"all_volumes_encrypted\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "c1-2",
+            "title": "Disposal of Confidential Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "C1.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "c1-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "c1-2_smt",
+                "name": "statement",
+                "prose": "The entity disposes of confidential information to meet the entity's objectives related to confidentiality, including secure deletion, media sanitization, and key destruction.\n"
+              },
+              {
+                "id": "c1-2-a_guidance",
+                "name": "guidance",
+                "prose": "Implement data retention and disposal policies with automated lifecycle management.",
+                "parts": [
+                  {
+                    "id": "c1-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store data retention policy: aws s3 cp data-retention-policy.pdf s3://<policy-bucket>/policies/data-retention-policy.pdf\n- Configure S3 lifecycle rules for data expiration: aws s3api put-bucket-lifecycle-configuration --bucket <bucket> --lifecycle-configuration '{\"Rules\":[{\"ID\":\"expire-confidential\",\"Status\":\"Enabled\",\"Filter\":{\"Tag\":{\"Key\":\"DataClassification\",\"Value\":\"Confidential\"}},\"Expiration\":{\"Days\":365}}]}'\n- Schedule KMS key deletion for disposed data: aws kms schedule-key-deletion --key-id <key-id> --pending-window-in-days 30\n- Verify no unencrypted snapshots: aws ec2 describe-snapshots --owner-ids self --query 'Snapshots[?!Encrypted].[SnapshotId,StartTime]'"
+                  }
+                ]
+              },
+              {
+                "id": "c1-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify confidential data disposal procedures and retention policies",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"get_bucket_lifecycle_configuration\", \"assertion\": \"lifecycle_rules_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"ec2\", \"method\": \"describe_snapshots\", \"assertion\": \"all_snapshots_encrypted\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pi1",
+        "title": "Processing Integrity",
+        "controls": [
+          {
+            "id": "pi1-1",
+            "title": "Accurate and Complete Processing",
+            "props": [
+              {
+                "name": "label",
+                "value": "PI1.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "pi1-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pi1-1_smt",
+                "name": "statement",
+                "prose": "The entity implements policies and procedures over system processing to result in products, services, and reporting to meet the entity's objectives related to processing integrity.\n"
+              },
+              {
+                "id": "pi1-1-a_guidance",
+                "name": "guidance",
+                "prose": "Implement input validation, API schema enforcement, and data integrity checks in application code.",
+                "parts": [
+                  {
+                    "id": "pi1-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable API Gateway request validation: aws apigateway update-rest-api --rest-api-id <api-id> --patch-operations op=replace,path=/minimumCompressionSize,value=0\n- Create API Gateway request validator: aws apigateway create-request-validator --rest-api-id <api-id> --name validate-body --validate-request-body --validate-request-parameters\n- Enable WAF SQL injection protection: aws wafv2 create-web-acl --name api-protection --scope REGIONAL --default-action '{\"Allow\":{}}' --rules '[{\"Name\":\"SQLiProtection\",\"Priority\":1,\"Statement\":{\"SqliMatchStatement\":{\"FieldToMatch\":{\"Body\":{}},\"TextTransformations\":[{\"Priority\":0,\"Type\":\"NONE\"}]}},\"Action\":{\"Block\":{}},\"VisibilityConfig\":{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"sqli\"}}]' --visibility-config '{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"api-waf\"}'"
+                  }
+                ]
+              },
+              {
+                "id": "pi1-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify input validation and data integrity controls are implemented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "application_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"apigateway\", \"method\": \"get_request_validators\", \"assertion\": \"request_validation_enabled\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"wafv2\", \"method\": \"list_web_acls\", \"assertion\": \"waf_protects_apis\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pi1-2",
+            "title": "System Inputs and Outputs",
+            "props": [
+              {
+                "name": "label",
+                "value": "PI1.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "pi1-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pi1-2_smt",
+                "name": "statement",
+                "prose": "The entity implements policies and procedures over system inputs to result in products, services, and reporting to meet the entity's objectives, ensuring completeness, accuracy, and timeliness.\n"
+              },
+              {
+                "id": "pi1-2-a_guidance",
+                "name": "guidance",
+                "prose": "Implement data validation rules, checksums, and reconciliation procedures for system inputs.",
+                "parts": [
+                  {
+                    "id": "pi1-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable DynamoDB stream for audit trail: aws dynamodb update-table --table-name <table> --stream-specification StreamEnabled=true,StreamViewType=NEW_AND_OLD_IMAGES\n- Create Lambda function for input validation: aws lambda create-function --function-name input-validator --runtime python3.12 --handler index.handler --role <role-arn> --zip-file fileb://validator.zip\n- Set up dead-letter queue for failed validations: aws sqs create-queue --queue-name validation-failures-dlq"
+                  }
+                ]
+              },
+              {
+                "id": "pi1-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify data input completeness and accuracy controls",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "application_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"describe_table\", \"assertion\": \"stream_enabled_for_audit\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pi1-3",
+            "title": "Processing Accuracy and Timeliness",
+            "props": [
+              {
+                "name": "label",
+                "value": "PI1.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "pi1-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pi1-3_smt",
+                "name": "statement",
+                "prose": "The entity implements policies and procedures over processing activities to result in products, services, and reporting to meet the entity's objectives, ensuring processing is accurate, complete, and timely.\n"
+              },
+              {
+                "id": "pi1-3-a_guidance",
+                "name": "guidance",
+                "prose": "Monitor processing latency and accuracy with CloudWatch metrics and alarms.",
+                "parts": [
+                  {
+                    "id": "pi1-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Create custom CloudWatch metric for processing time: aws cloudwatch put-metric-data --namespace Application --metric-name ProcessingLatency --value <ms> --unit Milliseconds\n- Create alarm for slow processing: aws cloudwatch put-metric-alarm --alarm-name slow-processing --namespace Application --metric-name ProcessingLatency --statistic Average --period 300 --threshold 5000 --comparison-operator GreaterThanThreshold --alarm-actions <sns-arn>\n- Monitor Step Functions execution: aws stepfunctions list-executions --state-machine-arn <arn> --status-filter FAILED"
+                  }
+                ]
+              },
+              {
+                "id": "pi1-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify processing monitoring and SLA tracking for timeliness",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitoring_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudwatch\", \"method\": \"describe_alarms\", \"assertion\": \"processing_latency_alarms_configured\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pi1-4",
+            "title": "Output Completeness, Accuracy, and Distribution",
+            "props": [
+              {
+                "name": "label",
+                "value": "PI1.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "pi1-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pi1-4_smt",
+                "name": "statement",
+                "prose": "The entity implements policies and procedures to make available or deliver output completely, accurately, and timely in accordance with specifications to meet the entity's objectives.\n"
+              },
+              {
+                "id": "pi1-4-a_guidance",
+                "name": "guidance",
+                "prose": "Implement output validation checksums and secure distribution channels.",
+                "parts": [
+                  {
+                    "id": "pi1-4-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Enable S3 object integrity checking: aws s3api put-object --bucket <bucket> --key <key> --body <file> --checksum-algorithm SHA256\n- Verify object checksums: aws s3api head-object --bucket <bucket> --key <key> --checksum-mode ENABLED\n- Create CloudWatch metric for output validation: aws cloudwatch put-metric-data --namespace Application --metric-name OutputValidationFailures --value 0 --unit Count\n- Set up alarm: aws cloudwatch put-metric-alarm --alarm-name output-validation-failures --namespace Application --metric-name OutputValidationFailures --statistic Sum --period 300 --threshold 0 --comparison-operator GreaterThanThreshold --alarm-actions <sns-arn>"
+                  }
+                ]
+              },
+              {
+                "id": "pi1-4-a",
+                "name": "assessment-objective",
+                "prose": "Verify output validation and distribution controls",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "application_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"cloudwatch\", \"method\": \"describe_alarms\", \"assertion\": \"output_validation_alarms_configured\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pi1-5",
+            "title": "Error Handling and Correction",
+            "props": [
+              {
+                "name": "label",
+                "value": "PI1.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "pi1-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pi1-5_smt",
+                "name": "statement",
+                "prose": "The entity implements policies and procedures to store inputs, items in processing, and outputs completely, accurately, and timely to meet the entity's objectives, including error handling and correction procedures.\n"
+              },
+              {
+                "id": "pi1-5-a_guidance",
+                "name": "guidance",
+                "prose": "Implement dead-letter queues, error logging, and automated retry mechanisms.",
+                "parts": [
+                  {
+                    "id": "pi1-5-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- List SQS queues with DLQ: aws sqs list-queues --queue-name-prefix dlq\n- Configure DLQ on Lambda: aws lambda update-function-configuration --function-name <func> --dead-letter-config '{\"TargetArn\":\"arn:aws:sqs:<region>:<account>:<dlq-name>\"}'\n- Check Lambda error metrics: aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Errors --dimensions Name=FunctionName,Value=<func> --start-time <start> --end-time <end> --period 3600 --statistics Sum\n- Create CloudWatch alarm for errors: aws cloudwatch put-metric-alarm --alarm-name lambda-errors --namespace AWS/Lambda --metric-name Errors --dimensions Name=FunctionName,Value=<func> --statistic Sum --period 300 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold --alarm-actions <sns-arn>"
+                  }
+                ]
+              },
+              {
+                "id": "pi1-5-a",
+                "name": "assessment-objective",
+                "prose": "Verify error handling, dead-letter queues, and error correction procedures",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "application_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"lambda\", \"method\": \"get_function_configuration\", \"assertion\": \"dead_letter_queue_configured\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"sqs\", \"method\": \"list_queues\", \"assertion\": \"dlq_queues_exist\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "p1",
+        "title": "Privacy",
+        "controls": [
+          {
+            "id": "p1-1",
+            "title": "Privacy Notice and Communication",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-1_smt",
+                "name": "statement",
+                "prose": "The entity provides notice to data subjects about its privacy practices to meet the entity's objectives related to privacy. The notice is updated and communicated to data subjects in a timely manner for changes to the entity's privacy practices.\n"
+              },
+              {
+                "id": "p1-1-a_guidance",
+                "name": "guidance",
+                "prose": "Publish and maintain a privacy notice accessible to all data subjects.",
+                "parts": [
+                  {
+                    "id": "p1-1-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store privacy notice: aws s3 cp privacy-notice.html s3://<website-bucket>/privacy-notice.html --content-type text/html\n- Verify public accessibility via CloudFront: aws cloudfront list-distributions --query 'DistributionList.Items[*].[DomainName,Origins.Items[0].DomainName]'\n- Store internal privacy policy: aws s3 cp privacy-policy.pdf s3://<policy-bucket>/policies/privacy-policy.pdf\n- Tag with review date: aws s3api put-object-tagging --bucket <policy-bucket> --key policies/privacy-policy.pdf --tagging 'TagSet=[{Key=ReviewDate,Value=<date>},{Key=Owner,Value=DPO}]'"
+                  }
+                ]
+              },
+              {
+                "id": "p1-1-a",
+                "name": "assessment-objective",
+                "prose": "Verify privacy notice exists, is current, and is accessible to data subjects",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"head_object\", \"assertion\": \"privacy_notice_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-2",
+            "title": "Choice and Consent",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-2_smt",
+                "name": "statement",
+                "prose": "The entity communicates choices available regarding the collection, use, retention, disclosure, and disposal of personal information to data subjects and obtains consent.\n"
+              },
+              {
+                "id": "p1-2-a_guidance",
+                "name": "guidance",
+                "prose": "Implement consent management with documented opt-in/opt-out mechanisms.",
+                "parts": [
+                  {
+                    "id": "p1-2-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Create DynamoDB table for consent records: aws dynamodb create-table --table-name ConsentRecords --attribute-definitions AttributeName=user_id,AttributeType=S --key-schema AttributeName=user_id,KeyType=HASH --billing-mode PAY_PER_REQUEST\n- Record consent: aws dynamodb put-item --table-name ConsentRecords --item '{\"user_id\":{\"S\":\"<id>\"},\"consent_type\":{\"S\":\"marketing\"},\"granted\":{\"BOOL\":true},\"timestamp\":{\"S\":\"<iso-date>\"},\"ip_address\":{\"S\":\"<ip>\"}}'\n- Query consent status: aws dynamodb get-item --table-name ConsentRecords --key '{\"user_id\":{\"S\":\"<id>\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "p1-2-a",
+                "name": "assessment-objective",
+                "prose": "Verify consent management mechanisms are implemented",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "application_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"describe_table\", \"assertion\": \"consent_records_table_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-3",
+            "title": "Collection of Personal Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-3_smt",
+                "name": "statement",
+                "prose": "The entity collects personal information only for the purposes identified in the notice and limits collection to that which is necessary for the purposes identified.\n"
+              },
+              {
+                "id": "p1-3-a_guidance",
+                "name": "guidance",
+                "prose": "Document data collection purposes and implement data minimization controls.",
+                "parts": [
+                  {
+                    "id": "p1-3-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store data inventory: aws s3 cp data-inventory.xlsx s3://<policy-bucket>/privacy/data-inventory.xlsx\n- Enable Macie for PII detection: aws macie2 enable-macie\n- Create Macie classification job: aws macie2 create-classification-job --job-type ONE_TIME --s3-job-definition '{\"bucketDefinitions\":[{\"accountId\":\"<account>\",\"buckets\":[\"<bucket>\"]}]}' --name pii-discovery --managed-data-identifier-selector ALL\n- Review findings: aws macie2 list-findings --sort-criteria '{\"attributeName\":\"severity.score\",\"orderBy\":\"DESC\"}'"
+                  }
+                ]
+              },
+              {
+                "id": "p1-3-a",
+                "name": "assessment-objective",
+                "prose": "Verify data collection is limited to documented purposes with data minimization",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"macie2\", \"method\": \"list_classification_jobs\", \"assertion\": \"pii_classification_jobs_active\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-4",
+            "title": "Use, Retention, and Disposal of Personal Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-4_smt",
+                "name": "statement",
+                "prose": "The entity limits the use of personal information to the purposes identified in the notice and retains it only for as long as necessary.\n"
+              },
+              {
+                "id": "p1-4-a_guidance",
+                "name": "guidance",
+                "prose": "Implement data retention schedules with automated disposal mechanisms.",
+                "parts": [
+                  {
+                    "id": "p1-4-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store retention schedule: aws s3 cp data-retention-schedule.pdf s3://<policy-bucket>/privacy/data-retention-schedule.pdf\n- Configure DynamoDB TTL for automatic expiration: aws dynamodb update-time-to-live --table-name <table> --time-to-live-specification Enabled=true,AttributeName=ttl\n- Configure S3 lifecycle for PII data expiration: aws s3api put-bucket-lifecycle-configuration --bucket <pii-bucket> --lifecycle-configuration '{\"Rules\":[{\"ID\":\"expire-pii\",\"Status\":\"Enabled\",\"Filter\":{\"Prefix\":\"pii/\"},\"Expiration\":{\"Days\":730}}]}'"
+                  }
+                ]
+              },
+              {
+                "id": "p1-4-a",
+                "name": "assessment-objective",
+                "prose": "Verify data retention schedules and automated disposal for personal information",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"describe_time_to_live\", \"assertion\": \"ttl_enabled_for_pii_tables\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"get_bucket_lifecycle_configuration\", \"assertion\": \"pii_lifecycle_rules_configured\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-5",
+            "title": "Access to Personal Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-5_smt",
+                "name": "statement",
+                "prose": "The entity grants identified and authenticated data subjects the ability to access their stored personal information for review and, upon request, provides physical or electronic copies.\n"
+              },
+              {
+                "id": "p1-5-a_guidance",
+                "name": "guidance",
+                "prose": "Implement DSAR procedures with automated data retrieval capabilities.",
+                "parts": [
+                  {
+                    "id": "p1-5-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store DSAR procedure: aws s3 cp dsar-procedure.pdf s3://<policy-bucket>/privacy/dsar-procedure.pdf\n- Create DSAR tracking table: aws dynamodb create-table --table-name DSARRequests --attribute-definitions AttributeName=request_id,AttributeType=S --key-schema AttributeName=request_id,KeyType=HASH --billing-mode PAY_PER_REQUEST\n- Track DSAR: aws dynamodb put-item --table-name DSARRequests --item '{\"request_id\":{\"S\":\"<id>\"},\"requester\":{\"S\":\"<email>\"},\"status\":{\"S\":\"pending\"},\"requested_date\":{\"S\":\"<date>\"},\"due_date\":{\"S\":\"<date+30>\"}}'"
+                  }
+                ]
+              },
+              {
+                "id": "p1-5-a",
+                "name": "assessment-objective",
+                "prose": "Verify data subject access request (DSAR) procedures are documented and operational",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"describe_table\", \"assertion\": \"dsar_tracking_table_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-6",
+            "title": "Correction of Personal Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-6_smt",
+                "name": "statement",
+                "prose": "The entity corrects, amends, or appends personal information based on information provided by data subjects and communicates such corrections to third parties as committed or required.\n"
+              },
+              {
+                "id": "p1-6-a_guidance",
+                "name": "guidance",
+                "prose": "Document data correction procedures and maintain an audit trail of corrections.",
+                "parts": [
+                  {
+                    "id": "p1-6-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store correction procedure: aws s3 cp data-correction-procedure.pdf s3://<policy-bucket>/privacy/data-correction-procedure.pdf\n- Enable DynamoDB streams for correction audit trail: aws dynamodb update-table --table-name <user-data-table> --stream-specification StreamEnabled=true,StreamViewType=NEW_AND_OLD_IMAGES\n- Archive stream to S3 via Kinesis: aws kinesis create-stream --stream-name data-corrections-audit --shard-count 1"
+                  }
+                ]
+              },
+              {
+                "id": "p1-6-a",
+                "name": "assessment-objective",
+                "prose": "Verify data correction request procedures are documented and tracked",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"dynamodb\", \"method\": \"describe_table\", \"assertion\": \"stream_enabled_for_correction_audit\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-7",
+            "title": "Disclosure and Notification of Personal Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-7"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-7_smt",
+                "name": "statement",
+                "prose": "The entity discloses personal information to third parties with the consent of the data subject only for the purposes identified in the notice, and notifies data subjects in the event of a breach.\n"
+              },
+              {
+                "id": "p1-7-a_guidance",
+                "name": "guidance",
+                "prose": "Maintain data processing agreements with third parties and document breach notification procedures.",
+                "parts": [
+                  {
+                    "id": "p1-7-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Store DPAs: aws s3 sync ./data-processing-agreements/ s3://<policy-bucket>/privacy/dpas/\n- Store breach notification plan: aws s3 cp breach-notification-plan.pdf s3://<policy-bucket>/privacy/breach-notification-plan.pdf\n- Create SNS topic for breach notifications: aws sns create-topic --name breach-notification\n- Subscribe legal and compliance team: aws sns subscribe --topic-arn <topic-arn> --protocol email --notification-endpoint legal@<domain>"
+                  }
+                ]
+              },
+              {
+                "id": "p1-7-a",
+                "name": "assessment-objective",
+                "prose": "Verify third-party data sharing agreements and breach notification procedures",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "policy_doc"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"s3\", \"method\": \"list_objects_v2\", \"assertion\": \"data_processing_agreements_exist\"}"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"sns\", \"method\": \"list_topics\", \"assertion\": \"breach_notification_topic_exists\"}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p1-8",
+            "title": "Quality of Personal Information",
+            "props": [
+              {
+                "name": "label",
+                "value": "P1.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "p1-8"
+              }
+            ],
+            "parts": [
+              {
+                "id": "p1-8_smt",
+                "name": "statement",
+                "prose": "The entity collects and maintains accurate, up-to-date, complete, and relevant personal information for the purposes identified in the notice.\n"
+              },
+              {
+                "id": "p1-8-a_guidance",
+                "name": "guidance",
+                "prose": "Implement data quality controls including validation rules, deduplication, and accuracy checks.",
+                "parts": [
+                  {
+                    "id": "p1-8-a_guidance_aws",
+                    "name": "remediation-aws",
+                    "prose": "- Create Glue data quality rules: aws glue create-data-quality-ruleset --name pii-quality-rules --ruleset '{\"Rules\":[{\"Name\":\"email_format\",\"Expression\":\"ColumnValues['email'] matches '[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+'\"}]}' --target-table '{\"TableName\":\"<table>\",\"DatabaseName\":\"<db>\"}'\n- Run data quality evaluation: aws glue start-data-quality-ruleset-evaluation-run --data-source '{\"GlueTable\":{\"DatabaseName\":\"<db>\",\"TableName\":\"<table>\"}}' --role <role-arn> --ruleset-names pii-quality-rules\n- Check results: aws glue get-data-quality-result --result-id <result-id>"
+                  }
+                ]
+              },
+              {
+                "id": "p1-8-a",
+                "name": "assessment-objective",
+                "prose": "Verify data quality controls and validation procedures for personal information",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "application_config"
+                  },
+                  {
+                    "name": "cloud-check-aws",
+                    "value": "{\"service\": \"glue\", \"method\": \"list_data_quality_rulesets\", \"assertion\": \"data_quality_rules_exist\"}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

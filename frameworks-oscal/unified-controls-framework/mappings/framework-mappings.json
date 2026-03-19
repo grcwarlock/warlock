@@ -1,0 +1,1020 @@
+{
+  "ucf-mappings": {
+    "uuid": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "metadata": {
+      "title": "UCF Framework Mappings",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-16T00:00:00Z",
+      "description": "Maps controls from each supported framework to UCF domain IDs. Crosswalks between any two frameworks are derived by mapping through UCF IDs, eliminating the N-squared pairwise mapping problem."
+    },
+    "supported-frameworks": [
+      {
+        "key": "nist_800_53",
+        "label": "NIST 800-53",
+        "oscal-dir": "nist-800-53-oscal"
+      },
+      {
+        "key": "soc2",
+        "label": "SOC 2",
+        "oscal-dir": "soc2-oscal"
+      },
+      {
+        "key": "iso27001",
+        "label": "ISO 27001",
+        "oscal-dir": "iso-27001-oscal"
+      },
+      {
+        "key": "hipaa",
+        "label": "HIPAA",
+        "oscal-dir": "hipaa-oscal"
+      },
+      {
+        "key": "cmmc_l2",
+        "label": "CMMC L2",
+        "oscal-dir": "cmmc-oscal"
+      },
+      {
+        "key": "fedramp_moderate",
+        "label": "FedRAMP Moderate",
+        "oscal-dir": "fedramp-oscal"
+      },
+      {
+        "key": "gdpr",
+        "label": "GDPR",
+        "oscal-dir": "gdpr-oscal"
+      },
+      {
+        "key": "iso_42001",
+        "label": "ISO 42001",
+        "oscal-dir": "iso-42001-oscal"
+      },
+      {
+        "key": "pci_dss",
+        "label": "PCI DSS",
+        "oscal-dir": "pci-dss-oscal"
+      }
+    ],
+    "domain-mappings": [
+      {
+        "ucf-domain": "UCF-01",
+        "title": "Access Control",
+        "controls": {
+          "nist_800_53": [
+            "AC-2",
+            "AC-3",
+            "AC-5",
+            "AC-6"
+          ],
+          "soc2": [
+            "CC6.1",
+            "CC6.2",
+            "CC6.3"
+          ],
+          "iso27001": [
+            "A.5.15",
+            "A.5.18",
+            "A.8.2",
+            "A.8.3"
+          ],
+          "hipaa": [
+            "164.312(a)(1)",
+            "164.312(a)(2)(i)"
+          ],
+          "cmmc_l2": [
+            "AC.L2-3.1.1",
+            "AC.L2-3.1.2",
+            "AC.L2-3.1.5"
+          ],
+          "fedramp_moderate": [
+            "AC-2",
+            "AC-3",
+            "AC-6"
+          ],
+          "gdpr": [
+            "Art5-1f",
+            "Art32-1"
+          ],
+          "iso_42001": [
+            "A5-1"
+          ],
+          "pci_dss": [
+            "7.2.1",
+            "7.2.2",
+            "8.2.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Account Management \u2014 create, enable, modify, disable, and remove accounts per organizational policy.",
+          "soc2": "Logical Access Controls \u2014 restrict logical access to information assets through authentication and authorization.",
+          "iso27001": "Access control \u2014 policy and rules controlling access to information and processing facilities.",
+          "hipaa": "Access Control \u2014 implement technical policies to limit access to ePHI to authorized persons.",
+          "cmmc_l2": "Authorized Access Control \u2014 limit system access to authorized users, processes, and devices."
+        }
+      },
+      {
+        "ucf-domain": "UCF-02",
+        "title": "Audit & Accountability",
+        "controls": {
+          "nist_800_53": [
+            "AU-2",
+            "AU-3",
+            "AU-6",
+            "AU-12"
+          ],
+          "soc2": [
+            "CC7.2"
+          ],
+          "iso27001": [
+            "A.8.15"
+          ],
+          "hipaa": [
+            "164.312(b)",
+            "164.308(a)(1)(ii)(C)"
+          ],
+          "cmmc_l2": [
+            "AU.L2-3.3.1",
+            "AU.L2-3.3.2",
+            "AU.L2-3.3.5"
+          ],
+          "fedramp_moderate": [
+            "AU-2",
+            "AU-3",
+            "AU-6",
+            "AU-12"
+          ],
+          "gdpr": [
+            "Art30-1"
+          ],
+          "iso_42001": [
+            "A9-1"
+          ],
+          "pci_dss": [
+            "10.2.1",
+            "10.3.1",
+            "10.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Event Logging \u2014 determine events the system must be capable of logging.",
+          "soc2": "Monitoring Infrastructure \u2014 detect anomalies that indicate unauthorized or malicious acts.",
+          "iso27001": "Logging \u2014 produce, store, protect and analyse logs recording activities and events.",
+          "hipaa": "Audit Controls \u2014 implement mechanisms to record and examine activity in ePHI systems.",
+          "cmmc_l2": "System Auditing \u2014 create and retain system audit logs to enable monitoring."
+        }
+      },
+      {
+        "ucf-domain": "UCF-03",
+        "title": "Configuration Management",
+        "controls": {
+          "nist_800_53": [
+            "CM-2",
+            "CM-3",
+            "CM-6",
+            "CM-8"
+          ],
+          "soc2": [
+            "CC8.1"
+          ],
+          "iso27001": [
+            "A.8.9"
+          ],
+          "hipaa": [
+            "164.310(d)(1)"
+          ],
+          "cmmc_l2": [
+            "CM.L2-3.4.1",
+            "CM.L2-3.4.2",
+            "CM.L2-3.4.3"
+          ],
+          "fedramp_moderate": [
+            "CM-2",
+            "CM-6",
+            "CM-8"
+          ],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": [
+            "2.2.1",
+            "2.2.5"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Baseline Configuration \u2014 develop, document, and maintain current baseline configurations.",
+          "soc2": "Change Management \u2014 authorize, design, develop, test, and implement changes to meet objectives.",
+          "iso27001": "Configuration management \u2014 establish and maintain configurations of systems, software and networks.",
+          "hipaa": "Device and Media Controls \u2014 govern receipt and removal of hardware and electronic media.",
+          "cmmc_l2": "System Baselines \u2014 establish and enforce security configuration settings for IT products."
+        }
+      },
+      {
+        "ucf-domain": "UCF-04",
+        "title": "Identification & Authentication",
+        "controls": {
+          "nist_800_53": [
+            "IA-2",
+            "IA-5",
+            "IA-8"
+          ],
+          "soc2": [
+            "CC6.1"
+          ],
+          "iso27001": [
+            "A.8.5"
+          ],
+          "hipaa": [
+            "164.312(d)",
+            "164.312(a)(2)(i)"
+          ],
+          "cmmc_l2": [
+            "IA.L2-3.5.1",
+            "IA.L2-3.5.2",
+            "IA.L2-3.5.3"
+          ],
+          "fedramp_moderate": [
+            "IA-2",
+            "IA-2-1",
+            "IA-8"
+          ],
+          "gdpr": [
+            "Art32-1"
+          ],
+          "iso_42001": [],
+          "pci_dss": [
+            "8.3.1",
+            "8.4.2"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Identification and Authentication \u2014 uniquely identify and authenticate organizational users.",
+          "soc2": "Logical Access Controls \u2014 authenticate users before granting access to systems and data.",
+          "iso27001": "Secure authentication \u2014 ensure secure log-on procedures and strong authentication mechanisms.",
+          "hipaa": "Person or Entity Authentication \u2014 verify the identity of persons seeking access to ePHI.",
+          "cmmc_l2": "Identification \u2014 identify and authenticate users of organizational systems."
+        }
+      },
+      {
+        "ucf-domain": "UCF-05",
+        "title": "Incident Response",
+        "controls": {
+          "nist_800_53": [
+            "IR-4",
+            "IR-5",
+            "IR-6",
+            "IR-8"
+          ],
+          "soc2": [
+            "CC7.3",
+            "CC7.4",
+            "CC7.5"
+          ],
+          "iso27001": [
+            "A.5.24",
+            "A.5.25",
+            "A.5.26"
+          ],
+          "hipaa": [
+            "164.308(a)(6)(i)",
+            "164.308(a)(6)(ii)"
+          ],
+          "cmmc_l2": [
+            "IR.L2-3.6.1",
+            "IR.L2-3.6.2",
+            "IR.L2-3.6.3"
+          ],
+          "fedramp_moderate": [
+            "IR-4",
+            "IR-6"
+          ],
+          "gdpr": [
+            "Art33-1"
+          ],
+          "iso_42001": [
+            "A10-2"
+          ],
+          "pci_dss": [
+            "12.10.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Incident Handling \u2014 implement handling capability for incidents including preparation, detection, and recovery.",
+          "soc2": "Evaluates Security Events \u2014 evaluate security events to determine if they are incidents.",
+          "iso27001": "Information security incident management \u2014 plan and prepare for managing information security incidents.",
+          "hipaa": "Security Incident Procedures \u2014 identify and respond to suspected or known security incidents.",
+          "cmmc_l2": "Incident Handling \u2014 establish operational incident-handling capability for organizational systems."
+        }
+      },
+      {
+        "ucf-domain": "UCF-06",
+        "title": "System & Communications Protection",
+        "controls": {
+          "nist_800_53": [
+            "SC-7",
+            "SC-8",
+            "SC-13",
+            "SC-28"
+          ],
+          "soc2": [
+            "CC6.6",
+            "CC6.7"
+          ],
+          "iso27001": [
+            "A.8.20",
+            "A.8.21",
+            "A.8.24"
+          ],
+          "hipaa": [
+            "164.312(e)(1)",
+            "164.312(e)(2)(i)",
+            "164.312(e)(2)(ii)"
+          ],
+          "cmmc_l2": [
+            "SC.L2-3.13.1",
+            "SC.L2-3.13.8",
+            "SC.L2-3.13.11"
+          ],
+          "fedramp_moderate": [
+            "SC-7",
+            "SC-13",
+            "SC-28"
+          ],
+          "gdpr": [
+            "Art32-1"
+          ],
+          "iso_42001": [
+            "B6-Security"
+          ],
+          "pci_dss": [
+            "1.2.1",
+            "1.3.1",
+            "1.3.2",
+            "1.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Boundary Protection \u2014 monitor and control communications at external and key internal boundaries.",
+          "soc2": "Logical Access Security Measures \u2014 protect against threats from external sources.",
+          "iso27001": "Networks security \u2014 manage and control networks to protect systems and applications.",
+          "hipaa": "Transmission Security \u2014 implement technical measures to guard against unauthorized access to ePHI during transmission.",
+          "cmmc_l2": "Boundary Protection \u2014 monitor, control, and protect organizational communications at boundaries."
+        }
+      },
+      {
+        "ucf-domain": "UCF-07",
+        "title": "System & Information Integrity",
+        "controls": {
+          "nist_800_53": [
+            "SI-2",
+            "SI-3",
+            "SI-4",
+            "SI-5"
+          ],
+          "soc2": [
+            "CC7.1"
+          ],
+          "iso27001": [
+            "A.8.8"
+          ],
+          "hipaa": [
+            "164.308(a)(5)(ii)(B)"
+          ],
+          "cmmc_l2": [
+            "SI.L2-3.14.1",
+            "SI.L2-3.14.2",
+            "SI.L2-3.14.3"
+          ],
+          "fedramp_moderate": [
+            "SI-2",
+            "SI-4"
+          ],
+          "gdpr": [],
+          "iso_42001": [
+            "B5-Safety"
+          ],
+          "pci_dss": [
+            "5.2.1",
+            "5.3.1",
+            "6.3.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Flaw Remediation \u2014 identify, report, and correct system flaws in a timely manner.",
+          "soc2": "Threat and Vulnerability ID \u2014 use defined procedures to identify and assess threats and vulnerabilities.",
+          "iso27001": "Management of technical vulnerabilities \u2014 obtain information about vulnerabilities and take appropriate action.",
+          "hipaa": "Protection from Malicious Software \u2014 implement procedures for guarding against and detecting malicious software.",
+          "cmmc_l2": "Flaw Remediation \u2014 identify, report, and correct information system flaws in a timely manner."
+        }
+      },
+      {
+        "ucf-domain": "UCF-08",
+        "title": "Risk Assessment",
+        "controls": {
+          "nist_800_53": [
+            "RA-3",
+            "RA-5"
+          ],
+          "soc2": [
+            "CC3.2",
+            "CC3.4"
+          ],
+          "iso27001": [
+            "A.5.12"
+          ],
+          "hipaa": [
+            "164.308(a)(1)(i)",
+            "164.308(a)(1)(ii)(A)"
+          ],
+          "cmmc_l2": [
+            "RA.L2-3.11.1",
+            "RA.L2-3.11.2",
+            "RA.L2-3.11.3"
+          ],
+          "fedramp_moderate": [
+            "RA-5"
+          ],
+          "gdpr": [
+            "Art35-1"
+          ],
+          "iso_42001": [
+            "A6-1",
+            "A6-2"
+          ],
+          "pci_dss": []
+        },
+        "guidance": {
+          "nist_800_53": "Risk Assessment \u2014 assess risk to organizational operations, assets, and individuals.",
+          "soc2": "Identifies and Analyzes Risk \u2014 identify and assess risks to the achievement of objectives.",
+          "iso27001": "Classification of information \u2014 classify information according to security needs.",
+          "hipaa": "Risk Management \u2014 implement measures to reduce risks and vulnerabilities to a reasonable level.",
+          "cmmc_l2": "Risk Assessment \u2014 periodically assess risk to organizational systems and data."
+        }
+      },
+      {
+        "ucf-domain": "UCF-09",
+        "title": "Personnel Security",
+        "controls": {
+          "nist_800_53": [
+            "PS-2",
+            "PS-3",
+            "PS-4",
+            "PS-5"
+          ],
+          "soc2": [
+            "CC1.4"
+          ],
+          "iso27001": [
+            "A.6.1",
+            "A.6.2",
+            "A.6.5"
+          ],
+          "hipaa": [
+            "164.308(a)(3)(i)",
+            "164.308(a)(3)(ii)(A)",
+            "164.308(a)(3)(ii)(C)"
+          ],
+          "cmmc_l2": [
+            "PS.L2-3.9.1",
+            "PS.L2-3.9.2"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [
+            "A7-2"
+          ],
+          "pci_dss": []
+        },
+        "guidance": {
+          "nist_800_53": "Personnel Screening \u2014 screen individuals prior to authorizing access to systems.",
+          "soc2": "Demonstrates Commitment to Competence \u2014 evaluate competence of workforce.",
+          "iso27001": "Screening \u2014 verify backgrounds of candidates prior to joining.",
+          "hipaa": "Authorization/Supervision \u2014 implement procedures for workforce access authorization.",
+          "cmmc_l2": "Personnel Screening \u2014 screen individuals prior to authorizing access to CUI systems."
+        }
+      },
+      {
+        "ucf-domain": "UCF-10",
+        "title": "Physical Protection",
+        "controls": {
+          "nist_800_53": [
+            "PE-2",
+            "PE-3",
+            "PE-6"
+          ],
+          "soc2": [
+            "CC6.4"
+          ],
+          "iso27001": [
+            "A.7.1",
+            "A.7.2",
+            "A.7.3"
+          ],
+          "hipaa": [
+            "164.310(a)(1)",
+            "164.310(a)(2)(ii)"
+          ],
+          "cmmc_l2": [
+            "PE.L2-3.10.1",
+            "PE.L2-3.10.2",
+            "PE.L2-3.10.3"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": [
+            "9.2.1",
+            "9.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Physical Access Authorizations \u2014 develop and maintain lists of authorized physical access.",
+          "soc2": "Restricts Physical Access \u2014 restrict physical access to facilities and protected information assets.",
+          "iso27001": "Physical security perimeters \u2014 define and use security perimeters to protect sensitive areas.",
+          "hipaa": "Facility Access Controls \u2014 implement policies to limit physical access to ePHI systems.",
+          "cmmc_l2": "Limit Physical Access \u2014 limit physical access to organizational systems and environments."
+        }
+      },
+      {
+        "ucf-domain": "UCF-11",
+        "title": "Awareness & Training",
+        "controls": {
+          "nist_800_53": [
+            "AT-2",
+            "AT-3",
+            "AT-4"
+          ],
+          "soc2": [
+            "CC1.4"
+          ],
+          "iso27001": [
+            "A.6.3"
+          ],
+          "hipaa": [
+            "164.308(a)(5)(i)",
+            "164.308(a)(5)(ii)(A)"
+          ],
+          "cmmc_l2": [
+            "AT.L2-3.2.1",
+            "AT.L2-3.2.2",
+            "AT.L2-3.2.3"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [
+            "A7-2",
+            "A7-3"
+          ],
+          "pci_dss": [
+            "12.6.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Literacy Training and Awareness \u2014 provide security literacy training.",
+          "soc2": "Demonstrates Commitment to Competence \u2014 train personnel on security policies.",
+          "iso27001": "Information security awareness \u2014 provide appropriate awareness and training programs.",
+          "hipaa": "Security Awareness and Training \u2014 implement training for all workforce members.",
+          "cmmc_l2": "Role-Based Awareness \u2014 ensure personnel are aware of security risks and applicable policies."
+        }
+      },
+      {
+        "ucf-domain": "UCF-12",
+        "title": "Contingency Planning",
+        "controls": {
+          "nist_800_53": [
+            "CP-2",
+            "CP-4",
+            "CP-9",
+            "CP-10"
+          ],
+          "soc2": [
+            "A1.2"
+          ],
+          "iso27001": [
+            "A.5.29",
+            "A.5.30"
+          ],
+          "hipaa": [
+            "164.308(a)(7)(i)",
+            "164.308(a)(7)(ii)(A)",
+            "164.308(a)(7)(ii)(B)"
+          ],
+          "cmmc_l2": [
+            "MP.L2-3.8.9"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": []
+        },
+        "guidance": {
+          "nist_800_53": "Contingency Plan \u2014 develop a contingency plan addressing recovery and reconstitution.",
+          "soc2": "Environmental Threat Management \u2014 design systems for resilience.",
+          "iso27001": "Information security during disruption \u2014 maintain security during adverse situations.",
+          "hipaa": "Contingency Plan \u2014 establish policies for responding to emergencies or system failures.",
+          "cmmc_l2": "System Recovery \u2014 establish plans for system recovery and reconstitution."
+        }
+      },
+      {
+        "ucf-domain": "UCF-13",
+        "title": "Cryptography & Key Management",
+        "controls": {
+          "nist_800_53": [
+            "SC-12",
+            "SC-13"
+          ],
+          "soc2": [
+            "CC6.1"
+          ],
+          "iso27001": [
+            "A.8.24"
+          ],
+          "hipaa": [
+            "164.312(a)(2)(iv)",
+            "164.312(e)(2)(ii)"
+          ],
+          "cmmc_l2": [
+            "SC.L2-3.13.10",
+            "SC.L2-3.13.11"
+          ],
+          "fedramp_moderate": [
+            "SC-13"
+          ],
+          "gdpr": [
+            "Art32-1"
+          ],
+          "iso_42001": [],
+          "pci_dss": [
+            "3.4.1",
+            "3.5.1",
+            "4.2.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Cryptographic Key Establishment \u2014 establish and manage cryptographic keys.",
+          "soc2": "Logical Access Controls \u2014 implement encryption and key management.",
+          "iso27001": "Use of cryptography \u2014 define rules for effective cryptography and key management.",
+          "hipaa": "Encryption \u2014 implement mechanisms to encrypt and decrypt ePHI.",
+          "cmmc_l2": "CUI Encryption \u2014 employ FIPS-validated cryptography to protect CUI."
+        }
+      },
+      {
+        "ucf-domain": "UCF-14",
+        "title": "Data Protection & Privacy",
+        "controls": {
+          "nist_800_53": [
+            "PT-2",
+            "PT-3"
+          ],
+          "soc2": [
+            "P1.1"
+          ],
+          "iso27001": [
+            "A.5.34"
+          ],
+          "hipaa": [
+            "164.308(a)(4)(i)"
+          ],
+          "cmmc_l2": [
+            "MP.L2-3.8.1"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [
+            "Art5-1a",
+            "Art5-1b",
+            "Art5-1c",
+            "Art5-1e",
+            "Art6-1",
+            "Art13-1",
+            "Art15-1",
+            "Art17-1",
+            "Art25-1",
+            "Art28-1"
+          ],
+          "iso_42001": [
+            "B4-Privacy"
+          ],
+          "pci_dss": [
+            "3.7.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Authority to Process PII \u2014 determine and document legal authority for processing PII.",
+          "soc2": "Privacy Policy Notification \u2014 provide notice about privacy policies to data subjects.",
+          "iso27001": "Privacy and protection of PII \u2014 ensure privacy and protection of PII.",
+          "hipaa": "Safeguards \u2014 implement appropriate safeguards to protect privacy of PHI.",
+          "cmmc_l2": "Media Protection \u2014 protect and control media containing CUI.",
+          "gdpr": "GDPR Principles \u2014 ensure lawfulness, fairness, transparency, purpose limitation, data minimization."
+        }
+      },
+      {
+        "ucf-domain": "UCF-15",
+        "title": "Vulnerability Management",
+        "controls": {
+          "nist_800_53": [
+            "RA-5"
+          ],
+          "soc2": [
+            "CC7.1"
+          ],
+          "iso27001": [
+            "A.8.8"
+          ],
+          "hipaa": [
+            "164.308(a)(1)(i)"
+          ],
+          "cmmc_l2": [
+            "RA.L2-3.11.2",
+            "RA.L2-3.11.3"
+          ],
+          "fedramp_moderate": [
+            "RA-5"
+          ],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": [
+            "11.3.1",
+            "6.3.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Vulnerability Monitoring \u2014 monitor and scan for vulnerabilities.",
+          "soc2": "Threat and Vulnerability ID \u2014 identify and assess threats and vulnerabilities.",
+          "iso27001": "Technical vulnerability management \u2014 take remediation steps for identified vulnerabilities.",
+          "hipaa": "Security Management \u2014 prevent, detect, contain, and correct security violations.",
+          "cmmc_l2": "Vulnerability Scanning \u2014 scan for vulnerabilities periodically and on new threats."
+        }
+      },
+      {
+        "ucf-domain": "UCF-16",
+        "title": "Change Management",
+        "controls": {
+          "nist_800_53": [
+            "CM-3",
+            "CM-4",
+            "CM-5"
+          ],
+          "soc2": [
+            "CC8.1"
+          ],
+          "iso27001": [
+            "A.8.32"
+          ],
+          "hipaa": [
+            "164.312(e)(2)(ii)"
+          ],
+          "cmmc_l2": [
+            "CM.L2-3.4.3",
+            "CM.L2-3.4.4",
+            "CM.L2-3.4.5"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": [
+            "6.2.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Configuration Change Control \u2014 manage changes through formal request, review, and approval.",
+          "soc2": "Change Management \u2014 authorize, design, test, and implement changes.",
+          "iso27001": "Change management \u2014 control changes to information processing facilities.",
+          "hipaa": "Integrity Controls \u2014 protect ePHI from improper alteration or destruction.",
+          "cmmc_l2": "Change Tracking \u2014 track, review, approve/disapprove, and log changes."
+        }
+      },
+      {
+        "ucf-domain": "UCF-17",
+        "title": "Logging & Monitoring",
+        "controls": {
+          "nist_800_53": [
+            "SI-4",
+            "AU-6"
+          ],
+          "soc2": [
+            "CC7.2"
+          ],
+          "iso27001": [
+            "A.8.16"
+          ],
+          "hipaa": [
+            "164.312(b)"
+          ],
+          "cmmc_l2": [
+            "AU.L2-3.3.1",
+            "AU.L2-3.3.5",
+            "SI.L2-3.14.6"
+          ],
+          "fedramp_moderate": [
+            "SI-4"
+          ],
+          "gdpr": [],
+          "iso_42001": [
+            "A8-6"
+          ],
+          "pci_dss": [
+            "10.2.1",
+            "10.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "System Monitoring \u2014 detect attacks, unauthorized connections, and anomalies.",
+          "soc2": "Monitoring Infrastructure \u2014 detect anomalies indicating security threats.",
+          "iso27001": "Monitoring activities \u2014 monitor for anomalous behaviour.",
+          "hipaa": "Audit Controls \u2014 record and examine activity in systems containing ePHI.",
+          "cmmc_l2": "Event Review \u2014 review and update logged events on a defined frequency."
+        }
+      },
+      {
+        "ucf-domain": "UCF-18",
+        "title": "Supply Chain Risk Management",
+        "controls": {
+          "nist_800_53": [
+            "SR-2",
+            "SR-3"
+          ],
+          "soc2": [
+            "CC9.2"
+          ],
+          "iso27001": [
+            "A.5.21",
+            "A.5.22"
+          ],
+          "hipaa": [
+            "164.308(b)(1)",
+            "164.314(a)(1)"
+          ],
+          "cmmc_l2": [],
+          "fedramp_moderate": [],
+          "gdpr": [
+            "Art28-1"
+          ],
+          "iso_42001": [],
+          "pci_dss": []
+        },
+        "guidance": {
+          "nist_800_53": "Supply Chain Risk Management Plan \u2014 manage supply chain risks.",
+          "soc2": "Monitors Third-party Vendors \u2014 assess third-party vendor risks.",
+          "iso27001": "ICT supply chain security \u2014 manage ICT supply chain security risks.",
+          "hipaa": "Business Associate Contracts \u2014 ensure BAAs include security requirements.",
+          "gdpr": "Processor Contracts \u2014 ensure data processing agreements with all processors."
+        }
+      },
+      {
+        "ucf-domain": "UCF-19",
+        "title": "Media Protection",
+        "controls": {
+          "nist_800_53": [
+            "MP-2",
+            "MP-4",
+            "MP-6"
+          ],
+          "soc2": [
+            "C1.2"
+          ],
+          "iso27001": [
+            "A.7.10"
+          ],
+          "hipaa": [
+            "164.310(d)(2)(i)",
+            "164.310(d)(2)(ii)"
+          ],
+          "cmmc_l2": [
+            "MP.L2-3.8.1",
+            "MP.L2-3.8.2",
+            "MP.L2-3.8.3"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": [
+            "9.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Media Access \u2014 restrict access to media to authorized individuals.",
+          "soc2": "Secure Disposal \u2014 dispose of confidential information securely.",
+          "iso27001": "Storage media \u2014 manage media through their lifecycle.",
+          "hipaa": "Disposal \u2014 implement policies for final disposal of ePHI media.",
+          "cmmc_l2": "Media Protection \u2014 protect and control system media containing CUI."
+        }
+      },
+      {
+        "ucf-domain": "UCF-20",
+        "title": "Maintenance",
+        "controls": {
+          "nist_800_53": [
+            "MA-2",
+            "MA-4",
+            "MA-5"
+          ],
+          "soc2": [
+            "CC6.1"
+          ],
+          "iso27001": [
+            "A.7.13"
+          ],
+          "hipaa": [
+            "164.310(a)(2)(iv)"
+          ],
+          "cmmc_l2": [
+            "MA.L2-3.7.1",
+            "MA.L2-3.7.2",
+            "MA.L2-3.7.5"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": []
+        },
+        "guidance": {
+          "nist_800_53": "Controlled Maintenance \u2014 perform maintenance using organization-approved tools.",
+          "soc2": "Logical Access Controls \u2014 control system access during maintenance.",
+          "iso27001": "Equipment maintenance \u2014 maintain equipment for availability and integrity.",
+          "hipaa": "Maintenance Records \u2014 document maintenance for facility security hardware.",
+          "cmmc_l2": "System Maintenance \u2014 perform maintenance on organizational systems."
+        }
+      },
+      {
+        "ucf-domain": "UCF-21",
+        "title": "Network Access Control",
+        "controls": {
+          "nist_800_53": [
+            "SC-7"
+          ],
+          "soc2": [
+            "CC6.6"
+          ],
+          "iso27001": [
+            "A.8.22"
+          ],
+          "hipaa": [
+            "164.312(e)(1)"
+          ],
+          "cmmc_l2": [
+            "SC.L2-3.13.5",
+            "SC.L2-3.13.6"
+          ],
+          "fedramp_moderate": [
+            "SC-7"
+          ],
+          "gdpr": [],
+          "iso_42001": [],
+          "pci_dss": [
+            "1.2.1",
+            "1.3.1",
+            "1.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Boundary Protection \u2014 implement subnetworks and enforce network segmentation.",
+          "soc2": "Logical Access Security \u2014 implement network controls against external threats.",
+          "iso27001": "Network segregation \u2014 segregate groups of information services within networks.",
+          "hipaa": "Transmission Security \u2014 guard against unauthorized access over networks.",
+          "cmmc_l2": "System Connections \u2014 monitor and control connections at external system boundaries."
+        }
+      },
+      {
+        "ucf-domain": "UCF-22",
+        "title": "Secure Development",
+        "controls": {
+          "nist_800_53": [
+            "SA-11",
+            "SA-15"
+          ],
+          "soc2": [
+            "CC8.1"
+          ],
+          "iso27001": [
+            "A.8.25",
+            "A.8.26",
+            "A.8.31"
+          ],
+          "hipaa": [],
+          "cmmc_l2": [
+            "SI.L2-3.14.1"
+          ],
+          "fedramp_moderate": [],
+          "gdpr": [
+            "Art25-1"
+          ],
+          "iso_42001": [
+            "A8-1",
+            "A8-3",
+            "A8-4"
+          ],
+          "pci_dss": [
+            "6.2.1",
+            "6.4.1"
+          ]
+        },
+        "guidance": {
+          "nist_800_53": "Developer Testing \u2014 require developers to perform security testing and evaluation.",
+          "soc2": "Change Management \u2014 test and verify changes in non-production before deployment.",
+          "iso27001": "Secure development \u2014 apply rules for secure development of software and systems.",
+          "cmmc_l2": "Flaw Remediation \u2014 identify and correct system flaws within SDLC processes.",
+          "gdpr": "Data Protection by Design \u2014 implement appropriate measures for data protection principles.",
+          "iso_42001": "AI System Lifecycle \u2014 plan, implement, and control AI system lifecycle processes."
+        }
+      }
+    ]
+  }
+}
