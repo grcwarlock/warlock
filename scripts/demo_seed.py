@@ -9111,7 +9111,24 @@ def main():
     framework_dir = str(Path(__file__).resolve().parent.parent / "warlock" / "frameworks")
     load_framework_configs(framework_dir, mapper)
 
-    assessor = Assessor(engine=assertion_engine)
+    # Wire AI reasoning if configured (WLK_AI_PROVIDER + WLK_AI_API_KEY)
+    ai_reasoner = None
+    try:
+        from warlock.config import get_settings
+        from warlock.assessors.ai_reasoning import create_reasoner
+        settings = get_settings()
+        if settings.ai_provider and settings.ai_api_key:
+            ai_reasoner = create_reasoner(
+                provider=settings.ai_provider,
+                api_key=settings.ai_api_key,
+                model=settings.ai_model,
+                base_url=getattr(settings, "ai_base_url", ""),
+            )
+            print(f"       AI reasoning enabled: {settings.ai_provider}/{settings.ai_model}")
+    except Exception:
+        pass  # No AI — deterministic only
+
+    assessor = Assessor(engine=assertion_engine, ai_reasoner=ai_reasoner)
 
     pipeline = Pipeline(
         connectors=connectors,
@@ -9122,7 +9139,8 @@ def main():
     )
 
     # 3. Run pipeline
-    print("[3/20] Running pipeline (collect -> normalize -> map -> assess)...")
+    ai_label = " + AI reasoning" if ai_reasoner else ""
+    print(f"[3/20] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
     with get_session() as session:
         stats = pipeline.run(session)
 
