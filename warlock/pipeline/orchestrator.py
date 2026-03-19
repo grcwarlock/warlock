@@ -16,6 +16,11 @@ from warlock.assessors.engine import Assessor, ControlResultData
 from warlock.pipeline.bus import EventBus, PipelineEvent
 from warlock.db import models
 
+# Optional OPA compliance evaluation imports (may not be initialized)
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from warlock.assessors.opa_evaluator import OPAComplianceEvaluator
+
 log = logging.getLogger(__name__)
 
 
@@ -72,12 +77,14 @@ class Pipeline:
         mapper: ControlMapper,
         assessor: Assessor,
         bus: EventBus,
+        opa_evaluator: OPAComplianceEvaluator | None = None,
     ) -> None:
         self.connectors = connectors
         self.normalizers = normalizers
         self.mapper = mapper
         self.assessor = assessor
         self.bus = bus
+        self.opa_evaluator = opa_evaluator
 
     def run(self, session: Session) -> PipelineRunStats:
         """Execute the full pipeline. One pass, all connectors.
@@ -175,6 +182,11 @@ class Pipeline:
                                 "severity": result.severity,
                             },
                         ))
+
+        # Stage 5 (optional): OPA compliance evaluation across all frameworks
+        if self.opa_evaluator is not None:
+            opa_results = self._evaluate_opa_compliance(session, connector_results)
+            stats.results_assessed += len(opa_results)
 
         session.flush()
         stats.completed_at = datetime.now(timezone.utc)
@@ -277,6 +289,82 @@ class Pipeline:
                 )
 
         return {"total": total, "passed": passed, "failed": failed}
+
+    # -- OPA compliance evaluation --
+
+    def _evaluate_opa_compliance(
+        self,
+        session: Session,
+        connector_results: list[ConnectorResult],
+    ) -> list[ControlResultData]:
+        """Run OPA compliance evaluation across all frameworks.
+
+        Assembles normalized_data from raw events and findings collected
+        during this pipeline run, then evaluates all registered Rego
+        policies against OPA.
+        """
+        from warlock.assessors.data_assembler import NormalizedDataAssembler
+        from warlock.assessors.policy_registry import get_policy_registry
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        results: list[ControlResultData] = []
+
+        try:
+            # Gather all raw events and findings from this run
+            all_raw_events: list[RawEventData] = []
+            all_findings: list[FindingData] = []
+            for cr in connector_results:
+                all_raw_events.extend(cr.events)
+                for raw_event in cr.events:
+                    try:
+                        findings = self.normalizers.normalize(raw_event)
+                        all_findings.extend(findings)
+                    except Exception:
+                        pass  # Already logged during main loop
+
+            # Assemble the normalized data document
+            assembler = NormalizedDataAssembler()
+            normalized_data = assembler.assemble(all_findings, all_raw_events)
+
+            # Get the policy registry
+            registry = get_policy_registry(
+                policies_dir=settings.opa_bundle_path if settings.opa_bundle_path else None
+            )
+            policy_map = registry.policy_map
+
+            # Determine which frameworks to evaluate
+            frameworks = settings.opa_frameworks if settings.opa_frameworks else None
+
+            # Evaluate
+            opa_results = self.opa_evaluator.evaluate_all(
+                normalized_data=normalized_data,
+                policy_map=policy_map,
+                frameworks=frameworks,
+            )
+
+            # Persist results
+            for result in opa_results:
+                db_result = self._persist_result(session, result)
+                results.append(result)
+                self.bus.publish(PipelineEvent(
+                    event_type="control.assessed",
+                    payload_id=db_result.id,
+                    metadata={
+                        "framework": result.framework,
+                        "control_id": result.control_id,
+                        "status": result.status,
+                        "severity": result.severity,
+                        "assessor": result.assessor,
+                    },
+                ))
+
+            log.info("OPA compliance evaluation: %d results", len(results))
+
+        except Exception:
+            log.exception("OPA compliance evaluation failed")
+
+        return results
 
     # -- Persistence helpers --
 
