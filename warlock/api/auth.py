@@ -18,10 +18,8 @@ import hashlib
 import hmac
 import json
 import logging
-import os
 import secrets
 from datetime import datetime, timezone, timedelta
-from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -260,8 +258,10 @@ def authenticate_user(session: Session, email: str, password: str) -> User | Non
     user = session.query(User).filter(User.email == email, User.is_active == True).first()  # noqa: E712
 
     if not user:
-        # Dummy verify to prevent timing oracle
-        verify_password("dummy", "$2b$12$" + "x" * 53)
+        # Dummy verify to prevent timing oracle — use a valid PBKDF2 hash
+        # so the verify function takes the same time as a real verification
+        _DUMMY_HASH = "pbkdf2:aaaa:bbbb"
+        verify_password("dummy", _DUMMY_HASH)
         return None
 
     # Check lockout

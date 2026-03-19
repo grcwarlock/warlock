@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from typing import Any, Callable
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import HTTPException, Request, status
 
 log = logging.getLogger(__name__)
 

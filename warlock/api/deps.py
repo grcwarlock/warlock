@@ -12,7 +12,6 @@ from warlock.db.models import User
 from warlock.api.auth import (
     authenticate_api_key,
     decode_access_token,
-    has_permission,
     PERMISSIONS,
 )
 

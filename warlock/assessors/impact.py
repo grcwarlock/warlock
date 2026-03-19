@@ -9,12 +9,10 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from pathlib import Path
 
-from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
-from warlock.db.models import ControlMapping, ControlResult
+from warlock.db.models import ControlResult
 
 log = logging.getLogger(__name__)
 

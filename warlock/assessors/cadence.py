@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
-from warlock.db.models import ControlMapping, ControlResult, Finding
+from warlock.db.models import ControlMapping, ControlResult
 
 log = logging.getLogger(__name__)
 

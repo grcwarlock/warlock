@@ -296,7 +296,7 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
             findings = pipeline.normalizers.normalize(raw_event)
             for finding in findings:
                 finding.raw_event_id = db_raw.id
-                db_finding = pipeline._persist_finding(session, finding)
+                pipeline._persist_finding(session, finding)
                 stats.findings_normalized += 1
 
                 mapped = pipeline.mapper.map(finding)
@@ -365,8 +365,6 @@ def oscal(framework, system_name, output, fmt, description, ai):
                 session, framework=framework, system_name=system_name,
                 narrator=narrator,
             )
-
-    json_str = exporter.to_json(data)
 
     if output:
         exporter.to_file(data, output)
@@ -753,7 +751,7 @@ def retention_report() -> None:
 
     # Purgeable
     purgeable = report["purgeable"]
-    console.print(f"\n[bold]Purgeable Records[/bold]")
+    console.print("\n[bold]Purgeable Records[/bold]")
     console.print(f"  Raw events:      {purgeable['raw_events']}")
     console.print(f"  Findings:        {purgeable['findings']}")
     console.print(f"  Control results: {purgeable['control_results']}")
@@ -1640,7 +1638,6 @@ def effectiveness_report(framework: str | None, days: int) -> None:
     """Show control effectiveness scores over time."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import PostureSnapshot
-    from sqlalchemy import distinct
 
     init_db()
 
@@ -1704,22 +1701,22 @@ def framework_diff_cmd(old_path: str, new_path: str) -> None:
     differ = FrameworkDiff()
     result = differ.diff(old_path, new_path)
 
-    console.print(f"\n[bold]Framework Diff[/bold]")
+    console.print("\n[bold]Framework Diff[/bold]")
     console.print(f"  Added:     [green]{len(result.added_controls)}[/green]")
     console.print(f"  Removed:   [red]{len(result.removed_controls)}[/red]")
     console.print(f"  Modified:  [yellow]{len(result.modified_controls)}[/yellow]")
     console.print(f"  Unchanged: [dim]{len(result.unchanged_controls)}[/dim]")
 
     if result.added_controls:
-        console.print(f"\n[green]Added:[/green]")
+        console.print("\n[green]Added:[/green]")
         for c in sorted(result.added_controls)[:20]:
             console.print(f"  + {c}")
     if result.removed_controls:
-        console.print(f"\n[red]Removed:[/red]")
+        console.print("\n[red]Removed:[/red]")
         for c in sorted(result.removed_controls)[:20]:
             console.print(f"  - {c}")
     if result.modified_controls:
-        console.print(f"\n[yellow]Modified:[/yellow]")
+        console.print("\n[yellow]Modified:[/yellow]")
         for c in sorted(result.modified_controls)[:20]:
             console.print(f"  ~ {c}")
 

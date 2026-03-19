@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from warlock.connectors.base import ConnectorRegistry, ConnectorResult, RawEventData
 from warlock.normalizers.base import FindingData, NormalizerRegistry
-from warlock.mappers.control_mapper import ControlMapper, MappedFinding
+from warlock.mappers.control_mapper import ControlMapper
 from warlock.assessors.engine import Assessor, ControlResultData
 from warlock.pipeline.bus import EventBus, PipelineEvent
 from warlock.db import models
@@ -112,7 +112,7 @@ class Pipeline:
                     # Stage 3: Map to controls
                     mapped = self.mapper.map(finding)
                     for mapping in mapped.mappings:
-                        db_mapping = self._persist_mapping(session, mapping)
+                        self._persist_mapping(session, mapping)
                         stats.controls_mapped += 1
 
                     if mapped.mappings:
