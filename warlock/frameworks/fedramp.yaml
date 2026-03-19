@@ -10,6 +10,12 @@ control_families:
         - id: AC-1.fed.1
           description: Access control policy reviewed at least annually
           evidence_type: policy
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
       AC-2:
         title: Account Management
         description: Define and manage system account types, conditions, and processes.
@@ -17,9 +23,36 @@ control_families:
         - id: AC-2.fed.1
           description: Automated account management notifications
           evidence_type: iam_config
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          - sailpoint_accounts
+          resource_types:
+          - iam_user
+          - iam_account
+          - okta_user
+          - entra_user
+          - sailpoint_identity
         - id: AC-2.fed.2
           description: 'Account review frequency: monthly'
           evidence_type: review_log
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_directory_audits
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_audit
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
       AC-2-1:
         title: Account Management — Automated System Account Management
         description: Employ automated mechanisms to support management of system accounts.
@@ -27,6 +60,17 @@ control_families:
         - id: AC-2-1.fed.1
           description: Automated provisioning and deprovisioning
           evidence_type: iam_config
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
       AC-3:
         title: Access Enforcement
         description: Enforce approved authorizations for logical access.
@@ -34,6 +78,21 @@ control_families:
         - id: AC-3.fed.1
           description: RBAC enforcement verified
           evidence_type: iam_config
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_policies
+          - entra_conditional_access_policies
+          - ec2_security_groups
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - iam_policy
+          - okta_policy
+          - entra_conditional_access_policy
+          - ec2_security_group
+          - compute_firewall_rule
+          - network_security_group
       AC-6:
         title: Least Privilege
         description: Employ least privilege principle for all access.
@@ -41,6 +100,20 @@ control_families:
         - id: AC-6.fed.1
           description: No wildcard admin policies in use
           evidence_type: iam_policy
+          event_types:
+          - iam_users
+          - gcp_iam_policies
+          - okta_groups
+          - cyberark_accounts
+          - sailpoint_roles
+          - sailpoint_entitlements
+          resource_types:
+          - iam_policy
+          - iam_user
+          - okta_user
+          - cyberark_account
+          - sailpoint_role
+          - sailpoint_entitlement
       AC-17:
         title: Remote Access
         description: Establish and document usage restrictions for remote access.
@@ -48,6 +121,18 @@ control_families:
         - id: AC-17.fed.1
           description: Remote access via VPN or zero-trust network
           evidence_type: network_config
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_conditional_access_policies
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_conditional_access_policy
+          - ec2_security_group
+          - network_security_group
     name: Access Control
   AU:
     controls:
@@ -58,6 +143,16 @@ control_families:
         - id: AU-2.fed.1
           description: All FedRAMP-required event types are logged
           evidence_type: logging_config
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
       AU-3:
         title: Content of Audit Records
         description: Audit records contain required information fields.
@@ -65,6 +160,18 @@ control_families:
         - id: AU-3.fed.1
           description: Audit records include who, what, when, where, outcome
           evidence_type: log_sample
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - okta_event
+          - entra_audit
       AU-6:
         title: Audit Record Review
         description: Review and analyze audit records at least weekly.
@@ -72,6 +179,17 @@ control_families:
         - id: AU-6.fed.1
           description: Weekly audit log review documented
           evidence_type: review_log
+          event_types:
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - elastic_security_alerts
+          - elastic_detection_rules
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
       AU-12:
         title: Audit Record Generation
         description: Provide audit record generation capability.
@@ -79,6 +197,20 @@ control_families:
         - id: AU-12.fed.1
           description: Centralized log aggregation active
           evidence_type: logging_config
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
+          - okta_event
+          - entra_audit
     name: Audit and Accountability
   CA:
     controls:
@@ -89,6 +221,14 @@ control_families:
         - id: CA-2.fed.1
           description: Annual assessment conducted by 3PAO
           evidence_type: assessment_report
+          event_types:
+          - prisma_compliance
+          - compliance_audits
+          - compliance_posture
+          - wiz_config_findings
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
       CA-7:
         title: Continuous Monitoring
         description: Develop and implement continuous monitoring strategy.
@@ -96,9 +236,31 @@ control_families:
         - id: CA-7.fed.1
           description: ConMon plan documented and operational
           evidence_type: conmon_plan
+          event_types:
+          - config_recorders
+          - securityhub_hub
+          - guardduty_detectors
+          - policy_compliance
+          - scc_findings
+          - prisma_alerts
+          - wiz_issues
+          resource_types:
+          - aws_config
+          - securityhub
+          - guardduty
         - id: CA-7.fed.2
           description: Monthly OS/infrastructure scans
           evidence_type: scan_report
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
     name: Assessment, Authorization, and Monitoring
   CM:
     controls:
@@ -109,6 +271,15 @@ control_families:
         - id: CM-2.fed.1
           description: Baseline configuration documented
           evidence_type: config_baseline
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_compliance
+          - wiz_config_findings
+          resource_types:
+          - aws_config
+          - compliance_standard
+          - compliance_requirement
       CM-6:
         title: Configuration Settings
         description: Establish and document mandatory configuration settings.
@@ -116,6 +287,14 @@ control_families:
         - id: CM-6.fed.1
           description: CIS benchmarks or STIG applied
           evidence_type: config_scan
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - wiz_config_findings
+          - prisma_alerts
+          resource_types:
+          - aws_config
+          - azure_resource
       CM-8:
         title: System Component Inventory
         description: Develop and maintain inventory of system components.
@@ -123,6 +302,19 @@ control_families:
         - id: CM-8.fed.1
           description: Complete system inventory maintained
           evidence_type: asset_inventory
+          event_types:
+          - falcon_device_details
+          - falcon_devices
+          - defender_machines
+          - s1_agents
+          - prisma_assets
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+          - host
+          - agent
     name: Configuration Management
   IA:
     controls:
@@ -133,6 +325,17 @@ control_families:
         - id: IA-2.fed.1
           description: MFA required for all users
           evidence_type: iam_config
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - entra_sign_ins
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - entra_sign_in
       IA-2-1:
         title: Multi-Factor Authentication to Privileged Accounts
         description: Implement MFA for access to privileged accounts.
@@ -140,6 +343,17 @@ control_families:
         - id: IA-2-1.fed.1
           description: PIV or hardware token for privileged access
           evidence_type: iam_config
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_factors
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user_factors
+          - entra_user
+          - entra_conditional_access_policy
       IA-8:
         title: Identification and Authentication (Non-Org Users)
         description: Uniquely identify and authenticate non-organizational users.
@@ -147,6 +361,16 @@ control_families:
         - id: IA-8.fed.1
           description: External user authentication via SAML/OIDC
           evidence_type: iam_config
+          event_types:
+          - entra_users
+          - entra_sign_ins
+          - entra_conditional_access_policies
+          - okta_users
+          resource_types:
+          - entra_user
+          - entra_sign_in
+          - entra_conditional_access_policy
+          - okta_user
     name: Identification and Authentication
   IR:
     controls:
@@ -157,6 +381,15 @@ control_families:
         - id: IR-4.fed.1
           description: US-CERT reporting procedures documented
           evidence_type: ir_plan
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
       IR-6:
         title: Incident Reporting
         description: Report incidents to appropriate authorities.
@@ -164,6 +397,12 @@ control_families:
         - id: IR-6.fed.1
           description: US-CERT reporting within required timeframes
           evidence_type: ir_procedure
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
     name: Incident Response
   RA:
     controls:
@@ -174,9 +413,30 @@ control_families:
         - id: RA-5.fed.1
           description: Monthly vulnerability scans conducted
           evidence_type: scan_report
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          - prisma_alerts
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
         - id: RA-5.fed.2
           description: High findings remediated within 30 days
           evidence_type: remediation_log
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
     name: Risk Assessment
   SC:
     controls:
@@ -187,6 +447,16 @@ control_families:
         - id: SC-7.fed.1
           description: Network boundary protections in place
           evidence_type: network_config
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
       SC-13:
         title: Cryptographic Protection
         description: Implement FIPS-validated cryptography.
@@ -194,6 +464,16 @@ control_families:
         - id: SC-13.fed.1
           description: FIPS 140-2/3 validated modules in use
           evidence_type: crypto_config
+          event_types:
+          - key_vault
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - key_vault
+          - s3_bucket
+          - storage_account
+          - storage_bucket
       SC-28:
         title: Protection of Information at Rest
         description: Protect confidentiality and integrity of information at rest.
@@ -201,6 +481,16 @@ control_families:
         - id: SC-28.fed.1
           description: All data at rest encrypted with FIPS-validated modules
           evidence_type: encryption_config
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+          - key_vault
     name: System and Communications Protection
   SI:
     controls:
@@ -211,6 +501,16 @@ control_families:
         - id: SI-2.fed.1
           description: Critical patches applied within 30 days
           evidence_type: patch_report
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - host
+          - endpoint
       SI-4:
         title: System Monitoring
         description: Monitor the system to detect attacks and unauthorized connections.
@@ -218,4 +518,21 @@ control_families:
         - id: SI-4.fed.1
           description: IDS/IPS deployed at system boundaries
           evidence_type: security_config
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          - elastic_security_alerts
+          - elastic_detection_rules
+          - scc_findings
+          - defender_alerts
+          - monitor_alerts
+          resource_types:
+          - guardduty
+          - securityhub
+          - splunk_notable_event
+          - splunk_correlation_rule
     name: System and Information Integrity

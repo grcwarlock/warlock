@@ -16,7 +16,7 @@ That's it. The script:
 1. Creates a virtualenv and installs dependencies
 2. Starts the OPA server with 604 Rego policies (if OPA is installed)
 3. Runs database migrations
-4. Seeds 40 connectors, 547+ findings, 26,135 control results across 6 frameworks
+4. Seeds 40 connectors, 547+ findings, 29,207 control results across 10 frameworks
 5. Starts the API server on port 8000
 
 When it finishes you'll see:

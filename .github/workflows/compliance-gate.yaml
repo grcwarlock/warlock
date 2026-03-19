@@ -1,0 +1,162 @@
+name: Compliance Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'policies/**'
+      - 'terraform/**'
+      - 'frameworks-oscal/**'
+      - 'warlock/frameworks/**'
+      - 'warlock/assessors/**'
+  pull_request:
+    paths:
+      - 'policies/**'
+      - 'terraform/**'
+      - 'frameworks-oscal/**'
+      - 'warlock/frameworks/**'
+      - 'warlock/assessors/**'
+
+jobs:
+  opa-policies:
+    name: OPA Policy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Validate policy syntax
+        run: opa check policies/
+
+      - name: Run policy tests
+        run: opa test policies/ -v
+
+      - name: Check policy count regression
+        run: |
+          POLICY_COUNT=$(find policies/ -name "*.rego" ! -name "*_test.rego" | wc -l)
+          echo "Total policies: $POLICY_COUNT"
+          if [ "$POLICY_COUNT" -lt 300 ]; then
+            echo "::error::Policy count dropped below 300"
+            exit 1
+          fi
+
+      - name: Verify test coverage
+        run: |
+          MISSING=0
+          for policy in $(find policies/ -name "*.rego" ! -name "*_test.rego"); do
+            DIR=$(dirname "$policy")
+            BASE=$(basename "$policy" .rego)
+            SHORT=$(echo "$BASE" | sed 's/_[a-z_]*$//')
+            if [ ! -f "${policy%.rego}_test.rego" ] && [ ! -f "$DIR/${SHORT}_test.rego" ]; then
+              echo "::warning::Missing test for $policy"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          echo "Policies without tests: $MISSING"
+          if [ "$MISSING" -gt 20 ]; then
+            echo "::error::Too many untested policies"
+            exit 1
+          fi
+
+  terraform:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Validate all modules
+        shell: bash
+        run: |
+          FAILED=0
+          for dir in terraform/modules/*/*; do
+            echo "--- $dir ---"
+            pushd "$dir" > /dev/null
+            terraform init -backend=false -input=false > /dev/null 2>&1
+            if ! terraform validate; then
+              echo "::error::Validate failed for $dir"
+              FAILED=$((FAILED + 1))
+            fi
+            popd > /dev/null
+          done
+          if [ "$FAILED" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive terraform/
+
+  oscal:
+    name: OSCAL Package Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate all OSCAL JSON
+        shell: bash
+        run: |
+          python3 << 'EOF'
+          import json, pathlib, sys
+          errors = []
+          count = 0
+          for f in pathlib.Path("frameworks-oscal").rglob("*.json"):
+              count += 1
+              try:
+                  json.loads(f.read_text())
+              except Exception as e:
+                  errors.append(f"{f}: {e}")
+          print(f"Checked {count} OSCAL JSON files")
+          if errors:
+              for e in errors:
+                  print(f"BROKEN: {e}", file=sys.stderr)
+              sys.exit(1)
+          print("All OSCAL JSON valid")
+          EOF
+
+  framework-yaml:
+    name: Framework YAML Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate framework YAML files
+        shell: bash
+        run: |
+          pip install pyyaml --quiet
+          python3 << 'EOF'
+          import yaml, pathlib, sys
+          errors = []
+          for f in pathlib.Path("warlock/frameworks").glob("*.yaml"):
+              if f.stem.startswith("crosswalk"):
+                  continue
+              try:
+                  data = yaml.safe_load(f.read_text())
+                  if not isinstance(data, dict):
+                      errors.append(f"{f}: root is not a dict")
+                      continue
+                  families = data.get("control_families", {})
+                  if not isinstance(families, dict):
+                      errors.append(f"{f}: control_families is not a dict")
+                      continue
+                  total = sum(len(fam.get("controls", {})) for fam in families.values()
+                              if isinstance(fam.get("controls", {}), dict))
+                  fid = data.get("framework_id", f.stem)
+                  print(f"{f.name}: {fid} -- {len(families)} families, {total} controls")
+              except Exception as e:
+                  errors.append(f"{f}: {e}")
+          if errors:
+              for e in errors:
+                  print(f"BROKEN: {e}", file=sys.stderr)
+              sys.exit(1)
+          print("All framework YAMLs valid")
+          EOF

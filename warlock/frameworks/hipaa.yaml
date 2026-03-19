@@ -11,6 +11,15 @@ control_families:
             and availability of ePHI held by the covered entity or business associate.
 
             '
+          event_types:
+          - onetrust_assessments
+          - confluence_pages
+          - vuln_export
+          - wiz_issues
+          resource_types:
+          - privacy_assessment
+          - grc_document
+          - vulnerability
         monitoring_frequency: quarterly
       164.308(a)(1)(ii)(A):
         checks:
@@ -20,6 +29,14 @@ control_families:
             general security requirements of the HIPAA Security Rule.
 
             '
+          event_types:
+          - vuln_export
+          - wiz_issues
+          - prisma_alerts
+          - defender_recommendations
+          resource_types:
+          - vulnerability
+          - recommendation
         monitoring_frequency: quarterly
       164.308(a)(1)(ii)(B):
         checks:
@@ -29,6 +46,12 @@ control_families:
             entity or business associate.
 
             '
+          event_types:
+          - workday_employees
+          - workday_disciplinary
+          resource_types:
+          - hr_employee
+          - hr_disciplinary_action
         monitoring_frequency: quarterly
       164.308(a)(1)(ii)(C):
         checks:
@@ -38,6 +61,18 @@ control_families:
             tracking reports.
 
             '
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - splunk_notable_events
+          - sentinel_incidents
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - splunk_notable_event
+          - sentinel_incident
         monitoring_frequency: quarterly
       164.308(a)(2):
         checks:
@@ -47,6 +82,12 @@ control_families:
             by the HIPAA Security Rule for the covered entity or business associate.
 
             '
+          event_types:
+          - workday_employees
+          - confluence_pages
+          resource_types:
+          - hr_employee
+          - grc_document
         monitoring_frequency: quarterly
       164.308(a)(3)(i):
         checks:
@@ -57,6 +98,16 @@ control_families:
             to ePHI.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - workday_employees
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - hr_employee
         monitoring_frequency: quarterly
       164.308(a)(3)(ii)(A):
         checks:
@@ -66,6 +117,16 @@ control_families:
             be accessed.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - workday_employees
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - hr_employee
         monitoring_frequency: quarterly
       164.308(a)(3)(ii)(B):
         checks:
@@ -75,6 +136,18 @@ control_families:
             within the organization.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - okta_policies
+          - entra_users
+          - workday_employees
+          resource_types:
+          - iam_user
+          - okta_user
+          - okta_policy
+          - entra_user
+          - hr_employee
         monitoring_frequency: quarterly
       164.308(a)(3)(ii)(C):
         checks:
@@ -84,6 +157,16 @@ control_families:
             required by the access authorization policy.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - workday_employees
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - hr_employee
         monitoring_frequency: quarterly
       164.308(a)(4)(i):
         checks:
@@ -93,6 +176,18 @@ control_families:
             Privacy Rule.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - okta_policies
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user
+          - okta_policy
+          - entra_user
+          - entra_conditional_access_policy
         monitoring_frequency: quarterly
       164.308(a)(4)(ii)(A):
         checks:
@@ -102,6 +197,14 @@ control_families:
             from unauthorized access by the larger organization.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_policy
+          - entra_conditional_access_policy
         monitoring_frequency: quarterly
       164.308(a)(4)(ii)(B):
         checks:
@@ -111,6 +214,18 @@ control_families:
             based on the principle of least privilege.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - okta_policies
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user
+          - okta_policy
+          - entra_user
+          - entra_conditional_access_policy
         monitoring_frequency: quarterly
       164.308(a)(4)(ii)(C):
         checks:
@@ -121,6 +236,16 @@ control_families:
             transaction, program, or process.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - entra_directory_audits
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - entra_audit
         monitoring_frequency: quarterly
       164.308(a)(5)(i):
         checks:
@@ -130,6 +255,12 @@ control_families:
             threats, password management, and incident reporting procedures.
 
             '
+          event_types:
+          - kb4_training_enrollments
+          - kb4_phishing_results
+          resource_types:
+          - training_enrollment
+          - phishing_result
         monitoring_frequency: quarterly
       164.308(a)(5)(ii)(A):
         checks:
@@ -139,6 +270,12 @@ control_families:
             ePHI.
 
             '
+          event_types:
+          - kb4_training_enrollments
+          - kb4_phishing_results
+          resource_types:
+          - training_enrollment
+          - phishing_result
         monitoring_frequency: quarterly
       164.308(a)(5)(ii)(B):
         checks:
@@ -148,6 +285,13 @@ control_families:
             threats to information systems containing ePHI.
 
             '
+          event_types:
+          - falcon_detection_details
+          - s1_threats
+          - defender_alerts
+          resource_types:
+          - endpoint
+          - endpoint_fleet
         monitoring_frequency: quarterly
       164.308(a)(5)(ii)(C):
         checks:
@@ -157,6 +301,16 @@ control_families:
             patterns, and access from unauthorized locations.
 
             '
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_risky_users
+          - cloudtrail_trails
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_user
+          - cloudtrail
         monitoring_frequency: quarterly
       164.308(a)(5)(ii)(D):
         checks:
@@ -166,6 +320,14 @@ control_families:
             prohibition of password sharing.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_policies
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_policy
+          - entra_user
         monitoring_frequency: quarterly
       164.308(a)(6)(i):
         checks:
@@ -175,6 +337,13 @@ control_families:
             that may affect the confidentiality, integrity, or availability of ePHI.
 
             '
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          - defender_alerts
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
         monitoring_frequency: quarterly
       164.308(a)(6)(ii):
         checks:
@@ -184,6 +353,15 @@ control_families:
             incidents, and document security incidents and their outcomes.
 
             '
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          - defender_alerts
+          - elastic_security_alerts
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
+          - elastic_security_alert
         monitoring_frequency: quarterly
       164.308(a)(7)(i):
         checks:
@@ -193,6 +371,12 @@ control_families:
             ensuring the continuity of critical business processes.
 
             '
+          event_types:
+          - confluence_pages
+          - veeam_backup_sessions
+          resource_types:
+          - grc_document
+          - backup_session
         monitoring_frequency: quarterly
       164.308(a)(7)(ii)(A):
         checks:
@@ -202,6 +386,14 @@ control_families:
             storage locations, and verification procedures.
 
             '
+          event_types:
+          - veeam_backup_sessions
+          - veeam_restore_points
+          - s3_buckets
+          resource_types:
+          - backup_session
+          - backup_restore_point
+          - s3_bucket
         monitoring_frequency: quarterly
       164.308(a)(7)(ii)(B):
         checks:
@@ -211,6 +403,12 @@ control_families:
             and procedures for system restoration.
 
             '
+          event_types:
+          - veeam_backup_sessions
+          - veeam_restore_points
+          resource_types:
+          - backup_session
+          - backup_restore_point
         monitoring_frequency: quarterly
       164.308(a)(7)(ii)(C):
         checks:
@@ -220,6 +418,12 @@ control_families:
             in emergency mode during and after a crisis.
 
             '
+          event_types:
+          - confluence_pages
+          - veeam_backup_sessions
+          resource_types:
+          - grc_document
+          - backup_session
         monitoring_frequency: quarterly
       164.308(a)(7)(ii)(D):
         checks:
@@ -229,6 +433,12 @@ control_families:
             lessons learned.
 
             '
+          event_types:
+          - confluence_pages
+          - veeam_restore_points
+          resource_types:
+          - grc_document
+          - backup_restore_point
         monitoring_frequency: quarterly
       164.308(a)(7)(ii)(E):
         checks:
@@ -238,6 +448,14 @@ control_families:
             essential for ePHI processing and their recovery priority.
 
             '
+          event_types:
+          - prisma_assets
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - endpoint
+          - host
+          - agent
         monitoring_frequency: quarterly
       164.308(a)(8):
         checks:
@@ -248,6 +466,13 @@ control_families:
             the security of ePHI.
 
             '
+          event_types:
+          - onetrust_assessments
+          - compliance_audits
+          - compliance_posture
+          resource_types:
+          - privacy_assessment
+          - compliance_standard
         monitoring_frequency: quarterly
       164.308(b)(1):
         checks:
@@ -258,6 +483,14 @@ control_families:
             appropriately safeguard the information.
 
             '
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          - confluence_pages
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+          - grc_document
         monitoring_frequency: quarterly
       164.308(b)(3):
         checks:
@@ -267,6 +500,12 @@ control_families:
             meets the applicable requirements of the HIPAA Rules.
 
             '
+          event_types:
+          - confluence_pages
+          - ssc_companies
+          resource_types:
+          - grc_document
+          - vendor_company
         monitoring_frequency: quarterly
     name: Administrative Safeguards
   '164.310':
@@ -279,6 +518,12 @@ control_families:
             housed, while ensuring that properly authorized access is allowed.
 
             '
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
         monitoring_frequency: quarterly
       164.310(a)(2)(i):
         checks:
@@ -288,6 +533,12 @@ control_families:
             and emergency mode operations plan in the event of an emergency.
 
             '
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
         monitoring_frequency: quarterly
       164.310(a)(2)(ii):
         checks:
@@ -297,6 +548,12 @@ control_families:
             and theft, including surveillance, locks, and visitor management.
 
             '
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
         monitoring_frequency: quarterly
       164.310(a)(2)(iii):
         checks:
@@ -306,6 +563,12 @@ control_families:
             and control of access to software programs for testing and revision.
 
             '
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
         monitoring_frequency: quarterly
       164.310(a)(2)(iv):
         checks:
@@ -315,6 +578,12 @@ control_families:
             to security, such as hardware, walls, doors, and locks.
 
             '
+          event_types:
+          - snow_change_requests
+          - verkada_doors
+          resource_types:
+          - itsm_change_request
+          - physical_door
         monitoring_frequency: quarterly
       164.310(b):
         checks:
@@ -325,6 +594,13 @@ control_families:
             workstation or class of workstation that can access ePHI.
 
             '
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
         monitoring_frequency: quarterly
       164.310(c):
         checks:
@@ -334,6 +610,13 @@ control_families:
             privacy filters, and secure placement.
 
             '
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
         monitoring_frequency: quarterly
       164.310(d)(1):
         checks:
@@ -343,6 +626,12 @@ control_families:
             out of a facility, and the movement of these items within the facility.
 
             '
+          event_types:
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
         monitoring_frequency: quarterly
       164.310(d)(2)(i):
         checks:
@@ -353,6 +642,12 @@ control_families:
             methods.
 
             '
+          event_types:
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
         monitoring_frequency: quarterly
       164.310(d)(2)(ii):
         checks:
@@ -362,6 +657,12 @@ control_families:
             or degaussing techniques.
 
             '
+          event_types:
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
         monitoring_frequency: quarterly
       164.310(d)(2)(iii):
         checks:
@@ -371,6 +672,12 @@ control_families:
             chain-of-custody documentation.
 
             '
+          event_types:
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
         monitoring_frequency: quarterly
       164.310(d)(2)(iv):
         checks:
@@ -380,6 +687,12 @@ control_families:
             and can be restored if the original is lost or damaged.
 
             '
+          event_types:
+          - veeam_backup_sessions
+          - veeam_restore_points
+          resource_types:
+          - backup_session
+          - backup_restore_point
         monitoring_frequency: quarterly
     name: Physical Safeguards
   '164.312':
@@ -393,6 +706,18 @@ control_families:
             in the access authorization policy.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - okta_policies
+          - entra_users
+          - ec2_security_groups
+          resource_types:
+          - iam_user
+          - okta_user
+          - okta_policy
+          - entra_user
+          - ec2_security_group
         monitoring_frequency: quarterly
       164.312(a)(2)(i):
         checks:
@@ -402,6 +727,14 @@ control_families:
             and attributed.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
         monitoring_frequency: quarterly
       164.312(a)(2)(ii):
         checks:
@@ -411,6 +744,14 @@ control_families:
             logging and post-event review.
 
             '
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - cyberark_accounts
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - cyberark_account
         monitoring_frequency: quarterly
       164.312(a)(2)(iii):
         checks:
@@ -420,6 +761,12 @@ control_families:
             access to ePHI on unattended workstations.
 
             '
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
         monitoring_frequency: quarterly
       164.312(a)(2)(iv):
         checks:
@@ -429,6 +776,14 @@ control_families:
             data unreadable to unauthorized individuals.
 
             '
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - key_vault
         monitoring_frequency: quarterly
       164.312(b):
         checks:
@@ -439,6 +794,16 @@ control_families:
             records.
 
             '
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - guardduty_detectors
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - guardduty
         monitoring_frequency: quarterly
       164.312(c)(1):
         checks:
@@ -448,6 +813,12 @@ control_families:
             throughout its lifecycle.
 
             '
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          resource_types:
+          - aws_config
+          - cloudtrail
         monitoring_frequency: quarterly
       164.312(c)(2):
         checks:
@@ -457,6 +828,12 @@ control_families:
             signatures, checksums, or message authentication codes.
 
             '
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          resource_types:
+          - aws_config
+          - cloudtrail
         monitoring_frequency: quarterly
       164.312(d):
         checks:
@@ -466,6 +843,18 @@ control_families:
             biometrics, or other reliable identity verification.
 
             '
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - okta_policies
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user
+          - okta_policy
+          - entra_user
+          - entra_conditional_access_policy
         monitoring_frequency: quarterly
       164.312(e)(1):
         checks:
@@ -475,6 +864,14 @@ control_families:
             network.
 
             '
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
         monitoring_frequency: quarterly
       164.312(e)(2)(i):
         checks:
@@ -484,6 +881,12 @@ control_families:
             integrity checks such as TLS with HMAC.
 
             '
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
         monitoring_frequency: quarterly
       164.312(e)(2)(ii):
         checks:
@@ -493,6 +896,14 @@ control_families:
             containing protected health information.
 
             '
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - s3_buckets
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - s3_bucket
         monitoring_frequency: quarterly
     name: Technical Safeguards
   '164.314':
@@ -506,6 +917,12 @@ control_families:
             ePHI.
 
             '
+          event_types:
+          - confluence_pages
+          - onetrust_assessments
+          resource_types:
+          - grc_document
+          - privacy_assessment
         monitoring_frequency: quarterly
       164.314(a)(2)(i):
         checks:
@@ -516,6 +933,12 @@ control_families:
             of ePHI.
 
             '
+          event_types:
+          - confluence_pages
+          - onetrust_assessments
+          resource_types:
+          - grc_document
+          - privacy_assessment
         monitoring_frequency: quarterly
       164.314(a)(2)(ii):
         checks:
@@ -525,6 +948,10 @@ control_families:
             arrangements such as a memorandum of understanding or other written agreement.
 
             '
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
         monitoring_frequency: quarterly
       164.314(b)(1):
         checks:
@@ -535,6 +962,12 @@ control_families:
             plan.
 
             '
+          event_types:
+          - confluence_pages
+          - onetrust_assessments
+          resource_types:
+          - grc_document
+          - privacy_assessment
         monitoring_frequency: quarterly
       164.314(b)(2)(i):
         checks:
@@ -545,6 +978,12 @@ control_families:
             to the group health plan.
 
             '
+          event_types:
+          - confluence_pages
+          - onetrust_assessments
+          resource_types:
+          - grc_document
+          - privacy_assessment
         monitoring_frequency: quarterly
     name: Organizational Requirements
   '164.316':
@@ -558,6 +997,12 @@ control_families:
             complexity, and capabilities of the covered entity.
 
             '
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
         monitoring_frequency: quarterly
       164.316(b)(1)(i):
         checks:
@@ -566,6 +1011,10 @@ control_families:
             of its creation or the date when it last was in effect, whichever is later.
 
             '
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
         monitoring_frequency: quarterly
       164.316(b)(1)(ii):
         checks:
@@ -575,6 +1024,12 @@ control_families:
             authorized personnel can access current policies at all times.
 
             '
+          event_types:
+          - confluence_pages
+          - snow_knowledge_articles
+          resource_types:
+          - grc_document
+          - itsm_knowledge_article
         monitoring_frequency: quarterly
       164.316(b)(2)(i):
         checks:
@@ -584,6 +1039,10 @@ control_families:
             of ePHI, including changes in technology, regulations, or threats.
 
             '
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
         monitoring_frequency: quarterly
       164.316(b)(2)(ii):
         checks:
@@ -593,6 +1052,12 @@ control_families:
             activities and their outcomes.
 
             '
+          event_types:
+          - confluence_pages
+          - onetrust_assessments
+          resource_types:
+          - grc_document
+          - privacy_assessment
         monitoring_frequency: quarterly
       164.316(b)(2)(iii):
         checks:
@@ -602,5 +1067,9 @@ control_families:
             and in a format that is accessible and retrievable.
 
             '
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
         monitoring_frequency: quarterly
     name: Policies and Procedures
