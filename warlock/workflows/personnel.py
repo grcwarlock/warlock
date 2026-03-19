@@ -304,8 +304,12 @@ class PersonnelManager:
             # No access review in 90 days
             if person.last_access_review is None and person.hr_status == "active":
                 flags.append("no_access_review")
-            elif person.last_access_review and person.last_access_review < review_threshold:
-                flags.append("no_access_review")
+            elif person.last_access_review:
+                lar = person.last_access_review
+                if lar.tzinfo is None:
+                    lar = lar.replace(tzinfo=timezone.utc)
+                if lar < review_threshold:
+                    flags.append("no_access_review")
 
             # High phishing risk
             if person.phishing_score is not None and person.phishing_score < 50:

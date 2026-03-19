@@ -50,15 +50,22 @@ warlock issues
 
 ## Step 4: Start the API Server
 
-Open a new terminal tab:
+Open a new terminal tab (`Cmd+T`):
 
 ```bash
-cd warlock
+cd /Users/jsn/Coding/GitHub/warlock
 source .venv/bin/activate
 warlock-api
 ```
 
 The API starts at **http://localhost:8000**.
+
+If you get `address already in use`, kill the old process first:
+
+```bash
+lsof -ti:8000 | xargs kill -9
+warlock-api
+```
 
 Verify it's running:
 
