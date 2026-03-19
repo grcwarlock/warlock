@@ -28,6 +28,18 @@ seed: ## Run demo seed
 
 demo: ## Spin up full demo (DB + OPA + API + seed) in one command
 	./scripts/demo.sh
+	@echo ""
+	@echo "  ⚠  Run this to use CLI commands:"
+	@echo ""
+	@echo "     source .venv/bin/activate"
+	@echo ""
+
+cli: ## Activate venv and show available commands
+	@echo "Run this in your terminal:"
+	@echo ""
+	@echo "  source .venv/bin/activate"
+	@echo "  warlock --help"
+	@echo ""
 
 clean: ## Stop dev environment and clean up
 	docker compose down -v
