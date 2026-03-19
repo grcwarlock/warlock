@@ -74,6 +74,13 @@ class ControlEvidence:
     ai_assessments: list[str]          # any existing AI assessments
     resources: list[dict[str, str]]    # resource_id, resource_type, resource_name
     sources: list[str]                 # provider names
+    # Phase 2-5 context
+    compensating_controls: list[dict[str, Any]] = field(default_factory=list)
+    risk_acceptances: list[dict[str, Any]] = field(default_factory=list)
+    poams: list[dict[str, Any]] = field(default_factory=list)
+    inheritance: dict[str, Any] | None = None
+    posture_trend: dict[str, Any] | None = None
+    cadence_status: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -179,8 +186,20 @@ You are a senior GRC analyst writing {doc_type} documentation for {framework_nam
 
 {statement_structure}
 
-You will receive aggregated evidence for a single control. Generate a clear, \
-audit-ready implementation narrative that an assessor or auditor can review.
+You will receive aggregated evidence for a single control, which may include:
+- Assessment findings and assertion results (primary evidence)
+- Compensating controls (alternative implementations when primary control is not fully met)
+- Risk acceptances (formally accepted residual risk with AO approval)
+- Active POA&Ms (remediation plans with milestones and due dates)
+- Control inheritance (inherited/shared/common/system-specific designation)
+- Posture trends (compliance score history)
+- Monitoring cadence (required assessment frequency)
+
+Generate a clear, audit-ready implementation narrative that references ALL \
+relevant context. If compensating controls exist, describe them as part of the \
+implementation. If risk acceptances exist, acknowledge them. If POA&Ms exist, \
+note the remediation timeline. If the control is inherited, describe the \
+provider relationship.
 
 Respond ONLY with a JSON object (no markdown fences):
 {{
@@ -223,7 +242,7 @@ def _build_impl_prompt(evidence: ControlEvidence) -> str:
     status_counts = Counter(evidence.statuses)
     dominant_status = status_counts.most_common(1)[0][0] if status_counts else "not_assessed"
 
-    return json.dumps({
+    prompt_data = {
         "control": {
             "framework": evidence.framework,
             "control_id": evidence.control_id,
@@ -236,11 +255,27 @@ def _build_impl_prompt(evidence: ControlEvidence) -> str:
             "evidence_sources": list(set(evidence.sources)),
             "resources_assessed": len(evidence.resources),
         },
-        "findings": evidence.findings[:15],  # cap to stay within context
+        "findings": evidence.findings[:15],
         "assertion_results": evidence.assertion_results[:10],
         "prior_ai_assessments": evidence.ai_assessments[:5],
         "resources": evidence.resources[:20],
-    }, indent=2, default=str)
+    }
+
+    # Phase 2-5 context for richer narratives
+    if evidence.compensating_controls:
+        prompt_data["compensating_controls"] = evidence.compensating_controls
+    if evidence.risk_acceptances:
+        prompt_data["risk_acceptances"] = evidence.risk_acceptances
+    if evidence.poams:
+        prompt_data["active_poams"] = evidence.poams
+    if evidence.inheritance:
+        prompt_data["inheritance"] = evidence.inheritance
+    if evidence.posture_trend:
+        prompt_data["posture_trend"] = evidence.posture_trend
+    if evidence.cadence_status:
+        prompt_data["cadence_status"] = evidence.cadence_status
+
+    return json.dumps(prompt_data, indent=2, default=str)
 
 
 def _build_remediation_prompt(evidence: ControlEvidence) -> str:
@@ -255,7 +290,7 @@ def _build_remediation_prompt(evidence: ControlEvidence) -> str:
         if not a.get("passed", True)
     ]
 
-    return json.dumps({
+    prompt_data = {
         "control": {
             "framework": evidence.framework,
             "control_id": evidence.control_id,
@@ -265,7 +300,17 @@ def _build_remediation_prompt(evidence: ControlEvidence) -> str:
         "failed_assertions": failed_assertions,
         "affected_resources": evidence.resources[:20],
         "evidence_sources": list(set(evidence.sources)),
-    }, indent=2, default=str)
+    }
+
+    # Phase 2-5 context for remediation-aware plans
+    if evidence.compensating_controls:
+        prompt_data["existing_compensating_controls"] = evidence.compensating_controls
+    if evidence.risk_acceptances:
+        prompt_data["active_risk_acceptances"] = evidence.risk_acceptances
+    if evidence.poams:
+        prompt_data["existing_poams"] = evidence.poams
+
+    return json.dumps(prompt_data, indent=2, default=str)
 
 
 # ---------------------------------------------------------------------------
@@ -597,6 +642,118 @@ def aggregate_control_evidence(
         if mapping:
             control_family = mapping.control_family
 
+    # ------------------------------------------------------------------
+    # Phase 2-5: gather compensating controls, risk acceptances, POA&Ms,
+    # inheritance, posture trends, and cadence status
+    # ------------------------------------------------------------------
+    from warlock.db.models import (
+        CompensatingControl, RiskAcceptance, POAM,
+        ControlInheritance, PostureSnapshot,
+    )
+    from datetime import timedelta
+
+    now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+
+    # Compensating controls
+    cc_rows = (
+        session.query(CompensatingControl)
+        .filter(
+            CompensatingControl.original_framework == framework,
+            CompensatingControl.original_control_id == control_id,
+            CompensatingControl.status.in_(("active", "approved")),
+        )
+        .all()
+    )
+    cc_data = [
+        {"title": cc.title, "status": cc.status, "effectiveness": cc.effectiveness_score,
+         "expiry_date": cc.expiry_date.isoformat() if cc.expiry_date else None}
+        for cc in cc_rows
+    ]
+
+    # Risk acceptances
+    ra_rows = (
+        session.query(RiskAcceptance)
+        .filter(
+            RiskAcceptance.framework == framework,
+            RiskAcceptance.control_id == control_id,
+            RiskAcceptance.status == "active",
+        )
+        .all()
+    )
+    ra_data = [
+        {"risk_level": ra.risk_level, "approved_by": ra.approved_by,
+         "expiry_date": ra.expiry_date.isoformat() if ra.expiry_date else None}
+        for ra in ra_rows
+    ]
+
+    # POA&Ms
+    poam_rows = (
+        session.query(POAM)
+        .filter(
+            POAM.framework == framework,
+            POAM.control_id == control_id,
+            POAM.status.notin_(("closed", "verified")),
+        )
+        .all()
+    )
+    poam_data = [
+        {"status": p.status, "severity": p.severity, "delay_count": p.delay_count,
+         "scheduled_completion": p.scheduled_completion.isoformat() if p.scheduled_completion else None}
+        for p in poam_rows
+    ]
+
+    # Inheritance (from first result's system_profile_id)
+    inheritance_data = None
+    sample_system_id = None
+    if results and results[0].system_profile_id:
+        sample_system_id = results[0].system_profile_id
+        ci = (
+            session.query(ControlInheritance)
+            .filter(
+                ControlInheritance.system_profile_id == sample_system_id,
+                ControlInheritance.framework == framework,
+                ControlInheritance.control_id == control_id,
+            )
+            .first()
+        )
+        if ci:
+            inheritance_data = {
+                "type": ci.inheritance_type,
+                "evidence_requirement": ci.evidence_requirement,
+                "provider_description": ci.provider_description,
+            }
+
+    # Posture trend (last 5 snapshots)
+    trend_data = None
+    trend_snapshots = (
+        session.query(PostureSnapshot)
+        .filter(
+            PostureSnapshot.framework == framework,
+            PostureSnapshot.control_id == control_id,
+        )
+        .order_by(PostureSnapshot.snapshot_date.desc())
+        .limit(5)
+        .all()
+    )
+    if trend_snapshots:
+        trend_data = {
+            "latest_score": trend_snapshots[0].posture_score,
+            "latest_status": trend_snapshots[0].status,
+            "snapshots": len(trend_snapshots),
+        }
+
+    # Cadence status
+    cadence_data = None
+    from warlock.db.models import ControlMapping as CM2
+    freq = (
+        session.query(CM2.monitoring_frequency)
+        .filter(CM2.framework == framework, CM2.control_id == control_id,
+                CM2.monitoring_frequency.isnot(None))
+        .first()
+    )
+    if freq:
+        cadence_data = {"required_frequency": freq[0]}
+
     return ControlEvidence(
         framework=framework,
         control_id=control_id,
@@ -607,6 +764,12 @@ def aggregate_control_evidence(
         ai_assessments=ai_data,
         resources=resources,
         sources=sources,
+        compensating_controls=cc_data,
+        risk_acceptances=ra_data,
+        poams=poam_data,
+        inheritance=inheritance_data,
+        posture_trend=trend_data,
+        cadence_status=cadence_data,
     )
 
 
