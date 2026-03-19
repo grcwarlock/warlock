@@ -321,8 +321,22 @@ def build_pipeline(
     )
     load_framework_configs(framework_dir, mapper)
 
-    # 4. Build assessor
-    assessor = Assessor(engine=assertion_engine)
+    # 4. Build assessor (with AI reasoning if configured)
+    ai_reasoner = None
+    if settings.ai_provider and settings.ai_api_key:
+        try:
+            from warlock.assessors.ai_reasoning import create_reasoner
+            ai_reasoner = create_reasoner(
+                provider=settings.ai_provider,
+                api_key=settings.ai_api_key,
+                model=settings.ai_model,
+                base_url=getattr(settings, "ai_base_url", ""),
+            )
+            log.info("AI reasoning enabled: %s/%s", settings.ai_provider, settings.ai_model)
+        except Exception:
+            log.warning("AI reasoning configured but failed to initialize — running deterministic only")
+
+    assessor = Assessor(engine=assertion_engine, ai_reasoner=ai_reasoner)
 
     return Pipeline(
         connectors=connectors,
