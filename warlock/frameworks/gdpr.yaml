@@ -10,6 +10,12 @@ control_families:
         - id: Art5-1a.1
           description: Verify lawful basis for processing is documented
           evidence_type: policy
+          event_types:
+          - onetrust_assessments
+          - confluence_pages
+          resource_types:
+          - privacy_assessment
+          - grc_document
       Art5-1b:
         title: Purpose Limitation
         description: Personal data shall be collected for specified, explicit and
@@ -18,6 +24,12 @@ control_families:
         - id: Art5-1b.1
           description: Verify purpose of data collection is documented
           evidence_type: policy
+          event_types:
+          - onetrust_assessments
+          - confluence_pages
+          resource_types:
+          - privacy_assessment
+          - grc_document
       Art5-1c:
         title: Data Minimization
         description: Personal data shall be adequate, relevant and limited to what
@@ -26,6 +38,12 @@ control_families:
         - id: Art5-1c.1
           description: Verify data collection is limited to necessary fields
           evidence_type: data_inventory
+          event_types:
+          - onetrust_data_maps
+          - onetrust_assessments
+          resource_types:
+          - privacy_data_map
+          - privacy_assessment
       Art5-1e:
         title: Storage Limitation
         description: Personal data shall be kept for no longer than is necessary.
@@ -33,6 +51,12 @@ control_families:
         - id: Art5-1e.1
           description: Verify data retention policies are defined and enforced
           evidence_type: policy
+          event_types:
+          - onetrust_assessments
+          - confluence_pages
+          resource_types:
+          - privacy_assessment
+          - grc_document
       Art5-1f:
         title: Integrity and Confidentiality
         description: Personal data shall be processed with appropriate security measures.
@@ -40,6 +64,16 @@ control_families:
         - id: Art5-1f.1
           description: Verify encryption and access controls for personal data
           evidence_type: security_config
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          - purview_dlp_policies
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - key_vault
+          - dlp_policy
     name: Principles of Processing
   Art6:
     controls:
@@ -51,6 +85,12 @@ control_families:
         - id: Art6-1.1
           description: Document legal basis for each processing activity
           evidence_type: ropa
+          event_types:
+          - onetrust_consent_records
+          - onetrust_assessments
+          resource_types:
+          - privacy_consent
+          - privacy_assessment
     name: Lawful Basis for Processing
   Art13:
     controls:
@@ -62,6 +102,12 @@ control_families:
         - id: Art13-1.1
           description: Privacy notice contains all required information
           evidence_type: policy
+          event_types:
+          - onetrust_assessments
+          - confluence_pages
+          resource_types:
+          - privacy_assessment
+          - grc_document
     name: Information to Data Subjects
   Art15:
     controls:
@@ -73,6 +119,10 @@ control_families:
         - id: Art15-1.1
           description: Data subject access request process is documented and operational
           evidence_type: procedure
+          event_types:
+          - onetrust_dsar_requests
+          resource_types:
+          - privacy_dsar
     name: Right of Access
   Art17:
     controls:
@@ -84,6 +134,10 @@ control_families:
         - id: Art17-1.1
           description: Data deletion process is documented and testable
           evidence_type: procedure
+          event_types:
+          - onetrust_dsar_requests
+          resource_types:
+          - privacy_dsar
     name: Right to Erasure
   Art25:
     controls:
@@ -95,6 +149,16 @@ control_families:
         - id: Art25-1.1
           description: Privacy impact assessments conducted for new processing activities
           evidence_type: dpia
+          event_types:
+          - onetrust_assessments
+          - s3_buckets
+          - storage_accounts
+          - purview_dlp_policies
+          resource_types:
+          - privacy_assessment
+          - s3_bucket
+          - storage_account
+          - dlp_policy
     name: Data Protection by Design
   Art28:
     controls:
@@ -105,6 +169,12 @@ control_families:
         - id: Art28-1.1
           description: Data processing agreements in place with all processors
           evidence_type: contract
+          event_types:
+          - confluence_pages
+          - ssc_companies
+          resource_types:
+          - grc_document
+          - vendor_company
     name: Processor Requirements
   Art30:
     controls:
@@ -115,6 +185,12 @@ control_families:
         - id: Art30-1.1
           description: ROPA is maintained and up-to-date
           evidence_type: ropa
+          event_types:
+          - onetrust_data_maps
+          - onetrust_assessments
+          resource_types:
+          - privacy_data_map
+          - privacy_assessment
     name: Records of Processing
   Art32:
     controls:
@@ -126,9 +202,26 @@ control_families:
         - id: Art32-1.1
           description: Encryption at rest and in transit for personal data
           evidence_type: security_config
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          - purview_dlp_policies
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - key_vault
+          - dlp_policy
         - id: Art32-1.2
           description: Regular testing and evaluation of security measures
           evidence_type: assessment
+          event_types:
+          - vuln_export
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - vulnerability
+          - recommendation
     name: Security of Processing
   Art33:
     controls:
@@ -140,6 +233,12 @@ control_families:
         - id: Art33-1.1
           description: Breach notification process documented with 72-hour timeline
           evidence_type: procedure
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
     name: Breach Notification
   Art35:
     controls:
@@ -150,4 +249,10 @@ control_families:
         - id: Art35-1.1
           description: DPIA conducted for high-risk processing activities
           evidence_type: dpia
+          event_types:
+          - onetrust_assessments
+          - confluence_pages
+          resource_types:
+          - privacy_assessment
+          - grc_document
     name: Data Protection Impact Assessment

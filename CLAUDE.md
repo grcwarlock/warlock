@@ -45,7 +45,7 @@ Connectors succeeded:   40
 Connectors failed:      0
 Raw events collected:   191
 Findings normalized:    547
-Controls mapped:        26,135
+Controls mapped:        29,207
 ```
 
 If any number changes, you broke something. Stop and fix it.
@@ -237,6 +237,9 @@ When you change the left column, you MUST update every file in the right column.
 | Dependency | `pyproject.toml`, `pip install -e ".[dev,ai]"` |
 | Terraform (`terraform/`) | `terraform validate` + `terraform fmt -check` on ALL modules |
 | OPA policies (`policies/`) | `opa check` + `opa test`, input schema matches normalizer output |
+| OSCAL packages (`frameworks-oscal/`) | Validate JSON, check control IDs match pipeline YAML, update README.md counts |
+| Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader doesn't crash, update README.md framework table |
+| CI workflows (`.github/workflows/`) | Test the workflow logic locally before pushing — CI failures block all PRs |
 
 ---
 
@@ -246,7 +249,7 @@ When you change the left column, you MUST update every file in the right column.
 warlock/
   connectors/    — 40 source connectors
   normalizers/   — 41 parsers (raw → FindingData)
-  mappers/       — control mapping (findings → 1,564 controls across 6 frameworks)
+  mappers/       — control mapping (findings → 1,779 controls across 10 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (100+ routes, ABAC-scoped)
   cli.py         — Click CLI (34 commands)
@@ -254,10 +257,15 @@ warlock/
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
+  frameworks/    — 10 framework YAMLs + crosswalks + baselines + inherited controls
+  frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
 tests/           — 190 pytest tests (9 files)
-policies/        — 604 OPA/Rego files (631 tests) across 6 frameworks
+policies/        — 604 OPA/Rego files (631 tests) across 7 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 10 frameworks
 terraform/       — 5 IaC modules (AWS, Azure, GCP)
+.github/workflows/
+  ci.yml             — Python lint + test + Docker build
+  compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command full demo (DB + OPA + seed + API)
   demo_seed.py   — 40 mock connectors, 547+ findings, 26K results
@@ -272,6 +280,42 @@ scripts/
 - **Timezone-aware datetimes**: Use `ensure_aware()` from `warlock/utils/`. No naive datetimes.
 - **Prompt sanitization**: `<evidence>` tags + control character stripping in all LLM prompts.
 - **Gemini API key in header**: `x-goog-api-key`, never in URL query params.
+
+## CI/CD Pipelines
+
+Two GitHub Actions workflows run on every push/PR:
+
+### `.github/workflows/ci.yml` — Python CI
+- **Triggers:** push to main, all PRs
+- **Jobs:** lint (ruff), test (pytest 190 tests), build (Docker image)
+- If lint fails (like the 128 F401 errors on 2026-03-19), the whole pipeline is red. Run `ruff check warlock/` locally first.
+
+### `.github/workflows/compliance-gate.yaml` — Compliance CI
+- **Triggers:** push/PR that touches `policies/`, `terraform/`, `frameworks-oscal/`, `warlock/frameworks/`, `warlock/assessors/`
+- **4 jobs run in parallel:**
+  - OPA Policy Validation — syntax check, 631+ tests, policy count regression guard (min 300), test coverage check
+  - Terraform Validation — `terraform validate` + `terraform fmt -check` on all 5 modules
+  - OSCAL Package Validation — all JSON files parse correctly
+  - Framework YAML Validation — all YAMLs have valid v2 dict-based structure
+
+If you touch policies or terraform, both CI workflows run. Fix failures locally before pushing.
+
+## Frameworks (10 total)
+
+| Framework | Pipeline YAML | Rego Policies | OSCAL Package | Active in Demo |
+|---|---|---|---|---|
+| NIST 800-53 | nist_800_53.yaml (1,176 controls) | 284 files | Yes | Yes |
+| ISO 27001 | iso_27001.yaml (93 controls) | 186 files | Yes | Yes |
+| ISO 27701 | iso_27701.yaml (95 controls) | — | Yes | Yes |
+| ISO 42001 | iso_42001.yaml (39 controls) | — | Yes | Yes |
+| SOC 2 | soc2.yaml (46 controls) | 26 files | Yes | Yes |
+| UCF | ucf.yaml (115 controls) | 12 files | Yes | Yes |
+| FedRAMP | fedramp.yaml (26 controls) | — | Yes | Yes |
+| HIPAA | hipaa.yaml (64 controls) | 40 files | Yes | Yes |
+| CMMC L2 | cmmc_l2.yaml (110 controls) | 50 files | Yes | Yes |
+| GDPR | gdpr.yaml (15 controls) | — | Yes | Yes |
+
+**"Active in Demo"** means the framework produces control results in the demo seed. All 10 frameworks are now wired with event_types and produce control results.
 
 ## Security-Critical Config Defaults
 
