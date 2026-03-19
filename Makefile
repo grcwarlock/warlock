@@ -26,6 +26,9 @@ dev: ## Start local dev environment (docker-compose)
 seed: ## Run demo seed
 	python scripts/demo_seed.py
 
+demo: ## Spin up full demo (DB + OPA + API + seed) in one command
+	./scripts/demo.sh
+
 clean: ## Stop dev environment and clean up
 	docker compose down -v
 	rm -f warlock.db
