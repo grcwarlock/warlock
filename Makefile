@@ -1,0 +1,32 @@
+.PHONY: install test lint migrate dev clean seed help
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+install: ## Install dependencies (dev mode)
+	pip install -e ".[dev,aws,ai]"
+
+test: ## Run test suite
+	pytest tests/ -v --tb=short
+
+lint: ## Run linter
+	ruff check warlock/
+
+migrate: ## Run database migrations
+	alembic upgrade head
+
+dev: ## Start local dev environment (docker-compose)
+	docker compose up -d
+	@echo "Waiting for services..."
+	@sleep 3
+	@echo "Running migrations..."
+	WLK_DATABASE_URL=postgresql://warlock:warlock_dev@localhost:5432/warlock alembic upgrade head
+	@echo "Ready: http://localhost:8000/api/v1/health"
+
+seed: ## Run demo seed
+	python scripts/demo_seed.py
+
+clean: ## Stop dev environment and clean up
+	docker compose down -v
+	rm -f warlock.db
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

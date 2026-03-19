@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: warlock
+      POSTGRES_USER: warlock
+      POSTGRES_PASSWORD: warlock_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warlock"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      args:
+        EXTRAS: "aws,ai"
+    ports:
+      - "8000:8000"
+    environment:
+      WLK_DATABASE_URL: postgresql://warlock:warlock_dev@db:5432/warlock
+      WLK_QUEUE_BACKEND: redis
+      WLK_QUEUE_URL: redis://redis:6379
+      WLK_JWT_SECRET: dev-only-change-in-production-min-32-chars
+      WLK_ENV: development
+      WLK_LOG_LEVEL: INFO
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

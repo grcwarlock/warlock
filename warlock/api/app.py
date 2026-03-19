@@ -3952,6 +3952,40 @@ def impact_check_endpoint(
 
 
 # =========================================================================
+# GDPR Data Subject Rights
+# =========================================================================
+
+
+@app.get(PREFIX + "/gdpr/export")
+def gdpr_export(
+    email: str = Query(..., description="Email of the data subject"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("manage_users")),
+):
+    """Export all personal data for a data subject (GDPR Article 15)."""
+    from warlock.workflows.gdpr import GDPRManager
+    manager = GDPRManager()
+    return manager.export_subject_data(db, email)
+
+
+@app.delete(PREFIX + "/gdpr/erase")
+def gdpr_erase(
+    email: str = Query(..., description="Email of the data subject to anonymize"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("manage_users")),
+):
+    """Anonymize all PII for a data subject (GDPR Article 17).
+
+    Does not delete records — anonymizes PII fields to preserve
+    referential integrity and audit trail.
+    """
+    from warlock.workflows.gdpr import GDPRManager
+    manager = GDPRManager()
+    result = manager.erase_subject_data(db, email, erased_by=current_user.email)
+    return result
+
+
+# =========================================================================
 # Server entry point
 # =========================================================================
 

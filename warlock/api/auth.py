@@ -49,6 +49,8 @@ def _get_auth_config() -> tuple[str, int]:
 
 # Minimum password length
 MIN_PASSWORD_LENGTH = 12
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_MINUTES = 30
 
 # Detect PyJWT availability
 try:
@@ -146,18 +148,27 @@ def _hmac_decode(token: str, secret: str) -> dict:
 
 
 def _get_jwt_secret() -> str:
-    """Get JWT secret, refusing to use a hardcoded fallback in production."""
+    """Get JWT secret, refusing to start without one in production."""
     secret, _ = _get_auth_config()
     if not secret:
-        # Dev mode: generate an ephemeral secret and warn loudly
-        log.warning(
+        from warlock.config import get_settings
+        settings = get_settings()
+        if settings.env == "production":
+            raise RuntimeError(
+                "CRITICAL: WLK_JWT_SECRET is not set. "
+                "Refusing to start in production without a JWT secret. "
+                "Set WLK_JWT_SECRET to a random string of at least 32 characters."
+            )
+        log.critical(
             "WLK_JWT_SECRET not set — using ephemeral secret. "
-            "Tokens will not survive restarts. Set WLK_JWT_SECRET for production."
+            "Tokens will NOT survive restarts. This is ONLY acceptable in development."
         )
         global _EPHEMERAL_SECRET
         if not _EPHEMERAL_SECRET:
             _EPHEMERAL_SECRET = secrets.token_urlsafe(48)
         return _EPHEMERAL_SECRET
+    if len(secret) < 32:
+        log.warning("WLK_JWT_SECRET is shorter than 32 characters — this is insecure for production")
     return secret
 
 _EPHEMERAL_SECRET: str = ""
@@ -244,11 +255,41 @@ def create_user(session: Session, email: str, name: str, password: str, role: st
 
 
 def authenticate_user(session: Session, email: str, password: str) -> User | None:
-    """Authenticate a user by email and password."""
+    """Authenticate a user by email and password with lockout protection."""
     user = session.query(User).filter(User.email == email, User.is_active == True).first()  # noqa: E712
-    if user and verify_password(password, user.hashed_password):
+
+    if not user:
+        # Dummy verify to prevent timing oracle
+        verify_password("dummy", "$2b$12$" + "x" * 53)
+        return None
+
+    # Check lockout
+    if user.locked_until:
+        now = datetime.now(timezone.utc)
+        if user.locked_until.tzinfo is None:
+            user.locked_until = user.locked_until.replace(tzinfo=timezone.utc)
+        if now < user.locked_until:
+            log.warning("Login attempt on locked account: %s (locked until %s)", email, user.locked_until)
+            return None
+        # Lockout expired — reset
+        user.failed_login_count = 0
+        user.locked_until = None
+
+    if verify_password(password, user.hashed_password):
+        # Success — reset failure counter
+        user.failed_login_count = 0
+        user.locked_until = None
         user.last_login = datetime.now(timezone.utc)
         return user
+
+    # Failed — increment counter
+    user.failed_login_count = (user.failed_login_count or 0) + 1
+    if user.failed_login_count >= MAX_FAILED_ATTEMPTS:
+        user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)
+        log.warning(
+            "Account locked: %s after %d failed attempts (locked for %d minutes)",
+            email, user.failed_login_count, LOCKOUT_MINUTES,
+        )
     return None
 
 

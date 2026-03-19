@@ -24,7 +24,7 @@ DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
     "pipeline_collect": {"interval_minutes": 60, "enabled": True},
     "posture_snapshot": {"interval_minutes": 1440, "enabled": True},   # daily
     "cadence_check": {"interval_minutes": 60, "enabled": True},        # after each collect
-    "retention_purge": {"interval_minutes": 10080, "enabled": False},  # weekly
+    "retention_purge": {"interval_minutes": 10080, "enabled": True},  # weekly
 }
 
 
@@ -219,8 +219,25 @@ class PipelineScheduler:
             log.info("Cadence check: all controls within monitoring frequency")
 
     def _execute_retention(self) -> None:
-        """Placeholder for retention purge — implemented in Phase 5g."""
-        log.info("Retention purge: not yet implemented")
+        """Purge expired data respecting legal holds."""
+        from warlock.db.engine import get_session, init_db
+        from warlock.workflows.retention import RetentionManager
+
+        init_db()
+        manager = RetentionManager()
+
+        with get_session() as session:
+            result = manager.purge_expired(session, dry_run=False)
+
+        purged = result.get("purged", 0)
+        held = result.get("held_by_legal_hold", 0)
+        if purged or held:
+            log.info(
+                "Retention purge: %d records purged, %d held by legal hold",
+                purged, held,
+            )
+        else:
+            log.info("Retention purge: nothing to purge")
 
     @property
     def status(self) -> dict[str, Any]:
