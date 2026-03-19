@@ -38,6 +38,7 @@ control_families:
           - sailpoint_certifications
           resource_types:
           - sailpoint_certification
+        monitoring_frequency: daily
       AC-3:
         checks:
         - id: ac3_access_enforcement
@@ -56,6 +57,7 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: weekly
       AC-6:
         checks:
         - id: ac6_least_priv
@@ -73,6 +75,7 @@ control_families:
           - cyberark_account
           - sailpoint_role
           - sailpoint_entitlement
+        monitoring_frequency: weekly
       AC-7:
         checks:
         - id: ac7_failed_logon
@@ -86,6 +89,7 @@ control_families:
           - entra_sign_in
           - entra_user
           - cloudtrail
+        monitoring_frequency: weekly
       AC-17:
         checks:
         - id: ac17_remote_access
@@ -101,8 +105,10 @@ control_families:
           - entra_conditional_access_policy
           - ec2_security_group
           - network_security_group
+        monitoring_frequency: weekly
       AC-1:
         checks: []
+        monitoring_frequency: weekly
       AC-2(1):
         checks:
         - id: ac2_1_automated_mgmt
@@ -117,6 +123,7 @@ control_families:
           - okta_user
           - entra_user
           - sailpoint_identity
+        monitoring_frequency: daily
       AC-2(2):
         checks:
         - id: ac2_2_temp_accounts
@@ -130,6 +137,7 @@ control_families:
           - okta_user
           - entra_user
           - sailpoint_identity
+        monitoring_frequency: daily
       AC-2(3):
         checks:
         - id: ac2_3_disable_accounts
@@ -143,6 +151,7 @@ control_families:
           - okta_user
           - entra_user
           - sailpoint_identity
+        monitoring_frequency: daily
       AC-2(4):
         checks:
         - id: ac2_4_audit_actions
@@ -158,6 +167,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: daily
       AC-2(5):
         checks:
         - id: ac2_5_inactivity_logout
@@ -167,6 +177,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: daily
       AC-2(6):
         checks:
         - id: ac2_6_dynamic_privilege
@@ -180,6 +191,7 @@ control_families:
           - cyberark_safe
           - sailpoint_role
           - sailpoint_entitlement
+        monitoring_frequency: daily
       AC-2(7):
         checks:
         - id: ac2_7_privileged_users
@@ -195,6 +207,7 @@ control_families:
           - cyberark_account
           - sailpoint_role
           - sailpoint_entitlement
+        monitoring_frequency: daily
       AC-2(8):
         checks:
         - id: ac2_8_dynamic_account
@@ -206,6 +219,7 @@ control_families:
           - entra_user
           - entra_sign_in
           - entra_conditional_access_policy
+        monitoring_frequency: daily
       AC-2(9):
         checks:
         - id: ac2_9_shared_accounts
@@ -218,6 +232,7 @@ control_families:
           - iam_user
           - okta_user
           - entra_user
+        monitoring_frequency: daily
       AC-2(10):
         checks:
         - id: ac2_10_credential_change
@@ -229,6 +244,7 @@ control_families:
           - iam_user
           - okta_event
           - entra_audit
+        monitoring_frequency: daily
       AC-2(11):
         checks:
         - id: ac2_11_usage_conditions
@@ -238,6 +254,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: daily
       AC-2(12):
         checks:
         - id: ac2_12_atypical_usage
@@ -253,6 +270,7 @@ control_families:
           - okta_event
           - guardduty
           - sentinel_incident
+        monitoring_frequency: daily
       AC-2(13):
         checks:
         - id: ac2_13_high_risk_disable
@@ -264,6 +282,7 @@ control_families:
           - entra_user
           - okta_user
           - sailpoint_identity
+        monitoring_frequency: daily
       AC-3(1):
         checks:
         - id: ac3_1_restricted_priv
@@ -276,6 +295,7 @@ control_families:
           - iam_policy
           - cyberark_account
           - cyberark_safe
+        monitoring_frequency: weekly
       AC-3(2):
         checks:
         - id: ac3_2_dual_auth
@@ -287,6 +307,7 @@ control_families:
           - okta_policy
           - entra_conditional_access_policy
           - cyberark_safe
+        monitoring_frequency: weekly
       AC-3(3):
         checks:
         - id: ac3_3_mac
@@ -296,6 +317,7 @@ control_families:
           resource_types:
           - iam_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-3(4):
         checks:
         - id: ac3_4_dac
@@ -310,6 +332,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AC-3(5):
         checks:
         - id: ac3_5_sec_relevant_info
@@ -321,8 +344,10 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AC-3(6):
         checks: []
+        monitoring_frequency: weekly
       AC-3(7):
         checks:
         - id: ac3_7_rbac
@@ -336,6 +361,7 @@ control_families:
           - okta_user
           - sailpoint_role
           - sailpoint_entitlement
+        monitoring_frequency: weekly
       AC-3(8):
         checks:
         - id: ac3_8_revocation
@@ -347,6 +373,7 @@ control_families:
           - okta_event
           - entra_audit
           - sailpoint_certification
+        monitoring_frequency: weekly
       AC-3(9):
         checks:
         - id: ac3_9_controlled_release
@@ -358,6 +385,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AC-3(10):
         checks:
         - id: ac3_10_audited_override
@@ -371,6 +399,7 @@ control_families:
           - gcp_audit
           - azure_activity
           - cyberark_account
+        monitoring_frequency: weekly
       AC-3(11):
         checks:
         - id: ac3_11_restrict_info_types
@@ -382,6 +411,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - key_vault
+        monitoring_frequency: weekly
       AC-3(12):
         checks:
         - id: ac3_12_app_access
@@ -392,6 +422,7 @@ control_families:
           resource_types:
           - okta_application
           - entra_service_principal
+        monitoring_frequency: weekly
       AC-3(13):
         checks:
         - id: ac3_13_abac
@@ -401,6 +432,7 @@ control_families:
           resource_types:
           - iam_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-3(14):
         checks:
         - id: ac3_14_individual_access
@@ -412,6 +444,7 @@ control_families:
           - okta_user
           - entra_user
           - iam_user
+        monitoring_frequency: weekly
       AC-3(15):
         checks:
         - id: ac3_15_dac_mac
@@ -421,6 +454,7 @@ control_families:
           resource_types:
           - iam_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-4:
         checks:
         - id: ac4_info_flow
@@ -434,6 +468,7 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(1):
         checks:
         - id: ac4_1_object_attrs
@@ -445,6 +480,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AC-4(2):
         checks:
         - id: ac4_2_processing_domains
@@ -456,6 +492,7 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(3):
         checks:
         - id: ac4_3_dynamic_flow
@@ -467,6 +504,7 @@ control_families:
           - ec2_security_group
           - network_security_group
           - compute_firewall_rule
+        monitoring_frequency: weekly
       AC-4(4):
         checks:
         - id: ac4_4_encrypted_flow
@@ -478,6 +516,7 @@ control_families:
           - ec2_security_group
           - network_security_group
           - key_vault
+        monitoring_frequency: weekly
       AC-4(5):
         checks:
         - id: ac4_5_embedded_data
@@ -487,6 +526,7 @@ control_families:
           resource_types:
           - ec2_security_group
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(6):
         checks:
         - id: ac4_6_metadata
@@ -496,6 +536,7 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_bucket
+        monitoring_frequency: weekly
       AC-4(7):
         checks:
         - id: ac4_7_one_way_flow
@@ -507,6 +548,7 @@ control_families:
           - ec2_security_group
           - ec2_network_acl
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(8):
         checks:
         - id: ac4_8_policy_filters
@@ -520,8 +562,10 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(9):
         checks: []
+        monitoring_frequency: weekly
       AC-4(10):
         checks:
         - id: ac4_10_toggle_filters
@@ -533,6 +577,7 @@ control_families:
           - ec2_security_group
           - network_security_group
           - compute_firewall_rule
+        monitoring_frequency: weekly
       AC-4(11):
         checks:
         - id: ac4_11_config_filters
@@ -544,6 +589,7 @@ control_families:
           - ec2_security_group
           - network_security_group
           - compute_firewall_rule
+        monitoring_frequency: weekly
       AC-4(12):
         checks:
         - id: ac4_12_data_type_ids
@@ -553,6 +599,7 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_bucket
+        monitoring_frequency: weekly
       AC-4(13):
         checks:
         - id: ac4_13_decomposition
@@ -562,6 +609,7 @@ control_families:
           resource_types:
           - ec2_security_group
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(14):
         checks:
         - id: ac4_14_filter_constraints
@@ -573,6 +621,7 @@ control_families:
           - ec2_security_group
           - network_security_group
           - compute_firewall_rule
+        monitoring_frequency: weekly
       AC-4(15):
         checks:
         - id: ac4_15_unsanctioned
@@ -585,8 +634,10 @@ control_families:
           - guardduty
           - securityhub
           - endpoint
+        monitoring_frequency: weekly
       AC-4(16):
         checks: []
+        monitoring_frequency: weekly
       AC-4(17):
         checks:
         - id: ac4_17_domain_auth
@@ -596,8 +647,10 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       AC-4(18):
         checks: []
+        monitoring_frequency: weekly
       AC-4(19):
         checks:
         - id: ac4_19_metadata_validation
@@ -607,8 +660,10 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_bucket
+        monitoring_frequency: weekly
       AC-4(20):
         checks: []
+        monitoring_frequency: weekly
       AC-4(21):
         checks:
         - id: ac4_21_separation
@@ -622,6 +677,7 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(22):
         checks:
         - id: ac4_22_access_only
@@ -633,12 +689,16 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AC-4(23):
         checks: []
+        monitoring_frequency: weekly
       AC-4(24):
         checks: []
+        monitoring_frequency: weekly
       AC-4(25):
         checks: []
+        monitoring_frequency: weekly
       AC-4(26):
         checks:
         - id: ac4_26_audit_filtering
@@ -650,6 +710,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AC-4(27):
         checks:
         - id: ac4_27_redundant_filter
@@ -661,6 +722,7 @@ control_families:
           - ec2_security_group
           - ec2_network_acl
           - network_security_group
+        monitoring_frequency: weekly
       AC-4(28):
         checks:
         - id: ac4_28_linear_filter
@@ -670,10 +732,13 @@ control_families:
           resource_types:
           - ec2_security_group
           - ec2_network_acl
+        monitoring_frequency: weekly
       AC-4(29):
         checks: []
+        monitoring_frequency: weekly
       AC-4(30):
         checks: []
+        monitoring_frequency: weekly
       AC-4(31):
         checks:
         - id: ac4_31_failed_transfer
@@ -685,8 +750,10 @@ control_families:
           - guardduty
           - securityhub
           - endpoint
+        monitoring_frequency: weekly
       AC-4(32):
         checks: []
+        monitoring_frequency: weekly
       AC-5:
         checks:
         - id: ac5_sep_duties
@@ -701,8 +768,10 @@ control_families:
           - okta_user
           - sailpoint_role
           - sailpoint_entitlement
+        monitoring_frequency: weekly
       AC-5(1):
         checks: []
+        monitoring_frequency: weekly
       AC-6(1):
         checks:
         - id: ac6_1_security_functions
@@ -716,6 +785,7 @@ control_families:
           - iam_user
           - cyberark_account
           - cyberark_safe
+        monitoring_frequency: weekly
       AC-6(2):
         checks:
         - id: ac6_2_nonpriv_access
@@ -729,6 +799,7 @@ control_families:
           - iam_policy
           - okta_user
           - entra_user
+        monitoring_frequency: weekly
       AC-6(3):
         checks:
         - id: ac6_3_network_priv
@@ -742,6 +813,7 @@ control_families:
           - network_security_group
           - compute_firewall_rule
           - cyberark_account
+        monitoring_frequency: weekly
       AC-6(4):
         checks:
         - id: ac6_4_sep_domains
@@ -752,6 +824,7 @@ control_families:
           resource_types:
           - ec2_security_group
           - compute_firewall_rule
+        monitoring_frequency: weekly
       AC-6(5):
         checks:
         - id: ac6_5_priv_accounts
@@ -767,6 +840,7 @@ control_families:
           - cyberark_account
           - cyberark_safe
           - sailpoint_role
+        monitoring_frequency: weekly
       AC-6(6):
         checks:
         - id: ac6_6_external_priv
@@ -780,6 +854,7 @@ control_families:
           - entra_user
           - entra_service_principal
           - okta_user
+        monitoring_frequency: weekly
       AC-6(7):
         checks:
         - id: ac6_7_review_privs
@@ -793,6 +868,7 @@ control_families:
           - sailpoint_certification
           - sailpoint_entitlement
           - cyberark_account
+        monitoring_frequency: weekly
       AC-6(8):
         checks:
         - id: ac6_8_code_exec_priv
@@ -802,6 +878,7 @@ control_families:
           resource_types:
           - iam_policy
           - iam_user
+        monitoring_frequency: weekly
       AC-6(9):
         checks:
         - id: ac6_9_log_priv
@@ -815,6 +892,7 @@ control_families:
           - gcp_audit
           - azure_activity
           - cyberark_account
+        monitoring_frequency: weekly
       AC-6(10):
         checks:
         - id: ac6_10_prohibit_priv_exec
@@ -828,8 +906,10 @@ control_families:
           - iam_user
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-7(1):
         checks: []
+        monitoring_frequency: weekly
       AC-7(2):
         checks:
         - id: ac7_2_wipe_mobile
@@ -839,8 +919,10 @@ control_families:
           - s1_agents
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       AC-7(3):
         checks: []
+        monitoring_frequency: weekly
       AC-7(4):
         checks:
         - id: ac7_4_alt_auth
@@ -852,10 +934,13 @@ control_families:
           - okta_user
           - okta_event
           - entra_sign_in
+        monitoring_frequency: weekly
       AC-8:
         checks: []
+        monitoring_frequency: weekly
       AC-8(1):
         checks: []
+        monitoring_frequency: weekly
       AC-9:
         checks:
         - id: ac9_previous_logon
@@ -865,6 +950,7 @@ control_families:
           resource_types:
           - okta_event
           - entra_sign_in
+        monitoring_frequency: weekly
       AC-10:
         checks:
         - id: ac10_concurrent_sessions
@@ -876,8 +962,10 @@ control_families:
           - okta_event
           - entra_sign_in
           - okta_policy
+        monitoring_frequency: weekly
       AC-10(1):
         checks: []
+        monitoring_frequency: weekly
       AC-11:
         checks:
         - id: ac11_session_lock
@@ -887,8 +975,10 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-11(1):
         checks: []
+        monitoring_frequency: weekly
       AC-12:
         checks:
         - id: ac12_session_term
@@ -900,6 +990,7 @@ control_families:
           - okta_policy
           - entra_conditional_access_policy
           - okta_event
+        monitoring_frequency: weekly
       AC-12(1):
         checks:
         - id: ac12_1_user_logout
@@ -909,12 +1000,16 @@ control_families:
           resource_types:
           - okta_event
           - entra_sign_in
+        monitoring_frequency: weekly
       AC-12(2):
         checks: []
+        monitoring_frequency: weekly
       AC-12(3):
         checks: []
+        monitoring_frequency: weekly
       AC-13:
         checks: []
+        monitoring_frequency: weekly
       AC-14:
         checks:
         - id: ac14_permitted_actions
@@ -926,10 +1021,13 @@ control_families:
           - s3_bucket
           - storage_bucket
           - ec2_security_group
+        monitoring_frequency: weekly
       AC-14(1):
         checks: []
+        monitoring_frequency: weekly
       AC-15:
         checks: []
+        monitoring_frequency: weekly
       AC-16:
         checks:
         - id: ac16_sec_attributes
@@ -943,6 +1041,7 @@ control_families:
           - storage_bucket
           - storage_account
           - iam_policy
+        monitoring_frequency: weekly
       AC-16(1):
         checks:
         - id: ac16_1_dynamic_attrs
@@ -952,6 +1051,7 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_bucket
+        monitoring_frequency: weekly
       AC-16(2):
         checks:
         - id: ac16_2_attr_changes
@@ -963,6 +1063,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AC-16(3):
         checks:
         - id: ac16_3_attr_maintenance
@@ -972,6 +1073,7 @@ control_families:
           resource_types:
           - aws_config
           - s3_bucket
+        monitoring_frequency: weekly
       AC-16(4):
         checks:
         - id: ac16_4_attr_assoc
@@ -981,8 +1083,10 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AC-16(5):
         checks: []
+        monitoring_frequency: weekly
       AC-16(6):
         checks:
         - id: ac16_6_maintain_assoc
@@ -990,10 +1094,13 @@ control_families:
           - config_recorders
           resource_types:
           - aws_config
+        monitoring_frequency: weekly
       AC-16(7):
         checks: []
+        monitoring_frequency: weekly
       AC-16(8):
         checks: []
+        monitoring_frequency: weekly
       AC-16(9):
         checks:
         - id: ac16_9_reassignment
@@ -1003,6 +1110,7 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AC-16(10):
         checks:
         - id: ac16_10_attr_config
@@ -1014,6 +1122,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AC-17(1):
         checks:
         - id: ac17_1_monitoring
@@ -1027,6 +1136,7 @@ control_families:
           - entra_sign_in
           - cloudtrail
           - sentinel_incident
+        monitoring_frequency: weekly
       AC-17(2):
         checks:
         - id: ac17_2_encryption
@@ -1038,6 +1148,7 @@ control_families:
           - ec2_security_group
           - network_security_group
           - key_vault
+        monitoring_frequency: weekly
       AC-17(3):
         checks:
         - id: ac17_3_managed_acp
@@ -1051,6 +1162,7 @@ control_families:
           - ec2_network_acl
           - network_security_group
           - compute_firewall_rule
+        monitoring_frequency: weekly
       AC-17(4):
         checks:
         - id: ac17_4_priv_remote
@@ -1061,8 +1173,10 @@ control_families:
           resource_types:
           - cyberark_account
           - cloudtrail
+        monitoring_frequency: weekly
       AC-17(5):
         checks: []
+        monitoring_frequency: weekly
       AC-17(6):
         checks:
         - id: ac17_6_protect_mech
@@ -1072,10 +1186,13 @@ control_families:
           resource_types:
           - key_vault
           - s3_bucket
+        monitoring_frequency: weekly
       AC-17(7):
         checks: []
+        monitoring_frequency: weekly
       AC-17(8):
         checks: []
+        monitoring_frequency: weekly
       AC-17(9):
         checks:
         - id: ac17_9_disconnect
@@ -1089,6 +1206,7 @@ control_families:
           - entra_user
           - ec2_security_group
           - network_security_group
+        monitoring_frequency: weekly
       AC-17(10):
         checks:
         - id: ac17_10_auth_remote_cmd
@@ -1098,6 +1216,7 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AC-18:
         checks:
         - id: ac18_wireless
@@ -1107,6 +1226,7 @@ control_families:
           resource_types:
           - ec2_security_group
           - network_security_group
+        monitoring_frequency: weekly
       AC-18(1):
         checks:
         - id: ac18_1_auth_encrypt
@@ -1116,8 +1236,10 @@ control_families:
           resource_types:
           - network_security_group
           - key_vault
+        monitoring_frequency: weekly
       AC-18(2):
         checks: []
+        monitoring_frequency: weekly
       AC-18(3):
         checks:
         - id: ac18_3_disable_wireless
@@ -1127,6 +1249,7 @@ control_families:
           - s1_agents
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       AC-18(4):
         checks:
         - id: ac18_4_restrict_config
@@ -1135,8 +1258,10 @@ control_families:
           - defender_machines
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       AC-18(5):
         checks: []
+        monitoring_frequency: weekly
       AC-19:
         checks:
         - id: ac19_mobile_devices
@@ -1148,14 +1273,19 @@ control_families:
           resource_types:
           - endpoint
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-19(1):
         checks: []
+        monitoring_frequency: weekly
       AC-19(2):
         checks: []
+        monitoring_frequency: weekly
       AC-19(3):
         checks: []
+        monitoring_frequency: weekly
       AC-19(4):
         checks: []
+        monitoring_frequency: weekly
       AC-19(5):
         checks:
         - id: ac19_5_device_encrypt
@@ -1165,6 +1295,7 @@ control_families:
           - s1_agents
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       AC-20:
         checks:
         - id: ac20_external_systems
@@ -1177,6 +1308,7 @@ control_families:
           - entra_conditional_access_policy
           - okta_policy
           - entra_service_principal
+        monitoring_frequency: weekly
       AC-20(1):
         checks:
         - id: ac20_1_limits
@@ -1186,6 +1318,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       AC-20(2):
         checks:
         - id: ac20_2_portable_storage
@@ -1194,6 +1327,7 @@ control_families:
           - defender_machines
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       AC-20(3):
         checks:
         - id: ac20_3_non_org_systems
@@ -1203,6 +1337,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       AC-20(4):
         checks:
         - id: ac20_4_net_storage
@@ -1212,6 +1347,7 @@ control_families:
           resource_types:
           - ec2_security_group
           - network_security_group
+        monitoring_frequency: weekly
       AC-21:
         checks:
         - id: ac21_info_sharing
@@ -1223,6 +1359,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AC-22:
         checks:
         - id: ac22_public_content
@@ -1234,8 +1371,10 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AC-22(1):
         checks: []
+        monitoring_frequency: weekly
       AC-23:
         checks:
         - id: ac23_data_mining
@@ -1247,6 +1386,7 @@ control_families:
           - guardduty
           - securityhub
           - sentinel_incident
+        monitoring_frequency: weekly
       AC-24:
         checks:
         - id: ac24_access_decisions
@@ -1258,6 +1398,7 @@ control_families:
           - okta_policy
           - entra_conditional_access_policy
           - iam_policy
+        monitoring_frequency: weekly
       AC-24(1):
         checks:
         - id: ac24_1_transmit_authz
@@ -1267,6 +1408,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       AC-24(2):
         checks:
         - id: ac24_2_no_identity
@@ -1276,8 +1418,10 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       AC-25:
         checks: []
+        monitoring_frequency: weekly
   AU:
     controls:
       AU-2:
@@ -1293,6 +1437,7 @@ control_families:
           - gcp_audit
           - azure_activity
           - aws_config
+        monitoring_frequency: weekly
       AU-3:
         checks:
         - id: au3_audit_content
@@ -1308,6 +1453,7 @@ control_families:
           - azure_activity
           - okta_event
           - entra_audit
+        monitoring_frequency: weekly
       AU-6:
         checks:
         - id: au6_audit_review
@@ -1322,6 +1468,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: daily
       AU-12:
         checks:
         - id: au12_audit_generation
@@ -1339,16 +1486,22 @@ control_families:
           - aws_config
           - okta_event
           - entra_audit
+        monitoring_frequency: weekly
       AU-1:
         checks: []
+        monitoring_frequency: weekly
       AU-2(1):
         checks: []
+        monitoring_frequency: weekly
       AU-2(2):
         checks: []
+        monitoring_frequency: weekly
       AU-2(3):
         checks: []
+        monitoring_frequency: weekly
       AU-2(4):
         checks: []
+        monitoring_frequency: weekly
       AU-3(1):
         checks:
         - id: au3_1_additional_info
@@ -1360,8 +1513,10 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AU-3(2):
         checks: []
+        monitoring_frequency: weekly
       AU-3(3):
         checks:
         - id: au3_3_limit_pii
@@ -1371,6 +1526,7 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AU-4:
         checks:
         - id: au4_storage_capacity
@@ -1382,6 +1538,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AU-5:
         checks:
         - id: au5_audit_failures
@@ -1392,6 +1549,7 @@ control_families:
           resource_types:
           - cloudtrail
           - aws_config
+        monitoring_frequency: weekly
       AU-5(1):
         checks:
         - id: au5_1_storage_warning
@@ -1402,6 +1560,7 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_account
+        monitoring_frequency: weekly
       AU-5(2):
         checks:
         - id: au5_2_realtime_alerts
@@ -1414,6 +1573,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: weekly
       AU-5(3):
         checks:
         - id: au5_3_traffic_thresholds
@@ -1426,6 +1586,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: weekly
       AU-5(4):
         checks:
         - id: au5_4_shutdown_failure
@@ -1435,6 +1596,7 @@ control_families:
           resource_types:
           - cloudtrail
           - aws_config
+        monitoring_frequency: weekly
       AU-5(5):
         checks:
         - id: au5_5_alt_logging
@@ -1446,6 +1608,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AU-6(1):
         checks:
         - id: au6_1_automated_process
@@ -1457,8 +1620,10 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: daily
       AU-6(2):
         checks: []
+        monitoring_frequency: daily
       AU-6(3):
         checks:
         - id: au6_3_correlate
@@ -1476,6 +1641,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: daily
       AU-6(4):
         checks:
         - id: au6_4_central_review
@@ -1487,6 +1653,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: daily
       AU-6(5):
         checks:
         - id: au6_5_integrated_analysis
@@ -1498,8 +1665,10 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: daily
       AU-6(6):
         checks: []
+        monitoring_frequency: daily
       AU-6(7):
         checks:
         - id: au6_7_permitted_actions
@@ -1511,6 +1680,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: daily
       AU-6(8):
         checks:
         - id: au6_8_full_text_priv
@@ -1522,8 +1692,10 @@ control_families:
           - cloudtrail
           - gcp_audit
           - cyberark_account
+        monitoring_frequency: daily
       AU-6(9):
         checks: []
+        monitoring_frequency: daily
       AU-6(10):
         checks:
         - id: au6_10_level_adjustment
@@ -1535,6 +1707,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: daily
       AU-7:
         checks:
         - id: au7_audit_reduction
@@ -1546,6 +1719,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: weekly
       AU-7(1):
         checks:
         - id: au7_1_auto_processing
@@ -1557,8 +1731,10 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: weekly
       AU-7(2):
         checks: []
+        monitoring_frequency: weekly
       AU-8:
         checks:
         - id: au8_timestamps
@@ -1570,6 +1746,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AU-9:
         checks:
         - id: au9_protect_audit
@@ -1583,8 +1760,10 @@ control_families:
           - s3_bucket
           - storage_account
           - key_vault
+        monitoring_frequency: weekly
       AU-9(1):
         checks: []
+        monitoring_frequency: weekly
       AU-9(2):
         checks:
         - id: au9_2_separate_storage
@@ -1596,6 +1775,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AU-9(3):
         checks:
         - id: au9_3_crypto_protection
@@ -1607,6 +1787,7 @@ control_families:
           - cloudtrail
           - s3_bucket
           - key_vault
+        monitoring_frequency: weekly
       AU-9(4):
         checks:
         - id: au9_4_priv_subset
@@ -1618,6 +1799,7 @@ control_families:
           - iam_user
           - iam_policy
           - cyberark_account
+        monitoring_frequency: weekly
       AU-9(5):
         checks:
         - id: au9_5_dual_auth
@@ -1627,6 +1809,7 @@ control_families:
           resource_types:
           - cyberark_safe
           - iam_user
+        monitoring_frequency: weekly
       AU-9(6):
         checks:
         - id: au9_6_read_only
@@ -1638,8 +1821,10 @@ control_families:
           - s3_bucket
           - storage_account
           - iam_policy
+        monitoring_frequency: weekly
       AU-9(7):
         checks: []
+        monitoring_frequency: weekly
       AU-10:
         checks:
         - id: au10_non_repudiation
@@ -1651,6 +1836,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AU-10(1):
         checks:
         - id: au10_1_identity_assoc
@@ -1664,6 +1850,7 @@ control_families:
           - gcp_audit
           - okta_event
           - entra_audit
+        monitoring_frequency: weekly
       AU-10(2):
         checks:
         - id: au10_2_validate_binding
@@ -1673,6 +1860,7 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AU-10(3):
         checks:
         - id: au10_3_chain_custody
@@ -1682,6 +1870,7 @@ control_families:
           resource_types:
           - cloudtrail
           - s3_bucket
+        monitoring_frequency: weekly
       AU-10(4):
         checks:
         - id: au10_4_reviewer_binding
@@ -1691,8 +1880,10 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AU-10(5):
         checks: []
+        monitoring_frequency: weekly
       AU-11:
         checks:
         - id: au11_retention
@@ -1704,6 +1895,7 @@ control_families:
           - s3_bucket
           - storage_bucket
           - storage_account
+        monitoring_frequency: weekly
       AU-11(1):
         checks:
         - id: au11_1_long_term
@@ -1713,6 +1905,7 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_account
+        monitoring_frequency: weekly
       AU-12(1):
         checks:
         - id: au12_1_system_wide
@@ -1726,6 +1919,7 @@ control_families:
           - gcp_audit
           - azure_activity
           - sentinel_incident
+        monitoring_frequency: weekly
       AU-12(2):
         checks:
         - id: au12_2_standard_formats
@@ -1737,6 +1931,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       AU-12(3):
         checks:
         - id: au12_3_auth_changes
@@ -1748,6 +1943,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - aws_config
+        monitoring_frequency: weekly
       AU-12(4):
         checks:
         - id: au12_4_pii_audits
@@ -1757,6 +1953,7 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AU-13:
         checks:
         - id: au13_info_disclosure
@@ -1770,6 +1967,7 @@ control_families:
           - securityhub
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: weekly
       AU-14:
         checks:
         - id: au14_session_audit
@@ -1783,6 +1981,7 @@ control_families:
           - entra_sign_in
           - cloudtrail
           - cyberark_account
+        monitoring_frequency: weekly
       AU-14(1):
         checks:
         - id: au14_1_startup
@@ -1792,8 +1991,10 @@ control_families:
           resource_types:
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: weekly
       AU-14(2):
         checks: []
+        monitoring_frequency: weekly
       AU-14(3):
         checks:
         - id: au14_3_remote_view
@@ -1803,8 +2004,10 @@ control_families:
           resource_types:
           - cyberark_account
           - cloudtrail
+        monitoring_frequency: weekly
       AU-15:
         checks: []
+        monitoring_frequency: weekly
       AU-16:
         checks:
         - id: au16_cross_org
@@ -1818,6 +2021,7 @@ control_families:
           - gcp_audit
           - azure_activity
           - sentinel_incident
+        monitoring_frequency: weekly
   CM:
     controls:
       CM-2:
@@ -1832,6 +2036,7 @@ control_families:
           - aws_config
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: monthly
       CM-6:
         checks:
         - id: cm6_config_settings
@@ -1843,6 +2048,7 @@ control_families:
           resource_types:
           - aws_config
           - azure_resource
+        monitoring_frequency: weekly
       CM-8:
         checks:
         - id: cm8_system_inventory
@@ -1859,10 +2065,13 @@ control_families:
           - endpoint_fleet
           - host
           - agent
+        monitoring_frequency: monthly
       CM-1:
         checks: []
+        monitoring_frequency: monthly
       CM-2(1):
         checks: []
+        monitoring_frequency: monthly
       CM-2(2):
         checks:
         - id: cm2_2_automation_support
@@ -1872,6 +2081,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-2(3):
         checks:
         - id: cm2_3_retention_previous
@@ -1879,10 +2089,13 @@ control_families:
           - config_recorders
           resource_types:
           - aws_config
+        monitoring_frequency: monthly
       CM-2(4):
         checks: []
+        monitoring_frequency: monthly
       CM-2(5):
         checks: []
+        monitoring_frequency: monthly
       CM-2(6):
         checks:
         - id: cm2_6_dev_test_environments
@@ -1892,6 +2105,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-2(7):
         checks:
         - id: cm2_7_high_risk_config
@@ -1902,6 +2116,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-3:
         checks:
         - id: cm3_change_control
@@ -1913,6 +2128,7 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       CM-3(1):
         checks:
         - id: cm3_1_automated_documentation
@@ -1926,6 +2142,7 @@ control_families:
           - aws_config
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       CM-3(2):
         checks:
         - id: cm3_2_testing_validation
@@ -1935,6 +2152,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: weekly
       CM-3(3):
         checks:
         - id: cm3_3_automated_change_impl
@@ -1944,8 +2162,10 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: weekly
       CM-3(4):
         checks: []
+        monitoring_frequency: weekly
       CM-3(5):
         checks:
         - id: cm3_5_automated_security_response
@@ -1956,6 +2176,7 @@ control_families:
           resource_types:
           - aws_config
           - securityhub
+        monitoring_frequency: weekly
       CM-3(6):
         checks:
         - id: cm3_6_cryptography_mgmt
@@ -1963,8 +2184,10 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: weekly
       CM-3(7):
         checks: []
+        monitoring_frequency: weekly
       CM-3(8):
         checks:
         - id: cm3_8_prevent_config_changes
@@ -1976,6 +2199,7 @@ control_families:
           - aws_config
           - iam_policy
           - gcp_iam_binding
+        monitoring_frequency: weekly
       CM-4:
         checks:
         - id: cm4_impact_analyses
@@ -1985,6 +2209,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-4(1):
         checks:
         - id: cm4_1_separate_test_env
@@ -1994,6 +2219,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-4(2):
         checks:
         - id: cm4_2_verification_controls
@@ -2004,6 +2230,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-5:
         checks:
         - id: cm5_access_restrictions
@@ -2015,6 +2242,7 @@ control_families:
           - iam_policy
           - gcp_iam_binding
           - okta_policy
+        monitoring_frequency: monthly
       CM-5(1):
         checks:
         - id: cm5_1_automated_access_enforcement
@@ -2026,10 +2254,13 @@ control_families:
           - iam_policy
           - cloudtrail
           - gcp_audit
+        monitoring_frequency: monthly
       CM-5(2):
         checks: []
+        monitoring_frequency: monthly
       CM-5(3):
         checks: []
+        monitoring_frequency: monthly
       CM-5(4):
         checks:
         - id: cm5_4_dual_authorization
@@ -2039,6 +2270,7 @@ control_families:
           resource_types:
           - iam_policy
           - okta_policy
+        monitoring_frequency: monthly
       CM-5(5):
         checks:
         - id: cm5_5_privilege_limitation
@@ -2050,6 +2282,7 @@ control_families:
           - iam_policy
           - gcp_iam_binding
           - cyberark_account
+        monitoring_frequency: monthly
       CM-5(6):
         checks:
         - id: cm5_6_limit_library_privileges
@@ -2059,8 +2292,10 @@ control_families:
           resource_types:
           - iam_policy
           - gcp_iam_binding
+        monitoring_frequency: monthly
       CM-5(7):
         checks: []
+        monitoring_frequency: monthly
       CM-6(1):
         checks:
         - id: cm6_1_automated_management
@@ -2071,6 +2306,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: weekly
       CM-6(2):
         checks:
         - id: cm6_2_respond_unauthorized
@@ -2081,10 +2317,13 @@ control_families:
           resource_types:
           - aws_config
           - securityhub
+        monitoring_frequency: weekly
       CM-6(3):
         checks: []
+        monitoring_frequency: weekly
       CM-6(4):
         checks: []
+        monitoring_frequency: weekly
       CM-7:
         checks:
         - id: cm7_least_functionality
@@ -2095,6 +2334,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(1):
         checks:
         - id: cm7_1_periodic_review
@@ -2104,6 +2344,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(2):
         checks:
         - id: cm7_2_prevent_program_execution
@@ -2114,6 +2355,7 @@ control_families:
           resource_types:
           - endpoint
           - agent
+        monitoring_frequency: monthly
       CM-7(3):
         checks:
         - id: cm7_3_registration_compliance
@@ -2123,6 +2365,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(4):
         checks:
         - id: cm7_4_unauthorized_software
@@ -2135,6 +2378,7 @@ control_families:
           - endpoint
           - agent
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(5):
         checks:
         - id: cm7_5_authorized_software
@@ -2147,6 +2391,7 @@ control_families:
           - endpoint
           - agent
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(6):
         checks:
         - id: cm7_6_confined_environments
@@ -2156,6 +2401,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(7):
         checks:
         - id: cm7_7_code_execution_protected
@@ -2165,6 +2411,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-7(8):
         checks:
         - id: cm7_8_binary_executable_code
@@ -2173,6 +2420,7 @@ control_families:
           - defender_machines
           resource_types:
           - endpoint
+        monitoring_frequency: monthly
       CM-7(9):
         checks:
         - id: cm7_9_unauthorized_hardware
@@ -2184,6 +2432,7 @@ control_families:
           resource_types:
           - endpoint
           - endpoint_fleet
+        monitoring_frequency: monthly
       CM-8(1):
         checks:
         - id: cm8_1_updates_install_removal
@@ -2195,6 +2444,7 @@ control_families:
           - aws_config
           - cloudtrail
           - host
+        monitoring_frequency: monthly
       CM-8(2):
         checks:
         - id: cm8_2_automated_maintenance
@@ -2206,6 +2456,7 @@ control_families:
           - aws_config
           - host
           - endpoint
+        monitoring_frequency: monthly
       CM-8(3):
         checks:
         - id: cm8_3_unauthorized_component_detection
@@ -2217,6 +2468,7 @@ control_families:
           resource_types:
           - endpoint
           - aws_config
+        monitoring_frequency: monthly
       CM-8(4):
         checks:
         - id: cm8_4_accountability_info
@@ -2227,8 +2479,10 @@ control_families:
           resource_types:
           - host
           - endpoint
+        monitoring_frequency: monthly
       CM-8(5):
         checks: []
+        monitoring_frequency: monthly
       CM-8(6):
         checks:
         - id: cm8_6_assessed_configurations
@@ -2239,6 +2493,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-8(7):
         checks:
         - id: cm8_7_centralized_repository
@@ -2249,6 +2504,7 @@ control_families:
           resource_types:
           - host
           - aws_config
+        monitoring_frequency: monthly
       CM-8(8):
         checks:
         - id: cm8_8_automated_location_tracking
@@ -2259,6 +2515,7 @@ control_families:
           resource_types:
           - host
           - endpoint
+        monitoring_frequency: monthly
       CM-8(9):
         checks:
         - id: cm8_9_assignment_to_systems
@@ -2268,8 +2525,10 @@ control_families:
           resource_types:
           - host
           - endpoint
+        monitoring_frequency: monthly
       CM-9:
         checks: []
+        monitoring_frequency: monthly
       CM-9(1):
         checks:
         - id: cm9_1_assignment_responsibility
@@ -2277,8 +2536,10 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_standard
+        monitoring_frequency: monthly
       CM-10:
         checks: []
+        monitoring_frequency: monthly
       CM-10(1):
         checks:
         - id: cm10_1_open_source_software
@@ -2286,6 +2547,7 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_standard
+        monitoring_frequency: monthly
       CM-11:
         checks:
         - id: cm11_user_installed_software
@@ -2296,6 +2558,7 @@ control_families:
           resource_types:
           - endpoint
           - agent
+        monitoring_frequency: monthly
       CM-11(1):
         checks:
         - id: cm11_1_alerts_unauthorized
@@ -2305,6 +2568,7 @@ control_families:
           - s1_threats
           resource_types:
           - endpoint
+        monitoring_frequency: monthly
       CM-11(2):
         checks:
         - id: cm11_2_privileged_install
@@ -2316,6 +2580,7 @@ control_families:
           - iam_policy
           - gcp_iam_binding
           - endpoint
+        monitoring_frequency: monthly
       CM-11(3):
         checks:
         - id: cm11_3_automated_enforcement
@@ -2326,6 +2591,7 @@ control_families:
           resource_types:
           - endpoint
           - compliance_standard
+        monitoring_frequency: monthly
       CM-12:
         checks:
         - id: cm12_information_location
@@ -2338,6 +2604,7 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: monthly
       CM-12(1):
         checks:
         - id: cm12_1_automated_info_location
@@ -2351,8 +2618,10 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: monthly
       CM-13:
         checks: []
+        monitoring_frequency: monthly
       CM-14:
         checks:
         - id: cm14_signed_components
@@ -2362,6 +2631,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
       CM-14(1):
         checks:
         - id: cm14_1_integrity_verification
@@ -2372,6 +2642,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
   IA:
     controls:
       IA-2:
@@ -2397,6 +2668,7 @@ control_families:
           - iam_password_policy
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-5:
         checks:
         - id: ia5_authenticator_management
@@ -2414,6 +2686,7 @@ control_families:
           - okta_user_factors
           - entra_user
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-8:
         checks:
         - id: ia8_non_organizational_users
@@ -2427,8 +2700,10 @@ control_families:
           - entra_sign_in
           - entra_conditional_access_policy
           - okta_user
+        monitoring_frequency: weekly
       IA-1:
         checks: []
+        monitoring_frequency: weekly
       IA-2(1):
         checks:
         - id: ia2_1_mfa_privileged
@@ -2443,6 +2718,7 @@ control_families:
           - okta_user_factors
           - entra_user
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(2):
         checks:
         - id: ia2_2_mfa_non_privileged
@@ -2457,6 +2733,7 @@ control_families:
           - okta_user_factors
           - entra_user
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(3):
         checks:
         - id: ia2_3_local_access_mfa
@@ -2466,6 +2743,7 @@ control_families:
           resource_types:
           - okta_user_factors
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(4):
         checks:
         - id: ia2_4_remote_access_mfa
@@ -2475,6 +2753,7 @@ control_families:
           resource_types:
           - okta_user_factors
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(5):
         checks:
         - id: ia2_5_individual_authentication_group
@@ -2486,6 +2765,7 @@ control_families:
           - iam_user
           - okta_user
           - entra_user
+        monitoring_frequency: weekly
       IA-2(6):
         checks:
         - id: ia2_6_access_to_accounts
@@ -2499,6 +2779,7 @@ control_families:
           - okta_user_factors
           - entra_conditional_access_policy
           - cyberark_account
+        monitoring_frequency: weekly
       IA-2(7):
         checks:
         - id: ia2_7_network_access_non_privileged_replay_resistant
@@ -2508,6 +2789,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(8):
         checks:
         - id: ia2_8_replay_resistant_mfa
@@ -2519,6 +2801,7 @@ control_families:
           - okta_policy
           - okta_user_factors
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(9):
         checks:
         - id: ia2_9_network_service_access_replay_resistant
@@ -2528,6 +2811,7 @@ control_families:
           resource_types:
           - entra_service_principal
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(10):
         checks:
         - id: ia2_10_single_sign_on
@@ -2539,6 +2823,7 @@ control_families:
           - okta_policy
           - entra_conditional_access_policy
           - entra_sign_in
+        monitoring_frequency: weekly
       IA-2(11):
         checks:
         - id: ia2_11_remote_access_separate_device
@@ -2548,6 +2833,7 @@ control_families:
           resource_types:
           - okta_user_factors
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-2(12):
         checks:
         - id: ia2_12_acceptance_of_piv_credentials
@@ -2557,6 +2843,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       IA-2(13):
         checks:
         - id: ia2_13_out_of_band_authentication
@@ -2566,6 +2853,7 @@ control_families:
           resource_types:
           - okta_user_factors
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-3:
         checks:
         - id: ia3_device_identification
@@ -2576,6 +2864,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - endpoint
+        monitoring_frequency: weekly
       IA-3(1):
         checks:
         - id: ia3_1_cryptographic_bidirectional_auth
@@ -2583,14 +2872,17 @@ control_families:
           - entra_conditional_access_policies
           resource_types:
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-3(2):
         checks: []
+        monitoring_frequency: weekly
       IA-3(3):
         checks:
         - id: ia3_3_dynamic_address_allocation
           event_types:
           - audit_logs
           resource_types: []
+        monitoring_frequency: weekly
       IA-3(4):
         checks:
         - id: ia3_4_device_attestation
@@ -2600,6 +2892,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - endpoint
+        monitoring_frequency: weekly
       IA-4:
         checks:
         - id: ia4_identifier_management
@@ -2613,8 +2906,10 @@ control_families:
           - okta_user
           - entra_user
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-4(1):
         checks: []
+        monitoring_frequency: weekly
       IA-4(2):
         checks:
         - id: ia4_2_supervisor_authorization
@@ -2622,6 +2917,7 @@ control_families:
           - sailpoint_certifications
           resource_types:
           - sailpoint_certification
+        monitoring_frequency: weekly
       IA-4(3):
         checks:
         - id: ia4_3_multiple_forms_of_certification
@@ -2629,6 +2925,7 @@ control_families:
           - sailpoint_certifications
           resource_types:
           - sailpoint_certification
+        monitoring_frequency: weekly
       IA-4(4):
         checks:
         - id: ia4_4_identify_user_status
@@ -2641,6 +2938,7 @@ control_families:
           - iam_user
           - okta_user
           - entra_user
+        monitoring_frequency: weekly
       IA-4(5):
         checks:
         - id: ia4_5_dynamic_management
@@ -2650,10 +2948,13 @@ control_families:
           resource_types:
           - sailpoint_identity
           - entra_user
+        monitoring_frequency: weekly
       IA-4(6):
         checks: []
+        monitoring_frequency: weekly
       IA-4(7):
         checks: []
+        monitoring_frequency: weekly
       IA-4(8):
         checks:
         - id: ia4_8_pairwise_pseudonymous_identifiers
@@ -2662,6 +2963,7 @@ control_families:
           - entra_app_registrations
           resource_types:
           - entra_user
+        monitoring_frequency: weekly
       IA-4(9):
         checks:
         - id: ia4_9_attribute_maintenance
@@ -2675,6 +2977,7 @@ control_families:
           - okta_user
           - entra_user
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-5(1):
         checks:
         - id: ia5_1_password_based
@@ -2686,6 +2989,7 @@ control_families:
           - iam_password_policy
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-5(2):
         checks:
         - id: ia5_2_pki_based
@@ -2695,10 +2999,13 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - key_vault
+        monitoring_frequency: weekly
       IA-5(3):
         checks: []
+        monitoring_frequency: weekly
       IA-5(4):
         checks: []
+        monitoring_frequency: weekly
       IA-5(5):
         checks:
         - id: ia5_5_change_authenticators_prior_delivery
@@ -2708,6 +3015,7 @@ control_families:
           resource_types:
           - iam_password_policy
           - okta_policy
+        monitoring_frequency: weekly
       IA-5(6):
         checks:
         - id: ia5_6_protection_of_authenticators
@@ -2719,6 +3027,7 @@ control_families:
           - key_vault
           - cyberark_account
           - cyberark_compliance
+        monitoring_frequency: weekly
       IA-5(7):
         checks:
         - id: ia5_7_no_embedded_unencrypted_static_authenticators
@@ -2726,6 +3035,7 @@ control_families:
           - iam_credential_report
           resource_types:
           - iam_user
+        monitoring_frequency: weekly
       IA-5(8):
         checks:
         - id: ia5_8_multiple_system_accounts
@@ -2737,6 +3047,7 @@ control_families:
           - iam_user
           - okta_user
           - entra_user
+        monitoring_frequency: weekly
       IA-5(9):
         checks:
         - id: ia5_9_federated_credential_management
@@ -2748,6 +3059,7 @@ control_families:
           - okta_policy
           - entra_conditional_access_policy
           - entra_service_principal
+        monitoring_frequency: weekly
       IA-5(10):
         checks:
         - id: ia5_10_dynamic_credential_binding
@@ -2757,8 +3069,10 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       IA-5(11):
         checks: []
+        monitoring_frequency: weekly
       IA-5(12):
         checks:
         - id: ia5_12_biometric_auth
@@ -2768,6 +3082,7 @@ control_families:
           resource_types:
           - okta_user_factors
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-5(13):
         checks:
         - id: ia5_13_expiration_of_cached_authenticators
@@ -2777,8 +3092,10 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-5(14):
         checks: []
+        monitoring_frequency: weekly
       IA-5(15):
         checks:
         - id: ia5_15_gsa_approved_products_services
@@ -2788,6 +3105,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-5(16):
         checks:
         - id: ia5_16_in_person_or_trusted_third_party_registration
@@ -2795,6 +3113,7 @@ control_families:
           - sailpoint_identities
           resource_types:
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-5(17):
         checks:
         - id: ia5_17_presentation_attack_detection
@@ -2802,6 +3121,7 @@ control_families:
           - okta_factors
           resource_types:
           - okta_user_factors
+        monitoring_frequency: weekly
       IA-5(18):
         checks:
         - id: ia5_18_password_managers
@@ -2811,6 +3131,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-6:
         checks:
         - id: ia6_authentication_feedback
@@ -2820,8 +3141,10 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-6(1):
         checks: []
+        monitoring_frequency: weekly
       IA-7:
         checks:
         - id: ia7_cryptographic_module_auth
@@ -2829,10 +3152,13 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: weekly
       IA-7(1):
         checks: []
+        monitoring_frequency: weekly
       IA-7(2):
         checks: []
+        monitoring_frequency: weekly
       IA-8(1):
         checks:
         - id: ia8_1_acceptance_of_piv_external
@@ -2840,6 +3166,7 @@ control_families:
           - entra_conditional_access_policies
           resource_types:
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-8(2):
         checks:
         - id: ia8_2_acceptance_of_external_authenticators
@@ -2849,6 +3176,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       IA-8(3):
         checks:
         - id: ia8_3_use_of_ficam_approved_products
@@ -2856,6 +3184,7 @@ control_families:
           - entra_conditional_access_policies
           resource_types:
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-8(4):
         checks:
         - id: ia8_4_use_of_defined_profiles
@@ -2865,6 +3194,7 @@ control_families:
           resource_types:
           - entra_conditional_access_policy
           - okta_policy
+        monitoring_frequency: weekly
       IA-8(5):
         checks:
         - id: ia8_5_acceptance_of_piv_i_credentials
@@ -2872,6 +3202,7 @@ control_families:
           - entra_conditional_access_policies
           resource_types:
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-8(6):
         checks:
         - id: ia8_6_disassociability
@@ -2880,6 +3211,7 @@ control_families:
           - entra_app_registrations
           resource_types:
           - entra_user
+        monitoring_frequency: weekly
       IA-9:
         checks:
         - id: ia9_service_identification
@@ -2888,6 +3220,7 @@ control_families:
           - entra_app_registrations
           resource_types:
           - entra_service_principal
+        monitoring_frequency: weekly
       IA-9(1):
         checks:
         - id: ia9_1_information_exchange
@@ -2895,6 +3228,7 @@ control_families:
           - entra_service_principals
           resource_types:
           - entra_service_principal
+        monitoring_frequency: weekly
       IA-9(2):
         checks:
         - id: ia9_2_transmission_of_decisions
@@ -2904,6 +3238,7 @@ control_families:
           resource_types:
           - entra_service_principal
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-10:
         checks:
         - id: ia10_adaptive_authentication
@@ -2917,6 +3252,7 @@ control_families:
           - entra_user
           - entra_sign_in
           - okta_policy
+        monitoring_frequency: weekly
       IA-10(1):
         checks:
         - id: ia10_1_risk_based_authentication
@@ -2928,6 +3264,7 @@ control_families:
           - entra_user
           - entra_sign_in
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-11:
         checks:
         - id: ia11_re_authentication
@@ -2937,6 +3274,7 @@ control_families:
           resource_types:
           - okta_policy
           - entra_conditional_access_policy
+        monitoring_frequency: weekly
       IA-11(1):
         checks:
         - id: ia11_1_re_authentication_for_privileged
@@ -2948,6 +3286,7 @@ control_families:
           - okta_policy
           - entra_conditional_access_policy
           - cyberark_account
+        monitoring_frequency: weekly
       IA-12:
         checks:
         - id: ia12_identity_proofing
@@ -2959,6 +3298,7 @@ control_families:
           - sailpoint_identity
           - entra_user
           - okta_user
+        monitoring_frequency: weekly
       IA-12(1):
         checks:
         - id: ia12_1_supervisor_authorization
@@ -2966,6 +3306,7 @@ control_families:
           - sailpoint_certifications
           resource_types:
           - sailpoint_certification
+        monitoring_frequency: weekly
       IA-12(2):
         checks:
         - id: ia12_2_identity_evidence
@@ -2973,6 +3314,7 @@ control_families:
           - sailpoint_identities
           resource_types:
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-12(3):
         checks:
         - id: ia12_3_identity_evidence_validation_verification
@@ -2980,6 +3322,7 @@ control_families:
           - sailpoint_identities
           resource_types:
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-12(4):
         checks:
         - id: ia12_4_in_person_validation_verification
@@ -2987,6 +3330,7 @@ control_families:
           - sailpoint_identities
           resource_types:
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-12(5):
         checks:
         - id: ia12_5_address_confirmation
@@ -2994,6 +3338,7 @@ control_families:
           - sailpoint_identities
           resource_types:
           - sailpoint_identity
+        monitoring_frequency: weekly
       IA-12(6):
         checks:
         - id: ia12_6_accept_externally_proofed
@@ -3003,8 +3348,10 @@ control_families:
           resource_types:
           - entra_user
           - okta_user
+        monitoring_frequency: weekly
       IA-13:
         checks: []
+        monitoring_frequency: weekly
   SC:
     controls:
       SC-7:
@@ -3021,6 +3368,7 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-8:
         title: Transmission Confidentiality and Integrity
         checks:
@@ -3035,6 +3383,7 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: monthly
       SC-12:
         title: Cryptographic Key Establishment and Management
         checks:
@@ -3043,6 +3392,7 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-28:
         title: Protection of Information at Rest
         checks:
@@ -3057,45 +3407,59 @@ control_families:
           - storage_account
           - storage_bucket
           - key_vault
+        monitoring_frequency: monthly
       SC-1:
         title: Policy and Procedures
         checks: []
+        monitoring_frequency: monthly
       SC-2:
         title: Separation of User and System Functionality
         checks: []
+        monitoring_frequency: monthly
       SC-2(1):
         title: Interfaces for Non-Privileged Users
         checks: []
+        monitoring_frequency: monthly
       SC-2(2):
         title: Disassociability
         checks: []
+        monitoring_frequency: monthly
       SC-3:
         title: Security Function Isolation
         checks: []
+        monitoring_frequency: monthly
       SC-3(1):
         title: Hardware Separation
         checks: []
+        monitoring_frequency: monthly
       SC-3(2):
         title: Access and Flow Control Functions
         checks: []
+        monitoring_frequency: monthly
       SC-3(3):
         title: Minimize Nonsecurity Functionality
         checks: []
+        monitoring_frequency: monthly
       SC-3(4):
         title: Module Coupling and Cohesiveness
         checks: []
+        monitoring_frequency: monthly
       SC-3(5):
         title: Layered Structures
         checks: []
+        monitoring_frequency: monthly
       SC-4:
         title: Information in Shared System Resources
         checks: []
+        monitoring_frequency: monthly
       SC-4(1):
         title: Security Levels
         checks: []
+        monitoring_frequency: monthly
       SC-4(2):
         title: Periods Processing
         checks: []
+        monitoring_frequency: monthly
       SC-5:
         title: Denial-of-Service Protection
         checks:
@@ -3109,6 +3473,7 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-5(1):
         title: Restrict Ability to Attack Other Systems
         checks:
@@ -3123,9 +3488,11 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-5(2):
         title: Capacity, Bandwidth, and Redundancy
         checks: []
+        monitoring_frequency: monthly
       SC-5(3):
         title: Detection and Monitoring
         checks:
@@ -3136,15 +3503,19 @@ control_families:
           - defender_alerts
           resource_types:
           - guardduty
+        monitoring_frequency: monthly
       SC-6:
         title: Resource Availability
         checks: []
+        monitoring_frequency: monthly
       SC-7(1):
         title: Physically Separated Subnetworks
         checks: []
+        monitoring_frequency: monthly
       SC-7(2):
         title: Public Access
         checks: []
+        monitoring_frequency: monthly
       SC-7(3):
         title: Access Points
         checks:
@@ -3159,11 +3530,13 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(4):
         title: External Telecommunications Services
         checks: []
+        monitoring_frequency: monthly
       SC-7(5):
-        title: Deny by Default — Allow by Exception
+        title: "Deny by Default \u2014 Allow by Exception"
         checks:
         - id: sc7_5_deny_default
           event_types:
@@ -3176,12 +3549,15 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(6):
         title: Response to Recognized Failures
         checks: []
+        monitoring_frequency: monthly
       SC-7(7):
         title: Split Tunneling for Remote Devices
         checks: []
+        monitoring_frequency: monthly
       SC-7(8):
         title: Route Traffic to Authenticated Proxy Servers
         checks:
@@ -3194,6 +3570,7 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(9):
         title: Restrict Threatening Outgoing Communications Traffic
         checks:
@@ -3210,6 +3587,7 @@ control_families:
           - compute_firewall_rule
           - network_security_group
           - guardduty
+        monitoring_frequency: monthly
       SC-7(10):
         title: Prevent Exfiltration
         checks:
@@ -3224,6 +3602,7 @@ control_families:
           - ec2_network_acl
           - guardduty
           - s3_bucket
+        monitoring_frequency: monthly
       SC-7(11):
         title: Restrict Incoming Communications Traffic
         checks:
@@ -3238,6 +3617,7 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(12):
         title: Host-Based Protection
         checks:
@@ -3249,12 +3629,15 @@ control_families:
           resource_types:
           - endpoint
           - agent
+        monitoring_frequency: monthly
       SC-7(13):
         title: Isolation of Security Tools, Mechanisms, and Support Components
         checks: []
+        monitoring_frequency: monthly
       SC-7(14):
         title: Protect Against Unauthorized Physical Connections
         checks: []
+        monitoring_frequency: monthly
       SC-7(15):
         title: Networked Privileged Accesses
         checks:
@@ -3267,15 +3650,19 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(16):
         title: Prevent Discovery of System Components
         checks: []
+        monitoring_frequency: monthly
       SC-7(17):
         title: Automated Enforcement of Protocol Formats
         checks: []
+        monitoring_frequency: monthly
       SC-7(18):
         title: Fail Secure
         checks: []
+        monitoring_frequency: monthly
       SC-7(19):
         title: Block Communication from Non-Organizationally Configured Hosts
         checks:
@@ -3288,9 +3675,11 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(20):
         title: Dynamic Isolation and Segregation
         checks: []
+        monitoring_frequency: monthly
       SC-7(21):
         title: Isolation of System Components
         checks:
@@ -3305,24 +3694,31 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(22):
         title: Separate Subnets for Connecting to Different Security Domains
         checks: []
+        monitoring_frequency: monthly
       SC-7(23):
         title: Disable Sender Feedback on Protocol Validation Failure
         checks: []
+        monitoring_frequency: monthly
       SC-7(24):
         title: Personally Identifiable Information
         checks: []
+        monitoring_frequency: monthly
       SC-7(25):
-        title: Unclassified Telecommunications Systems — External Network
+        title: "Unclassified Telecommunications Systems \u2014 External Network"
         checks: []
+        monitoring_frequency: monthly
       SC-7(26):
         title: Classified National Security System Connections
         checks: []
+        monitoring_frequency: monthly
       SC-7(27):
         title: Unclassified Non-National Security System Connections
         checks: []
+        monitoring_frequency: monthly
       SC-7(28):
         title: Connections to Public Networks
         checks:
@@ -3335,6 +3731,7 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-7(29):
         title: Separate Subnets to Isolate Functions
         checks:
@@ -3349,6 +3746,7 @@ control_families:
           - ec2_network_acl
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SC-8(1):
         title: Cryptographic Protection
         checks:
@@ -3363,9 +3761,11 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: monthly
       SC-8(2):
         title: Pre- and Post-Transmission Handling
         checks: []
+        monitoring_frequency: monthly
       SC-8(3):
         title: Cryptographic Protection for Message Externals
         checks:
@@ -3374,24 +3774,31 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-8(4):
         title: Conceal or Randomize Communications
         checks: []
+        monitoring_frequency: monthly
       SC-8(5):
         title: Protected Distribution System
         checks: []
+        monitoring_frequency: monthly
       SC-9:
         title: Transmission Confidentiality
         checks: []
+        monitoring_frequency: monthly
       SC-10:
         title: Network Disconnect
         checks: []
+        monitoring_frequency: monthly
       SC-10(1):
         title: Session Termination Notification
         checks: []
+        monitoring_frequency: monthly
       SC-11:
         title: Trusted Path
         checks: []
+        monitoring_frequency: monthly
       SC-12(1):
         title: Availability
         checks:
@@ -3400,6 +3807,7 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-12(2):
         title: Symmetric Keys
         checks:
@@ -3408,6 +3816,7 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-12(3):
         title: Asymmetric Keys
         checks:
@@ -3416,6 +3825,7 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-12(4):
         title: PKI Certificates
         checks:
@@ -3424,12 +3834,15 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-12(5):
-        title: PKI Certificates — Hardware Tokens
+        title: "PKI Certificates \u2014 Hardware Tokens"
         checks: []
+        monitoring_frequency: monthly
       SC-12(6):
         title: Physical Control of Keys
         checks: []
+        monitoring_frequency: monthly
       SC-13:
         title: Cryptographic Protection
         checks:
@@ -3444,6 +3857,7 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: monthly
       SC-13(1):
         title: FIPS-Validated Cryptography
         checks:
@@ -3452,33 +3866,43 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-13(2):
         title: NSA-Approved Cryptography
         checks: []
+        monitoring_frequency: monthly
       SC-13(3):
         title: Individuals Without Formal Access Approvals
         checks: []
+        monitoring_frequency: monthly
       SC-13(4):
         title: Digital Signatures
         checks: []
+        monitoring_frequency: monthly
       SC-14:
         title: Public Access Protections
         checks: []
+        monitoring_frequency: monthly
       SC-15:
         title: Collaborative Computing Devices and Applications
         checks: []
+        monitoring_frequency: monthly
       SC-16:
         title: Transmission of Security and Privacy Attributes
         checks: []
+        monitoring_frequency: monthly
       SC-16(1):
         title: Integrity Verification
         checks: []
+        monitoring_frequency: monthly
       SC-16(2):
         title: Anti-Spoofing Mechanisms
         checks: []
+        monitoring_frequency: monthly
       SC-16(3):
         title: Cryptographic Binding
         checks: []
+        monitoring_frequency: monthly
       SC-17:
         title: Public Key Infrastructure Certificates
         checks:
@@ -3487,12 +3911,15 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-17(1):
         title: Interoperable Root Certification Authority
         checks: []
+        monitoring_frequency: monthly
       SC-18:
         title: Mobile Code
         checks: []
+        monitoring_frequency: monthly
       SC-18(1):
         title: Identify Unacceptable Code and Take Corrective Actions
         checks:
@@ -3503,9 +3930,11 @@ control_families:
           - s1_threats
           resource_types:
           - endpoint
+        monitoring_frequency: monthly
       SC-18(2):
         title: Acquisition, Development, and Use
         checks: []
+        monitoring_frequency: monthly
       SC-18(3):
         title: Prevent Downloading and Execution
         checks:
@@ -3517,39 +3946,51 @@ control_families:
           - s1_policies
           resource_types:
           - endpoint
+        monitoring_frequency: monthly
       SC-18(4):
         title: Prevent Automatic Execution
         checks: []
+        monitoring_frequency: monthly
       SC-18(5):
         title: Allow Execution Only in Confined Environments
         checks: []
+        monitoring_frequency: monthly
       SC-19:
         title: Voice Over Internet Protocol
         checks: []
+        monitoring_frequency: monthly
       SC-20:
-        title: Secure Name/Address Resolution Service — Authoritative Source
+        title: "Secure Name/Address Resolution Service \u2014 Authoritative Source"
         checks: []
+        monitoring_frequency: monthly
       SC-21:
-        title: Secure Name/Address Resolution Service — Recursive or Caching Resolver
+        title: "Secure Name/Address Resolution Service \u2014 Recursive or Caching Resolver"
         checks: []
+        monitoring_frequency: monthly
       SC-22:
         title: Architecture and Provisioning for Name/Address Resolution Service
         checks: []
+        monitoring_frequency: monthly
       SC-23:
         title: Session Authenticity
         checks: []
+        monitoring_frequency: monthly
       SC-23(1):
         title: Invalidate Session Identifiers at Logout
         checks: []
+        monitoring_frequency: monthly
       SC-23(2):
         title: User-Initiated Logouts and Message Displays
         checks: []
+        monitoring_frequency: monthly
       SC-23(3):
         title: Unique System-Generated Session Identifiers
         checks: []
+        monitoring_frequency: monthly
       SC-23(4):
         title: Unique Session Identifiers with Randomization
         checks: []
+        monitoring_frequency: monthly
       SC-23(5):
         title: Allowed Certificate Authorities
         checks:
@@ -3558,15 +3999,19 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-24:
         title: Fail in Known State
         checks: []
+        monitoring_frequency: monthly
       SC-25:
         title: Thin Nodes
         checks: []
+        monitoring_frequency: monthly
       SC-26:
         title: Honeypots
         checks: []
+        monitoring_frequency: monthly
       SC-26(1):
         title: Detection of Malicious Code
         checks:
@@ -3578,9 +4023,11 @@ control_families:
           resource_types:
           - endpoint
           - guardduty
+        monitoring_frequency: monthly
       SC-27:
         title: Platform-Independent Applications
         checks: []
+        monitoring_frequency: monthly
       SC-28(1):
         title: Cryptographic Protection
         checks:
@@ -3595,9 +4042,11 @@ control_families:
           - storage_account
           - storage_bucket
           - key_vault
+        monitoring_frequency: monthly
       SC-28(2):
         title: Offline Storage
         checks: []
+        monitoring_frequency: monthly
       SC-28(3):
         title: Cryptographic Keys
         checks:
@@ -3606,102 +4055,135 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SC-29:
         title: Heterogeneity
         checks: []
+        monitoring_frequency: monthly
       SC-30:
         title: Concealment and Misdirection
         checks: []
+        monitoring_frequency: monthly
       SC-31:
         title: Covert Channel Analysis
         checks: []
+        monitoring_frequency: monthly
       SC-31(1):
         title: Test Covert Channels for Exploitability
         checks: []
+        monitoring_frequency: monthly
       SC-31(2):
         title: Maximum Bandwidth
         checks: []
+        monitoring_frequency: monthly
       SC-31(3):
         title: Measure Bandwidth in Operational Environments
         checks: []
+        monitoring_frequency: monthly
       SC-32:
         title: System Partitioning
         checks: []
+        monitoring_frequency: monthly
       SC-33:
         title: Transmission Preparation Integrity
         checks: []
+        monitoring_frequency: monthly
       SC-34:
         title: Non-Modifiable Executable Programs
         checks: []
+        monitoring_frequency: monthly
       SC-35:
         title: External Malicious Code Identification
         checks: []
+        monitoring_frequency: monthly
       SC-36:
         title: Distributed Processing and Storage
         checks: []
+        monitoring_frequency: monthly
       SC-36(1):
         title: Polling Techniques
         checks: []
+        monitoring_frequency: monthly
       SC-36(2):
         title: Synchronization
         checks: []
+        monitoring_frequency: monthly
       SC-37:
         title: Out-of-Band Channels
         checks: []
+        monitoring_frequency: monthly
       SC-38:
         title: Operations Security
         checks: []
+        monitoring_frequency: monthly
       SC-39:
         title: Process Isolation
         checks: []
+        monitoring_frequency: monthly
       SC-39(1):
         title: Hardware Separation
         checks: []
+        monitoring_frequency: monthly
       SC-39(2):
         title: Separate Execution Domain Per Thread
         checks: []
+        monitoring_frequency: monthly
       SC-40:
         title: Wireless Link Protection
         checks: []
+        monitoring_frequency: monthly
       SC-41:
         title: Port and I/O Device Access
         checks: []
+        monitoring_frequency: monthly
       SC-42:
         title: Sensor Capability and Data
         checks: []
+        monitoring_frequency: monthly
       SC-43:
         title: Usage Restrictions
         checks: []
+        monitoring_frequency: monthly
       SC-44:
         title: Detonation Chambers
         checks: []
+        monitoring_frequency: monthly
       SC-45:
         title: System Time Synchronization
         checks: []
+        monitoring_frequency: monthly
       SC-45(1):
         title: Synchronization with Authoritative Time Source
         checks: []
+        monitoring_frequency: monthly
       SC-45(2):
         title: Secondary Authoritative Time Source
         checks: []
+        monitoring_frequency: monthly
       SC-46:
         title: Cross Domain Policy Enforcement
         checks: []
+        monitoring_frequency: monthly
       SC-47:
         title: Alternate Communications Paths
         checks: []
+        monitoring_frequency: monthly
       SC-48:
         title: Sensor Relocation
         checks: []
+        monitoring_frequency: monthly
       SC-49:
         title: Hardware-Enforced Separation and Policy Enforcement
         checks: []
+        monitoring_frequency: monthly
       SC-50:
         title: Software-Enforced Separation and Policy Enforcement
         checks: []
+        monitoring_frequency: monthly
       SC-51:
         title: Hardware-Based Protection
         checks: []
+        monitoring_frequency: monthly
   SI:
     controls:
       SI-2:
@@ -3718,6 +4200,7 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: weekly
       SI-3:
         title: Malicious Code Protection
         checks:
@@ -3729,6 +4212,7 @@ control_families:
           - elastic_security_alerts
           resource_types:
           - endpoint
+        monitoring_frequency: daily
       SI-4:
         title: System Monitoring
         checks:
@@ -3752,6 +4236,7 @@ control_families:
           - splunk_correlation_rule
           - sentinel_analytics_rule
           - elastic_detection_rule
+        monitoring_frequency: daily
       SI-5:
         title: Security Alerts, Advisories, and Directives
         checks:
@@ -3763,9 +4248,11 @@ control_families:
           - wiz_issues
           resource_types:
           - securityhub
+        monitoring_frequency: weekly
       SI-1:
         title: Policy and Procedures
         checks: []
+        monitoring_frequency: weekly
       SI-2(1):
         title: Central Management
         checks:
@@ -3780,6 +4267,7 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: weekly
       SI-2(2):
         title: Automated Flaw Remediation Status
         checks:
@@ -3794,6 +4282,7 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: weekly
       SI-2(3):
         title: Time to Remediate Flaws and Benchmarks for Corrective Actions
         checks:
@@ -3806,6 +4295,7 @@ control_families:
           resource_types:
           - vulnerability
           - host
+        monitoring_frequency: weekly
       SI-2(4):
         title: Automated Patch Management Tools
         checks:
@@ -3818,6 +4308,7 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: weekly
       SI-2(5):
         title: Automatic Software and Firmware Updates
         checks:
@@ -3828,6 +4319,7 @@ control_families:
           resource_types:
           - endpoint
           - vulnerability
+        monitoring_frequency: weekly
       SI-2(6):
         title: Removal of Previous Versions of Software and Firmware
         checks:
@@ -3838,6 +4330,7 @@ control_families:
           resource_types:
           - host
           - vulnerability
+        monitoring_frequency: weekly
       SI-3(1):
         title: Central Management
         checks:
@@ -3851,6 +4344,7 @@ control_families:
           - endpoint
           - endpoint_fleet
           - agent
+        monitoring_frequency: daily
       SI-3(2):
         title: Automatic Updates
         checks:
@@ -3863,15 +4357,19 @@ control_families:
           resource_types:
           - endpoint
           - agent
+        monitoring_frequency: daily
       SI-3(3):
         title: Non-Privileged Users
         checks: []
+        monitoring_frequency: daily
       SI-3(4):
         title: Updates Only by Privileged Users
         checks: []
+        monitoring_frequency: daily
       SI-3(5):
         title: Portable Storage Devices
         checks: []
+        monitoring_frequency: daily
       SI-3(6):
         title: Testing and Verification
         checks:
@@ -3882,6 +4380,7 @@ control_families:
           - s1_threats
           resource_types:
           - endpoint
+        monitoring_frequency: daily
       SI-3(7):
         title: Nonsignature-Based Detection
         checks:
@@ -3893,6 +4392,7 @@ control_families:
           - elastic_security_alerts
           resource_types:
           - endpoint
+        monitoring_frequency: daily
       SI-3(8):
         title: Detect Unauthorized Commands
         checks:
@@ -3903,9 +4403,11 @@ control_families:
           - elastic_security_alerts
           resource_types:
           - endpoint
+        monitoring_frequency: daily
       SI-3(9):
         title: Authenticate Remote Commands
         checks: []
+        monitoring_frequency: daily
       SI-3(10):
         title: Malicious Code Analysis
         checks:
@@ -3916,6 +4418,7 @@ control_families:
           - s1_threats
           resource_types:
           - endpoint
+        monitoring_frequency: daily
       SI-4(1):
         title: System-Wide Intrusion Detection System
         checks:
@@ -3927,6 +4430,7 @@ control_families:
           resource_types:
           - guardduty
           - securityhub
+        monitoring_frequency: daily
       SI-4(2):
         title: Automated Tools and Mechanisms for Real-Time Analysis
         checks:
@@ -3941,6 +4445,7 @@ control_families:
           - sentinel_analytics_rule
           - elastic_detection_rule
           - guardduty
+        monitoring_frequency: daily
       SI-4(3):
         title: Automated Tool and Mechanism Integration
         checks:
@@ -3953,6 +4458,7 @@ control_families:
           - splunk_correlation_rule
           - sentinel_analytics_rule
           - elastic_detection_rule
+        monitoring_frequency: daily
       SI-4(4):
         title: Inbound and Outbound Communications Traffic
         checks:
@@ -3969,6 +4475,7 @@ control_families:
           - compute_firewall_rule
           - network_security_group
           - guardduty
+        monitoring_frequency: daily
       SI-4(5):
         title: System-Generated Alerts
         checks:
@@ -3985,9 +4492,11 @@ control_families:
           - splunk_notable_event
           - sentinel_incident
           - elastic_security_alert
+        monitoring_frequency: daily
       SI-4(6):
         title: Restrict Non-Privileged Users
         checks: []
+        monitoring_frequency: daily
       SI-4(7):
         title: Automated Response to Suspicious Events
         checks:
@@ -4000,15 +4509,19 @@ control_families:
           - sentinel_analytics_rule
           - splunk_correlation_rule
           - elastic_detection_rule
+        monitoring_frequency: daily
       SI-4(8):
         title: Protection of Monitoring Information
         checks: []
+        monitoring_frequency: daily
       SI-4(9):
         title: Testing of Monitoring Tools and Mechanisms
         checks: []
+        monitoring_frequency: daily
       SI-4(10):
         title: Visibility of Encrypted Communications
         checks: []
+        monitoring_frequency: daily
       SI-4(11):
         title: Analyze Communications Traffic Anomalies
         checks:
@@ -4021,6 +4534,7 @@ control_families:
           - guardduty
           - splunk_correlation_rule
           - sentinel_analytics_rule
+        monitoring_frequency: daily
       SI-4(12):
         title: Automated Organization-Generated Alerts
         checks:
@@ -4034,6 +4548,7 @@ control_families:
           - splunk_notable_event
           - sentinel_incident
           - elastic_security_alert
+        monitoring_frequency: daily
       SI-4(13):
         title: Analyze Traffic and Event Patterns
         checks:
@@ -4046,12 +4561,15 @@ control_families:
           - splunk_correlation_rule
           - sentinel_analytics_rule
           - elastic_detection_rule
+        monitoring_frequency: daily
       SI-4(14):
         title: Wireless Intrusion Detection
         checks: []
+        monitoring_frequency: daily
       SI-4(15):
         title: Wireless to Wireline Communications
         checks: []
+        monitoring_frequency: daily
       SI-4(16):
         title: Correlate Monitoring Information
         checks:
@@ -4068,6 +4586,7 @@ control_families:
           - sentinel_incident
           - sentinel_analytics_rule
           - securityhub
+        monitoring_frequency: daily
       SI-4(17):
         title: Integrated Situational Awareness
         checks:
@@ -4081,6 +4600,7 @@ control_families:
           resource_types:
           - securityhub
           - guardduty
+        monitoring_frequency: daily
       SI-4(18):
         title: Analyze Traffic and Covert Exfiltration
         checks:
@@ -4093,9 +4613,11 @@ control_families:
           - guardduty
           - splunk_correlation_rule
           - sentinel_analytics_rule
+        monitoring_frequency: daily
       SI-4(19):
         title: Risk for Individuals
         checks: []
+        monitoring_frequency: daily
       SI-4(20):
         title: Privileged Users
         checks:
@@ -4109,9 +4631,11 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: daily
       SI-4(21):
         title: Probationary Periods
         checks: []
+        monitoring_frequency: daily
       SI-4(22):
         title: Unauthorized Network Services
         checks:
@@ -4126,6 +4650,7 @@ control_families:
           - compute_firewall_rule
           - network_security_group
           - guardduty
+        monitoring_frequency: daily
       SI-4(23):
         title: Host-Based Devices
         checks:
@@ -4141,6 +4666,7 @@ control_families:
           - endpoint
           - endpoint_fleet
           - agent
+        monitoring_frequency: daily
       SI-4(24):
         title: Indicators of Compromise
         checks:
@@ -4156,6 +4682,7 @@ control_families:
           - sentinel_incident
           - elastic_security_alert
           - splunk_notable_event
+        monitoring_frequency: daily
       SI-4(25):
         title: Optimize Network Traffic Analysis
         checks:
@@ -4170,6 +4697,7 @@ control_families:
           - splunk_correlation_rule
           - sentinel_analytics_rule
           - elastic_detection_rule
+        monitoring_frequency: daily
       SI-5(1):
         title: Automated Alerts and Advisories
         checks:
@@ -4182,6 +4710,7 @@ control_families:
           - scc_findings
           resource_types:
           - securityhub
+        monitoring_frequency: weekly
       SI-6:
         title: Security and Privacy Function Verification
         checks:
@@ -4193,6 +4722,7 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: weekly
       SI-6(1):
         title: Notification of Failed Security Tests
         checks:
@@ -4203,6 +4733,7 @@ control_families:
           - monitor_alerts
           resource_types:
           - compliance_standard
+        monitoring_frequency: weekly
       SI-6(2):
         title: Automation Support for Distributed Testing
         checks:
@@ -4214,6 +4745,7 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: weekly
       SI-6(3):
         title: Report Verification Results
         checks:
@@ -4225,6 +4757,7 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: weekly
       SI-7:
         title: Software, Firmware, and Information Integrity
         checks:
@@ -4235,6 +4768,7 @@ control_families:
           - wiz_config_findings
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       SI-7(1):
         title: Integrity Checks
         checks:
@@ -4246,6 +4780,7 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: weekly
       SI-7(2):
         title: Automated Notifications of Integrity Violations
         checks:
@@ -4257,6 +4792,7 @@ control_families:
           - prisma_alerts
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       SI-7(3):
         title: Centrally Managed Integrity Tools
         checks:
@@ -4268,9 +4804,11 @@ control_families:
           resource_types:
           - endpoint
           - agent
+        monitoring_frequency: weekly
       SI-7(4):
         title: Tamper-Evident Packaging
         checks: []
+        monitoring_frequency: weekly
       SI-7(5):
         title: Automated Response to Integrity Violations
         checks:
@@ -4281,6 +4819,7 @@ control_families:
           - s1_threats
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       SI-7(6):
         title: Cryptographic Protection
         checks:
@@ -4289,6 +4828,7 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: weekly
       SI-7(7):
         title: Integration of Detection and Response
         checks:
@@ -4302,6 +4842,7 @@ control_families:
           - endpoint
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: weekly
       SI-7(8):
         title: Auditing Capability for Significant Events
         checks:
@@ -4314,15 +4855,19 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       SI-7(9):
         title: Verify Boot Process
         checks: []
+        monitoring_frequency: weekly
       SI-7(10):
         title: Protection of Boot Firmware
         checks: []
+        monitoring_frequency: weekly
       SI-7(11):
         title: Confined Environments with Limited Privileges
         checks: []
+        monitoring_frequency: weekly
       SI-7(12):
         title: Integrity Verification
         checks:
@@ -4332,18 +4877,23 @@ control_families:
           - prisma_compliance
           resource_types:
           - compliance_standard
+        monitoring_frequency: weekly
       SI-7(13):
         title: Code Execution in Protected Environments
         checks: []
+        monitoring_frequency: weekly
       SI-7(14):
         title: Binary or Machine Executable Code
         checks: []
+        monitoring_frequency: weekly
       SI-7(15):
         title: Code Authentication
         checks: []
+        monitoring_frequency: weekly
       SI-7(16):
         title: Time Limit on Process Execution Without Supervision
         checks: []
+        monitoring_frequency: weekly
       SI-7(17):
         title: Runtime Application Self-Protection
         checks:
@@ -4353,57 +4903,75 @@ control_families:
           - falcon_detection_details
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       SI-8:
         title: Spam Protection
         checks: []
+        monitoring_frequency: weekly
       SI-9:
         title: Information Input Restrictions
         checks: []
+        monitoring_frequency: weekly
       SI-10:
         title: Information Input Validation
         checks: []
+        monitoring_frequency: weekly
       SI-10(1):
         title: Manual Override Capability
         checks: []
+        monitoring_frequency: weekly
       SI-10(2):
         title: Review and Resolve Errors
         checks: []
+        monitoring_frequency: weekly
       SI-10(3):
         title: Predictive or Known Correct Behavior
         checks: []
+        monitoring_frequency: weekly
       SI-10(4):
         title: Timing Interactions
         checks: []
+        monitoring_frequency: weekly
       SI-10(5):
         title: Restrict Inputs to Trusted Sources and Approved Formats
         checks: []
+        monitoring_frequency: weekly
       SI-10(6):
         title: Injection Prevention
         checks: []
+        monitoring_frequency: weekly
       SI-11:
         title: Error Handling
         checks: []
+        monitoring_frequency: weekly
       SI-12:
         title: Information Management and Retention
         checks: []
+        monitoring_frequency: weekly
       SI-12(1):
         title: Limit Personally Identifiable Information Elements
         checks: []
+        monitoring_frequency: weekly
       SI-12(2):
         title: Minimize Personally Identifiable Information in Testing, Training, and Research
         checks: []
+        monitoring_frequency: weekly
       SI-12(3):
         title: Information Disposal
         checks: []
+        monitoring_frequency: weekly
       SI-13:
         title: Predictable Failure Prevention
         checks: []
+        monitoring_frequency: weekly
       SI-14:
         title: Non-Persistence
         checks: []
+        monitoring_frequency: weekly
       SI-15:
         title: Information Output Filtering
         checks: []
+        monitoring_frequency: weekly
       SI-16:
         title: Memory Protection
         checks:
@@ -4414,87 +4982,115 @@ control_families:
           - s1_threats
           resource_types:
           - endpoint
+        monitoring_frequency: weekly
       SI-16(1):
         title: Stack Canaries
         checks: []
+        monitoring_frequency: weekly
       SI-16(2):
         title: Address Space Layout Randomization
         checks: []
+        monitoring_frequency: weekly
       SI-16(3):
         title: Data Execution Prevention
         checks: []
+        monitoring_frequency: weekly
       SI-17:
         title: Fail-Safe Procedures
         checks: []
+        monitoring_frequency: weekly
       SI-18:
         title: Personally Identifiable Information Quality Operations
         checks: []
+        monitoring_frequency: weekly
       SI-18(1):
         title: Automation Support
         checks: []
+        monitoring_frequency: weekly
       SI-18(2):
         title: Data Tags
         checks: []
+        monitoring_frequency: weekly
       SI-18(3):
         title: Collection
         checks: []
+        monitoring_frequency: weekly
       SI-18(4):
         title: Individual Requests
         checks: []
+        monitoring_frequency: weekly
       SI-18(5):
         title: Notice of Correction or Deletion
         checks: []
+        monitoring_frequency: weekly
       SI-19:
         title: De-Identification
         checks: []
+        monitoring_frequency: weekly
       SI-19(1):
         title: Collection
         checks: []
+        monitoring_frequency: weekly
       SI-19(2):
         title: Archiving
         checks: []
+        monitoring_frequency: weekly
       SI-19(3):
         title: Release
         checks: []
+        monitoring_frequency: weekly
       SI-19(4):
         title: Removal, Masking, Encryption, Hashing, or Replacement of Direct Identifiers
         checks: []
+        monitoring_frequency: weekly
       SI-19(5):
         title: Statistical Disclosure Control
         checks: []
+        monitoring_frequency: weekly
       SI-19(6):
         title: Differential Privacy
         checks: []
+        monitoring_frequency: weekly
       SI-19(7):
         title: Validated Algorithms and Software
         checks: []
+        monitoring_frequency: weekly
       SI-19(8):
         title: Motivated Intruder
         checks: []
+        monitoring_frequency: weekly
       SI-20:
         title: Tainting
         checks: []
+        monitoring_frequency: weekly
       SI-20(1):
         title: Taint Sources
         checks: []
+        monitoring_frequency: weekly
       SI-20(2):
         title: Taint Sinks
         checks: []
+        monitoring_frequency: weekly
       SI-21:
         title: Information Refresh
         checks: []
+        monitoring_frequency: weekly
       SI-21(1):
-        title: Data Refresh — Non-Persistent Memory
+        title: "Data Refresh \u2014 Non-Persistent Memory"
         checks: []
+        monitoring_frequency: weekly
       SI-22:
         title: Information Diversity
         checks: []
+        monitoring_frequency: weekly
       SI-23:
         title: Information Fragmentation
         checks: []
+        monitoring_frequency: weekly
       SI-23(1):
-        title: Data Fragmentation — Reconstructability
+        title: "Data Fragmentation \u2014 Reconstructability"
         checks: []
+        monitoring_frequency: weekly
   RA:
     controls:
       RA-5:
@@ -4514,6 +5110,7 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: weekly
       RA-7:
         title: Risk Response
         checks:
@@ -4524,15 +5121,19 @@ control_families:
           - prisma_alerts
           resource_types:
           - recommendation
+        monitoring_frequency: monthly
       RA-1:
         title: Policy and Procedures
         checks: []
+        monitoring_frequency: monthly
       RA-2:
         title: Security Categorization
         checks: []
+        monitoring_frequency: monthly
       RA-2(1):
         title: Impact-Level Prioritization
         checks: []
+        monitoring_frequency: monthly
       RA-3:
         title: Risk Assessment
         checks:
@@ -4545,12 +5146,15 @@ control_families:
           resource_types:
           - recommendation
           - compliance_standard
+        monitoring_frequency: monthly
       RA-3(1):
         title: Supply Chain Risk Assessment
         checks: []
+        monitoring_frequency: monthly
       RA-3(2):
         title: Use of All-Source Intelligence
         checks: []
+        monitoring_frequency: monthly
       RA-3(3):
         title: Dynamic Threat Awareness
         checks:
@@ -4563,12 +5167,15 @@ control_families:
           - sentinel_incident
           - endpoint
           - guardduty
+        monitoring_frequency: monthly
       RA-3(4):
         title: Predictive Cyber Analytics
         checks: []
+        monitoring_frequency: monthly
       RA-4:
         title: Risk Assessment Update
         checks: []
+        monitoring_frequency: monthly
       RA-5(1):
         title: Update Tool Capability
         checks:
@@ -4580,6 +5187,7 @@ control_families:
           resource_types:
           - vulnerability
           - host
+        monitoring_frequency: weekly
       RA-5(2):
         title: Update Vulnerabilities to Be Scanned
         checks:
@@ -4594,6 +5202,7 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: weekly
       RA-5(3):
         title: Breadth and Depth of Coverage
         checks:
@@ -4610,6 +5219,7 @@ control_families:
           - endpoint
           - endpoint_fleet
           - agent
+        monitoring_frequency: weekly
       RA-5(4):
         title: Discoverable Information
         checks:
@@ -4624,6 +5234,7 @@ control_families:
           - compute_firewall_rule
           - network_security_group
           - s3_bucket
+        monitoring_frequency: weekly
       RA-5(5):
         title: Privileged Access
         checks:
@@ -4635,6 +5246,7 @@ control_families:
           resource_types:
           - vulnerability
           - host
+        monitoring_frequency: weekly
       RA-5(6):
         title: Automated Trend Analyses
         checks:
@@ -4647,6 +5259,7 @@ control_families:
           resource_types:
           - vulnerability
           - host
+        monitoring_frequency: weekly
       RA-5(7):
         title: Automated Detection and Notification of Unauthorized Components
         checks:
@@ -4659,6 +5272,7 @@ control_families:
           resource_types:
           - host
           - endpoint
+        monitoring_frequency: weekly
       RA-5(8):
         title: Review Historic Audit Logs
         checks:
@@ -4671,9 +5285,11 @@ control_families:
           - cloudtrail
           - gcp_audit
           - azure_activity
+        monitoring_frequency: weekly
       RA-5(9):
         title: Penetration Testing and Analysis
         checks: []
+        monitoring_frequency: weekly
       RA-5(10):
         title: Correlate Scanning Information
         checks:
@@ -4690,14 +5306,17 @@ control_families:
           - host
           - endpoint
           - securityhub
+        monitoring_frequency: weekly
       RA-5(11):
         title: Public Disclosure Program
         checks: []
+        monitoring_frequency: weekly
       RA-6:
         title: Technical Surveillance Countermeasures Survey
         checks: []
+        monitoring_frequency: monthly
       RA-7(1):
-        title: Risk Response — Continuous Monitoring
+        title: "Risk Response \u2014 Continuous Monitoring"
         checks:
         - id: ra7_1_continuous_risk
           event_types:
@@ -4710,24 +5329,31 @@ control_families:
           - securityhub
           - guardduty
           - recommendation
+        monitoring_frequency: monthly
       RA-8:
         title: Privacy Impact Assessments
         checks: []
+        monitoring_frequency: monthly
       RA-9:
         title: Criticality Analysis
         checks: []
+        monitoring_frequency: monthly
       RA-9(1):
         title: Impact Identification
         checks: []
+        monitoring_frequency: monthly
       RA-9(2):
         title: Criticality Review
         checks: []
+        monitoring_frequency: monthly
       RA-9(3):
         title: Supply Chain Criticality
         checks: []
+        monitoring_frequency: monthly
       RA-9(4):
         title: Continuity of Operations
         checks: []
+        monitoring_frequency: monthly
       RA-10:
         title: Threat Hunting
         checks:
@@ -4746,8 +5372,9 @@ control_families:
           - sentinel_analytics_rule
           - elastic_detection_rule
           - endpoint
+        monitoring_frequency: monthly
       RA-10(1):
-        title: Threat Hunting — Automated Techniques
+        title: "Threat Hunting \u2014 Automated Techniques"
         checks:
         - id: ra10_1_auto_hunting
           event_types:
@@ -4758,6 +5385,7 @@ control_families:
           - splunk_correlation_rule
           - sentinel_analytics_rule
           - elastic_detection_rule
+        monitoring_frequency: monthly
   IR:
     controls:
       IR-4:
@@ -4772,6 +5400,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: monthly
       IR-5:
         checks:
         - id: ir5_incident_monitoring
@@ -4784,6 +5413,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: monthly
       IR-6:
         checks:
         - id: ir6_incident_reporting
@@ -4793,16 +5423,22 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-1:
         checks: []
+        monitoring_frequency: monthly
       IR-1(1):
         checks: []
+        monitoring_frequency: monthly
       IR-2:
         checks: []
+        monitoring_frequency: monthly
       IR-2(1):
         checks: []
+        monitoring_frequency: monthly
       IR-2(2):
         checks: []
+        monitoring_frequency: monthly
       IR-2(3):
         checks:
         - id: ir2_3_breach_notification
@@ -4810,6 +5446,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-3:
         checks:
         - id: ir3_incident_response_testing
@@ -4819,6 +5456,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-3(1):
         checks:
         - id: ir3_1_automated_testing
@@ -4827,6 +5465,7 @@ control_families:
           - sentinel_analytics_rules
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-3(2):
         checks:
         - id: ir3_2_coordination_with_related_plans
@@ -4834,6 +5473,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-3(3):
         checks:
         - id: ir3_3_continuous_improvement
@@ -4843,6 +5483,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-4(1):
         checks:
         - id: ir4_1_automated_incident_handling
@@ -4853,12 +5494,14 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-4(2):
         checks:
         - id: ir4_2_dynamic_reconfiguration
           event_types:
           - sentinel_analytics_rules
           resource_types: []
+        monitoring_frequency: monthly
       IR-4(3):
         checks:
         - id: ir4_3_continuity_of_operations
@@ -4866,6 +5509,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-4(4):
         checks:
         - id: ir4_4_information_correlation
@@ -4877,6 +5521,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: monthly
       IR-4(5):
         checks:
         - id: ir4_5_automatic_disabling
@@ -4885,6 +5530,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-4(6):
         checks:
         - id: ir4_6_insider_threats
@@ -4896,6 +5542,7 @@ control_families:
           - sentinel_incident
           - entra_user
           - entra_sign_in
+        monitoring_frequency: monthly
       IR-4(7):
         checks:
         - id: ir4_7_insider_threats_intra_organization
@@ -4903,6 +5550,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-4(8):
         checks:
         - id: ir4_8_correlation_with_external_orgs
@@ -4912,6 +5560,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-4(9):
         checks:
         - id: ir4_9_dynamic_response_capability
@@ -4920,6 +5569,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-4(10):
         checks:
         - id: ir4_10_supply_chain_coordination
@@ -4927,6 +5577,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-4(11):
         checks:
         - id: ir4_11_integrated_incident_response_team
@@ -4934,6 +5585,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-4(12):
         checks:
         - id: ir4_12_malicious_code_and_forensic_analysis
@@ -4945,6 +5597,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - endpoint
+        monitoring_frequency: monthly
       IR-4(13):
         checks:
         - id: ir4_13_behavior_analysis
@@ -4956,6 +5609,7 @@ control_families:
           - sentinel_incident
           - entra_user
           - endpoint
+        monitoring_frequency: monthly
       IR-4(14):
         checks:
         - id: ir4_14_security_operations_center
@@ -4968,6 +5622,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: monthly
       IR-5(1):
         checks:
         - id: ir5_1_automated_tracking_collection_analysis
@@ -4978,6 +5633,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-6(1):
         checks:
         - id: ir6_1_automated_reporting
@@ -4986,6 +5642,7 @@ control_families:
           - sentinel_analytics_rules
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-6(2):
         checks:
         - id: ir6_2_vulnerabilities_related_to_incidents
@@ -4996,6 +5653,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - vulnerability
+        monitoring_frequency: monthly
       IR-6(3):
         checks:
         - id: ir6_3_supply_chain_coordination
@@ -5003,6 +5661,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-7:
         checks:
         - id: ir7_incident_response_assistance
@@ -5010,6 +5669,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-7(1):
         checks:
         - id: ir7_1_automation_support
@@ -5018,6 +5678,7 @@ control_families:
           - sentinel_analytics_rules
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-7(2):
         checks:
         - id: ir7_2_coordination_with_external_providers
@@ -5025,10 +5686,13 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-8:
         checks: []
+        monitoring_frequency: monthly
       IR-8(1):
         checks: []
+        monitoring_frequency: monthly
       IR-9:
         checks:
         - id: ir9_information_spillage
@@ -5038,6 +5702,7 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: monthly
       IR-9(1):
         checks:
         - id: ir9_1_responsible_personnel
@@ -5045,8 +5710,10 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-9(2):
         checks: []
+        monitoring_frequency: monthly
       IR-9(3):
         checks:
         - id: ir9_3_post_spill_operations
@@ -5054,6 +5721,7 @@ control_families:
           - sentinel_incidents
           resource_types:
           - sentinel_incident
+        monitoring_frequency: monthly
       IR-9(4):
         checks:
         - id: ir9_4_exposure_to_unauthorized_personnel
@@ -5063,10 +5731,13 @@ control_families:
           resource_types:
           - sentinel_incident
           - entra_sign_in
+        monitoring_frequency: monthly
       IR-10:
         checks: []
+        monitoring_frequency: monthly
       IR-10(1):
         checks: []
+        monitoring_frequency: monthly
   CA:
     controls:
       CA-2:
@@ -5080,6 +5751,7 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: monthly
       CA-7:
         checks:
         - id: ca7_continuous_monitoring
@@ -5095,10 +5767,13 @@ control_families:
           - aws_config
           - securityhub
           - guardduty
+        monitoring_frequency: weekly
       CA-1:
         checks: []
+        monitoring_frequency: monthly
       CA-2(1):
         checks: []
+        monitoring_frequency: monthly
       CA-2(2):
         checks:
         - id: ca2_2_specialized_assessments
@@ -5111,8 +5786,10 @@ control_families:
           - vulnerability
           - host
           - endpoint
+        monitoring_frequency: monthly
       CA-2(3):
         checks: []
+        monitoring_frequency: monthly
       CA-3:
         checks:
         - id: ca3_information_exchange
@@ -5124,12 +5801,16 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       CA-3(1):
         checks: []
+        monitoring_frequency: monthly
       CA-3(2):
         checks: []
+        monitoring_frequency: monthly
       CA-3(3):
         checks: []
+        monitoring_frequency: monthly
       CA-3(4):
         checks:
         - id: ca3_4_public_network_connections
@@ -5141,8 +5822,10 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       CA-3(5):
         checks: []
+        monitoring_frequency: monthly
       CA-3(6):
         checks:
         - id: ca3_6_transfer_authorizations
@@ -5150,12 +5833,16 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_standard
+        monitoring_frequency: monthly
       CA-3(7):
         checks: []
+        monitoring_frequency: monthly
       CA-4:
         checks: []
+        monitoring_frequency: monthly
       CA-5:
         checks: []
+        monitoring_frequency: monthly
       CA-5(1):
         checks:
         - id: ca5_1_poam_automation
@@ -5166,8 +5853,10 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: monthly
       CA-6:
         checks: []
+        monitoring_frequency: monthly
       CA-7(1):
         checks:
         - id: ca7_1_independent_assessment
@@ -5177,8 +5866,10 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: weekly
       CA-7(2):
         checks: []
+        monitoring_frequency: weekly
       CA-7(3):
         checks:
         - id: ca7_3_trend_analyses
@@ -5190,6 +5881,7 @@ control_families:
           resource_types:
           - securityhub
           - splunk_notable_event
+        monitoring_frequency: weekly
       CA-7(4):
         checks:
         - id: ca7_4_risk_monitoring
@@ -5201,6 +5893,7 @@ control_families:
           resource_types:
           - guardduty
           - azure_defender_alert
+        monitoring_frequency: weekly
       CA-7(5):
         checks:
         - id: ca7_5_consistency_analysis
@@ -5211,6 +5904,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: weekly
       CA-7(6):
         checks:
         - id: ca7_6_automation_support
@@ -5225,14 +5919,19 @@ control_families:
           - securityhub
           - guardduty
           - azure_monitor
+        monitoring_frequency: weekly
       CA-8:
         checks: []
+        monitoring_frequency: monthly
       CA-8(1):
         checks: []
+        monitoring_frequency: monthly
       CA-8(2):
         checks: []
+        monitoring_frequency: monthly
       CA-8(3):
         checks: []
+        monitoring_frequency: monthly
       CA-9:
         checks:
         - id: ca9_internal_connections
@@ -5244,6 +5943,7 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       CA-9(1):
         checks:
         - id: ca9_1_compliance_checks
@@ -5254,14 +5954,18 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: monthly
   AT:
     controls:
       AT-2:
         checks: []
+        monitoring_frequency: quarterly
       AT-1:
         checks: []
+        monitoring_frequency: quarterly
       AT-2(1):
         checks: []
+        monitoring_frequency: quarterly
       AT-2(2):
         checks:
         - id: at2_2_insider_threat
@@ -5273,8 +5977,10 @@ control_families:
           - entra_user
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: quarterly
       AT-2(3):
         checks: []
+        monitoring_frequency: quarterly
       AT-2(4):
         checks:
         - id: at2_4_suspicious_comms
@@ -5286,6 +5992,7 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - elastic_security_alert
+        monitoring_frequency: quarterly
       AT-2(5):
         checks:
         - id: at2_5_apt
@@ -5298,24 +6005,34 @@ control_families:
           - sentinel_incident
           - splunk_notable_event
           - endpoint
+        monitoring_frequency: quarterly
       AT-3:
         checks: []
+        monitoring_frequency: quarterly
       AT-3(1):
         checks: []
+        monitoring_frequency: quarterly
       AT-3(2):
         checks: []
+        monitoring_frequency: quarterly
       AT-3(3):
         checks: []
+        monitoring_frequency: quarterly
       AT-3(4):
         checks: []
+        monitoring_frequency: quarterly
       AT-3(5):
         checks: []
+        monitoring_frequency: quarterly
       AT-4:
         checks: []
+        monitoring_frequency: quarterly
       AT-5:
         checks: []
+        monitoring_frequency: quarterly
       AT-6:
         checks: []
+        monitoring_frequency: quarterly
       AT-6(1):
         checks:
         - id: at6_1_awareness_events
@@ -5325,50 +6042,72 @@ control_families:
           resource_types:
           - sentinel_incident
           - splunk_notable_event
+        monitoring_frequency: quarterly
       AT-6(2):
         checks: []
+        monitoring_frequency: quarterly
   PE:
     controls:
       PE-3:
         checks: []
+        monitoring_frequency: annual
       PE-1:
         checks: []
+        monitoring_frequency: annual
       PE-2:
         checks: []
+        monitoring_frequency: annual
       PE-2(1):
         checks: []
+        monitoring_frequency: annual
       PE-2(2):
         checks: []
+        monitoring_frequency: annual
       PE-2(3):
         checks: []
+        monitoring_frequency: annual
       PE-3(1):
         checks: []
+        monitoring_frequency: annual
       PE-3(2):
         checks: []
+        monitoring_frequency: annual
       PE-3(3):
         checks: []
+        monitoring_frequency: annual
       PE-3(4):
         checks: []
+        monitoring_frequency: annual
       PE-3(5):
         checks: []
+        monitoring_frequency: annual
       PE-3(6):
         checks: []
+        monitoring_frequency: annual
       PE-3(7):
         checks: []
+        monitoring_frequency: annual
       PE-3(8):
         checks: []
+        monitoring_frequency: annual
       PE-4:
         checks: []
+        monitoring_frequency: annual
       PE-4(1):
         checks: []
+        monitoring_frequency: annual
       PE-5:
         checks: []
+        monitoring_frequency: annual
       PE-5(1):
         checks: []
+        monitoring_frequency: annual
       PE-5(2):
         checks: []
+        monitoring_frequency: annual
       PE-5(3):
         checks: []
+        monitoring_frequency: annual
       PE-6:
         checks:
         - id: pe6_monitoring_audit_logs
@@ -5377,6 +6116,7 @@ control_families:
           - activity_log
           resource_types:
           - audit_event
+        monitoring_frequency: annual
       PE-6(1):
         checks:
         - id: pe6_1_intrusion_alarms
@@ -5384,84 +6124,124 @@ control_families:
           - audit_logs
           resource_types:
           - audit_event
+        monitoring_frequency: annual
       PE-6(2):
         checks: []
+        monitoring_frequency: annual
       PE-6(3):
         checks: []
+        monitoring_frequency: annual
       PE-6(4):
         checks: []
+        monitoring_frequency: annual
       PE-7:
         checks: []
+        monitoring_frequency: annual
       PE-8:
         checks: []
+        monitoring_frequency: annual
       PE-8(1):
         checks: []
+        monitoring_frequency: annual
       PE-8(2):
         checks: []
+        monitoring_frequency: annual
       PE-8(3):
         checks: []
+        monitoring_frequency: annual
       PE-9:
         checks: []
+        monitoring_frequency: annual
       PE-9(1):
         checks: []
+        monitoring_frequency: annual
       PE-9(2):
         checks: []
+        monitoring_frequency: annual
       PE-10:
         checks: []
+        monitoring_frequency: annual
       PE-10(1):
         checks: []
+        monitoring_frequency: annual
       PE-11:
         checks: []
+        monitoring_frequency: annual
       PE-11(1):
         checks: []
+        monitoring_frequency: annual
       PE-11(2):
         checks: []
+        monitoring_frequency: annual
       PE-12:
         checks: []
+        monitoring_frequency: annual
       PE-12(1):
         checks: []
+        monitoring_frequency: annual
       PE-13:
         checks: []
+        monitoring_frequency: annual
       PE-13(1):
         checks: []
+        monitoring_frequency: annual
       PE-13(2):
         checks: []
+        monitoring_frequency: annual
       PE-13(3):
         checks: []
+        monitoring_frequency: annual
       PE-13(4):
         checks: []
+        monitoring_frequency: annual
       PE-14:
         checks: []
+        monitoring_frequency: annual
       PE-14(1):
         checks: []
+        monitoring_frequency: annual
       PE-14(2):
         checks: []
+        monitoring_frequency: annual
       PE-15:
         checks: []
+        monitoring_frequency: annual
       PE-15(1):
         checks: []
+        monitoring_frequency: annual
       PE-16:
         checks: []
+        monitoring_frequency: annual
       PE-17:
         checks: []
+        monitoring_frequency: annual
       PE-17(1):
         checks: []
+        monitoring_frequency: annual
       PE-18:
         checks: []
+        monitoring_frequency: annual
       PE-18(1):
         checks: []
+        monitoring_frequency: annual
       PE-19:
         checks: []
+        monitoring_frequency: annual
       PE-20:
         checks: []
+        monitoring_frequency: annual
       PE-21:
         checks: []
+        monitoring_frequency: annual
       PE-22:
         checks: []
+        monitoring_frequency: annual
       PE-23:
         checks: []
+        monitoring_frequency: annual
       PE-23(1):
         checks: []
+        monitoring_frequency: annual
   PS:
     controls:
       PS-4:
@@ -5477,6 +6257,7 @@ control_families:
           - sailpoint_account
           - okta_user
           - entra_user
+        monitoring_frequency: quarterly
       PS-5:
         checks:
         - id: ps5_personnel_transfer_access
@@ -5490,22 +6271,31 @@ control_families:
           - sailpoint_account
           - okta_user
           - entra_user
+        monitoring_frequency: quarterly
       PS-1:
         checks: []
+        monitoring_frequency: quarterly
       PS-2:
         checks: []
+        monitoring_frequency: quarterly
       PS-3:
         checks: []
+        monitoring_frequency: quarterly
       PS-3(1):
         checks: []
+        monitoring_frequency: quarterly
       PS-3(2):
         checks: []
+        monitoring_frequency: quarterly
       PS-3(3):
         checks: []
+        monitoring_frequency: quarterly
       PS-3(4):
         checks: []
+        monitoring_frequency: quarterly
       PS-4(1):
         checks: []
+        monitoring_frequency: quarterly
       PS-4(2):
         checks:
         - id: ps4_2_automated_actions
@@ -5520,40 +6310,57 @@ control_families:
           - sailpoint_account
           - okta_user
           - entra_user
+        monitoring_frequency: quarterly
       PS-5(1):
         checks: []
+        monitoring_frequency: quarterly
       PS-5(2):
         checks: []
+        monitoring_frequency: quarterly
       PS-5(3):
         checks: []
+        monitoring_frequency: quarterly
       PS-6:
         checks: []
+        monitoring_frequency: quarterly
       PS-6(1):
         checks: []
+        monitoring_frequency: quarterly
       PS-6(2):
         checks: []
+        monitoring_frequency: quarterly
       PS-6(3):
         checks: []
+        monitoring_frequency: quarterly
       PS-7:
         checks: []
+        monitoring_frequency: quarterly
       PS-7(1):
         checks: []
+        monitoring_frequency: quarterly
       PS-8:
         checks: []
+        monitoring_frequency: quarterly
       PS-9:
         checks: []
+        monitoring_frequency: quarterly
       PS-9(1):
         checks: []
+        monitoring_frequency: quarterly
       PS-9(2):
         checks: []
+        monitoring_frequency: quarterly
   CP:
     controls:
       CP-1:
         checks: []
+        monitoring_frequency: quarterly
       CP-2:
         checks: []
+        monitoring_frequency: quarterly
       CP-2(1):
         checks: []
+        monitoring_frequency: quarterly
       CP-2(2):
         checks:
         - id: cp2_2_capacity_planning
@@ -5563,16 +6370,22 @@ control_families:
           resource_types:
           - aws_config
           - azure_monitor
+        monitoring_frequency: quarterly
       CP-2(3):
         checks: []
+        monitoring_frequency: quarterly
       CP-2(4):
         checks: []
+        monitoring_frequency: quarterly
       CP-2(5):
         checks: []
+        monitoring_frequency: quarterly
       CP-2(6):
         checks: []
+        monitoring_frequency: quarterly
       CP-2(7):
         checks: []
+        monitoring_frequency: quarterly
       CP-2(8):
         checks:
         - id: cp2_8_identify_critical_assets
@@ -5583,16 +6396,22 @@ control_families:
           resource_types:
           - host
           - aws_config
+        monitoring_frequency: quarterly
       CP-3:
         checks: []
+        monitoring_frequency: quarterly
       CP-3(1):
         checks: []
+        monitoring_frequency: quarterly
       CP-3(2):
         checks: []
+        monitoring_frequency: quarterly
       CP-4:
         checks: []
+        monitoring_frequency: quarterly
       CP-4(1):
         checks: []
+        monitoring_frequency: quarterly
       CP-4(2):
         checks:
         - id: cp4_2_alternate_processing_site
@@ -5602,14 +6421,19 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-4(3):
         checks: []
+        monitoring_frequency: quarterly
       CP-4(4):
         checks: []
+        monitoring_frequency: quarterly
       CP-4(5):
         checks: []
+        monitoring_frequency: quarterly
       CP-5:
         checks: []
+        monitoring_frequency: quarterly
       CP-6:
         checks:
         - id: cp6_alternate_storage_site
@@ -5621,6 +6445,7 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: quarterly
       CP-6(1):
         checks:
         - id: cp6_1_separation_primary
@@ -5632,6 +6457,7 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: quarterly
       CP-6(2):
         checks:
         - id: cp6_2_rto_rpo
@@ -5641,6 +6467,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-6(3):
         checks:
         - id: cp6_3_accessibility
@@ -5650,6 +6477,7 @@ control_families:
           resource_types:
           - compliance_standard
           - aws_config
+        monitoring_frequency: quarterly
       CP-7:
         checks:
         - id: cp7_alternate_processing_site
@@ -5659,6 +6487,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-7(1):
         checks:
         - id: cp7_1_separation_primary
@@ -5668,6 +6497,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-7(2):
         checks:
         - id: cp7_2_accessibility
@@ -5677,6 +6507,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-7(3):
         checks:
         - id: cp7_3_priority_of_service
@@ -5684,6 +6515,7 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-7(4):
         checks:
         - id: cp7_4_preparation_for_use
@@ -5693,10 +6525,13 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-7(5):
         checks: []
+        monitoring_frequency: quarterly
       CP-7(6):
         checks: []
+        monitoring_frequency: quarterly
       CP-8:
         checks:
         - id: cp8_telecom_services
@@ -5706,10 +6541,13 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-8(1):
         checks: []
+        monitoring_frequency: quarterly
       CP-8(2):
         checks: []
+        monitoring_frequency: quarterly
       CP-8(3):
         checks:
         - id: cp8_3_separation_providers
@@ -5719,10 +6557,13 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-8(4):
         checks: []
+        monitoring_frequency: quarterly
       CP-8(5):
         checks: []
+        monitoring_frequency: quarterly
       CP-9:
         checks:
         - id: cp9_system_backup
@@ -5736,6 +6577,7 @@ control_families:
           - compliance_standard
           - s3_bucket
           - storage_account
+        monitoring_frequency: quarterly
       CP-9(1):
         checks:
         - id: cp9_1_testing_reliability
@@ -5745,6 +6587,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-9(2):
         checks:
         - id: cp9_2_test_restoration
@@ -5754,6 +6597,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-9(3):
         checks:
         - id: cp9_3_separate_storage
@@ -5765,8 +6609,10 @@ control_families:
           - s3_bucket
           - storage_account
           - storage_bucket
+        monitoring_frequency: quarterly
       CP-9(4):
         checks: []
+        monitoring_frequency: quarterly
       CP-9(5):
         checks:
         - id: cp9_5_transfer_alternate
@@ -5780,6 +6626,7 @@ control_families:
           - storage_account
           - storage_bucket
           - aws_config
+        monitoring_frequency: quarterly
       CP-9(6):
         checks:
         - id: cp9_6_redundant_secondary
@@ -5789,6 +6636,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-9(7):
         checks:
         - id: cp9_7_dual_auth_deletion
@@ -5798,6 +6646,7 @@ control_families:
           resource_types:
           - iam_policy
           - s3_bucket
+        monitoring_frequency: quarterly
       CP-9(8):
         checks:
         - id: cp9_8_cryptographic_protection
@@ -5809,6 +6658,7 @@ control_families:
           - key_vault
           - s3_bucket
           - storage_account
+        monitoring_frequency: quarterly
       CP-10:
         checks:
         - id: cp10_system_recovery
@@ -5818,8 +6668,10 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-10(1):
         checks: []
+        monitoring_frequency: quarterly
       CP-10(2):
         checks:
         - id: cp10_2_transaction_recovery
@@ -5829,8 +6681,10 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-10(3):
         checks: []
+        monitoring_frequency: quarterly
       CP-10(4):
         checks:
         - id: cp10_4_restore_within_time
@@ -5840,8 +6694,10 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-10(5):
         checks: []
+        monitoring_frequency: quarterly
       CP-10(6):
         checks:
         - id: cp10_6_component_protection
@@ -5852,6 +6708,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-11:
         checks:
         - id: cp11_alternate_comms
@@ -5861,6 +6718,7 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-12:
         checks:
         - id: cp12_safe_mode
@@ -5870,8 +6728,10 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-12(1):
         checks: []
+        monitoring_frequency: quarterly
       CP-13:
         checks:
         - id: cp13_alternative_security
@@ -5882,32 +6742,45 @@ control_families:
           resource_types:
           - aws_config
           - compliance_standard
+        monitoring_frequency: quarterly
       CP-13(1):
         checks: []
+        monitoring_frequency: quarterly
   MA:
     controls:
       MA-1:
         checks: []
+        monitoring_frequency: quarterly
       MA-2:
         checks: []
+        monitoring_frequency: quarterly
       MA-2(1):
         checks: []
+        monitoring_frequency: quarterly
       MA-2(2):
         checks: []
+        monitoring_frequency: quarterly
       MA-3:
         checks: []
+        monitoring_frequency: quarterly
       MA-3(1):
         checks: []
+        monitoring_frequency: quarterly
       MA-3(2):
         checks: []
+        monitoring_frequency: quarterly
       MA-3(3):
         checks: []
+        monitoring_frequency: quarterly
       MA-3(4):
         checks: []
+        monitoring_frequency: quarterly
       MA-3(5):
         checks: []
+        monitoring_frequency: quarterly
       MA-3(6):
         checks: []
+        monitoring_frequency: quarterly
       MA-4:
         checks:
         - id: ma4_nonlocal_maintenance
@@ -5917,6 +6790,7 @@ control_families:
           - activity_log
           resource_types:
           - cloudtrail
+        monitoring_frequency: quarterly
       MA-4(1):
         checks:
         - id: ma4_1_logging_and_review
@@ -5926,14 +6800,17 @@ control_families:
           - activity_log
           resource_types:
           - cloudtrail
+        monitoring_frequency: quarterly
       MA-4(2):
         checks: []
+        monitoring_frequency: quarterly
       MA-4(3):
         checks:
         - id: ma4_3_comparable_security
           event_types:
           - audit_logs
           resource_types: []
+        monitoring_frequency: quarterly
       MA-4(4):
         checks:
         - id: ma4_4_authentication_and_separation_of_sessions
@@ -5942,8 +6819,10 @@ control_families:
           - okta_system_log
           resource_types:
           - entra_sign_in
+        monitoring_frequency: quarterly
       MA-4(5):
         checks: []
+        monitoring_frequency: quarterly
       MA-4(6):
         checks:
         - id: ma4_6_cryptographic_protection
@@ -5951,14 +6830,17 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: quarterly
       MA-4(7):
         checks:
         - id: ma4_7_disconnect_verification
           event_types:
           - audit_logs
           resource_types: []
+        monitoring_frequency: quarterly
       MA-5:
         checks: []
+        monitoring_frequency: quarterly
       MA-5(1):
         checks:
         - id: ma5_1_individuals_without_appropriate_access
@@ -5968,10 +6850,13 @@ control_families:
           resource_types:
           - iam_user
           - entra_user
+        monitoring_frequency: quarterly
       MA-5(2):
         checks: []
+        monitoring_frequency: quarterly
       MA-5(3):
         checks: []
+        monitoring_frequency: quarterly
       MA-5(4):
         checks:
         - id: ma5_4_foreign_nationals
@@ -5979,42 +6864,58 @@ control_families:
           - sailpoint_identities
           resource_types:
           - sailpoint_identity
+        monitoring_frequency: quarterly
       MA-5(5):
         checks:
         - id: ma5_5_nonsystem_related_maintenance
           event_types:
           - audit_logs
           resource_types: []
+        monitoring_frequency: quarterly
       MA-6:
         checks: []
+        monitoring_frequency: quarterly
       MA-6(1):
         checks: []
+        monitoring_frequency: quarterly
       MA-6(2):
         checks: []
+        monitoring_frequency: quarterly
       MA-6(3):
         checks: []
+        monitoring_frequency: quarterly
       MA-7:
         checks: []
+        monitoring_frequency: quarterly
       MA-7(1):
         checks: []
+        monitoring_frequency: quarterly
       MA-7(2):
         checks: []
+        monitoring_frequency: quarterly
   MP:
     controls:
       MP-1:
         checks: []
+        monitoring_frequency: quarterly
       MP-2:
         checks: []
+        monitoring_frequency: quarterly
       MP-2(1):
         checks: []
+        monitoring_frequency: quarterly
       MP-2(2):
         checks: []
+        monitoring_frequency: quarterly
       MP-3:
         checks: []
+        monitoring_frequency: quarterly
       MP-3(1):
         checks: []
+        monitoring_frequency: quarterly
       MP-3(2):
         checks: []
+        monitoring_frequency: quarterly
       MP-4:
         checks:
         - id: mp4_media_storage
@@ -6025,8 +6926,10 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_account
+        monitoring_frequency: quarterly
       MP-4(1):
         checks: []
+        monitoring_frequency: quarterly
       MP-4(2):
         checks:
         - id: mp4_2_automated_restricted_access
@@ -6037,18 +6940,23 @@ control_families:
           resource_types:
           - s3_bucket
           - storage_account
+        monitoring_frequency: quarterly
       MP-5:
         checks: []
+        monitoring_frequency: quarterly
       MP-5(1):
         checks: []
+        monitoring_frequency: quarterly
       MP-5(2):
         checks: []
+        monitoring_frequency: quarterly
       MP-5(3):
         checks:
         - id: mp5_3_custodians
           event_types:
           - audit_logs
           resource_types: []
+        monitoring_frequency: quarterly
       MP-5(4):
         checks:
         - id: mp5_4_cryptographic_protection
@@ -6060,24 +6968,34 @@ control_families:
           - key_vault
           - s3_bucket
           - storage_account
+        monitoring_frequency: quarterly
       MP-6:
         checks: []
+        monitoring_frequency: quarterly
       MP-6(1):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(2):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(3):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(4):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(5):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(6):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(7):
         checks: []
+        monitoring_frequency: quarterly
       MP-6(8):
         checks: []
+        monitoring_frequency: quarterly
       MP-7:
         checks:
         - id: mp7_media_use
@@ -6087,6 +7005,7 @@ control_families:
           - falcon_device_details
           resource_types:
           - endpoint
+        monitoring_frequency: quarterly
       MP-7(1):
         checks:
         - id: mp7_1_prohibit_use_without_owner
@@ -6095,6 +7014,7 @@ control_families:
           - defender_machines
           resource_types:
           - endpoint
+        monitoring_frequency: quarterly
       MP-7(2):
         checks:
         - id: mp7_2_prohibit_use_of_sanitization_resistant_media
@@ -6103,90 +7023,131 @@ control_families:
           - defender_machines
           resource_types:
           - endpoint
+        monitoring_frequency: quarterly
       MP-8:
         checks: []
+        monitoring_frequency: quarterly
       MP-8(1):
         checks: []
+        monitoring_frequency: quarterly
       MP-8(2):
         checks: []
+        monitoring_frequency: quarterly
       MP-8(3):
         checks: []
+        monitoring_frequency: quarterly
       MP-8(4):
         checks: []
+        monitoring_frequency: quarterly
   PL:
     controls:
       PL-1:
         checks: []
+        monitoring_frequency: annual
       PL-2:
         checks: []
+        monitoring_frequency: annual
       PL-2(1):
         checks: []
+        monitoring_frequency: annual
       PL-2(2):
         checks: []
+        monitoring_frequency: annual
       PL-2(3):
         checks: []
+        monitoring_frequency: annual
       PL-3:
         checks: []
+        monitoring_frequency: annual
       PL-4:
         checks: []
+        monitoring_frequency: annual
       PL-4(1):
         checks: []
+        monitoring_frequency: annual
       PL-5:
         checks: []
+        monitoring_frequency: annual
       PL-6:
         checks: []
+        monitoring_frequency: annual
       PL-7:
         checks: []
+        monitoring_frequency: annual
       PL-7(1):
         checks: []
+        monitoring_frequency: annual
       PL-7(2):
         checks: []
+        monitoring_frequency: annual
       PL-8:
         checks: []
+        monitoring_frequency: annual
       PL-8(1):
         checks: []
+        monitoring_frequency: annual
       PL-8(2):
         checks: []
+        monitoring_frequency: annual
       PL-9:
         checks: []
+        monitoring_frequency: annual
       PL-10:
         checks: []
+        monitoring_frequency: annual
       PL-11:
         checks: []
+        monitoring_frequency: annual
   PM:
     controls:
       PM-1:
         checks: []
+        monitoring_frequency: annual
       PM-2:
         checks: []
+        monitoring_frequency: annual
       PM-3:
         checks: []
+        monitoring_frequency: annual
       PM-4:
         checks: []
+        monitoring_frequency: annual
       PM-5:
         checks: []
+        monitoring_frequency: annual
       PM-5(1):
         checks: []
+        monitoring_frequency: annual
       PM-6:
         checks: []
+        monitoring_frequency: annual
       PM-7:
         checks: []
+        monitoring_frequency: annual
       PM-7(1):
         checks: []
+        monitoring_frequency: annual
       PM-8:
         checks: []
+        monitoring_frequency: annual
       PM-9:
         checks: []
+        monitoring_frequency: annual
       PM-10:
         checks: []
+        monitoring_frequency: annual
       PM-11:
         checks: []
+        monitoring_frequency: annual
       PM-11(1):
         checks: []
+        monitoring_frequency: annual
       PM-12:
         checks: []
+        monitoring_frequency: annual
       PM-13:
         checks: []
+        monitoring_frequency: annual
       PM-14:
         checks:
         - id: pm14_compliance_testing
@@ -6195,6 +7156,7 @@ control_families:
           - prisma_compliance
           resource_types:
           - compliance_result
+        monitoring_frequency: annual
       PM-14(1):
         checks:
         - id: pm14_1_automation_support
@@ -6205,44 +7167,64 @@ control_families:
           resource_types:
           - compliance_result
           - config_recorder
+        monitoring_frequency: annual
       PM-15:
         checks: []
+        monitoring_frequency: annual
       PM-16:
         checks: []
+        monitoring_frequency: annual
       PM-16(1):
         checks: []
+        monitoring_frequency: annual
       PM-17:
         checks: []
+        monitoring_frequency: annual
       PM-18:
         checks: []
+        monitoring_frequency: annual
       PM-19:
         checks: []
+        monitoring_frequency: annual
       PM-20:
         checks: []
+        monitoring_frequency: annual
       PM-21:
         checks: []
+        monitoring_frequency: annual
       PM-22:
         checks: []
+        monitoring_frequency: annual
       PM-23:
         checks: []
+        monitoring_frequency: annual
       PM-24:
         checks: []
+        monitoring_frequency: annual
       PM-25:
         checks: []
+        monitoring_frequency: annual
       PM-25(1):
         checks: []
+        monitoring_frequency: annual
       PM-26:
         checks: []
+        monitoring_frequency: annual
       PM-27:
         checks: []
+        monitoring_frequency: annual
       PM-28:
         checks: []
+        monitoring_frequency: annual
       PM-29:
         checks: []
+        monitoring_frequency: annual
       PM-30:
         checks: []
+        monitoring_frequency: annual
       PM-30(1):
         checks: []
+        monitoring_frequency: annual
       PM-31:
         checks:
         - id: pm31_continuous_monitoring
@@ -6255,14 +7237,18 @@ control_families:
           - compliance_result
           - config_recorder
           - cloudtrail_trail
+        monitoring_frequency: annual
       PM-31(1):
         checks: []
+        monitoring_frequency: annual
       PM-32:
         checks: []
+        monitoring_frequency: annual
   PT:
     controls:
       PT-1:
         checks: []
+        monitoring_frequency: annual
       PT-2:
         checks:
         - id: pt2_pii_authority_to_process
@@ -6270,10 +7256,13 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_result
+        monitoring_frequency: annual
       PT-2(1):
         checks: []
+        monitoring_frequency: annual
       PT-2(2):
         checks: []
+        monitoring_frequency: annual
       PT-3:
         checks:
         - id: pt3_pii_processing_purposes
@@ -6283,10 +7272,13 @@ control_families:
           resource_types:
           - compliance_result
           - prisma_policy
+        monitoring_frequency: annual
       PT-3(1):
         checks: []
+        monitoring_frequency: annual
       PT-3(2):
         checks: []
+        monitoring_frequency: annual
       PT-4:
         checks:
         - id: pt4_consent
@@ -6295,16 +7287,22 @@ control_families:
           - activity_log
           resource_types:
           - audit_event
+        monitoring_frequency: annual
       PT-4(1):
         checks: []
+        monitoring_frequency: annual
       PT-4(2):
         checks: []
+        monitoring_frequency: annual
       PT-4(3):
         checks: []
+        monitoring_frequency: annual
       PT-5:
         checks: []
+        monitoring_frequency: annual
       PT-5(1):
         checks: []
+        monitoring_frequency: annual
       PT-5(2):
         checks:
         - id: pt5_2_privacy_act_statements
@@ -6312,6 +7310,7 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_result
+        monitoring_frequency: annual
       PT-6:
         checks:
         - id: pt6_system_of_records_notice
@@ -6319,10 +7318,13 @@ control_families:
           - policy_compliance
           resource_types:
           - compliance_result
+        monitoring_frequency: annual
       PT-6(1):
         checks: []
+        monitoring_frequency: annual
       PT-6(2):
         checks: []
+        monitoring_frequency: annual
       PT-7:
         checks:
         - id: pt7_specific_categories_pii
@@ -6332,6 +7334,7 @@ control_families:
           resource_types:
           - compliance_result
           - prisma_policy
+        monitoring_frequency: annual
       PT-7(1):
         checks:
         - id: pt7_1_social_security_numbers
@@ -6341,8 +7344,10 @@ control_families:
           resource_types:
           - compliance_result
           - prisma_policy
+        monitoring_frequency: annual
       PT-7(2):
         checks: []
+        monitoring_frequency: annual
       PT-8:
         checks:
         - id: pt8_computer_matching
@@ -6350,53 +7355,70 @@ control_families:
           - audit_logs
           resource_types:
           - audit_event
+        monitoring_frequency: annual
       PT-8(1):
         checks: []
+        monitoring_frequency: annual
       PT-8(2):
         checks: []
+        monitoring_frequency: annual
       PT-8(3):
         checks: []
+        monitoring_frequency: annual
   SA:
     controls:
       SA-1:
         title: Policy and Procedures
         checks: []
+        monitoring_frequency: monthly
       SA-2:
         title: Allocation of Resources
         checks: []
+        monitoring_frequency: monthly
       SA-2(1):
         title: Sufficient Resources
         checks: []
+        monitoring_frequency: monthly
       SA-2(2):
         title: Risk-Based Resource Allocation
         checks: []
+        monitoring_frequency: monthly
       SA-3:
         title: System Development Life Cycle
         checks: []
+        monitoring_frequency: monthly
       SA-3(1):
         title: Manage Preproduction Environment
         checks: []
+        monitoring_frequency: monthly
       SA-3(2):
         title: Use of Live or Operational Data
         checks: []
+        monitoring_frequency: monthly
       SA-3(3):
         title: Technology Refresh
         checks: []
+        monitoring_frequency: monthly
       SA-4:
         title: Acquisition Process
         checks: []
+        monitoring_frequency: monthly
       SA-4(1):
         title: Functional Properties of Controls
         checks: []
+        monitoring_frequency: monthly
       SA-4(2):
         title: Design and Implementation Information for Controls
         checks: []
+        monitoring_frequency: monthly
       SA-4(3):
         title: Development Methods, Techniques, and Practices
         checks: []
+        monitoring_frequency: monthly
       SA-4(4):
         title: Assignment of Components to Systems
         checks: []
+        monitoring_frequency: monthly
       SA-4(5):
         title: System, Component, and Service Configurations
         checks:
@@ -6408,12 +7430,15 @@ control_families:
           resource_types:
           - compliance_standard
           - compliance_requirement
+        monitoring_frequency: monthly
       SA-4(6):
         title: Use of Information Assurance Products
         checks: []
+        monitoring_frequency: monthly
       SA-4(7):
         title: NIAP-Approved Protection Profiles
         checks: []
+        monitoring_frequency: monthly
       SA-4(8):
         title: Continuous Monitoring Plan
         checks:
@@ -6425,6 +7450,7 @@ control_families:
           resource_types:
           - securityhub
           - guardduty
+        monitoring_frequency: monthly
       SA-4(9):
         title: Functions, Ports, Protocols, and Services in Use
         checks:
@@ -6437,141 +7463,187 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SA-4(10):
         title: Use of Approved PIV Products
         checks: []
+        monitoring_frequency: monthly
       SA-4(11):
         title: System of Records
         checks: []
+        monitoring_frequency: monthly
       SA-4(12):
         title: Data Ownership
         checks: []
+        monitoring_frequency: monthly
       SA-5:
         title: System Documentation
         checks: []
+        monitoring_frequency: monthly
       SA-5(1):
         title: Functional Properties of Security Controls
         checks: []
+        monitoring_frequency: monthly
       SA-5(2):
         title: Security-Relevant External System Interfaces
         checks: []
+        monitoring_frequency: monthly
       SA-5(3):
         title: High-Level Design
         checks: []
+        monitoring_frequency: monthly
       SA-5(4):
         title: Low-Level Design
         checks: []
+        monitoring_frequency: monthly
       SA-5(5):
         title: Source Code
         checks: []
+        monitoring_frequency: monthly
       SA-6:
         title: Software Usage Restrictions
         checks: []
+        monitoring_frequency: monthly
       SA-7:
         title: User-Installed Software
         checks: []
+        monitoring_frequency: monthly
       SA-8:
         title: Security and Privacy Engineering Principles
         checks: []
+        monitoring_frequency: monthly
       SA-8(1):
         title: Clear Abstractions
         checks: []
+        monitoring_frequency: monthly
       SA-8(2):
         title: Least Common Mechanism
         checks: []
+        monitoring_frequency: monthly
       SA-8(3):
         title: Modularity and Layering
         checks: []
+        monitoring_frequency: monthly
       SA-8(4):
         title: Partially Ordered Dependencies
         checks: []
+        monitoring_frequency: monthly
       SA-8(5):
         title: Efficiently Mediated Access
         checks: []
+        monitoring_frequency: monthly
       SA-8(6):
         title: Minimized Sharing
         checks: []
+        monitoring_frequency: monthly
       SA-8(7):
         title: Reduced Complexity
         checks: []
+        monitoring_frequency: monthly
       SA-8(8):
         title: Secure Evolvability
         checks: []
+        monitoring_frequency: monthly
       SA-8(9):
         title: Trusted Components
         checks: []
+        monitoring_frequency: monthly
       SA-8(10):
         title: Hierarchical Trust
         checks: []
+        monitoring_frequency: monthly
       SA-8(11):
         title: Inverse Modification Threshold
         checks: []
+        monitoring_frequency: monthly
       SA-8(12):
         title: Hierarchical Protection
         checks: []
+        monitoring_frequency: monthly
       SA-8(13):
         title: Minimized Security Elements
         checks: []
+        monitoring_frequency: monthly
       SA-8(14):
         title: Least Privilege
         checks: []
+        monitoring_frequency: monthly
       SA-8(15):
         title: Predicate Permission
         checks: []
+        monitoring_frequency: monthly
       SA-8(16):
         title: Self-Reliant Trustworthiness
         checks: []
+        monitoring_frequency: monthly
       SA-8(17):
         title: Secure Distributed Composition
         checks: []
+        monitoring_frequency: monthly
       SA-8(18):
         title: Trusted Communications Channels
         checks: []
+        monitoring_frequency: monthly
       SA-8(19):
         title: Continuous Protection
         checks: []
+        monitoring_frequency: monthly
       SA-8(20):
         title: Secure Metadata Management
         checks: []
+        monitoring_frequency: monthly
       SA-8(21):
         title: Self-Analysis
         checks: []
+        monitoring_frequency: monthly
       SA-8(22):
         title: Accountability and Traceability
         checks: []
+        monitoring_frequency: monthly
       SA-8(23):
         title: Secure Defaults
         checks: []
+        monitoring_frequency: monthly
       SA-8(24):
         title: Secure Failure and Recovery
         checks: []
+        monitoring_frequency: monthly
       SA-8(25):
         title: Economic Security
         checks: []
+        monitoring_frequency: monthly
       SA-8(26):
         title: Performance Security
         checks: []
+        monitoring_frequency: monthly
       SA-8(27):
         title: Human Factored Security
         checks: []
+        monitoring_frequency: monthly
       SA-8(28):
         title: Acceptable Security
         checks: []
+        monitoring_frequency: monthly
       SA-8(29):
         title: Repeatable and Documented Procedures
         checks: []
+        monitoring_frequency: monthly
       SA-8(30):
         title: Procedural Rigor
         checks: []
+        monitoring_frequency: monthly
       SA-8(31):
         title: Secure System Modification
         checks: []
+        monitoring_frequency: monthly
       SA-8(32):
         title: Sufficient Documentation
         checks: []
+        monitoring_frequency: monthly
       SA-8(33):
         title: Minimization
         checks: []
+        monitoring_frequency: monthly
       SA-9:
         title: External System Services
         checks:
@@ -6583,9 +7655,11 @@ control_families:
           resource_types:
           - entra_service_principal
           - okta_application
+        monitoring_frequency: monthly
       SA-9(1):
         title: Risk Assessments and Organizational Approvals
         checks: []
+        monitoring_frequency: monthly
       SA-9(2):
         title: Identification of Functions, Ports, Protocols, and Services
         checks:
@@ -6598,15 +7672,19 @@ control_families:
           - ec2_security_group
           - compute_firewall_rule
           - network_security_group
+        monitoring_frequency: monthly
       SA-9(3):
         title: Establish and Maintain Trust Relationship with Providers
         checks: []
+        monitoring_frequency: monthly
       SA-9(4):
         title: Consistent Interests of Consumers and Providers
         checks: []
+        monitoring_frequency: monthly
       SA-9(5):
         title: Processing, Storage, and Service Location
         checks: []
+        monitoring_frequency: monthly
       SA-9(6):
         title: Organization-Controlled Cryptographic Keys
         checks:
@@ -6615,141 +7693,187 @@ control_families:
           - key_vault
           resource_types:
           - key_vault
+        monitoring_frequency: monthly
       SA-9(7):
         title: Organization-Controlled Integrity Checking
         checks: []
+        monitoring_frequency: monthly
       SA-9(8):
-        title: Processing and Storage Location — U.S. Jurisdiction
+        title: "Processing and Storage Location \u2014 U.S. Jurisdiction"
         checks: []
+        monitoring_frequency: monthly
       SA-10:
         title: Developer Configuration Management
         checks: []
+        monitoring_frequency: monthly
       SA-10(1):
         title: Software and Firmware Integrity Verification
         checks: []
+        monitoring_frequency: monthly
       SA-10(2):
         title: Alternative Configuration Management Processes
         checks: []
+        monitoring_frequency: monthly
       SA-10(3):
         title: Hardware Integrity Verification
         checks: []
+        monitoring_frequency: monthly
       SA-10(4):
         title: Trusted Generation
         checks: []
+        monitoring_frequency: monthly
       SA-10(5):
         title: Mapping Integrity for Version Control
         checks: []
+        monitoring_frequency: monthly
       SA-10(6):
         title: Trusted Distribution
         checks: []
+        monitoring_frequency: monthly
       SA-10(7):
         title: Security and Privacy Representatives
         checks: []
+        monitoring_frequency: monthly
       SA-11:
         title: Developer Testing and Evaluation
         checks: []
+        monitoring_frequency: monthly
       SA-11(1):
         title: Static Code Analysis
         checks: []
+        monitoring_frequency: monthly
       SA-11(2):
         title: Threat Modeling and Vulnerability Analyses
         checks: []
+        monitoring_frequency: monthly
       SA-11(3):
         title: Independent Verification of Assessment Plans and Evidence
         checks: []
+        monitoring_frequency: monthly
       SA-11(4):
         title: Manual Code Reviews
         checks: []
+        monitoring_frequency: monthly
       SA-11(5):
         title: Penetration Testing
         checks: []
+        monitoring_frequency: monthly
       SA-11(6):
         title: Attack Surface Reviews
         checks: []
+        monitoring_frequency: monthly
       SA-11(7):
         title: Verify Scope of Testing and Evaluation
         checks: []
+        monitoring_frequency: monthly
       SA-11(8):
         title: Dynamic Code Analysis
         checks: []
+        monitoring_frequency: monthly
       SA-11(9):
         title: Interactive Application Security Testing
         checks: []
+        monitoring_frequency: monthly
       SA-12:
         title: Supply Chain Protection
         checks: []
+        monitoring_frequency: monthly
       SA-12(1):
         title: Acquisition Strategies, Tools, and Methods
         checks: []
+        monitoring_frequency: monthly
       SA-12(2):
         title: Supplier Reviews
         checks: []
+        monitoring_frequency: monthly
       SA-12(3):
         title: Trusted Shipping and Warehousing
         checks: []
+        monitoring_frequency: monthly
       SA-12(4):
         title: Diversity of Suppliers
         checks: []
+        monitoring_frequency: monthly
       SA-12(5):
         title: Limitation of Harm
         checks: []
+        monitoring_frequency: monthly
       SA-12(6):
         title: Minimizing Procurement Time
         checks: []
+        monitoring_frequency: monthly
       SA-12(7):
         title: Assessments Prior to Selection, Acceptance, Modification, or Update
         checks: []
+        monitoring_frequency: monthly
       SA-12(8):
         title: Use of All-Source Intelligence
         checks: []
+        monitoring_frequency: monthly
       SA-12(9):
         title: Operations Security
         checks: []
+        monitoring_frequency: monthly
       SA-12(10):
         title: Validate as Genuine and Not Altered
         checks: []
+        monitoring_frequency: monthly
       SA-12(11):
         title: Penetration Testing and Analysis of Elements, Processes, and Actors
         checks: []
+        monitoring_frequency: monthly
       SA-12(12):
         title: Inter-Organizational Agreements
         checks: []
+        monitoring_frequency: monthly
       SA-12(13):
         title: Critical Information System Components
         checks: []
+        monitoring_frequency: monthly
       SA-12(14):
         title: Identity and Traceability
         checks: []
+        monitoring_frequency: monthly
       SA-12(15):
         title: Processes to Address Weaknesses or Deficiencies
         checks: []
+        monitoring_frequency: monthly
       SA-13:
         title: Trustworthiness
         checks: []
+        monitoring_frequency: monthly
       SA-14:
         title: Criticality Analysis
         checks: []
+        monitoring_frequency: monthly
       SA-15:
         title: Development Process, Standards, and Tools
         checks: []
+        monitoring_frequency: monthly
       SA-15(1):
         title: Quality Metrics
         checks: []
+        monitoring_frequency: monthly
       SA-15(2):
         title: Security and Privacy Tracking Tools
         checks: []
+        monitoring_frequency: monthly
       SA-15(3):
         title: Criticality Analysis
         checks: []
+        monitoring_frequency: monthly
       SA-15(4):
         title: Threat Modeling and Vulnerability Analysis
         checks: []
+        monitoring_frequency: monthly
       SA-15(5):
         title: Attack Surface Reduction
         checks: []
+        monitoring_frequency: monthly
       SA-15(6):
         title: Continuous Improvement
         checks: []
+        monitoring_frequency: monthly
       SA-15(7):
         title: Automated Vulnerability Analysis
         checks:
@@ -6760,66 +7884,87 @@ control_families:
           - prisma_alerts
           resource_types:
           - vulnerability
+        monitoring_frequency: monthly
       SA-15(8):
         title: Reuse of Threat and Vulnerability Information
         checks: []
+        monitoring_frequency: monthly
       SA-15(9):
         title: Use of Live Data
         checks: []
+        monitoring_frequency: monthly
       SA-15(10):
         title: Incident Response Plan
         checks: []
+        monitoring_frequency: monthly
       SA-15(11):
         title: Archive System or Component
         checks: []
+        monitoring_frequency: monthly
       SA-15(12):
         title: Minimize Personally Identifiable Information
         checks: []
+        monitoring_frequency: monthly
       SA-16:
         title: Developer-Provided Training
         checks: []
+        monitoring_frequency: monthly
       SA-17:
         title: Developer Security and Privacy Architecture and Design
         checks: []
+        monitoring_frequency: monthly
       SA-17(1):
         title: Formal Policy Model
         checks: []
+        monitoring_frequency: monthly
       SA-17(2):
         title: Security-Relevant Components
         checks: []
+        monitoring_frequency: monthly
       SA-17(3):
         title: Formal Correspondence
         checks: []
+        monitoring_frequency: monthly
       SA-17(4):
         title: Informal Correspondence
         checks: []
+        monitoring_frequency: monthly
       SA-17(5):
         title: Conceptually Simple Design
         checks: []
+        monitoring_frequency: monthly
       SA-17(6):
         title: Structure for Testing
         checks: []
+        monitoring_frequency: monthly
       SA-17(7):
         title: Structure for Least Privilege
         checks: []
+        monitoring_frequency: monthly
       SA-17(8):
         title: Orchestration
         checks: []
+        monitoring_frequency: monthly
       SA-17(9):
         title: Design Diversity
         checks: []
+        monitoring_frequency: monthly
       SA-18:
         title: Tamper Resistance and Detection
         checks: []
+        monitoring_frequency: monthly
       SA-19:
         title: Component Authenticity
         checks: []
+        monitoring_frequency: monthly
       SA-20:
         title: Customized Development of Critical Components
         checks: []
+        monitoring_frequency: monthly
       SA-21:
         title: Developer Screening
         checks: []
+        monitoring_frequency: monthly
       SA-22:
         title: Unsupported System Components
         checks:
@@ -6831,89 +7976,117 @@ control_families:
           resource_types:
           - vulnerability
           - host
+        monitoring_frequency: monthly
       SA-23:
         title: Specialization
         checks: []
+        monitoring_frequency: monthly
   SR:
     controls:
       SR-1:
         title: Policy and Procedures
         checks: []
+        monitoring_frequency: monthly
       SR-2:
         title: Supply Chain Risk Management Plan
         checks: []
+        monitoring_frequency: monthly
       SR-2(1):
         title: Establish SCRM Team
         checks: []
+        monitoring_frequency: monthly
       SR-3:
         title: Supply Chain Controls and Processes
         checks: []
+        monitoring_frequency: monthly
       SR-3(1):
         title: Diverse Supply Base
         checks: []
+        monitoring_frequency: monthly
       SR-3(2):
         title: Limitation of Harm
         checks: []
+        monitoring_frequency: monthly
       SR-3(3):
         title: Sub-Tier Flow Down
         checks: []
+        monitoring_frequency: monthly
       SR-4:
         title: Provenance
         checks: []
+        monitoring_frequency: monthly
       SR-4(1):
         title: Identity
         checks: []
+        monitoring_frequency: monthly
       SR-4(2):
         title: Track and Trace
         checks: []
+        monitoring_frequency: monthly
       SR-4(3):
         title: Validate as Genuine and Not Altered
         checks: []
+        monitoring_frequency: monthly
       SR-4(4):
-        title: Supply Chain Integrity — Pedigree
+        title: "Supply Chain Integrity \u2014 Pedigree"
         checks: []
+        monitoring_frequency: monthly
       SR-5:
         title: Acquisition Strategies, Tools, and Methods
         checks: []
+        monitoring_frequency: monthly
       SR-5(1):
         title: Adequate Supply
         checks: []
+        monitoring_frequency: monthly
       SR-5(2):
         title: Assessments Prior to Selection, Acceptance, Modification, or Update
         checks: []
+        monitoring_frequency: monthly
       SR-6:
         title: Supplier Assessments and Reviews
         checks: []
+        monitoring_frequency: monthly
       SR-6(1):
         title: Testing and Analysis
         checks: []
+        monitoring_frequency: monthly
       SR-7:
         title: Supply Chain Operations Security
         checks: []
+        monitoring_frequency: monthly
       SR-8:
         title: Notification Agreements
         checks: []
+        monitoring_frequency: monthly
       SR-9:
         title: Tamper Resistance and Detection
         checks: []
+        monitoring_frequency: monthly
       SR-9(1):
         title: Multiple Stages of System Development Life Cycle
         checks: []
+        monitoring_frequency: monthly
       SR-10:
         title: Inspection of Systems or Components
         checks: []
+        monitoring_frequency: monthly
       SR-10(1):
         title: Processes and Procedures
         checks: []
+        monitoring_frequency: monthly
       SR-11:
         title: Component Authenticity
         checks: []
+        monitoring_frequency: monthly
       SR-11(1):
         title: Anti-Counterfeit Training
         checks: []
+        monitoring_frequency: monthly
       SR-11(2):
         title: Configuration Control for Component Service and Repair
         checks: []
+        monitoring_frequency: monthly
       SR-11(3):
         title: Anti-Counterfeit Scanning
         checks:
@@ -6924,9 +8097,12 @@ control_families:
           resource_types:
           - host
           - endpoint
+        monitoring_frequency: monthly
       SR-12:
         title: Component Disposal
         checks: []
+        monitoring_frequency: monthly
       SR-12(1):
         title: Data Destruction
         checks: []
+        monitoring_frequency: monthly
