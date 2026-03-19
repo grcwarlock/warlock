@@ -338,10 +338,29 @@ def build_pipeline(
 
     assessor = Assessor(engine=assertion_engine, ai_reasoner=ai_reasoner)
 
+    # 5. Build OPA compliance evaluator (if configured)
+    opa_evaluator = None
+    if settings.opa_compliance_enabled and settings.opa_compliance_url:
+        try:
+            from warlock.assessors.opa_evaluator import OPAComplianceEvaluator
+            opa_evaluator = OPAComplianceEvaluator(
+                base_url=settings.opa_compliance_url,
+                timeout=settings.opa_compliance_timeout,
+                fail_mode=settings.opa_compliance_fail_mode,
+            )
+            log.info(
+                "OPA compliance evaluation enabled: %s (fail_mode=%s)",
+                settings.opa_compliance_url,
+                settings.opa_compliance_fail_mode,
+            )
+        except Exception:
+            log.warning("OPA compliance evaluation configured but failed to initialize")
+
     return Pipeline(
         connectors=connectors,
         normalizers=norm_registry,
         mapper=mapper,
         assessor=assessor,
         bus=bus,
+        opa_evaluator=opa_evaluator,
     )

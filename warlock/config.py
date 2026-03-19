@@ -223,9 +223,17 @@ class Settings(BaseSettings):
     snapshot_interval_minutes: int = 1440  # posture snapshot interval (daily)
     cadence_check_interval_minutes: int = 60  # cadence check interval
 
-    # OPA policy enforcement
+    # OPA policy enforcement (API gate)
     opa_url: str = ""  # OPA decision endpoint URL
     opa_fail_mode: str = "closed"  # S-2: "closed" (deny if OPA down) or "open" (allow)
+
+    # OPA compliance evaluation engine
+    opa_compliance_enabled: bool = False
+    opa_compliance_url: str = ""  # e.g. http://localhost:8181/v1/data
+    opa_compliance_timeout: float = 30.0
+    opa_compliance_fail_mode: str = "open"  # "open" (skip if OPA down) or "closed"
+    opa_bundle_path: str = "policies/"
+    opa_frameworks: list[str] = Field(default_factory=list)  # empty = all available
 
     # Change event retention
     change_event_retention_days: int = 90  # auto-purge change events older than this
