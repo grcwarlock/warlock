@@ -372,7 +372,11 @@ def oscal(framework, system_name, output, fmt, description, ai):
         exporter.to_file(data, output)
         console.print(f"[green]OSCAL {fmt.upper()} written to {output}[/green]")
     else:
-        console.print(json_str)
+        from warlock.export.paths import export_path
+
+        dest = export_path(fmt, framework=framework)
+        exporter.to_file(data, str(dest))
+        console.print(f"[green]OSCAL {fmt.upper()} written to {dest}[/green]")
 
 
 @cli.command()
