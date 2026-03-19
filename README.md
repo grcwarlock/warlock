@@ -214,6 +214,64 @@ Or without Docker:
 rm -f warlock.db && alembic upgrade head && python scripts/demo_seed.py
 ```
 
+### Running the Demo API
+
+The seeded SQLite database works with both the CLI and the REST API. No Docker or PostgreSQL required for local demo use.
+
+```bash
+# Start the API server (uses warlock.db in the current directory)
+warlock-api
+# → Uvicorn running on http://0.0.0.0:8000
+
+# Or run via uvicorn directly with auto-reload for development
+uvicorn warlock.api.app:app --reload --port 8000
+```
+
+Health check (no auth required):
+
+```bash
+curl http://localhost:8000/api/v1/health
+# {"status":"ok","version":"2.0.0a1","timestamp":"..."}
+```
+
+### Demo Credentials
+
+The seed creates 4 user accounts for API testing:
+
+| Email | Password | Role | Scope |
+|---|---|---|---|
+| `admin@acme.com` | `WarlockAdmin2026!` | admin | Full access to all endpoints |
+| `eve.nakamura@acme.com` | `SecurityFirst2026!` | auditor | Read-only across all frameworks |
+| `frank.torres@acme.com` | `EngineerBuild2026!` | owner | NIST, SOC 2, ISO 27001 + AWS/CrowdStrike/Okta |
+| `carol.park@acme.com` | `FinanceReview2026!` | viewer | SOC 2 only |
+
+Authenticate and use the API:
+
+```bash
+# Login — returns a JWT bearer token (1-hour expiry)
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@acme.com","password":"WarlockAdmin2026!"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+# Use the token on any authenticated endpoint
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/results/coverage
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/findings?limit=10
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/poams
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/drift
+```
+
+### Full Docker Stack (Optional)
+
+For a production-like setup with PostgreSQL and Redis:
+
+```bash
+make dev
+# Starts: PostgreSQL (5432) + Redis (6379) + API (8000)
+# Runs migrations automatically, then seed with:
+#   WLK_DATABASE_URL=postgresql://warlock:warlock_dev@localhost:5432/warlock python scripts/demo_seed.py
+```
+
 ### Verifying the Seed
 
 After seeding, run the test suite to confirm nothing is broken:
