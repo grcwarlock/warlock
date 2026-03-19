@@ -840,16 +840,19 @@ def create_bus_from_settings() -> EventBus | RedisStreamBus | KafkaBus | SQSBus:
     All variables are optional. If ``WLK_QUEUE_BACKEND`` is unset or
     ``"memory"``, returns the in-memory EventBus.
     """
-    backend = os.environ.get("WLK_QUEUE_BACKEND", "memory").lower()
+    from warlock.config import get_settings
+    settings = get_settings()
+
+    backend = settings.queue_backend.lower()
     if backend == "memory":
         return EventBus()
 
     config = QueueConfig(
         backend=backend,
-        url=os.environ.get("WLK_QUEUE_URL", ""),
-        stream_prefix=os.environ.get("WLK_QUEUE_PREFIX", "warlock"),
-        consumer_group=os.environ.get("WLK_QUEUE_CONSUMER_GROUP", "warlock-pipeline"),
-        max_retries=int(os.environ.get("WLK_QUEUE_MAX_RETRIES", "3")),
-        batch_size=int(os.environ.get("WLK_QUEUE_BATCH_SIZE", "100")),
+        url=settings.queue_url,
+        stream_prefix=settings.queue_prefix,
+        consumer_group=settings.queue_consumer_group,
+        max_retries=settings.queue_max_retries,
+        batch_size=settings.queue_batch_size,
     )
     return create_bus(config)

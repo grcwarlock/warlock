@@ -30,8 +30,10 @@ class PolicyGate:
         opa_url: str | None = None,
         fail_mode: str = "open",
     ):
-        self.opa_url = opa_url or os.environ.get("WLK_OPA_URL", "")
-        self.fail_mode = fail_mode or os.environ.get("WLK_OPA_FAIL_MODE", "open")
+        from warlock.config import get_settings
+        settings = get_settings()
+        self.opa_url = opa_url or settings.opa_url
+        self.fail_mode = fail_mode or settings.opa_fail_mode
         self.enabled = bool(self.opa_url)
         self._session = None
 

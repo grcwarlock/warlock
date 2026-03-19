@@ -195,19 +195,50 @@ class Settings(BaseSettings):
     ai_api_key: str = ""
     ai_model: str = ""
     ai_base_url: str = ""  # for ollama / vllm
+    ai_confidence_floor: float = 0.7  # minimum AI confidence to accept assessment
+    ai_temperature: float = 0.0  # LLM temperature (0.0 for reproducibility)
 
     # Field encryption
     encryption_key: str = ""  # key for field-level encryption (crypto.py)
 
+    # JWT authentication
+    jwt_secret: str = ""  # REQUIRED in production — min 32 chars
+    jwt_expire_minutes: int = 60  # token lifetime
+
+    # API server
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
+    api_reload: bool = False
+
+    # Queue backend
+    queue_backend: str = "memory"  # "memory", "redis", "kafka", "sqs"
+    queue_url: str = ""  # redis://localhost:6379, kafka broker, SQS region
+    queue_prefix: str = "warlock"  # stream/topic prefix
+    queue_consumer_group: str = "warlock-pipeline"
+    queue_max_retries: int = 3
+    queue_batch_size: int = 100
+
     # Scheduler
-    scheduler_interval_minutes: int = 60  # pipeline scheduler interval
+    scheduler_interval_minutes: int = 60  # pipeline collection interval
+    snapshot_interval_minutes: int = 1440  # posture snapshot interval (daily)
+    cadence_check_interval_minutes: int = 60  # cadence check interval
 
     # OPA policy enforcement
     opa_url: str = ""  # OPA decision endpoint URL
     opa_fail_mode: str = "open"  # "open" (allow if OPA down) or "closed" (deny)
 
+    # Change event retention
+    change_event_retention_days: int = 90  # auto-purge change events older than this
+
+    # CORS
+    cors_origins: list[str] = Field(default_factory=list)  # allowed origins, empty = no CORS
+
+    # Environment mode
+    env: str = "development"  # "development", "staging", "production"
+
     # Logging
     log_level: str = "INFO"
+    log_format: str = "text"  # "text" or "json" for structured logging
 
 
 _settings: Settings | None = None

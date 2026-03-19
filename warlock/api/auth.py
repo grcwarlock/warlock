@@ -29,10 +29,23 @@ from warlock.db.models import User, APIKey
 
 log = logging.getLogger(__name__)
 
-# Configuration from environment
-SECRET_KEY = os.environ.get("WLK_JWT_SECRET", "")
+# Configuration — loaded from Settings, not raw os.environ
+def _load_auth_config():
+    from warlock.config import get_settings
+    s = get_settings()
+    return s.jwt_secret, s.jwt_expire_minutes
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+# Lazy-loaded from settings on first use
+_SECRET_KEY: str | None = None
+_EXPIRE_MINUTES: int | None = None
+
+def _get_auth_config() -> tuple[str, int]:
+    global _SECRET_KEY, _EXPIRE_MINUTES
+    if _SECRET_KEY is None:
+        _SECRET_KEY, _EXPIRE_MINUTES = _load_auth_config()
+    return _SECRET_KEY, _EXPIRE_MINUTES
 
 # Minimum password length
 MIN_PASSWORD_LENGTH = 12
@@ -134,7 +147,7 @@ def _hmac_decode(token: str, secret: str) -> dict:
 
 def _get_jwt_secret() -> str:
     """Get JWT secret, refusing to use a hardcoded fallback in production."""
-    secret = SECRET_KEY or os.environ.get("WLK_JWT_SECRET", "")
+    secret, _ = _get_auth_config()
     if not secret:
         # Dev mode: generate an ephemeral secret and warn loudly
         log.warning(
@@ -153,8 +166,9 @@ _EPHEMERAL_SECRET: str = ""
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
     secret = _get_jwt_secret()
+    _, expire_minutes = _get_auth_config()
     to_encode = {"sub": data.get("sub", "")}  # Only include sub claim (M-3 fix)
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=expire_minutes))
     to_encode["exp"] = expire.timestamp()
     to_encode["iat"] = datetime.now(timezone.utc).timestamp()
 
