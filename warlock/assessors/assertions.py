@@ -305,7 +305,7 @@ def encryption_at_rest(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
                     reasons.append(f"Azure storage encryption not enabled for {svc_name}")
 
     # GCS bucket
-    default_object_acl = detail.get("defaultObjectAcl", [])
+    detail.get("defaultObjectAcl", [])
     if detail.get("kind") == "storage#bucket":
         bucket_encryption = detail.get("encryption", {})
         if not isinstance(bucket_encryption, dict) or not bucket_encryption.get("defaultKmsKeyName"):
@@ -561,7 +561,7 @@ def privileged_access_managed(detail: dict, raw_data: dict) -> tuple[bool, list[
         return False, reasons
 
     # Safe-level checks
-    member_count = detail.get("numberOfDaysRetention")
+    detail.get("numberOfDaysRetention")
     if platform_id and safe_name:
         return True, []
 
@@ -880,7 +880,7 @@ def backup_job_successful(detail: dict, raw_data: dict) -> tuple[bool, list[str]
     # RPO check
     rpo_exceeded = detail.get("rpo_exceeded")
     if rpo_exceeded:
-        reasons.append(f"RPO exceeded: last successful backup more than target hours ago")
+        reasons.append("RPO exceeded: last successful backup more than target hours ago")
         return False, reasons
     return True, []
 

@@ -211,7 +211,7 @@ class CyberArkNormalizer(BaseNormalizer):
         for account in accounts:
             secret_mgmt = account.get("secretManagement", {})
             last_modified = secret_mgmt.get("lastModifiedTime")
-            status = secret_mgmt.get("status", "")
+            secret_mgmt.get("status", "")
 
             if last_modified:
                 try:

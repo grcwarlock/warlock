@@ -15,7 +15,6 @@ from datetime import datetime, timedelta, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -183,7 +182,6 @@ class OCIConnector(BaseConnector):
         client = self._get_client()
 
         if client is not None:
-            import oci
 
             response = client.call_api(
                 resource_path=url.split(".com")[-1],

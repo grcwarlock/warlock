@@ -8,7 +8,6 @@ package paths and framework control identifiers.
 from __future__ import annotations
 
 import logging
-import os
 import re
 from pathlib import Path
 from typing import Any

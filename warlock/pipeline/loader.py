@@ -21,7 +21,7 @@ from warlock.connectors.base import (
     SourceType,
     registry as type_registry,
 )
-from warlock.normalizers.base import NormalizerRegistry, registry as norm_registry
+from warlock.normalizers.base import registry as norm_registry
 from warlock.mappers.control_mapper import ControlMapper
 from warlock.assessors.engine import Assessor, engine as assertion_engine
 from warlock.pipeline.bus import EventBus

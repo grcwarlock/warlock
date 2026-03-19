@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     ControlResult,
-    Finding,
     Questionnaire,
     QuestionnaireTemplate,
 )
@@ -525,7 +524,7 @@ class QuestionnaireManager:
                         break
 
             if matched_compliant > 0 or matched_non_compliant > 0:
-                total_matched = matched_compliant + matched_non_compliant
+                matched_compliant + matched_non_compliant
                 if question.get("response_type") == "yes_no":
                     answer = "Yes" if matched_compliant > matched_non_compliant else "No"
                 else:

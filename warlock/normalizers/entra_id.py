@@ -310,7 +310,7 @@ class EntraIDNormalizer(BaseNormalizer):
             findings.append(FindingData(
                 **self._base(raw),
                 observation_type=obs_type,
-                title=f"Service principal: {name}" + (f" — overprivileged" if overprivileged else ""),
+                title=f"Service principal: {name}" + (" — overprivileged" if overprivileged else ""),
                 detail={
                     "sp_id": sp.get("id", ""),
                     "app_id": sp.get("appId", ""),

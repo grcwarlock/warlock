@@ -10,13 +10,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
-    AuditEntry,
     ControlMapping,
     ControlResult,
     Finding,
     LegalHold,
     RawEvent,
-    _uuid,
 )
 from warlock.utils import ensure_aware
 

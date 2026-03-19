@@ -9,19 +9,15 @@ Generates structured reports in the format auditors expect:
 from __future__ import annotations
 
 import html as _html
-import json
 import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     AuditEngagement,
-    ControlMapping,
     ControlResult,
-    Finding,
 )
 from warlock.assessors.posture import PostureAggregator
 
@@ -404,7 +400,7 @@ class ReportGenerator:
             title = f"{framework} Compliance Report"
 
         by_control = _group_by_control(results)
-        aggregator = PostureAggregator()
+        PostureAggregator()
 
         lines: list[str] = []
         lines.append(f"# {title}")
@@ -431,8 +427,8 @@ class ReportGenerator:
 
         lines.append("## Summary")
         lines.append("")
-        lines.append(f"| Metric | Count |")
-        lines.append(f"|--------|-------|")
+        lines.append("| Metric | Count |")
+        lines.append("|--------|-------|")
         lines.append(f"| Total Controls | {total} |")
         lines.append(f"| Compliant | {compliant_controls} |")
         lines.append(f"| Non-Compliant | {non_compliant_controls} |")
@@ -742,8 +738,8 @@ class ReportGenerator:
             )
         elif status == "partial":
             return (
-                f"Control is applicable and partially implemented. "
-                f"Some findings indicate gaps requiring attention."
+                "Control is applicable and partially implemented. "
+                "Some findings indicate gaps requiring attention."
             )
         return "Control is applicable. Assessment is in progress."
 
@@ -778,7 +774,6 @@ class ReportGenerator:
         html_lines: list[str] = []
         in_table = False
         in_list = False
-        header_done = False
 
         for line in lines:
             stripped = line.strip()
@@ -793,7 +788,6 @@ class ReportGenerator:
                     in_table = False
                 text = _html.escape(stripped[4:])
                 # Add status class
-                css_class = ""
                 if "[PASS]" in text:
                     text = text.replace("[PASS]", '<span class="pass">[PASS]</span>')
                 elif "[FAIL]" in text:
@@ -835,7 +829,6 @@ class ReportGenerator:
                         html_lines.append(f"<th>{cell}</th>")
                     html_lines.append("</tr></thead><tbody>")
                     in_table = True
-                    header_done = True
                 else:
                     html_lines.append("<tr>")
                     for cell in cells:

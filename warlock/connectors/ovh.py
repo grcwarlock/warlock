@@ -14,7 +14,6 @@ from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,

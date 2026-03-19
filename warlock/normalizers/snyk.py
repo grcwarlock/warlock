@@ -66,7 +66,7 @@ class SnykNormalizer(BaseNormalizer):
                         last_tested_str.replace("Z", "+00:00")
                     )
                     if last_tested < stale_threshold:
-                        issues.append(f"not_tested_in_7_days")
+                        issues.append("not_tested_in_7_days")
                         severity = "medium"
                         obs_type = "misconfiguration"
                 except (ValueError, TypeError):

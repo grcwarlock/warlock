@@ -6,20 +6,16 @@ Each repository encapsulates queries for a specific domain entity.
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import distinct, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     Attestation,
-    AuditComment,
     AuditEngagement,
-    AuditEntry,
     ConnectorRun,
-    ControlMapping,
     ControlResult,
     DataSilo,
     Finding,

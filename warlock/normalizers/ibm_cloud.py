@@ -6,7 +6,6 @@ specific API response and extracts structured observations from it.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
@@ -67,7 +66,7 @@ class IBMCloudNormalizer(BaseNormalizer):
             # Determine observation type from kind
             if kind == "FINDING":
                 finding_detail = occ.get("finding", {})
-                next_steps = finding_detail.get("next_steps", [])
+                finding_detail.get("next_steps", [])
                 obs_type = "vulnerability"
                 if any(
                     kw in occ.get("note_name", "").lower()
@@ -112,7 +111,7 @@ class IBMCloudNormalizer(BaseNormalizer):
             user_id = user.get("iam_id", user.get("id", ""))
             email = user.get("email", "")
             state = user.get("state", "")
-            phonetic_name = user.get("phonetic_name", "")
+            user.get("phonetic_name", "")
             user_name = user.get("user_id", email)
 
             issues = []
@@ -247,7 +246,7 @@ class IBMCloudNormalizer(BaseNormalizer):
             key_id = key.get("id", "")
             key_name = key.get("name", "unknown")
             state = key.get("state", 0)
-            state_name = key.get("algorithmMetadata", {}).get("state", "")
+            key.get("algorithmMetadata", {}).get("state", "")
 
             # IBM Key Protect states: 1=Pre-activation, 2=Active, 3=Suspended,
             # 4=Deactivated, 5=Destroyed

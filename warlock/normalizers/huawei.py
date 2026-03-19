@@ -104,7 +104,7 @@ class HuaweiNormalizer(BaseNormalizer):
             enabled = user.get("enabled", True)
             mfa_enabled = user.get("mfa_device", None) is not None
             pwd_status = user.get("pwd_status", None)
-            last_login = user.get("last_project_id", "")  # proxy for activity
+            user.get("last_project_id", "")  # proxy for activity
 
             issues = []
             severity = "info"
@@ -121,7 +121,7 @@ class HuaweiNormalizer(BaseNormalizer):
                 issues.append("user_disabled")
 
             # Check password status for staleness
-            pwd_expires_at = user.get("pwd_strength", "")
+            user.get("pwd_strength", "")
             last_login_time = user.get("last_login_time", "")
             if last_login_time:
                 try:
@@ -375,7 +375,7 @@ class HuaweiNormalizer(BaseNormalizer):
             for grant in grants:
                 grantee = grant.get("grantee", {})
                 grantee_uri = grantee.get("uri", "")
-                grantee_type = grantee.get("type", "")
+                grantee.get("type", "")
                 permission = grant.get("permission", "")
 
                 # AllUsers or AuthenticatedUsers = public

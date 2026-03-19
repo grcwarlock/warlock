@@ -64,7 +64,6 @@ from warlock.db.models import (
     PostureSnapshot,
     Questionnaire,
     QuestionnaireTemplate,
-    RawEvent,
     SystemProfile,
     User,
     LegalHold,

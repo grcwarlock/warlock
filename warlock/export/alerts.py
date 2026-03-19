@@ -6,7 +6,6 @@ to configured channels (Slack webhook, PagerDuty, email, generic webhook).
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone

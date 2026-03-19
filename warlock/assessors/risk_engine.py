@@ -19,15 +19,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from warlock.assessors.posture import ControlPosture, PostureAggregator
 from warlock.db.models import (
-    ControlResult,
-    PostureSnapshot,
     RiskAnalysis,
-    _uuid,
 )
 
 log = logging.getLogger(__name__)

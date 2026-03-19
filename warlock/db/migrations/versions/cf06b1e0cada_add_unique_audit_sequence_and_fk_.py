@@ -15,7 +15,6 @@ The column definitions are copied during the rebuild.
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 
 revision: str = 'cf06b1e0cada'

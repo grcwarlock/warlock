@@ -5,7 +5,6 @@ Handles machine risk data, alerts, vulnerabilities, and recommendations.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry

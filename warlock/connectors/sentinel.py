@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -157,7 +156,6 @@ class SentinelConnector(BaseConnector):
 
     def _paginate(self, client, url: str, headers: dict) -> list[dict]:
         """Follow nextLink pagination, return all items."""
-        import httpx  # noqa: F811
 
         all_items: list[dict] = []
         while url:

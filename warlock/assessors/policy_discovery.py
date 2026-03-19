@@ -8,16 +8,14 @@ scores policy documentation coverage.
 from __future__ import annotations
 
 import logging
-import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
-    ControlMapping,
     ControlResult,
     Finding,
 )
@@ -342,7 +340,7 @@ def _is_likely_policy(title: str, detail: dict[str, Any]) -> bool:
     doc_type = str(detail.get("document_type", "")).lower()
     labels = detail.get("labels", [])
     if isinstance(labels, list):
-        label_text = " ".join(str(l).lower() for l in labels)
+        label_text = " ".join(str(lbl).lower() for lbl in labels)
     else:
         label_text = str(labels).lower()
 

@@ -6,7 +6,6 @@ specific API response and extracts structured observations from it.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
@@ -300,7 +299,7 @@ class AzureNormalizer(BaseNormalizer):
             network_rules = properties.get("network_rule_set", {})
             if network_rules.get("default_action", "").lower() == "allow":
                 issues.append("default_network_access_allow")
-            if not properties.get("allow_blob_public_access") is False:
+            if properties.get("allow_blob_public_access") is not False:
                 # Only flag if explicitly set to True
                 if properties.get("allow_blob_public_access", False):
                     issues.append("public_blob_access_enabled")
