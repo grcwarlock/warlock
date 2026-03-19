@@ -9285,7 +9285,7 @@ def main():
     print("  warlock vendors                    # vendor risk scores")
     print("  warlock questionnaires             # vendor questionnaires")
     print("  warlock data-silos                 # storage inventory")
-    print("  warlock retention                  # retention & legal holds")
+    print("  warlock retention report            # retention & legal holds")
     print("  warlock issues                     # compliance issues")
     print("  warlock policy-coverage -f iso_27001  # policy gaps")
     print("  warlock risk -f nist_800_53        # FAIR risk analysis")
