@@ -1349,5 +1349,380 @@ def sufficiency_check(framework: str | None, below: float | None) -> None:
     console.print(table)
 
 
+# ---------------------------------------------------------------------------
+# Phase 2: POA&M, Compensating Controls, Risk Acceptance
+# ---------------------------------------------------------------------------
+
+
+@cli.command("poams")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--status", "-s", default=None, help="Filter by status")
+@click.option("--overdue", is_flag=True, help="Show only overdue POA&Ms")
+@click.option("--limit", "-n", default=50, help="Max results")
+def poams_list(framework: str | None, status: str | None, overdue: bool, limit: int) -> None:
+    """List Plans of Action & Milestones."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.poam import POAMManager
+
+    init_db()
+    mgr = POAMManager()
+
+    with get_session() as session:
+        if overdue:
+            rows = mgr.get_overdue(session)
+        else:
+            rows = mgr.list_poams(session, framework=framework, status=status)
+
+    rows = rows[:limit]
+    if not rows:
+        console.print("[dim]No POA&Ms found.[/dim]")
+        return
+
+    table = Table(title="Plans of Action & Milestones")
+    table.add_column("ID", max_width=8)
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Severity")
+    table.add_column("Status")
+    table.add_column("Due Date")
+    table.add_column("Delays", justify="right")
+    table.add_column("Weakness", max_width=40)
+
+    for p in rows:
+        due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "—"
+        status_style = "red" if p.status in ("draft", "open") else ("yellow" if p.status == "in_progress" else "green")
+        table.add_row(
+            p.id[:8], p.framework, p.control_id, p.severity,
+            f"[{status_style}]{p.status}[/{status_style}]",
+            due, str(p.delay_count or 0),
+            (p.weakness_description or "")[:40],
+        )
+
+    console.print(table)
+
+
+@cli.command("compensating-controls")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--status", "-s", default=None, help="Filter by status")
+def compensating_list(framework: str | None, status: str | None) -> None:
+    """List compensating controls."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.compensating import CompensatingControlManager
+
+    init_db()
+    mgr = CompensatingControlManager()
+
+    with get_session() as session:
+        rows = mgr.list_controls(session, framework=framework, status=status)
+
+    if not rows:
+        console.print("[dim]No compensating controls found.[/dim]")
+        return
+
+    table = Table(title="Compensating Controls")
+    table.add_column("ID", max_width=8)
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Title", max_width=30)
+    table.add_column("Status")
+    table.add_column("Effectiveness", justify="right")
+    table.add_column("Expiry")
+
+    for c in rows:
+        exp = c.expiry_date.strftime("%Y-%m-%d") if c.expiry_date else "—"
+        eff = f"{c.effectiveness_score:.0f}" if c.effectiveness_score else "—"
+        table.add_row(
+            c.id[:8], c.original_framework, c.original_control_id,
+            (c.title or "")[:30], c.status, eff, exp,
+        )
+
+    console.print(table)
+
+
+@cli.command("risk-acceptances")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--status", "-s", default=None, help="Filter by status")
+@click.option("--expiring-soon", type=int, default=None, help="Show acceptances expiring within N days")
+def risk_acceptances_list(framework: str | None, status: str | None, expiring_soon: int | None) -> None:
+    """List risk acceptances."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.risk_acceptance import RiskAcceptanceManager
+
+    init_db()
+    mgr = RiskAcceptanceManager()
+
+    with get_session() as session:
+        rows = mgr.list_acceptances(session, framework=framework, status=status, expiring_days=expiring_soon)
+
+    if not rows:
+        console.print("[dim]No risk acceptances found.[/dim]")
+        return
+
+    table = Table(title="Risk Acceptances")
+    table.add_column("ID", max_width=8)
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Risk Level")
+    table.add_column("Status")
+    table.add_column("Approved By")
+    table.add_column("Expires")
+
+    for r in rows:
+        exp = r.expiry_date.strftime("%Y-%m-%d") if r.expiry_date else "—"
+        table.add_row(
+            r.id[:8], r.framework, r.control_id, r.risk_level,
+            r.status, r.approved_by or "—", exp,
+        )
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: Inheritance & Dependencies
+# ---------------------------------------------------------------------------
+
+
+@cli.command("inheritance")
+@click.option("--system", required=True, help="System profile ID")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+def inheritance_list(system: str, framework: str | None) -> None:
+    """Show control inheritance map for a system."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.inheritance import InheritanceManager
+
+    init_db()
+    mgr = InheritanceManager()
+
+    with get_session() as session:
+        rows = mgr.get_for_system(session, system, framework=framework)
+
+    if not rows:
+        console.print("[dim]No inheritance mappings found.[/dim]")
+        return
+
+    table = Table(title="Control Inheritance")
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Type")
+    table.add_column("Provider")
+    table.add_column("Evidence Req")
+    table.add_column("Status")
+
+    for ci in rows:
+        type_style = {"inherited": "cyan", "shared": "yellow", "common": "blue", "system_specific": "white"}.get(ci.inheritance_type, "white")
+        table.add_row(
+            ci.framework, ci.control_id,
+            f"[{type_style}]{ci.inheritance_type}[/{type_style}]",
+            ci.provider_system_id[:8] if ci.provider_system_id else "—",
+            ci.evidence_requirement, ci.status,
+        )
+
+    console.print(table)
+
+
+@cli.command("dependencies")
+@click.option("--system", default=None, help="Filter by system profile ID")
+def dependencies_list(system: str | None) -> None:
+    """Show cross-system dependency graph."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SystemDependency
+
+    init_db()
+
+    with get_session() as session:
+        q = session.query(SystemDependency)
+        if system:
+            q = q.filter(
+                (SystemDependency.consumer_system_id == system) |
+                (SystemDependency.provider_system_id == system)
+            )
+        rows = q.all()
+
+    if not rows:
+        console.print("[dim]No system dependencies found.[/dim]")
+        return
+
+    table = Table(title="System Dependencies")
+    table.add_column("Consumer", max_width=8)
+    table.add_column("Provider", max_width=8)
+    table.add_column("Type")
+    table.add_column("Shared Controls")
+
+    for d in rows:
+        ctrls = ", ".join((d.shared_controls or [])[:3])
+        if len(d.shared_controls or []) > 3:
+            ctrls += f" (+{len(d.shared_controls) - 3})"
+        table.add_row(
+            d.consumer_system_id[:8], d.provider_system_id[:8],
+            d.dependency_type, ctrls,
+        )
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Drift, Simulation, Effectiveness
+# ---------------------------------------------------------------------------
+
+
+@cli.command("drift")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--days", "-d", default=30, help="Lookback window in days")
+@click.option("--direction", default=None, help="Filter: improved or degraded")
+def drift_list(framework: str | None, days: int, direction: str | None) -> None:
+    """Show compliance drift events with correlated changes."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.assessors.drift import DriftDetector
+
+    init_db()
+    detector = DriftDetector()
+
+    with get_session() as session:
+        drifts = detector.get_drifts(session, framework=framework, days=days, direction=direction)
+
+    if not drifts:
+        console.print("[green]No compliance drift detected.[/green]")
+        return
+
+    table = Table(title=f"Compliance Drift ({days}d)")
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Direction")
+    table.add_column("From")
+    table.add_column("To")
+    table.add_column("Correlated Changes", justify="right")
+    table.add_column("Detected")
+
+    for d in drifts:
+        dir_style = "red" if d.drift_direction == "degraded" else "green"
+        changes = len(d.correlated_change_event_ids or [])
+        table.add_row(
+            d.framework, d.control_id,
+            f"[{dir_style}]{d.drift_direction}[/{dir_style}]",
+            d.previous_status, d.new_status,
+            str(changes),
+            d.detected_at.strftime("%Y-%m-%d %H:%M") if d.detected_at else "—",
+        )
+
+    console.print(table)
+
+
+@cli.command("simulate-audit")
+@click.option("--framework", "-f", required=True, help="Framework to simulate")
+@click.option("--date", required=True, help="Target audit date (YYYY-MM-DD)")
+@click.option("--system", default=None, help="System profile ID")
+def simulate_audit(framework: str, date: str, system: str | None) -> None:
+    """Simulate what an auditor would see at a future date."""
+    from datetime import datetime as dt
+    from warlock.db.engine import get_session, init_db
+    from warlock.assessors.simulation import AuditSimulator
+
+    init_db()
+    target = dt.fromisoformat(date).replace(tzinfo=__import__("datetime").timezone.utc)
+    sim = AuditSimulator()
+
+    with get_session() as session:
+        result = sim.simulate(session, framework, target, system_id=system)
+
+    console.print(f"\n[bold]Audit Simulation: {framework} @ {date}[/bold]")
+    console.print(f"  Projected coverage: [{'green' if result.projected_coverage >= 80 else 'red'}]{result.projected_coverage:.1f}%[/]")
+    console.print(f"  Total controls:     {result.total_controls}")
+    console.print(f"  Stale by date:      [yellow]{len(result.stale_controls)}[/yellow]")
+    console.print(f"  Overdue POA&Ms:     [yellow]{len(result.overdue_poams)}[/yellow]")
+    console.print(f"  Expiring acceptances: [yellow]{len(result.expiring_acceptances)}[/yellow]")
+    console.print(f"  At-risk controls:   [red]{len(result.at_risk_controls)}[/red]")
+
+
+@cli.command("effectiveness")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--days", "-d", default=365, help="Trailing window in days")
+def effectiveness_report(framework: str | None, days: int) -> None:
+    """Show control effectiveness scores over time."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import PostureSnapshot
+    from sqlalchemy import distinct
+
+    init_db()
+
+    with get_session() as session:
+        from datetime import timedelta
+        from datetime import datetime, timezone
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+        q = session.query(PostureSnapshot).filter(
+            PostureSnapshot.snapshot_date >= cutoff,
+            PostureSnapshot.uptime_pct.isnot(None),
+        )
+        if framework:
+            q = q.filter(PostureSnapshot.framework == framework)
+
+        # Get latest snapshot per control
+        latest = q.order_by(PostureSnapshot.snapshot_date.desc()).all()
+        seen = set()
+        rows = []
+        for s in latest:
+            key = (s.framework, s.control_id)
+            if key not in seen:
+                seen.add(key)
+                rows.append(s)
+
+    if not rows:
+        console.print("[dim]No effectiveness data. Run posture snapshots first.[/dim]")
+        return
+
+    rows.sort(key=lambda s: s.uptime_pct or 0)
+
+    table = Table(title=f"Control Effectiveness ({days}d)")
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Uptime %", justify="right")
+    table.add_column("MTTR (hrs)", justify="right")
+    table.add_column("Drift Count", justify="right")
+
+    for s in rows:
+        uptime = f"{s.uptime_pct:.1f}" if s.uptime_pct is not None else "—"
+        mttr = f"{s.mttr_hours:.1f}" if s.mttr_hours is not None else "—"
+        drift = str(s.drift_count) if s.drift_count is not None else "—"
+        style = "red" if (s.uptime_pct or 0) < 80 else ("yellow" if (s.uptime_pct or 0) < 95 else "green")
+        table.add_row(s.framework, s.control_id, f"[{style}]{uptime}[/{style}]", mttr, drift)
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# Phase 5: Framework Diff
+# ---------------------------------------------------------------------------
+
+
+@cli.command("framework-diff")
+@click.option("--old", "old_path", required=True, help="Path to old framework YAML")
+@click.option("--new", "new_path", required=True, help="Path to new framework YAML")
+def framework_diff_cmd(old_path: str, new_path: str) -> None:
+    """Compare two framework versions and show control changes."""
+    from warlock.frameworks.diff import FrameworkDiff
+
+    differ = FrameworkDiff()
+    result = differ.diff(old_path, new_path)
+
+    console.print(f"\n[bold]Framework Diff[/bold]")
+    console.print(f"  Added:     [green]{len(result.added_controls)}[/green]")
+    console.print(f"  Removed:   [red]{len(result.removed_controls)}[/red]")
+    console.print(f"  Modified:  [yellow]{len(result.modified_controls)}[/yellow]")
+    console.print(f"  Unchanged: [dim]{len(result.unchanged_controls)}[/dim]")
+
+    if result.added_controls:
+        console.print(f"\n[green]Added:[/green]")
+        for c in sorted(result.added_controls)[:20]:
+            console.print(f"  + {c}")
+    if result.removed_controls:
+        console.print(f"\n[red]Removed:[/red]")
+        for c in sorted(result.removed_controls)[:20]:
+            console.print(f"  - {c}")
+    if result.modified_controls:
+        console.print(f"\n[yellow]Modified:[/yellow]")
+        for c in sorted(result.modified_controls)[:20]:
+            console.print(f"  ~ {c}")
+
+
 if __name__ == "__main__":
     cli()
