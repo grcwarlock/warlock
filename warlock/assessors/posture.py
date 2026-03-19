@@ -22,6 +22,7 @@ from warlock.db.models import (
     Finding,
     PostureSnapshot,
 )
+from datetime import timedelta
 
 log = logging.getLogger(__name__)
 
@@ -629,3 +630,135 @@ class EvidenceSufficiencyScorer:
             controls_insufficient=insufficient,
             common_gaps=common_gaps,
         )
+
+
+# ---------------------------------------------------------------------------
+# Posture Time-Series
+# ---------------------------------------------------------------------------
+
+@dataclass
+class PostureTimeSeriesPoint:
+    date: datetime
+    status: str
+    posture_score: float
+    sufficiency_score: float
+    evidence_freshness_hours: float | None
+
+
+@dataclass
+class PostureTimeSeries:
+    framework: str
+    control_id: str
+    points: list[PostureTimeSeriesPoint]
+    trend: str  # improving, stable, degrading
+    trend_slope: float  # posture_score change per day
+
+
+class PostureTimeSeriesQuery:
+    """Query PostureSnapshot history for trend analysis."""
+
+    def query_control(
+        self,
+        session: Session,
+        framework: str,
+        control_id: str,
+        days: int = 90,
+    ) -> PostureTimeSeries:
+        """Get time-series data for a single control."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+        snapshots = (
+            session.query(PostureSnapshot)
+            .filter(
+                PostureSnapshot.framework == framework,
+                PostureSnapshot.control_id == control_id,
+                PostureSnapshot.snapshot_date >= cutoff,
+            )
+            .order_by(PostureSnapshot.snapshot_date)
+            .all()
+        )
+
+        points = [
+            PostureTimeSeriesPoint(
+                date=s.snapshot_date,
+                status=s.status,
+                posture_score=s.posture_score,
+                sufficiency_score=s.sufficiency_score or 0.0,
+                evidence_freshness_hours=s.evidence_freshness_hours,
+            )
+            for s in snapshots
+        ]
+
+        slope = self._compute_slope(points)
+        if slope > 0.05:
+            trend = "improving"
+        elif slope < -0.05:
+            trend = "degrading"
+        else:
+            trend = "stable"
+
+        return PostureTimeSeries(
+            framework=framework,
+            control_id=control_id,
+            points=points,
+            trend=trend,
+            trend_slope=round(slope, 4),
+        )
+
+    def query_framework(
+        self,
+        session: Session,
+        framework: str,
+        days: int = 90,
+    ) -> list[PostureTimeSeries]:
+        """Get time-series for all controls in a framework."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+        control_rows = (
+            session.query(distinct(PostureSnapshot.control_id))
+            .filter(
+                PostureSnapshot.framework == framework,
+                PostureSnapshot.snapshot_date >= cutoff,
+            )
+            .all()
+        )
+        control_ids = sorted([row[0] for row in control_rows])
+        return [
+            self.query_control(session, framework, cid, days)
+            for cid in control_ids
+        ]
+
+    @staticmethod
+    def _compute_slope(points: list[PostureTimeSeriesPoint]) -> float:
+        """Simple linear regression slope on posture_score over time.
+
+        Returns change in posture_score per day.
+        """
+        if len(points) < 2:
+            return 0.0
+
+        base_time = points[0].date
+        if base_time.tzinfo is None:
+            base_time = base_time.replace(tzinfo=timezone.utc)
+
+        xs: list[float] = []
+        ys: list[float] = []
+        for p in points:
+            t = p.date
+            if t.tzinfo is None:
+                t = t.replace(tzinfo=timezone.utc)
+            day_offset = (t - base_time).total_seconds() / 86400.0
+            xs.append(day_offset)
+            ys.append(p.posture_score)
+
+        n = len(xs)
+        sum_x = sum(xs)
+        sum_y = sum(ys)
+        sum_xy = sum(x * y for x, y in zip(xs, ys))
+        sum_x2 = sum(x * x for x in xs)
+
+        denom = n * sum_x2 - sum_x * sum_x
+        if abs(denom) < 1e-10:
+            return 0.0
+
+        return (n * sum_xy - sum_x * sum_y) / denom

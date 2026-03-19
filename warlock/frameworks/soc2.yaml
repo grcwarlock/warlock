@@ -1,678 +1,639 @@
 framework_id: soc2
-
 control_families:
-  # ---------------------------------------------------------------------------
-  # CC1 — Control Environment
-  # ---------------------------------------------------------------------------
   CC1:
     controls:
       CC1.1:
         checks:
-          - id: cc1_1_org_commitment
-            event_types:
-              - sailpoint_identities
-              - sailpoint_roles
-            resource_types:
-              - sailpoint_identity
-              - sailpoint_role
-
+        - id: cc1_1_org_commitment
+          event_types:
+          - sailpoint_identities
+          - sailpoint_roles
+          resource_types:
+          - sailpoint_identity
+          - sailpoint_role
+        monitoring_frequency: quarterly
       CC1.2:
         checks:
-          - id: cc1_2_board_oversight
-            event_types:
-              - sailpoint_certifications
-            resource_types:
-              - sailpoint_certification
-
+        - id: cc1_2_board_oversight
+          event_types:
+          - sailpoint_certifications
+          resource_types:
+          - sailpoint_certification
+        monitoring_frequency: quarterly
       CC1.3:
         checks:
-          - id: cc1_3_management_structure
-            event_types:
-              - workday_employees
-            resource_types:
-              - hr_employee
-
+        - id: cc1_3_management_structure
+          event_types:
+          - workday_employees
+          resource_types:
+          - hr_employee
+        monitoring_frequency: quarterly
       CC1.4:
         checks:
-          - id: cc1_4_competence
-            event_types:
-              - kb4_training_enrollments
-            resource_types:
-              - training_enrollment
-
+        - id: cc1_4_competence
+          event_types:
+          - kb4_training_enrollments
+          resource_types:
+          - training_enrollment
+        monitoring_frequency: quarterly
       CC1.5:
         checks:
-          - id: cc1_5_enforcement
-            event_types:
-              - workday_disciplinary
-            resource_types:
-              - hr_disciplinary_action
-
-  # ---------------------------------------------------------------------------
-  # CC2 — Communication and Information
-  # ---------------------------------------------------------------------------
+        - id: cc1_5_enforcement
+          event_types:
+          - workday_disciplinary
+          resource_types:
+          - hr_disciplinary_action
+        monitoring_frequency: quarterly
   CC2:
     controls:
       CC2.1:
         checks:
-          - id: cc2_1_internal_communication
-            event_types:
-              - splunk_notable_events
-              - sentinel_incidents
-            resource_types:
-              - splunk_notable_event
-              - sentinel_incident
-
+        - id: cc2_1_internal_communication
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
+        monitoring_frequency: quarterly
       CC2.2:
         checks:
-          - id: cc2_2_internal_communication
-            event_types:
-              - confluence_pages
-              - snow_knowledge_articles
-              - okta_system_log
-            resource_types:
-              - grc_document
-              - itsm_knowledge_article
-              - okta_event
-
+        - id: cc2_2_internal_communication
+          event_types:
+          - confluence_pages
+          - snow_knowledge_articles
+          - okta_system_log
+          resource_types:
+          - grc_document
+          - itsm_knowledge_article
+          - okta_event
+        monitoring_frequency: quarterly
       CC2.3:
         checks:
-          - id: cc2_3_external_communication
-            event_types:
-              - confluence_pages
-              - snow_policies
-            resource_types:
-              - grc_document
-              - itsm_policy
-
-  # ---------------------------------------------------------------------------
-  # CC3 — Risk Assessment
-  # ---------------------------------------------------------------------------
+        - id: cc2_3_external_communication
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
   CC3:
     controls:
       CC3.1:
         checks:
-          - id: cc3_1_risk_identification
-            event_types:
-              - vuln_export
-              - host_detections
-              - falcon_vulnerabilities
-              - defender_vulnerabilities
-              - wiz_vuln_findings
-              - wiz_issues
-            resource_types:
-              - host
-              - endpoint
-              - vulnerability
-
+        - id: cc3_1_risk_identification
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - wiz_vuln_findings
+          - wiz_issues
+          resource_types:
+          - host
+          - endpoint
+          - vulnerability
+        monitoring_frequency: monthly
       CC3.2:
         checks:
-          - id: cc3_2_risk_analysis
-            event_types:
-              - defender_recommendations
-              - prisma_alerts
-              - wiz_issues
-              - scc_findings
-            resource_types:
-              - recommendation
-
+        - id: cc3_2_risk_analysis
+          event_types:
+          - defender_recommendations
+          - prisma_alerts
+          - wiz_issues
+          - scc_findings
+          resource_types:
+          - recommendation
+        monitoring_frequency: monthly
       CC3.3:
         checks:
-          - id: cc3_3_risk_estimation
-            event_types:
-              - snow_risks
-              - wiz_issues
-              - prisma_alerts
-              - scc_findings
-            resource_types:
-              - itsm_risk
-              - recommendation
-
+        - id: cc3_3_risk_estimation
+          event_types:
+          - snow_risks
+          - wiz_issues
+          - prisma_alerts
+          - scc_findings
+          resource_types:
+          - itsm_risk
+          - recommendation
+        monitoring_frequency: monthly
       CC3.4:
         checks:
-          - id: cc3_4_fraud_risk
-            event_types:
-              - entra_risky_users
-              - okta_system_log
-              - sentinel_incidents
-              - splunk_notable_events
-            resource_types:
-              - entra_user
-              - okta_event
-              - sentinel_incident
-              - splunk_notable_event
-
-  # ---------------------------------------------------------------------------
-  # CC4 — Monitoring Activities
-  # ---------------------------------------------------------------------------
+        - id: cc3_4_fraud_risk
+          event_types:
+          - entra_risky_users
+          - okta_system_log
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - entra_user
+          - okta_event
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: monthly
   CC4:
     controls:
       CC4.1:
         checks:
-          - id: cc4_1_monitoring
-            event_types:
-              - config_recorders
-              - securityhub_hub
-              - guardduty_detectors
-              - policy_compliance
-              - scc_findings
-              - prisma_compliance
-              - wiz_config_findings
-            resource_types:
-              - aws_config
-              - securityhub
-              - guardduty
-              - compliance_standard
-
+        - id: cc4_1_monitoring
+          event_types:
+          - config_recorders
+          - securityhub_hub
+          - guardduty_detectors
+          - policy_compliance
+          - scc_findings
+          - prisma_compliance
+          - wiz_config_findings
+          resource_types:
+          - aws_config
+          - securityhub
+          - guardduty
+          - compliance_standard
+        monitoring_frequency: monthly
       CC4.2:
         checks:
-          - id: cc4_2_deficiency_remediation
-            event_types:
-              - defender_recommendations
-              - wiz_issues
-              - prisma_alerts
-            resource_types:
-              - recommendation
-
-  # ---------------------------------------------------------------------------
-  # CC5 — Control Activities
-  # ---------------------------------------------------------------------------
+        - id: cc4_2_deficiency_remediation
+          event_types:
+          - defender_recommendations
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - recommendation
+        monitoring_frequency: monthly
   CC5:
     controls:
       CC5.1:
         checks:
-          - id: cc5_1_control_selection
-            event_types:
-              - prisma_compliance
-              - compliance_audits
-              - compliance_posture
-            resource_types:
-              - compliance_standard
-              - compliance_requirement
-
+        - id: cc5_1_control_selection
+          event_types:
+          - prisma_compliance
+          - compliance_audits
+          - compliance_posture
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+        monitoring_frequency: monthly
       CC5.2:
         checks:
-          - id: cc5_2_general_it_controls
-            event_types:
-              - config_recorders
-              - policy_compliance
-              - prisma_policies
-            resource_types:
-              - aws_config
-              - azure_resource
-              - policy
-
+        - id: cc5_2_general_it_controls
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - prisma_policies
+          resource_types:
+          - aws_config
+          - azure_resource
+          - policy
+        monitoring_frequency: monthly
       CC5.3:
         checks:
-          - id: cc5_3_segregation_of_duties
-            event_types:
-              - iam_policies
-              - gcp_iam_policies
-              - sailpoint_roles
-              - sailpoint_entitlements
-              - cyberark_accounts
-              - cyberark_safes
-            resource_types:
-              - iam_policy
-              - gcp_iam_binding
-              - sailpoint_role
-              - sailpoint_entitlement
-              - cyberark_account
-              - cyberark_safe
-
-  # ---------------------------------------------------------------------------
-  # CC6 — Logical and Physical Access Controls
-  # ---------------------------------------------------------------------------
+        - id: cc5_3_segregation_of_duties
+          event_types:
+          - iam_policies
+          - gcp_iam_policies
+          - sailpoint_roles
+          - sailpoint_entitlements
+          - cyberark_accounts
+          - cyberark_safes
+          resource_types:
+          - iam_policy
+          - gcp_iam_binding
+          - sailpoint_role
+          - sailpoint_entitlement
+          - cyberark_account
+          - cyberark_safe
+        monitoring_frequency: monthly
   CC6:
     controls:
       CC6.1:
         checks:
-          - id: cc6_1_access_controls
-            event_types:
-              - iam_credential_report
-              - iam_users
-              - iam_account_summary
-              - okta_users
-              - entra_users
-              - entra_risky_users
-              - sailpoint_identities
-              - sailpoint_accounts
-            resource_types:
-              - iam_user
-              - iam_account
-              - okta_user
-              - entra_user
-              - sailpoint_identity
-              - sailpoint_account
-
+        - id: cc6_1_access_controls
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - iam_account_summary
+          - okta_users
+          - entra_users
+          - entra_risky_users
+          - sailpoint_identities
+          - sailpoint_accounts
+          resource_types:
+          - iam_user
+          - iam_account
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+          - sailpoint_account
+        monitoring_frequency: weekly
       CC6.2:
         checks:
-          - id: cc6_2_user_registration
-            event_types:
-              - iam_users
-              - okta_users
-              - entra_users
-              - sailpoint_identities
-              - entra_directory_audits
-            resource_types:
-              - iam_user
-              - okta_user
-              - entra_user
-              - sailpoint_identity
-              - entra_audit
-
+        - id: cc6_2_user_registration
+          event_types:
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          - entra_directory_audits
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+          - entra_audit
+        monitoring_frequency: weekly
       CC6.3:
         checks:
-          - id: cc6_3_role_based_access
-            event_types:
-              - iam_policies
-              - gcp_iam_policies
-              - okta_policies
-              - entra_conditional_access_policies
-              - sailpoint_roles
-              - sailpoint_entitlements
-              - cyberark_accounts
-            resource_types:
-              - iam_policy
-              - gcp_iam_binding
-              - okta_policy
-              - entra_conditional_access_policy
-              - sailpoint_role
-              - sailpoint_entitlement
-              - cyberark_account
-
+        - id: cc6_3_role_based_access
+          event_types:
+          - iam_policies
+          - gcp_iam_policies
+          - okta_policies
+          - entra_conditional_access_policies
+          - sailpoint_roles
+          - sailpoint_entitlements
+          - cyberark_accounts
+          resource_types:
+          - iam_policy
+          - gcp_iam_binding
+          - okta_policy
+          - entra_conditional_access_policy
+          - sailpoint_role
+          - sailpoint_entitlement
+          - cyberark_account
+        monitoring_frequency: weekly
       CC6.4:
         checks:
-          - id: cc6_4_credential_management
-            event_types:
-              - iam_credential_report
-              - iam_account_summary
-              - okta_users
-              - entra_users
-              - cyberark_accounts
-              - cyberark_safes
-            resource_types:
-              - iam_user
-              - iam_account
-              - okta_user
-              - entra_user
-              - cyberark_account
-              - cyberark_safe
-
+        - id: cc6_4_credential_management
+          event_types:
+          - iam_credential_report
+          - iam_account_summary
+          - okta_users
+          - entra_users
+          - cyberark_accounts
+          - cyberark_safes
+          resource_types:
+          - iam_user
+          - iam_account
+          - okta_user
+          - entra_user
+          - cyberark_account
+          - cyberark_safe
+        monitoring_frequency: weekly
       CC6.5:
         checks:
-          - id: cc6_5_authentication_mechanisms
-            event_types:
-              - okta_policies
-              - entra_conditional_access_policies
-              - iam_credential_report
-              - iam_account_summary
-            resource_types:
-              - okta_policy
-              - entra_conditional_access_policy
-              - iam_user
-              - iam_account
-
+        - id: cc6_5_authentication_mechanisms
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          - iam_credential_report
+          - iam_account_summary
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+          - iam_user
+          - iam_account
+        monitoring_frequency: weekly
       CC6.6:
         checks:
-          - id: cc6_6_boundary_protection
-            event_types:
-              - ec2_security_groups
-              - ec2_network_acls
-              - compute_firewall_rules
-              - network_security_groups
-            resource_types:
-              - ec2_security_group
-              - ec2_network_acl
-              - compute_firewall_rule
-              - network_security_group
-
+        - id: cc6_6_boundary_protection
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - compute_firewall_rules
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - compute_firewall_rule
+          - network_security_group
+        monitoring_frequency: weekly
       CC6.7:
         checks:
-          - id: cc6_7_data_restrictions
-            event_types:
-              - s3_buckets
-              - storage_buckets
-              - storage_accounts
-            resource_types:
-              - s3_bucket
-              - storage_bucket
-              - storage_account
-
+        - id: cc6_7_data_restrictions
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+        monitoring_frequency: weekly
       CC6.8:
         checks:
-          - id: cc6_8_malware_prevention
-            event_types:
-              - falcon_detection_details
-              - falcon_device_details
-              - falcon_devices
-              - defender_machines
-              - defender_alerts
-              - s1_threats
-              - s1_agents
-            resource_types:
-              - endpoint
-              - endpoint_fleet
-
-  # ---------------------------------------------------------------------------
-  # CC7 — System Operations
-  # ---------------------------------------------------------------------------
+        - id: cc6_8_malware_prevention
+          event_types:
+          - falcon_detection_details
+          - falcon_device_details
+          - falcon_devices
+          - defender_machines
+          - defender_alerts
+          - s1_threats
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: weekly
   CC7:
     controls:
       CC7.1:
         checks:
-          - id: cc7_1_detection
-            event_types:
-              - guardduty_detectors
-              - securityhub_hub
-              - splunk_notable_events
-              - splunk_correlation_rules
-              - sentinel_analytics_rules
-              - elastic_detection_rules
-              - scc_findings
-              - falcon_detection_details
-              - defender_alerts
-              - s1_threats
-            resource_types:
-              - guardduty
-              - securityhub
-              - splunk_notable_event
-              - splunk_correlation_rule
-              - sentinel_analytics_rule
-              - elastic_detection_rule
-              - endpoint
-
+        - id: cc7_1_detection
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          - scc_findings
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - guardduty
+          - securityhub
+          - splunk_notable_event
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+          - endpoint
+        monitoring_frequency: weekly
       CC7.2:
         checks:
-          - id: cc7_2_monitoring
-            event_types:
-              - cloudtrail_trails
-              - audit_logs
-              - activity_log
-              - config_recorders
-              - monitor_alerts
-              - splunk_index_health
-            resource_types:
-              - cloudtrail
-              - gcp_audit
-              - azure_activity
-              - aws_config
-              - azure_monitor
-              - splunk_index
-
+        - id: cc7_2_monitoring
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          - monitor_alerts
+          - splunk_index_health
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
+          - azure_monitor
+          - splunk_index
+        monitoring_frequency: weekly
       CC7.3:
         checks:
-          - id: cc7_3_change_detection
-            event_types:
-              - config_recorders
-              - cloudtrail_trails
-              - entra_directory_audits
-              - okta_system_log
-            resource_types:
-              - aws_config
-              - cloudtrail
-              - entra_audit
-              - okta_event
-
+        - id: cc7_3_change_detection
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          - entra_directory_audits
+          - okta_system_log
+          resource_types:
+          - aws_config
+          - cloudtrail
+          - entra_audit
+          - okta_event
+        monitoring_frequency: weekly
       CC7.4:
         checks:
-          - id: cc7_4_incident_response
-            event_types:
-              - sentinel_incidents
-              - splunk_notable_events
-              - elastic_security_alerts
-              - falcon_detection_details
-              - defender_alerts
-            resource_types:
-              - sentinel_incident
-              - splunk_notable_event
-              - elastic_security_alert
-              - endpoint
-
+        - id: cc7_4_incident_response
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - elastic_security_alerts
+          - falcon_detection_details
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - elastic_security_alert
+          - endpoint
+        monitoring_frequency: weekly
       CC7.5:
         checks:
-          - id: cc7_5_incident_recovery
-            event_types:
-              - sentinel_incidents
-              - splunk_notable_events
-            resource_types:
-              - sentinel_incident
-              - splunk_notable_event
-
-  # ---------------------------------------------------------------------------
-  # CC8 — Change Management
-  # ---------------------------------------------------------------------------
+        - id: cc7_5_incident_recovery
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
   CC8:
     controls:
       CC8.1:
         checks:
-          - id: cc8_1_change_management
-            event_types:
-              - config_recorders
-              - cloudtrail_trails
-              - audit_logs
-              - activity_log
-              - entra_directory_audits
-              - snow_change_requests
-            resource_types:
-              - aws_config
-              - cloudtrail
-              - gcp_audit
-              - azure_activity
-              - entra_audit
-              - itsm_change_request
-
-  # ---------------------------------------------------------------------------
-  # CC9 — Risk Mitigation
-  # ---------------------------------------------------------------------------
+        - id: cc8_1_change_management
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - entra_directory_audits
+          - snow_change_requests
+          resource_types:
+          - aws_config
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - entra_audit
+          - itsm_change_request
+        monitoring_frequency: monthly
   CC9:
     controls:
       CC9.1:
         checks:
-          - id: cc9_1_risk_mitigation
-            event_types:
-              - vuln_export
-              - host_detections
-              - falcon_vulnerabilities
-              - defender_vulnerabilities
-              - defender_recommendations
-              - wiz_vuln_findings
-              - wiz_issues
-            resource_types:
-              - host
-              - endpoint
-              - vulnerability
-              - recommendation
-
+        - id: cc9_1_risk_mitigation
+          event_types:
+          - vuln_export
+          - host_detections
+          - falcon_vulnerabilities
+          - defender_vulnerabilities
+          - defender_recommendations
+          - wiz_vuln_findings
+          - wiz_issues
+          resource_types:
+          - host
+          - endpoint
+          - vulnerability
+          - recommendation
+        monitoring_frequency: quarterly
       CC9.2:
         checks:
-          - id: cc9_2_vendor_risk_acceptance
-            event_types:
-              - snow_risks
-              - ssc_companies
-              - ssc_factors
-            resource_types:
-              - itsm_risk
-              - vendor_company
-              - vendor_risk_factor
-
-  # ---------------------------------------------------------------------------
-  # A1 — Availability
-  # ---------------------------------------------------------------------------
+        - id: cc9_2_vendor_risk_acceptance
+          event_types:
+          - snow_risks
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - itsm_risk
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
   A1:
     controls:
       A1.1:
         checks:
-          - id: a1_1_capacity_planning
-            event_types:
-              - prisma_assets
-              - asset_export
-              - asset_inventory
-              - falcon_devices
-              - defender_machines
-              - s1_agents
-            resource_types:
-              - endpoint
-              - endpoint_fleet
-              - host
-              - agent
-
+        - id: a1_1_capacity_planning
+          event_types:
+          - prisma_assets
+          - asset_export
+          - asset_inventory
+          - falcon_devices
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+          - host
+          - agent
+        monitoring_frequency: monthly
       A1.2:
         checks:
-          - id: a1_2_recovery
-            event_types:
-              - config_recorders
-              - policy_compliance
-              - veeam_backup_sessions
-            resource_types:
-              - aws_config
-              - azure_resource
-              - backup_session
-
+        - id: a1_2_recovery
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - veeam_backup_sessions
+          resource_types:
+          - aws_config
+          - azure_resource
+          - backup_session
+        monitoring_frequency: monthly
       A1.3:
         checks:
-          - id: a1_3_recovery_testing
-            event_types:
-              - config_recorders
-              - policy_compliance
-              - compliance_audits
-              - veeam_restore_points
-            resource_types:
-              - aws_config
-              - azure_resource
-              - compliance_standard
-              - backup_restore_point
-
-  # ---------------------------------------------------------------------------
-  # C1 — Confidentiality
-  # ---------------------------------------------------------------------------
+        - id: a1_3_recovery_testing
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - compliance_audits
+          - veeam_restore_points
+          resource_types:
+          - aws_config
+          - azure_resource
+          - compliance_standard
+          - backup_restore_point
+        monitoring_frequency: monthly
   C1:
     controls:
       C1.1:
         checks:
-          - id: c1_1_data_classification
-            event_types:
-              - s3_buckets
-              - storage_buckets
-              - storage_accounts
-              - prisma_assets
-            resource_types:
-              - s3_bucket
-              - storage_bucket
-              - storage_account
-
+        - id: c1_1_data_classification
+          event_types:
+          - s3_buckets
+          - storage_buckets
+          - storage_accounts
+          - prisma_assets
+          resource_types:
+          - s3_bucket
+          - storage_bucket
+          - storage_account
+        monitoring_frequency: monthly
       C1.2:
         checks:
-          - id: c1_2_data_disposal
-            event_types:
-              - s3_buckets
-              - storage_accounts
-              - key_vault
-            resource_types:
-              - s3_bucket
-              - storage_account
-              - key_vault
-
-  # ---------------------------------------------------------------------------
-  # PI1 — Processing Integrity
-  # ---------------------------------------------------------------------------
+        - id: c1_2_data_disposal
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - key_vault
+        monitoring_frequency: monthly
   PI1:
     controls:
       PI1.1:
         checks:
-          - id: pi1_1_processing_integrity
-            event_types:
-              - cloudtrail_trails
-              - config_recorders
-              - audit_logs
-            resource_types:
-              - cloudtrail
-              - aws_config
-              - gcp_audit
-
+        - id: pi1_1_processing_integrity
+          event_types:
+          - cloudtrail_trails
+          - config_recorders
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - aws_config
+          - gcp_audit
+        monitoring_frequency: monthly
       PI1.2:
         checks:
-          - id: pi1_2_system_inputs
-            event_types:
-              - config_recorders
-              - policy_compliance
-            resource_types:
-              - aws_config
-              - azure_resource
-
+        - id: pi1_2_system_inputs
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - azure_resource
+        monitoring_frequency: monthly
       PI1.3:
         checks:
-          - id: pi1_3_system_processing
-            event_types:
-              - cloudtrail_trails
-              - audit_logs
-              - activity_log
-              - config_recorders
-            resource_types:
-              - cloudtrail
-              - gcp_audit
-              - azure_activity
-              - aws_config
-
+        - id: pi1_3_system_processing
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
+        monitoring_frequency: monthly
       PI1.4:
         checks:
-          - id: pi1_4_system_output
-            event_types:
-              - cloudtrail_trails
-              - audit_logs
-              - config_recorders
-            resource_types:
-              - cloudtrail
-              - gcp_audit
-              - aws_config
-
+        - id: pi1_4_system_output
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - aws_config
+        monitoring_frequency: monthly
       PI1.5:
         checks:
-          - id: pi1_5_stored_information
-            event_types:
-              - s3_buckets
-              - storage_accounts
-              - storage_buckets
-              - key_vault
-            resource_types:
-              - s3_bucket
-              - storage_account
-              - storage_bucket
-              - key_vault
-
-  # ---------------------------------------------------------------------------
-  # P1 — Privacy
-  # ---------------------------------------------------------------------------
+        - id: pi1_5_stored_information
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+          - key_vault
+        monitoring_frequency: monthly
   P1:
     controls:
       P1.0:
         checks:
-          - id: p1_0_privacy_notice
-            event_types:
-              - onetrust_consent_records
-              - onetrust_data_maps
-              - confluence_pages
-            resource_types:
-              - privacy_consent
-              - privacy_data_map
-              - grc_document
-
+        - id: p1_0_privacy_notice
+          event_types:
+          - onetrust_consent_records
+          - onetrust_data_maps
+          - confluence_pages
+          resource_types:
+          - privacy_consent
+          - privacy_data_map
+          - grc_document
+        monitoring_frequency: quarterly
       P1.1:
         checks:
-          - id: p1_1_privacy_notice
-            event_types:
-              - prisma_policies
-              - policy_compliance
-              - compliance_audits
-            resource_types:
-              - policy
-              - compliance_standard
-
+        - id: p1_1_privacy_notice
+          event_types:
+          - prisma_policies
+          - policy_compliance
+          - compliance_audits
+          resource_types:
+          - policy
+          - compliance_standard
+        monitoring_frequency: quarterly
       P1.2:
         checks:
-          - id: p1_2_choice_and_consent
-            event_types:
-              - prisma_policies
-              - policy_compliance
-            resource_types:
-              - policy
+        - id: p1_2_choice_and_consent
+          event_types:
+          - prisma_policies
+          - policy_compliance
+          resource_types:
+          - policy
+        monitoring_frequency: quarterly

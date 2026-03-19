@@ -147,6 +147,7 @@ class ControlMapping(Base):
     mapping_method = Column(String(30), nullable=False)   # explicit, resource_rule, keyword, crosswalk
     confidence = Column(Float, nullable=False)
     crosswalk_path = Column(SQLiteJSON)                   # for transitive: ["nist:AC-2", "soc2:CC6.1"]
+    monitoring_frequency = Column(String(20))              # daily, weekly, monthly, quarterly, annual
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
     finding = relationship("Finding", back_populates="control_mappings")

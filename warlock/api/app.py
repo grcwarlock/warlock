@@ -881,6 +881,166 @@ def results_posture(
 
 
 # =========================================================================
+# Cadence & Sufficiency
+# =========================================================================
+
+
+class CadenceResponse(BaseModel):
+    framework: str
+    control_id: str
+    required_frequency: str
+    required_hours: float
+    last_evidence_at: str | None
+    hours_since: float | None
+    is_stale: bool
+    staleness_ratio: float
+
+
+class SufficiencyResponse(BaseModel):
+    framework: str
+    control_id: str
+    score: float
+    evidence_volume: float
+    evidence_freshness: float
+    evidence_diversity: float
+    assertion_coverage: float
+    gaps: list[str]
+
+
+@app.get(PREFIX + "/cadence", response_model=list[CadenceResponse])
+def get_cadence(
+    framework: str | None = Query(None),
+    stale_only: bool = Query(False),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Check monitoring cadence — are controls being assessed on schedule?"""
+    from warlock.assessors.cadence import CadenceChecker
+
+    checker = CadenceChecker()
+
+    if stale_only:
+        cadences = checker.get_stale_controls(db, framework=framework)
+    elif framework:
+        cadences = checker.check_framework(db, framework)
+    else:
+        all_c = checker.check_all(db)
+        cadences = [c for clist in all_c.values() for c in clist]
+
+    return [
+        CadenceResponse(
+            framework=c.framework,
+            control_id=c.control_id,
+            required_frequency=c.required_frequency,
+            required_hours=c.required_hours,
+            last_evidence_at=c.last_evidence_at.isoformat() if c.last_evidence_at else None,
+            hours_since=c.hours_since,
+            is_stale=c.is_stale,
+            staleness_ratio=c.staleness_ratio,
+        )
+        for c in cadences
+    ]
+
+
+class PostureHistoryPointResponse(BaseModel):
+    date: str
+    status: str
+    posture_score: float
+    sufficiency_score: float
+    evidence_freshness_hours: float | None
+
+
+class PostureHistoryResponse(BaseModel):
+    framework: str
+    control_id: str
+    trend: str
+    trend_slope: float
+    points: list[PostureHistoryPointResponse]
+
+
+@app.get(PREFIX + "/posture/history", response_model=list[PostureHistoryResponse])
+def posture_history(
+    framework: str = Query(...),
+    control_id: str | None = Query(None),
+    days: int = Query(90, ge=1, le=730),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Posture time-series with trend analysis."""
+    from warlock.assessors.posture import PostureTimeSeriesQuery
+
+    tsq = PostureTimeSeriesQuery()
+
+    if control_id:
+        series_list = [tsq.query_control(db, framework, control_id, days)]
+    else:
+        series_list = tsq.query_framework(db, framework, days)
+
+    return [
+        PostureHistoryResponse(
+            framework=ts.framework,
+            control_id=ts.control_id,
+            trend=ts.trend,
+            trend_slope=ts.trend_slope,
+            points=[
+                PostureHistoryPointResponse(
+                    date=p.date.isoformat() if p.date else "",
+                    status=p.status,
+                    posture_score=p.posture_score,
+                    sufficiency_score=p.sufficiency_score,
+                    evidence_freshness_hours=p.evidence_freshness_hours,
+                )
+                for p in ts.points
+            ],
+        )
+        for ts in series_list
+    ]
+
+
+@app.get(PREFIX + "/sufficiency", response_model=list[SufficiencyResponse])
+def get_sufficiency(
+    framework: str | None = Query(None),
+    below: float | None = Query(None, description="Only controls below this score"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Evidence sufficiency scores per control."""
+    from warlock.assessors.posture import EvidenceSufficiencyScorer
+    from sqlalchemy import distinct
+
+    scorer = EvidenceSufficiencyScorer()
+
+    if framework:
+        fw_result = scorer.score_framework(db, framework)
+        scores = fw_result.control_scores
+    else:
+        fw_rows = db.query(distinct(ControlResult.framework)).all()
+        scores = []
+        for (fw,) in fw_rows:
+            fw_result = scorer.score_framework(db, fw)
+            scores.extend(fw_result.control_scores)
+
+    if below is not None:
+        scores = [s for s in scores if s.score < below]
+
+    scores.sort(key=lambda s: s.score)
+
+    return [
+        SufficiencyResponse(
+            framework=s.framework,
+            control_id=s.control_id,
+            score=s.score,
+            evidence_volume=s.evidence_volume,
+            evidence_freshness=s.evidence_freshness,
+            evidence_diversity=s.evidence_diversity,
+            assertion_coverage=s.assertion_coverage,
+            gaps=s.gaps,
+        )
+        for s in scores
+    ]
+
+
+# =========================================================================
 # Connectors
 # =========================================================================
 

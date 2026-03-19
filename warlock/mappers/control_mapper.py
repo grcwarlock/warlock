@@ -30,6 +30,7 @@ class ControlMappingData:
     mapping_method: str = "explicit"   # explicit, resource_rule, keyword, crosswalk
     confidence: float = 1.0
     crosswalk_path: list[str] = field(default_factory=list)
+    monitoring_frequency: str = ""     # daily, weekly, monthly, quarterly, annual
     id: str = field(default_factory=lambda: str(uuid4()))
 
 
@@ -51,6 +52,7 @@ class ExplicitRule:
     framework: str
     control_id: str
     control_family: str = ""
+    monitoring_frequency: str = ""
 
 
 @dataclass
@@ -60,6 +62,7 @@ class ResourceRule:
     framework: str
     control_ids: list[str] = field(default_factory=list)
     control_family: str = ""
+    monitoring_frequency: str = ""
 
 
 @dataclass
@@ -85,6 +88,7 @@ class ControlMapper:
         self._resource_rules: list[ResourceRule] = []
         self._crosswalk_graph: dict[tuple[str, str], list[CrosswalkEdge]] = defaultdict(list)
         self._active_frameworks: set[str] = set()
+        self._monitoring_frequencies: dict[tuple[str, str], str] = {}  # (framework, control_id) -> frequency
 
     # -- Configuration --
 
@@ -119,6 +123,8 @@ class ControlMapper:
         for family_id, family in families.items():
             controls = family.get("controls", {})
             for control_id, control in controls.items():
+                freq = control.get("monitoring_frequency", "monthly")
+                self._monitoring_frequencies[(framework_id, control_id)] = freq
                 for check in control.get("checks", []):
                     # Explicit rules from event_types
                     for event_type in check.get("event_types", []):
@@ -128,6 +134,7 @@ class ControlMapper:
                             framework=framework_id,
                             control_id=control_id,
                             control_family=family_id,
+                            monitoring_frequency=freq,
                         ))
                     # Resource rules
                     for resource_type in check.get("resource_types", []):
@@ -136,6 +143,7 @@ class ControlMapper:
                             framework=framework_id,
                             control_ids=[control_id],
                             control_family=family_id,
+                            monitoring_frequency=freq,
                         ))
 
     def load_crosswalk_yaml(self, crosswalks: list[dict[str, Any]]) -> None:
@@ -168,6 +176,7 @@ class ControlMapper:
                         control_family=rule.control_family,
                         mapping_method="explicit",
                         confidence=1.0,
+                        monitoring_frequency=rule.monitoring_frequency,
                     ))
 
         # Priority 2: Resource-type rules
@@ -185,6 +194,7 @@ class ControlMapper:
                                 control_family=rule.control_family,
                                 mapping_method="resource_rule",
                                 confidence=0.85,
+                                monitoring_frequency=rule.monitoring_frequency,
                             ))
 
         # Priority 3: Crosswalk — expand existing mappings to other frameworks
@@ -195,6 +205,11 @@ class ControlMapper:
                 target_key = (edge.target_framework, edge.target_control)
                 if target_key not in seen:
                     seen.add(target_key)
+                    # Look up target control's frequency
+                    target_freq = self._monitoring_frequencies.get(
+                        (edge.target_framework, edge.target_control),
+                        m.monitoring_frequency,
+                    )
                     crosswalked.append(ControlMappingData(
                         finding_id=finding.id,
                         framework=edge.target_framework,
@@ -205,6 +220,7 @@ class ControlMapper:
                             f"{m.framework}:{m.control_id}",
                             f"{edge.target_framework}:{edge.target_control}",
                         ],
+                        monitoring_frequency=target_freq,
                     ))
 
         mappings.extend(crosswalked)
