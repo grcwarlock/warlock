@@ -2580,6 +2580,114 @@ def seed_50_personnel(session) -> int:
 # ---------------------------------------------------------------------------
 
 
+def _assign_findings_to_systems(session):
+    """Assign findings to system profiles based on connector_scope matching."""
+    systems = session.query(SystemProfile).all()
+    if not systems:
+        return 0
+
+    # Build source -> system mapping from connector_scope
+    source_to_system = {}
+    for sp in systems:
+        for source in (sp.connector_scope or []):
+            # First match wins (most specific system)
+            if source not in source_to_system:
+                source_to_system[source] = sp.id
+
+    findings = session.query(Finding).filter(Finding.system_profile_id.is_(None)).all()
+    assigned = 0
+    for f in findings:
+        sys_id = source_to_system.get(f.source)
+        if sys_id:
+            f.system_profile_id = sys_id
+            assigned += 1
+
+    # Also propagate to control results
+    from warlock.db.models import ControlResult as CR
+    results = session.query(CR).filter(CR.system_profile_id.is_(None)).all()
+    finding_system_map = {f.id: f.system_profile_id for f in findings if f.system_profile_id}
+    for r in results:
+        if r.finding_id in finding_system_map:
+            r.system_profile_id = finding_system_map[r.finding_id]
+
+    session.commit()
+    return assigned
+
+
+def _backfill_monitoring_frequency(session):
+    """Backfill monitoring_frequency on control mappings from framework YAML data."""
+    import yaml
+
+    # Load frequencies from YAML files
+    freq_map = {}  # (framework, control_id) -> frequency
+    fw_dir = Path(__file__).resolve().parent.parent / "warlock" / "frameworks"
+    for yaml_path in fw_dir.glob("*.yaml"):
+        if "crosswalk" in yaml_path.name:
+            continue
+        with open(yaml_path) as f:
+            data = yaml.safe_load(f)
+        fw_id = data.get("framework_id", yaml_path.stem)
+        for family_id, family in data.get("control_families", {}).items():
+            for ctrl_id, ctrl in family.get("controls", {}).items():
+                freq = ctrl.get("monitoring_frequency", "monthly")
+                freq_map[(fw_id, ctrl_id)] = freq
+
+    # Update mappings missing frequency
+    from warlock.db.models import ControlMapping as CM
+    mappings = session.query(CM).filter(CM.monitoring_frequency.is_(None)).all()
+    updated = 0
+    for m in mappings:
+        freq = freq_map.get((m.framework, m.control_id))
+        if freq:
+            m.monitoring_frequency = freq
+            updated += 1
+
+    session.commit()
+    return updated
+
+
+def _create_demo_users(session):
+    """Create demo user accounts for API testing."""
+    from warlock.api.auth import hash_password
+    from warlock.db.models import User as UserModel
+
+    demo_users = [
+        UserModel(
+            email="admin@acme.com", name="Admin User",
+            hashed_password=hash_password("WarlockAdmin2026!"),
+            role="admin",
+        ),
+        UserModel(
+            email="eve.nakamura@acme.com", name="Eve Nakamura",
+            hashed_password=hash_password("SecurityFirst2026!"),
+            role="auditor",
+        ),
+        UserModel(
+            email="frank.torres@acme.com", name="Frank Torres",
+            hashed_password=hash_password("EngineerBuild2026!"),
+            role="owner",
+            allowed_frameworks=["nist_800_53", "soc2", "iso_27001"],
+            allowed_sources=["aws", "crowdstrike", "okta"],
+        ),
+        UserModel(
+            email="carol.park@acme.com", name="Carol Park",
+            hashed_password=hash_password("FinanceReview2026!"),
+            role="viewer",
+            allowed_frameworks=["soc2"],
+        ),
+    ]
+
+    created = 0
+    existing_emails = {row[0] for row in session.query(UserModel.email).all()}
+    for user in demo_users:
+        if user.email not in existing_emails:
+            session.add(user)
+            created += 1
+
+    session.commit()
+    return created
+
+
 def main():
     print("=" * 60)
     print("  Warlock Demo Seed")
@@ -2780,7 +2888,24 @@ def main():
         total_personnel = seed_50_personnel(session)
         print(f"       Total personnel: {total_personnel}")
 
-    print("[20/20] Seed complete!\n")
+    # --- Post-pipeline data enrichment ---
+
+    print("[20/23] Assigning findings to system profiles...")
+    with get_session() as session:
+        assigned = _assign_findings_to_systems(session)
+        print(f"       Findings assigned: {assigned}")
+
+    print("[21/23] Backfilling monitoring_frequency on control mappings...")
+    with get_session() as session:
+        backfilled = _backfill_monitoring_frequency(session)
+        print(f"       Mappings updated: {backfilled}")
+
+    print("[22/23] Creating demo user accounts...")
+    with get_session() as session:
+        users_created = _create_demo_users(session)
+        print(f"       Users created: {users_created}")
+
+    print("[23/23] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")
