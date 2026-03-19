@@ -111,3 +111,24 @@ def require_permission(permission: str):
         return ctx.user
 
     return checker
+
+
+def apply_framework_scope(query, model_class, user: User):
+    """Apply user's allowed_frameworks filter to a query.
+
+    If user.allowed_frameworks is empty, no filter is applied (access to all).
+    Otherwise, filters to only the allowed frameworks.
+    """
+    if user.allowed_frameworks:
+        query = query.filter(model_class.framework.in_(user.allowed_frameworks))
+    return query
+
+
+def apply_source_scope(query, model_class, user: User):
+    """Apply user's allowed_sources filter to a query."""
+    if user.allowed_sources:
+        if hasattr(model_class, 'source'):
+            query = query.filter(model_class.source.in_(user.allowed_sources))
+        elif hasattr(model_class, 'provider'):
+            query = query.filter(model_class.provider.in_(user.allowed_sources))
+    return query

@@ -16,7 +16,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
 )
-from sqlalchemy.dialects.sqlite import JSON as SQLiteJSON
+from sqlalchemy import JSON as SQLiteJSON  # Generic JSON: maps to JSONB on PostgreSQL, JSON on SQLite
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -329,6 +329,8 @@ class User(Base):
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     last_login = Column(DateTime(timezone=True))
+    failed_login_count = Column(Integer, default=0)
+    locked_until = Column(DateTime(timezone=True))  # null = not locked
 
     __table_args__ = (
         Index("idx_user_email", "email"),
