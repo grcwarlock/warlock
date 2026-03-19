@@ -3959,15 +3959,14 @@ def impact_check_endpoint(
 def run_server():
     """Entry point for `warlock-api` console script."""
     import uvicorn
+    from warlock.config import get_settings
 
-    host = os.environ.get("WLK_API_HOST", "0.0.0.0")
-    port = int(os.environ.get("WLK_API_PORT", "8000"))
-    reload_flag = os.environ.get("WLK_API_RELOAD", "false").lower() == "true"
+    settings = get_settings()
 
     uvicorn.run(
         "warlock.api.app:app",
-        host=host,
-        port=port,
-        reload=reload_flag,
-        log_level="info",
+        host=settings.api_host,
+        port=settings.api_port,
+        reload=settings.api_reload,
+        log_level=settings.log_level.lower(),
     )
