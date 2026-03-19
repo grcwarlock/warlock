@@ -66,18 +66,23 @@ Stage 4: Export                        → OSCAL, SOC 2 reports, ISO SoA, PDF
 ## Quick Start
 
 ```bash
-# Install
+# Install (requires Python 3.12+)
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
 
-# Initialize database
-warlock init
-
-# Run pipeline (with connectors configured via env vars)
-warlock collect
+# Seed a demo environment (no credentials needed)
+python scripts/demo_seed.py
 
 # View results
-warlock results -f nist_800_53
+warlock results
+warlock results --status non_compliant
 warlock coverage
+warlock findings
+
+# Create issues from non-compliant results
+warlock issues-auto-create
+warlock issues
 
 # Export OSCAL
 warlock oscal --format ar -f nist_800_53 -o assessment.json
@@ -93,6 +98,13 @@ warlock policy-coverage -f iso_27001
 # Vendor risk
 warlock vendors
 ```
+
+The demo seed script creates mock data from AWS, Okta, and CrowdStrike and
+runs it through the full pipeline (collect, normalize, map, assess) across all
+6 frameworks. No API credentials required.
+
+To run against real sources instead, configure connectors via environment
+variables (see [Configuration](#configuration)) and use `warlock collect`.
 
 ## REST API
 
