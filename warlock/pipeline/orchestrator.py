@@ -226,6 +226,7 @@ class Pipeline:
             mapping_method=m.mapping_method,
             confidence=m.confidence,
             crosswalk_path=m.crosswalk_path or None,
+            monitoring_frequency=m.monitoring_frequency or None,
         )
         session.add(db_mapping)
         session.flush()
