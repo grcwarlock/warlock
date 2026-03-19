@@ -196,6 +196,16 @@ class Settings(BaseSettings):
     ai_model: str = ""
     ai_base_url: str = ""  # for ollama / vllm
 
+    # Field encryption
+    encryption_key: str = ""  # key for field-level encryption (crypto.py)
+
+    # Scheduler
+    scheduler_interval_minutes: int = 60  # pipeline scheduler interval
+
+    # OPA policy enforcement
+    opa_url: str = ""  # OPA decision endpoint URL
+    opa_fail_mode: str = "open"  # "open" (allow if OPA down) or "closed" (deny)
+
     # Logging
     log_level: str = "INFO"
 

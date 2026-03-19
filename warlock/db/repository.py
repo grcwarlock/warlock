@@ -21,10 +21,14 @@ from warlock.db.models import (
     ConnectorRun,
     ControlMapping,
     ControlResult,
+    DataSilo,
     Finding,
     Issue,
     IssueComment,
+    Personnel,
     PostureSnapshot,
+    Questionnaire,
+    QuestionnaireTemplate,
     SystemProfile,
     User,
 )
@@ -622,6 +626,220 @@ class SystemProfileRepository(BaseRepository):
 
 
 # ---------------------------------------------------------------------------
+# Personnel Repository
+# ---------------------------------------------------------------------------
+
+
+class PersonnelRepository(BaseRepository):
+    """Personnel queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, Personnel)
+
+    def by_email(self, email: str) -> Personnel | None:
+        """Look up a person by email."""
+        return self.session.query(Personnel).filter(Personnel.email == email).first()
+
+    def by_department(self, department: str, limit: int = 100) -> list[Personnel]:
+        """Personnel in a specific department."""
+        return (
+            self.session.query(Personnel)
+            .filter(Personnel.department == department, Personnel.is_active == True)  # noqa: E712
+            .order_by(Personnel.full_name)
+            .limit(limit)
+            .all()
+        )
+
+    def by_hr_status(self, status: str, limit: int = 100) -> list[Personnel]:
+        """Personnel filtered by HR status."""
+        return (
+            self.session.query(Personnel)
+            .filter(Personnel.hr_status == status, Personnel.is_active == True)  # noqa: E712
+            .order_by(Personnel.full_name)
+            .limit(limit)
+            .all()
+        )
+
+    def flagged(self, limit: int = 100) -> list[Personnel]:
+        """Personnel with risk_score > 0."""
+        return (
+            self.session.query(Personnel)
+            .filter(Personnel.risk_score > 0, Personnel.is_active == True)  # noqa: E712
+            .order_by(Personnel.risk_score.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def terminated_with_active_idp(self) -> list[Personnel]:
+        """Terminated in HR but active in IdP."""
+        return (
+            self.session.query(Personnel)
+            .filter(
+                Personnel.hr_status.in_(["terminated", "inactive"]),
+                Personnel.idp_status.in_(["active", "ACTIVE"]),
+                Personnel.is_active == True,  # noqa: E712
+            )
+            .order_by(Personnel.termination_date.asc())
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Questionnaire Repository
+# ---------------------------------------------------------------------------
+
+
+class QuestionnaireTemplateRepository(BaseRepository):
+    """Questionnaire template queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, QuestionnaireTemplate)
+
+    def active_templates(self) -> list[QuestionnaireTemplate]:
+        """All active templates."""
+        return (
+            self.session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.is_active == True)  # noqa: E712
+            .order_by(QuestionnaireTemplate.name)
+            .all()
+        )
+
+    def by_type(self, template_type: str) -> list[QuestionnaireTemplate]:
+        """Templates of a specific type."""
+        return (
+            self.session.query(QuestionnaireTemplate)
+            .filter(
+                QuestionnaireTemplate.template_type == template_type,
+                QuestionnaireTemplate.is_active == True,  # noqa: E712
+            )
+            .all()
+        )
+
+
+class QuestionnaireRepository(BaseRepository):
+    """Questionnaire queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, Questionnaire)
+
+    def by_vendor(self, vendor_name: str, limit: int = 100) -> list[Questionnaire]:
+        """Questionnaires for a specific vendor."""
+        return (
+            self.session.query(Questionnaire)
+            .filter(Questionnaire.vendor_name == vendor_name)
+            .order_by(Questionnaire.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def by_status(self, status: str, limit: int = 100) -> list[Questionnaire]:
+        """Questionnaires filtered by status."""
+        return (
+            self.session.query(Questionnaire)
+            .filter(Questionnaire.status == status)
+            .order_by(Questionnaire.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def overdue(self, limit: int = 100) -> list[Questionnaire]:
+        """Overdue questionnaires."""
+        now = datetime.now(timezone.utc)
+        return (
+            self.session.query(Questionnaire)
+            .filter(
+                Questionnaire.due_date < now,
+                Questionnaire.status.notin_(["completed", "reviewed", "accepted", "rejected"]),
+            )
+            .order_by(Questionnaire.due_date.asc())
+            .limit(limit)
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Data Silo Repository
+# ---------------------------------------------------------------------------
+
+
+class DataSiloRepository(BaseRepository):
+    """Data silo queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, DataSilo)
+
+    def by_type(self, silo_type: str, limit: int = 100) -> list[DataSilo]:
+        """Silos of a specific type."""
+        return (
+            self.session.query(DataSilo)
+            .filter(DataSilo.silo_type == silo_type, DataSilo.is_active == True)  # noqa: E712
+            .order_by(DataSilo.name)
+            .limit(limit)
+            .all()
+        )
+
+    def by_classification(self, classification: str, limit: int = 100) -> list[DataSilo]:
+        """Silos at a specific classification level."""
+        return (
+            self.session.query(DataSilo)
+            .filter(
+                DataSilo.data_classification == classification,
+                DataSilo.is_active == True,  # noqa: E712
+            )
+            .order_by(DataSilo.name)
+            .limit(limit)
+            .all()
+        )
+
+    def by_provider(self, provider: str, limit: int = 100) -> list[DataSilo]:
+        """Silos from a specific cloud provider."""
+        return (
+            self.session.query(DataSilo)
+            .filter(DataSilo.provider == provider, DataSilo.is_active == True)  # noqa: E712
+            .order_by(DataSilo.name)
+            .limit(limit)
+            .all()
+        )
+
+    def unclassified(self) -> list[DataSilo]:
+        """Silos classified as 'unknown'."""
+        return (
+            self.session.query(DataSilo)
+            .filter(
+                DataSilo.data_classification == "unknown",
+                DataSilo.is_active == True,  # noqa: E712
+            )
+            .order_by(DataSilo.created_at.desc())
+            .all()
+        )
+
+    def unprotected(self) -> list[DataSilo]:
+        """Silos missing encryption or logging."""
+        return (
+            self.session.query(DataSilo)
+            .filter(
+                DataSilo.is_active == True,  # noqa: E712
+                (
+                    (DataSilo.encrypted_at_rest == False)  # noqa: E712
+                    | (DataSilo.encrypted_at_rest == None)  # noqa: E711
+                    | (DataSilo.access_logging_enabled == False)  # noqa: E712
+                    | (DataSilo.access_logging_enabled == None)  # noqa: E711
+                ),
+            )
+            .all()
+        )
+
+    def containing_pii(self) -> list[DataSilo]:
+        """Silos containing PII."""
+        return (
+            self.session.query(DataSilo)
+            .filter(DataSilo.contains_pii == True, DataSilo.is_active == True)  # noqa: E712
+            .order_by(DataSilo.name)
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
 # Repository factory
 # ---------------------------------------------------------------------------
 
@@ -639,6 +857,10 @@ class Repositories:
         self.issues = IssueRepository(session)
         self.attestations = AttestationRepository(session)
         self.system_profiles = SystemProfileRepository(session)
+        self.personnel = PersonnelRepository(session)
+        self.questionnaire_templates = QuestionnaireTemplateRepository(session)
+        self.questionnaires = QuestionnaireRepository(session)
+        self.data_silos = DataSiloRepository(session)
 
 
 def get_repos(session: Session) -> Repositories:

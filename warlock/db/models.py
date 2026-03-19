@@ -551,6 +551,56 @@ class AuditComment(Base):
 
 
 # ---------------------------------------------------------------------------
+# Legal Holds — prevent data purging during investigations
+# ---------------------------------------------------------------------------
+
+
+class LegalHold(Base):
+    """Legal hold that prevents data purging during investigations or litigation."""
+    __tablename__ = "legal_holds"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    reason = Column(Text, nullable=False)
+    start_date = Column(DateTime(timezone=True), nullable=False)
+    end_date = Column(DateTime(timezone=True))  # null = indefinite
+    created_by = Column(String(255))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_legal_hold_active", "is_active"),
+        Index("idx_legal_hold_dates", "start_date", "end_date"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Trust Portal — access requests
+# ---------------------------------------------------------------------------
+
+
+class TrustAccessRequest(Base):
+    """Tracks requests for compliance documentation via the trust portal."""
+    __tablename__ = "trust_access_requests"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    company_name = Column(String(255), nullable=False)
+    contact_name = Column(String(255), nullable=False)
+    contact_email = Column(String(255), nullable=False)
+    document_types = Column(SQLiteJSON, default=list)
+    reason = Column(Text, default="")
+    nda_accepted = Column(Boolean, default=False)
+    status = Column(String(20), nullable=False, default="pending")  # pending, approved, denied
+    reviewed_by = Column(String(255))
+    reviewed_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_trust_req_status", "status"),
+        Index("idx_trust_req_email", "contact_email"),
+    )
+
+
+# ---------------------------------------------------------------------------
 # System Profile & Authorization Boundary
 # ---------------------------------------------------------------------------
 
@@ -609,4 +659,192 @@ class SystemProfile(Base):
     __table_args__ = (
         Index("idx_system_name", "name"),
         Index("idx_system_status", "authorization_status"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Personnel Management + IdP Cross-Reference
+# ---------------------------------------------------------------------------
+
+
+class Personnel(Base):
+    """Unified personnel record cross-referencing HR + IdP + training data."""
+    __tablename__ = "personnel"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+
+    # Identity
+    email = Column(String(255), nullable=False, unique=True)
+    full_name = Column(String(255), nullable=False)
+    department = Column(String(100))
+    title = Column(String(255))
+    manager_email = Column(String(255))
+    employee_type = Column(String(30), default="employee")  # employee, contractor, vendor, intern
+
+    # HR source (Workday)
+    hr_employee_id = Column(String(100))
+    hire_date = Column(DateTime(timezone=True))
+    termination_date = Column(DateTime(timezone=True))
+    hr_status = Column(String(30))  # active, terminated, leave
+    background_check_status = Column(String(30))  # completed, pending, not_started
+    background_check_date = Column(DateTime(timezone=True))
+    agreements_signed = Column(SQLiteJSON, default=list)  # [{type, signed_date}]
+
+    # IdP source (Okta/Entra)
+    idp_user_id = Column(String(255))
+    idp_provider = Column(String(30))  # okta, entra_id, google
+    idp_status = Column(String(30))  # active, suspended, deprovisioned
+    idp_last_login = Column(DateTime(timezone=True))
+    mfa_enabled = Column(Boolean)
+    idp_groups = Column(SQLiteJSON, default=list)
+
+    # Training (KnowBe4)
+    training_status = Column(String(30))  # current, overdue, not_enrolled
+    last_training_date = Column(DateTime(timezone=True))
+    phishing_score = Column(Float)  # 0-100
+    training_completions = Column(SQLiteJSON, default=list)  # [{campaign, completed_date}]
+
+    # Access reviews
+    last_access_review = Column(DateTime(timezone=True))
+    access_review_status = Column(String(30))  # completed, pending, overdue
+
+    # Compliance flags
+    flags = Column(SQLiteJSON, default=list)  # ["terminated_but_active_idp", "no_mfa", ...]
+    risk_score = Column(Float, default=0.0)  # 0-100
+
+    is_active = Column(Boolean, default=True)
+    last_synced = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_personnel_email", "email"),
+        Index("idx_personnel_dept", "department"),
+        Index("idx_personnel_status", "hr_status"),
+        Index("idx_personnel_flags", "risk_score"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Vendor Questionnaires
+# ---------------------------------------------------------------------------
+
+
+class QuestionnaireTemplate(Base):
+    """Reusable questionnaire templates (SIG, DDQ, CAIQ, custom)."""
+    __tablename__ = "questionnaire_templates"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)  # "SIG Lite", "CAIQ v4", "Custom Security DDQ"
+    template_type = Column(String(30), nullable=False)  # sig, sig_lite, ddq, caiq, custom
+    version = Column(String(20), default="1.0")
+    description = Column(Text)
+    questions = Column(SQLiteJSON, nullable=False, default=list)
+    # [{id, category, text, response_type, required, help_text, mapped_controls}]
+    # response_type: "yes_no", "text", "file", "multi_select", "rating"
+    # mapped_controls: ["NIST AC-2", "SOC2 CC6.1"] -- which controls this question satisfies
+    total_questions = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_template_type", "template_type"),
+    )
+
+
+class Questionnaire(Base):
+    """A questionnaire sent to a specific vendor."""
+    __tablename__ = "questionnaires"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    template_id = Column(String(36), ForeignKey("questionnaire_templates.id"), nullable=False)
+    vendor_name = Column(String(255), nullable=False)
+    vendor_contact_email = Column(String(255))
+
+    # Lifecycle: draft -> sent -> in_progress -> completed -> reviewed -> accepted/rejected
+    status = Column(String(20), nullable=False, default="draft")
+
+    # Responses
+    responses = Column(SQLiteJSON, default=dict)  # {question_id: {answer, notes, attachments}}
+    completion_pct = Column(Float, default=0.0)
+
+    # AI auto-answer
+    ai_suggested_answers = Column(SQLiteJSON, default=dict)  # {question_id: {answer, confidence, source}}
+
+    # Scoring
+    risk_score = Column(Float)  # 0-100 based on responses
+    risk_findings = Column(SQLiteJSON, default=list)  # [{question_id, finding, severity}]
+
+    # Dates
+    sent_at = Column(DateTime(timezone=True))
+    due_date = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    reviewed_by = Column(String(255))
+    reviewed_at = Column(DateTime(timezone=True))
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow)
+    created_by = Column(String(255))
+
+    __table_args__ = (
+        Index("idx_questionnaire_vendor", "vendor_name"),
+        Index("idx_questionnaire_status", "status"),
+        Index("idx_questionnaire_template", "template_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Data Silo Scanning
+# ---------------------------------------------------------------------------
+
+
+class DataSilo(Base):
+    """Tracks discovered data stores and their sensitive data classification."""
+    __tablename__ = "data_silos"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    silo_type = Column(String(30), nullable=False)  # s3_bucket, rds_database, sharepoint_site, snowflake_db, github_repo
+    provider = Column(String(30))  # aws, azure, gcp, github, sharepoint
+    location = Column(String(500))  # ARN, URL, connection string (masked)
+
+    # Classification
+    data_classification = Column(String(20), default="unknown")  # public, internal, confidential, restricted, unknown
+    contains_pii = Column(Boolean, default=False)
+    contains_phi = Column(Boolean, default=False)
+    contains_pci = Column(Boolean, default=False)
+    contains_credentials = Column(Boolean, default=False)
+
+    # Scan results
+    last_scan_date = Column(DateTime(timezone=True))
+    scan_status = Column(String(20), default="not_scanned")  # not_scanned, scanning, completed, error
+    sensitive_field_count = Column(Integer, default=0)
+    total_records = Column(Integer)
+    scan_findings = Column(SQLiteJSON, default=list)  # [{field_name, data_type, sample_masked, confidence}]
+
+    # Protection status
+    encrypted_at_rest = Column(Boolean)
+    encrypted_in_transit = Column(Boolean)
+    access_logging_enabled = Column(Boolean)
+    backup_enabled = Column(Boolean)
+    retention_days = Column(Integer)
+
+    # Ownership
+    owner = Column(String(255))
+    team = Column(String(100))
+
+    # Compliance
+    applicable_frameworks = Column(SQLiteJSON, default=list)  # ["hipaa", "gdpr", "pci_dss"]
+    remediation_status = Column(String(20), default="none")  # none, in_progress, completed
+    remediation_notes = Column(Text)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_silo_type", "silo_type"),
+        Index("idx_silo_classification", "data_classification"),
+        Index("idx_silo_provider", "provider"),
+        Index("idx_silo_pii", "contains_pii"),
     )
