@@ -7,14 +7,11 @@ Uses Huawei Cloud REST APIs via httpx with AKSK token authentication.
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import logging
 from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,

@@ -102,7 +102,17 @@ class NormalizerRegistry:
     def register(self, normalizer: BaseNormalizer) -> None:
         self._normalizers.append(normalizer)
 
+    def list_normalizers(self) -> list[BaseNormalizer]:
+        """Return the list of registered normalizers (public API)."""
+        return list(self._normalizers)
+
     def normalize(self, raw_event: RawEventData) -> list[FindingData]:
+        if raw_event.raw_data is None:
+            log.warning(
+                "Skipping event %s with null raw_data (source=%s, event_type=%s)",
+                raw_event.id, raw_event.source, raw_event.event_type,
+            )
+            return []
         for normalizer in self._normalizers:
             if normalizer.can_handle(raw_event):
                 try:

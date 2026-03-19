@@ -6,7 +6,8 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    google = { source = "hashicorp/google", version = ">= 5.0" }
+    # T-4: Pin to compatible minor versions within the 5.x series
+    google = { source = "hashicorp/google", version = "~> 5.0" }
   }
 }
 
@@ -32,7 +33,8 @@ resource "google_project_service" "apis" {
 # ── AU-2: Logging Sink to BigQuery ───────────────────────────────────
 
 resource "google_bigquery_dataset" "audit_logs" {
-  dataset_id = "grc_audit_logs"
+  # T-7: Use name_prefix variable instead of hardcoded "grc_audit_logs"
+  dataset_id = "${var.name_prefix}_audit_logs"
   project    = var.project_id
   location   = var.region
   labels     = local.common_labels
@@ -61,16 +63,31 @@ resource "google_bigquery_dataset_iam_member" "sink_writer" {
   member     = google_logging_project_sink.audit.writer_identity
 }
 
-# ── AC-3: Organization Policy Constraints ────────────────────────────
+# ── AC-3: Organization Policy Constraints (V2 API) ────────────────────
+# T-12: Replaced deprecated google_project_organization_policy (V1) with
+# google_org_policy_policy (V2 API). Key differences:
+#   - Resource path format: "projects/{project_id}/policies/{constraint_short_name}"
+#   - Constraint short name drops the "constraints/" prefix
+#   - Boolean enforcement uses spec.rules[].enforce = true instead of boolean_policy block
 
-resource "google_project_organization_policy" "uniform_bucket" {
-  project    = var.project_id
-  constraint = "constraints/storage.uniformBucketLevelAccess"
-  boolean_policy { enforced = true }
+resource "google_org_policy_policy" "uniform_bucket" {
+  name   = "projects/${var.project_id}/policies/storage.uniformBucketLevelAccess"
+  parent = "projects/${var.project_id}"
+
+  spec {
+    rules {
+      enforce = "TRUE"
+    }
+  }
 }
 
-resource "google_project_organization_policy" "os_login" {
-  project    = var.project_id
-  constraint = "constraints/compute.requireOsLogin"
-  boolean_policy { enforced = true }
+resource "google_org_policy_policy" "os_login" {
+  name   = "projects/${var.project_id}/policies/compute.requireOsLogin"
+  parent = "projects/${var.project_id}"
+
+  spec {
+    rules {
+      enforce = "TRUE"
+    }
+  }
 }

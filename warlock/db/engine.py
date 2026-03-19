@@ -24,9 +24,9 @@ def get_engine():
         pool_kwargs = {}
         if not settings.database_url.startswith("sqlite"):
             pool_kwargs = {
-                "pool_size": 20,
-                "max_overflow": 30,
-                "pool_recycle": 1800,
+                "pool_size": 5,
+                "max_overflow": 10,
+                "pool_recycle": 3600,
                 "pool_timeout": 30,
             }
         _engine = create_engine(

@@ -12,7 +12,6 @@ from datetime import datetime, timezone
 
 from warlock.connectors.base import (
     BaseConnector,
-    ConnectorConfig,
     ConnectorResult,
     RawEventData,
     SourceType,
@@ -48,6 +47,10 @@ class IBMCloudConnector(BaseConnector):
             return False
 
     def collect(self) -> ConnectorResult:
+        if httpx is None:
+            raise RuntimeError(
+                "IBMCloudConnector requires httpx. Install with: pip install httpx"
+            )
         result = ConnectorResult(
             connector_name=self.name,
             source="ibm_cloud",

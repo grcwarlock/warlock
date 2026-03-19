@@ -14,6 +14,7 @@ from warlock.db.models import (
     Finding,
     SystemProfile,
 )
+from warlock.utils import ensure_aware
 
 
 class SystemProfileManager:
@@ -327,14 +328,18 @@ class SystemProfileManager:
         now = datetime.now(timezone.utc)
         cutoff = now + timedelta(days=90)
 
-        return (
+        rows = (
             session.query(SystemProfile)
             .filter(
                 SystemProfile.is_active == True,  # noqa: E712
                 SystemProfile.authorization_status == "authorized",
                 SystemProfile.authorization_expiry != None,  # noqa: E711
-                SystemProfile.authorization_expiry <= cutoff,
             )
             .order_by(SystemProfile.authorization_expiry.asc())
             .all()
         )
+        # W-4: ensure_aware before comparing authorization_expiry
+        return [
+            sp for sp in rows
+            if ensure_aware(sp.authorization_expiry) <= cutoff
+        ]

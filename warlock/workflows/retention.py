@@ -18,6 +18,7 @@ from warlock.db.models import (
     RawEvent,
     _uuid,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -61,18 +62,61 @@ class RetentionManager:
         ]
         return max(days) if days else DEFAULT_RETENTION_DAYS
 
-    def _has_active_hold(self, session: Session) -> bool:
-        """Check if any legal hold is currently active."""
+    def _has_active_hold(
+        self,
+        session: Session,
+        framework: str | None = None,
+        record_date: datetime | None = None,
+    ) -> bool:
+        """Check if any legal hold covers the given scope.
+
+        W-5: Scoped legal holds only block purging of records that match the
+        hold's scope. If all scope fields on a hold are null, it is a global
+        hold (blocks everything).
+
+        Args:
+            session: SQLAlchemy session.
+            framework: Framework of the record being considered.
+            record_date: Timestamp of the record being considered.
+
+        Returns:
+            True if an active hold covers the given scope.
+        """
         now = datetime.now(timezone.utc)
-        hold = (
+        holds = (
             session.query(LegalHold)
             .filter(
                 LegalHold.is_active == True,  # noqa: E712
                 (LegalHold.end_date.is_(None)) | (LegalHold.end_date > now),
             )
-            .first()
+            .all()
         )
-        return hold is not None
+        for hold in holds:
+            is_global = (
+                hold.framework is None
+                and hold.system_profile_id is None
+                and hold.date_range_start is None
+                and hold.date_range_end is None
+            )
+            if is_global:
+                return True
+
+            # Check framework scope
+            if hold.framework and framework and hold.framework != framework:
+                continue
+
+            # Check date range scope
+            if record_date and hold.date_range_start:
+                if ensure_aware(record_date) < ensure_aware(hold.date_range_start):
+                    continue
+            if record_date and hold.date_range_end:
+                if ensure_aware(record_date) > ensure_aware(hold.date_range_end):
+                    continue
+
+            # Hold matches scope
+            return True
+
+        return False
 
     def _cutoff_date(self, frameworks: list[str] | None = None) -> datetime:
         """Calculate the cutoff date for purging based on framework retention."""
@@ -96,7 +140,7 @@ class RetentionManager:
             return {"raw_events": 0, "findings": 0, "control_results": 0, "total": 0}
 
         frameworks = [framework] if framework else list(FRAMEWORK_RETENTION.keys())
-        cutoff = self._cutoff_date(frameworks if framework else None)
+        cutoff = ensure_aware(self._cutoff_date(frameworks if framework else None))
 
         raw_count = (
             session.query(func.count(RawEvent.id))
@@ -136,6 +180,17 @@ class RetentionManager:
         """Delete records past retention. dry_run=True just counts, doesn't delete.
 
         NEVER purges audit_entries (immutable). Respects legal holds.
+
+        Transactional purge order (W-13):
+            1. ControlResults (depend on ControlMappings and Findings via FKs)
+            2. ControlMappings (depend on Findings via FKs)
+            3. Findings (depend on RawEvents via FKs)
+            4. RawEvents (leaf records)
+
+        This order respects foreign key constraints. If the transaction is
+        interrupted between steps, orphaned child records (e.g. ControlResults
+        referencing deleted Findings) may remain. The caller should wrap
+        this in a transaction and retry on failure to avoid partial purges.
         """
         if self._has_active_hold(session):
             return {
@@ -150,7 +205,7 @@ class RetentionManager:
             }
 
         frameworks = [framework] if framework else None
-        cutoff = self._cutoff_date(frameworks)
+        cutoff = ensure_aware(self._cutoff_date(frameworks))
 
         # Count what would be purged
         raw_count = (

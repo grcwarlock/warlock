@@ -1,35 +1,40 @@
 {
   "catalog": {
-    "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "uuid": "f3a1b2c4-d5e6-4f78-9012-abcdef345678",
     "metadata": {
-      "title": "Unified Controls Framework (UCF)",
-      "version": "1.0.0",
+      "title": "ISO/IEC 27701:2019 Privacy Information Management System",
+      "version": "2019",
       "oscal-version": "1.1.2",
-      "last-modified": "2026-03-19T20:45:41Z",
-      "description": "A superset control taxonomy that maps controls across NIST 800-53, SOC 2, ISO 27001, HIPAA, CMMC L2, FedRAMP, GDPR, and ISO 42001. Each UCF domain represents a security/compliance concept with mappings to equivalent controls in each framework.",
+      "last-modified": "2026-03-19T20:46:13Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://www.iso.org/standard/71670.html"
+        }
+      ],
       "props": [
         {
           "name": "framework-key",
-          "value": "ucf"
+          "value": "iso_27701"
         }
       ]
     },
     "groups": [
       {
-        "id": "AIM",
-        "title": "AI Management",
+        "id": "cl5",
+        "title": "Clause 5 - PIMS-Specific Requirements Related to ISO/IEC 27001",
         "controls": [
           {
-            "id": "UCF-AIM-1",
-            "title": "UCF-AIM-1",
+            "id": "5.2.1",
+            "title": "Control 5.2.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-AIM-1"
+                "value": "5.2.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-aim-1"
+                "value": "5.2.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -38,23 +43,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_aim_1_smt",
+                "id": "5-2-1_smt",
                 "name": "statement",
-                "prose": "AI Management control UCF-AIM-1."
+                "prose": "Requirements for 5.2.1."
               }
             ]
           },
           {
-            "id": "UCF-AIM-2",
-            "title": "UCF-AIM-2",
+            "id": "5.2.2",
+            "title": "Control 5.2.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-AIM-2"
+                "value": "5.2.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-aim-2"
+                "value": "5.2.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -63,23 +68,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_aim_2_smt",
+                "id": "5-2-2_smt",
                 "name": "statement",
-                "prose": "AI Management control UCF-AIM-2."
+                "prose": "Requirements for 5.2.2."
               }
             ]
           },
           {
-            "id": "UCF-AIM-3",
-            "title": "UCF-AIM-3",
+            "id": "5.2.3",
+            "title": "Control 5.2.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-AIM-3"
+                "value": "5.2.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-aim-3"
+                "value": "5.2.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -88,23 +93,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_aim_3_smt",
+                "id": "5-2-3_smt",
                 "name": "statement",
-                "prose": "AI Management control UCF-AIM-3."
+                "prose": "Requirements for 5.2.3."
               }
             ]
           },
           {
-            "id": "UCF-AIM-4",
-            "title": "UCF-AIM-4",
+            "id": "5.2.4",
+            "title": "Control 5.2.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-AIM-4"
+                "value": "5.2.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-aim-4"
+                "value": "5.2.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -113,23 +118,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_aim_4_smt",
+                "id": "5-2-4_smt",
                 "name": "statement",
-                "prose": "AI Management control UCF-AIM-4."
+                "prose": "Requirements for 5.2.4."
               }
             ]
           },
           {
-            "id": "UCF-AIM-5",
-            "title": "UCF-AIM-5",
+            "id": "5.4.1.2",
+            "title": "Control 5.4.1.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-AIM-5"
+                "value": "5.4.1.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-aim-5"
+                "value": "5.4.1.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -138,23 +143,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_aim_5_smt",
+                "id": "5-4-1-2_smt",
                 "name": "statement",
-                "prose": "AI Management control UCF-AIM-5."
+                "prose": "Requirements for 5.4.1.2."
               }
             ]
           },
           {
-            "id": "UCF-AIM-6",
-            "title": "UCF-AIM-6",
+            "id": "5.4.1.3",
+            "title": "Control 5.4.1.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-AIM-6"
+                "value": "5.4.1.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-aim-6"
+                "value": "5.4.1.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -163,29 +168,29 @@
             ],
             "parts": [
               {
-                "id": "ucf_aim_6_smt",
+                "id": "5-4-1-3_smt",
                 "name": "statement",
-                "prose": "AI Management control UCF-AIM-6."
+                "prose": "Requirements for 5.4.1.3."
               }
             ]
           }
         ]
       },
       {
-        "id": "ASM",
-        "title": "Asset Management",
+        "id": "cl6",
+        "title": "Clause 6 - PIMS-Specific Guidance Related to ISO/IEC 27002",
         "controls": [
           {
-            "id": "UCF-ASM-1",
-            "title": "UCF-ASM-1",
+            "id": "6.3.1.1",
+            "title": "Control 6.3.1.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-ASM-1"
+                "value": "6.3.1.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-asm-1"
+                "value": "6.3.1.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -194,23 +199,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_asm_1_smt",
+                "id": "6-3-1-1_smt",
                 "name": "statement",
-                "prose": "Asset Management control UCF-ASM-1."
+                "prose": "Requirements for 6.3.1.1."
               }
             ]
           },
           {
-            "id": "UCF-ASM-2",
-            "title": "UCF-ASM-2",
+            "id": "6.5.2.1",
+            "title": "Control 6.5.2.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-ASM-2"
+                "value": "6.5.2.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-asm-2"
+                "value": "6.5.2.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -219,23 +224,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_asm_2_smt",
+                "id": "6-5-2-1_smt",
                 "name": "statement",
-                "prose": "Asset Management control UCF-ASM-2."
+                "prose": "Requirements for 6.5.2.1."
               }
             ]
           },
           {
-            "id": "UCF-ASM-3",
-            "title": "UCF-ASM-3",
+            "id": "6.5.2.2",
+            "title": "Control 6.5.2.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-ASM-3"
+                "value": "6.5.2.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-asm-3"
+                "value": "6.5.2.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -244,23 +249,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_asm_3_smt",
+                "id": "6-5-2-2_smt",
                 "name": "statement",
-                "prose": "Asset Management control UCF-ASM-3."
+                "prose": "Requirements for 6.5.2.2."
               }
             ]
           },
           {
-            "id": "UCF-ASM-4",
-            "title": "UCF-ASM-4",
+            "id": "6.5.2.3",
+            "title": "Control 6.5.2.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-ASM-4"
+                "value": "6.5.2.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-asm-4"
+                "value": "6.5.2.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -269,23 +274,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_asm_4_smt",
+                "id": "6-5-2-3_smt",
                 "name": "statement",
-                "prose": "Asset Management control UCF-ASM-4."
+                "prose": "Requirements for 6.5.2.3."
               }
             ]
           },
           {
-            "id": "UCF-ASM-5",
-            "title": "UCF-ASM-5",
+            "id": "6.5.3.1",
+            "title": "Control 6.5.3.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-ASM-5"
+                "value": "6.5.3.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-asm-5"
+                "value": "6.5.3.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -294,23 +299,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_asm_5_smt",
+                "id": "6-5-3-1_smt",
                 "name": "statement",
-                "prose": "Asset Management control UCF-ASM-5."
+                "prose": "Requirements for 6.5.3.1."
               }
             ]
           },
           {
-            "id": "UCF-ASM-6",
-            "title": "UCF-ASM-6",
+            "id": "6.6.2.1",
+            "title": "Control 6.6.2.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-ASM-6"
+                "value": "6.6.2.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-asm-6"
+                "value": "6.6.2.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -319,29 +324,179 @@
             ],
             "parts": [
               {
-                "id": "ucf_asm_6_smt",
+                "id": "6-6-2-1_smt",
                 "name": "statement",
-                "prose": "Asset Management control UCF-ASM-6."
+                "prose": "Requirements for 6.6.2.1."
+              }
+            ]
+          },
+          {
+            "id": "6.6.2.2",
+            "title": "Control 6.6.2.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "6.6.2.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "6.6.2.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "6-6-2-2_smt",
+                "name": "statement",
+                "prose": "Requirements for 6.6.2.2."
+              }
+            ]
+          },
+          {
+            "id": "6.8.2.7",
+            "title": "Control 6.8.2.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "6.8.2.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "6.8.2.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "6-8-2-7_smt",
+                "name": "statement",
+                "prose": "Requirements for 6.8.2.7."
+              }
+            ]
+          },
+          {
+            "id": "6.8.2.8",
+            "title": "Control 6.8.2.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "6.8.2.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "6.8.2.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "6-8-2-8_smt",
+                "name": "statement",
+                "prose": "Requirements for 6.8.2.8."
+              }
+            ]
+          },
+          {
+            "id": "6.9.3.1",
+            "title": "Control 6.9.3.1",
+            "props": [
+              {
+                "name": "label",
+                "value": "6.9.3.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "6.9.3.1"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "6-9-3-1_smt",
+                "name": "statement",
+                "prose": "Requirements for 6.9.3.1."
+              }
+            ]
+          },
+          {
+            "id": "6.9.4.1",
+            "title": "Control 6.9.4.1",
+            "props": [
+              {
+                "name": "label",
+                "value": "6.9.4.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "6.9.4.1"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "6-9-4-1_smt",
+                "name": "statement",
+                "prose": "Requirements for 6.9.4.1."
+              }
+            ]
+          },
+          {
+            "id": "6.9.4.2",
+            "title": "Control 6.9.4.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "6.9.4.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "6.9.4.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "6-9-4-2_smt",
+                "name": "statement",
+                "prose": "Requirements for 6.9.4.2."
               }
             ]
           }
         ]
       },
       {
-        "id": "BCP",
-        "title": "Business Continuity",
+        "id": "cl7",
+        "title": "Clause 7 - Additional ISO/IEC 27002 Guidance for PII Controllers",
         "controls": [
           {
-            "id": "UCF-BCP-1",
-            "title": "UCF-BCP-1",
+            "id": "7.2.1",
+            "title": "Control 7.2.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-BCP-1"
+                "value": "7.2.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-bcp-1"
+                "value": "7.2.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -350,23 +505,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_bcp_1_smt",
+                "id": "7-2-1_smt",
                 "name": "statement",
-                "prose": "Business Continuity control UCF-BCP-1."
+                "prose": "Requirements for 7.2.1."
               }
             ]
           },
           {
-            "id": "UCF-BCP-2",
-            "title": "UCF-BCP-2",
+            "id": "7.2.2",
+            "title": "Control 7.2.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-BCP-2"
+                "value": "7.2.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-bcp-2"
+                "value": "7.2.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -375,23 +530,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_bcp_2_smt",
+                "id": "7-2-2_smt",
                 "name": "statement",
-                "prose": "Business Continuity control UCF-BCP-2."
+                "prose": "Requirements for 7.2.2."
               }
             ]
           },
           {
-            "id": "UCF-BCP-3",
-            "title": "UCF-BCP-3",
+            "id": "7.2.3",
+            "title": "Control 7.2.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-BCP-3"
+                "value": "7.2.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-bcp-3"
+                "value": "7.2.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -400,23 +555,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_bcp_3_smt",
+                "id": "7-2-3_smt",
                 "name": "statement",
-                "prose": "Business Continuity control UCF-BCP-3."
+                "prose": "Requirements for 7.2.3."
               }
             ]
           },
           {
-            "id": "UCF-BCP-4",
-            "title": "UCF-BCP-4",
+            "id": "7.2.4",
+            "title": "Control 7.2.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-BCP-4"
+                "value": "7.2.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-bcp-4"
+                "value": "7.2.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -425,23 +580,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_bcp_4_smt",
+                "id": "7-2-4_smt",
                 "name": "statement",
-                "prose": "Business Continuity control UCF-BCP-4."
+                "prose": "Requirements for 7.2.4."
               }
             ]
           },
           {
-            "id": "UCF-BCP-5",
-            "title": "UCF-BCP-5",
+            "id": "7.2.5",
+            "title": "Control 7.2.5",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-BCP-5"
+                "value": "7.2.5"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-bcp-5"
+                "value": "7.2.5"
               },
               {
                 "name": "monitoring-frequency",
@@ -450,29 +605,579 @@
             ],
             "parts": [
               {
-                "id": "ucf_bcp_5_smt",
+                "id": "7-2-5_smt",
                 "name": "statement",
-                "prose": "Business Continuity control UCF-BCP-5."
+                "prose": "Requirements for 7.2.5."
+              }
+            ]
+          },
+          {
+            "id": "7.2.6",
+            "title": "Control 7.2.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.2.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.2.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-2-6_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.2.6."
+              }
+            ]
+          },
+          {
+            "id": "7.2.7",
+            "title": "Control 7.2.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.2.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.2.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-2-7_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.2.7."
+              }
+            ]
+          },
+          {
+            "id": "7.2.8",
+            "title": "Control 7.2.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.2.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.2.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-2-8_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.2.8."
+              }
+            ]
+          },
+          {
+            "id": "7.3.1",
+            "title": "Control 7.3.1",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.3.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.3.1"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-3-1_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.3.1."
+              }
+            ]
+          },
+          {
+            "id": "7.3.2",
+            "title": "Control 7.3.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.3.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.3.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-3-2_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.3.2."
+              }
+            ]
+          },
+          {
+            "id": "7.3.3",
+            "title": "Control 7.3.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.3.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.3.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-3-3_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.3.3."
+              }
+            ]
+          },
+          {
+            "id": "7.3.4",
+            "title": "Control 7.3.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.3.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.3.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-3-4_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.3.4."
+              }
+            ]
+          },
+          {
+            "id": "7.3.5",
+            "title": "Control 7.3.5",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.3.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.3.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-3-5_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.3.5."
+              }
+            ]
+          },
+          {
+            "id": "7.3.6",
+            "title": "Control 7.3.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.3.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.3.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-3-6_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.3.6."
+              }
+            ]
+          },
+          {
+            "id": "7.4.1",
+            "title": "Control 7.4.1",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.1"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-1_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.1."
+              }
+            ]
+          },
+          {
+            "id": "7.4.2",
+            "title": "Control 7.4.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-2_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.2."
+              }
+            ]
+          },
+          {
+            "id": "7.4.3",
+            "title": "Control 7.4.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-3_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.3."
+              }
+            ]
+          },
+          {
+            "id": "7.4.4",
+            "title": "Control 7.4.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-4_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.4."
+              }
+            ]
+          },
+          {
+            "id": "7.4.5",
+            "title": "Control 7.4.5",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-5_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.5."
+              }
+            ]
+          },
+          {
+            "id": "7.4.6",
+            "title": "Control 7.4.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-6_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.6."
+              }
+            ]
+          },
+          {
+            "id": "7.4.7",
+            "title": "Control 7.4.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-7_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.7."
+              }
+            ]
+          },
+          {
+            "id": "7.4.8",
+            "title": "Control 7.4.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-8_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.8."
+              }
+            ]
+          },
+          {
+            "id": "7.4.9",
+            "title": "Control 7.4.9",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.4.9"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.4.9"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-4-9_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.4.9."
+              }
+            ]
+          },
+          {
+            "id": "7.5.1",
+            "title": "Control 7.5.1",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.5.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.5.1"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-5-1_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.5.1."
+              }
+            ]
+          },
+          {
+            "id": "7.5.2",
+            "title": "Control 7.5.2",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.5.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.5.2"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-5-2_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.5.2."
+              }
+            ]
+          },
+          {
+            "id": "7.5.3",
+            "title": "Control 7.5.3",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.5.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.5.3"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-5-3_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.5.3."
+              }
+            ]
+          },
+          {
+            "id": "7.5.4",
+            "title": "Control 7.5.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "7.5.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "7.5.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "7-5-4_smt",
+                "name": "statement",
+                "prose": "Requirements for 7.5.4."
               }
             ]
           }
         ]
       },
       {
-        "id": "CFG",
-        "title": "Configuration Management",
+        "id": "a7_2",
+        "title": "Annex A.7.2 - Conditions for Collection and Processing",
         "controls": [
           {
-            "id": "UCF-CFG-1",
-            "title": "UCF-CFG-1",
+            "id": "A.7.2.1",
+            "title": "Control A.7.2.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CFG-1"
+                "value": "A.7.2.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cfg-1"
+                "value": "a.7.2.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -481,23 +1186,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cfg_1_smt",
+                "id": "a-7-2-1_smt",
                 "name": "statement",
-                "prose": "Configuration Management control UCF-CFG-1."
+                "prose": "Requirements for A.7.2.1."
               }
             ]
           },
           {
-            "id": "UCF-CFG-2",
-            "title": "UCF-CFG-2",
+            "id": "A.7.2.2",
+            "title": "Control A.7.2.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CFG-2"
+                "value": "A.7.2.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cfg-2"
+                "value": "a.7.2.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -506,23 +1211,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cfg_2_smt",
+                "id": "a-7-2-2_smt",
                 "name": "statement",
-                "prose": "Configuration Management control UCF-CFG-2."
+                "prose": "Requirements for A.7.2.2."
               }
             ]
           },
           {
-            "id": "UCF-CFG-3",
-            "title": "UCF-CFG-3",
+            "id": "A.7.2.3",
+            "title": "Control A.7.2.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CFG-3"
+                "value": "A.7.2.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cfg-3"
+                "value": "a.7.2.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -531,23 +1236,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cfg_3_smt",
+                "id": "a-7-2-3_smt",
                 "name": "statement",
-                "prose": "Configuration Management control UCF-CFG-3."
+                "prose": "Requirements for A.7.2.3."
               }
             ]
           },
           {
-            "id": "UCF-CFG-4",
-            "title": "UCF-CFG-4",
+            "id": "A.7.2.4",
+            "title": "Control A.7.2.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CFG-4"
+                "value": "A.7.2.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cfg-4"
+                "value": "a.7.2.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -556,23 +1261,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cfg_4_smt",
+                "id": "a-7-2-4_smt",
                 "name": "statement",
-                "prose": "Configuration Management control UCF-CFG-4."
+                "prose": "Requirements for A.7.2.4."
               }
             ]
           },
           {
-            "id": "UCF-CFG-5",
-            "title": "UCF-CFG-5",
+            "id": "A.7.2.5",
+            "title": "Control A.7.2.5",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CFG-5"
+                "value": "A.7.2.5"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cfg-5"
+                "value": "a.7.2.5"
               },
               {
                 "name": "monitoring-frequency",
@@ -581,23 +1286,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cfg_5_smt",
+                "id": "a-7-2-5_smt",
                 "name": "statement",
-                "prose": "Configuration Management control UCF-CFG-5."
+                "prose": "Requirements for A.7.2.5."
               }
             ]
           },
           {
-            "id": "UCF-CFG-6",
-            "title": "UCF-CFG-6",
+            "id": "A.7.2.6",
+            "title": "Control A.7.2.6",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CFG-6"
+                "value": "A.7.2.6"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cfg-6"
+                "value": "a.7.2.6"
               },
               {
                 "name": "monitoring-frequency",
@@ -606,29 +1311,79 @@
             ],
             "parts": [
               {
-                "id": "ucf_cfg_6_smt",
+                "id": "a-7-2-6_smt",
                 "name": "statement",
-                "prose": "Configuration Management control UCF-CFG-6."
+                "prose": "Requirements for A.7.2.6."
+              }
+            ]
+          },
+          {
+            "id": "A.7.2.7",
+            "title": "Control A.7.2.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.2.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.2.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-2-7_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.2.7."
+              }
+            ]
+          },
+          {
+            "id": "A.7.2.8",
+            "title": "Control A.7.2.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.2.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.2.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-2-8_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.2.8."
               }
             ]
           }
         ]
       },
       {
-        "id": "CMP",
-        "title": "Compliance Management",
+        "id": "a7_3",
+        "title": "Annex A.7.3 - Obligations to PII Principals",
         "controls": [
           {
-            "id": "UCF-CMP-1",
-            "title": "UCF-CMP-1",
+            "id": "A.7.3.1",
+            "title": "Control A.7.3.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CMP-1"
+                "value": "A.7.3.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cmp-1"
+                "value": "a.7.3.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -637,23 +1392,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cmp_1_smt",
+                "id": "a-7-3-1_smt",
                 "name": "statement",
-                "prose": "Compliance Management control UCF-CMP-1."
+                "prose": "Requirements for A.7.3.1."
               }
             ]
           },
           {
-            "id": "UCF-CMP-2",
-            "title": "UCF-CMP-2",
+            "id": "A.7.3.10",
+            "title": "Control A.7.3.10",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CMP-2"
+                "value": "A.7.3.10"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cmp-2"
+                "value": "a.7.3.10"
               },
               {
                 "name": "monitoring-frequency",
@@ -662,23 +1417,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cmp_2_smt",
+                "id": "a-7-3-10_smt",
                 "name": "statement",
-                "prose": "Compliance Management control UCF-CMP-2."
+                "prose": "Requirements for A.7.3.10."
               }
             ]
           },
           {
-            "id": "UCF-CMP-3",
-            "title": "UCF-CMP-3",
+            "id": "A.7.3.2",
+            "title": "Control A.7.3.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CMP-3"
+                "value": "A.7.3.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cmp-3"
+                "value": "a.7.3.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -687,23 +1442,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cmp_3_smt",
+                "id": "a-7-3-2_smt",
                 "name": "statement",
-                "prose": "Compliance Management control UCF-CMP-3."
+                "prose": "Requirements for A.7.3.2."
               }
             ]
           },
           {
-            "id": "UCF-CMP-4",
-            "title": "UCF-CMP-4",
+            "id": "A.7.3.3",
+            "title": "Control A.7.3.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CMP-4"
+                "value": "A.7.3.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cmp-4"
+                "value": "a.7.3.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -712,23 +1467,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_cmp_4_smt",
+                "id": "a-7-3-3_smt",
                 "name": "statement",
-                "prose": "Compliance Management control UCF-CMP-4."
+                "prose": "Requirements for A.7.3.3."
               }
             ]
           },
           {
-            "id": "UCF-CMP-5",
-            "title": "UCF-CMP-5",
+            "id": "A.7.3.4",
+            "title": "Control A.7.3.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-CMP-5"
+                "value": "A.7.3.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-cmp-5"
+                "value": "a.7.3.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -737,29 +1492,154 @@
             ],
             "parts": [
               {
-                "id": "ucf_cmp_5_smt",
+                "id": "a-7-3-4_smt",
                 "name": "statement",
-                "prose": "Compliance Management control UCF-CMP-5."
+                "prose": "Requirements for A.7.3.4."
+              }
+            ]
+          },
+          {
+            "id": "A.7.3.5",
+            "title": "Control A.7.3.5",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.3.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.3.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-3-5_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.3.5."
+              }
+            ]
+          },
+          {
+            "id": "A.7.3.6",
+            "title": "Control A.7.3.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.3.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.3.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-3-6_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.3.6."
+              }
+            ]
+          },
+          {
+            "id": "A.7.3.7",
+            "title": "Control A.7.3.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.3.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.3.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-3-7_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.3.7."
+              }
+            ]
+          },
+          {
+            "id": "A.7.3.8",
+            "title": "Control A.7.3.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.3.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.3.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-3-8_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.3.8."
+              }
+            ]
+          },
+          {
+            "id": "A.7.3.9",
+            "title": "Control A.7.3.9",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.3.9"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.3.9"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-3-9_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.3.9."
               }
             ]
           }
         ]
       },
       {
-        "id": "COM",
-        "title": "Communication Security",
+        "id": "a7_4",
+        "title": "Annex A.7.4 - Privacy by Design and Default",
         "controls": [
           {
-            "id": "UCF-COM-1",
-            "title": "UCF-COM-1",
+            "id": "A.7.4.1",
+            "title": "Control A.7.4.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-COM-1"
+                "value": "A.7.4.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-com-1"
+                "value": "a.7.4.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -768,23 +1648,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_com_1_smt",
+                "id": "a-7-4-1_smt",
                 "name": "statement",
-                "prose": "Communication Security control UCF-COM-1."
+                "prose": "Requirements for A.7.4.1."
               }
             ]
           },
           {
-            "id": "UCF-COM-2",
-            "title": "UCF-COM-2",
+            "id": "A.7.4.2",
+            "title": "Control A.7.4.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-COM-2"
+                "value": "A.7.4.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-com-2"
+                "value": "a.7.4.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -793,23 +1673,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_com_2_smt",
+                "id": "a-7-4-2_smt",
                 "name": "statement",
-                "prose": "Communication Security control UCF-COM-2."
+                "prose": "Requirements for A.7.4.2."
               }
             ]
           },
           {
-            "id": "UCF-COM-3",
-            "title": "UCF-COM-3",
+            "id": "A.7.4.3",
+            "title": "Control A.7.4.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-COM-3"
+                "value": "A.7.4.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-com-3"
+                "value": "a.7.4.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -818,29 +1698,179 @@
             ],
             "parts": [
               {
-                "id": "ucf_com_3_smt",
+                "id": "a-7-4-3_smt",
                 "name": "statement",
-                "prose": "Communication Security control UCF-COM-3."
+                "prose": "Requirements for A.7.4.3."
+              }
+            ]
+          },
+          {
+            "id": "A.7.4.4",
+            "title": "Control A.7.4.4",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.4.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.4.4"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-4-4_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.4.4."
+              }
+            ]
+          },
+          {
+            "id": "A.7.4.5",
+            "title": "Control A.7.4.5",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.4.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.4.5"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-4-5_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.4.5."
+              }
+            ]
+          },
+          {
+            "id": "A.7.4.6",
+            "title": "Control A.7.4.6",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.4.6"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.4.6"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-4-6_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.4.6."
+              }
+            ]
+          },
+          {
+            "id": "A.7.4.7",
+            "title": "Control A.7.4.7",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.4.7"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.4.7"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-4-7_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.4.7."
+              }
+            ]
+          },
+          {
+            "id": "A.7.4.8",
+            "title": "Control A.7.4.8",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.4.8"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.4.8"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-4-8_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.4.8."
+              }
+            ]
+          },
+          {
+            "id": "A.7.4.9",
+            "title": "Control A.7.4.9",
+            "props": [
+              {
+                "name": "label",
+                "value": "A.7.4.9"
+              },
+              {
+                "name": "sort-id",
+                "value": "a.7.4.9"
+              },
+              {
+                "name": "monitoring-frequency",
+                "value": "monthly"
+              }
+            ],
+            "parts": [
+              {
+                "id": "a-7-4-9_smt",
+                "name": "statement",
+                "prose": "Requirements for A.7.4.9."
               }
             ]
           }
         ]
       },
       {
-        "id": "DAT",
-        "title": "Data Protection",
+        "id": "a7_5",
+        "title": "Annex A.7.5 - PII Sharing, Transfer, and Disclosure",
         "controls": [
           {
-            "id": "UCF-DAT-1",
-            "title": "UCF-DAT-1",
+            "id": "A.7.5.1",
+            "title": "Control A.7.5.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DAT-1"
+                "value": "A.7.5.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dat-1"
+                "value": "a.7.5.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -849,23 +1879,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dat_1_smt",
+                "id": "a-7-5-1_smt",
                 "name": "statement",
-                "prose": "Data Protection control UCF-DAT-1."
+                "prose": "Requirements for A.7.5.1."
               }
             ]
           },
           {
-            "id": "UCF-DAT-2",
-            "title": "UCF-DAT-2",
+            "id": "A.7.5.2",
+            "title": "Control A.7.5.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DAT-2"
+                "value": "A.7.5.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dat-2"
+                "value": "a.7.5.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -874,23 +1904,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dat_2_smt",
+                "id": "a-7-5-2_smt",
                 "name": "statement",
-                "prose": "Data Protection control UCF-DAT-2."
+                "prose": "Requirements for A.7.5.2."
               }
             ]
           },
           {
-            "id": "UCF-DAT-3",
-            "title": "UCF-DAT-3",
+            "id": "A.7.5.3",
+            "title": "Control A.7.5.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DAT-3"
+                "value": "A.7.5.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dat-3"
+                "value": "a.7.5.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -899,23 +1929,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dat_3_smt",
+                "id": "a-7-5-3_smt",
                 "name": "statement",
-                "prose": "Data Protection control UCF-DAT-3."
+                "prose": "Requirements for A.7.5.3."
               }
             ]
           },
           {
-            "id": "UCF-DAT-4",
-            "title": "UCF-DAT-4",
+            "id": "A.7.5.4",
+            "title": "Control A.7.5.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DAT-4"
+                "value": "A.7.5.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dat-4"
+                "value": "a.7.5.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -924,104 +1954,29 @@
             ],
             "parts": [
               {
-                "id": "ucf_dat_4_smt",
+                "id": "a-7-5-4_smt",
                 "name": "statement",
-                "prose": "Data Protection control UCF-DAT-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-DAT-5",
-            "title": "UCF-DAT-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-DAT-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-dat-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_dat_5_smt",
-                "name": "statement",
-                "prose": "Data Protection control UCF-DAT-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-DAT-6",
-            "title": "UCF-DAT-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-DAT-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-dat-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_dat_6_smt",
-                "name": "statement",
-                "prose": "Data Protection control UCF-DAT-6."
-              }
-            ]
-          },
-          {
-            "id": "UCF-DAT-7",
-            "title": "UCF-DAT-7",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-DAT-7"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-dat-7"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_dat_7_smt",
-                "name": "statement",
-                "prose": "Data Protection control UCF-DAT-7."
+                "prose": "Requirements for A.7.5.4."
               }
             ]
           }
         ]
       },
       {
-        "id": "DEV",
-        "title": "Secure Development",
+        "id": "b8_2",
+        "title": "Annex B.8.2 - Conditions for Collection and Processing",
         "controls": [
           {
-            "id": "UCF-DEV-1",
-            "title": "UCF-DEV-1",
+            "id": "B.8.2.1",
+            "title": "Control B.8.2.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DEV-1"
+                "value": "B.8.2.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dev-1"
+                "value": "b.8.2.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -1030,23 +1985,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dev_1_smt",
+                "id": "b-8-2-1_smt",
                 "name": "statement",
-                "prose": "Secure Development control UCF-DEV-1."
+                "prose": "Requirements for B.8.2.1."
               }
             ]
           },
           {
-            "id": "UCF-DEV-2",
-            "title": "UCF-DEV-2",
+            "id": "B.8.2.2",
+            "title": "Control B.8.2.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DEV-2"
+                "value": "B.8.2.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dev-2"
+                "value": "b.8.2.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -1055,23 +2010,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dev_2_smt",
+                "id": "b-8-2-2_smt",
                 "name": "statement",
-                "prose": "Secure Development control UCF-DEV-2."
+                "prose": "Requirements for B.8.2.2."
               }
             ]
           },
           {
-            "id": "UCF-DEV-3",
-            "title": "UCF-DEV-3",
+            "id": "B.8.2.3",
+            "title": "Control B.8.2.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DEV-3"
+                "value": "B.8.2.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dev-3"
+                "value": "b.8.2.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -1080,23 +2035,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dev_3_smt",
+                "id": "b-8-2-3_smt",
                 "name": "statement",
-                "prose": "Secure Development control UCF-DEV-3."
+                "prose": "Requirements for B.8.2.3."
               }
             ]
           },
           {
-            "id": "UCF-DEV-4",
-            "title": "UCF-DEV-4",
+            "id": "B.8.2.4",
+            "title": "Control B.8.2.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DEV-4"
+                "value": "B.8.2.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dev-4"
+                "value": "b.8.2.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -1105,23 +2060,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dev_4_smt",
+                "id": "b-8-2-4_smt",
                 "name": "statement",
-                "prose": "Secure Development control UCF-DEV-4."
+                "prose": "Requirements for B.8.2.4."
               }
             ]
           },
           {
-            "id": "UCF-DEV-5",
-            "title": "UCF-DEV-5",
+            "id": "B.8.2.5",
+            "title": "Control B.8.2.5",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DEV-5"
+                "value": "B.8.2.5"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dev-5"
+                "value": "b.8.2.5"
               },
               {
                 "name": "monitoring-frequency",
@@ -1130,23 +2085,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_dev_5_smt",
+                "id": "b-8-2-5_smt",
                 "name": "statement",
-                "prose": "Secure Development control UCF-DEV-5."
+                "prose": "Requirements for B.8.2.5."
               }
             ]
           },
           {
-            "id": "UCF-DEV-6",
-            "title": "UCF-DEV-6",
+            "id": "B.8.2.6",
+            "title": "Control B.8.2.6",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-DEV-6"
+                "value": "B.8.2.6"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-dev-6"
+                "value": "b.8.2.6"
               },
               {
                 "name": "monitoring-frequency",
@@ -1155,29 +2110,29 @@
             ],
             "parts": [
               {
-                "id": "ucf_dev_6_smt",
+                "id": "b-8-2-6_smt",
                 "name": "statement",
-                "prose": "Secure Development control UCF-DEV-6."
+                "prose": "Requirements for B.8.2.6."
               }
             ]
           }
         ]
       },
       {
-        "id": "EPP",
-        "title": "Endpoint Protection",
+        "id": "b8_3",
+        "title": "Annex B.8.3 - Obligations to PII Principals",
         "controls": [
           {
-            "id": "UCF-EPP-1",
-            "title": "UCF-EPP-1",
+            "id": "B.8.3.1",
+            "title": "Control B.8.3.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-EPP-1"
+                "value": "B.8.3.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-epp-1"
+                "value": "b.8.3.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -1186,23 +2141,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_epp_1_smt",
+                "id": "b-8-3-1_smt",
                 "name": "statement",
-                "prose": "Endpoint Protection control UCF-EPP-1."
+                "prose": "Requirements for B.8.3.1."
               }
             ]
           },
           {
-            "id": "UCF-EPP-2",
-            "title": "UCF-EPP-2",
+            "id": "B.8.3.2",
+            "title": "Control B.8.3.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-EPP-2"
+                "value": "B.8.3.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-epp-2"
+                "value": "b.8.3.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -1211,104 +2166,29 @@
             ],
             "parts": [
               {
-                "id": "ucf_epp_2_smt",
+                "id": "b-8-3-2_smt",
                 "name": "statement",
-                "prose": "Endpoint Protection control UCF-EPP-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-EPP-3",
-            "title": "UCF-EPP-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-EPP-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-epp-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_epp_3_smt",
-                "name": "statement",
-                "prose": "Endpoint Protection control UCF-EPP-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-EPP-4",
-            "title": "UCF-EPP-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-EPP-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-epp-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_epp_4_smt",
-                "name": "statement",
-                "prose": "Endpoint Protection control UCF-EPP-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-EPP-5",
-            "title": "UCF-EPP-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-EPP-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-epp-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_epp_5_smt",
-                "name": "statement",
-                "prose": "Endpoint Protection control UCF-EPP-5."
+                "prose": "Requirements for B.8.3.2."
               }
             ]
           }
         ]
       },
       {
-        "id": "GOV",
-        "title": "Governance",
+        "id": "b8_4",
+        "title": "Annex B.8.4 - Privacy by Design and Default",
         "controls": [
           {
-            "id": "UCF-GOV-1",
-            "title": "UCF-GOV-1",
+            "id": "B.8.4.1",
+            "title": "Control B.8.4.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-GOV-1"
+                "value": "B.8.4.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-gov-1"
+                "value": "b.8.4.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -1317,23 +2197,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_gov_1_smt",
+                "id": "b-8-4-1_smt",
                 "name": "statement",
-                "prose": "Governance control UCF-GOV-1."
+                "prose": "Requirements for B.8.4.1."
               }
             ]
           },
           {
-            "id": "UCF-GOV-2",
-            "title": "UCF-GOV-2",
+            "id": "B.8.4.2",
+            "title": "Control B.8.4.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-GOV-2"
+                "value": "B.8.4.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-gov-2"
+                "value": "b.8.4.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -1342,23 +2222,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_gov_2_smt",
+                "id": "b-8-4-2_smt",
                 "name": "statement",
-                "prose": "Governance control UCF-GOV-2."
+                "prose": "Requirements for B.8.4.2."
               }
             ]
           },
           {
-            "id": "UCF-GOV-3",
-            "title": "UCF-GOV-3",
+            "id": "B.8.4.3",
+            "title": "Control B.8.4.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-GOV-3"
+                "value": "B.8.4.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-gov-3"
+                "value": "b.8.4.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -1367,104 +2247,29 @@
             ],
             "parts": [
               {
-                "id": "ucf_gov_3_smt",
+                "id": "b-8-4-3_smt",
                 "name": "statement",
-                "prose": "Governance control UCF-GOV-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-GOV-4",
-            "title": "UCF-GOV-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-GOV-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-gov-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_gov_4_smt",
-                "name": "statement",
-                "prose": "Governance control UCF-GOV-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-GOV-5",
-            "title": "UCF-GOV-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-GOV-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-gov-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_gov_5_smt",
-                "name": "statement",
-                "prose": "Governance control UCF-GOV-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-GOV-6",
-            "title": "UCF-GOV-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-GOV-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-gov-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_gov_6_smt",
-                "name": "statement",
-                "prose": "Governance control UCF-GOV-6."
+                "prose": "Requirements for B.8.4.3."
               }
             ]
           }
         ]
       },
       {
-        "id": "HRS",
-        "title": "Human Resource Security",
+        "id": "b8_5",
+        "title": "Annex B.8.5 - PII Sharing, Transfer, and Disclosure",
         "controls": [
           {
-            "id": "UCF-HRS-1",
-            "title": "UCF-HRS-1",
+            "id": "B.8.5.1",
+            "title": "Control B.8.5.1",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-HRS-1"
+                "value": "B.8.5.1"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-hrs-1"
+                "value": "b.8.5.1"
               },
               {
                 "name": "monitoring-frequency",
@@ -1473,23 +2278,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_hrs_1_smt",
+                "id": "b-8-5-1_smt",
                 "name": "statement",
-                "prose": "Human Resource Security control UCF-HRS-1."
+                "prose": "Requirements for B.8.5.1."
               }
             ]
           },
           {
-            "id": "UCF-HRS-2",
-            "title": "UCF-HRS-2",
+            "id": "B.8.5.2",
+            "title": "Control B.8.5.2",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-HRS-2"
+                "value": "B.8.5.2"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-hrs-2"
+                "value": "b.8.5.2"
               },
               {
                 "name": "monitoring-frequency",
@@ -1498,23 +2303,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_hrs_2_smt",
+                "id": "b-8-5-2_smt",
                 "name": "statement",
-                "prose": "Human Resource Security control UCF-HRS-2."
+                "prose": "Requirements for B.8.5.2."
               }
             ]
           },
           {
-            "id": "UCF-HRS-3",
-            "title": "UCF-HRS-3",
+            "id": "B.8.5.3",
+            "title": "Control B.8.5.3",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-HRS-3"
+                "value": "B.8.5.3"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-hrs-3"
+                "value": "b.8.5.3"
               },
               {
                 "name": "monitoring-frequency",
@@ -1523,23 +2328,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_hrs_3_smt",
+                "id": "b-8-5-3_smt",
                 "name": "statement",
-                "prose": "Human Resource Security control UCF-HRS-3."
+                "prose": "Requirements for B.8.5.3."
               }
             ]
           },
           {
-            "id": "UCF-HRS-4",
-            "title": "UCF-HRS-4",
+            "id": "B.8.5.4",
+            "title": "Control B.8.5.4",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-HRS-4"
+                "value": "B.8.5.4"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-hrs-4"
+                "value": "b.8.5.4"
               },
               {
                 "name": "monitoring-frequency",
@@ -1548,23 +2353,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_hrs_4_smt",
+                "id": "b-8-5-4_smt",
                 "name": "statement",
-                "prose": "Human Resource Security control UCF-HRS-4."
+                "prose": "Requirements for B.8.5.4."
               }
             ]
           },
           {
-            "id": "UCF-HRS-5",
-            "title": "UCF-HRS-5",
+            "id": "B.8.5.5",
+            "title": "Control B.8.5.5",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-HRS-5"
+                "value": "B.8.5.5"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-hrs-5"
+                "value": "b.8.5.5"
               },
               {
                 "name": "monitoring-frequency",
@@ -1573,54 +2378,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_hrs_5_smt",
+                "id": "b-8-5-5_smt",
                 "name": "statement",
-                "prose": "Human Resource Security control UCF-HRS-5."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "IAM",
-        "title": "Identity & Access Management",
-        "controls": [
-          {
-            "id": "UCF-IAM-1",
-            "title": "UCF-IAM-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-IAM-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-iam-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_iam_1_smt",
-                "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-1."
+                "prose": "Requirements for B.8.5.5."
               }
             ]
           },
           {
-            "id": "UCF-IAM-2",
-            "title": "UCF-IAM-2",
+            "id": "B.8.5.6",
+            "title": "Control B.8.5.6",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-IAM-2"
+                "value": "B.8.5.6"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-iam-2"
+                "value": "b.8.5.6"
               },
               {
                 "name": "monitoring-frequency",
@@ -1629,23 +2403,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_iam_2_smt",
+                "id": "b-8-5-6_smt",
                 "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-2."
+                "prose": "Requirements for B.8.5.6."
               }
             ]
           },
           {
-            "id": "UCF-IAM-3",
-            "title": "UCF-IAM-3",
+            "id": "B.8.5.7",
+            "title": "Control B.8.5.7",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-IAM-3"
+                "value": "B.8.5.7"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-iam-3"
+                "value": "b.8.5.7"
               },
               {
                 "name": "monitoring-frequency",
@@ -1654,23 +2428,23 @@
             ],
             "parts": [
               {
-                "id": "ucf_iam_3_smt",
+                "id": "b-8-5-7_smt",
                 "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-3."
+                "prose": "Requirements for B.8.5.7."
               }
             ]
           },
           {
-            "id": "UCF-IAM-4",
-            "title": "UCF-IAM-4",
+            "id": "B.8.5.8",
+            "title": "Control B.8.5.8",
             "props": [
               {
                 "name": "label",
-                "value": "UCF-IAM-4"
+                "value": "B.8.5.8"
               },
               {
                 "name": "sort-id",
-                "value": "ucf-iam-4"
+                "value": "b.8.5.8"
               },
               {
                 "name": "monitoring-frequency",
@@ -1679,1332 +2453,9 @@
             ],
             "parts": [
               {
-                "id": "ucf_iam_4_smt",
+                "id": "b-8-5-8_smt",
                 "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-IAM-5",
-            "title": "UCF-IAM-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-IAM-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-iam-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_iam_5_smt",
-                "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-IAM-6",
-            "title": "UCF-IAM-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-IAM-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-iam-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_iam_6_smt",
-                "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-6."
-              }
-            ]
-          },
-          {
-            "id": "UCF-IAM-7",
-            "title": "UCF-IAM-7",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-IAM-7"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-iam-7"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_iam_7_smt",
-                "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-7."
-              }
-            ]
-          },
-          {
-            "id": "UCF-IAM-8",
-            "title": "UCF-IAM-8",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-IAM-8"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-iam-8"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_iam_8_smt",
-                "name": "statement",
-                "prose": "Identity & Access Management control UCF-IAM-8."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "LOG",
-        "title": "Logging & Monitoring",
-        "controls": [
-          {
-            "id": "UCF-LOG-1",
-            "title": "UCF-LOG-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-LOG-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-log-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_log_1_smt",
-                "name": "statement",
-                "prose": "Logging & Monitoring control UCF-LOG-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-LOG-2",
-            "title": "UCF-LOG-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-LOG-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-log-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_log_2_smt",
-                "name": "statement",
-                "prose": "Logging & Monitoring control UCF-LOG-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-LOG-3",
-            "title": "UCF-LOG-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-LOG-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-log-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_log_3_smt",
-                "name": "statement",
-                "prose": "Logging & Monitoring control UCF-LOG-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-LOG-4",
-            "title": "UCF-LOG-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-LOG-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-log-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_log_4_smt",
-                "name": "statement",
-                "prose": "Logging & Monitoring control UCF-LOG-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-LOG-5",
-            "title": "UCF-LOG-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-LOG-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-log-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_log_5_smt",
-                "name": "statement",
-                "prose": "Logging & Monitoring control UCF-LOG-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-LOG-6",
-            "title": "UCF-LOG-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-LOG-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-log-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_log_6_smt",
-                "name": "statement",
-                "prose": "Logging & Monitoring control UCF-LOG-6."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "NET",
-        "title": "Network Security",
-        "controls": [
-          {
-            "id": "UCF-NET-1",
-            "title": "UCF-NET-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_1_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-NET-2",
-            "title": "UCF-NET-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_2_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-NET-3",
-            "title": "UCF-NET-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_3_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-NET-4",
-            "title": "UCF-NET-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_4_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-NET-5",
-            "title": "UCF-NET-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_5_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-NET-6",
-            "title": "UCF-NET-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_6_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-6."
-              }
-            ]
-          },
-          {
-            "id": "UCF-NET-7",
-            "title": "UCF-NET-7",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-NET-7"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-net-7"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_net_7_smt",
-                "name": "statement",
-                "prose": "Network Security control UCF-NET-7."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "PHY",
-        "title": "Physical Security",
-        "controls": [
-          {
-            "id": "UCF-PHY-1",
-            "title": "UCF-PHY-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PHY-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-phy-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_phy_1_smt",
-                "name": "statement",
-                "prose": "Physical Security control UCF-PHY-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PHY-2",
-            "title": "UCF-PHY-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PHY-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-phy-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_phy_2_smt",
-                "name": "statement",
-                "prose": "Physical Security control UCF-PHY-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PHY-3",
-            "title": "UCF-PHY-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PHY-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-phy-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_phy_3_smt",
-                "name": "statement",
-                "prose": "Physical Security control UCF-PHY-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PHY-4",
-            "title": "UCF-PHY-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PHY-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-phy-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_phy_4_smt",
-                "name": "statement",
-                "prose": "Physical Security control UCF-PHY-4."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "PRV",
-        "title": "Privacy",
-        "controls": [
-          {
-            "id": "UCF-PRV-1",
-            "title": "UCF-PRV-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_1_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-2",
-            "title": "UCF-PRV-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_2_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-3",
-            "title": "UCF-PRV-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_3_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-4",
-            "title": "UCF-PRV-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_4_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-5",
-            "title": "UCF-PRV-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_5_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-6",
-            "title": "UCF-PRV-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_6_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-6."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-7",
-            "title": "UCF-PRV-7",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-7"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-7"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_7_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-7."
-              }
-            ]
-          },
-          {
-            "id": "UCF-PRV-8",
-            "title": "UCF-PRV-8",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-PRV-8"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-prv-8"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_prv_8_smt",
-                "name": "statement",
-                "prose": "Privacy control UCF-PRV-8."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "RSK",
-        "title": "Risk Management",
-        "controls": [
-          {
-            "id": "UCF-RSK-1",
-            "title": "UCF-RSK-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-RSK-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-rsk-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_rsk_1_smt",
-                "name": "statement",
-                "prose": "Risk Management control UCF-RSK-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-RSK-2",
-            "title": "UCF-RSK-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-RSK-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-rsk-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_rsk_2_smt",
-                "name": "statement",
-                "prose": "Risk Management control UCF-RSK-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-RSK-3",
-            "title": "UCF-RSK-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-RSK-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-rsk-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_rsk_3_smt",
-                "name": "statement",
-                "prose": "Risk Management control UCF-RSK-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-RSK-4",
-            "title": "UCF-RSK-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-RSK-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-rsk-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_rsk_4_smt",
-                "name": "statement",
-                "prose": "Risk Management control UCF-RSK-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-RSK-5",
-            "title": "UCF-RSK-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-RSK-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-rsk-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_rsk_5_smt",
-                "name": "statement",
-                "prose": "Risk Management control UCF-RSK-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-RSK-6",
-            "title": "UCF-RSK-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-RSK-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-rsk-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_rsk_6_smt",
-                "name": "statement",
-                "prose": "Risk Management control UCF-RSK-6."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "THR",
-        "title": "Threat Detection & Response",
-        "controls": [
-          {
-            "id": "UCF-THR-1",
-            "title": "UCF-THR-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-THR-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-thr-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_thr_1_smt",
-                "name": "statement",
-                "prose": "Threat Detection & Response control UCF-THR-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-THR-2",
-            "title": "UCF-THR-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-THR-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-thr-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_thr_2_smt",
-                "name": "statement",
-                "prose": "Threat Detection & Response control UCF-THR-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-THR-3",
-            "title": "UCF-THR-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-THR-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-thr-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_thr_3_smt",
-                "name": "statement",
-                "prose": "Threat Detection & Response control UCF-THR-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-THR-4",
-            "title": "UCF-THR-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-THR-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-thr-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_thr_4_smt",
-                "name": "statement",
-                "prose": "Threat Detection & Response control UCF-THR-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-THR-5",
-            "title": "UCF-THR-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-THR-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-thr-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_thr_5_smt",
-                "name": "statement",
-                "prose": "Threat Detection & Response control UCF-THR-5."
-              }
-            ]
-          },
-          {
-            "id": "UCF-THR-6",
-            "title": "UCF-THR-6",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-THR-6"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-thr-6"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_thr_6_smt",
-                "name": "statement",
-                "prose": "Threat Detection & Response control UCF-THR-6."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "TPM",
-        "title": "Third-Party Management",
-        "controls": [
-          {
-            "id": "UCF-TPM-1",
-            "title": "UCF-TPM-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-TPM-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-tpm-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_tpm_1_smt",
-                "name": "statement",
-                "prose": "Third-Party Management control UCF-TPM-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-TPM-2",
-            "title": "UCF-TPM-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-TPM-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-tpm-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_tpm_2_smt",
-                "name": "statement",
-                "prose": "Third-Party Management control UCF-TPM-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-TPM-3",
-            "title": "UCF-TPM-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-TPM-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-tpm-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_tpm_3_smt",
-                "name": "statement",
-                "prose": "Third-Party Management control UCF-TPM-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-TPM-4",
-            "title": "UCF-TPM-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-TPM-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-tpm-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_tpm_4_smt",
-                "name": "statement",
-                "prose": "Third-Party Management control UCF-TPM-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-TPM-5",
-            "title": "UCF-TPM-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-TPM-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-tpm-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_tpm_5_smt",
-                "name": "statement",
-                "prose": "Third-Party Management control UCF-TPM-5."
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "VLN",
-        "title": "Vulnerability Management",
-        "controls": [
-          {
-            "id": "UCF-VLN-1",
-            "title": "UCF-VLN-1",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-VLN-1"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-vln-1"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_vln_1_smt",
-                "name": "statement",
-                "prose": "Vulnerability Management control UCF-VLN-1."
-              }
-            ]
-          },
-          {
-            "id": "UCF-VLN-2",
-            "title": "UCF-VLN-2",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-VLN-2"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-vln-2"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_vln_2_smt",
-                "name": "statement",
-                "prose": "Vulnerability Management control UCF-VLN-2."
-              }
-            ]
-          },
-          {
-            "id": "UCF-VLN-3",
-            "title": "UCF-VLN-3",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-VLN-3"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-vln-3"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_vln_3_smt",
-                "name": "statement",
-                "prose": "Vulnerability Management control UCF-VLN-3."
-              }
-            ]
-          },
-          {
-            "id": "UCF-VLN-4",
-            "title": "UCF-VLN-4",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-VLN-4"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-vln-4"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_vln_4_smt",
-                "name": "statement",
-                "prose": "Vulnerability Management control UCF-VLN-4."
-              }
-            ]
-          },
-          {
-            "id": "UCF-VLN-5",
-            "title": "UCF-VLN-5",
-            "props": [
-              {
-                "name": "label",
-                "value": "UCF-VLN-5"
-              },
-              {
-                "name": "sort-id",
-                "value": "ucf-vln-5"
-              },
-              {
-                "name": "monitoring-frequency",
-                "value": "monthly"
-              }
-            ],
-            "parts": [
-              {
-                "id": "ucf_vln_5_smt",
-                "name": "statement",
-                "prose": "Vulnerability Management control UCF-VLN-5."
+                "prose": "Requirements for B.8.5.8."
               }
             ]
           }

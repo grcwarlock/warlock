@@ -14,6 +14,7 @@ from warlock.db.models import (
     Questionnaire,
     QuestionnaireTemplate,
 )
+from warlock.utils import ensure_aware
 
 
 class QuestionnaireManager:
@@ -451,8 +452,9 @@ class QuestionnaireManager:
             else:
                 answer = resp.get("answer") if isinstance(resp, dict) else resp
                 if question.get("response_type") == "yes_no":
-                    # For security controls, "no" is a risk finding
-                    if str(answer).lower() in ("no", "false", "n"):
+                    # W-12: Check against per-question positive_answer (default "yes")
+                    positive = question.get("positive_answer", "yes")
+                    if str(answer).lower() not in (positive.lower(), "true", "t"):
                         severity = "high" if required else "medium"
                         risk_findings.append({
                             "question_id": qid,
@@ -598,15 +600,17 @@ class QuestionnaireManager:
     def overdue(self, session: Session) -> list[Questionnaire]:
         """Return questionnaires past due_date that aren't completed."""
         now = datetime.now(timezone.utc)
-        return (
+        rows = (
             session.query(Questionnaire)
             .filter(
-                Questionnaire.due_date < now,
+                Questionnaire.due_date.isnot(None),
                 Questionnaire.status.notin_(["completed", "reviewed", "accepted", "rejected"]),
             )
             .order_by(Questionnaire.due_date.asc())
             .all()
         )
+        # W-4: ensure_aware before comparing due_date
+        return [q for q in rows if ensure_aware(q.due_date) < now]
 
     def summary(self, session: Session) -> dict:
         """Return questionnaire stats."""

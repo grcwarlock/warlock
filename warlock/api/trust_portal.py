@@ -6,6 +6,7 @@ Exposes high-level compliance posture without sensitive details.
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -29,6 +30,21 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/trust", tags=["Trust Portal"])
 
 
+def _bin_control_count(count: int) -> str:
+    """S-7: Bin exact control counts into ranges to avoid leaking precise topology."""
+    if count >= 200:
+        return "200+"
+    elif count >= 100:
+        return "100+"
+    elif count >= 50:
+        return "50-99"
+    elif count >= 10:
+        return "10-49"
+    elif count >= 1:
+        return "1-9"
+    return "0"
+
+
 # ---------------------------------------------------------------------------
 # Response models
 # ---------------------------------------------------------------------------
@@ -37,7 +53,7 @@ router = APIRouter(prefix="/trust", tags=["Trust Portal"])
 class FrameworkStatus(BaseModel):
     framework: str
     posture_rating: str          # "Strong", "Moderate", "Needs Improvement"
-    total_controls: int
+    total_controls: str          # S-7: Binned range string, not exact count
     compliance_rate_band: str    # "90-100%", "70-89%", "50-69%", "Below 50%"
 
 
@@ -154,7 +170,7 @@ async def trust_status(db: Session = Depends(get_db)):
                 FrameworkStatus(
                     framework=fw,
                     posture_rating=rating,
-                    total_controls=data["total"],
+                    total_controls=_bin_control_count(data["total"]),
                     compliance_rate_band=band,
                 )
             )
@@ -317,7 +333,8 @@ async def submit_access_request(
             detail="NDA acceptance is required to request compliance documents.",
         )
 
-    if not body.contact_email or "@" not in body.contact_email:
+    # S-17: Proper email validation with regex
+    if not body.contact_email or not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', body.contact_email):
         raise HTTPException(status_code=400, detail="A valid contact email is required.")
 
     req = TrustAccessRequest(

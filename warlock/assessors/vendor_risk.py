@@ -209,11 +209,11 @@ class VendorRiskEngine:
         elif days_since <= expected * 2:
             # Linear degradation from 20 to 10
             ratio = (days_since - expected) / expected
-            return round(20.0 - 10.0 * ratio, 2)
+            return max(0.0, round(20.0 - 10.0 * ratio, 2))
         elif days_since <= expected * 3:
             # Linear degradation from 10 to 0
             ratio = (days_since - expected * 2) / expected
-            return round(10.0 - 10.0 * ratio, 2)
+            return max(0.0, round(10.0 - 10.0 * ratio, 2))
         else:
             return 0.0
 

@@ -104,10 +104,15 @@ def verify_password(password: str, hashed: str) -> bool:
         return hmac.compare_digest(dk.hex(), expected_hex)
     else:
         # Legacy SHA-256 format — verify but log warning for migration
+        # S-14: Migration path: legacy hashes are auto-upgraded on next login
+        # in authenticate_user(). This path should be fully deprecated.
         salt, expected = hashed.split(":", 1)
         actual = hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
         if hmac.compare_digest(actual, expected):
-            log.warning("User authenticated with legacy SHA-256 hash — should be migrated")
+            log.warning(
+                "User authenticated with legacy SHA-256 hash — must be migrated. "
+                "Hash will be auto-upgraded on next successful login via authenticate_user()."
+            )
             return True
         return False
 
@@ -146,8 +151,18 @@ def _hmac_decode(token: str, secret: str) -> dict:
     return payload
 
 
+def _is_dev_env() -> bool:
+    """Return True if running in development mode (S-3 helper)."""
+    import os
+    env = os.environ.get("WLK_ENV", "").strip().lower()
+    return env in ("", "development")
+
+
 def _get_jwt_secret() -> str:
-    """Get JWT secret, refusing to start without one in production."""
+    """Get JWT secret, refusing to start without one in production.
+
+    S-3: Enforce minimum 32-character JWT secret in non-development environments.
+    """
     secret, _ = _get_auth_config()
     if not secret:
         from warlock.config import get_settings
@@ -166,7 +181,14 @@ def _get_jwt_secret() -> str:
         if not _EPHEMERAL_SECRET:
             _EPHEMERAL_SECRET = secrets.token_urlsafe(48)
         return _EPHEMERAL_SECRET
+    # S-3: Reject short secrets in non-development environments
     if len(secret) < 32:
+        if not _is_dev_env():
+            raise RuntimeError(
+                f"CRITICAL: WLK_JWT_SECRET is only {len(secret)} characters. "
+                "A minimum of 32 characters is required in non-development environments. "
+                "Set WLK_JWT_SECRET to a random string of at least 32 characters."
+            )
         log.warning("WLK_JWT_SECRET is shorter than 32 characters — this is insecure for production")
     return secret
 
@@ -198,9 +220,11 @@ def decode_access_token(token: str) -> dict:
     except Exception as exc:
         raise ValueError(f"Invalid token: {exc}") from exc
 
-    # Check expiration
+    # S-15: Reject tokens without an exp claim
     exp = payload.get("exp")
-    if exp is not None and float(exp) < datetime.now(timezone.utc).timestamp():
+    if exp is None:
+        raise ValueError("Token missing exp claim")
+    if float(exp) < datetime.now(timezone.utc).timestamp():
         raise ValueError("Token has expired")
     return payload
 
@@ -210,10 +234,23 @@ def decode_access_token(token: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def _hmac_key_hash(raw_key: str) -> str:
+    """Compute HMAC-SHA256 of an API key using the JWT secret as HMAC key.
+
+    S-5: Uses HMAC instead of plain SHA-256 to prevent offline brute-force
+    if the database is compromised without the server secret.
+    """
+    server_secret, _ = _get_auth_config()
+    return hmac.new(server_secret.encode(), raw_key.encode(), hashlib.sha256).hexdigest()
+
+
 def generate_api_key() -> tuple[str, str]:
-    """Generate an API key. Returns (raw_key, key_hash)."""
+    """Generate an API key. Returns (raw_key, key_hash).
+
+    S-5: Uses HMAC-SHA256 with the JWT secret as HMAC key.
+    """
     raw_key = f"wlk_{secrets.token_urlsafe(32)}"
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+    key_hash = _hmac_key_hash(raw_key)
     return raw_key, key_hash
 
 
@@ -223,10 +260,19 @@ def generate_api_key() -> tuple[str, str]:
 
 
 def validate_password(password: str) -> list[str]:
-    """Validate password complexity. Returns list of issues (empty = valid)."""
+    """Validate password complexity. Returns list of issues (empty = valid).
+
+    S-16: Requires at least 1 uppercase, 1 lowercase, 1 digit, and 12+ chars.
+    """
     issues = []
     if len(password) < MIN_PASSWORD_LENGTH:
         issues.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+    if not any(c.isupper() for c in password):
+        issues.append("Password must contain at least 1 uppercase letter")
+    if not any(c.islower() for c in password):
+        issues.append("Password must contain at least 1 lowercase letter")
+    if not any(c.isdigit() for c in password):
+        issues.append("Password must contain at least 1 digit")
     return issues
 
 
@@ -258,10 +304,9 @@ def authenticate_user(session: Session, email: str, password: str) -> User | Non
     user = session.query(User).filter(User.email == email, User.is_active == True).first()  # noqa: E712
 
     if not user:
-        # Dummy verify to prevent timing oracle — use a valid PBKDF2 hash
-        # so the verify function takes the same time as a real verification
-        _DUMMY_HASH = "pbkdf2:aaaa:bbbb"
-        verify_password("dummy", _DUMMY_HASH)
+        # S-13: Dummy verify to prevent timing oracle — use a pre-computed
+        # realistic hash so the verify function takes the same time as a real one
+        verify_password("dummy-timing-oracle-prevention", _DUMMY_HASH)
         return None
 
     # Check lockout
@@ -299,14 +344,25 @@ def authenticate_user(session: Session, email: str, password: str) -> User | Non
 
 
 def authenticate_api_key(session: Session, raw_key: str) -> tuple[User | None, APIKey | None]:
-    """Authenticate by API key."""
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+    """Authenticate by API key.
+
+    S-5: Uses HMAC-SHA256 for key hashing. Falls back to plain SHA-256 for
+    legacy keys that were hashed before the HMAC migration.
+    """
+    key_hash = _hmac_key_hash(raw_key)
+    # Also compute legacy hash for backward compatibility during migration
+    legacy_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+    from sqlalchemy import or_
     api_key = session.query(APIKey).filter(
-        APIKey.key_hash == key_hash,
+        or_(APIKey.key_hash == key_hash, APIKey.key_hash == legacy_hash),
         APIKey.is_active == True,  # noqa: E712
     ).first()
     if not api_key:
         return None, None
+    # S-5: Migrate legacy plain SHA-256 hashes to HMAC on successful auth
+    if api_key.key_hash == legacy_hash and api_key.key_hash != key_hash:
+        log.info("Migrating API key %s from SHA-256 to HMAC-SHA256", api_key.id[:8])
+        api_key.key_hash = key_hash
     if api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc):
         return None, None
     user = session.query(User).filter(User.id == api_key.user_id).first()
@@ -329,3 +385,8 @@ PERMISSIONS: dict[str, set[str]] = {
 def has_permission(role: str, permission: str) -> bool:
     """Check if a role has a specific permission."""
     return permission in PERMISSIONS.get(role, set())
+
+
+# S-13: Pre-compute a realistic dummy hash at module load for timing oracle prevention.
+# This ensures authenticate_user takes the same time whether the user exists or not.
+_DUMMY_HASH: str = hash_password("dummy-timing-oracle-prevention")

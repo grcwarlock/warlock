@@ -86,6 +86,7 @@ class QueueConfig:
     consumer_group: str = "warlock-pipeline"
     max_retries: int = 3
     batch_size: int = 100
+    visibility_timeout_seconds: int = 300  # SQS VisibilityTimeout in seconds
 
 
 # ---------------------------------------------------------------------------
@@ -600,7 +601,7 @@ class SQSBus:
             resp = self._sqs.create_queue(
                 QueueName=name,
                 Attributes={
-                    "VisibilityTimeout": str(self._config.batch_size),
+                    "VisibilityTimeout": str(self._config.visibility_timeout_seconds),
                     "MessageRetentionPeriod": "345600",  # 4 days
                 },
             )
@@ -610,7 +611,7 @@ class SQSBus:
             resp = self._sqs.create_queue(
                 QueueName=name,
                 Attributes={
-                    "VisibilityTimeout": str(self._config.batch_size),
+                    "VisibilityTimeout": str(self._config.visibility_timeout_seconds),
                     "MessageRetentionPeriod": "345600",
                 },
             )

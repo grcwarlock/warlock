@@ -1,15 +1,19 @@
 output "vpc_id" {
-  value = aws_vpc.main.id
+  description = "ID of the created VPC"
+  value       = aws_vpc.main.id
 }
 
 output "public_subnet_ids" {
-  value = aws_subnet.public[*].id
+  description = "IDs of the public subnets, one per availability zone"
+  value       = aws_subnet.public[*].id
 }
 
 output "private_subnet_ids" {
-  value = aws_subnet.private[*].id
+  description = "IDs of the private subnets, one per availability zone"
+  value       = aws_subnet.private[*].id
 }
 
 output "nat_gateway_ids" {
-  value = aws_nat_gateway.main[*].id
+  description = "IDs of the NAT gateways, one per availability zone"
+  value       = aws_nat_gateway.main[*].id
 }

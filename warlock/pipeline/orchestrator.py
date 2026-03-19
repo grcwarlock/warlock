@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -16,6 +17,10 @@ from warlock.pipeline.bus import EventBus, PipelineEvent
 from warlock.db import models
 
 log = logging.getLogger(__name__)
+
+
+class PipelineConcurrencyError(RuntimeError):
+    """Raised when a pipeline run cannot acquire the concurrency lock."""
 
 
 # ---------------------------------------------------------------------------
@@ -36,6 +41,10 @@ class PipelineRunStats:
     connectors_succeeded: int = 0
     connectors_failed: int = 0
     errors: list[str] = field(default_factory=list)
+
+    # Normalizer quality counters
+    normalizer_failures: int = 0       # raw events where normalization raised an exception
+    events_without_findings: int = 0   # raw events that produced zero findings
 
     @property
     def duration_seconds(self) -> float | None:
@@ -71,7 +80,25 @@ class Pipeline:
         self.bus = bus
 
     def run(self, session: Session) -> PipelineRunStats:
-        """Execute the full pipeline. One pass, all connectors."""
+        """Execute the full pipeline. One pass, all connectors.
+
+        Transaction model: this method uses an all-or-nothing approach. All
+        four stages (Ingest, Normalize, Map, Assess) run within a single
+        database session. The caller's context manager (get_session) commits on
+        success or rolls back the entire run on any unhandled exception. This
+        is intentional: a partial pipeline run would leave orphaned findings
+        without assessments, which is worse than no run at all. If a connector
+        fails, its errors are recorded in ConnectorRun.errors and the pipeline
+        continues with the remaining connectors; only a session-level exception
+        triggers a full rollback.
+
+        Concurrency: acquires an advisory lock before executing to prevent
+        overlapping pipeline runs. For SQLite, a file lock is used. For
+        PostgreSQL, pg_advisory_lock is used. Raises PipelineConcurrencyError
+        if the lock cannot be acquired (another run is in progress).
+        """
+        self._acquire_concurrency_lock(session)
+
         stats = PipelineRunStats()
         log.info("Pipeline run starting")
 
@@ -98,7 +125,15 @@ class Pipeline:
                 ))
 
                 # Stage 2: Normalize
-                findings = self.normalizers.normalize(raw_event)
+                try:
+                    findings = self.normalizers.normalize(raw_event)
+                except Exception as norm_exc:
+                    stats.normalizer_failures += 1
+                    stats.errors.append(f"Normalization failed for {db_raw.id}: {norm_exc}")
+                    log.exception("Normalizer failed for raw event %s", db_raw.id)
+                    continue
+                if not findings:
+                    stats.events_without_findings += 1
                 for finding in findings:
                     finding.raw_event_id = db_raw.id
                     db_finding = self._persist_finding(session, finding)
@@ -152,6 +187,96 @@ class Pipeline:
             stats.duration_seconds or 0,
         )
         return stats
+
+    # -- Concurrency lock --
+
+    def _acquire_concurrency_lock(self, session: Session) -> None:
+        """Acquire a single-instance advisory lock for pipeline execution.
+
+        For SQLite databases, uses a file lock (fcntl.flock) on a temporary
+        lock file so concurrent processes cannot run the pipeline simultaneously.
+        For PostgreSQL, uses pg_advisory_lock with a fixed integer key so that
+        the lock is automatically released when the session ends.
+
+        Raises PipelineConcurrencyError if the lock cannot be acquired (i.e.,
+        another pipeline run is already in progress).
+        """
+        dialect = session.bind.dialect.name if session.bind else "sqlite"
+
+        if dialect == "postgresql":
+            # pg_advisory_lock blocks until the lock is available; use
+            # pg_try_advisory_lock to detect contention immediately.
+            from sqlalchemy import text
+            result = session.execute(
+                text("SELECT pg_try_advisory_lock(7301839201)")  # fixed Warlock pipeline key
+            ).scalar()
+            if not result:
+                raise PipelineConcurrencyError(
+                    "Another pipeline run is already in progress "
+                    "(pg_try_advisory_lock returned false). "
+                    "Wait for the current run to complete."
+                )
+        else:
+            # SQLite: use a file-based lock via fcntl (POSIX only).
+            try:
+                import fcntl
+                lock_path = os.path.join(
+                    os.environ.get("TMPDIR", "/tmp"), "warlock_pipeline.lock"
+                )
+                lock_file = open(lock_path, "w")
+                try:
+                    fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    lock_file.close()
+                    raise PipelineConcurrencyError(
+                        "Another pipeline run is already in progress "
+                        "(file lock could not be acquired). "
+                        "Wait for the current run to complete."
+                    )
+                # Store the lock file on the instance so it stays open (and
+                # locked) for the duration of the run. The OS releases the
+                # lock when the file object is garbage-collected or closed.
+                self._lock_file = lock_file
+            except ImportError:
+                # fcntl is not available on Windows — skip locking.
+                log.warning(
+                    "fcntl not available; pipeline concurrency lock is disabled on this platform"
+                )
+
+    # -- Integrity verification --
+
+    def verify_integrity(self, session: Session) -> dict:
+        """Verify SHA-256 hashes of all stored RawEvent records.
+
+        Iterates over every RawEvent row, recomputes the SHA-256 of its
+        raw_data payload, and compares it to the stored sha256 column.
+
+        Returns a dict with keys:
+          - total: number of records checked
+          - passed: records whose hash matched
+          - failed: list of IDs whose hash did not match
+        """
+        import hashlib
+        import json
+
+        failed = []
+        total = 0
+        passed = 0
+
+        for raw_event in session.query(models.RawEvent).yield_per(500):
+            total += 1
+            payload = json.dumps(raw_event.raw_data, sort_keys=True, default=str).encode()
+            computed = hashlib.sha256(payload).hexdigest()
+            if computed == raw_event.sha256:
+                passed += 1
+            else:
+                failed.append(raw_event.id)
+                log.warning(
+                    "Integrity check failed for RawEvent %s: stored=%s computed=%s",
+                    raw_event.id, raw_event.sha256, computed,
+                )
+
+        return {"total": total, "passed": passed, "failed": failed}
 
     # -- Persistence helpers --
 

@@ -282,6 +282,18 @@ def register_middleware(app) -> None:
     Starlette processes middleware in reverse registration order,
     so we register in reverse: audit first, rate limit second, headers last.
     """
+    # S-6: Warn if running production without Redis-backed rate limiter
+    import os
+    wlk_env = os.environ.get("WLK_ENV", "").strip().lower()
+    redis_url = os.environ.get("WLK_QUEUE_URL", "").strip()
+    if wlk_env == "production" and not redis_url:
+        log.warning(
+            "PRODUCTION WARNING: No Redis URL configured (WLK_QUEUE_URL). "
+            "Rate limiter is running in per-process in-memory mode. "
+            "Rate limits will not be shared across workers. "
+            "Configure WLK_QUEUE_URL to a Redis instance for production deployments."
+        )
+
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(RequestAuditMiddleware)

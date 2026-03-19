@@ -56,6 +56,10 @@ Each policy file uses the package namespace `nist.<family>.<control_id>` and exp
 
 This framework maps to UCF domains UCF-01 through UCF-22 via `unified-controls-framework/mappings/framework-mappings.json`. NIST 800-53 provides the most comprehensive control coverage across all UCF domains.
 
+## Enhancement Coverage Gap
+
+This catalog contains 293 base controls. The pipeline's nist_800_53.yaml defines 1,176 controls including all enhancements. Enhancement-level OSCAL entries should be generated from the official NIST OSCAL content for full coverage.
+
 ## Standalone Use
 
 This package is designed to be split into its own repository. All paths within the package are relative, and the catalog is self-contained. The only external dependency is the UCF mappings file for cross-framework lookups.

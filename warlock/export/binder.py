@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import zipfile
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -124,6 +125,24 @@ class AuditBinderGenerator:
             "control_families": sorted(controls.keys()),
         }
 
+        # W-11: Validate output path is under an allowed directory
+        import tempfile
+
+        resolved = Path(output_path).resolve()
+        allowed_prefixes = (
+            Path("exports").resolve(),
+            Path("/tmp").resolve(),
+            Path(tempfile.gettempdir()).resolve(),
+        )
+        if not any(
+            str(resolved).startswith(str(prefix))
+            for prefix in allowed_prefixes
+        ):
+            raise ValueError(
+                f"Output path {resolved} is not under an allowed directory "
+                f"(exports/ or /tmp/)"
+            )
+
         # Write ZIP
         output = Path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -137,6 +156,9 @@ class AuditBinderGenerator:
 
             for family, cid_map in sorted(controls.items()):
                 for cid, crs in sorted(cid_map.items()):
+                    # W-1: Sanitize to prevent ZIP path traversal
+                    family = re.sub(r'[^a-zA-Z0-9._()-]', '_', family)
+                    cid = re.sub(r'[^a-zA-Z0-9._()-]', '_', cid)
                     prefix = f"binder/{family}/{cid}"
 
                     # Evidence: control results + linked findings

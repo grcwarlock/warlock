@@ -27,14 +27,15 @@ class PolicyGate:
     def __init__(
         self,
         opa_url: str | None = None,
-        fail_mode: str = "open",
+        fail_mode: str | None = None,
     ):
         from warlock.config import get_settings
         settings = get_settings()
         self.opa_url = opa_url or settings.opa_url
-        self.fail_mode = fail_mode or settings.opa_fail_mode
-        # In production, default to fail-closed for security
-        if settings.env == "production" and self.fail_mode == "open" and bool(self.opa_url):
+        # S-2: Default to fail-closed. Explicit parameter overrides settings.
+        self.fail_mode = fail_mode or settings.opa_fail_mode or "closed"
+        # S-2: Warn when fail-open in production
+        if settings.env == "production" and self.fail_mode == "open":
             log.warning(
                 "OPA policy gate is set to fail-open in production. "
                 "This means OPA outages will bypass all policy enforcement. "

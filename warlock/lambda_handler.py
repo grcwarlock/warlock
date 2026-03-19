@@ -28,9 +28,13 @@ def _configure_logging() -> None:
 def _is_eventbridge_event(event: dict) -> bool:
     """Check if this looks like an EventBridge scheduled event."""
     return (
-        event.get("source") == "aws.events"
-        or event.get("detail-type") == "Scheduled Event"
-        or "source" in event and "detail-type" in event
+        (event.get("source") == "aws.events")
+        or (event.get("detail-type") == "Scheduled Event")
+        or (
+            "source" in event
+            and "detail-type" in event
+            and event.get("source", "").startswith("aws.")
+        )
     )
 
 

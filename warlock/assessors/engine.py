@@ -85,7 +85,7 @@ class AssertionEngine:
 
     def __init__(self) -> None:
         self._assertions: dict[str, AssertionFn] = {}
-        self._control_assertions: dict[tuple[str, str], str] = {}  # (framework, control_id) → assertion_name
+        self._control_assertions: dict[tuple[str, str], list[str]] = {}  # (framework, control_id) → [assertion_names]
         self._remediation: dict[str, dict[str, Any]] = {}  # assertion_name → remediation info
 
     def register(self, name: str, fn: AssertionFn) -> None:
@@ -100,15 +100,27 @@ class AssertionEngine:
         return decorator
 
     def bind_control(self, framework: str, control_id: str, assertion_name: str) -> None:
-        """Bind a control to an assertion. When this control is assessed, run this assertion."""
-        self._control_assertions[(framework, control_id)] = assertion_name
+        """Bind a control to an assertion. When this control is assessed, run this assertion.
+
+        Multiple assertions can be bound to the same control; each call appends
+        to the list rather than overwriting.
+        """
+        key = (framework, control_id)
+        if key not in self._control_assertions:
+            self._control_assertions[key] = []
+        if assertion_name not in self._control_assertions[key]:
+            self._control_assertions[key].append(assertion_name)
 
     def set_remediation(self, assertion_name: str, remediation: dict[str, Any]) -> None:
         """Set remediation info for an assertion (summary, steps, console_path)."""
         self._remediation[assertion_name] = remediation
 
-    def get_assertion_for_control(self, framework: str, control_id: str) -> str | None:
-        return self._control_assertions.get((framework, control_id))
+    def get_assertion_for_control(self, framework: str, control_id: str) -> list[str] | None:
+        """Return the list of assertion names bound to a control, or None."""
+        assertions = self._control_assertions.get((framework, control_id))
+        if assertions:
+            return list(assertions)
+        return None
 
     def evaluate(
         self,
@@ -174,23 +186,36 @@ class Assessor:
             evidence_ids=[finding.raw_event_id],
         )
 
-        # Tier 1: deterministic assertion
-        assertion_name = self.engine.get_assertion_for_control(
+        # Tier 1: deterministic assertions (may be multiple per control)
+        assertion_names = self.engine.get_assertion_for_control(
             mapping.framework, mapping.control_id
         )
-        if assertion_name:
-            passed, reasons = self.engine.evaluate(
-                assertion_name, finding.detail, raw_data
-            )
-            result.assertion_name = assertion_name
-            result.assertion_passed = passed
-            result.assertion_findings = reasons
-            result.status = "compliant" if passed else "non_compliant"
-            result.assessor = f"assertion:{assertion_name}"
+        if assertion_names:
+            all_passed = True
+            all_reasons: list[str] = []
+            failed_assertions: list[str] = []
+            ran_names: list[str] = []
 
-            # Attach remediation on failure
-            if not passed:
-                remediation = self.engine._remediation.get(assertion_name, {})
+            for aname in assertion_names:
+                passed, reasons = self.engine.evaluate(
+                    aname, finding.detail, raw_data
+                )
+                ran_names.append(aname)
+                if not passed:
+                    all_passed = False
+                    failed_assertions.append(aname)
+                all_reasons.extend(reasons)
+
+            result.assertion_name = ",".join(ran_names)
+            result.assertion_passed = all_passed
+            result.assertion_findings = all_reasons
+            # non_compliant if ANY assertion fails; compliant only if ALL pass
+            result.status = "compliant" if all_passed else "non_compliant"
+            result.assessor = f"assertion:{','.join(ran_names)}"
+
+            # Attach remediation from the first failed assertion
+            if not all_passed and failed_assertions:
+                remediation = self.engine._remediation.get(failed_assertions[0], {})
                 result.remediation_summary = remediation.get("summary", "")
                 result.remediation_steps = remediation.get("steps", [])
                 result.console_path = remediation.get("console_path", "")

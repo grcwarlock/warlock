@@ -7,15 +7,93 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    aws = { source = "hashicorp/aws", version = ">= 5.0" }
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
 }
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 locals {
   common_tags = merge(var.tags, {
     ManagedBy = "warlock"
     Framework = "NIST-800-53"
   })
+}
+
+# ── SC-28: KMS Key for CloudTrail Log Encryption ─────────────────────
+
+resource "aws_kms_key" "cloudtrail" {
+  count                   = var.kms_key_id == null ? 1 : 0
+  description             = "KMS key for CloudTrail log encryption"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+  tags                    = local.common_tags
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableRootAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudTrailEncrypt"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action = [
+          "kms:GenerateDataKey",
+          "kms:Decrypt"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
+          }
+          StringLike = {
+            "kms:EncryptionContext:aws:cloudtrail:arn" = "arn:aws:cloudtrail:*:${data.aws_caller_identity.current.account_id}:trail/*"
+          }
+        }
+      },
+      {
+        Sid    = "AllowCloudWatchLogsEncrypt"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:*"
+          }
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_kms_alias" "cloudtrail" {
+  count         = var.kms_key_id == null ? 1 : 0
+  name          = "alias/${var.cloudtrail_name}-key"
+  target_key_id = aws_kms_key.cloudtrail[0].key_id
+}
+
+locals {
+  effective_kms_key_id = var.kms_key_id != null ? var.kms_key_id : (length(aws_kms_key.cloudtrail) > 0 ? aws_kms_key.cloudtrail[0].arn : null)
 }
 
 # ── AU-2: CloudTrail (Event Logging) ─────────────────────────────────
@@ -49,6 +127,29 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
   restrict_public_buckets = true
 }
 
+# T-2: S3 Lifecycle Policy — transition to Glacier, expire non-current versions
+resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
+  bucket = aws_s3_bucket.audit_logs.id
+
+  rule {
+    id     = "audit-log-lifecycle"
+    status = "Enabled"
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.log_retention_days
+    }
+
+    expiration {
+      expired_object_delete_marker = true
+    }
+  }
+}
+
 resource "aws_s3_bucket_policy" "cloudtrail" {
   bucket = aws_s3_bucket.audit_logs.id
   policy = jsonencode({
@@ -73,6 +174,44 @@ resource "aws_s3_bucket_policy" "cloudtrail" {
   })
 }
 
+# T-13: CloudWatch Log Group for CloudTrail
+resource "aws_cloudwatch_log_group" "cloudtrail" {
+  name              = "/aws/cloudtrail/${var.cloudtrail_name}"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = local.effective_kms_key_id
+  tags              = local.common_tags
+}
+
+# T-13: IAM role allowing CloudTrail to write to CloudWatch Logs
+resource "aws_iam_role" "cloudtrail_cloudwatch" {
+  name = "${var.cloudtrail_name}-cloudwatch-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "cloudtrail.amazonaws.com" }
+    }]
+  })
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy" "cloudtrail_cloudwatch" {
+  name = "cloudtrail-to-cloudwatch"
+  role = aws_iam_role.cloudtrail_cloudwatch.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      Resource = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
+    }]
+  })
+}
+
 resource "aws_cloudtrail" "main" {
   name                          = var.cloudtrail_name
   s3_bucket_name                = aws_s3_bucket.audit_logs.id
@@ -80,6 +219,10 @@ resource "aws_cloudtrail" "main" {
   include_global_service_events = true
   enable_log_file_validation    = true # NIST AU-2
   enable_logging                = true
+  kms_key_id                    = local.effective_kms_key_id
+
+  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
+  cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch.arn
 
   event_selector {
     read_write_type           = "All"
@@ -100,10 +243,10 @@ resource "aws_guardduty_detector" "main" {
 # ── AU-6: Security Hub (Centralized Findings) ────────────────────────
 
 resource "aws_securityhub_account" "main" {
-  count                        = var.enable_security_hub ? 1 : 0
-  enable_default_standards     = true
-  auto_enable_controls         = true
-  control_finding_generator    = "SECURITY_CONTROL"
+  count                     = var.enable_security_hub ? 1 : 0
+  enable_default_standards  = true
+  auto_enable_controls      = true
+  control_finding_generator = "SECURITY_CONTROL"
 }
 
 # ── AC-6: IAM Password Policy ────────────────────────────────────────

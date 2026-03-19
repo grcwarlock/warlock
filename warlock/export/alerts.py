@@ -216,6 +216,10 @@ class AlertRouter:
 
     def __init__(self, configs: list[AlertConfig]) -> None:
         self.configs = [c for c in configs if c.enabled]
+        self._last_error: str = ""
+        # W-9: Alert deduplication cache
+        self._sent_cache: dict[str, datetime] = {}
+        self.cooldown_minutes: int = 60
 
     def evaluate_and_alert(
         self,
@@ -230,14 +234,26 @@ class AlertRouter:
             List of AlertResult for every alert attempted.
         """
         results: list[AlertResult] = []
+        now = datetime.now(timezone.utc)
 
         for posture in postures:
             for config in self.configs:
                 if not self._should_alert(config, posture):
                     continue
 
+                # W-9: Check dedup cooldown
+                dedup_key = f"{posture.framework}|{posture.control_id}|{posture.status}"
+                last_sent = self._sent_cache.get(dedup_key)
+                if last_sent is not None:
+                    elapsed = (now - last_sent).total_seconds() / 60
+                    if elapsed < self.cooldown_minutes:
+                        continue
+
                 result = self._send_alert(config, posture)
                 results.append(result)
+
+                if result.success:
+                    self._sent_cache[dedup_key] = now
 
         return results
 
@@ -355,7 +371,7 @@ class AlertRouter:
         return self._post_with_retry(config.url, payload)
 
     def send_email(self, config: AlertConfig, posture: ControlPosture) -> bool:
-        """Send email alert (placeholder — logs only).
+        """Send email alert (placeholder -- SMTP not configured).
 
         Email delivery requires SMTP configuration which varies by deployment.
         This method logs the alert details. To enable actual email sending,
@@ -367,17 +383,18 @@ class AlertRouter:
             posture: Control posture triggering the alert.
 
         Returns:
-            True (logged successfully).
+            False (W-8: email sending not implemented).
         """
-        log.info(
-            "EMAIL ALERT (placeholder — SMTP not configured): "
+        log.warning(
+            "EMAIL ALERT (not implemented -- SMTP not configured): "
             "framework=%s control=%s status=%s score=%.1f",
             posture.framework,
             posture.control_id,
             posture.status,
             posture.posture_score,
         )
-        return True
+        self._last_error = "Email sending not implemented"
+        return False
 
     @staticmethod
     def _post_with_retry(

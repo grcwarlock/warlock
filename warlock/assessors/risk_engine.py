@@ -243,7 +243,10 @@ def _extract_family(control_id: str) -> str:
     return family or control_id
 
 
-def _pert_sample(minimum: float, mode: float, maximum: float, lam: float = 4.0) -> float:
+def _pert_sample(
+    minimum: float, mode: float, maximum: float, lam: float = 4.0,
+    rng: Any = None,
+) -> float:
     """Generate a single sample from a PERT distribution.
 
     Uses Beta distribution parameterization when numpy is available,
@@ -253,12 +256,13 @@ def _pert_sample(minimum: float, mode: float, maximum: float, lam: float = 4.0) 
         return mode
 
     if _HAS_NUMPY:
+        gen = rng if rng is not None else np.random.default_rng()
         # PERT via Beta distribution
         mu = (minimum + lam * mode + maximum) / (lam + 2)
         if maximum == minimum:
             return mode
         if abs(mode - mu) < 1e-10:
-            return float(np.random.triangular(minimum, mode, maximum))
+            return float(gen.triangular(minimum, mode, maximum))
         # Avoid division by zero in alpha/beta calculation
         a1 = ((mu - minimum) * (2 * mode - minimum - maximum)) / (
             (mode - mu) * (maximum - minimum)
@@ -268,7 +272,7 @@ def _pert_sample(minimum: float, mode: float, maximum: float, lam: float = 4.0) 
         a2 = a1 * (maximum - mu) / (mu - minimum) if (mu - minimum) > 0 else 1.0
         if a2 <= 0:
             a2 = 1.0
-        sample = np.random.beta(a1, a2)
+        sample = gen.beta(a1, a2)
         return minimum + sample * (maximum - minimum)
     else:
         # Triangular fallback
@@ -277,15 +281,17 @@ def _pert_sample(minimum: float, mode: float, maximum: float, lam: float = 4.0) 
 
 def _pert_samples(
     minimum: float, mode: float, maximum: float, n: int, lam: float = 4.0,
+    rng: Any = None,
 ) -> list[float]:
     """Generate n samples from a PERT distribution."""
     if minimum >= maximum:
         return [mode] * n
 
     if _HAS_NUMPY:
+        gen = rng if rng is not None else np.random.default_rng()
         mu = (minimum + lam * mode + maximum) / (lam + 2)
         if abs(mode - mu) < 1e-10:
-            return list(np.random.triangular(minimum, mode, maximum, size=n))
+            return list(gen.triangular(minimum, mode, maximum, size=n))
         a1 = ((mu - minimum) * (2 * mode - minimum - maximum)) / (
             (mode - mu) * (maximum - minimum)
         )
@@ -294,7 +300,7 @@ def _pert_samples(
         a2 = a1 * (maximum - mu) / (mu - minimum) if (mu - minimum) > 0 else 1.0
         if a2 <= 0:
             a2 = 1.0
-        samples = np.random.beta(a1, a2, size=n)
+        samples = gen.beta(a1, a2, size=n)
         return (minimum + samples * (maximum - minimum)).tolist()
     else:
         return [random.triangular(minimum, maximum, mode) for _ in range(n)]
@@ -309,10 +315,13 @@ class RiskEngine:
 
     def __init__(self, default_iterations: int = 10_000, seed: int | None = None):
         self.default_iterations = default_iterations
+        self._rng: Any = None
         if seed is not None:
             random.seed(seed)
             if _HAS_NUMPY:
-                np.random.seed(seed)
+                self._rng = np.random.default_rng(seed)
+        elif _HAS_NUMPY:
+            self._rng = np.random.default_rng()
 
     def simulate_scenario(
         self,
@@ -333,15 +342,20 @@ class RiskEngine:
         n = iterations or self.default_iterations
         annual_losses: list[float] = []
 
+        rng = self._rng
+
         # Sample frequencies for all iterations
         frequencies = _pert_samples(
             scenario.frequency_min, scenario.frequency_mode, scenario.frequency_max, n,
+            rng=rng,
         )
 
         for freq in frequencies:
             # Poisson event count based on sampled frequency
-            if _HAS_NUMPY:
-                event_count = int(np.random.poisson(max(0, freq)))
+            if _HAS_NUMPY and rng is not None:
+                event_count = int(rng.poisson(max(0, freq)))
+            elif _HAS_NUMPY:
+                event_count = int(np.random.default_rng().poisson(max(0, freq)))
             else:
                 event_count = _poisson_pure(max(0, freq))
 
@@ -352,6 +366,7 @@ class RiskEngine:
             # Sample loss per event
             losses = _pert_samples(
                 scenario.impact_min, scenario.impact_mode, scenario.impact_max, event_count,
+                rng=rng,
             )
 
             # Apply control effectiveness: effective controls reduce loss
@@ -410,6 +425,10 @@ class RiskEngine:
             results.append(result)
 
         total_mean = sum(r.mean_ale for r in results)
+        # VaR is summed across scenarios assuming perfect positive correlation.
+        # This is a conservative upper bound; in practice, diversification
+        # effects would reduce portfolio VaR. A copula-based approach would
+        # provide a more accurate estimate but requires correlation data.
         total_var_95 = sum(r.var_95 for r in results)
         total_var_99 = sum(r.var_99 for r in results)
 
@@ -430,6 +449,10 @@ class RiskEngine:
                 "total_var_99": round(total_var_99, 2),
                 "scenario_count": len(results),
                 "iterations": n,
+                "portfolio_note": (
+                    "VaR summed assuming perfect correlation "
+                    "(conservative upper bound)"
+                ),
             },
         }
 
