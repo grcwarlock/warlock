@@ -104,6 +104,8 @@ warlock-api                            # start REST API on :8000
 | `warlock dependencies` | Cross-system dependency graph |
 | `warlock personnel --flagged` | Personnel with compliance flags |
 | `warlock framework-diff --old v5.yaml --new v6.yaml` | Compare framework versions |
+| `warlock architecture` | Live architecture diagram (terminal) |
+| `warlock architecture --format svg` | Export architecture as SVG (requires d2) |
 
 ### Export & Risk
 
