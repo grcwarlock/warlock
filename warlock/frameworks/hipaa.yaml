@@ -1,0 +1,606 @@
+framework_id: hipaa
+control_families:
+  '164.308':
+    controls:
+      164.308(a)(1)(i):
+        checks:
+        - id: 164_308_a_1_i_check
+          description: 'Implement policies and procedures to prevent, detect, contain,
+            and correct security violations. Conduct an accurate and thorough assessment
+            of the potential risks and vulnerabilities to the confidentiality, integrity,
+            and availability of ePHI held by the covered entity or business associate.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(1)(ii)(A):
+        checks:
+        - id: 164_308_a_1_ii_a_check
+          description: 'Implement security measures sufficient to reduce risks and
+            vulnerabilities to a reasonable and appropriate level to comply with the
+            general security requirements of the HIPAA Security Rule.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(1)(ii)(B):
+        checks:
+        - id: 164_308_a_1_ii_b_check
+          description: 'Apply appropriate sanctions against workforce members who
+            fail to comply with the security policies and procedures of the covered
+            entity or business associate.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(1)(ii)(C):
+        checks:
+        - id: 164_308_a_1_ii_c_check
+          description: 'Implement procedures to regularly review records of information
+            system activity, such as audit logs, access reports, and security incident
+            tracking reports.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(2):
+        checks:
+        - id: 164_308_a_2_check
+          description: 'Identify the security official who is responsible for the
+            development and implementation of the policies and procedures required
+            by the HIPAA Security Rule for the covered entity or business associate.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(3)(i):
+        checks:
+        - id: 164_308_a_3_i_check
+          description: 'Implement policies and procedures to ensure that all members
+            of the workforce have appropriate access to ePHI and to prevent those
+            workforce members who do not have authorized access from obtaining access
+            to ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(3)(ii)(A):
+        checks:
+        - id: 164_308_a_3_ii_a_check
+          description: 'Implement procedures for the authorization and/or supervision
+            of workforce members who work with ePHI or in locations where it might
+            be accessed.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(3)(ii)(B):
+        checks:
+        - id: 164_308_a_3_ii_b_check
+          description: 'Implement procedures to determine that the access of a workforce
+            member to ePHI is appropriate based on their role and responsibilities
+            within the organization.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(3)(ii)(C):
+        checks:
+        - id: 164_308_a_3_ii_c_check
+          description: 'Implement procedures for terminating access to ePHI when the
+            employment of, or other arrangement with, a workforce member ends or as
+            required by the access authorization policy.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(4)(i):
+        checks:
+        - id: 164_308_a_4_i_check
+          description: 'Implement policies and procedures for authorizing access to
+            ePHI that are consistent with the applicable requirements of the HIPAA
+            Privacy Rule.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(4)(ii)(A):
+        checks:
+        - id: 164_308_a_4_ii_a_check
+          description: 'If a health care clearinghouse is part of a larger organization,
+            implement policies and procedures that protect the ePHI of the clearinghouse
+            from unauthorized access by the larger organization.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(4)(ii)(B):
+        checks:
+        - id: 164_308_a_4_ii_b_check
+          description: 'Implement policies and procedures for granting access to ePHI,
+            such as through access to a workstation, transaction, program, or process,
+            based on the principle of least privilege.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(4)(ii)(C):
+        checks:
+        - id: 164_308_a_4_ii_c_check
+          description: 'Implement policies and procedures that, based upon the covered
+            entity''s or business associate''s access authorization policies, establish,
+            document, review, and modify a user''s right of access to a workstation,
+            transaction, program, or process.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(5)(i):
+        checks:
+        - id: 164_308_a_5_i_check
+          description: 'Implement a security awareness and training program for all
+            members of the workforce, including management, covering recognition of
+            threats, password management, and incident reporting procedures.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(5)(ii)(A):
+        checks:
+        - id: 164_308_a_5_ii_a_check
+          description: 'Provide periodic security updates and reminders to the workforce
+            regarding current threats, policy changes, and best practices for protecting
+            ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(5)(ii)(B):
+        checks:
+        - id: 164_308_a_5_ii_b_check
+          description: 'Implement procedures for guarding against, detecting, and
+            reporting malicious software such as viruses, worms, ransomware, and other
+            threats to information systems containing ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(5)(ii)(C):
+        checks:
+        - id: 164_308_a_5_ii_c_check
+          description: 'Implement procedures for monitoring log-in attempts and reporting
+            discrepancies, including failed authentication attempts, unusual access
+            patterns, and access from unauthorized locations.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(5)(ii)(D):
+        checks:
+        - id: 164_308_a_5_ii_d_check
+          description: 'Implement procedures for creating, changing, and safeguarding
+            passwords, including complexity requirements, expiration policies, and
+            prohibition of password sharing.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(6)(i):
+        checks:
+        - id: 164_308_a_6_i_check
+          description: 'Implement policies and procedures to address security incidents,
+            including the identification, classification, and escalation of incidents
+            that may affect the confidentiality, integrity, or availability of ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(6)(ii):
+        checks:
+        - id: 164_308_a_6_ii_check
+          description: 'Identify and respond to suspected or known security incidents,
+            mitigate to the extent practicable the harmful effects of known security
+            incidents, and document security incidents and their outcomes.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(7)(i):
+        checks:
+        - id: 164_308_a_7_i_check
+          description: 'Establish and implement policies and procedures for responding
+            to an emergency or other occurrence that damages systems containing ePHI,
+            ensuring the continuity of critical business processes.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(7)(ii)(A):
+        checks:
+        - id: 164_308_a_7_ii_a_check
+          description: 'Establish and implement procedures to create and maintain
+            retrievable exact copies of ePHI, including defining backup frequency,
+            storage locations, and verification procedures.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(7)(ii)(B):
+        checks:
+        - id: 164_308_a_7_ii_b_check
+          description: 'Establish and implement procedures to restore any loss of
+            data, including documented recovery time objectives, recovery point objectives,
+            and procedures for system restoration.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(7)(ii)(C):
+        checks:
+        - id: 164_308_a_7_ii_c_check
+          description: 'Establish and implement procedures to enable continuation
+            of critical business processes for the protection of ePHI while operating
+            in emergency mode during and after a crisis.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(7)(ii)(D):
+        checks:
+        - id: 164_308_a_7_ii_d_check
+          description: 'Implement procedures for periodic testing and revision of
+            contingency plans, including tabletop exercises, failover tests, and documented
+            lessons learned.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(7)(ii)(E):
+        checks:
+        - id: 164_308_a_7_ii_e_check
+          description: 'Assess the relative criticality of specific applications and
+            data in support of other contingency plan components, identifying systems
+            essential for ePHI processing and their recovery priority.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(a)(8):
+        checks:
+        - id: 164_308_a_8_check
+          description: 'Perform a periodic technical and nontechnical evaluation,
+            based initially upon the standards implemented under the Security Rule
+            and subsequently in response to environmental or operational changes affecting
+            the security of ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(b)(1):
+        checks:
+        - id: 164_308_b_1_check
+          description: 'A covered entity may permit a business associate to create,
+            receive, maintain, or transmit ePHI on its behalf only if the covered
+            entity obtains satisfactory assurances that the business associate will
+            appropriately safeguard the information.
+
+            '
+        monitoring_frequency: quarterly
+      164.308(b)(3):
+        checks:
+        - id: 164_308_b_3_check
+          description: 'Document the satisfactory assurances required by the business
+            associate contract through a written contract or other arrangement that
+            meets the applicable requirements of the HIPAA Rules.
+
+            '
+        monitoring_frequency: quarterly
+    name: Administrative Safeguards
+  '164.310':
+    controls:
+      164.310(a)(1):
+        checks:
+        - id: 164_310_a_1_check
+          description: 'Implement policies and procedures to limit physical access
+            to electronic information systems and the facilities in which they are
+            housed, while ensuring that properly authorized access is allowed.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(a)(2)(i):
+        checks:
+        - id: 164_310_a_2_i_check
+          description: 'Establish and implement procedures that allow facility access
+            in support of restoration of lost data under the disaster recovery plan
+            and emergency mode operations plan in the event of an emergency.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(a)(2)(ii):
+        checks:
+        - id: 164_310_a_2_ii_check
+          description: 'Implement policies and procedures to safeguard the facility
+            and the equipment therein from unauthorized physical access, tampering,
+            and theft, including surveillance, locks, and visitor management.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(a)(2)(iii):
+        checks:
+        - id: 164_310_a_2_iii_check
+          description: 'Implement procedures to control and validate a person''s access
+            to facilities based on their role or function, including visitor control
+            and control of access to software programs for testing and revision.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(a)(2)(iv):
+        checks:
+        - id: 164_310_a_2_iv_check
+          description: 'Implement policies and procedures to document repairs and
+            modifications to the physical components of a facility which are related
+            to security, such as hardware, walls, doors, and locks.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(b):
+        checks:
+        - id: 164_310_b_check
+          description: 'Implement policies and procedures that specify the proper
+            functions to be performed, the manner in which those functions are to
+            be performed, and the physical attributes of the surroundings of a specific
+            workstation or class of workstation that can access ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(c):
+        checks:
+        - id: 164_310_c_check
+          description: 'Implement physical safeguards for all workstations that access
+            ePHI, to restrict access to authorized users, including cable locks, screen
+            privacy filters, and secure placement.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(d)(1):
+        checks:
+        - id: 164_310_d_1_check
+          description: 'Implement policies and procedures that govern the receipt
+            and removal of hardware and electronic media that contain ePHI into and
+            out of a facility, and the movement of these items within the facility.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(d)(2)(i):
+        checks:
+        - id: 164_310_d_2_i_check
+          description: 'Implement policies and procedures to address the final disposition
+            of ePHI and/or the hardware or electronic media on which it is stored,
+            ensuring data is rendered unrecoverable through approved sanitization
+            methods.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(d)(2)(ii):
+        checks:
+        - id: 164_310_d_2_ii_check
+          description: 'Implement procedures for removal of ePHI from electronic media
+            before the media are made available for re-use, using approved data wiping
+            or degaussing techniques.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(d)(2)(iii):
+        checks:
+        - id: 164_310_d_2_iii_check
+          description: 'Maintain a record of the movements of hardware and electronic
+            media and any person responsible therefor, including asset tracking and
+            chain-of-custody documentation.
+
+            '
+        monitoring_frequency: quarterly
+      164.310(d)(2)(iv):
+        checks:
+        - id: 164_310_d_2_iv_check
+          description: 'Create a retrievable, exact copy of ePHI when needed before
+            movement of equipment, ensuring that backed-up data is stored securely
+            and can be restored if the original is lost or damaged.
+
+            '
+        monitoring_frequency: quarterly
+    name: Physical Safeguards
+  '164.312':
+    controls:
+      164.312(a)(1):
+        checks:
+        - id: 164_312_a_1_check
+          description: 'Implement technical policies and procedures for electronic
+            information systems that maintain ePHI to allow access only to those persons
+            or software programs that have been granted access rights as specified
+            in the access authorization policy.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(a)(2)(i):
+        checks:
+        - id: 164_312_a_2_i_check
+          description: 'Assign a unique name and/or number for identifying and tracking
+            user identity so that each user''s activity can be individually audited
+            and attributed.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(a)(2)(ii):
+        checks:
+        - id: 164_312_a_2_ii_check
+          description: 'Establish and implement procedures for obtaining necessary
+            ePHI during an emergency, including break-glass procedures with appropriate
+            logging and post-event review.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(a)(2)(iii):
+        checks:
+        - id: 164_312_a_2_iii_check
+          description: 'Implement electronic procedures that terminate an electronic
+            session after a predetermined time of inactivity to prevent unauthorized
+            access to ePHI on unattended workstations.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(a)(2)(iv):
+        checks:
+        - id: 164_312_a_2_iv_check
+          description: 'Implement a mechanism to encrypt and decrypt ePHI at rest,
+            using NIST-approved cryptographic algorithms such as AES-256 to render
+            data unreadable to unauthorized individuals.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(b):
+        checks:
+        - id: 164_312_b_check
+          description: 'Implement hardware, software, and/or procedural mechanisms
+            that record and examine activity in information systems that contain or
+            use ePHI, including access logs, authentication events, and data modification
+            records.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(c)(1):
+        checks:
+        - id: 164_312_c_1_check
+          description: 'Implement policies and procedures to protect ePHI from improper
+            alteration or destruction, ensuring that data remains accurate and complete
+            throughout its lifecycle.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(c)(2):
+        checks:
+        - id: 164_312_c_2_check
+          description: 'Implement electronic mechanisms to corroborate that ePHI has
+            not been altered or destroyed in an unauthorized manner, such as digital
+            signatures, checksums, or message authentication codes.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(d):
+        checks:
+        - id: 164_312_d_check
+          description: 'Implement procedures to verify that a person or entity seeking
+            access to ePHI is the one claimed, using multi-factor authentication,
+            biometrics, or other reliable identity verification.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(e)(1):
+        checks:
+        - id: 164_312_e_1_check
+          description: 'Implement technical security measures to guard against unauthorized
+            access to ePHI that is being transmitted over an electronic communications
+            network.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(e)(2)(i):
+        checks:
+        - id: 164_312_e_2_i_check
+          description: 'Implement security measures to ensure that electronically
+            transmitted ePHI is not improperly modified without detection, using message
+            integrity checks such as TLS with HMAC.
+
+            '
+        monitoring_frequency: quarterly
+      164.312(e)(2)(ii):
+        checks:
+        - id: 164_312_e_2_ii_check
+          description: 'Implement a mechanism to encrypt ePHI in transit whenever
+            deemed appropriate, using TLS 1.2 or higher for all network transmissions
+            containing protected health information.
+
+            '
+        monitoring_frequency: quarterly
+    name: Technical Safeguards
+  '164.314':
+    controls:
+      164.314(a)(1):
+        checks:
+        - id: 164_314_a_1_check
+          description: 'The contract between a covered entity and a business associate
+            must meet the requirements of the HIPAA Security Rule, including provisions
+            requiring the business associate to implement appropriate safeguards for
+            ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.314(a)(2)(i):
+        checks:
+        - id: 164_314_a_2_i_check
+          description: 'The contract must provide that the business associate will
+            implement administrative, physical, and technical safeguards that reasonably
+            and appropriately protect the confidentiality, integrity, and availability
+            of ePHI.
+
+            '
+        monitoring_frequency: quarterly
+      164.314(a)(2)(ii):
+        checks:
+        - id: 164_314_a_2_ii_check
+          description: 'When a covered entity and its business associate are both
+            governmental entities, the covered entity may comply through alternative
+            arrangements such as a memorandum of understanding or other written agreement.
+
+            '
+        monitoring_frequency: quarterly
+      164.314(b)(1):
+        checks:
+        - id: 164_314_b_1_check
+          description: 'A group health plan must ensure that its plan sponsor will
+            reasonably and appropriately safeguard ePHI created, received, maintained,
+            or transmitted to or by the plan sponsor on behalf of the group health
+            plan.
+
+            '
+        monitoring_frequency: quarterly
+      164.314(b)(2)(i):
+        checks:
+        - id: 164_314_b_2_i_check
+          description: 'The plan documents of the group health plan must be amended
+            to incorporate provisions requiring the plan sponsor to implement reasonable
+            and appropriate safeguards to protect ePHI and to report security incidents
+            to the group health plan.
+
+            '
+        monitoring_frequency: quarterly
+    name: Organizational Requirements
+  '164.316':
+    controls:
+      164.316(a):
+        checks:
+        - id: 164_316_a_check
+          description: 'Implement reasonable and appropriate policies and procedures
+            to comply with the standards, implementation specifications, and other
+            requirements of the HIPAA Security Rule, taking into account the size,
+            complexity, and capabilities of the covered entity.
+
+            '
+        monitoring_frequency: quarterly
+      164.316(b)(1)(i):
+        checks:
+        - id: 164_316_b_1_i_check
+          description: 'Retain required documentation for six years from the date
+            of its creation or the date when it last was in effect, whichever is later.
+
+            '
+        monitoring_frequency: quarterly
+      164.316(b)(1)(ii):
+        checks:
+        - id: 164_316_b_1_ii_check
+          description: 'Make documentation available to those persons responsible
+            for implementing the procedures to which the documentation pertains, ensuring
+            authorized personnel can access current policies at all times.
+
+            '
+        monitoring_frequency: quarterly
+      164.316(b)(2)(i):
+        checks:
+        - id: 164_316_b_2_i_check
+          description: 'Review documentation periodically and update as needed in
+            response to environmental or operational changes affecting the security
+            of ePHI, including changes in technology, regulations, or threats.
+
+            '
+        monitoring_frequency: quarterly
+      164.316(b)(2)(ii):
+        checks:
+        - id: 164_316_b_2_ii_check
+          description: 'Document actions, activities, or assessments required by the
+            HIPAA Security Rule, maintaining written or electronic records of compliance
+            activities and their outcomes.
+
+            '
+        monitoring_frequency: quarterly
+      164.316(b)(2)(iii):
+        checks:
+        - id: 164_316_b_2_iii_check
+          description: 'Retain all required documentation, including policies, procedures,
+            and records of actions and assessments, for the mandated retention period
+            and in a format that is accessible and retrievable.
+
+            '
+        monitoring_frequency: quarterly
+    name: Policies and Procedures

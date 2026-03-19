@@ -1,0 +1,153 @@
+framework_id: gdpr
+control_families:
+  Art5:
+    controls:
+      Art5-1a:
+        title: Lawfulness, Fairness, and Transparency
+        description: Personal data shall be processed lawfully, fairly, and in a transparent
+          manner.
+        checks:
+        - id: Art5-1a.1
+          description: Verify lawful basis for processing is documented
+          evidence_type: policy
+      Art5-1b:
+        title: Purpose Limitation
+        description: Personal data shall be collected for specified, explicit and
+          legitimate purposes.
+        checks:
+        - id: Art5-1b.1
+          description: Verify purpose of data collection is documented
+          evidence_type: policy
+      Art5-1c:
+        title: Data Minimization
+        description: Personal data shall be adequate, relevant and limited to what
+          is necessary.
+        checks:
+        - id: Art5-1c.1
+          description: Verify data collection is limited to necessary fields
+          evidence_type: data_inventory
+      Art5-1e:
+        title: Storage Limitation
+        description: Personal data shall be kept for no longer than is necessary.
+        checks:
+        - id: Art5-1e.1
+          description: Verify data retention policies are defined and enforced
+          evidence_type: policy
+      Art5-1f:
+        title: Integrity and Confidentiality
+        description: Personal data shall be processed with appropriate security measures.
+        checks:
+        - id: Art5-1f.1
+          description: Verify encryption and access controls for personal data
+          evidence_type: security_config
+    name: Principles of Processing
+  Art6:
+    controls:
+      Art6-1:
+        title: Conditions for Lawful Processing
+        description: Processing shall be lawful only if and to the extent that at
+          least one legal basis applies.
+        checks:
+        - id: Art6-1.1
+          description: Document legal basis for each processing activity
+          evidence_type: ropa
+    name: Lawful Basis for Processing
+  Art13:
+    controls:
+      Art13-1:
+        title: Information at Point of Collection
+        description: Provide identity of controller, purposes, legal basis, recipients,
+          and transfer info.
+        checks:
+        - id: Art13-1.1
+          description: Privacy notice contains all required information
+          evidence_type: policy
+    name: Information to Data Subjects
+  Art15:
+    controls:
+      Art15-1:
+        title: Data Subject Access Rights
+        description: Data subjects have the right to obtain confirmation and access
+          to their personal data.
+        checks:
+        - id: Art15-1.1
+          description: Data subject access request process is documented and operational
+          evidence_type: procedure
+    name: Right of Access
+  Art17:
+    controls:
+      Art17-1:
+        title: Right to Be Forgotten
+        description: Data subjects have the right to obtain erasure of personal data
+          without undue delay.
+        checks:
+        - id: Art17-1.1
+          description: Data deletion process is documented and testable
+          evidence_type: procedure
+    name: Right to Erasure
+  Art25:
+    controls:
+      Art25-1:
+        title: Data Protection by Design and Default
+        description: Implement appropriate technical and organisational measures for
+          data protection principles.
+        checks:
+        - id: Art25-1.1
+          description: Privacy impact assessments conducted for new processing activities
+          evidence_type: dpia
+    name: Data Protection by Design
+  Art28:
+    controls:
+      Art28-1:
+        title: Processor Contracts
+        description: Processing by a processor shall be governed by a contract.
+        checks:
+        - id: Art28-1.1
+          description: Data processing agreements in place with all processors
+          evidence_type: contract
+    name: Processor Requirements
+  Art30:
+    controls:
+      Art30-1:
+        title: Records of Processing Activities
+        description: Maintain a record of processing activities under controller responsibility.
+        checks:
+        - id: Art30-1.1
+          description: ROPA is maintained and up-to-date
+          evidence_type: ropa
+    name: Records of Processing
+  Art32:
+    controls:
+      Art32-1:
+        title: Technical and Organisational Measures
+        description: Implement appropriate security measures including encryption,
+          pseudonymisation, resilience.
+        checks:
+        - id: Art32-1.1
+          description: Encryption at rest and in transit for personal data
+          evidence_type: security_config
+        - id: Art32-1.2
+          description: Regular testing and evaluation of security measures
+          evidence_type: assessment
+    name: Security of Processing
+  Art33:
+    controls:
+      Art33-1:
+        title: Notification to Supervisory Authority
+        description: Notify supervisory authority within 72 hours of becoming aware
+          of a personal data breach.
+        checks:
+        - id: Art33-1.1
+          description: Breach notification process documented with 72-hour timeline
+          evidence_type: procedure
+    name: Breach Notification
+  Art35:
+    controls:
+      Art35-1:
+        title: DPIA Requirements
+        description: Carry out DPIA where processing is likely to result in high risk.
+        checks:
+        - id: Art35-1.1
+          description: DPIA conducted for high-risk processing activities
+          evidence_type: dpia
+    name: Data Protection Impact Assessment
