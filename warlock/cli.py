@@ -1772,6 +1772,267 @@ def framework_diff_cmd(old_path: str, new_path: str) -> None:
             console.print(f"  ~ {c}")
 
 
+# ---------------------------------------------------------------------------
+# Remediation commands
+# ---------------------------------------------------------------------------
+
+
+@cli.command("remediate")
+@click.argument("item_id")
+@click.option("--action", "-a", type=click.Choice(["show", "assign", "transition", "accept-risk", "extend", "comment"]), default="show", help="Action to take")
+@click.option("--to", "to_value", required=False, help="Target value (email for assign, status for transition, days for extend)")
+@click.option("--reason", required=False, help="Reason or comment text")
+def remediate(item_id: str, action: str, to_value: str | None, reason: str | None) -> None:
+    """Show remediation guidance and take action on issues/POA&Ms.
+
+    Default (no --action) shows the full remediation plan: what's wrong,
+    how to fix it (CLI + manual steps), what evidence to collect, and
+    the current workflow state.
+
+    \b
+    Examples:
+        warlock remediate <id>                                    # show full remediation plan
+        warlock remediate <id> -a assign --to eve@acme.com        # assign to someone
+        warlock remediate <id> -a transition --to in_progress     # move to in_progress
+        warlock remediate <id> -a accept-risk --reason "Low risk" # accept the risk
+        warlock remediate <id> -a extend --to 30 --reason "Delay" # extend deadline by 30 days
+        warlock remediate <id> -a comment --reason "Patch staged" # add a comment
+
+    Use 'warlock issues' or 'warlock poams' to find IDs.
+    """
+    from rich.markdown import Markdown
+    from rich.panel import Panel
+    from sqlalchemy import func
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import (
+        CompensatingControl,
+        ControlResult,
+        Finding,
+        Issue,
+        POAM,
+        RiskAcceptance,
+    )
+
+    init_db()
+    with get_session() as session:
+        # Try to find as issue first, then POA&M
+        issue = session.query(Issue).filter(Issue.id.startswith(item_id)).first()
+        poam = session.query(POAM).filter(POAM.id.startswith(item_id)).first()
+
+        if not issue and not poam:
+            console.print(f"[red]Not found: {item_id}. Use 'warlock issues' or 'warlock poams' to find IDs.[/red]")
+            return
+
+        # --- SHOW MODE: full remediation plan ---
+        if action == "show":
+            if issue:
+                _show_remediation_for_issue(session, issue)
+            else:
+                _show_remediation_for_poam(session, poam)
+            return
+
+        # --- ACTION MODE ---
+        if issue:
+            from warlock.workflows.issues import IssueManager
+            mgr = IssueManager()
+
+            if action == "assign":
+                if not to_value:
+                    console.print("[red]--to <email> required[/red]")
+                    return
+                mgr.assign(session, issue.id, to_value, assigned_by="cli@warlock")
+                console.print(f"[green]Issue {issue.id[:8]} assigned to {to_value}[/green]")
+            elif action == "transition":
+                if not to_value:
+                    console.print("[red]--to <status> required. Valid: open, assigned, in_progress, resolved, closed, verified, risk_accepted[/red]")
+                    return
+                try:
+                    mgr.transition(session, issue.id, to_value, actor="cli@warlock")
+                    console.print(f"[green]Issue {issue.id[:8]} → {to_value}[/green]")
+                except ValueError as e:
+                    console.print(f"[red]{e}[/red]")
+            elif action == "accept-risk":
+                mgr.accept_risk(session, issue.id, reason=reason or "Accepted via CLI", accepted_by="cli@warlock")
+                console.print(f"[green]Issue {issue.id[:8]} risk accepted[/green]")
+            elif action == "comment":
+                if not reason:
+                    console.print("[red]--reason <text> required[/red]")
+                    return
+                mgr.add_comment(session, issue.id, author="cli@warlock", content=reason)
+                console.print(f"[green]Comment added to issue {issue.id[:8]}[/green]")
+            elif action == "extend":
+                console.print("[yellow]Use --action transition to change issue state[/yellow]")
+
+        elif poam:
+            from warlock.workflows.poam import POAMManager
+            mgr = POAMManager()
+
+            if action == "transition":
+                if not to_value:
+                    console.print("[red]--to <status> required. Valid: open, in_progress, remediated, verified, completed, risk_accepted, cancelled[/red]")
+                    return
+                try:
+                    mgr.transition(session, poam.id, to_value, actor="cli@warlock")
+                    console.print(f"[green]POA&M {poam.id[:8]} → {to_value}[/green]")
+                except ValueError as e:
+                    console.print(f"[red]{e}[/red]")
+            elif action == "extend":
+                if not to_value:
+                    console.print("[red]--to <days> required[/red]")
+                    return
+                try:
+                    days = int(to_value)
+                except ValueError:
+                    console.print("[red]--to must be number of days[/red]")
+                    return
+                from datetime import datetime, timedelta, timezone
+                new_date = datetime.now(timezone.utc) + timedelta(days=days)
+                mgr.extend(session, poam.id, justification=reason or "Extended via CLI", new_date=new_date, approved_by="cli@warlock")
+                console.print(f"[green]POA&M {poam.id[:8]} extended by {days} days (new deadline: {new_date.date()})[/green]")
+            elif action == "assign":
+                console.print("[yellow]Assign the linked issue instead[/yellow]")
+            elif action == "accept-risk":
+                try:
+                    mgr.transition(session, poam.id, "risk_accepted", transitioned_by="cli@warlock")
+                    console.print(f"[green]POA&M {poam.id[:8]} → risk_accepted[/green]")
+                except ValueError as e:
+                    console.print(f"[red]{e}[/red]")
+            elif action == "comment":
+                console.print("[yellow]POA&M comments not yet implemented — comment on the linked issue[/yellow]")
+
+
+def _show_remediation_for_issue(session, issue) -> None:
+    """Show full remediation guidance for an issue."""
+    from rich.panel import Panel
+
+    from warlock.db.models import CompensatingControl, ControlResult, Finding, POAM, RiskAcceptance
+
+    # Header
+    console.print()
+    console.print(Panel(
+        f"[bold]{issue.title}[/bold]\n\n"
+        f"ID: {issue.id[:8]}  |  Framework: {issue.framework}  |  Control: {issue.control_id}\n"
+        f"Status: [yellow]{issue.status}[/yellow]  |  Priority: {issue.priority}  |  "
+        f"Assigned: {issue.assigned_to or '[dim]unassigned[/dim]'}",
+        title="[bold red]Issue[/bold red]",
+        border_style="red",
+    ))
+
+    # Description
+    if issue.description:
+        console.print(f"\n[bold]What's wrong:[/bold]\n{issue.description}")
+
+    # Get the control result for remediation data
+    result = None
+    if issue.control_result_id:
+        result = session.query(ControlResult).filter(ControlResult.id == issue.control_result_id).first()
+
+    # Remediation steps from assertion engine
+    if result and result.remediation_summary:
+        console.print(f"\n[bold green]How to fix:[/bold green]")
+        console.print(f"  {result.remediation_summary}")
+        if result.remediation_steps:
+            console.print(f"\n[bold]Manual steps:[/bold]")
+            for i, step in enumerate(result.remediation_steps, 1):
+                console.print(f"  {i}. {step}")
+        if result.console_path:
+            console.print(f"\n[bold]Console path:[/bold] {result.console_path}")
+
+    # CLI remediation actions
+    console.print(f"\n[bold cyan]CLI actions:[/bold cyan]")
+    console.print(f"  warlock remediate {issue.id[:8]} -a assign --to <email>")
+    console.print(f"  warlock remediate {issue.id[:8]} -a transition --to in_progress")
+    console.print(f"  warlock remediate {issue.id[:8]} -a comment --reason \"<update>\"")
+    console.print(f"  warlock remediate {issue.id[:8]} -a accept-risk --reason \"<justification>\"")
+
+    # Evidence needed
+    console.print(f"\n[bold]Evidence to collect:[/bold]")
+    if result and result.assessor and result.assessor.startswith("assertion:"):
+        assertion_name = result.assessor.split(":", 1)[1]
+        console.print(f"  Re-run pipeline after fix: warlock collect")
+        console.print(f"  Assertion '{assertion_name}' must pass on next assessment")
+    else:
+        console.print(f"  Re-run pipeline after fix: warlock collect")
+        console.print(f"  Control {issue.control_id} must show as compliant")
+
+    # Related items
+    related_poam = session.query(POAM).filter(POAM.control_id == issue.control_id, POAM.framework == issue.framework).first()
+    related_cc = session.query(CompensatingControl).filter(CompensatingControl.original_control_id == issue.control_id).first()
+    related_ra = session.query(RiskAcceptance).filter(RiskAcceptance.control_id == issue.control_id).first()
+
+    if related_poam or related_cc or related_ra:
+        console.print(f"\n[bold]Related items:[/bold]")
+        if related_poam:
+            console.print(f"  POA&M: {related_poam.id[:8]} ({related_poam.status})")
+        if related_cc:
+            console.print(f"  Compensating control: {related_cc.title} ({related_cc.status})")
+        if related_ra:
+            console.print(f"  Risk acceptance: {related_ra.id[:8]} ({related_ra.status}, expires {related_ra.expiry_date})")
+
+    console.print()
+
+
+def _show_remediation_for_poam(session, poam) -> None:
+    """Show full remediation guidance for a POA&M."""
+    from rich.panel import Panel
+
+    from warlock.db.models import CompensatingControl, ControlResult, RiskAcceptance
+
+    console.print()
+    console.print(Panel(
+        f"[bold]{poam.weakness_description}[/bold]\n\n"
+        f"ID: {poam.id[:8]}  |  Framework: {poam.framework}  |  Control: {poam.control_id}\n"
+        f"Status: [yellow]{poam.status}[/yellow]  |  Severity: {poam.severity}  |  "
+        f"Due: {poam.scheduled_completion or '[dim]no deadline[/dim]'}  |  Delays: {poam.delay_count}",
+        title="[bold red]POA&M[/bold red]",
+        border_style="red",
+    ))
+
+    # Get remediation from linked control result
+    if poam.control_result_id:
+        result = session.query(ControlResult).filter(ControlResult.id == poam.control_result_id).first()
+        if result and result.remediation_summary:
+            console.print(f"\n[bold green]How to fix:[/bold green]")
+            console.print(f"  {result.remediation_summary}")
+            if result.remediation_steps:
+                console.print(f"\n[bold]Manual steps:[/bold]")
+                for i, step in enumerate(result.remediation_steps, 1):
+                    console.print(f"  {i}. {step}")
+            if result.console_path:
+                console.print(f"\n[bold]Console path:[/bold] {result.console_path}")
+
+    # Milestones
+    if poam.milestones:
+        console.print(f"\n[bold]Milestones:[/bold]")
+        for m in poam.milestones:
+            status = m.get("status", "pending")
+            icon = "[green]done[/green]" if status == "completed" else "[yellow]pending[/yellow]"
+            console.print(f"  {icon}  {m.get('description', '?')}")
+
+    # CLI actions
+    console.print(f"\n[bold cyan]CLI actions:[/bold cyan]")
+    console.print(f"  warlock remediate {poam.id[:8]} -a transition --to open")
+    console.print(f"  warlock remediate {poam.id[:8]} -a transition --to in_progress")
+    console.print(f"  warlock remediate {poam.id[:8]} -a transition --to remediated")
+    console.print(f"  warlock remediate {poam.id[:8]} -a extend --to 30 --reason \"<justification>\"")
+    console.print(f"  warlock remediate {poam.id[:8]} -a transition --to risk_accepted")
+
+    # Compensating controls
+    cc = session.query(CompensatingControl).filter(CompensatingControl.poam_id == poam.id).first()
+    if cc:
+        console.print(f"\n[bold]Compensating control:[/bold]")
+        console.print(f"  {cc.title} ({cc.status}, effectiveness: {cc.effectiveness_score}%)")
+
+    # Risk acceptance
+    ra = session.query(RiskAcceptance).filter(RiskAcceptance.poam_id == poam.id).first()
+    if ra:
+        console.print(f"\n[bold]Risk acceptance:[/bold]")
+        console.print(f"  {ra.status} — expires {ra.expiry_date} — approved by {ra.approved_by or 'pending'}")
+
+    console.print()
+
+
 @cli.command("architecture")
 @click.option("--format", "fmt", type=click.Choice(["terminal", "svg", "png"]), default="terminal", help="Output format")
 @click.option("--output", "-o", default=None, help="Output file path (for svg/png)")
