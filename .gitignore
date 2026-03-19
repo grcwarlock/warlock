@@ -19,3 +19,5 @@ htmlcov/
 .coverage
 *.log
 exports/
+terraform/**/.terraform/
+terraform/**/.terraform.lock.hcl
