@@ -41,7 +41,6 @@ class OVHNormalizer(BaseNormalizer):
             "source_type": SourceType.CLOUD,
             "provider": "ovh",
             "account_id": raw.raw_data.get("service_name", ""),
-            "region": "",
             "observed_at": raw.observed_at,
         }
 

@@ -367,8 +367,11 @@ class GCPNormalizer(BaseNormalizer):
 
             location = cluster.get("location", "")
 
+            base = self._base(raw)
+            if location:
+                base["region"] = location
             findings.append(FindingData(
-                **self._base(raw),
+                **base,
                 observation_type=obs_type,
                 title=f"GKE cluster: {cluster_name}" + (
                     f" — {len(issues)} issues" if issues else ""
@@ -378,7 +381,6 @@ class GCPNormalizer(BaseNormalizer):
                 resource_type="gke_cluster",
                 resource_name=cluster_name,
                 severity=severity,
-                region=location,
             ))
 
         return findings

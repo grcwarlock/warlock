@@ -654,6 +654,8 @@ def siem_monitoring_active(detail: dict, raw_data: dict) -> tuple[bool, list[str
 
 _NIST_BINDINGS: list[tuple[str, str]] = [
     ("AC-2", "mfa_enabled"),
+    ("AC-2", "no_root_access_keys"),
+    ("AC-6", "no_root_access_keys"),
     ("AC-6", "privileged_access_managed"),
     ("AC-17", "no_open_security_groups"),
     ("AU-2", "cloudtrail_enabled"),
@@ -947,11 +949,15 @@ engine.bind_control("soc2", "CC8.1", "change_request_approved")
 engine.bind_control("iso_27001", "A.8.32", "change_request_approved")
 engine.bind_control("ucf", "UCF-CFG-2", "change_request_approved")
 
-# Training
+# Training & phishing
 engine.bind_control("nist_800_53", "AT-2", "training_completion_rate")
+engine.bind_control("nist_800_53", "AT-2", "phishing_failure_rate")
 engine.bind_control("nist_800_53", "AT-3", "training_completion_rate")
+engine.bind_control("nist_800_53", "AT-3", "phishing_failure_rate")
 engine.bind_control("iso_27001", "A.6.3", "training_completion_rate")
+engine.bind_control("iso_27001", "A.6.3", "phishing_failure_rate")
 engine.bind_control("ucf", "UCF-HRS-3", "training_completion_rate")
+engine.bind_control("ucf", "UCF-HRS-3", "phishing_failure_rate")
 
 # Code security
 engine.bind_control("nist_800_53", "SA-11", "no_critical_code_vulns")

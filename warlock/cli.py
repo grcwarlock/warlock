@@ -11,6 +11,33 @@ from rich.table import Table
 console = Console()
 
 
+def _resolve_system_id(session, value: str) -> str:
+    """Resolve a system profile ID from a UUID, partial UUID, or acronym."""
+    from warlock.db.models import SystemProfile
+
+    # Try exact UUID match first
+    sp = session.query(SystemProfile).filter(SystemProfile.id == value).first()
+    if sp:
+        return sp.id
+
+    # Try case-insensitive acronym match
+    sp = session.query(SystemProfile).filter(
+        SystemProfile.acronym.ilike(value)
+    ).first()
+    if sp:
+        return sp.id
+
+    # Try partial UUID prefix
+    sp = session.query(SystemProfile).filter(
+        SystemProfile.id.startswith(value)
+    ).first()
+    if sp:
+        return sp.id
+
+    # Fall through — return as-is, let the query return empty
+    return value
+
+
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging")
 def cli(verbose: bool) -> None:
@@ -1481,7 +1508,7 @@ def risk_acceptances_list(framework: str | None, status: str | None, expiring_so
 
 
 @cli.command("inheritance")
-@click.option("--system", required=True, help="System profile ID")
+@click.option("--system", required=True, help="System profile ID or acronym")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 def inheritance_list(system: str, framework: str | None) -> None:
     """Show control inheritance map for a system."""
@@ -1492,7 +1519,8 @@ def inheritance_list(system: str, framework: str | None) -> None:
     mgr = InheritanceManager()
 
     with get_session() as session:
-        rows = mgr.get_for_system(session, system, framework=framework)
+        system_id = _resolve_system_id(session, system)
+        rows = mgr.get_for_system(session, system_id, framework=framework)
 
     if not rows:
         console.print("[dim]No inheritance mappings found.[/dim]")
