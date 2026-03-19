@@ -515,6 +515,182 @@ def policy_coverage(framework: str, no_rag: bool) -> None:
             console.print(f"  [dim]... and {len(coverage.gaps) - 20} more[/dim]")
 
 
+@cli.command("issues")
+@click.option("--status", "-s", default=None, help="Filter by status (open, assigned, in_progress, etc.)")
+@click.option("--priority", "-p", default=None, help="Filter by priority (critical, high, medium, low)")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--assigned-to", default=None, help="Filter by assignee")
+@click.option("--limit", "-n", default=50, help="Max results")
+def issues(status: str | None, priority: str | None, framework: str | None, assigned_to: str | None, limit: int) -> None:
+    """List and manage compliance issues."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Issue
+
+    init_db()
+
+    with get_session() as session:
+        q = session.query(Issue)
+        if status:
+            q = q.filter(Issue.status == status)
+        else:
+            # Default: show non-closed issues
+            q = q.filter(Issue.status.notin_(["closed", "verified"]))
+        if priority:
+            q = q.filter(Issue.priority == priority)
+        if framework:
+            q = q.filter(Issue.framework == framework)
+        if assigned_to:
+            q = q.filter(Issue.assigned_to == assigned_to)
+        q = q.order_by(Issue.created_at.desc()).limit(limit)
+        rows = q.all()
+
+    if not rows:
+        console.print("[dim]No issues found.[/dim]")
+        return
+
+    table = Table(title=f"Issues ({len(rows)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Framework", style="cyan")
+    table.add_column("Control", style="cyan")
+    table.add_column("Title", max_width=50)
+    table.add_column("Status")
+    table.add_column("Priority")
+    table.add_column("Assigned To", style="dim")
+
+    for i in rows:
+        status_style = {
+            "open": "yellow",
+            "assigned": "blue",
+            "in_progress": "cyan",
+            "remediated": "green",
+            "verified": "green bold",
+            "closed": "dim",
+            "risk_accepted": "magenta",
+        }.get(i.status, "")
+        priority_style = {
+            "critical": "red bold",
+            "high": "red",
+            "medium": "yellow",
+            "low": "dim",
+        }.get(i.priority, "")
+        table.add_row(
+            i.id[:8],
+            i.framework or "",
+            i.control_id or "",
+            i.title[:50],
+            f"[{status_style}]{i.status}[/]",
+            f"[{priority_style}]{i.priority}[/]",
+            i.assigned_to or "",
+        )
+
+    console.print(table)
+
+
+@cli.command("issues-auto-create")
+@click.option("--framework", "-f", default=None, help="Limit to a specific framework")
+def issues_auto_create(framework: str | None) -> None:
+    """Auto-create issues from non-compliant control results."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.issues import IssueManager
+
+    init_db()
+    mgr = IssueManager()
+
+    with get_session() as session:
+        created = mgr.auto_create_from_results(session, framework=framework)
+
+    if not created:
+        console.print("[dim]No new issues to create. All non-compliant results already have issues.[/dim]")
+        return
+
+    console.print(f"[green]Created {len(created)} issue(s):[/green]")
+    for issue in created:
+        console.print(f"  [cyan]{issue.id[:8]}[/cyan] [{issue.priority}] {issue.title[:70]}")
+
+
+@cli.command("systems")
+def systems_list() -> None:
+    """List active system profiles."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.system_profile import SystemProfileManager
+
+    init_db()
+    mgr = SystemProfileManager()
+
+    with get_session() as session:
+        profiles = mgr.list_active(session)
+
+    if not profiles:
+        console.print("[dim]No system profiles found. Create one with 'warlock systems-create'.[/dim]")
+        return
+
+    table = Table(title=f"System Profiles ({len(profiles)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Name", style="cyan")
+    table.add_column("Acronym")
+    table.add_column("Impact")
+    table.add_column("Auth Status")
+    table.add_column("Frameworks", style="dim")
+
+    for sp in profiles:
+        auth_style = {
+            "authorized": "green",
+            "in_process": "yellow",
+            "not_authorized": "red",
+            "denied": "red bold",
+            "revoked": "red",
+        }.get(sp.authorization_status, "")
+        frameworks_str = ", ".join(sp.frameworks or [])
+        table.add_row(
+            sp.id[:8],
+            sp.name,
+            sp.acronym or "",
+            sp.overall_impact or "moderate",
+            f"[{auth_style}]{sp.authorization_status or 'not_authorized'}[/]",
+            frameworks_str[:40],
+        )
+
+    console.print(table)
+
+
+@cli.command("systems-create")
+@click.option("--name", "-n", required=True, help="System name")
+@click.option("--acronym", "-a", default=None, help="System acronym")
+@click.option("--description", "-d", default="", help="System description")
+@click.option("--impact", type=click.Choice(["low", "moderate", "high"]), default="moderate", help="Overall impact level")
+@click.option("--framework", "-f", multiple=True, help="Applicable frameworks (can specify multiple)")
+@click.option("--connector", "-c", multiple=True, help="Connector scope (can specify multiple)")
+def systems_create(name: str, acronym: str | None, description: str, impact: str, framework: tuple, connector: tuple) -> None:
+    """Create a new system profile."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.system_profile import SystemProfileManager
+
+    init_db()
+    mgr = SystemProfileManager()
+
+    kwargs = {
+        "overall_impact": impact,
+        "confidentiality_impact": impact,
+        "integrity_impact": impact,
+        "availability_impact": impact,
+    }
+    if acronym:
+        kwargs["acronym"] = acronym
+    if framework:
+        kwargs["frameworks"] = list(framework)
+    if connector:
+        kwargs["connector_scope"] = list(connector)
+
+    with get_session() as session:
+        sp = mgr.create(session, name=name, description=description, **kwargs)
+
+    console.print(f"[green]System profile created: {sp.id}[/green]")
+    console.print(f"  Name:   {sp.name}")
+    console.print(f"  Impact: {sp.overall_impact}")
+    if sp.frameworks:
+        console.print(f"  Frameworks: {', '.join(sp.frameworks)}")
+
+
 def _print_stats(stats) -> None:
     table = Table(title="Pipeline Run")
     table.add_column("Metric", style="cyan")

@@ -3,6 +3,7 @@ crosswalks, the assertion library, and multiple source types.
 """
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
@@ -179,7 +180,8 @@ def test_full_pipeline_with_frameworks():
     # Load real framework configs and assertions
     load_assertions()
     mapper = ControlMapper()
-    load_framework_configs("/Users/jsn/warlock-v2/warlock/frameworks", mapper)
+    framework_dir = str(Path(__file__).resolve().parent.parent / "warlock" / "frameworks")
+    load_framework_configs(framework_dir, mapper)
 
     # Assessor with assertion engine
     assessor = Assessor(engine=assertion_engine)

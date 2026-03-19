@@ -393,3 +393,220 @@ class AuditEngagement(Base):
         Index("idx_engagement_period", "period_start", "period_end"),
         Index("idx_engagement_status", "status"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Issue Tracking & Remediation
+# ---------------------------------------------------------------------------
+
+
+class Issue(Base):
+    """Tracks remediation of non-compliant findings through their lifecycle."""
+    __tablename__ = "issues"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    title = Column(Text, nullable=False)
+    description = Column(Text)
+
+    # Linked to compliance data
+    finding_id = Column(String(36), ForeignKey("findings.id"))
+    control_result_id = Column(String(36), ForeignKey("control_results.id"))
+    framework = Column(String(50))
+    control_id = Column(String(50))
+
+    # Lifecycle
+    status = Column(String(20), nullable=False, default="open")
+    # open -> assigned -> in_progress -> remediated -> verified -> closed
+    # open -> risk_accepted (alternative path)
+    priority = Column(String(20), nullable=False, default="medium")  # critical, high, medium, low
+
+    # Assignment
+    assigned_to = Column(String(255))  # email or name
+    assigned_by = Column(String(255))
+    assigned_at = Column(DateTime(timezone=True))
+
+    # Dates
+    due_date = Column(DateTime(timezone=True))
+    remediated_at = Column(DateTime(timezone=True))
+    verified_at = Column(DateTime(timezone=True))
+    closed_at = Column(DateTime(timezone=True))
+
+    # Risk acceptance (if applicable)
+    risk_accepted = Column(Boolean, default=False)
+    risk_acceptance_owner = Column(String(255))
+    risk_acceptance_expiry = Column(DateTime(timezone=True))
+    risk_acceptance_justification = Column(Text)
+
+    # Remediation details
+    remediation_plan = Column(Text)
+    remediation_evidence = Column(SQLiteJSON, default=list)  # [{description, url, uploaded_at}]
+    verification_notes = Column(Text)
+
+    # Metadata
+    source = Column(String(50))  # "pipeline", "manual", "import"
+    tags = Column(SQLiteJSON, default=list)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    created_by = Column(String(255))
+
+    __table_args__ = (
+        Index("idx_issue_status", "status"),
+        Index("idx_issue_priority", "priority"),
+        Index("idx_issue_framework", "framework", "control_id"),
+        Index("idx_issue_assigned", "assigned_to"),
+        Index("idx_issue_due", "due_date"),
+    )
+
+
+class IssueComment(Base):
+    """Comments on issues for collaboration."""
+    __tablename__ = "issue_comments"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    issue_id = Column(String(36), ForeignKey("issues.id"), nullable=False)
+    author = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    comment_type = Column(String(20), default="comment")  # comment, status_change, assignment, evidence
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_comment_issue", "issue_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Attestation & Audit Collaboration
+# ---------------------------------------------------------------------------
+
+
+class Attestation(Base):
+    """Sign-off workflow for control assessments."""
+    __tablename__ = "attestations"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    engagement_id = Column(String(36), ForeignKey("audit_engagements.id"))
+    framework = Column(String(50), nullable=False)
+    control_id = Column(String(50))  # null = framework-level attestation
+
+    # Workflow: draft -> submitted -> reviewed -> approved -> rejected
+    status = Column(String(20), nullable=False, default="draft")
+
+    # Content
+    statement = Column(Text, nullable=False)  # "Management asserts that..."
+    evidence_references = Column(SQLiteJSON, default=list)  # [{finding_id, description}]
+
+    # Actors (separation of duties: preparer != reviewer != approver)
+    prepared_by = Column(String(255))
+    prepared_at = Column(DateTime(timezone=True))
+    submitted_by = Column(String(255))
+    submitted_at = Column(DateTime(timezone=True))
+    reviewed_by = Column(String(255))
+    reviewed_at = Column(DateTime(timezone=True))
+    review_notes = Column(Text)
+    approved_by = Column(String(255))
+    approved_at = Column(DateTime(timezone=True))
+    rejected_by = Column(String(255))
+    rejected_at = Column(DateTime(timezone=True))
+    rejection_reason = Column(Text)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_attest_engagement", "engagement_id"),
+        Index("idx_attest_framework", "framework", "control_id"),
+        Index("idx_attest_status", "status"),
+    )
+
+
+class AuditComment(Base):
+    """Auditor-practitioner collaboration comments."""
+    __tablename__ = "audit_comments"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    engagement_id = Column(String(36), ForeignKey("audit_engagements.id"), nullable=False)
+
+    # What the comment is about
+    target_type = Column(String(30), nullable=False)  # "control", "finding", "attestation", "engagement"
+    target_id = Column(String(50), nullable=False)  # control_id, finding_id, attestation_id, or engagement_id
+
+    # Content
+    author = Column(String(255), nullable=False)
+    author_role = Column(String(20))  # "auditor", "practitioner", "management"
+    content = Column(Text, nullable=False)
+
+    # Thread support
+    parent_id = Column(String(36))  # null = top-level comment
+    resolved = Column(Boolean, default=False)
+    resolved_by = Column(String(255))
+    resolved_at = Column(DateTime(timezone=True))
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_auditcomment_engagement", "engagement_id"),
+        Index("idx_auditcomment_target", "target_type", "target_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# System Profile & Authorization Boundary
+# ---------------------------------------------------------------------------
+
+
+class SystemProfile(Base):
+    """Defines an authorization boundary / system for assessment scoping."""
+    __tablename__ = "system_profiles"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    acronym = Column(String(50))
+    description = Column(Text)
+
+    # Security categorization (FIPS 199)
+    confidentiality_impact = Column(String(10), default="moderate")  # low, moderate, high
+    integrity_impact = Column(String(10), default="moderate")
+    availability_impact = Column(String(10), default="moderate")
+    overall_impact = Column(String(10), default="moderate")
+
+    # Boundary definition
+    cloud_accounts = Column(SQLiteJSON, default=list)  # [{provider, account_id, regions}]
+    network_boundaries = Column(SQLiteJSON, default=list)  # [{cidr, description}]
+    interconnections = Column(SQLiteJSON, default=list)  # [{system_name, direction, data_types}]
+
+    # Applicable connectors — which connectors feed this system
+    connector_scope = Column(SQLiteJSON, default=list)  # ["aws", "okta", "crowdstrike"]
+
+    # Applicable frameworks
+    frameworks = Column(SQLiteJSON, default=list)  # ["nist_800_53", "soc2"]
+
+    # Responsible parties
+    system_owner = Column(String(255))
+    system_owner_email = Column(String(255))
+    isso = Column(String(255))  # Information System Security Officer
+    isso_email = Column(String(255))
+    issm = Column(String(255))  # Information System Security Manager
+    issm_email = Column(String(255))
+    authorizing_official = Column(String(255))
+    ao_email = Column(String(255))
+
+    # Authorization
+    authorization_status = Column(String(30), default="not_authorized")
+    # not_authorized, in_process, authorized, denied, revoked
+    authorization_date = Column(DateTime(timezone=True))
+    authorization_expiry = Column(DateTime(timezone=True))
+    continuous_monitoring_plan = Column(Text)
+
+    # Deployment
+    deployment_model = Column(String(30))  # cloud, on-premise, hybrid
+    service_model = Column(String(20))  # IaaS, PaaS, SaaS
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_system_name", "name"),
+        Index("idx_system_status", "authorization_status"),
+    )

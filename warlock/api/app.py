@@ -52,15 +52,20 @@ from warlock.api.auth import (
 from warlock.api.deps import get_current_user, get_db, require_permission
 from warlock.db.models import (
     APIKey,
+    Attestation,
+    AuditComment,
     AuditEngagement,
     AuditEntry,
     ConnectorRun,
     ControlMapping,
     ControlResult,
     Finding,
+    Issue,
+    IssueComment,
     PostureSnapshot,
     RawEvent,
     RiskAnalysis,
+    SystemProfile,
     User,
 )
 from warlock.db.repository import get_repos
@@ -1556,6 +1561,985 @@ def policy_gaps(
         gaps=gaps,
         gap_count=len(gaps),
     )
+
+
+# =========================================================================
+# Issue Tracking & Remediation
+# =========================================================================
+
+
+class IssueCreateRequest(BaseModel):
+    title: str
+    description: str | None = None
+    framework: str | None = None
+    control_id: str | None = None
+    priority: str = "medium"
+    assigned_to: str | None = None
+    due_date: str | None = None
+    source: str = "manual"
+
+
+class IssueUpdateRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    priority: str | None = None
+    due_date: str | None = None
+    remediation_plan: str | None = None
+    tags: list[str] | None = None
+
+
+class IssueTransitionRequest(BaseModel):
+    status: str
+    notes: str | None = None
+
+
+class IssueAssignRequest(BaseModel):
+    assigned_to: str
+
+
+class IssueRiskAcceptRequest(BaseModel):
+    owner: str
+    justification: str
+    expiry_days: int = 90
+
+
+class IssueEvidenceRequest(BaseModel):
+    description: str
+    url: str
+
+
+class IssueCommentRequest(BaseModel):
+    content: str
+    comment_type: str = "comment"
+
+
+class IssueResponse(BaseModel):
+    id: str
+    title: str
+    description: str | None = None
+    finding_id: str | None = None
+    control_result_id: str | None = None
+    framework: str | None = None
+    control_id: str | None = None
+    status: str
+    priority: str
+    assigned_to: str | None = None
+    assigned_by: str | None = None
+    assigned_at: str | None = None
+    due_date: str | None = None
+    remediated_at: str | None = None
+    verified_at: str | None = None
+    closed_at: str | None = None
+    risk_accepted: bool
+    risk_acceptance_owner: str | None = None
+    risk_acceptance_expiry: str | None = None
+    risk_acceptance_justification: str | None = None
+    remediation_plan: str | None = None
+    remediation_evidence: list[dict[str, Any]] | None = None
+    verification_notes: str | None = None
+    source: str | None = None
+    tags: list[str] | None = None
+    created_at: str
+    updated_at: str | None = None
+    created_by: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class IssueCommentResponse(BaseModel):
+    id: str
+    issue_id: str
+    author: str
+    content: str
+    comment_type: str
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class IssueDetailResponse(BaseModel):
+    issue: IssueResponse
+    comments: list[IssueCommentResponse]
+
+
+class IssueSummaryResponse(BaseModel):
+    total: int
+    by_status: dict[str, int]
+    by_priority: dict[str, int]
+    overdue: int
+
+
+class IssueAutoCreateRequest(BaseModel):
+    framework: str | None = None
+
+
+def _issue_to_response(issue: Issue) -> IssueResponse:
+    return IssueResponse(
+        id=issue.id,
+        title=issue.title,
+        description=issue.description,
+        finding_id=issue.finding_id,
+        control_result_id=issue.control_result_id,
+        framework=issue.framework,
+        control_id=issue.control_id,
+        status=issue.status,
+        priority=issue.priority,
+        assigned_to=issue.assigned_to,
+        assigned_by=issue.assigned_by,
+        assigned_at=_dt_str(issue.assigned_at),
+        due_date=_dt_str(issue.due_date),
+        remediated_at=_dt_str(issue.remediated_at),
+        verified_at=_dt_str(issue.verified_at),
+        closed_at=_dt_str(issue.closed_at),
+        risk_accepted=issue.risk_accepted or False,
+        risk_acceptance_owner=issue.risk_acceptance_owner,
+        risk_acceptance_expiry=_dt_str(issue.risk_acceptance_expiry),
+        risk_acceptance_justification=issue.risk_acceptance_justification,
+        remediation_plan=issue.remediation_plan,
+        remediation_evidence=issue.remediation_evidence,
+        verification_notes=issue.verification_notes,
+        source=issue.source,
+        tags=issue.tags,
+        created_at=_dt_str(issue.created_at) or "",
+        updated_at=_dt_str(issue.updated_at),
+        created_by=issue.created_by,
+    )
+
+
+@app.get(PREFIX + "/issues/summary", response_model=IssueSummaryResponse)
+def issues_summary(
+    framework: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    summary = mgr.summary(db, framework=framework)
+    return IssueSummaryResponse(**summary)
+
+
+@app.get(PREFIX + "/issues", response_model=PaginatedResponse)
+def list_issues(
+    issue_status: str | None = Query(None, alias="status"),
+    priority: str | None = Query(None),
+    framework: str | None = Query(None),
+    assigned_to: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    query = db.query(Issue)
+    if issue_status:
+        query = query.filter(Issue.status == issue_status)
+    if priority:
+        query = query.filter(Issue.priority == priority)
+    if framework:
+        query = query.filter(Issue.framework == framework)
+    if assigned_to:
+        query = query.filter(Issue.assigned_to == assigned_to)
+
+    total = query.count()
+    rows = query.order_by(Issue.created_at.desc()).offset(offset).limit(limit).all()
+    items = [_issue_to_response(i) for i in rows]
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
+
+
+@app.post(PREFIX + "/issues", response_model=IssueResponse, status_code=201)
+def create_issue(
+    body: IssueCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    issue = mgr.create_from_poam(
+        db,
+        framework=body.framework or "",
+        control_id=body.control_id or "",
+        title=body.title,
+        description=body.description or "",
+        priority=body.priority,
+        created_by=current_user.email,
+    )
+    if body.assigned_to:
+        mgr.assign(db, issue.id, body.assigned_to, current_user.email)
+    if body.due_date:
+        issue.due_date = _parse_dt(body.due_date)
+    issue.source = body.source
+    db.flush()
+    return _issue_to_response(issue)
+
+
+@app.get(PREFIX + "/issues/{issue_id}", response_model=IssueDetailResponse)
+def get_issue(
+    issue_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+    comments = (
+        db.query(IssueComment)
+        .filter(IssueComment.issue_id == issue_id)
+        .order_by(IssueComment.created_at.asc())
+        .all()
+    )
+    return IssueDetailResponse(
+        issue=_issue_to_response(issue),
+        comments=[
+            IssueCommentResponse(
+                id=c.id,
+                issue_id=c.issue_id,
+                author=c.author,
+                content=c.content,
+                comment_type=c.comment_type or "comment",
+                created_at=_dt_str(c.created_at) or "",
+            )
+            for c in comments
+        ],
+    )
+
+
+@app.patch(PREFIX + "/issues/{issue_id}", response_model=IssueResponse)
+def update_issue(
+    issue_id: str,
+    body: IssueUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+    if body.title is not None:
+        issue.title = body.title
+    if body.description is not None:
+        issue.description = body.description
+    if body.priority is not None:
+        issue.priority = body.priority
+    if body.due_date is not None:
+        issue.due_date = _parse_dt(body.due_date)
+    if body.remediation_plan is not None:
+        issue.remediation_plan = body.remediation_plan
+    if body.tags is not None:
+        issue.tags = body.tags
+    issue.updated_at = datetime.now(timezone.utc)
+    db.flush()
+    return _issue_to_response(issue)
+
+
+@app.post(PREFIX + "/issues/{issue_id}/transition", response_model=IssueResponse)
+def transition_issue(
+    issue_id: str,
+    body: IssueTransitionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    try:
+        issue = mgr.transition(db, issue_id, body.status, current_user.email, body.notes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _issue_to_response(issue)
+
+
+@app.post(PREFIX + "/issues/{issue_id}/assign", response_model=IssueResponse)
+def assign_issue(
+    issue_id: str,
+    body: IssueAssignRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    try:
+        issue = mgr.assign(db, issue_id, body.assigned_to, current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _issue_to_response(issue)
+
+
+@app.post(PREFIX + "/issues/{issue_id}/accept-risk", response_model=IssueResponse)
+def accept_risk_issue(
+    issue_id: str,
+    body: IssueRiskAcceptRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    try:
+        issue = mgr.accept_risk(
+            db, issue_id, body.owner, body.justification,
+            body.expiry_days, actor=current_user.email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _issue_to_response(issue)
+
+
+@app.post(PREFIX + "/issues/{issue_id}/evidence", response_model=IssueResponse)
+def add_issue_evidence(
+    issue_id: str,
+    body: IssueEvidenceRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    try:
+        issue = mgr.add_evidence(db, issue_id, body.description, body.url, current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _issue_to_response(issue)
+
+
+@app.post(PREFIX + "/issues/{issue_id}/comments", response_model=IssueCommentResponse, status_code=201)
+def add_issue_comment(
+    issue_id: str,
+    body: IssueCommentRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    try:
+        comment = mgr.add_comment(db, issue_id, current_user.email, body.content, body.comment_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return IssueCommentResponse(
+        id=comment.id,
+        issue_id=comment.issue_id,
+        author=comment.author,
+        content=comment.content,
+        comment_type=comment.comment_type or "comment",
+        created_at=_dt_str(comment.created_at) or "",
+    )
+
+
+@app.post(PREFIX + "/issues/auto-create", response_model=list[IssueResponse])
+def auto_create_issues(
+    body: IssueAutoCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.issues import IssueManager
+    mgr = IssueManager()
+    issues = mgr.auto_create_from_results(db, framework=body.framework)
+    return [_issue_to_response(i) for i in issues]
+
+
+# =========================================================================
+# Attestations
+# =========================================================================
+
+
+class AttestationCreateRequest(BaseModel):
+    framework: str
+    statement: str
+    control_id: str | None = None
+    engagement_id: str | None = None
+
+
+class AttestationResponse(BaseModel):
+    id: str
+    engagement_id: str | None = None
+    framework: str
+    control_id: str | None = None
+    status: str
+    statement: str
+    evidence_references: list[dict[str, Any]] | None = None
+    prepared_by: str | None = None
+    prepared_at: str | None = None
+    submitted_by: str | None = None
+    submitted_at: str | None = None
+    reviewed_by: str | None = None
+    reviewed_at: str | None = None
+    review_notes: str | None = None
+    approved_by: str | None = None
+    approved_at: str | None = None
+    rejected_by: str | None = None
+    rejected_at: str | None = None
+    rejection_reason: str | None = None
+    created_at: str
+    updated_at: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class AttestationReviewRequest(BaseModel):
+    notes: str | None = None
+
+
+class AttestationRejectRequest(BaseModel):
+    reason: str
+
+
+class GenerateAssertionRequest(BaseModel):
+    framework: str
+
+
+class AuditCommentCreateRequest(BaseModel):
+    target_type: str
+    target_id: str
+    author_role: str | None = None
+    content: str
+    parent_id: str | None = None
+
+
+class AuditCommentResponse(BaseModel):
+    id: str
+    engagement_id: str
+    target_type: str
+    target_id: str
+    author: str
+    author_role: str | None = None
+    content: str
+    parent_id: str | None = None
+    resolved: bool
+    resolved_by: str | None = None
+    resolved_at: str | None = None
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class UnresolvedCountResponse(BaseModel):
+    engagement_id: str
+    unresolved: int
+
+
+def _attestation_to_response(att: Attestation) -> AttestationResponse:
+    return AttestationResponse(
+        id=att.id,
+        engagement_id=att.engagement_id,
+        framework=att.framework,
+        control_id=att.control_id,
+        status=att.status,
+        statement=att.statement,
+        evidence_references=att.evidence_references,
+        prepared_by=att.prepared_by,
+        prepared_at=_dt_str(att.prepared_at),
+        submitted_by=att.submitted_by,
+        submitted_at=_dt_str(att.submitted_at),
+        reviewed_by=att.reviewed_by,
+        reviewed_at=_dt_str(att.reviewed_at),
+        review_notes=att.review_notes,
+        approved_by=att.approved_by,
+        approved_at=_dt_str(att.approved_at),
+        rejected_by=att.rejected_by,
+        rejected_at=_dt_str(att.rejected_at),
+        rejection_reason=att.rejection_reason,
+        created_at=_dt_str(att.created_at) or "",
+        updated_at=_dt_str(att.updated_at),
+    )
+
+
+def _audit_comment_to_response(c: AuditComment) -> AuditCommentResponse:
+    return AuditCommentResponse(
+        id=c.id,
+        engagement_id=c.engagement_id,
+        target_type=c.target_type,
+        target_id=c.target_id,
+        author=c.author,
+        author_role=c.author_role,
+        content=c.content,
+        parent_id=c.parent_id,
+        resolved=c.resolved or False,
+        resolved_by=c.resolved_by,
+        resolved_at=_dt_str(c.resolved_at),
+        created_at=_dt_str(c.created_at) or "",
+    )
+
+
+@app.get(PREFIX + "/attestations", response_model=list[AttestationResponse])
+def list_attestations(
+    engagement_id: str | None = Query(None),
+    framework: str | None = Query(None),
+    attest_status: str | None = Query(None, alias="status"),
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    query = db.query(Attestation)
+    if engagement_id:
+        query = query.filter(Attestation.engagement_id == engagement_id)
+    if framework:
+        query = query.filter(Attestation.framework == framework)
+    if attest_status:
+        query = query.filter(Attestation.status == attest_status)
+    rows = query.order_by(Attestation.created_at.desc()).offset(offset).limit(limit).all()
+    return [_attestation_to_response(a) for a in rows]
+
+
+@app.post(PREFIX + "/attestations", response_model=AttestationResponse, status_code=201)
+def create_attestation(
+    body: AttestationCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AttestationManager
+    mgr = AttestationManager()
+    try:
+        att = mgr.create(
+            db,
+            framework=body.framework,
+            statement=body.statement,
+            prepared_by=current_user.email,
+            control_id=body.control_id,
+            engagement_id=body.engagement_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _attestation_to_response(att)
+
+
+@app.get(PREFIX + "/attestations/{attestation_id}", response_model=AttestationResponse)
+def get_attestation(
+    attestation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    att = db.query(Attestation).filter(Attestation.id == attestation_id).first()
+    if not att:
+        raise HTTPException(status_code=404, detail="Attestation not found")
+    return _attestation_to_response(att)
+
+
+@app.post(PREFIX + "/attestations/{attestation_id}/submit", response_model=AttestationResponse)
+def submit_attestation(
+    attestation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AttestationManager
+    mgr = AttestationManager()
+    try:
+        att = mgr.submit(db, attestation_id, current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _attestation_to_response(att)
+
+
+@app.post(PREFIX + "/attestations/{attestation_id}/review", response_model=AttestationResponse)
+def review_attestation(
+    attestation_id: str,
+    body: AttestationReviewRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AttestationManager
+    mgr = AttestationManager()
+    try:
+        att = mgr.review(db, attestation_id, current_user.email, body.notes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _attestation_to_response(att)
+
+
+@app.post(PREFIX + "/attestations/{attestation_id}/approve", response_model=AttestationResponse)
+def approve_attestation(
+    attestation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AttestationManager
+    mgr = AttestationManager()
+    try:
+        att = mgr.approve(db, attestation_id, current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _attestation_to_response(att)
+
+
+@app.post(PREFIX + "/attestations/{attestation_id}/reject", response_model=AttestationResponse)
+def reject_attestation(
+    attestation_id: str,
+    body: AttestationRejectRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AttestationManager
+    mgr = AttestationManager()
+    try:
+        att = mgr.reject(db, attestation_id, current_user.email, body.reason)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _attestation_to_response(att)
+
+
+@app.post(PREFIX + "/engagements/{engagement_id}/generate-assertion", response_model=AttestationResponse)
+def generate_assertion(
+    engagement_id: str,
+    body: GenerateAssertionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AttestationManager
+    mgr = AttestationManager()
+    try:
+        att = mgr.generate_management_assertion(db, engagement_id, body.framework)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _attestation_to_response(att)
+
+
+# --- Audit Comments ---
+
+
+@app.get(PREFIX + "/engagements/{engagement_id}/comments", response_model=list[AuditCommentResponse])
+def list_engagement_comments(
+    engagement_id: str,
+    target_type: str | None = Query(None),
+    resolved: bool | None = Query(None),
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    query = db.query(AuditComment).filter(AuditComment.engagement_id == engagement_id)
+    if target_type:
+        query = query.filter(AuditComment.target_type == target_type)
+    if resolved is not None:
+        query = query.filter(AuditComment.resolved == resolved)
+    rows = query.order_by(AuditComment.created_at.asc()).offset(offset).limit(limit).all()
+    return [_audit_comment_to_response(c) for c in rows]
+
+
+@app.post(PREFIX + "/engagements/{engagement_id}/comments", response_model=AuditCommentResponse, status_code=201)
+def add_engagement_comment(
+    engagement_id: str,
+    body: AuditCommentCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AuditCollaboration
+    collab = AuditCollaboration()
+    try:
+        comment = collab.add_comment(
+            db, engagement_id, body.target_type, body.target_id,
+            current_user.email, body.author_role or "practitioner",
+            body.content, body.parent_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _audit_comment_to_response(comment)
+
+
+@app.post(PREFIX + "/comments/{comment_id}/resolve", response_model=AuditCommentResponse)
+def resolve_comment(
+    comment_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.attestations import AuditCollaboration
+    collab = AuditCollaboration()
+    try:
+        comment = collab.resolve_comment(db, comment_id, current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _audit_comment_to_response(comment)
+
+
+@app.get(PREFIX + "/engagements/{engagement_id}/comments/unresolved", response_model=UnresolvedCountResponse)
+def unresolved_comments_count(
+    engagement_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.attestations import AuditCollaboration
+    collab = AuditCollaboration()
+    count = collab.unresolved_count(db, engagement_id)
+    return UnresolvedCountResponse(engagement_id=engagement_id, unresolved=count)
+
+
+# =========================================================================
+# System Profiles
+# =========================================================================
+
+
+class SystemProfileCreateRequest(BaseModel):
+    name: str
+    description: str | None = None
+    acronym: str | None = None
+    confidentiality_impact: str = "moderate"
+    integrity_impact: str = "moderate"
+    availability_impact: str = "moderate"
+    overall_impact: str = "moderate"
+    cloud_accounts: list[dict[str, Any]] = Field(default_factory=list)
+    network_boundaries: list[dict[str, Any]] = Field(default_factory=list)
+    interconnections: list[dict[str, Any]] = Field(default_factory=list)
+    connector_scope: list[str] = Field(default_factory=list)
+    frameworks: list[str] = Field(default_factory=list)
+    system_owner: str | None = None
+    system_owner_email: str | None = None
+    isso: str | None = None
+    isso_email: str | None = None
+    issm: str | None = None
+    issm_email: str | None = None
+    authorizing_official: str | None = None
+    ao_email: str | None = None
+    authorization_status: str = "not_authorized"
+    deployment_model: str | None = None
+    service_model: str | None = None
+
+
+class SystemProfileUpdateRequest(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    acronym: str | None = None
+    confidentiality_impact: str | None = None
+    integrity_impact: str | None = None
+    availability_impact: str | None = None
+    overall_impact: str | None = None
+    cloud_accounts: list[dict[str, Any]] | None = None
+    network_boundaries: list[dict[str, Any]] | None = None
+    interconnections: list[dict[str, Any]] | None = None
+    connector_scope: list[str] | None = None
+    frameworks: list[str] | None = None
+    system_owner: str | None = None
+    system_owner_email: str | None = None
+    isso: str | None = None
+    isso_email: str | None = None
+    issm: str | None = None
+    issm_email: str | None = None
+    authorizing_official: str | None = None
+    ao_email: str | None = None
+    authorization_status: str | None = None
+    authorization_date: str | None = None
+    authorization_expiry: str | None = None
+    continuous_monitoring_plan: str | None = None
+    deployment_model: str | None = None
+    service_model: str | None = None
+
+
+class SystemProfileResponse(BaseModel):
+    id: str
+    name: str
+    acronym: str | None = None
+    description: str | None = None
+    confidentiality_impact: str | None = None
+    integrity_impact: str | None = None
+    availability_impact: str | None = None
+    overall_impact: str | None = None
+    cloud_accounts: list[dict[str, Any]] | None = None
+    network_boundaries: list[dict[str, Any]] | None = None
+    interconnections: list[dict[str, Any]] | None = None
+    connector_scope: list[str] | None = None
+    frameworks: list[str] | None = None
+    system_owner: str | None = None
+    system_owner_email: str | None = None
+    isso: str | None = None
+    isso_email: str | None = None
+    issm: str | None = None
+    issm_email: str | None = None
+    authorizing_official: str | None = None
+    ao_email: str | None = None
+    authorization_status: str | None = None
+    authorization_date: str | None = None
+    authorization_expiry: str | None = None
+    continuous_monitoring_plan: str | None = None
+    deployment_model: str | None = None
+    service_model: str | None = None
+    is_active: bool
+    created_at: str
+    updated_at: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class SystemPostureResponse(BaseModel):
+    framework: str
+    total: int
+    compliant: int
+    non_compliant: int
+    partial: int
+    not_assessed: int
+    posture_score: float
+
+
+def _system_profile_to_response(sp: SystemProfile) -> SystemProfileResponse:
+    return SystemProfileResponse(
+        id=sp.id,
+        name=sp.name,
+        acronym=sp.acronym,
+        description=sp.description,
+        confidentiality_impact=sp.confidentiality_impact,
+        integrity_impact=sp.integrity_impact,
+        availability_impact=sp.availability_impact,
+        overall_impact=sp.overall_impact,
+        cloud_accounts=sp.cloud_accounts,
+        network_boundaries=sp.network_boundaries,
+        interconnections=sp.interconnections,
+        connector_scope=sp.connector_scope,
+        frameworks=sp.frameworks,
+        system_owner=sp.system_owner,
+        system_owner_email=sp.system_owner_email,
+        isso=sp.isso,
+        isso_email=sp.isso_email,
+        issm=sp.issm,
+        issm_email=sp.issm_email,
+        authorizing_official=sp.authorizing_official,
+        ao_email=sp.ao_email,
+        authorization_status=sp.authorization_status,
+        authorization_date=_dt_str(sp.authorization_date),
+        authorization_expiry=_dt_str(sp.authorization_expiry),
+        continuous_monitoring_plan=sp.continuous_monitoring_plan,
+        deployment_model=sp.deployment_model,
+        service_model=sp.service_model,
+        is_active=sp.is_active or False,
+        created_at=_dt_str(sp.created_at) or "",
+        updated_at=_dt_str(sp.updated_at),
+    )
+
+
+@app.get(PREFIX + "/systems", response_model=list[SystemProfileResponse])
+def list_systems(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    profiles = mgr.list_active(db)
+    return [_system_profile_to_response(sp) for sp in profiles]
+
+
+@app.post(PREFIX + "/systems", response_model=SystemProfileResponse, status_code=201)
+def create_system(
+    body: SystemProfileCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    kwargs = body.model_dump(exclude={"name", "description"}, exclude_none=True)
+    try:
+        sp = mgr.create(db, name=body.name, description=body.description or "", **kwargs)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _system_profile_to_response(sp)
+
+
+@app.get(PREFIX + "/systems/expiring", response_model=list[SystemProfileResponse])
+def expiring_systems(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    profiles = mgr.check_authorization_expiry(db)
+    return [_system_profile_to_response(sp) for sp in profiles]
+
+
+@app.get(PREFIX + "/systems/{system_id}", response_model=SystemProfileResponse)
+def get_system(
+    system_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    sp = db.query(SystemProfile).filter(SystemProfile.id == system_id).first()
+    if not sp:
+        raise HTTPException(status_code=404, detail="System profile not found")
+    return _system_profile_to_response(sp)
+
+
+@app.patch(PREFIX + "/systems/{system_id}", response_model=SystemProfileResponse)
+def update_system(
+    system_id: str,
+    body: SystemProfileUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    kwargs = body.model_dump(exclude_none=True)
+    # Convert date strings to datetimes
+    if "authorization_date" in kwargs:
+        kwargs["authorization_date"] = _parse_dt(kwargs["authorization_date"])
+    if "authorization_expiry" in kwargs:
+        kwargs["authorization_expiry"] = _parse_dt(kwargs["authorization_expiry"])
+    try:
+        sp = mgr.update(db, system_id, **kwargs)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _system_profile_to_response(sp)
+
+
+@app.delete(PREFIX + "/systems/{system_id}", response_model=MessageResponse)
+def archive_system(
+    system_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("delete")),
+):
+    sp = db.query(SystemProfile).filter(SystemProfile.id == system_id).first()
+    if not sp:
+        raise HTTPException(status_code=404, detail="System profile not found")
+    sp.is_active = False
+    sp.updated_at = datetime.now(timezone.utc)
+    db.flush()
+    return MessageResponse(message="System profile archived")
+
+
+@app.get(PREFIX + "/systems/{system_id}/findings", response_model=list[FindingResponse])
+def system_findings(
+    system_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    try:
+        findings = mgr.scope_findings(db, system_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return [
+        FindingResponse(
+            id=f.id,
+            title=f.title,
+            observation_type=f.observation_type,
+            severity=f.severity,
+            resource_id=f.resource_id,
+            resource_type=f.resource_type,
+            source=f.source,
+            provider=f.provider,
+            observed_at=_dt_str(f.observed_at) or "",
+            detail=f.detail,
+        )
+        for f in findings
+    ]
+
+
+@app.get(PREFIX + "/systems/{system_id}/posture", response_model=SystemPostureResponse)
+def system_posture(
+    system_id: str,
+    framework: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    try:
+        posture = mgr.posture_for_system(db, system_id, framework)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return SystemPostureResponse(**posture)
+
+
+@app.get(PREFIX + "/systems/{system_id}/ssp-header")
+def system_ssp_header(
+    system_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    from warlock.workflows.system_profile import SystemProfileManager
+    mgr = SystemProfileManager()
+    sp = mgr.get(db, system_id)
+    if not sp:
+        raise HTTPException(status_code=404, detail="System profile not found")
+    return mgr.generate_ssp_header(sp)
 
 
 # =========================================================================
