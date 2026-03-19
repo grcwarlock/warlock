@@ -1,298 +1,369 @@
 # Warlock
 
-**Pipeline-first GRC platform.** Compliance treated as a telemetry problem.
+**Pipeline-first GRC platform.** Compliance treated as a telemetry problem — not a spreadsheet problem.
 
-Data flows through 4 immutable stages:
+Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (RawEventData)    → collect from 40 source APIs
-Stage 2: Normalizers (FindingData)     → transform to universal findings
-Stage 3: Mapper + Assessor            → map to controls, run assertions
-Stage 4: Export                        → OSCAL, SOC 2 reports, ISO SoA, PDF
+Stage 1: Connectors (40 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (41 parsers) → FindingData       → transform to universal findings
+Stage 3: Control Mapper           → ControlMappingData → map to 1,564 controls across 6 frameworks
+Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
+
+Every finding traces back to its raw API response. Every control result traces back to its finding. The hash-chained audit trail makes the entire chain tamper-evident.
 
 ## Frameworks
 
-| Framework | Controls | Status |
-|---|---|---|
-| NIST 800-53 Rev 5 | 1,176 | Full catalog (20 families + enhancements) |
-| ISO 27001:2022 | 93 | Complete Annex A |
-| ISO 27701:2019 | 95 | PIMS + Annex A + Annex B |
-| ISO 42001:2023 | 39 | AI Management System |
-| SOC 2 (TSC) | 46 | CC1–CC9, A1, C1, PI1, P1 |
-| UCF (Unified) | 115 | 20 domains, maps to all frameworks |
-| **Total** | **1,564** | 1,843 crosswalk edges |
+| Framework | Controls | Crosswalks | Status |
+|---|---|---|---|
+| NIST 800-53 Rev 5 | 1,176 | 1,843 edges | Full catalog (20 families + enhancements) |
+| ISO 27001:2022 | 93 | | Complete Annex A |
+| ISO 27701:2019 | 95 | | PIMS + Annex A + Annex B |
+| ISO 42001:2023 | 39 | | AI Management System |
+| SOC 2 (TSC) | 46 | | CC1-CC9, A1, C1, PI1, P1 |
+| UCF (Unified) | 115 | | 20 domains, maps to all frameworks |
+| **Total** | **1,564** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
 ## Connectors (40)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
-
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne
-
 **IAM:** Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault
-
 **Scanners:** Tenable, Qualys, Wiz
-
 **CSPM:** Prisma Cloud
-
 **SIEM:** Sentinel, Splunk, Elastic
-
-**HRIS:** Workday
-
-**ITSM:** ServiceNow
-
-**Training:** KnowBe4
-
+**HRIS:** Workday | **ITSM:** ServiceNow | **Training:** KnowBe4
 **Code Security:** Snyk, GitHub Advanced Security
-
-**DLP:** Microsoft Purview
-
-**Backup:** Veeam
-
-**MDM:** Microsoft Intune
-
-**GRC:** Confluence, OneTrust
-
-**Physical:** Verkada
-
-**Email:** Proofpoint
-
-**Third-Party Risk:** SecurityScorecard
-
-**Container:** Kubernetes
-
-**AI Tracking:** MLflow
+**DLP:** Microsoft Purview | **Backup:** Veeam | **MDM:** Microsoft Intune
+**GRC:** Confluence, OneTrust | **Physical:** Verkada | **Email:** Proofpoint
+**Third-Party Risk:** SecurityScorecard | **Container:** Kubernetes | **AI Tracking:** MLflow
 
 ## Quick Start
 
 ```bash
-# Install (requires Python 3.12+)
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
+# Install (Python 3.12+)
+make install
+# or manually:
+python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 
-# Seed a fully populated demo environment (no credentials needed)
-python scripts/demo_seed.py
+# Run database migrations
+make migrate
 
-# Explore every feature
-warlock results                        # control results (8,833 across 6 frameworks)
+# Seed a fully populated demo (no credentials needed)
+make seed
+
+# Explore
+warlock coverage                       # compliance summary across 6 frameworks
 warlock results --status non_compliant # non-compliant findings
-warlock coverage                       # compliance coverage summary
-warlock findings                       # 125 normalized findings
+warlock cadence -f nist_800_53         # monitoring cadence status
+warlock sufficiency -f soc2 --below 60 # evidence sufficiency gaps
+warlock posture-history -f nist_800_53 # 30-day posture trends
+warlock poams --overdue                # overdue POA&Ms
+warlock compensating-controls          # active compensating controls
+warlock risk-acceptances               # formal risk acceptances
+warlock drift                          # compliance drift with correlated changes
+warlock effectiveness -f nist_800_53   # control effectiveness (uptime %, MTTR)
+warlock simulate-audit -f soc2 --date 2026-09-01  # audit readiness projection
 warlock systems                        # 5 system profiles (FIPS 199 boundaries)
-warlock personnel                      # HR/IdP/training cross-reference
-warlock vendors                        # vendor risk scores (5 vendors)
-warlock questionnaires                 # vendor security questionnaires
-warlock data-silos                     # 7 data storage locations
-warlock retention report               # retention policies & legal holds
+warlock personnel --flagged            # personnel compliance flags
 warlock issues                         # 245 compliance issues
-warlock policy-coverage -f iso_27001   # policy documentation gaps
 warlock risk -f nist_800_53            # FAIR Monte Carlo risk analysis
 warlock oscal                          # OSCAL JSON export
 ```
 
-The demo seed creates mock data from 7 connectors (AWS, Okta, CrowdStrike,
-Workday, KnowBe4, SecurityScorecard, Confluence) and runs it through the full
-pipeline, then populates system profiles, personnel records, vendor
-questionnaires, data silos, legal holds, and compliance issues. No API
-credentials required.
+### Docker Quick Start
 
-To run against real sources instead, configure connectors via environment
-variables (see [Configuration](#configuration)) and use `warlock collect`.
+```bash
+make dev    # Starts PostgreSQL + Redis + API via docker-compose
+# API available at http://localhost:8000/api/v1/health
+```
+
+## Demo Environment
+
+The demo seed creates a realistic Fortune 500 compliance environment:
+
+| Data | Count | Details |
+|---|---|---|
+| Control results | 8,833 | Across 6 frameworks |
+| Findings | 125 | From 7 connectors (AWS, Okta, CrowdStrike, Workday, KnowBe4, SecurityScorecard, Confluence) |
+| POA&Ms | 18 | 5 draft, 4 open, 3 in-progress, 2 completed, 2 overdue |
+| Compensating controls | 10 | 5 active, 2 proposed, 2 approved, 1 expired |
+| Risk acceptances | 7 | With AO approval and expiry tracking |
+| Control inheritances | 70 | Inherited/shared/common/system-specific per FedRAMP CRM |
+| System dependencies | 6 | Identity, application, infrastructure chains |
+| Change events | 40 | CloudTrail + GitHub + ServiceNow over 30 days |
+| Posture snapshots | 360 | 30 days x 12 controls with trends |
+| Compliance drifts | 10 | With correlated change events |
+| Personnel | 50 | 10 departments, compliance flags, MFA status |
+| Issues | 245 | Auto-created from non-compliant results |
+| System profiles | 5 | With FIPS 199 categorization |
+| Audit engagements | 2 | With external auditors and evidence requests |
 
 ## CLI Commands
 
-### Pipeline
+### Pipeline & Monitoring
 
 | Command | Description |
 |---|---|
-| `warlock init` | Initialize the database (creates tables) |
-| `warlock collect` | Run the full pipeline: collect → normalize → map → assess |
+| `warlock collect` | Run the full pipeline: collect -> normalize -> map -> assess |
 | `warlock collect -s aws` | Limit collection to specific source(s) |
-| `warlock ingest -s webhook -p crowdstrike -t falcon_detections -f data.json` | Ingest a JSON file through the pipeline |
+| `warlock cadence` | Check monitoring cadence — are controls assessed on schedule? |
+| `warlock cadence -f nist_800_53 --stale-only` | Show only stale controls |
+| `warlock sufficiency -f soc2 --below 60` | Evidence sufficiency gaps |
+| `warlock posture-history -f nist_800_53` | Posture score trends with trend arrows |
+| `warlock effectiveness -f nist_800_53` | Control effectiveness (uptime %, MTTR, drift count) |
 
-### Query & Inspect
+### Compliance Results
 
 | Command | Description |
 |---|---|
-| `warlock results` | Show control results from the last pipeline run |
-| `warlock results -f nist_800_53 --status non_compliant` | Filter by framework and/or status |
+| `warlock results` | Control results from the last pipeline run |
+| `warlock results -f nist_800_53 --status non_compliant` | Filter by framework/status |
 | `warlock coverage` | Compliance coverage summary by framework |
-| `warlock findings` | Show recent normalized findings |
-| `warlock connectors` | List registered connector types |
-| `warlock sources` | List all connectors and normalizers |
+| `warlock findings` | Normalized findings |
+| `warlock drift` | Compliance drift events with correlated changes |
+| `warlock simulate-audit -f soc2 --date 2026-09-01` | Project audit readiness at a future date |
 
-### Export
-
-| Command | Description |
-|---|---|
-| `warlock oscal` | Export assessment results as OSCAL JSON (stdout) |
-| `warlock oscal --format ar -f nist_800_53 -o report.json` | Assessment Results for a framework |
-| `warlock oscal --format ssp -f iso_27001 -o ssp.json` | System Security Plan (requires `--framework`) |
-| `warlock oscal --format poam -f soc2 -o poam.json` | Plan of Action & Milestones |
-| `warlock oscal --format ssp -f nist_800_53 --ai` | Add AI-generated narratives (needs `WLK_AI_*` env vars) |
-
-### Risk & Vendors
+### Remediation Workflows
 
 | Command | Description |
 |---|---|
+| `warlock poams` | List Plans of Action & Milestones |
+| `warlock poams --overdue` | Show overdue POA&Ms |
+| `warlock compensating-controls` | List compensating controls |
+| `warlock risk-acceptances` | List risk acceptances |
+| `warlock risk-acceptances --expiring-soon 30` | Expiring within 30 days |
+| `warlock issues` | Compliance issues |
+| `warlock issues-auto-create` | Auto-create issues from non-compliant results |
+
+### Enterprise & Governance
+
+| Command | Description |
+|---|---|
+| `warlock systems` | System profiles (authorization boundaries) |
+| `warlock inheritance --system <id>` | Control inheritance map for a system |
+| `warlock dependencies` | Cross-system dependency graph |
+| `warlock personnel --flagged` | Personnel with compliance flags |
+| `warlock framework-diff --old v5.yaml --new v6.yaml` | Compare framework versions |
+
+### Export & Risk
+
+| Command | Description |
+|---|---|
+| `warlock oscal` | OSCAL JSON export (AR, SSP, POA&M) |
+| `warlock oscal --format ssp -f nist_800_53 --ai` | AI-generated SSP narratives |
 | `warlock risk -f nist_800_53` | FAIR Monte Carlo risk quantification |
 | `warlock vendors` | Vendor risk scores |
-| `warlock policy-coverage -f iso_27001` | Policy documentation coverage analysis |
+| `warlock export binder --engagement <id>` | Audit evidence binder (ZIP) |
 
-### Issues & Systems
-
-| Command | Description |
-|---|---|
-| `warlock issues` | List open compliance issues |
-| `warlock issues -s open -p critical` | Filter by status and priority |
-| `warlock issues-auto-create` | Auto-create issues from non-compliant results |
-| `warlock systems` | List system profiles |
-| `warlock systems-create -n "Prod" -f nist_800_53 -f soc2` | Create a system profile |
-
-### Personnel
+### Operations
 
 | Command | Description |
 |---|---|
-| `warlock personnel` | List personnel with HR/IdP/training cross-reference |
-| `warlock personnel --flagged` | Show only flagged personnel |
-| `warlock personnel-sync` | Sync records from HR, IdP, and training findings |
-
-### Vendor Questionnaires
-
-| Command | Description |
-|---|---|
-| `warlock questionnaires` | List vendor questionnaires |
-| `warlock questionnaires-seed` | Seed default templates (SIG Lite, DDQ, CAIQ) |
-
-### Data Silos
-
-| Command | Description |
-|---|---|
-| `warlock data-silos` | List discovered data silos |
-| `warlock data-silos-discover` | Auto-discover data silos from findings |
-
-### Subcommand Groups
-
-Some commands are grouped under a parent:
-
-```
-warlock retention report          # Show retention report (record ages, purgeable counts)
-warlock retention purge           # Purge expired records (dry-run by default)
-warlock retention purge --execute # Actually delete expired records
-
-warlock scheduler start           # Start continuous pipeline scheduler
-warlock scheduler start -i 30    # Custom interval (minutes)
-warlock scheduler status          # Show scheduler status
-```
-
-### Global Options
-
-```
-warlock --verbose <command>       # Enable debug logging for any command
-warlock <command> --help          # Show help for any command
-```
+| `warlock scheduler start` | Start continuous pipeline scheduler |
+| `warlock scheduler status` | Show scheduler status (multi-schedule) |
+| `warlock retention report` | Retention report (record ages, purgeable counts) |
+| `warlock retention purge --execute` | Purge expired records (respects legal holds) |
 
 ## REST API
 
 ```bash
 # Start the API server
 warlock-api
-# or
-uvicorn warlock.api.app:app --host 0.0.0.0 --port 8000
+# or with docker
+docker compose up api
 
-# 32 endpoints including:
-# POST /api/v1/auth/login          — JWT authentication
-# POST /api/v1/pipeline/collect    — trigger pipeline run
-# GET  /api/v1/results/posture     — control posture scores
-# GET  /api/v1/results/coverage    — compliance coverage
-# GET  /api/v1/export/oscal        — OSCAL export
-# POST /api/v1/risk/analyze        — FAIR risk quantification
-# GET  /api/v1/vendors/risk        — vendor risk scores
-# GET  /api/v1/policies/coverage   — policy document coverage
-# GET  /api/v1/engagements/{id}/package — audit evidence package
+# Health & readiness
+GET  /api/v1/health           # basic health check
+GET  /api/v1/health/live      # liveness probe (Kubernetes)
+GET  /api/v1/health/ready     # readiness probe (DB + scheduler check)
+
+# Authentication
+POST /api/v1/auth/login       # JWT bearer token
+POST /api/v1/auth/register    # create user (admin only)
+POST /api/v1/auth/logout      # revoke all tokens
+POST /api/v1/auth/api-keys    # generate API key
+
+# Pipeline
+POST /api/v1/pipeline/collect # trigger pipeline run (background)
+GET  /api/v1/pipeline/status  # run status + metrics
+
+# Compliance data
+GET  /api/v1/findings         # list/filter findings
+GET  /api/v1/results          # control results
+GET  /api/v1/results/coverage # compliance coverage
+GET  /api/v1/results/posture  # posture scores
+
+# Monitoring & trends
+GET  /api/v1/cadence          # monitoring cadence status
+GET  /api/v1/sufficiency      # evidence sufficiency scores
+GET  /api/v1/posture/history  # posture time-series with trends
+GET  /api/v1/effectiveness    # control effectiveness metrics
+GET  /api/v1/drift            # compliance drift events
+POST /api/v1/audit-simulation # project audit readiness
+
+# Remediation
+GET  /api/v1/poams            # POA&Ms
+POST /api/v1/poams/{id}/extend # extend POA&M deadline
+GET  /api/v1/compensating-controls
+GET  /api/v1/risk-acceptances
+
+# Audit & export
+GET  /api/v1/engagements      # audit engagements
+POST /api/v1/export/oscal     # OSCAL JSON export
+POST /api/v1/engagements/{id}/binder  # audit evidence binder
+POST /api/v1/frameworks/diff  # framework version comparison
+POST /api/v1/impact-check     # compliance-as-code CI check
+
+# GDPR
+GET  /api/v1/gdpr/export      # data subject access (Article 15)
+DELETE /api/v1/gdpr/erase     # PII anonymization (Article 17)
+
+# Admin
+GET  /api/v1/audit-trail      # immutable audit log
+GET  /api/v1/audit-trail/verify # hash chain integrity check
 ```
+
+## Security
+
+- **Authentication:** JWT (HS256) + API keys (SHA-256 hashed, scoped)
+- **Password hashing:** bcrypt (12 rounds) with PBKDF2 fallback (600K iterations)
+- **Account lockout:** 5 failed attempts = 30-minute lock, timing-oracle prevention
+- **Token revocation:** Per-user `token_valid_after` timestamp, logout endpoint
+- **RBAC:** 4 roles (admin, auditor, owner, viewer) with attribute-based scoping
+- **ABAC:** `allowed_frameworks`, `allowed_sources`, `allowed_control_families` per user
+- **Rate limiting:** Sliding window with per-endpoint differentiation (login: 10/min)
+- **Security headers:** HSTS, CSP, X-Frame-Options, nosniff, referrer policy
+- **Audit trail:** Hash-chained, append-only, tamper-evident with verification endpoint
+- **OPA integration:** Optional policy-as-code enforcement (fail-closed in production)
 
 ## Configuration
 
-All configuration via environment variables with `WLK_` prefix:
+All configuration via environment variables with `WLK_` prefix. See `.env.example` for the complete reference.
 
 ```bash
-# Database
+# Core (required in production)
 WLK_DATABASE_URL=postgresql://user:pass@localhost/warlock
+WLK_JWT_SECRET=your-secret-here-min-32-chars    # REQUIRED in production
+WLK_ENV=production                               # enforces security defaults
 
 # AI (optional — enables Tier 2 reasoning + narrative generation)
-WLK_AI_PROVIDER=anthropic    # or openai, gemini, ollama
+WLK_AI_PROVIDER=anthropic          # or openai, gemini, ollama
 WLK_AI_API_KEY=sk-...
 WLK_AI_MODEL=claude-sonnet-4-20250514
+WLK_AI_CONFIDENCE_FLOOR=0.7        # reject low-confidence AI assessments
+WLK_AI_TEMPERATURE=0.0             # deterministic for reproducibility
 
-# JWT (required for API)
-WLK_JWT_SECRET=your-secret-here-min-32-chars
-
-# Queue backend (optional — production)
-WLK_QUEUE_BACKEND=redis      # or kafka, sqs
+# Queue backend (production)
+WLK_QUEUE_BACKEND=redis             # or kafka, sqs
 WLK_QUEUE_URL=redis://localhost:6379
 
 # Connectors (enable individually)
 WLK_AWS_ENABLED=true
-WLK_AWS_REGIONS=us-east-1,us-west-2
 WLK_OKTA_ENABLED=true
 WLK_OKTA_DOMAIN=your-org.okta.com
 WLK_OKTA_API_TOKEN=...
-# ... see config.py for all options
 ```
 
 ## Architecture
 
 ```
 warlock/
-├── connectors/        # 40 source connectors (Stage 1)
-├── normalizers/       # 41 normalizers (Stage 2)
-├── mappers/           # Control mapping engine (Stage 3)
+├── connectors/           # 40 source connectors (Stage 1)
+├── normalizers/          # 41 normalizers (Stage 2)
+├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
-│   ├── assertions.py  # 25 deterministic assertions
-│   ├── engine.py      # Assessment engine + control inheritance
-│   ├── ai_reasoning.py    # Tier 2: LLM-based evaluation
-│   ├── ai_narrator.py     # Framework-aware narrative generation
-│   ├── anomaly.py         # Tier 3: Drift/volume/access detection
-│   ├── rag.py             # Tier 4: Semantic control matching
-│   ├── posture.py         # Control posture aggregation
-│   ├── risk_engine.py     # FAIR Monte Carlo risk quantification
-│   ├── vendor_risk.py     # Third-party risk scoring
-│   └── policy_discovery.py # Policy document scanning
+│   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
+│   ├── assertions.py     # 25 deterministic assertions bound to 99 controls
+│   ├── ai_reasoning.py   # Tier 2: LLM evaluation with full compliance context
+│   ├── ai_narrator.py    # SSP/POA&M narrative generation
+│   ├── posture.py        # Posture aggregation, sufficiency scoring, time-series
+│   ├── cadence.py        # Monitoring cadence tracking (NIST 800-53A frequencies)
+│   ├── drift.py          # Compliance drift detection with change correlation
+│   ├── simulation.py     # Audit readiness projection
+│   ├── impact.py         # Compliance-as-code CI impact analysis
+│   ├── risk_engine.py    # FAIR Monte Carlo risk quantification
+│   └── vendor_risk.py    # Third-party risk scoring
 ├── pipeline/
-│   ├── orchestrator.py    # 4-stage pipeline runner
-│   ├── bus.py             # Event bus (pub/sub)
-│   ├── queue.py           # Redis/Kafka/SQS backends
-│   └── loader.py          # Bootstrap & registration
+│   ├── orchestrator.py   # 4-stage pipeline runner
+│   ├── bus.py            # Event bus (pub/sub)
+│   ├── queue.py          # Redis/Kafka/SQS backends
+│   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
+│   └── loader.py         # Bootstrap & registration
 ├── db/
-│   ├── models.py          # 11 SQLAlchemy models
-│   ├── audit.py           # Hash-chained audit trail
-│   ├── repository.py      # Repository pattern
-│   └── engine.py          # Session management
+│   ├── models.py         # 33 SQLAlchemy models
+│   ├── migrations/       # Alembic migrations (7 revisions)
+│   ├── audit.py          # Hash-chained audit trail
+│   ├── repository.py     # Repository pattern
+│   └── engine.py         # Session management
 ├── api/
-│   ├── app.py             # FastAPI (32 routes)
-│   ├── auth.py            # JWT + API keys + RBAC
-│   ├── deps.py            # Auth dependencies
-│   └── middleware.py       # Rate limiting, security headers
+│   ├── app.py            # FastAPI REST API
+│   ├── auth.py           # JWT + API keys + RBAC + account lockout
+│   ├── deps.py           # Auth dependencies + ABAC scoping
+│   ├── middleware.py      # Rate limiting, security headers, audit logging
+│   ├── policy_gate.py    # OPA policy enforcement
+│   └── trust_portal.py   # Public trust portal
+├── workflows/
+│   ├── poam.py           # POA&M lifecycle management
+│   ├── compensating.py   # Compensating control tracking
+│   ├── risk_acceptance.py # Risk acceptance with AO approval
+│   ├── inheritance.py    # Control inheritance (FedRAMP CRM)
+│   ├── gdpr.py           # GDPR data subject rights (Articles 15-17)
+│   ├── issues.py         # Issue tracking and remediation
+│   ├── personnel.py      # HR + IdP + training cross-reference
+│   └── retention.py      # Data retention with legal hold enforcement
 ├── export/
-│   ├── oscal.py           # OSCAL 1.1.2 (AR, SSP, POA&M)
-│   ├── reports.py         # SOC 2 Type II, ISO SoA, PDF
-│   ├── temporal.py        # Audit-period evidence packaging
-│   ├── auditor.py         # Auditor evidence workflow
-│   └── alerts.py          # Slack/PagerDuty/webhook routing
-├── frameworks/            # 6 framework YAMLs + crosswalks
-└── cli.py                 # Click CLI
+│   ├── oscal.py          # OSCAL 1.1.2 (AR, SSP, POA&M)
+│   ├── binder.py         # Audit evidence binder (ZIP)
+│   └── alerts.py         # Slack/PagerDuty/webhook routing
+├── frameworks/
+│   ├── nist_800_53.yaml  # 1,176 controls with monitoring frequencies
+│   ├── iso_27001.yaml    # 93 controls
+│   ├── soc2.yaml         # 46 controls
+│   ├── crosswalks.yaml   # 1,843 crosswalk edges
+│   └── diff.py           # Framework version comparison
+├── config.py             # Pydantic settings (WLK_* env vars)
+└── cli.py                # Click CLI
 ```
+
+## Database
+
+33 tables across 7 Alembic migrations:
+
+**Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
+**Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency
+**Intelligence:** ChangeEvent, ComplianceDrift, PostureSnapshot
+**Operations:** Issue, IssueComment, AuditEntry, AuditEngagement, Attestation, AuditComment
+**Identity:** User, APIKey, ExternalAuditor, AuditorEngagementAssignment, EvidenceRequest
+**Assets:** SystemProfile, Personnel, DataSilo, LegalHold, TrustAccessRequest
+**Configuration:** QuestionnaireTemplate, Questionnaire, RiskAnalysis, PolicyOverride
 
 ## Tech Stack
 
-- Python 3.12+
-- SQLAlchemy 2.0 (SQLite dev, PostgreSQL prod)
-- FastAPI + Uvicorn
-- httpx (all HTTP calls)
-- Pydantic 2.0 (settings + validation)
-- Click + Rich (CLI)
+- **Language:** Python 3.12+
+- **Framework:** FastAPI + Uvicorn
+- **ORM:** SQLAlchemy 2.0 + Alembic
+- **Database:** SQLite (dev), PostgreSQL (prod) — generic JSON maps to JSONB
+- **Queue:** Redis Streams / Kafka / SQS (pluggable)
+- **AI:** Anthropic, OpenAI, Gemini, Ollama (optional Tier 2 + narrative generation)
+- **CLI:** Click + Rich
+- **Validation:** Pydantic 2.0
+- **HTTP:** httpx (async-capable)
+- **Container:** Docker multi-stage build, docker-compose for local dev
+- **CI/CD:** GitHub Actions (lint + test + build)
+
+## Development
+
+```bash
+make install    # Install dev dependencies
+make test       # Run 135 tests
+make lint       # Run ruff linter
+make migrate    # Run Alembic migrations
+make seed       # Populate demo data
+make dev        # Start docker-compose (postgres + redis + api)
+make clean      # Tear down and clean up
+```
 
 ## License
 
