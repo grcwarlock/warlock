@@ -47,29 +47,48 @@ make install
 # or manually:
 python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 
-# Run database migrations
+# Initialize the database
 make migrate
 
-# Seed a fully populated demo (no credentials needed)
+# Seed the full demo environment (no credentials or API keys needed)
 make seed
 
 # Explore
 warlock coverage                       # compliance summary across 6 frameworks
 warlock results --status non_compliant # non-compliant findings
-warlock cadence -f nist_800_53         # monitoring cadence status
-warlock sufficiency -f soc2 --below 60 # evidence sufficiency gaps
+warlock findings                       # all 547 normalized findings
+warlock sources                        # 40 connectors + 41 normalizers
+warlock systems                        # 5 system profiles (FIPS 199 boundaries)
+warlock personnel                      # 50 personnel with compliance flags
+warlock vendors                        # vendor risk scores from SecurityScorecard
+warlock questionnaires                 # vendor assessment questionnaires
+warlock data-silos                     # 12 storage locations with classification
+warlock issues                         # 541 compliance issues
+warlock policy-coverage -f iso_27001   # policy documentation gaps
+warlock risk -f nist_800_53            # FAIR Monte Carlo risk analysis
+warlock oscal                          # OSCAL JSON export
+```
+
+### Monitoring & Trends
+
+```bash
+warlock cadence                        # monitoring cadence status
+warlock sufficiency                    # evidence sufficiency gaps
 warlock posture-history -f nist_800_53 # 30-day posture trends
+warlock effectiveness                  # control effectiveness (uptime %, MTTR)
+warlock drift                          # compliance drift with correlated changes
+warlock simulate-audit -f soc2 --date 2026-09-01  # audit readiness projection
+```
+
+### Remediation Workflows
+
+```bash
+warlock poams                          # POA&M tracking
 warlock poams --overdue                # overdue POA&Ms
 warlock compensating-controls          # active compensating controls
 warlock risk-acceptances               # formal risk acceptances
-warlock drift                          # compliance drift with correlated changes
-warlock effectiveness -f nist_800_53   # control effectiveness (uptime %, MTTR)
-warlock simulate-audit -f soc2 --date 2026-09-01  # audit readiness projection
-warlock systems                        # 5 system profiles (FIPS 199 boundaries)
-warlock personnel --flagged            # personnel compliance flags
-warlock issues                         # 245 compliance issues
-warlock risk -f nist_800_53            # FAIR Monte Carlo risk analysis
-warlock oscal                          # OSCAL JSON export
+warlock inheritance --system APP       # control inheritance by system acronym or UUID
+warlock dependencies                   # cross-system dependency graph
 ```
 
 ### Docker Quick Start
@@ -81,24 +100,136 @@ make dev    # Starts PostgreSQL + Redis + API via docker-compose
 
 ## Demo Environment
 
-The demo seed creates a realistic Fortune 500 compliance environment:
+`make seed` runs `scripts/demo_seed.py` which builds a full-stack Fortune 500 compliance environment. No real API credentials are needed — 40 mock connectors produce realistic events that flow through the real pipeline (collect -> normalize -> map -> assess).
+
+### Seeding from Scratch
+
+```bash
+# Option 1: Makefile (recommended)
+make clean && make migrate && make seed
+
+# Option 2: Manual
+rm -f warlock.db                       # remove existing DB
+alembic upgrade head                   # apply all migrations
+python scripts/demo_seed.py            # run the full seed
+```
+
+The seed script runs in ~7 seconds and outputs progress for each phase:
+
+```
+[1/20] Initializing database...
+[2/20] Loading frameworks, assertions, and normalizers...
+[3/20] Running pipeline (collect -> normalize -> map -> assess)...
+[4/20] Done with pipeline!
+------------------------------------------------------------
+  Raw events collected:   191
+  Findings normalized:    547
+  Controls mapped:        26,135
+  Results assessed:       26,135
+  Connectors succeeded:   40
+  Connectors failed:      0
+  Duration:               7.53s
+------------------------------------------------------------
+```
+
+### What Gets Seeded
+
+**Pipeline data** (from 40 connectors exercising all 41 normalizers and all 25 assertions):
 
 | Data | Count | Details |
 |---|---|---|
-| Control results | 8,833 | Across 6 frameworks |
-| Findings | 125 | From 7 connectors (AWS, Okta, CrowdStrike, Workday, KnowBe4, SecurityScorecard, Confluence) |
+| Raw events | 191 | From 40 connectors across 17 source types |
+| Findings | 547+ | 547 from pipeline + vendor risk findings from `warlock vendors` |
+| Control results | 26,135 | Mapped across all 6 frameworks |
+| Assertions exercised | 25/25 | Every deterministic assertion fires at least once |
+
+**Framework coverage:**
+
+| Framework | Compliant | Non-Compliant | Not Assessed | Total |
+|---|---|---|---|---|
+| NIST 800-53 | 624 | 187 | 18,525 | 19,336 |
+| ISO 27001 | 783 | 147 | 1,031 | 1,961 |
+| ISO 27701 | 116 | 60 | 1,326 | 1,502 |
+| ISO 42001 | 131 | 11 | 581 | 723 |
+| SOC 2 | 455 | 84 | 585 | 1,124 |
+| UCF | 107 | 49 | 1,333 | 1,489 |
+
+**Connectors by category (all 40 exercised):**
+
+| Category | Connectors |
+|---|---|
+| Cloud (10) | AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare |
+| IAM (5) | Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault |
+| EDR (3) | CrowdStrike, Microsoft Defender, SentinelOne |
+| SIEM (3) | Azure Sentinel, Splunk, Elastic |
+| Scanners (3) | Tenable, Qualys, Wiz |
+| CSPM (1) | Prisma Cloud |
+| MDM (1) | Microsoft Intune |
+| ITSM (1) | ServiceNow |
+| HRIS (1) | Workday |
+| Training (1) | KnowBe4 |
+| Code (2) | Snyk, GitHub Advanced Security |
+| DLP (1) | Microsoft Purview |
+| Backup (1) | Veeam |
+| Email (1) | Proofpoint |
+| GRC (2) | Confluence, OneTrust |
+| Physical (1) | Verkada |
+| AI Tracking (1) | MLflow |
+| Third-Party Risk (1) | SecurityScorecard |
+| Container (1) | Kubernetes |
+
+**Governance & lifecycle data:**
+
+| Data | Count | Details |
+|---|---|---|
+| System profiles | 5 | APP, CDW, CIT, AIML, DEV with FIPS 199 categorization |
+| Personnel | 50 | 10 departments, MFA flags, training status, risk scores |
+| Data silos | 12 | S3, RDS, Redshift, SharePoint, GitHub repos, multi-cloud |
+| Issues | 530+ | Auto-created from non-compliant results + 3 manual |
 | POA&Ms | 18 | 5 draft, 4 open, 3 in-progress, 2 completed, 2 overdue |
 | Compensating controls | 10 | 5 active, 2 proposed, 2 approved, 1 expired |
 | Risk acceptances | 7 | With AO approval and expiry tracking |
 | Control inheritances | 70 | Inherited/shared/common/system-specific per FedRAMP CRM |
-| System dependencies | 6 | Identity, application, infrastructure chains |
+| System dependencies | 6 | Identity, application, infrastructure dependency chains |
 | Change events | 40 | CloudTrail + GitHub + ServiceNow over 30 days |
-| Posture snapshots | 360 | 30 days x 12 controls with trends |
-| Compliance drifts | 10 | With correlated change events |
-| Personnel | 50 | 10 departments, compliance flags, MFA status |
-| Issues | 245 | Auto-created from non-compliant results |
-| System profiles | 5 | With FIPS 199 categorization |
-| Audit engagements | 2 | With external auditors and evidence requests |
+| Posture snapshots | 360 | 30 days x 12 controls with improving/degrading/stable trends |
+| Compliance drifts | 10 | With correlated change events and confidence scores |
+| Audit engagements | 2 | With external auditors, assignments, and evidence requests |
+| Legal holds | 2 | Active FTC investigation + completed SOC 2 preservation |
+| Policy overrides | 3 | Break-glass, auditor scope, and POAM approval rules |
+| Vendor questionnaires | 2 | SIG and DDQ templates with in-progress responses |
+| Demo users | 4 | admin, auditor, owner, viewer roles for API testing |
+
+### Re-seeding
+
+To reset and re-seed, delete the database and re-run:
+
+```bash
+make clean && make migrate && make seed
+```
+
+Or without Docker:
+
+```bash
+rm -f warlock.db && alembic upgrade head && python scripts/demo_seed.py
+```
+
+### Verifying the Seed
+
+After seeding, run the test suite to confirm nothing is broken:
+
+```bash
+make test    # 172 tests should pass
+```
+
+Quick smoke test for the seeded data:
+
+```bash
+warlock coverage                       # should show 6 frameworks with results
+warlock sources                        # should show 40 connectors + 41 normalizers
+warlock findings                       # should show findings from diverse sources
+warlock inheritance --system APP       # should show control inheritance for Acme Production
+```
 
 ## CLI Commands
 
@@ -142,7 +273,7 @@ The demo seed creates a realistic Fortune 500 compliance environment:
 | Command | Description |
 |---|---|
 | `warlock systems` | System profiles (authorization boundaries) |
-| `warlock inheritance --system <id>` | Control inheritance map for a system |
+| `warlock inheritance --system <id-or-acronym>` | Control inheritance map for a system |
 | `warlock dependencies` | Cross-system dependency graph |
 | `warlock personnel --flagged` | Personnel with compliance flags |
 | `warlock framework-diff --old v5.yaml --new v6.yaml` | Compare framework versions |
