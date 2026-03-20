@@ -1845,6 +1845,33 @@ async def analyze_risk(
     )
 
 
+class RiskCacheStatsResponse(BaseModel):
+    total_entries: int
+    oldest_entry_age_hours: float | None
+    entries_per_framework: dict[str, int]
+    cache_hits: int
+    cache_misses: int
+    hit_rate: float | None
+
+
+@app.get(PREFIX + "/risk/cache-stats", response_model=RiskCacheStatsResponse)
+def risk_cache_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Return Monte Carlo cache statistics.
+
+    Reports the total number of cached RiskAnalysis entries, their age,
+    per-framework breakdown, and the in-process hit/miss counters accumulated
+    since the API process started.
+    """
+    from warlock.assessors.risk_engine import RiskEngine
+
+    engine = RiskEngine()
+    stats = engine.get_cache_stats(db)
+    return RiskCacheStatsResponse(**stats)
+
+
 # =========================================================================
 # Vendor Risk
 # =========================================================================

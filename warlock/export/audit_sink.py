@@ -9,6 +9,7 @@ Backends
 * ``StdoutSink``      — JSON-lines to stdout; feeds log aggregation pipelines.
 * ``S3AuditSink``     — JSON-lines batches to S3 with Object Lock for WORM.
 * ``CloudWatchSink``  — Batch send to an AWS CloudWatch Logs group.
+* ``SplunkHECSink``   — JSON batches to Splunk HTTP Event Collector.
 
 Factory
 -------
@@ -34,6 +35,18 @@ Thread safety
 ``BatchShipper`` uses a threading.Lock and is safe to call from multiple
 threads.  Each backend's ``ship()`` method is assumed to be blocking and
 may be called from a background thread by ``BatchShipper``.
+
+EventBus integration
+--------------------
+``AuditEventSubscriber`` bridges the in-process ``EventBus`` to a
+``BatchShipper``.  Register it via ``subscribe_all()`` to capture every
+``PipelineEvent`` as an ``AuditEntry``::
+
+    subscriber = AuditEventSubscriber(shipper)
+    bus.subscribe_all(subscriber)
+
+``_register_default_subscribers()`` in ``warlock.pipeline.bus`` does this
+automatically when ``WLK_AUDIT_SINK_BACKEND`` is set.
 """
 
 from __future__ import annotations
@@ -395,6 +408,159 @@ class CloudWatchSink(AuditLogSink):
 
 
 # ---------------------------------------------------------------------------
+# SplunkHECSink
+# ---------------------------------------------------------------------------
+
+class SplunkHECSink(AuditLogSink):
+    """Ship audit entries to Splunk via the HTTP Event Collector (HEC) API.
+
+    Each ``ship()`` call posts a JSON array of HEC event objects to the
+    configured HEC endpoint.  Transient failures (HTTP 429, 503) are retried
+    up to three times with exponential backoff before the batch is abandoned.
+
+    Configuration — read from environment at construction time:
+
+    * ``WLK_SPLUNK_HEC_URL``   — full HEC endpoint, e.g.
+      ``https://splunk.example.com:8088/services/collector/event``
+    * ``WLK_SPLUNK_HEC_TOKEN`` — HEC token (without the ``Splunk `` prefix)
+    * ``WLK_SPLUNK_INDEX``     — optional target index (omitted if empty)
+
+    Args:
+        hec_url:  HEC endpoint URL.  Defaults to ``WLK_SPLUNK_HEC_URL``.
+        token:    HEC token.  Defaults to ``WLK_SPLUNK_HEC_TOKEN``.
+        index:    Splunk index to write to.  Defaults to ``WLK_SPLUNK_INDEX``.
+        timeout:  HTTP request timeout in seconds (default 15).
+        max_retries: Maximum retry attempts on 429/503 (default 3).
+    """
+
+    _RETRY_STATUSES = {429, 503}
+    _RETRY_BASE_DELAY = 1.0  # seconds; doubled on each attempt
+
+    def __init__(
+        self,
+        hec_url: str | None = None,
+        token: str | None = None,
+        index: str | None = None,
+        timeout: float = 15.0,
+        max_retries: int = 3,
+    ) -> None:
+        self.hec_url: str = hec_url or os.environ.get("WLK_SPLUNK_HEC_URL", "")
+        self.token: str = token or os.environ.get("WLK_SPLUNK_HEC_TOKEN", "")
+        self.index: str | None = index or os.environ.get("WLK_SPLUNK_INDEX") or None
+        self.timeout = timeout
+        self.max_retries = max_retries
+
+        if not self.hec_url:
+            raise ValueError(
+                "SplunkHECSink requires hec_url or WLK_SPLUNK_HEC_URL to be set."
+            )
+        if not self.token:
+            raise ValueError(
+                "SplunkHECSink requires token or WLK_SPLUNK_HEC_TOKEN to be set."
+            )
+
+    def _build_hec_payload(self, entries: list[AuditEntry]) -> str:
+        """Serialise entries into a Splunk HEC JSON payload (space-separated objects)."""
+        events: list[dict[str, Any]] = []
+        for entry in entries:
+            event_obj: dict[str, Any] = {
+                "time": entry.created_at.timestamp(),
+                "source": "warlock",
+                "sourcetype": "warlock:audit",
+                "event": json.loads(entry.to_json_line()),
+            }
+            if self.index:
+                event_obj["index"] = self.index
+            events.append(event_obj)
+        # Splunk HEC accepts newline-delimited JSON objects (not a JSON array)
+        return "\n".join(json.dumps(e, separators=(",", ":")) for e in events)
+
+    def ship(self, entries: list[AuditEntry]) -> None:
+        if not entries:
+            return
+
+        try:
+            import httpx  # type: ignore[import-untyped]
+        except ImportError as exc:
+            raise ImportError(
+                "httpx is required for SplunkHECSink. "
+                "Install it with: pip install httpx"
+            ) from exc
+
+        payload = self._build_hec_payload(entries)
+        headers = {
+            "Authorization": f"Splunk {self.token}",
+            "Content-Type": "application/json",
+        }
+
+        last_exc: Exception | None = None
+        delay = self._RETRY_BASE_DELAY
+
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                response = httpx.post(
+                    self.hec_url,
+                    content=payload,
+                    headers=headers,
+                    timeout=self.timeout,
+                )
+                if response.status_code == 200:
+                    log.info(
+                        "SplunkHECSink shipped %d entries (attempt %d)",
+                        len(entries),
+                        attempt,
+                    )
+                    return
+                if response.status_code in self._RETRY_STATUSES and attempt < self.max_retries:
+                    log.warning(
+                        "SplunkHECSink HTTP %d on attempt %d/%d — retrying in %.1fs",
+                        response.status_code,
+                        attempt,
+                        self.max_retries,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    delay *= 2
+                    continue
+                # Non-retryable error or final attempt
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                last_exc = exc
+                if attempt < self.max_retries:
+                    log.warning(
+                        "SplunkHECSink HTTP error on attempt %d/%d: %s — retrying in %.1fs",
+                        attempt,
+                        self.max_retries,
+                        exc,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    delay *= 2
+                else:
+                    raise
+            except httpx.RequestError as exc:
+                last_exc = exc
+                if attempt < self.max_retries:
+                    log.warning(
+                        "SplunkHECSink request error on attempt %d/%d: %s — retrying in %.1fs",
+                        attempt,
+                        self.max_retries,
+                        exc,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    delay *= 2
+                else:
+                    raise
+
+        if last_exc is not None:
+            raise last_exc
+
+    def close(self) -> None:
+        pass  # httpx uses per-request connections; nothing to release
+
+
+# ---------------------------------------------------------------------------
 # BatchShipper
 # ---------------------------------------------------------------------------
 
@@ -462,6 +628,70 @@ class BatchShipper:
 
 
 # ---------------------------------------------------------------------------
+# AuditEventSubscriber
+# ---------------------------------------------------------------------------
+
+class AuditEventSubscriber:
+    """EventBus wildcard subscriber that converts PipelineEvents to AuditEntries.
+
+    Register with ``EventBus.subscribe_all()`` to capture every published
+    ``PipelineEvent`` and feed it into a ``BatchShipper`` for external
+    shipping.  The mapping is intentionally lightweight — the full audit
+    chain with hash verification lives in ``AuditTrail``; this subscriber
+    provides SIEM/external-sink fan-out without requiring a DB session.
+
+    Field mapping from PipelineEvent to AuditEntry:
+
+    * ``action``      — ``event.event_type``  (e.g. ``"finding.normalized"``)
+    * ``entity_type`` — derived from the event_type prefix  (e.g. ``"finding"``)
+    * ``entity_id``   — ``event.payload_id``
+    * ``actor``       — ``"pipeline"`` (pipeline-emitted events have no user context)
+    * ``created_at``  — ``event.timestamp``
+    * ``extra``       — ``event.metadata``  (forwarded verbatim)
+
+    Sequence and hash fields are set to sentinel values (``0`` / ``""``)
+    because this subscriber operates outside the hash-chain writer.  Sinks
+    that require a valid chain should consume from ``AuditTrail.record()``
+    instead.
+
+    Args:
+        shipper: A configured ``BatchShipper`` instance.
+    """
+
+    __name__ = "AuditEventSubscriber"  # used by bus._safe_call for log messages
+
+    def __init__(self, shipper: BatchShipper) -> None:
+        self._shipper = shipper
+
+    def __call__(self, event: Any) -> None:
+        """Handle a PipelineEvent — called by EventBus for every published event."""
+        # Derive entity_type from the event_type prefix (e.g. "finding.normalized" → "finding")
+        parts = event.event_type.split(".", 1)
+        entity_type = parts[0] if parts else event.event_type
+
+        entry = AuditEntry(
+            id=event.id,
+            sequence=0,       # sentinel — hash chain is maintained by AuditTrail
+            previous_hash="",
+            entry_hash="",
+            action=event.event_type,
+            entity_type=entity_type,
+            entity_id=event.payload_id,
+            actor="pipeline",
+            created_at=event.timestamp,
+            evidence_sha256=None,
+            extra=dict(event.metadata) if event.metadata else {},
+        )
+        self._shipper.ingest(entry)
+        log.debug(
+            "AuditEventSubscriber ingested event %s (entity=%s id=%s)",
+            event.event_type,
+            entity_type,
+            event.payload_id,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Factory
 # ---------------------------------------------------------------------------
 
@@ -469,6 +699,7 @@ _BACKENDS: dict[str, type[AuditLogSink]] = {
     "stdout": StdoutSink,
     "s3": S3AuditSink,
     "cloudwatch": CloudWatchSink,
+    "splunk": SplunkHECSink,
 }
 
 
@@ -476,7 +707,7 @@ def create_sink(backend: str, **config: Any) -> AuditLogSink:
     """Instantiate an ``AuditLogSink`` by backend name.
 
     Args:
-        backend: One of ``"stdout"``, ``"s3"``, ``"cloudwatch"``.
+        backend: One of ``"stdout"``, ``"s3"``, ``"cloudwatch"``, ``"splunk"``.
         **config: Keyword arguments forwarded to the sink constructor.
 
     Returns:

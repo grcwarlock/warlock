@@ -3,19 +3,79 @@
 Goes beyond "does the policy document exist?" to evaluate whether
 governance documents are current, reviewed/approved, and cover the
 required policy areas for a given compliance framework.
+
+Includes semantic content analysis: control reference extraction,
+policy language obligation strength, and TF-IDF comprehensiveness
+scoring against control descriptions.
 """
 
 from __future__ import annotations
 
 import logging
+import math
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from warlock.assessors.rag import TFIDFEmbedder
 from warlock.db.models import Finding
 
 log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Control reference patterns
+# ---------------------------------------------------------------------------
+
+# Matches NIST-style IDs: AC-2, SC-7, AU-6(1), SI-4(2)(3)
+# No trailing \b — word boundary fires before '(' which prevents matching
+# enhancement suffixes.  The leading \b is sufficient to avoid mid-word matches.
+_NIST_RE = re.compile(
+    r"\b([A-Z]{2}-\d{1,3}(?:\(\d{1,2}\))*)"
+)
+
+# Matches HIPAA refs: 164.308(a)(1), 164.312(e)(2)(ii)
+_HIPAA_RE = re.compile(
+    r"\b(164\.\d{3}\([a-z]\)\(\d+\)(?:\([ivx]+\))?)"
+)
+
+# Matches ISO Annex A style: A.5.1, A.8.2.3
+_ISO_ANNEX_RE = re.compile(
+    r"\b(A\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\b"
+)
+
+# Matches SOC 2 TSC: CC6.1, A1.2, C1.1, PI1.1, P1.1
+_SOC2_RE = re.compile(
+    r"\b((?:CC|A1|C1|PI1|P1)\d?\.\d{1,2})\b"
+)
+
+# Matches PCI DSS: 1.2.3, 12.10.1
+_PCI_RE = re.compile(
+    r"\b(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\b"
+)
+
+_CONTROL_PATTERNS: list[re.Pattern[str]] = [
+    _NIST_RE,
+    _HIPAA_RE,
+    _ISO_ANNEX_RE,
+    _SOC2_RE,
+]
+
+# ---------------------------------------------------------------------------
+# Obligation language patterns
+# ---------------------------------------------------------------------------
+
+_MANDATORY_RE = re.compile(
+    r"\b(?:shall|must|required|require|mandatory)\b", re.IGNORECASE
+)
+_RECOMMENDED_RE = re.compile(
+    r"\b(?:should|ought|recommended|recommend)\b", re.IGNORECASE
+)
+_OPTIONAL_RE = re.compile(
+    r"\b(?:may|can|optional|optionally)\b", re.IGNORECASE
+)
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +239,162 @@ class GovernanceAnalyzer:
                 matched.append(area)
         return matched
 
+    # -------------------------------------------------------------------
+    # Semantic content analysis (#60)
+    # -------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_control_references(content: str) -> list[str]:
+        """Extract compliance control IDs from document content.
+
+        Recognizes NIST 800-53 (AC-2, AU-6(1)), HIPAA (164.308(a)(1)),
+        ISO Annex A (A.5.1), and SOC 2 TSC (CC6.1) patterns.
+
+        Returns a deduplicated list of matched control IDs preserving
+        first-occurrence order.
+        """
+        if not content:
+            return []
+
+        seen: set[str] = set()
+        result: list[str] = []
+
+        for pattern in _CONTROL_PATTERNS:
+            for match in pattern.finditer(content):
+                ctrl_id = match.group(1)
+                if ctrl_id not in seen:
+                    seen.add(ctrl_id)
+                    result.append(ctrl_id)
+
+        return result
+
+    @staticmethod
+    def _analyze_policy_language(content: str) -> dict:
+        """Classify obligation strength of policy language.
+
+        Counts mandatory (shall/must/required), recommended
+        (should/ought), and optional (may/can) terms.  Returns a dict
+        with counts and a ``strength_score`` from 0.0 to 1.0 where
+        higher values indicate more enforceable language.
+        """
+        if not content:
+            return {
+                "mandatory": 0,
+                "recommended": 0,
+                "optional": 0,
+                "strength_score": 0.0,
+            }
+
+        mandatory = len(_MANDATORY_RE.findall(content))
+        recommended = len(_RECOMMENDED_RE.findall(content))
+        optional = len(_OPTIONAL_RE.findall(content))
+
+        total = mandatory + recommended + optional
+        strength_score = mandatory / total if total > 0 else 0.0
+
+        return {
+            "mandatory": mandatory,
+            "recommended": recommended,
+            "optional": optional,
+            "strength_score": round(strength_score, 4),
+        }
+
+    @staticmethod
+    def _score_comprehensiveness(content: str, control_description: str) -> float:
+        """Score how comprehensively a policy covers a control description.
+
+        Uses TF-IDF cosine similarity between the policy content and the
+        control description text.  Returns 0.0-1.0 where higher values
+        indicate stronger topical alignment.
+
+        Returns 0.0 if either input is empty.
+        """
+        if not content or not control_description:
+            return 0.0
+
+        embedder = TFIDFEmbedder()
+        corpus = [content, control_description]
+        vectors = embedder.fit_transform(corpus)
+
+        # Cosine similarity — vectors are already L2-normalized by TFIDFEmbedder
+        vec_a, vec_b = vectors[0], vectors[1]
+        dot = sum(a * b for a, b in zip(vec_a, vec_b))
+        norm_a = math.sqrt(sum(a * a for a in vec_a))
+        norm_b = math.sqrt(sum(b * b for b in vec_b))
+        denom = norm_a * norm_b
+        if denom < 1e-10:
+            return 0.0
+
+        similarity = dot / denom
+        return round(max(0.0, min(1.0, similarity)), 4)
+
+    def analyze_content(self, session: Session, framework: str) -> list[dict]:
+        """Perform semantic content analysis on governance documents.
+
+        For each Confluence page finding that contains a ``content`` or
+        ``body`` field in its detail, produces per-policy analysis
+        including control reference extraction, obligation strength, and
+        TF-IDF comprehensiveness scoring against control descriptions.
+
+        Args:
+            session: SQLAlchemy database session.
+            framework: Framework identifier (e.g. ``"nist_800_53"``).
+
+        Returns:
+            List of dicts, one per policy document, each containing:
+            ``title``, ``matched_controls``, ``obligation_strength``,
+            ``comprehensiveness``, and ``overall_score``.
+        """
+        policy_map = self._get_policy_map(framework)
+        findings = self._get_confluence_findings(session)
+
+        # Build a combined control description for comprehensiveness scoring
+        all_descriptions: list[str] = []
+        for _ctrl_id, docs in policy_map.items():
+            all_descriptions.extend(docs)
+        combined_description = " ".join(all_descriptions)
+
+        results: list[dict] = []
+
+        for finding in findings:
+            detail = finding.detail if isinstance(finding.detail, dict) else {}
+            title = detail.get("title", finding.resource_name or "")
+            content = detail.get("content", "") or detail.get("body", "")
+
+            matched_controls = self._extract_control_references(content)
+            obligation = self._analyze_policy_language(content)
+            comprehensiveness = self._score_comprehensiveness(
+                content, combined_description,
+            )
+
+            # Title keyword match score: fraction of policy areas matched
+            title_areas = self._match_policy_areas(title)
+            total_areas = len(_POLICY_KEYWORDS)
+            title_score = len(title_areas) / total_areas if total_areas > 0 else 0.0
+
+            # Overall: 60% semantic + 40% title keyword when content present
+            if content:
+                overall = 0.6 * comprehensiveness + 0.4 * title_score
+            else:
+                overall = title_score
+
+            results.append({
+                "title": title,
+                "matched_controls": matched_controls,
+                "obligation_strength": obligation,
+                "comprehensiveness": round(comprehensiveness, 4),
+                "overall_score": round(overall, 4),
+            })
+
+        log.info(
+            "Content analysis for %s: %d documents, %d with content",
+            framework,
+            len(results),
+            sum(1 for r in results if r["comprehensiveness"] > 0.0),
+        )
+
+        return results
+
     def analyze_policy_content(self, session: Session) -> list[PolicyStatus]:
         """Analyze all Confluence page findings for governance quality.
 
@@ -237,6 +453,10 @@ class GovernanceAnalyzer:
         1. Exist (any Confluence page matches the policy area keywords)
         2. Are current (last modified within the staleness threshold)
         3. Have been reviewed/approved
+
+        When a finding's detail contains a ``content`` or ``body`` field,
+        semantic TF-IDF similarity is used alongside title keyword matching
+        (60% semantic + 40% title). Otherwise falls back to title-only.
         """
         policy_map = self._get_policy_map(framework)
         if not policy_map:
@@ -253,6 +473,16 @@ class GovernanceAnalyzer:
 
         statuses = self.analyze_policy_content(session)
 
+        # Pre-extract content from findings for semantic matching
+        findings = self._get_confluence_findings(session)
+        content_by_title: dict[str, str] = {}
+        for finding in findings:
+            detail = finding.detail if isinstance(finding.detail, dict) else {}
+            title = detail.get("title", finding.resource_name or "")
+            content = detail.get("content", "") or detail.get("body", "")
+            if title and content:
+                content_by_title[title] = content
+
         # Build a set of all policy areas that are covered by existing docs
         total_required = 0
         covered = 0
@@ -264,7 +494,7 @@ class GovernanceAnalyzer:
                 total_required += 1
                 required_lower = required_doc.lower()
 
-                # Find a matching status entry
+                # Title-based matching (existing behavior)
                 matching = [
                     s for s in statuses
                     if any(
@@ -274,6 +504,27 @@ class GovernanceAnalyzer:
                     )
                     or required_lower in s.page_title.lower()
                 ]
+
+                # Semantic content matching: check all docs with content
+                # against the required document description
+                if not matching:
+                    for s in statuses:
+                        content = content_by_title.get(s.page_title, "")
+                        if content:
+                            semantic_score = self._score_comprehensiveness(
+                                content, required_doc,
+                            )
+                            title_areas = s.matched_policy_areas
+                            total_areas = len(_POLICY_KEYWORDS)
+                            title_score = (
+                                len(title_areas) / total_areas
+                                if total_areas > 0
+                                else 0.0
+                            )
+                            combined = 0.6 * semantic_score + 0.4 * title_score
+                            # Threshold: combined score > 0.3 indicates a match
+                            if combined > 0.3:
+                                matching.append(s)
 
                 if matching:
                     covered += 1

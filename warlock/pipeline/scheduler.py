@@ -27,6 +27,8 @@ DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
     "retention_purge": {"interval_minutes": 10080, "enabled": True},  # weekly
     "ccm_stale_check": {"interval_minutes": 60, "enabled": True},     # CCM stale control scan
     "risk_reeval_check": {"interval_minutes": 360, "enabled": True},  # risk acceptance re-eval (6h)
+    # Monte Carlo pre-computation cache warm (opt-in, weekly by default)
+    "risk_cache_precompute": {"interval_minutes": 10080, "enabled": False},
 }
 
 
@@ -83,6 +85,15 @@ class PipelineScheduler:
                 interval_seconds=interval * 60,
                 enabled=config["enabled"],
             )
+
+        # Honour opt-in config flag for risk cache pre-computation
+        try:
+            from warlock.config import get_settings
+            settings = get_settings()
+            precompute_enabled = getattr(settings, "risk_cache_precompute_enabled", False)
+            self._schedules["risk_cache_precompute"].enabled = precompute_enabled
+        except Exception:  # pragma: no cover
+            pass  # Config not available (tests, etc.) — keep default disabled
 
     def start(self) -> None:
         """Start the scheduler in a background daemon thread."""
@@ -163,6 +174,7 @@ class PipelineScheduler:
             "retention_purge": self._execute_retention,
             "ccm_stale_check": self._execute_ccm_stale,
             "risk_reeval_check": self._execute_risk_reeval,
+            "risk_cache_precompute": self._execute_risk_cache_precompute,
         }
 
         handler = handlers.get(schedule_name)
@@ -346,6 +358,32 @@ class PipelineScheduler:
             )
         else:
             log.info("Risk re-evaluation check: no acceptances triggered")
+
+    def _execute_risk_cache_precompute(self) -> None:
+        """Pre-warm the Monte Carlo risk cache for all active frameworks."""
+        from warlock.config import get_settings
+        from warlock.db.engine import get_session, init_db
+        from warlock.assessors.risk_engine import RiskEngine
+
+        settings = get_settings()
+        if not getattr(settings, "risk_cache_precompute_enabled", False):
+            log.debug("risk_cache_precompute skipped — risk_cache_precompute_enabled=False")
+            return
+
+        init_db()
+        engine = RiskEngine()
+
+        with get_session() as session:
+            summary = engine.precompute_all_frameworks(session)
+
+        hits = sum(1 for v in summary.values() if v.get("cached"))
+        misses = len(summary) - hits
+        log.info(
+            "risk_cache_precompute: %d frameworks processed — %d cache hits, %d simulations run",
+            len(summary),
+            hits,
+            misses,
+        )
 
     @property
     def status(self) -> dict[str, Any]:

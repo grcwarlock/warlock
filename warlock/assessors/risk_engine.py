@@ -18,6 +18,7 @@ import json
 import logging
 import math
 import random
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -674,6 +675,7 @@ class RiskEngine:
                         current_hash[:8],
                         cache_ttl_hours,
                     )
+                    self._record_hit()
                     return cached.details.get("portfolio_result", {})
 
         # --- Convert postures to scenarios ---
@@ -701,7 +703,8 @@ class RiskEngine:
                 },
             }
 
-        # Run portfolio simulation
+        # Run portfolio simulation (cache miss — record before simulation)
+        self._record_miss()
         portfolio = self.simulate_portfolio(scenarios, iterations=n)
         portfolio["framework"] = framework
 
@@ -739,6 +742,239 @@ class RiskEngine:
             portfolio["portfolio"]["total_mean_ale"],
         )
         return portfolio
+
+    def precompute_all_frameworks(
+        self,
+        session: Session,
+        cache_ttl_hours: float = 4.0,
+    ) -> dict[str, dict[str, Any]]:
+        """Pre-warm the Monte Carlo cache for every active framework.
+
+        Discovers active frameworks by querying the distinct set of framework
+        values present in ``ControlResult``.  For each framework, calls
+        ``analyze_framework_risk()`` which populates the DB-backed cache when a
+        valid cached entry does not already exist.
+
+        Args:
+            session: SQLAlchemy session.
+            cache_ttl_hours: TTL forwarded to ``analyze_framework_risk``.
+
+        Returns:
+            Summary dict keyed by framework name::
+
+                {
+                    "nist_800_53": {"cached": False, "duration_ms": 4312},
+                    "soc2":        {"cached": True,  "duration_ms": 3},
+                }
+
+            ``cached=True`` means a fresh cache entry was found and the
+            simulation was skipped; ``cached=False`` means the simulation ran
+            and results were written to the DB.
+        """
+        from sqlalchemy import distinct as sa_distinct
+        from warlock.db.models import ControlResult
+
+        frameworks: list[str] = [
+            row[0]
+            for row in session.query(sa_distinct(ControlResult.framework)).all()
+            if row[0]
+        ]
+
+        if not frameworks:
+            log.warning("precompute_all_frameworks: no active frameworks found in ControlResult")
+            return {}
+
+        log.info("precompute_all_frameworks: warming cache for %d frameworks", len(frameworks))
+        summary: dict[str, dict[str, Any]] = {}
+
+        for framework in sorted(frameworks):
+            # Determine whether a valid cache entry exists *before* calling
+            # analyze_framework_risk so we can accurately report hit/miss.
+            hit = self._cache_hit(session, framework, cache_ttl_hours)
+
+            t0 = datetime.now(timezone.utc)
+            try:
+                self.analyze_framework_risk(
+                    session,
+                    framework,
+                    cache_ttl_hours=cache_ttl_hours,
+                )
+            except Exception as exc:  # pragma: no cover
+                log.exception("precompute_all_frameworks: error processing %s", framework)
+                summary[framework] = {"cached": hit, "duration_ms": 0, "error": str(exc)}
+                continue
+
+            duration_ms = int(
+                (datetime.now(timezone.utc) - t0).total_seconds() * 1000
+            )
+            summary[framework] = {"cached": hit, "duration_ms": duration_ms}
+            log.info(
+                "precompute_all_frameworks: %s — %s in %d ms",
+                framework,
+                "cache hit" if hit else "simulation ran",
+                duration_ms,
+            )
+
+        return summary
+
+    def _cache_hit(
+        self,
+        session: Session,
+        framework: str,
+        cache_ttl_hours: float,
+    ) -> bool:
+        """Return True if a valid, hash-matching cache entry exists.
+
+        This is a lightweight pre-check used by ``precompute_all_frameworks``
+        to distinguish cache hits from misses without duplicating the logic
+        embedded inside ``analyze_framework_risk``.
+        """
+        if cache_ttl_hours <= 0:
+            return False
+
+        aggregator = PostureAggregator()
+        postures = aggregator.aggregate_framework(session, framework)
+        if not postures:
+            return False
+
+        current_hash = _posture_hash(postures)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=cache_ttl_hours)
+        cached = (
+            session.query(RiskAnalysis)
+            .filter(
+                RiskAnalysis.framework == framework,
+                RiskAnalysis.created_at >= cutoff,
+                RiskAnalysis.details.isnot(None),
+            )
+            .order_by(RiskAnalysis.created_at.desc())
+            .first()
+        )
+        if cached and isinstance(cached.details, dict):
+            return cached.details.get("posture_hash") == current_hash
+        return False
+
+    # -------------------------------------------------------------------------
+    # Cache stats
+    # -------------------------------------------------------------------------
+
+    # Module-level hit/miss counters shared across all RiskEngine instances.
+    # Protected by _stats_lock; updated by analyze_framework_risk via the
+    # internal tracking hooks below.
+    _cache_hits: int = 0
+    _cache_misses: int = 0
+    _stats_lock: threading.Lock = threading.Lock()
+
+    @classmethod
+    def _record_hit(cls) -> None:
+        """Increment the in-process cache hit counter."""
+        with cls._stats_lock:
+            cls._cache_hits += 1
+
+    @classmethod
+    def _record_miss(cls) -> None:
+        """Increment the in-process cache miss counter."""
+        with cls._stats_lock:
+            cls._cache_misses += 1
+
+    def get_cache_stats(self, session: Session) -> dict[str, Any]:
+        """Return runtime statistics about the Monte Carlo DB cache.
+
+        Queries the ``RiskAnalysis`` table for aggregate information and
+        combines it with the in-process hit/miss counters that are incremented
+        each time ``analyze_framework_risk`` is called.
+
+        Returns:
+            Dict with the following keys:
+
+            * ``total_entries``       — total RiskAnalysis rows in the DB.
+            * ``oldest_entry_age_hours`` — age of the oldest entry in hours,
+              or ``None`` when the table is empty.
+            * ``entries_per_framework`` — ``{framework: count}`` dict.
+            * ``cache_hits``          — cumulative in-process hit count.
+            * ``cache_misses``        — cumulative in-process miss count.
+            * ``hit_rate``            — float 0.0-1.0, or ``None`` when no
+              calls have been recorded yet.
+        """
+        from sqlalchemy import func as sa_func
+
+        # Total rows
+        total: int = session.query(sa_func.count(RiskAnalysis.id)).scalar() or 0
+
+        # Oldest created_at
+        oldest = session.query(sa_func.min(RiskAnalysis.created_at)).scalar()
+        if oldest is not None:
+            # Ensure timezone-aware before subtraction
+            if oldest.tzinfo is None:
+                oldest = oldest.replace(tzinfo=timezone.utc)
+            age_hours: float | None = (
+                datetime.now(timezone.utc) - oldest
+            ).total_seconds() / 3600.0
+        else:
+            age_hours = None
+
+        # Per-framework counts
+        rows = (
+            session.query(RiskAnalysis.framework, sa_func.count(RiskAnalysis.id))
+            .group_by(RiskAnalysis.framework)
+            .all()
+        )
+        per_framework: dict[str, int] = {fw: cnt for fw, cnt in rows if fw}
+
+        # In-process counters
+        with self._stats_lock:
+            hits = self._cache_hits
+            misses = self._cache_misses
+
+        total_calls = hits + misses
+        hit_rate: float | None = (hits / total_calls) if total_calls > 0 else None
+
+        return {
+            "total_entries": total,
+            "oldest_entry_age_hours": round(age_hours, 2) if age_hours is not None else None,
+            "entries_per_framework": per_framework,
+            "cache_hits": hits,
+            "cache_misses": misses,
+            "hit_rate": round(hit_rate, 4) if hit_rate is not None else None,
+        }
+
+    # -------------------------------------------------------------------------
+    # Cache invalidation
+    # -------------------------------------------------------------------------
+
+    def invalidate_cache(
+        self,
+        session: Session,
+        framework: str | None = None,
+    ) -> dict[str, Any]:
+        """Delete cached RiskAnalysis entries from the database.
+
+        Args:
+            session: SQLAlchemy session.  The caller is responsible for
+                committing the transaction after this method returns.
+            framework: If given, only entries for that framework are deleted.
+                Pass ``None`` to clear **all** cached entries.
+
+        Returns:
+            Dict with ``{"deleted": int, "framework": str | None}``.
+        """
+        q = session.query(RiskAnalysis)
+        if framework is not None:
+            q = q.filter(RiskAnalysis.framework == framework)
+
+        # Count before delete for the summary
+        count = q.count()
+        q.delete(synchronize_session="fetch")
+
+        if framework is not None:
+            log.info(
+                "invalidate_cache: deleted %d entries for framework '%s'",
+                count,
+                framework,
+            )
+        else:
+            log.info("invalidate_cache: deleted %d entries (all frameworks)", count)
+
+        return {"deleted": count, "framework": framework}
 
 
 # ---------------------------------------------------------------------------

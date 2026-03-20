@@ -422,51 +422,8 @@ def oscal(framework, system_name, output, fmt, description, ai):
         console.print(f"[green]OSCAL {fmt.upper()} written to {dest}[/green]")
 
 
-@cli.command()
-@click.option("-f", "--framework", required=True, help="Framework to analyze (e.g. nist_800_53)")
-@click.option("-n", "--iterations", default=10000, help="Monte Carlo iterations")
-def risk(framework: str, iterations: int) -> None:
-    """Run FAIR risk quantification for a framework."""
-    from warlock.assessors.risk_engine import RiskEngine
-    from warlock.db.engine import get_session, init_db
-
-    init_db()
-    engine = RiskEngine(default_iterations=iterations)
-
-    console.print("[dim]Running Monte Carlo simulation...[/dim]")
-
-    with get_session() as session:
-        result = engine.analyze_framework_risk(session, framework, iterations=iterations)
-
-    scenarios = result.get("scenarios", [])
-    portfolio = result.get("portfolio", {})
-
-    if not scenarios:
-        console.print(f"[dim]No risk scenarios for framework '{framework}'.[/dim]")
-        return
-
-    table = Table(title=f"FAIR Risk Analysis — {framework}")
-    table.add_column("Scenario", style="cyan")
-    table.add_column("Mean ALE", justify="right")
-    table.add_column("VaR 95", justify="right")
-    table.add_column("VaR 99", justify="right")
-    table.add_column("Control Eff.", justify="right")
-
-    for s in scenarios:
-        table.add_row(
-            s["name"],
-            f"${s['mean_ale']:,.0f}",
-            f"${s['var_95']:,.0f}",
-            f"${s['var_99']:,.0f}",
-            f"{s['control_effectiveness']:.0%}",
-        )
-
-    console.print(table)
-    console.print()
-    console.print(f"[bold]Portfolio Total Mean ALE:[/bold] ${portfolio['total_mean_ale']:,.0f}")
-    console.print(f"[bold]Portfolio Total VaR 95:[/bold]  ${portfolio['total_var_95']:,.0f}")
-    console.print(f"[bold]Scenarios:[/bold]               {portfolio['scenario_count']}")
-    console.print(f"[bold]Iterations:[/bold]              {portfolio['iterations']:,}")
+# NOTE: The `risk` command is now a group defined below (line ~924).
+# The original `warlock risk` command is now `warlock risk analyze`.
 
 
 @cli.command()
@@ -914,6 +871,189 @@ def scheduler_status() -> None:
     console.print(f"  Next run:   {st['next_run'] or 'n/a'}")
     if st["last_error"]:
         console.print(f"  Last error: [red]{st['last_error']}[/red]")
+
+
+# ---------------------------------------------------------------------------
+# Risk commands
+# ---------------------------------------------------------------------------
+
+
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def risk(ctx: click.Context) -> None:
+    """Monte Carlo risk quantification and cache management."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@risk.command("analyze")
+@click.option("-f", "--framework", required=True, help="Framework to analyze (e.g. nist_800_53)")
+@click.option("-n", "--iterations", default=10000, help="Monte Carlo iterations")
+def risk_analyze(framework: str, iterations: int) -> None:
+    """Run FAIR risk quantification for a framework."""
+    from warlock.assessors.risk_engine import RiskEngine
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    engine = RiskEngine(default_iterations=iterations)
+
+    console.print("[dim]Running Monte Carlo simulation...[/dim]")
+
+    with get_session() as session:
+        result = engine.analyze_framework_risk(session, framework, iterations=iterations)
+
+    scenarios = result.get("scenarios", [])
+    portfolio = result.get("portfolio", {})
+
+    if not scenarios:
+        console.print(f"[dim]No risk scenarios for framework '{framework}'.[/dim]")
+        return
+
+    table = Table(title=f"FAIR Risk Analysis — {framework}")
+    table.add_column("Scenario", style="cyan")
+    table.add_column("Mean ALE", justify="right")
+    table.add_column("VaR 95", justify="right")
+    table.add_column("VaR 99", justify="right")
+    table.add_column("Control Eff.", justify="right")
+
+    for s in scenarios:
+        table.add_row(
+            s["name"],
+            f"${s['mean_ale']:,.0f}",
+            f"${s['var_95']:,.0f}",
+            f"${s['var_99']:,.0f}",
+            f"{s['control_effectiveness']:.0%}",
+        )
+
+    console.print(table)
+    console.print()
+    console.print(f"[bold]Portfolio Total Mean ALE:[/bold] ${portfolio['total_mean_ale']:,.0f}")
+    console.print(f"[bold]Portfolio Total VaR 95:[/bold]  ${portfolio['total_var_95']:,.0f}")
+    console.print(f"[bold]Scenarios:[/bold]               {portfolio['scenario_count']}")
+    console.print(f"[bold]Iterations:[/bold]              {portfolio['iterations']:,}")
+
+
+@risk.command("precompute")
+@click.option(
+    "--ttl",
+    default=4.0,
+    show_default=True,
+    help="Cache TTL in hours.  Entries fresher than this are not re-simulated.",
+)
+def risk_precompute(ttl: float) -> None:
+    """Pre-warm the Monte Carlo cache for all active frameworks.
+
+    Discovers active frameworks from ControlResult, then runs
+    analyze_framework_risk() for each one.  Frameworks with a valid
+    cached entry are skipped (cache hit); stale or missing entries
+    trigger a full simulation (cache miss).
+    """
+    from warlock.assessors.risk_engine import RiskEngine
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    engine = RiskEngine()
+
+    with get_session() as session:
+        summary = engine.precompute_all_frameworks(session, cache_ttl_hours=ttl)
+
+    if not summary:
+        console.print("[dim]No active frameworks found. Run 'warlock collect' first.[/dim]")
+        return
+
+    table = Table(title="Monte Carlo Cache Pre-computation Results")
+    table.add_column("Framework", style="cyan")
+    table.add_column("Cache Hit", justify="center")
+    table.add_column("Duration (ms)", justify="right")
+    table.add_column("Notes", style="dim")
+
+    hits = 0
+    for framework in sorted(summary):
+        entry = summary[framework]
+        cached = entry.get("cached", False)
+        duration_ms = entry.get("duration_ms", 0)
+        error = entry.get("error")
+
+        if cached:
+            hits += 1
+            hit_display = "[green]yes[/green]"
+            notes = "skipped — fresh cache"
+        elif error:
+            hit_display = "[red]err[/red]"
+            notes = error[:60]
+        else:
+            hit_display = "[yellow]no[/yellow]"
+            notes = "simulation ran"
+
+        table.add_row(framework, hit_display, str(duration_ms), notes)
+
+    console.print(table)
+
+    misses = len(summary) - hits
+    console.print(
+        f"\n[bold]Summary:[/bold] {len(summary)} frameworks — "
+        f"[green]{hits} cache hits[/green], "
+        f"[yellow]{misses} simulations run[/yellow]"
+    )
+
+
+@risk.command("cache-stats")
+def risk_cache_stats() -> None:
+    """Show Monte Carlo DB cache statistics."""
+    from warlock.assessors.risk_engine import RiskEngine
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    engine = RiskEngine()
+
+    with get_session() as session:
+        stats = engine.get_cache_stats(session)
+
+    console.print("\n[bold]Monte Carlo Cache Statistics[/bold]")
+    console.print(f"  Total cached entries:   {stats['total_entries']}")
+    age = stats["oldest_entry_age_hours"]
+    console.print(f"  Oldest entry age:       {f'{age:.1f} hours' if age is not None else 'n/a'}")
+
+    hit_rate = stats["hit_rate"]
+    hr_display = f"{hit_rate * 100:.1f}%" if hit_rate is not None else "n/a (no calls recorded)"
+    console.print(f"  Cache hits (runtime):   {stats['cache_hits']}")
+    console.print(f"  Cache misses (runtime): {stats['cache_misses']}")
+    console.print(f"  Hit rate:               {hr_display}")
+
+    if stats["entries_per_framework"]:
+        console.print()
+        table = Table(title="Entries per Framework")
+        table.add_column("Framework", style="cyan")
+        table.add_column("Entries", justify="right")
+        for fw, count in sorted(stats["entries_per_framework"].items()):
+            table.add_row(fw, str(count))
+        console.print(table)
+    else:
+        console.print("\n[dim]No cached entries found.[/dim]")
+
+
+@risk.command("invalidate")
+@click.option("--framework", "-f", default=None, help="Framework to invalidate (omit for all)")
+@click.confirmation_option(prompt="This will delete cached risk analyses. Continue?")
+def risk_invalidate(framework: str | None) -> None:
+    """Delete cached Monte Carlo entries from the database.
+
+    Pass --framework to target a single framework, or omit it to
+    clear the entire cache.
+    """
+    from warlock.assessors.risk_engine import RiskEngine
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    engine = RiskEngine()
+
+    with get_session() as session:
+        result = engine.invalidate_cache(session, framework=framework)
+
+    scope = f"framework '{framework}'" if framework else "all frameworks"
+    console.print(
+        f"[green]Invalidated {result['deleted']} cached entries for {scope}.[/green]"
+    )
 
 
 # ---------------------------------------------------------------------------

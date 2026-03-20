@@ -10,36 +10,36 @@ Generated 2026-03-19 from 9 specialist agent analyses.
 Blocks production, revenue, or compliance. No customer can use this without these.
 
 ### Performance (8 items — most are <50 lines)
-- [ ] 1. Parallel connector collection — `ThreadPoolExecutor` in `collect_all()` (S)
-- [ ] 2. Batch OPA evaluation — 592 HTTP calls → 7 per framework (M)
-- [ ] 3. Fix double-normalization in OPA evaluator (S)
-- [ ] 4. Framework YAML `@lru_cache` — stop re-parsing disk every run (S)
-- [ ] 5. Coverage summary caching — hottest endpoint does full table scan (S)
-- [ ] 6. Parallel AI calls for SSP export — `asyncio.gather` (M)
-- [ ] 7. Prometheus `/metrics` endpoint (S)
-- [ ] 8. Run-ID log correlation (S)
+- [x] 1. Parallel connector collection — `ThreadPoolExecutor` in `collect_all()` (S)
+- [x] 2. Batch OPA evaluation — 592 HTTP calls → 7 per framework (M)
+- [x] 3. Fix double-normalization in OPA evaluator (S)
+- [x] 4. Framework YAML `@lru_cache` — stop re-parsing disk every run (S)
+- [x] 5. Coverage summary caching — hottest endpoint does full table scan (S)
+- [x] 6. Parallel AI calls for SSP export — `asyncio.gather` (M)
+- [x] 7. Prometheus `/metrics` endpoint (S)
+- [x] 8. Run-ID log correlation (S)
 
 ### Database (3 items)
-- [ ] 9. JSON → JSONB migration for PostgreSQL (S)
-- [ ] 10. Materialized views — coverage, posture, framework rollups (M)
-- [ ] 11. Composite index on `control_results(framework, status, assessed_at)` (S)
+- [x] 9. JSON → JSONB migration for PostgreSQL (S)
+- [x] 10. Materialized views — coverage, posture, framework rollups (M)
+- [x] 11. Composite index on `control_results(framework, status, assessed_at)` (S)
 
 ### Compliance (5 items)
-- [ ] 12. GDPR assertion bindings + Rego policies (L)
-- [ ] 13. HIPAA assertion bindings (S)
-- [ ] 14. FedRAMP SSP template + CRM + CIS generation (XL)
-- [ ] 15. SOC 2 Type II historical evidence retention (L)
-- [ ] 16. ISO 27001 Statement of Applicability export (M)
+- [x] 12. GDPR assertion bindings + Rego policies (L)
+- [x] 13. HIPAA assertion bindings (S)
+- [x] 14. FedRAMP SSP template + CRM + CIS generation (XL)
+- [x] 15. SOC 2 Type II historical evidence retention (L)
+- [x] 16. ISO 27001 Statement of Applicability export (M)
 
 ### Documentation (3 items)
-- [ ] 17. API documentation — mount FastAPI `/docs` (S)
-- [ ] 18. Deployment guide (L)
-- [ ] 19. CONTRIBUTING.md (S)
+- [x] 17. API documentation — mount FastAPI `/docs` (S)
+- [x] 18. Deployment guide (L)
+- [x] 19. CONTRIBUTING.md (S)
 
 ### Security (3 items)
-- [ ] 20. Evidence chain of custody — hash verification (M)
-- [ ] 21. MFA/TOTP support (L)
-- [ ] 22. Continuous control monitoring — event-driven reassessment (L)
+- [x] 20. Evidence chain of custody — hash verification (M)
+- [x] 21. MFA/TOTP support (L)
+- [x] 22. Continuous control monitoring — event-driven reassessment (L)
 
 ---
 
@@ -48,54 +48,54 @@ Blocks production, revenue, or compliance. No customer can use this without thes
 Competitive parity. Every GRC tool has these.
 
 ### Framework Coverage (6 items)
-- [ ] 23. PCI DSS 4.0 framework YAML + assertions + Rego (XL)
-- [ ] 24. NIST CSF 2.0 (L)
-- [ ] 25. EU AI Act / ISO 42001 depth (M)
-- [ ] 26. SEC cybersecurity disclosure rules (M)
-- [ ] 27. CMMC L2 assertion bindings (M)
-- [ ] 28. UCF crosswalk expansion to all 10 frameworks (M)
+- [x] 23. PCI DSS 4.0 framework YAML + assertions + Rego (XL)
+- [x] 24. NIST CSF 2.0 (L)
+- [x] 25. EU AI Act / ISO 42001 depth (M)
+- [x] 26. SEC cybersecurity disclosure rules (M)
+- [x] 27. CMMC L2 assertion bindings (M)
+- [x] 28. UCF crosswalk expansion to all 10 frameworks (M)
 
 ### Risk Management (5 items)
-- [ ] 29. Risk appetite/tolerance framework (M)
-- [ ] 30. MTTD/MTTR tracking — data exists, compute it (S)
-- [ ] 31. Risk acceptance re-evaluation triggers — model field exists, wire it (S)
-- [ ] 32. Loss exceedance curves for cyber insurance (M)
-- [ ] 33. Supply chain concentration analysis (M)
+- [x] 29. Risk appetite/tolerance framework (M)
+- [x] 30. MTTD/MTTR tracking — data exists, compute it (S)
+- [x] 31. Risk acceptance re-evaluation triggers — model field exists, wire it (S)
+- [x] 32. Loss exceedance curves for cyber insurance (M)
+- [x] 33. Supply chain concentration analysis (M)
 
 ### Platform (11 items)
-- [ ] 34. Webhook outbound — EventBus subscribers for Jira/Slack/ServiceNow (M)
-- [ ] 35. Evidence vault — S3/GCS for file-based evidence (M)
-- [ ] 36. Read replica routing (M)
-- [ ] 37. PgBouncer integration (S)
-- [ ] 38. Worker pool for scheduler (M)
-- [ ] 39. Terraform KMS modules — AWS, Azure, GCP (S per module)
-- [ ] 40. Terraform Config/GuardDuty/CloudTrail org modules (M per module)
-- [ ] 41. Terraform self-registration evidence pattern (M)
-- [ ] 42. Terraform drift detection — state vs cloud (L)
-- [ ] 43. Plan-time Rego evaluation via conftest in CI (M)
-- [ ] 44. Batch `session.flush()` per-connector instead of per-record (S) *(was missing)*
+- [x] 34. Webhook outbound — EventBus subscribers for Jira/Slack/ServiceNow (M)
+- [x] 35. Evidence vault — S3/GCS for file-based evidence (M)
+- [x] 36. Read replica routing (M)
+- [x] 37. PgBouncer integration (S)
+- [x] 38. Worker pool for scheduler (M)
+- [x] 39. Terraform KMS modules — AWS, Azure, GCP (S per module)
+- [x] 40. Terraform Config/GuardDuty/CloudTrail org modules (M per module)
+- [x] 41. Terraform self-registration evidence pattern (M)
+- [x] 42. Terraform drift detection — state vs cloud (L)
+- [x] 43. Plan-time Rego evaluation via conftest in CI (M)
+- [x] 44. Batch `session.flush()` per-connector instead of per-record (S) *(was missing)*
 
 ### Trust & Transparency (3 items)
-- [ ] 45. SOC 2 report portal — NDA-gated document access (M)
-- [ ] 46. Security questionnaire auto-response (L)
-- [ ] 47. Real-time compliance dashboard (M)
+- [x] 45. SOC 2 report portal — NDA-gated document access (M)
+- [x] 46. Security questionnaire auto-response (L)
+- [x] 47. Real-time compliance dashboard (M)
 
 ### Performance (3 items — were missing)
-- [ ] 52. Monte Carlo inner Poisson vectorization (M) *(was missing)*
-- [ ] 53. Monte Carlo pre-computation cache (S) *(was missing)*
-- [ ] 54. Session `expunge_all()` after connector batch — memory relief (S) *(was missing)*
+- [x] 52. Monte Carlo inner Poisson vectorization (M) *(was missing)*
+- [x] 53. Monte Carlo pre-computation cache (S) *(was missing)*
+- [x] 54. Session `expunge_all()` after connector batch — memory relief (S) *(was missing)*
 
 ### Architecture (3 items — were missing)
-- [ ] 55. API pagination enforcement — hard max on all list endpoints (S) *(was missing)*
-- [ ] 56. Audit log external sink — S3/CloudWatch/Splunk (S) *(was missing)*
-- [ ] 57. Regulatory change management — track framework version updates (M) *(was missing)*
+- [x] 55. API pagination enforcement — hard max on all list endpoints (S) *(was missing)*
+- [x] 56. Audit log external sink — S3/CloudWatch/Splunk (S) *(was missing)*
+- [x] 57. Regulatory change management — track framework version updates (M) *(was missing)*
 
 ### Security (2 items — were missing)
-- [ ] 58. JWT refresh token mechanism (M) *(was missing)*
-- [ ] 59. Control testing automation — active validation, not just observation (L) *(was missing)*
+- [x] 58. JWT refresh token mechanism (M) *(was missing)*
+- [x] 59. Control testing automation — active validation, not just observation (L) *(was missing)*
 
 ### Compliance (1 item — was missing)
-- [ ] 60. Governance control content analysis — beyond title-matching in Confluence (M) *(was missing)*
+- [x] 60. Governance control content analysis — beyond title-matching in Confluence (M) *(was missing)*
 
 ---
 
