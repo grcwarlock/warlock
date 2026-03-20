@@ -12,11 +12,9 @@ from typing import Any
 from textual import on, work
 from textual.app import ComposeResult
 from textual.reactive import reactive
-from textual.screen import Screen
+from textual.containers import VerticalScroll
 from textual.widgets import (
     DataTable,
-    Footer,
-    Header,
     Static,
     TabbedContent,
     TabPane,
@@ -158,15 +156,12 @@ class DetailPanel(Static):
 # ---------------------------------------------------------------------------
 
 
-class IssuesScreen(Screen):
+class IssuesScreen(VerticalScroll):
     """Combined Issues, POA&Ms, Risk Acceptances, and Compensating Controls."""
-
-    TITLE = "Issues & POA&M Management"
-    SUB_TITLE = "Warlock GRC"
 
     DEFAULT_CSS = """
     IssuesScreen {
-        layout: vertical;
+        padding: 1 1;
     }
 
     .stats-bar {
@@ -184,11 +179,6 @@ class IssuesScreen(Screen):
     }
     """
 
-    BINDINGS = [
-        ("escape", "app.pop_screen", "Back"),
-        ("r", "refresh", "Refresh"),
-    ]
-
     # Internal state ---------------------------------------------------------
 
     _issues: list[Any] = []
@@ -200,31 +190,29 @@ class IssuesScreen(Screen):
     # Compose ----------------------------------------------------------------
 
     def compose(self) -> ComposeResult:
-        yield Header()
         with TabbedContent("Issues", "POA&Ms", "Risk Acceptances", "Compensating Controls"):
-            with TabPane("Issues", id="tab-issues"):
+            with TabPane("Issues", id="issues-sub-issues"):
                 yield IssuesStats(id="issues-stats", classes="stats-bar")
                 yield DataTable(
                     id="issues-table", cursor_type="row", zebra_stripes=True, classes="tab-table"
                 )
                 yield DetailPanel(id="issues-detail")
-            with TabPane("POA&Ms", id="tab-poams"):
+            with TabPane("POA&Ms", id="issues-sub-poams"):
                 yield POAMStats(id="poams-stats", classes="stats-bar")
                 yield DataTable(
                     id="poams-table", cursor_type="row", zebra_stripes=True, classes="tab-table"
                 )
                 yield DetailPanel(id="poams-detail")
-            with TabPane("Risk Acceptances", id="tab-ra"):
+            with TabPane("Risk Acceptances", id="issues-sub-ra"):
                 yield DataTable(
                     id="ra-table", cursor_type="row", zebra_stripes=True, classes="tab-table"
                 )
                 yield DetailPanel(id="ra-detail")
-            with TabPane("Compensating Controls", id="tab-cc"):
+            with TabPane("Compensating Controls", id="issues-sub-cc"):
                 yield DataTable(
                     id="cc-table", cursor_type="row", zebra_stripes=True, classes="tab-table"
                 )
                 yield DetailPanel(id="cc-detail")
-        yield Footer()
 
     # Lifecycle --------------------------------------------------------------
 

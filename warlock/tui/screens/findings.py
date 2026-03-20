@@ -14,11 +14,9 @@ from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.reactive import reactive
-from textual.screen import Screen
+from textual.containers import VerticalScroll
 from textual.widgets import (
     DataTable,
-    Footer,
-    Header,
     Input,
     Select,
     Static,
@@ -98,15 +96,12 @@ class FindingDetail(Static):
 # ---------------------------------------------------------------------------
 
 
-class FindingsScreen(Screen):
+class FindingsScreen(VerticalScroll):
     """Interactive findings browser with filtering and detail view."""
-
-    TITLE = "Findings Browser"
-    SUB_TITLE = "Warlock GRC"
 
     DEFAULT_CSS = """
     FindingsScreen {
-        layout: vertical;
+        padding: 1 1;
     }
 
     #findings-stats {
@@ -140,12 +135,6 @@ class FindingsScreen(Screen):
     }
     """
 
-    BINDINGS = [
-        ("escape", "app.pop_screen", "Back"),
-        ("r", "refresh", "Refresh"),
-        ("slash", "focus_search", "Search"),
-    ]
-
     # Internal state ---------------------------------------------------------
 
     _findings: list[Any] = []
@@ -158,7 +147,6 @@ class FindingsScreen(Screen):
     # Compose ----------------------------------------------------------------
 
     def compose(self) -> ComposeResult:
-        yield Header()
         yield FindingsStats(id="findings-stats")
         with Horizontal(id="filter-bar"):
             yield Input(placeholder="Search findings (title, resource, control)...", id="search")
@@ -175,10 +163,14 @@ class FindingsScreen(Screen):
                 id="severity-filter",
                 allow_blank=False,
             )
-            yield Select([], value="all", id="source-filter", allow_blank=False)
+            yield Select(
+                [("All Sources", "all")],
+                value="all",
+                id="source-filter",
+                allow_blank=False,
+            )
         yield DataTable(id="findings-table", cursor_type="row", zebra_stripes=True)
         yield FindingDetail(id="finding-detail")
-        yield Footer()
 
     # Lifecycle --------------------------------------------------------------
 
