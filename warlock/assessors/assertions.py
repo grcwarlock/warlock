@@ -998,6 +998,283 @@ engine.bind_control("ucf", "UCF-GOV-6", "policy_reviewed_within_year")
 
 
 # ---------------------------------------------------------------------------
+# Control bindings — PCI DSS 4.0
+# ---------------------------------------------------------------------------
+
+_PCI_DSS_BINDINGS: list[tuple[str, str]] = [
+    # R1: Network Security Controls
+    ("R1.1", "no_open_security_groups"),
+    ("R1.2", "no_open_security_groups"),
+    ("R1.3", "no_open_security_groups"),
+    ("R1.4", "endpoint_protection_active"),
+    ("R1.5", "config_recorder_enabled"),
+    # R2: Secure Configurations
+    ("R2.1", "config_recorder_enabled"),
+    ("R2.2", "config_recorder_enabled"),
+    # R3: Protect Stored Account Data
+    ("R3.2", "dlp_policies_active"),
+    ("R3.3", "encryption_at_rest"),
+    ("R3.4", "encryption_at_rest"),
+    ("R3.5", "encryption_at_rest"),
+    ("R3.6", "encryption_at_rest"),
+    # R4: Cryptography During Transmission
+    ("R4.2", "dlp_policies_active"),
+    # R5: Malicious Software Protection
+    ("R5.1", "endpoint_protection_active"),
+    ("R5.2", "endpoint_protection_active"),
+    ("R5.3", "endpoint_protection_active"),
+    ("R5.4", "phishing_failure_rate"),
+    # R6: Secure Systems and Software
+    ("R6.1", "no_critical_code_vulns"),
+    ("R6.2", "no_critical_code_vulns"),
+    ("R6.3", "vulnerability_scan_current"),
+    ("R6.4", "vulnerability_scan_current"),
+    ("R6.5", "change_request_approved"),
+    # R7: Access Restriction
+    ("R7.1", "access_reviews_current"),
+    ("R7.2", "access_reviews_current"),
+    ("R7.3", "access_reviews_current"),
+    # R8: Authentication
+    ("R8.1", "mfa_enabled"),
+    ("R8.2", "mfa_enabled"),
+    ("R8.3", "password_policy_compliant"),
+    ("R8.4", "mfa_enabled"),
+    ("R8.5", "mfa_enabled"),
+    ("R8.6", "privileged_access_managed"),
+    # R10: Logging and Monitoring
+    ("R10.1", "cloudtrail_enabled"),
+    ("R10.2", "cloudtrail_enabled"),
+    ("R10.3", "cloudtrail_enabled"),
+    ("R10.4", "siem_monitoring_active"),
+    ("R10.5", "cloudtrail_enabled"),
+    ("R10.7", "siem_monitoring_active"),
+    # R11: Security Testing
+    ("R11.3", "vulnerability_scan_current"),
+    ("R11.5", "guardduty_enabled"),
+    ("R11.6", "config_recorder_enabled"),
+    # R12: Policies and Programs
+    ("R12.1", "policy_reviewed_within_year"),
+    ("R12.2", "policy_reviewed_within_year"),
+    ("R12.6", "training_completion_rate"),
+    ("R12.7", "background_check_completed"),
+    ("R12.10", "siem_monitoring_active"),
+]
+
+for _ctrl, _assertion in _PCI_DSS_BINDINGS:
+    engine.bind_control("pci_dss", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — NIST CSF 2.0
+# ---------------------------------------------------------------------------
+
+_NIST_CSF_BINDINGS: list[tuple[str, str]] = [
+    # Govern
+    ("GV.PO-01", "policy_reviewed_within_year"),
+    ("GV.PO-02", "policy_reviewed_within_year"),
+    ("GV.RR-04", "training_completion_rate"),
+    # Identify
+    ("ID.RA-01", "vulnerability_scan_current"),
+    ("ID.RA-02", "guardduty_enabled"),
+    ("ID.RA-03", "guardduty_enabled"),
+    # Protect
+    ("PR.AA-01", "access_reviews_current"),
+    ("PR.AA-03", "mfa_enabled"),
+    ("PR.AA-04", "privileged_access_managed"),
+    ("PR.AA-05", "access_reviews_current"),
+    ("PR.AT-01", "training_completion_rate"),
+    ("PR.AT-01", "phishing_failure_rate"),
+    ("PR.DS-01", "encryption_at_rest"),
+    ("PR.DS-02", "no_open_security_groups"),
+    ("PR.DS-11", "backup_job_successful"),
+    ("PR.PS-01", "config_recorder_enabled"),
+    ("PR.PS-02", "vulnerability_scan_current"),
+    ("PR.PS-04", "cloudtrail_enabled"),
+    ("PR.PS-06", "no_critical_code_vulns"),
+    ("PR.IR-01", "no_open_security_groups"),
+    # Detect
+    ("DE.CM-01", "guardduty_enabled"),
+    ("DE.CM-01", "securityhub_enabled"),
+    ("DE.CM-09", "endpoint_protection_active"),
+    ("DE.AE-02", "siem_monitoring_active"),
+    ("DE.AE-03", "siem_monitoring_active"),
+    # Respond
+    ("RS.MA-01", "siem_monitoring_active"),
+    ("RS.MA-05", "vulnerability_scan_current"),
+    # Recover
+    ("RC.RP-01", "backup_job_successful"),
+]
+
+for _ctrl, _assertion in _NIST_CSF_BINDINGS:
+    engine.bind_control("nist_csf", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — ISO 42001 (expanded from 3 to 20+)
+# ---------------------------------------------------------------------------
+
+_ISO42001_EXTRA_BINDINGS: list[tuple[str, str]] = [
+    ("A.2.2", "policy_reviewed_within_year"),       # AI policy document review
+    ("A.2.4", "policy_reviewed_within_year"),       # AI lifecycle policy review
+    ("A.3.2", "access_reviews_current"),            # Roles and responsibilities
+    ("A.4.3", "training_completion_rate"),           # Competence — training
+    ("A.4.4", "training_completion_rate"),           # Awareness — training
+    ("A.5.2", "vulnerability_scan_current"),        # Impact assessment — scanning
+    ("A.5.4", "guardduty_enabled"),                 # Ongoing impact monitoring
+    ("A.6.1.2", "policy_reviewed_within_year"),     # Responsible AI principles
+    ("A.6.2.3", "config_recorder_enabled"),         # Verification/validation
+    ("A.6.2.5", "encryption_at_rest"),              # Data management — encryption
+    ("A.6.2.6", "no_public_storage"),               # Data preparation — no public
+    ("A.6.2.11", "change_request_approved"),        # System deployment — change mgmt
+    ("A.7.2", "config_recorder_enabled"),           # Data quality
+    ("A.7.3", "cloudtrail_enabled"),                # Data provenance — audit trail
+    ("A.7.4", "encryption_at_rest"),                # Data preparation — encrypted
+    ("A.7.5", "cloudtrail_enabled"),                # Acquiring data — audit
+    ("A.9.3", "no_open_security_groups"),           # Misuse prevention — network
+    ("A.10.3", "access_reviews_current"),           # Supplier monitoring — reviews
+]
+
+for _ctrl, _assertion in _ISO42001_EXTRA_BINDINGS:
+    engine.bind_control("iso_42001", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — EU AI Act
+# ---------------------------------------------------------------------------
+
+_EU_AI_ACT_BINDINGS: list[tuple[str, str]] = [
+    ("ART9.1", "policy_reviewed_within_year"),       # Risk management system
+    ("ART9.2", "vulnerability_scan_current"),        # Risk identification
+    ("ART10.1", "encryption_at_rest"),               # Training data protection
+    ("ART10.2", "encryption_at_rest"),               # Data governance
+    ("ART12.1", "cloudtrail_enabled"),               # Automatic logging
+    ("ART12.2", "cloudtrail_enabled"),               # Traceability
+    ("ART14.1", "access_reviews_current"),           # Human oversight
+    ("ART14.3", "training_completion_rate"),          # Human understanding
+    ("ART15.3", "endpoint_protection_active"),       # Resilience
+    ("ART15.4", "guardduty_enabled"),                # Cybersecurity
+    ("ART15.4", "no_open_security_groups"),           # Cybersecurity — network
+    ("ART26.2", "siem_monitoring_active"),            # Deployer monitoring
+]
+
+for _ctrl, _assertion in _EU_AI_ACT_BINDINGS:
+    engine.bind_control("eu_ai_act", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — SEC Cybersecurity Disclosure Rules
+# ---------------------------------------------------------------------------
+
+_SEC_CYBER_BINDINGS: list[tuple[str, str]] = [
+    ("ITEM105.1", "siem_monitoring_active"),          # Incident determination
+    ("ITEM106.B1", "policy_reviewed_within_year"),    # Risk management program
+    ("ITEM106.B2", "vulnerability_scan_current"),     # Risk assessment process
+    ("ITEM106.C5", "training_completion_rate"),        # Management expertise
+    ("ITEM106.C6", "siem_monitoring_active"),          # Prevention/detection
+    ("ANN.1", "policy_reviewed_within_year"),          # Annual disclosure
+]
+
+for _ctrl, _assertion in _SEC_CYBER_BINDINGS:
+    engine.bind_control("sec_cyber", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — CMMC L2 (all 14 domains)
+# ---------------------------------------------------------------------------
+
+_CMMC_L2_BINDINGS: list[tuple[str, str]] = [
+    # AC — Access Control
+    ("AC.L2-3.1.1", "mfa_enabled"),
+    ("AC.L2-3.1.1", "access_reviews_current"),
+    ("AC.L2-3.1.2", "privileged_access_managed"),
+    ("AC.L2-3.1.3", "no_open_security_groups"),
+    ("AC.L2-3.1.4", "access_reviews_current"),
+    ("AC.L2-3.1.5", "privileged_access_managed"),
+    ("AC.L2-3.1.6", "privileged_access_managed"),
+    ("AC.L2-3.1.7", "cloudtrail_enabled"),
+    ("AC.L2-3.1.12", "no_open_security_groups"),
+    ("AC.L2-3.1.13", "no_open_security_groups"),
+    ("AC.L2-3.1.14", "no_open_security_groups"),
+    ("AC.L2-3.1.18", "device_compliant"),
+    ("AC.L2-3.1.19", "encryption_at_rest"),
+    ("AC.L2-3.1.20", "no_open_security_groups"),
+    ("AC.L2-3.1.22", "no_public_storage"),
+    # AT — Awareness and Training
+    ("AT.L2-3.2.1", "training_completion_rate"),
+    ("AT.L2-3.2.1", "phishing_failure_rate"),
+    ("AT.L2-3.2.2", "training_completion_rate"),
+    ("AT.L2-3.2.3", "training_completion_rate"),
+    # AU — Audit and Accountability
+    ("AU.L2-3.3.1", "cloudtrail_enabled"),
+    ("AU.L2-3.3.2", "cloudtrail_enabled"),
+    ("AU.L2-3.3.5", "siem_monitoring_active"),
+    ("AU.L2-3.3.8", "cloudtrail_enabled"),
+    ("AU.L2-3.3.9", "cloudtrail_enabled"),
+    # CM — Configuration Management
+    ("CM.L2-3.4.1", "config_recorder_enabled"),
+    ("CM.L2-3.4.2", "config_recorder_enabled"),
+    ("CM.L2-3.4.3", "change_request_approved"),
+    ("CM.L2-3.4.4", "change_request_approved"),
+    ("CM.L2-3.4.5", "change_request_approved"),
+    ("CM.L2-3.4.6", "no_open_security_groups"),
+    ("CM.L2-3.4.7", "no_open_security_groups"),
+    ("CM.L2-3.4.8", "endpoint_protection_active"),
+    ("CM.L2-3.4.9", "endpoint_protection_active"),
+    # IA — Identification and Authentication
+    ("IA.L2-3.5.1", "mfa_enabled"),
+    ("IA.L2-3.5.2", "mfa_enabled"),
+    ("IA.L2-3.5.3", "mfa_enabled"),
+    ("IA.L2-3.5.7", "password_policy_compliant"),
+    ("IA.L2-3.5.8", "password_policy_compliant"),
+    ("IA.L2-3.5.10", "password_policy_compliant"),
+    # IR — Incident Response
+    ("IR.L2-3.6.1", "siem_monitoring_active"),
+    ("IR.L2-3.6.2", "siem_monitoring_active"),
+    # MA — Maintenance
+    ("MA.L2-3.7.1", "change_request_approved"),
+    ("MA.L2-3.7.4", "endpoint_protection_active"),
+    ("MA.L2-3.7.5", "mfa_enabled"),
+    # MP — Media Protection
+    ("MP.L2-3.8.1", "no_public_storage"),
+    ("MP.L2-3.8.2", "no_public_storage"),
+    ("MP.L2-3.8.6", "encryption_at_rest"),
+    ("MP.L2-3.8.9", "encryption_at_rest"),
+    ("MP.L2-3.8.9", "backup_job_successful"),
+    # PS — Personnel Security
+    ("PS.L2-3.9.1", "background_check_completed"),
+    ("PS.L2-3.9.2", "access_reviews_current"),
+    # RA — Risk Assessment
+    ("RA.L2-3.11.1", "vulnerability_scan_current"),
+    ("RA.L2-3.11.2", "vulnerability_scan_current"),
+    ("RA.L2-3.11.3", "vulnerability_scan_current"),
+    # CA — Security Assessment
+    ("CA.L2-3.12.1", "config_recorder_enabled"),
+    ("CA.L2-3.12.3", "config_recorder_enabled"),
+    ("CA.L2-3.12.3", "guardduty_enabled"),
+    ("CA.L2-3.12.3", "securityhub_enabled"),
+    # SC — System and Communications Protection
+    ("SC.L2-3.13.1", "no_open_security_groups"),
+    ("SC.L2-3.13.2", "no_open_security_groups"),
+    ("SC.L2-3.13.5", "no_open_security_groups"),
+    ("SC.L2-3.13.6", "no_open_security_groups"),
+    ("SC.L2-3.13.8", "encryption_at_rest"),
+    ("SC.L2-3.13.11", "encryption_at_rest"),
+    ("SC.L2-3.13.16", "encryption_at_rest"),
+    # SI — System and Information Integrity
+    ("SI.L2-3.14.1", "vulnerability_scan_current"),
+    ("SI.L2-3.14.2", "endpoint_protection_active"),
+    ("SI.L2-3.14.3", "securityhub_enabled"),
+    ("SI.L2-3.14.4", "siem_monitoring_active"),
+    ("SI.L2-3.14.5", "siem_monitoring_active"),
+    ("SI.L2-3.14.6", "guardduty_enabled"),
+    ("SI.L2-3.14.7", "endpoint_protection_active"),
+]
+
+for _ctrl, _assertion in _CMMC_L2_BINDINGS:
+    engine.bind_control("cmmc_l2", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
 # Remediation guidance
 # ---------------------------------------------------------------------------
 

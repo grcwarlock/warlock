@@ -1,0 +1,134 @@
+controls:
+  GV.PO-01:
+    summary: "Establish cybersecurity policy based on organizational context and strategy"
+    remediation_steps:
+      - "Define and publish information security policies"
+      - "Review policies annually and after significant changes"
+      - "Communicate policies to all personnel"
+    assertion_name: "policy_reviewed_within_year"
+  GV.RR-01:
+    summary: "Organizational leadership is accountable for cybersecurity risk"
+    remediation_steps:
+      - "Assign CISO or equivalent cybersecurity leadership role"
+      - "Document reporting lines to executive management and board"
+      - "Establish regular cybersecurity briefing cadence"
+    assertion_name: null
+  GV.RR-04:
+    summary: "Integrate cybersecurity into human resources practices"
+    remediation_steps:
+      - "Include cybersecurity responsibilities in job descriptions"
+      - "Conduct background checks for sensitive positions"
+      - "Implement security training requirements for all personnel"
+    assertion_name: "training_completion_rate"
+  GV.SC-01:
+    summary: "Establish cybersecurity supply chain risk management program"
+    remediation_steps:
+      - "Identify and assess critical suppliers"
+      - "Include cybersecurity requirements in supplier contracts"
+      - "Monitor supplier cybersecurity posture continuously"
+    assertion_name: null
+  ID.AM-01:
+    summary: "Inventory and manage hardware assets"
+    remediation_steps:
+      - "Deploy automated asset discovery tools"
+      - "Maintain accurate CMDB with all hardware assets"
+      - "Review and reconcile asset inventory quarterly"
+    assertion_name: null
+  ID.RA-01:
+    summary: "Identify and document asset vulnerabilities"
+    remediation_steps:
+      - "Perform regular vulnerability scans on all assets"
+      - "Prioritize vulnerabilities by risk score"
+      - "Track remediation to closure"
+    assertion_name: "vulnerability_scan_current"
+  PR.AA-01:
+    summary: "Manage identities and credentials for authorized users"
+    remediation_steps:
+      - "Implement identity lifecycle management"
+      - "Use centralized identity provider (Okta, Entra ID)"
+      - "Disable accounts for departed personnel within 24 hours"
+    assertion_name: "access_reviews_current"
+  PR.AA-03:
+    summary: "Authenticate users, devices, and other assets"
+    remediation_steps:
+      - "Enforce MFA for all users"
+      - "Implement certificate-based device authentication"
+      - "Use phishing-resistant authentication methods"
+    assertion_name: "mfa_enabled"
+  PR.AT-01:
+    summary: "Provide cybersecurity awareness training"
+    remediation_steps:
+      - "Deploy security awareness training for all personnel"
+      - "Conduct regular phishing simulations"
+      - "Track completion rates and follow up on non-compliance"
+    assertion_name: "training_completion_rate"
+  PR.DS-01:
+    summary: "Protect data at rest"
+    remediation_steps:
+      - "Enable encryption at rest for all storage services"
+      - "Use KMS-managed keys with automatic rotation"
+      - "Verify encryption coverage across all data stores"
+    assertion_name: "encryption_at_rest"
+  PR.DS-02:
+    summary: "Protect data in transit"
+    remediation_steps:
+      - "Enforce TLS 1.2+ for all data in transit"
+      - "Disable legacy protocols (SSL, TLS 1.0/1.1)"
+      - "Implement certificate management and rotation"
+    assertion_name: "no_open_security_groups"
+  PR.DS-11:
+    summary: "Maintain data backups"
+    remediation_steps:
+      - "Implement automated backup procedures"
+      - "Test backup restoration regularly"
+      - "Store backups in geographically separated locations"
+    assertion_name: "backup_job_successful"
+  PR.PS-01:
+    summary: "Manage configuration of systems"
+    remediation_steps:
+      - "Define baseline configurations for all system types"
+      - "Implement automated configuration management"
+      - "Monitor for configuration drift"
+    assertion_name: "config_recorder_enabled"
+  PR.IR-01:
+    summary: "Protect networks from unauthorized access"
+    remediation_steps:
+      - "Implement network segmentation"
+      - "Deploy firewall rules with deny-all default"
+      - "Monitor network traffic for anomalies"
+    assertion_name: "no_open_security_groups"
+  DE.CM-01:
+    summary: "Monitor networks for cybersecurity events"
+    remediation_steps:
+      - "Deploy network monitoring and threat detection"
+      - "Enable GuardDuty, SecurityHub, or equivalent"
+      - "Configure alerts for suspicious network activity"
+    assertion_name: "guardduty_enabled"
+  DE.CM-09:
+    summary: "Monitor computing resources for cybersecurity events"
+    remediation_steps:
+      - "Deploy EDR/endpoint protection on all systems"
+      - "Monitor for malware, unauthorized changes, and anomalies"
+      - "Integrate endpoint telemetry with SIEM"
+    assertion_name: "endpoint_protection_active"
+  DE.AE-02:
+    summary: "Analyze cybersecurity events to identify patterns and trends"
+    remediation_steps:
+      - "Deploy SIEM with correlation rules"
+      - "Enable automated event analysis"
+      - "Review detection rule coverage regularly"
+    assertion_name: "siem_monitoring_active"
+  RS.MA-01:
+    summary: "Manage cybersecurity incidents"
+    remediation_steps:
+      - "Maintain and test incident response plan"
+      - "Assign incident response team roles"
+      - "Define escalation procedures and communication templates"
+    assertion_name: "siem_monitoring_active"
+  RC.RP-01:
+    summary: "Execute recovery plan"
+    remediation_steps:
+      - "Maintain and test disaster recovery procedures"
+      - "Define RPO and RTO for critical systems"
+      - "Conduct recovery testing at least annually"
+    assertion_name: "backup_job_successful"

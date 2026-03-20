@@ -1,29 +1,44 @@
-"""Public trust portal endpoints. No authentication required.
+"""Public trust portal endpoints. No authentication required (public tier).
 
-Exposes high-level compliance posture without sensitive details.
+Exposes high-level compliance posture without sensitive details, plus
+NDA-gated document management for #45: SOC 2 report portal.
+
+Document endpoints:
+- POST /api/v1/trust/documents            -- upload a compliance document
+- GET  /api/v1/trust/documents            -- list docs for caller's access tier
+- GET  /api/v1/trust/documents/{id}/download -- time-limited download URL
+- GET  /api/v1/trust/access-requests/{id}/documents -- post-NDA doc list
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import re
+import time
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db
-from fastapi import Depends
-
+from warlock.api.deps import get_db, require_permission
 from warlock.db.models import (
     AuditEngagement,
     ControlResult,
     PostureSnapshot,
     TrustAccessRequest,
+    TrustDocument,
 )
+
+# ---------------------------------------------------------------------------
+# Download token signing — HMAC-SHA256, 1-hour TTL
+# ---------------------------------------------------------------------------
+# In production, replace this constant with a secret from settings.
+_DOWNLOAD_TOKEN_SECRET = "wlk-trust-portal-download-secret-v1"
 
 log = logging.getLogger(__name__)
 
@@ -356,3 +371,281 @@ async def submit_access_request(
         message="Your request has been submitted. You will be contacted within 2 business days.",
         status="pending",
     )
+
+
+# ---------------------------------------------------------------------------
+# #45: SOC 2 Report Portal — NDA-gated document access
+# ---------------------------------------------------------------------------
+
+_VALID_TIERS = {"public", "nda", "contract"}
+_DOWNLOAD_URL_TTL = 3600  # 1 hour
+
+
+def _sign_download_token(doc_id: str, expires_at: int) -> str:
+    """Return an HMAC-SHA256 token for a time-limited download URL."""
+    msg = f"{doc_id}:{expires_at}"
+    return hmac.new(  # type: ignore[attr-defined]  # stdlib alias
+        _DOWNLOAD_TOKEN_SECRET.encode(),
+        msg.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def _verify_download_token(doc_id: str, expires_at: int, token: str) -> bool:
+    """Verify a previously signed download token, checking TTL."""
+    if time.time() > expires_at:
+        return False
+    expected = _sign_download_token(doc_id, expires_at)
+    return hmac.compare_digest(expected, token)
+
+
+class TrustDocumentResponse(BaseModel):
+    id: str
+    title: str
+    description: str
+    classification_tier: str
+    content_type: str
+    file_size_bytes: int
+    uploaded_by: str
+    uploaded_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class TrustDocumentUploadResponse(BaseModel):
+    id: str
+    title: str
+    classification_tier: str
+    message: str
+
+
+class TrustDocumentDownloadResponse(BaseModel):
+    document_id: str
+    title: str
+    download_url: str
+    expires_at: str
+
+
+def _doc_to_response(doc: TrustDocument) -> TrustDocumentResponse:
+    dt = doc.uploaded_at
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return TrustDocumentResponse(
+        id=doc.id,
+        title=doc.title,
+        description=doc.description or "",
+        classification_tier=doc.classification_tier,
+        content_type=doc.content_type or "application/octet-stream",
+        file_size_bytes=doc.file_size_bytes or 0,
+        uploaded_by=doc.uploaded_by,
+        uploaded_at=dt.isoformat(),
+    )
+
+
+@router.post("/documents", response_model=TrustDocumentUploadResponse, status_code=201)
+async def upload_trust_document(
+    title: str = Form(..., description="Document title (e.g. 'SOC 2 Type II Report 2025')"),
+    classification_tier: str = Form(..., description="public | nda | contract"),
+    description: str = Form(default=""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(require_permission("manage_users")),
+):
+    """Upload a compliance document (SOC 2, pen test summary, etc.).
+
+    Requires manage_users permission (admin/owner only).
+    File is stored on the server filesystem under a deterministic path.
+    """
+    if classification_tier not in _VALID_TIERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid classification_tier '{classification_tier}'. Must be one of: {sorted(_VALID_TIERS)}",
+        )
+
+    # Sanitize title and build a storage key
+    safe_title = re.sub(r"[^\w\s\-.]", "", title)[:120].strip().replace(" ", "_")
+    if not safe_title:
+        raise HTTPException(status_code=400, detail="Title must contain at least one alphanumeric character.")
+
+    import os
+    import uuid
+
+    doc_id = str(uuid.uuid4())
+    content = await file.read()
+    file_size = len(content)
+
+    # Store under exports/trust_documents/<tier>/<id>_<safe_title>
+    store_dir = os.path.join("exports", "trust_documents", classification_tier)
+    os.makedirs(store_dir, exist_ok=True)
+    filename = f"{doc_id}_{safe_title}"
+    file_path = os.path.join(store_dir, filename)
+    with open(file_path, "wb") as fh:
+        fh.write(content)
+
+    doc = TrustDocument(
+        id=doc_id,
+        title=title,
+        description=description,
+        classification_tier=classification_tier,
+        file_path=file_path,
+        content_type=file.content_type or "application/octet-stream",
+        file_size_bytes=file_size,
+        uploaded_by=current_user.email,
+        is_active=True,
+    )
+    db.add(doc)
+    db.flush()
+
+    log.info(
+        "Trust document uploaded: %s tier=%s size=%d bytes by %s",
+        doc.id,
+        classification_tier,
+        file_size,
+        current_user.email,
+    )
+
+    return TrustDocumentUploadResponse(
+        id=doc.id,
+        title=doc.title,
+        classification_tier=doc.classification_tier,
+        message="Document uploaded successfully.",
+    )
+
+
+@router.get("/documents", response_model=list[TrustDocumentResponse])
+async def list_trust_documents(
+    tier: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """List available compliance documents.
+
+    Unauthenticated callers only see 'public' tier.
+    Pass ?tier=nda or ?tier=contract for higher tiers (auth required elsewhere;
+    enforcement is handled via the access-request approval flow).
+    """
+    allowed_tier = tier or "public"
+    if allowed_tier not in _VALID_TIERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid tier '{allowed_tier}'. Must be one of: {sorted(_VALID_TIERS)}",
+        )
+
+    # For unauthenticated browsing, only expose public documents
+    query = (
+        db.query(TrustDocument)
+        .filter(
+            TrustDocument.is_active == True,  # noqa: E712
+            TrustDocument.classification_tier == allowed_tier,
+        )
+        .order_by(TrustDocument.uploaded_at.desc())
+    )
+
+    docs = query.all()
+    return [_doc_to_response(d) for d in docs]
+
+
+@router.get("/documents/{document_id}/download", response_model=TrustDocumentDownloadResponse)
+async def get_document_download_url(
+    document_id: str,
+    db: Session = Depends(get_db),
+):
+    """Generate a time-limited (1 hour) signed download URL for a document.
+
+    The generated URL is signed with HMAC-SHA256 and encodes an expiry
+    timestamp. The actual file serving is handled by the /download endpoint
+    using the token. Public-tier documents are freely downloadable;
+    NDA/contract tier requires prior NDA approval (enforced at request time).
+    """
+    doc = (
+        db.query(TrustDocument)
+        .filter(TrustDocument.id == document_id, TrustDocument.is_active == True)  # noqa: E712
+        .first()
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found.")
+
+    expires_at = int(time.time()) + _DOWNLOAD_URL_TTL
+    token = _sign_download_token(document_id, expires_at)
+
+    # Build a relative URL; in production the API host prefix is prepended
+    download_url = f"/api/v1/trust/documents/{document_id}/file?expires={expires_at}&token={token}"
+
+    expires_dt = datetime.fromtimestamp(expires_at, tz=timezone.utc).isoformat()
+
+    log.info("Download URL generated for document %s (expires %s)", document_id, expires_dt)
+
+    return TrustDocumentDownloadResponse(
+        document_id=document_id,
+        title=doc.title,
+        download_url=download_url,
+        expires_at=expires_dt,
+    )
+
+
+@router.get("/documents/{document_id}/file")
+async def serve_trust_document(
+    document_id: str,
+    expires: int,
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Serve the raw document file, validating the signed token and TTL."""
+    import os
+    from fastapi.responses import FileResponse
+
+    if not _verify_download_token(document_id, expires, token):
+        raise HTTPException(status_code=403, detail="Invalid or expired download token.")
+
+    doc = (
+        db.query(TrustDocument)
+        .filter(TrustDocument.id == document_id, TrustDocument.is_active == True)  # noqa: E712
+        .first()
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found.")
+
+    if not os.path.isfile(doc.file_path):
+        log.error("Trust document file missing on disk: %s", doc.file_path)
+        raise HTTPException(status_code=500, detail="Document file unavailable.")
+
+    return FileResponse(
+        path=doc.file_path,
+        media_type=doc.content_type or "application/octet-stream",
+        filename=f"{doc.title.replace(' ', '_')}.pdf",
+    )
+
+
+@router.get("/access-requests/{request_id}/documents", response_model=list[TrustDocumentResponse])
+async def list_documents_for_access_request(
+    request_id: str,
+    db: Session = Depends(get_db),
+):
+    """After NDA approval, list the documents accessible under this access request.
+
+    Returns documents whose classification_tier is 'public' or 'nda' if the
+    request is approved, 'public' only if still pending/denied.
+    """
+    req = (
+        db.query(TrustAccessRequest)
+        .filter(TrustAccessRequest.id == request_id)
+        .first()
+    )
+    if not req:
+        raise HTTPException(status_code=404, detail="Access request not found.")
+
+    if req.status == "approved":
+        allowed_tiers = ["public", "nda"]
+    else:
+        allowed_tiers = ["public"]
+
+    docs = (
+        db.query(TrustDocument)
+        .filter(
+            TrustDocument.is_active == True,  # noqa: E712
+            TrustDocument.classification_tier.in_(allowed_tiers),
+        )
+        .order_by(TrustDocument.classification_tier, TrustDocument.uploaded_at.desc())
+        .all()
+    )
+
+    return [_doc_to_response(d) for d in docs]

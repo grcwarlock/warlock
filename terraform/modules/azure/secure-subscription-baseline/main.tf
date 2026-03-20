@@ -128,3 +128,42 @@ resource "azurerm_security_center_contact" "main" {
   alert_notifications = true
   alerts_to_admins    = true
 }
+
+# ── #41: Warlock self-registration evidence ───────────────────────────
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL for self-registration evidence. Set to null to disable."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API authentication."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+resource "terraform_data" "warlock_evidence" {
+  count = var.warlock_api_endpoint != null ? 1 : 0
+
+  triggers_replace = [azurerm_resource_group.security.id]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
+        -H "Authorization: Bearer ${var.warlock_api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "module": "azure/secure-subscription-baseline",
+          "resource_id": "${azurerm_resource_group.security.id}",
+          "control_ids": ["AU-2", "AU-6", "SC-28"],
+          "attributes": {
+            "resource_group": "${var.resource_group_name}",
+            "location": "${var.location}",
+            "log_retention_days": ${var.log_retention_days}
+          }
+        }' || true
+    EOT
+  }
+}

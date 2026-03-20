@@ -354,6 +354,9 @@ class User(Base):
     mfa_backup_codes = Column(JSON, nullable=True)   # hashed backup codes
     mfa_verified_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Refresh token (#58)
+    refresh_token_hash = Column(String(64), nullable=True)
+
     __table_args__ = (
         Index("idx_user_email", "email"),
         Index("idx_user_role", "role"),
@@ -780,6 +783,35 @@ class TrustAccessRequest(Base):
     __table_args__ = (
         Index("idx_trust_req_status", "status"),
         Index("idx_trust_req_email", "contact_email"),
+    )
+
+
+class TrustDocument(Base):
+    """NDA-gated compliance documents (SOC 2 reports, pen test summaries, etc.).
+
+    Classification tiers:
+    - public:   visible to all (e.g. security whitepaper)
+    - nda:      requires NDA acceptance (approved TrustAccessRequest)
+    - contract: requires active contract (highest gate)
+    """
+    __tablename__ = "trust_documents"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, default="")
+    classification_tier = Column(String(20), nullable=False, default="nda")
+    # public | nda | contract
+    file_path = Column(Text, nullable=False)   # server-side storage path
+    content_type = Column(String(100), default="application/pdf")
+    file_size_bytes = Column(Integer, default=0)
+    uploaded_by = Column(String(255), nullable=False)
+    uploaded_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    is_active = Column(Boolean, default=True)
+
+    __table_args__ = (
+        Index("idx_trust_doc_tier", "classification_tier"),
+        Index("idx_trust_doc_active", "is_active"),
+        Index("idx_trust_doc_uploaded", "uploaded_at"),
     )
 
 

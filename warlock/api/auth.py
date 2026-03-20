@@ -533,3 +533,112 @@ def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
 
     log.warning("MFA login verification failed for user %s", user.email)
     return False
+
+
+# ---------------------------------------------------------------------------
+# Refresh Tokens (#58)
+# ---------------------------------------------------------------------------
+
+REFRESH_TOKEN_EXPIRE_DAYS = 30
+
+
+def _hash_refresh_token(token: str) -> str:
+    """Compute SHA-256 hash of a refresh token for storage.
+
+    Unlike API keys, refresh tokens do not use HMAC because they are
+    single-use (rotated on every refresh) and short-lived relative to
+    API keys.  A plain SHA-256 hash is sufficient.
+    """
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def generate_refresh_token(user_id: str, session: Session) -> str:
+    """Create a long-lived refresh token (30 days) and store its hash on the user.
+
+    Returns the raw token (shown to the client once; never stored in plaintext).
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+
+    raw_token = secrets.token_urlsafe(48)
+    user.refresh_token_hash = _hash_refresh_token(raw_token)
+    session.flush()
+
+    log.info("Refresh token issued for user %s", user.email)
+    return raw_token
+
+
+def verify_refresh_token(token: str, session: Session) -> str:
+    """Validate a refresh token and return the associated user_id.
+
+    Raises ``ValueError`` if the token is invalid or the user is inactive.
+    """
+    token_hash = _hash_refresh_token(token)
+    user = session.query(User).filter(
+        User.refresh_token_hash == token_hash,
+        User.is_active == True,  # noqa: E712
+    ).first()
+
+    if not user:
+        raise ValueError("Invalid or expired refresh token")
+
+    log.info("Refresh token verified for user %s", user.email)
+    return user.id
+
+
+def rotate_refresh_token(old_token: str, session: Session) -> tuple[str, str]:
+    """Invalidate *old_token* and issue a new refresh + access token pair.
+
+    Token rotation prevents replay attacks: once a refresh token is used it
+    can never be used again.  If an attacker replays a consumed token the
+    stored hash will not match, and the request is rejected.
+
+    Returns ``(new_access_token, new_refresh_token)``.
+    """
+    # Verify the old token (raises ValueError if invalid)
+    user_id = verify_refresh_token(old_token, session)
+
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError("User not found")
+
+    # Invalidate old token by overwriting the hash with the new one
+    new_refresh = secrets.token_urlsafe(48)
+    user.refresh_token_hash = _hash_refresh_token(new_refresh)
+    session.flush()
+
+    # Issue a fresh short-lived access token
+    new_access = create_access_token({"sub": user.id})
+
+    log.info("Refresh token rotated for user %s", user.email)
+    return new_access, new_refresh
+
+
+def login_with_tokens(session: Session, email: str, password: str) -> dict | None:
+    """Authenticate and return both access and refresh tokens.
+
+    Returns a dict with ``access_token``, ``refresh_token``, and ``token_type``
+    on success, or a dict with ``mfa_required`` if MFA is needed, or ``None``
+    on authentication failure.
+    """
+    result = authenticate_user(session, email, password)
+
+    if result is None:
+        return None
+
+    # MFA partial auth — pass through as-is
+    if isinstance(result, dict) and result.get("mfa_required"):
+        return result
+
+    # Full auth success — issue both tokens
+    user = result
+    access_token = create_access_token({"sub": user.id})
+    refresh_token = generate_refresh_token(user.id, session)
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": 3600,  # 1 hour access token
+    }

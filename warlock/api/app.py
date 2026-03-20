@@ -54,6 +54,7 @@ from warlock.db.models import (
     AuditComment,
     AuditEngagement,
     AuditEntry,
+    ComplianceDrift,
     ConnectorRun,
     ControlMapping,
     ControlResult,
@@ -4217,6 +4218,262 @@ def gdpr_erase(
     manager = GDPRManager()
     result = manager.erase_subject_data(db, email, erased_by=current_user.email)
     return result
+
+
+# =========================================================================
+# #47: Real-time compliance dashboard
+# =========================================================================
+
+# In-process TTL cache for the dashboard summary endpoint (5-minute TTL)
+# Keyed by user_id -> {"data": ..., "ts": float}
+_DASHBOARD_CACHE: dict[str, dict] = {}
+_DASHBOARD_CACHE_TTL = 300  # 5 minutes
+
+
+@app.get(PREFIX + "/dashboard/summary")
+def dashboard_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Real-time compliance dashboard — single call for the frontend.
+
+    Returns:
+    - frameworks:       per-framework compliance rate, control counts, trend
+    - top_risks:        top 5 non-compliant controls by severity
+    - recent_drift:     last 5 compliance drift events
+    - open_issues:      count by priority (critical/high/medium/low)
+    - posture_score:    overall weighted compliance percentage
+    - connectors:       health status of most recent run per provider
+    - last_assessment:  timestamp of most recent pipeline completion
+
+    Cached per user for 5 minutes (TTL = 300 s).
+    """
+    now_ts = time.time()
+    cache_key = current_user.id
+    cached = _DASHBOARD_CACHE.get(cache_key)
+    if cached and (now_ts - cached["ts"]) < _DASHBOARD_CACHE_TTL:
+        return cached["data"]
+
+    # -----------------------------------------------------------------
+    # frameworks: per-framework compliance rate, control counts, trend
+    # -----------------------------------------------------------------
+    fw_rows = (
+        db.query(
+            ControlResult.framework,
+            ControlResult.status,
+            func.count(ControlResult.id).label("cnt"),
+        )
+        .group_by(ControlResult.framework, ControlResult.status)
+        .all()
+    )
+
+    fw_agg: dict[str, dict] = {}
+    for framework, status_val, cnt in fw_rows:
+        if framework not in fw_agg:
+            fw_agg[framework] = {"total": 0, "compliant": 0, "non_compliant": 0}
+        fw_agg[framework]["total"] += cnt
+        if status_val == "compliant":
+            fw_agg[framework]["compliant"] += cnt
+        elif status_val == "non_compliant":
+            fw_agg[framework]["non_compliant"] += cnt
+
+    # Trend: compare current rate against most-recent posture snapshot rate
+    snapshot_rates: dict[str, float] = {}
+    latest_snapshot_date = db.query(func.max(PostureSnapshot.snapshot_date)).scalar()
+    if latest_snapshot_date:
+        snap_rows = (
+            db.query(
+                PostureSnapshot.framework,
+                func.avg(PostureSnapshot.posture_score).label("avg_score"),
+            )
+            .filter(PostureSnapshot.snapshot_date == latest_snapshot_date)
+            .group_by(PostureSnapshot.framework)
+            .all()
+        )
+        for fw_name, avg_score in snap_rows:
+            snapshot_rates[fw_name] = float(avg_score or 0)
+
+    frameworks_out = []
+    total_compliant = 0
+    total_controls = 0
+
+    for fw, agg in sorted(fw_agg.items()):
+        total = agg["total"]
+        compliant = agg["compliant"]
+        rate = round(compliant / total * 100, 1) if total else 0.0
+
+        total_compliant += compliant
+        total_controls += total
+
+        # Trend relative to snapshot
+        snap_rate = snapshot_rates.get(fw)
+        if snap_rate is None:
+            trend = "stable"
+        elif rate > snap_rate + 2:
+            trend = "improving"
+        elif rate < snap_rate - 2:
+            trend = "degrading"
+        else:
+            trend = "stable"
+
+        frameworks_out.append({
+            "framework": fw,
+            "compliance_rate": rate,
+            "total_controls": total,
+            "compliant_controls": compliant,
+            "non_compliant_controls": agg["non_compliant"],
+            "trend": trend,
+        })
+
+    # -----------------------------------------------------------------
+    # posture_score: overall weighted compliance percentage
+    # -----------------------------------------------------------------
+    posture_score = (
+        round(total_compliant / total_controls * 100, 1) if total_controls else 0.0
+    )
+
+    # -----------------------------------------------------------------
+    # top_risks: top 5 non-compliant controls by severity
+    # -----------------------------------------------------------------
+    _severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+    top_risk_rows = (
+        db.query(
+            ControlResult.framework,
+            ControlResult.control_id,
+            ControlResult.severity,
+            func.count(ControlResult.id).label("cnt"),
+        )
+        .filter(ControlResult.status == "non_compliant")
+        .group_by(ControlResult.framework, ControlResult.control_id, ControlResult.severity)
+        .all()
+    )
+
+    top_risk_sorted = sorted(
+        top_risk_rows,
+        key=lambda r: (_severity_order.get(r.severity or "info", 99), -(r.cnt or 0)),
+    )[:5]
+
+    top_risks = [
+        {
+            "framework": r.framework,
+            "control_id": r.control_id,
+            "severity": r.severity,
+            "non_compliant_count": r.cnt,
+        }
+        for r in top_risk_sorted
+    ]
+
+    # -----------------------------------------------------------------
+    # recent_drift: last 5 compliance drift events
+    # -----------------------------------------------------------------
+    drift_rows = (
+        db.query(ComplianceDrift)
+        .order_by(ComplianceDrift.detected_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    recent_drift = []
+    for d in drift_rows:
+        dt = d.detected_at
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        recent_drift.append({
+            "framework": d.framework,
+            "control_id": d.control_id,
+            "previous_status": d.previous_status,
+            "new_status": d.new_status,
+            "drift_direction": d.drift_direction,
+            "detected_at": dt.isoformat() if dt else None,
+        })
+
+    # -----------------------------------------------------------------
+    # open_issues: count by priority
+    # -----------------------------------------------------------------
+    issue_rows = (
+        db.query(Issue.priority, func.count(Issue.id).label("cnt"))
+        .filter(Issue.status.notin_(["closed", "verified"]))
+        .group_by(Issue.priority)
+        .all()
+    )
+    open_issues: dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    for priority, cnt in issue_rows:
+        if priority in open_issues:
+            open_issues[priority] = cnt
+
+    # -----------------------------------------------------------------
+    # connectors: health of most recent run per provider
+    # -----------------------------------------------------------------
+    latest_run_subq = (
+        db.query(
+            ConnectorRun.provider,
+            func.max(ConnectorRun.started_at).label("latest_started"),
+        )
+        .group_by(ConnectorRun.provider)
+        .subquery()
+    )
+
+    connector_runs = (
+        db.query(ConnectorRun)
+        .join(
+            latest_run_subq,
+            (ConnectorRun.provider == latest_run_subq.c.provider)
+            & (ConnectorRun.started_at == latest_run_subq.c.latest_started),
+        )
+        .all()
+    )
+
+    connectors = []
+    for run in connector_runs:
+        started = run.started_at
+        if started and started.tzinfo is None:
+            started = started.replace(tzinfo=timezone.utc)
+        completed = run.completed_at
+        if completed and completed.tzinfo is None:
+            completed = completed.replace(tzinfo=timezone.utc)
+        connectors.append({
+            "provider": run.provider,
+            "source_type": run.source_type,
+            "status": run.status,
+            "event_count": run.event_count,
+            "error_count": run.error_count,
+            "started_at": started.isoformat() if started else None,
+            "completed_at": completed.isoformat() if completed else None,
+        })
+
+    # -----------------------------------------------------------------
+    # last_assessment: most recent pipeline completion
+    # -----------------------------------------------------------------
+    last_result = (
+        db.query(ControlResult.assessed_at)
+        .order_by(ControlResult.assessed_at.desc())
+        .first()
+    )
+    last_assessment = None
+    if last_result and last_result.assessed_at:
+        dt = last_result.assessed_at
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        last_assessment = dt.isoformat()
+
+    # -----------------------------------------------------------------
+    # Assemble and cache
+    # -----------------------------------------------------------------
+    payload: dict[str, Any] = {
+        "frameworks": frameworks_out,
+        "top_risks": top_risks,
+        "recent_drift": recent_drift,
+        "open_issues": open_issues,
+        "posture_score": posture_score,
+        "connectors": connectors,
+        "last_assessment": last_assessment,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "cache_ttl_seconds": _DASHBOARD_CACHE_TTL,
+    }
+
+    _DASHBOARD_CACHE[cache_key] = {"data": payload, "ts": now_ts}
+    return payload
 
 
 # =========================================================================

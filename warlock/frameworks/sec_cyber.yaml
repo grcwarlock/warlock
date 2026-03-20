@@ -1,0 +1,215 @@
+framework_id: sec_cyber
+control_families:
+  ITEM105:
+    name: "Item 1.05 - Material Cybersecurity Incidents"
+    controls:
+      ITEM105.1:
+        checks:
+        - id: sec_105_1_incident_determination
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      ITEM105.2:
+        checks:
+        - id: sec_105_2_incident_disclosure_4day
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      ITEM105.3:
+        checks:
+        - id: sec_105_3_incident_nature_scope
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - cloudtrail_trails
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - cloudtrail
+        monitoring_frequency: weekly
+      ITEM105.4:
+        checks:
+        - id: sec_105_4_material_impact
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      ITEM105.5:
+        checks:
+        - id: sec_105_5_remediation_status
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - vuln_export
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - vulnerability
+        monitoring_frequency: weekly
+  ITEM106:
+    name: "Item 106 - Risk Management, Strategy, and Governance"
+    controls:
+      ITEM106.B1:
+        checks:
+        - id: sec_106_b1_risk_mgmt_program
+          event_types:
+          - confluence_pages
+          - snow_policies
+          - snow_risks
+          resource_types:
+          - grc_document
+          - itsm_policy
+          - itsm_risk
+        monitoring_frequency: quarterly
+      ITEM106.B2:
+        checks:
+        - id: sec_106_b2_risk_assessment_process
+          event_types:
+          - vuln_export
+          - wiz_issues
+          - snow_risks
+          resource_types:
+          - vulnerability
+          - itsm_risk
+        monitoring_frequency: quarterly
+      ITEM106.B3:
+        checks:
+        - id: sec_106_b3_third_party_risk
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      ITEM106.B4:
+        checks:
+        - id: sec_106_b4_previous_incidents
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: quarterly
+      ITEM106.B5:
+        checks:
+        - id: sec_106_b5_risk_material_impact
+          event_types:
+          - snow_risks
+          resource_types:
+          - itsm_risk
+        monitoring_frequency: quarterly
+      ITEM106.C1:
+        checks:
+        - id: sec_106_c1_board_oversight
+          event_types:
+          - confluence_pages
+          - sailpoint_identities
+          - sailpoint_roles
+          resource_types:
+          - grc_document
+          - sailpoint_identity
+          - sailpoint_role
+        monitoring_frequency: quarterly
+      ITEM106.C2:
+        checks:
+        - id: sec_106_c2_board_committee
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ITEM106.C3:
+        checks:
+        - id: sec_106_c3_board_informed
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ITEM106.C4:
+        checks:
+        - id: sec_106_c4_mgmt_role
+          event_types:
+          - workday_employees
+          - sailpoint_identities
+          resource_types:
+          - hr_employee
+          - sailpoint_identity
+        monitoring_frequency: quarterly
+      ITEM106.C5:
+        checks:
+        - id: sec_106_c5_mgmt_expertise
+          event_types:
+          - workday_employees
+          - kb4_training_enrollments
+          resource_types:
+          - hr_employee
+          - training_enrollment
+        monitoring_frequency: quarterly
+      ITEM106.C6:
+        checks:
+        - id: sec_106_c6_mgmt_incident_process
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - confluence_pages
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+          - grc_document
+        monitoring_frequency: quarterly
+      ITEM106.C7:
+        checks:
+        - id: sec_106_c7_mgmt_reporting
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+  ANN_RPT:
+    name: "Annual Reporting Requirements (10-K)"
+    controls:
+      ANN.1:
+        checks:
+        - id: sec_ann_1_annual_cyber_disclosure
+          event_types:
+          - confluence_pages
+          - compliance_audits
+          resource_types:
+          - grc_document
+          - compliance_standard
+        monitoring_frequency: quarterly
+      ANN.2:
+        checks:
+        - id: sec_ann_2_prior_incidents_update
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: quarterly
+      ANN.3:
+        checks:
+        - id: sec_ann_3_aggregated_incidents
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: quarterly

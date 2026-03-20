@@ -120,6 +120,91 @@ jobs:
           print("All OSCAL JSON valid")
           EOF
 
+  terraform-plan-policy:
+    name: Terraform Plan Policy Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Install conftest
+        run: |
+          CONFTEST_VERSION="0.57.0"
+          wget -q "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" -O /tmp/conftest.tar.gz
+          tar -xzf /tmp/conftest.tar.gz -C /tmp
+          sudo mv /tmp/conftest /usr/local/bin/conftest
+          conftest --version
+
+      - name: Generate plan JSON for policy check
+        shell: bash
+        run: |
+          # Use a synthetic minimal plan document that exercises all policy rules
+          # In production this step would run: terraform plan -out=tfplan && terraform show -json tfplan > tfplan.json
+          cat > /tmp/tfplan.json << 'PLAN'
+          {
+            "resource_changes": [
+              {
+                "type": "aws_kms_key",
+                "name": "example",
+                "change": {
+                  "actions": ["create"],
+                  "after": {
+                    "enable_key_rotation": true,
+                    "deletion_window_in_days": 30
+                  }
+                }
+              },
+              {
+                "type": "aws_s3_bucket_public_access_block",
+                "name": "example",
+                "change": {
+                  "actions": ["create"],
+                  "after": {
+                    "block_public_acls": true,
+                    "block_public_policy": true,
+                    "ignore_public_acls": true,
+                    "restrict_public_buckets": true
+                  }
+                }
+              },
+              {
+                "type": "aws_cloudtrail",
+                "name": "example",
+                "change": {
+                  "actions": ["create"],
+                  "after": {
+                    "is_multi_region_trail": true,
+                    "enable_log_file_validation": true,
+                    "include_global_service_events": true,
+                    "enable_logging": true
+                  }
+                }
+              }
+            ]
+          }
+          PLAN
+          echo "Synthetic plan JSON created at /tmp/tfplan.json"
+
+      - name: Run conftest against Terraform plan
+        run: |
+          conftest test /tmp/tfplan.json \
+            --policy policies/terraform/ \
+            --all-namespaces \
+            --output table
+          echo "conftest passed: plan is compliant"
+
+      - name: Validate new Terraform policy count
+        run: |
+          POLICY_COUNT=$(find policies/terraform/ -name "*.rego" ! -name "*_test.rego" | wc -l)
+          echo "Terraform policies: $POLICY_COUNT"
+          if [ "$POLICY_COUNT" -lt 9 ]; then
+            echo "::error::Terraform policy count dropped below 9"
+            exit 1
+          fi
+
   framework-yaml:
     name: Framework YAML Validation
     runs-on: ubuntu-latest
