@@ -105,8 +105,18 @@ if [ -n "$AI_CHOICE" ]; then
             read -r AI_MODEL < /dev/tty
             export WLK_AI_MODEL="${AI_MODEL:-$DEFAULT_MODEL}"
             export WLK_AI_ENABLED=true
+
+            # Write .env so dashboard and CLI pick up the AI config
+            cat > "${DIR}/.env" << ENVEOF
+WLK_AI_ENABLED=true
+WLK_AI_PROVIDER=${WLK_AI_PROVIDER}
+WLK_AI_API_KEY=${WLK_AI_API_KEY}
+WLK_AI_MODEL=${WLK_AI_MODEL}
+WLK_AI_BASE_URL=${WLK_AI_BASE_URL}
+ENVEOF
             echo ""
             echo "       AI enabled: ${WLK_AI_PROVIDER}/${WLK_AI_MODEL}"
+            echo "       Config saved to .env (auto-loaded by warlock)"
             echo "       Use --ai flag on commands: warlock coverage --ai"
             echo "       Interactive reasoning:     warlock remediate <id> --ask"
         else
