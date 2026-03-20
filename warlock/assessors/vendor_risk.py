@@ -15,7 +15,9 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
+    ControlResult,
     Finding,
+    SystemProfile,
 )
 
 log = logging.getLogger(__name__)
@@ -463,3 +465,130 @@ def _create_vendor_risk_finding(
     session.add(finding)
     session.flush()
     log.info("Created vendor risk finding for %s (id=%s)", vendor.name, finding.id)
+
+
+# ---------------------------------------------------------------------------
+# Supply chain concentration analysis
+# ---------------------------------------------------------------------------
+
+
+def analyze_concentration(
+    session: Session,
+) -> dict[str, Any]:
+    """Analyze supply chain concentration risk across vendors.
+
+    For each vendor (identified by connector_scope entries on SystemProfile),
+    counts how many distinct controls depend on systems fed by that vendor's
+    connector. A high concentration score means many controls rely on a
+    single vendor, creating systemic risk.
+
+    Returns:
+        Dict with ``vendors`` (mapping vendor -> concentration data) and
+        ``highest_concentration`` (the vendor with the most control dependencies).
+    """
+    profiles = session.query(SystemProfile).all()
+
+    # Build vendor -> systems mapping from connector_scope
+    vendor_systems: dict[str, list[str]] = {}
+    for profile in profiles:
+        scopes = profile.connector_scope or []
+        for vendor in scopes:
+            vendor_lower = vendor.lower()
+            vendor_systems.setdefault(vendor_lower, []).append(profile.id)
+
+    # For each vendor, count controls on its dependent systems
+    vendor_data: dict[str, dict[str, Any]] = {}
+    for vendor, system_ids in vendor_systems.items():
+        control_count = (
+            session.query(ControlResult.framework, ControlResult.control_id)
+            .filter(ControlResult.system_profile_id.in_(system_ids))
+            .distinct()
+            .count()
+        )
+
+        vendor_data[vendor] = {
+            "system_count": len(system_ids),
+            "control_count": control_count,
+            "system_ids": system_ids,
+            "concentration_score": round(
+                control_count / max(len(vendor_systems), 1), 2
+            ),
+        }
+
+    highest = max(
+        vendor_data.items(),
+        key=lambda x: x[1]["control_count"],
+        default=(None, {}),
+    )
+
+    return {
+        "vendors": vendor_data,
+        "highest_concentration": highest[0],
+        "vendor_count": len(vendor_data),
+    }
+
+
+def blast_radius(
+    session: Session,
+    vendor_name: str,
+) -> dict[str, Any]:
+    """Compute the blast radius if a vendor fails.
+
+    Identifies all systems that depend on the given vendor (via
+    connector_scope) and all controls assessed against those systems.
+
+    Args:
+        session: SQLAlchemy session.
+        vendor_name: Vendor/connector name (e.g. "aws", "okta").
+
+    Returns:
+        Dict with ``systems`` (list of affected system profiles),
+        ``controls`` (list of affected framework:control_id pairs),
+        and ``control_count``.
+    """
+    vendor_lower = vendor_name.lower()
+
+    profiles = session.query(SystemProfile).all()
+
+    affected_systems: list[dict[str, Any]] = []
+    affected_system_ids: list[str] = []
+
+    for profile in profiles:
+        scopes = [s.lower() for s in (profile.connector_scope or [])]
+        if vendor_lower in scopes:
+            affected_systems.append({
+                "id": profile.id,
+                "name": profile.name,
+                "acronym": profile.acronym,
+                "frameworks": profile.frameworks or [],
+            })
+            affected_system_ids.append(profile.id)
+
+    affected_controls: list[dict[str, str]] = []
+    if affected_system_ids:
+        results = (
+            session.query(
+                ControlResult.framework,
+                ControlResult.control_id,
+                ControlResult.status,
+            )
+            .filter(ControlResult.system_profile_id.in_(affected_system_ids))
+            .distinct()
+            .all()
+        )
+        affected_controls = [
+            {
+                "framework": r.framework,
+                "control_id": r.control_id,
+                "status": r.status,
+            }
+            for r in results
+        ]
+
+    return {
+        "vendor": vendor_name,
+        "systems": affected_systems,
+        "system_count": len(affected_systems),
+        "controls": affected_controls,
+        "control_count": len(affected_controls),
+    }

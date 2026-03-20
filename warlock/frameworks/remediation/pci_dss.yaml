@@ -1,0 +1,567 @@
+controls:
+  R1.1:
+    summary: "Install and maintain network security controls to protect cardholder data"
+    remediation_steps:
+      - "Document all network connections and data flows involving cardholder data"
+      - "Deploy firewalls/security groups at all internet-facing boundaries"
+      - "Maintain a network diagram showing all connections to the CDE"
+      - "Review and update firewall and router rule sets at least every six months"
+    console_path: "VPC > Security Groups / Azure NSGs / GCP Firewall Rules"
+    evidence_types: ["ec2_security_groups", "network_security_groups", "compute_firewall_rules"]
+    assertion_name: "no_open_security_groups"
+  R1.2:
+    summary: "Restrict inbound and outbound traffic to only what is necessary for the CDE"
+    remediation_steps:
+      - "Configure deny-all default rules on all firewall/security groups"
+      - "Add explicit allow rules only for documented business justifications"
+      - "Block direct public access to CDE components"
+      - "Review rules quarterly and remove stale entries"
+    console_path: "VPC > Security Groups > Inbound/Outbound Rules"
+    evidence_types: ["ec2_security_groups", "ec2_network_acls"]
+    assertion_name: "no_open_security_groups"
+  R1.3:
+    summary: "Restrict access between the CDE and untrusted networks"
+    remediation_steps:
+      - "Implement network segmentation between CDE and other networks"
+      - "Place web-facing components in a DMZ"
+      - "Block direct inbound from internet to CDE"
+      - "Restrict outbound from CDE to only required destinations"
+    console_path: "VPC > Subnets / Network ACLs"
+    evidence_types: ["ec2_security_groups", "ec2_network_acls"]
+    assertion_name: "no_open_security_groups"
+  R1.4:
+    summary: "Install personal firewall software on portable devices connecting to the CDE"
+    remediation_steps:
+      - "Deploy endpoint firewall via MDM/EDR policy"
+      - "Verify all portable devices have host-based firewall enabled"
+      - "Prevent users from disabling the personal firewall"
+    console_path: "CrowdStrike/Defender > Firewall Policies"
+    evidence_types: ["falcon_device_details", "defender_machines"]
+    assertion_name: "endpoint_protection_active"
+  R1.5:
+    summary: "Ensure security controls for network security are managed and maintained"
+    remediation_steps:
+      - "Define processes for managing network security controls"
+      - "Assign roles and responsibilities for firewall management"
+      - "Document change procedures for network security controls"
+    console_path: "AWS Config / Azure Policy"
+    evidence_types: ["config_recorders"]
+    assertion_name: "config_recorder_enabled"
+  R2.1:
+    summary: "Establish secure configuration standards for all system components"
+    remediation_steps:
+      - "Develop configuration standards based on CIS Benchmarks or DISA STIGs"
+      - "Apply hardening standards to all system components before deployment"
+      - "Change vendor default passwords before connecting systems to production"
+      - "Remove or disable unnecessary default accounts"
+    console_path: "AWS Config Rules / Azure Policy / Wiz"
+    evidence_types: ["config_recorders", "policy_compliance"]
+    assertion_name: "config_recorder_enabled"
+  R2.2:
+    summary: "Configure all system components securely"
+    remediation_steps:
+      - "Enable only necessary services, protocols, and ports"
+      - "Implement security parameters aligned with industry-accepted hardening guides"
+      - "Encrypt all non-console administrative access"
+      - "Document security-relevant configuration parameters"
+    console_path: "AWS Config / Wiz Configuration Findings"
+    evidence_types: ["config_recorders", "wiz_config_findings"]
+    assertion_name: "config_recorder_enabled"
+  R2.3:
+    summary: "Secure wireless environments connected to or transmitting cardholder data"
+    remediation_steps:
+      - "Inventory all wireless access points and connections"
+      - "Use WPA3 or WPA2 with AES encryption for wireless networks"
+      - "Change default wireless encryption keys at installation and upon personnel changes"
+    console_path: "Network Configuration"
+    evidence_types: ["ec2_security_groups"]
+    assertion_name: null
+  R3.1:
+    summary: "Minimize data storage and retention of stored account data"
+    remediation_steps:
+      - "Define data retention and disposal policies for cardholder data"
+      - "Implement automated data purge for data exceeding retention period"
+      - "Limit storage amount and retention time to business requirements"
+      - "Conduct quarterly process to identify and delete unnecessary data"
+    console_path: "S3 Lifecycle Policies / DLP"
+    evidence_types: ["s3_buckets", "storage_accounts"]
+    assertion_name: null
+  R3.2:
+    summary: "Do not store sensitive authentication data after authorization"
+    remediation_steps:
+      - "Implement DLP policies to detect and prevent storage of SAD"
+      - "Verify POS/payment applications do not store full track data, CVV, or PIN"
+      - "Scan for and remove any stored sensitive authentication data"
+    console_path: "DLP Policies"
+    evidence_types: ["purview_dlp_policies"]
+    assertion_name: "dlp_policies_active"
+  R3.3:
+    summary: "Protect stored account data"
+    remediation_steps:
+      - "Render PAN unreadable using one-way hashing, truncation, or strong encryption"
+      - "If disk encryption is used, manage keys independently from OS authentication"
+      - "Document cryptographic architecture for cardholder data protection"
+    console_path: "KMS / Key Vault"
+    evidence_types: ["key_vault", "s3_buckets"]
+    assertion_name: "encryption_at_rest"
+  R3.4:
+    summary: "Protect PAN with access restrictions"
+    remediation_steps:
+      - "Restrict access to PAN to only those with a business need"
+      - "Use role-based access control for cardholder data systems"
+      - "Display PAN in masked format (show only last four digits)"
+    console_path: "IAM / SailPoint"
+    evidence_types: ["s3_buckets", "storage_accounts"]
+    assertion_name: "encryption_at_rest"
+  R3.5:
+    summary: "Protect PAN wherever it is stored"
+    remediation_steps:
+      - "Encrypt PAN at rest using strong cryptography (AES-256)"
+      - "Use tokenization or format-preserving encryption where applicable"
+      - "Implement key management procedures per R3.6 and R3.7"
+    console_path: "KMS / Key Vault"
+    evidence_types: ["key_vault", "s3_buckets"]
+    assertion_name: "encryption_at_rest"
+  R3.6:
+    summary: "Protect cryptographic keys used to protect stored account data"
+    remediation_steps:
+      - "Restrict access to cryptographic keys to fewest custodians necessary"
+      - "Store keys securely in HSM or key management service"
+      - "Implement split knowledge and dual control for key management"
+    console_path: "KMS / Key Vault"
+    evidence_types: ["key_vault"]
+    assertion_name: "encryption_at_rest"
+  R3.7:
+    summary: "Implement key management processes and procedures"
+    remediation_steps:
+      - "Generate keys using approved algorithms (AES-256, RSA-2048+)"
+      - "Rotate encryption keys at least annually"
+      - "Retire or replace keys when integrity is weakened or suspected compromise"
+      - "Implement key destruction procedures"
+    console_path: "KMS Key Rotation / Key Vault Rotation"
+    evidence_types: ["key_vault"]
+    assertion_name: null
+  R4.1:
+    summary: "Protect cardholder data with strong cryptography during transmission over public networks"
+    remediation_steps:
+      - "Use TLS 1.2+ for all transmissions of cardholder data"
+      - "Do not use SSL or early TLS versions"
+      - "Verify certificates are valid and from trusted CAs"
+      - "Implement HSTS on all web interfaces handling cardholder data"
+    console_path: "Certificate Manager / Load Balancer TLS Settings"
+    evidence_types: ["ec2_security_groups", "network_security_groups"]
+    assertion_name: null
+  R4.2:
+    summary: "Protect PAN with strong cryptography when sent via end-user messaging"
+    remediation_steps:
+      - "Implement DLP policies to prevent PAN in email, chat, SMS"
+      - "Train personnel to never send PAN via unencrypted messaging"
+      - "Deploy email encryption for any business-justified PAN transmission"
+    console_path: "DLP Policies"
+    evidence_types: ["purview_dlp_policies"]
+    assertion_name: "dlp_policies_active"
+  R5.1:
+    summary: "Deploy anti-malware on all systems commonly affected by malware"
+    remediation_steps:
+      - "Install EDR/anti-malware on all endpoints and servers in the CDE"
+      - "Enable real-time scanning and automatic definition updates"
+      - "Ensure anti-malware cannot be disabled by users"
+      - "Configure periodic full-system scans"
+    console_path: "CrowdStrike/Defender/SentinelOne Console"
+    evidence_types: ["falcon_device_details", "defender_machines", "s1_agents"]
+    assertion_name: "endpoint_protection_active"
+  R5.2:
+    summary: "Detect and address malicious software"
+    remediation_steps:
+      - "Configure automated quarantine or blocking of detected malware"
+      - "Establish process for investigating malware detections"
+      - "Document and track malware incidents to resolution"
+    console_path: "EDR Console > Detections"
+    evidence_types: ["falcon_detection_details", "defender_alerts", "s1_threats"]
+    assertion_name: "endpoint_protection_active"
+  R5.3:
+    summary: "Keep anti-malware mechanisms active and up to date"
+    remediation_steps:
+      - "Enable automatic definition updates"
+      - "Monitor agent health and connectivity"
+      - "Alert on agents that have not checked in within 24 hours"
+    console_path: "EDR Console > Agent Health"
+    evidence_types: ["falcon_device_details", "defender_machines"]
+    assertion_name: "endpoint_protection_active"
+  R5.4:
+    summary: "Implement anti-phishing mechanisms"
+    remediation_steps:
+      - "Deploy email security gateway with anti-phishing capabilities"
+      - "Conduct regular phishing simulations via KnowBe4"
+      - "Train personnel on phishing recognition and reporting"
+    console_path: "KnowBe4 > Phishing Simulations"
+    evidence_types: ["kb4_phishing_results"]
+    assertion_name: "phishing_failure_rate"
+  R6.1:
+    summary: "Establish secure software development processes"
+    remediation_steps:
+      - "Define and enforce a secure SDLC methodology"
+      - "Train developers on secure coding practices"
+      - "Integrate security testing into CI/CD pipelines"
+    console_path: "Snyk / SonarQube"
+    evidence_types: ["snyk_issues", "sonarqube_issues"]
+    assertion_name: "no_critical_code_vulns"
+  R6.2:
+    summary: "Develop bespoke and custom software securely"
+    remediation_steps:
+      - "Perform code reviews for all custom code changes"
+      - "Use SAST/DAST tools in the development pipeline"
+      - "Remediate identified vulnerabilities before production deployment"
+    console_path: "Snyk / SonarQube"
+    evidence_types: ["snyk_issues", "sonarqube_issues"]
+    assertion_name: "no_critical_code_vulns"
+  R6.3:
+    summary: "Identify and address security vulnerabilities"
+    remediation_steps:
+      - "Install vendor-supplied security patches within 30 days of release"
+      - "Prioritize critical and high severity patches for immediate deployment"
+      - "Track patch status across all CDE systems"
+    console_path: "Vulnerability Scanner Console"
+    evidence_types: ["vuln_export", "wiz_vuln_findings"]
+    assertion_name: "vulnerability_scan_current"
+  R6.4:
+    summary: "Protect public-facing web applications"
+    remediation_steps:
+      - "Deploy WAF in front of public-facing web applications"
+      - "Review web applications via manual or automated vulnerability assessment"
+      - "Address identified web application vulnerabilities"
+    console_path: "WAF / CloudFront / Application Gateway"
+    evidence_types: ["vuln_export", "wiz_issues"]
+    assertion_name: "vulnerability_scan_current"
+  R6.5:
+    summary: "Apply change management processes for all changes to system components in the CDE"
+    remediation_steps:
+      - "Document and approve all changes via formal change request process"
+      - "Test changes in non-production environment before deployment"
+      - "Implement rollback procedures for failed changes"
+      - "Separate development/test from production environments"
+    console_path: "ServiceNow > Change Requests"
+    evidence_types: ["snow_change_requests"]
+    assertion_name: "change_request_approved"
+  R7.1:
+    summary: "Restrict access to system components and cardholder data to only those who need it"
+    remediation_steps:
+      - "Define access control policies based on job classification and function"
+      - "Implement role-based access control for CDE systems"
+      - "Document business justification for each access grant"
+      - "Default to deny-all for access to cardholder data"
+    console_path: "SailPoint / IAM / Entra ID"
+    evidence_types: ["sailpoint_identities", "sailpoint_roles"]
+    assertion_name: "access_reviews_current"
+  R7.2:
+    summary: "Ensure access to system components is appropriately defined and assigned"
+    remediation_steps:
+      - "Assign access based on individual job responsibilities"
+      - "Implement least-privilege access assignments"
+      - "Document and approve all access changes"
+    console_path: "SailPoint / IAM"
+    evidence_types: ["iam_credential_report", "sailpoint_identities"]
+    assertion_name: "access_reviews_current"
+  R7.3:
+    summary: "Manage access to system components and data via an access control system"
+    remediation_steps:
+      - "Use automated access control systems (SailPoint, Okta, Entra ID)"
+      - "Enforce separation of duties for critical functions"
+      - "Restrict access based on need-to-know"
+    console_path: "SailPoint / Okta / Entra ID"
+    evidence_types: ["sailpoint_identities", "okta_users"]
+    assertion_name: "access_reviews_current"
+  R8.1:
+    summary: "Identify and authenticate all users"
+    remediation_steps:
+      - "Assign a unique ID to each person with computer access"
+      - "Verify user identity before issuing credentials"
+      - "Implement processes for managing user identities throughout their lifecycle"
+    console_path: "IAM / Okta / Entra ID"
+    evidence_types: ["iam_users", "okta_users", "entra_users"]
+    assertion_name: "mfa_enabled"
+  R8.2:
+    summary: "Manage user IDs and authentication factors"
+    remediation_steps:
+      - "Disable accounts after 90 days of inactivity"
+      - "Remove or disable departed personnel accounts immediately"
+      - "Manage shared/group/service accounts securely"
+    console_path: "IAM / Okta / Entra ID"
+    evidence_types: ["iam_credential_report", "okta_users"]
+    assertion_name: "mfa_enabled"
+  R8.3:
+    summary: "Establish and manage strong authentication for users and administrators"
+    remediation_steps:
+      - "Require minimum 12-character passwords"
+      - "Enforce password complexity requirements"
+      - "Change passwords at least every 90 days"
+      - "Do not allow reuse of last 4 passwords"
+    console_path: "IAM Password Policy / Okta Policies"
+    evidence_types: ["iam_account_summary", "okta_policies"]
+    assertion_name: "password_policy_compliant"
+  R8.4:
+    summary: "Implement multi-factor authentication for access to the CDE"
+    remediation_steps:
+      - "Deploy MFA for all access to the CDE"
+      - "Require MFA for all remote network access"
+      - "Require MFA for all non-console administrative access"
+      - "Use hardware tokens or push-based authenticators (no SMS)"
+    console_path: "Okta MFA / Entra ID Conditional Access"
+    evidence_types: ["okta_users", "entra_conditional_access_policies"]
+    assertion_name: "mfa_enabled"
+  R8.5:
+    summary: "Configure MFA systems properly"
+    remediation_steps:
+      - "Implement MFA for all applicable system components"
+      - "Do not allow MFA bypass or fallback to single-factor"
+      - "Use replay-resistant MFA mechanisms"
+    console_path: "Okta / Entra ID MFA Settings"
+    evidence_types: ["okta_policies", "entra_conditional_access_policies"]
+    assertion_name: "mfa_enabled"
+  R8.6:
+    summary: "Manage application and system accounts securely"
+    remediation_steps:
+      - "Rotate service account credentials regularly"
+      - "Monitor service account usage for anomalies"
+      - "Use managed identities or workload identity where possible"
+    console_path: "Entra ID > App Registrations / IAM"
+    evidence_types: ["entra_service_principals", "iam_credential_report"]
+    assertion_name: "privileged_access_managed"
+  R9.1:
+    summary: "Restrict physical access to systems in the CDE"
+    remediation_steps:
+      - "Use video cameras or access control to monitor entry to sensitive areas"
+      - "Restrict physical access to network jacks and wireless access points"
+      - "Restrict access to consoles, networking equipment, and servers"
+    console_path: "Verkada / Physical Access Control"
+    evidence_types: ["verkada_access_events", "verkada_doors"]
+    assertion_name: null
+  R9.2:
+    summary: "Manage physical access controls"
+    remediation_steps:
+      - "Implement badge-based or biometric entry controls"
+      - "Review access lists at least quarterly"
+      - "Revoke physical access for terminated personnel immediately"
+    console_path: "Verkada / Physical Access Control"
+    evidence_types: ["verkada_access_events"]
+    assertion_name: null
+  R9.3:
+    summary: "Authorize and manage physical access for personnel and visitors"
+    remediation_steps:
+      - "Issue badges to authorized personnel"
+      - "Escort visitors in cardholder data areas"
+      - "Maintain visitor logs"
+    console_path: "Verkada / Visitor Management"
+    evidence_types: ["verkada_access_events"]
+    assertion_name: null
+  R9.4:
+    summary: "Physically secure media containing cardholder data"
+    remediation_steps:
+      - "Store media backups in a secure location"
+      - "Maintain inventory of all media"
+      - "Classify media by sensitivity"
+    console_path: "Asset Inventory"
+    evidence_types: ["asset_inventory"]
+    assertion_name: null
+  R9.5:
+    summary: "Protect POI devices from tampering and unauthorized substitution"
+    remediation_steps:
+      - "Maintain a list of POI devices including make, model, location"
+      - "Periodically inspect devices for tampering"
+      - "Train personnel to detect suspicious device behavior"
+    console_path: "Asset Inventory"
+    evidence_types: ["asset_inventory"]
+    assertion_name: null
+  R10.1:
+    summary: "Implement audit trails to link all access to system components and cardholder data"
+    remediation_steps:
+      - "Enable audit logging on all systems in the CDE"
+      - "Log all individual user access to cardholder data"
+      - "Log all actions taken by any individual with root or admin privileges"
+    console_path: "CloudTrail / Azure Activity Log / GCP Audit Logs"
+    evidence_types: ["cloudtrail_trails", "audit_logs", "activity_log"]
+    assertion_name: "cloudtrail_enabled"
+  R10.2:
+    summary: "Capture required audit log events"
+    remediation_steps:
+      - "Log all authentication attempts (success and failure)"
+      - "Log all privilege escalation events"
+      - "Log creation and deletion of system-level objects"
+      - "Log access to audit trails"
+    console_path: "CloudTrail / SIEM"
+    evidence_types: ["cloudtrail_trails", "config_recorders"]
+    assertion_name: "cloudtrail_enabled"
+  R10.3:
+    summary: "Protect audit logs from destruction and unauthorized modifications"
+    remediation_steps:
+      - "Enable log file integrity validation"
+      - "Store logs in append-only/immutable storage"
+      - "Restrict access to log files to authorized personnel"
+    console_path: "S3 Object Lock / CloudTrail Validation"
+    evidence_types: ["cloudtrail_trails", "s3_buckets"]
+    assertion_name: "cloudtrail_enabled"
+  R10.4:
+    summary: "Review audit logs to identify anomalies or suspicious activity"
+    remediation_steps:
+      - "Implement automated log analysis via SIEM"
+      - "Configure correlation rules for common attack patterns"
+      - "Review logs of all critical systems at least daily"
+      - "Investigate anomalies and exceptions"
+    console_path: "Splunk / Sentinel / Elastic"
+    evidence_types: ["splunk_notable_events", "sentinel_incidents"]
+    assertion_name: "siem_monitoring_active"
+  R10.5:
+    summary: "Retain audit log history for at least 12 months"
+    remediation_steps:
+      - "Configure log retention for minimum 12 months"
+      - "Ensure at least 3 months of logs are immediately available for analysis"
+      - "Archive older logs to secure, accessible storage"
+    console_path: "S3 Lifecycle / Log Analytics Retention"
+    evidence_types: ["cloudtrail_trails", "s3_buckets"]
+    assertion_name: "cloudtrail_enabled"
+  R10.6:
+    summary: "Synchronize time across all systems"
+    remediation_steps:
+      - "Configure NTP on all systems"
+      - "Use internal time servers synced to trusted external sources"
+      - "Protect time-synchronization settings from unauthorized changes"
+    console_path: "AWS Config / NTP Settings"
+    evidence_types: ["config_recorders"]
+    assertion_name: null
+  R10.7:
+    summary: "Detect and respond to audit log failures promptly"
+    remediation_steps:
+      - "Alert on audit logging failures immediately"
+      - "Respond to log collection failures within defined SLAs"
+      - "Investigate root cause of logging failures"
+    console_path: "SIEM Alerts / Monitor"
+    evidence_types: ["splunk_notable_events", "monitor_alerts"]
+    assertion_name: "siem_monitoring_active"
+  R11.3:
+    summary: "Perform internal and external vulnerability scans regularly"
+    remediation_steps:
+      - "Perform quarterly internal vulnerability scans"
+      - "Perform quarterly external ASV scans"
+      - "Re-scan after significant changes"
+      - "Remediate critical and high vulnerabilities and re-scan to confirm"
+    console_path: "Tenable / Qualys / Wiz"
+    evidence_types: ["vuln_export", "wiz_vuln_findings"]
+    assertion_name: "vulnerability_scan_current"
+  R11.4:
+    summary: "Perform penetration testing at least annually"
+    remediation_steps:
+      - "Conduct annual internal and external penetration tests"
+      - "Test from both inside and outside the network"
+      - "Remediate findings and re-test to confirm"
+    console_path: "Compliance Audits"
+    evidence_types: ["compliance_audits"]
+    assertion_name: null
+  R11.5:
+    summary: "Deploy network intrusion detection/prevention"
+    remediation_steps:
+      - "Deploy IDS/IPS at the network perimeter and critical internal segments"
+      - "Enable GuardDuty or equivalent threat detection"
+      - "Configure alerts for all suspicious traffic patterns"
+    console_path: "GuardDuty / SecurityHub"
+    evidence_types: ["guardduty_detectors", "securityhub_hub"]
+    assertion_name: "guardduty_enabled"
+  R11.6:
+    summary: "Detect unauthorized changes to payment pages and HTTP headers"
+    remediation_steps:
+      - "Implement change detection mechanisms for payment pages"
+      - "Alert on unauthorized modifications"
+      - "Verify integrity of payment page scripts"
+    console_path: "Config / CloudTrail"
+    evidence_types: ["config_recorders", "cloudtrail_trails"]
+    assertion_name: "config_recorder_enabled"
+  R12.1:
+    summary: "Establish and maintain a comprehensive information security policy"
+    remediation_steps:
+      - "Develop a security policy that addresses all PCI DSS requirements"
+      - "Review and update annually and after significant changes"
+      - "Distribute to all relevant personnel"
+    console_path: "Confluence / Policy Management"
+    evidence_types: ["confluence_pages", "snow_policies"]
+    assertion_name: "policy_reviewed_within_year"
+  R12.2:
+    summary: "Define acceptable use policies"
+    remediation_steps:
+      - "Document acceptable use policies for all technologies"
+      - "Require explicit approval for use of technologies"
+      - "Require personnel acknowledgment of acceptable use policies"
+    console_path: "Confluence / Policy Management"
+    evidence_types: ["confluence_pages"]
+    assertion_name: "policy_reviewed_within_year"
+  R12.3:
+    summary: "Perform risk assessments at least annually"
+    remediation_steps:
+      - "Identify threats and vulnerabilities to the CDE"
+      - "Perform formal risk assessment at least annually"
+      - "Update risk assessment upon significant environment changes"
+    console_path: "ServiceNow Risks"
+    evidence_types: ["snow_risks"]
+    assertion_name: null
+  R12.4:
+    summary: "Manage PCI DSS compliance program"
+    remediation_steps:
+      - "Assign responsibility for PCI DSS compliance"
+      - "Document PCI DSS compliance scope"
+      - "Perform quarterly reviews of compliance status"
+    console_path: "Compliance Audits"
+    evidence_types: ["compliance_audits"]
+    assertion_name: null
+  R12.5:
+    summary: "Document and validate PCI DSS scope"
+    remediation_steps:
+      - "Identify and document all CDE system components"
+      - "Verify scope accuracy at least annually and after changes"
+      - "Document segmentation controls if used to reduce scope"
+    console_path: "Asset Inventory"
+    evidence_types: ["prisma_assets", "asset_inventory"]
+    assertion_name: null
+  R12.6:
+    summary: "Implement security awareness training"
+    remediation_steps:
+      - "Provide security awareness training upon hire and annually"
+      - "Include PCI DSS-specific content in training"
+      - "Require acknowledgment of completion"
+      - "Conduct phishing simulations at least annually"
+    console_path: "KnowBe4 > Training"
+    evidence_types: ["kb4_training_enrollments"]
+    assertion_name: "training_completion_rate"
+  R12.7:
+    summary: "Screen personnel to reduce insider threat risk"
+    remediation_steps:
+      - "Conduct background checks for personnel with CDE access"
+      - "Complete screening prior to granting access"
+      - "Repeat screening periodically for sensitive positions"
+    console_path: "Workday > Background Checks"
+    evidence_types: ["workday_background_checks"]
+    assertion_name: "background_check_completed"
+  R12.8:
+    summary: "Manage third-party service providers supporting PCI DSS"
+    remediation_steps:
+      - "Maintain a list of all TPSPs with access to cardholder data"
+      - "Obtain written agreements acknowledging TPSP PCI responsibilities"
+      - "Monitor TPSP PCI DSS compliance status annually"
+    console_path: "SecurityScorecard / Vendor Management"
+    evidence_types: ["ssc_companies"]
+    assertion_name: null
+  R12.9:
+    summary: "TPSPs support PCI DSS compliance of their customers"
+    remediation_steps:
+      - "Obtain TPSP AOC or certification documentation"
+      - "Verify TPSP compliance covers relevant services"
+    console_path: "Vendor Management"
+    evidence_types: ["ssc_companies"]
+    assertion_name: null
+  R12.10:
+    summary: "Establish, maintain, and test incident response procedures"
+    remediation_steps:
+      - "Create an incident response plan addressing PCI DSS breach procedures"
+      - "Assign incident response roles and responsibilities"
+      - "Test the incident response plan at least annually"
+      - "Include notification procedures for payment brands"
+    console_path: "SIEM / Incident Management"
+    evidence_types: ["sentinel_incidents", "splunk_notable_events"]
+    assertion_name: "siem_monitoring_active"

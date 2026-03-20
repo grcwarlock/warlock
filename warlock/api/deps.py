@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from fastapi import Depends, HTTPException, Header, Request, status
+from fastapi import Depends, HTTPException, Header, Query, Request, status
 from sqlalchemy.orm import Session
 
 from warlock.db.engine import get_session as _get_session
@@ -154,3 +154,39 @@ def apply_source_scope(query, model_class, user: User):
         elif hasattr(model_class, 'provider'):
             query = query.filter(model_class.provider.in_(user.allowed_sources))
     return query
+
+
+# ---------------------------------------------------------------------------
+# Pagination dependency (#55)
+# ---------------------------------------------------------------------------
+
+def get_pagination(
+    limit: int = Query(default=50, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+) -> tuple[int, int]:
+    """Reusable FastAPI pagination dependency.
+
+    Enforces a hard cap of 1 000 rows per page so that callers cannot trigger
+    unbounded table scans by omitting limit parameters.
+
+    Usage in an endpoint::
+
+        @router.get("/findings")
+        def list_findings(
+            pagination: tuple[int, int] = Depends(get_pagination),
+            db: Session = Depends(get_db),
+        ):
+            limit, offset = pagination
+            return db.query(Finding).offset(offset).limit(limit).all()
+
+    Endpoints that need this dependency (currently doing unlimited queries):
+        - GET /findings          — warlock/api/app.py
+        - GET /controls          — warlock/api/app.py
+        - GET /audit-log         — warlock/api/app.py
+        - GET /risk-analyses     — warlock/api/app.py
+        - GET /posture-snapshots — warlock/api/app.py
+
+    Returns:
+        ``(limit, offset)`` tuple ready for ``.limit()`` / ``.offset()`` calls.
+    """
+    return limit, offset

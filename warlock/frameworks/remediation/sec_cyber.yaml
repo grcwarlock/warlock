@@ -1,0 +1,142 @@
+controls:
+  ITEM105.1:
+    summary: "Determine materiality of cybersecurity incidents"
+    remediation_steps:
+      - "Define materiality criteria for cybersecurity incidents"
+      - "Establish incident classification process mapping to SEC thresholds"
+      - "Create a materiality assessment template for cyber incidents"
+      - "Train incident response team on materiality determination"
+    assertion_name: "siem_monitoring_active"
+  ITEM105.2:
+    summary: "Disclose material incidents within 4 business days on Form 8-K"
+    remediation_steps:
+      - "Create 8-K disclosure template for cyber incidents"
+      - "Establish fast-track legal and executive review process"
+      - "Define escalation path from CISO to General Counsel to Board"
+      - "Pre-draft disclosure language for common incident types"
+    assertion_name: null
+  ITEM105.3:
+    summary: "Describe the nature, scope, and timing of material incidents"
+    remediation_steps:
+      - "Implement incident documentation standards"
+      - "Capture timeline, affected systems, data types, and user impact"
+      - "Maintain chain-of-custody for forensic evidence"
+    assertion_name: null
+  ITEM105.4:
+    summary: "Describe material impact or reasonably likely impact"
+    remediation_steps:
+      - "Develop financial impact assessment methodology for cyber incidents"
+      - "Track remediation costs, legal exposure, and business disruption"
+      - "Quantify impact using FAIR or equivalent risk model"
+    assertion_name: null
+  ITEM105.5:
+    summary: "Report remediation status and ongoing impact"
+    remediation_steps:
+      - "Track remediation actions with milestones and owners"
+      - "Report ongoing impact in subsequent filings"
+      - "Maintain POA&M for incident remediation"
+    assertion_name: null
+  ITEM106.B1:
+    summary: "Describe cybersecurity risk management program"
+    remediation_steps:
+      - "Document cybersecurity risk management strategy"
+      - "Describe risk assessment methodology"
+      - "Map risk management to recognized frameworks (NIST CSF, ISO 27001)"
+    assertion_name: "policy_reviewed_within_year"
+  ITEM106.B2:
+    summary: "Describe risk assessment process"
+    remediation_steps:
+      - "Document risk assessment cadence and methodology"
+      - "Describe tools and processes for identifying threats and vulnerabilities"
+      - "Explain how risk assessments inform security investments"
+    assertion_name: "vulnerability_scan_current"
+  ITEM106.B3:
+    summary: "Describe third-party risk management"
+    remediation_steps:
+      - "Document vendor risk management program"
+      - "Describe due diligence process for third parties"
+      - "Explain how third-party risks are monitored and managed"
+    assertion_name: null
+  ITEM106.B4:
+    summary: "Describe impact of previous cybersecurity incidents"
+    remediation_steps:
+      - "Maintain historical incident register"
+      - "Document lessons learned from prior incidents"
+      - "Describe how prior incidents informed current risk posture"
+    assertion_name: null
+  ITEM106.B5:
+    summary: "Describe whether risks are reasonably likely to materially affect the registrant"
+    remediation_steps:
+      - "Quantify cybersecurity risk exposure using FAIR methodology"
+      - "Map cyber risks to financial materiality thresholds"
+      - "Update risk exposure assessment quarterly"
+    assertion_name: null
+  ITEM106.C1:
+    summary: "Describe board oversight of cybersecurity risk"
+    remediation_steps:
+      - "Document board committee charter for cybersecurity oversight"
+      - "Schedule regular cybersecurity briefings to the board"
+      - "Track board-level decisions on cybersecurity matters"
+    assertion_name: null
+  ITEM106.C2:
+    summary: "Identify board committee responsible for cybersecurity"
+    remediation_steps:
+      - "Designate audit committee or dedicated cyber committee"
+      - "Document committee membership and cybersecurity expertise"
+      - "Establish committee reporting cadence"
+    assertion_name: null
+  ITEM106.C3:
+    summary: "Describe how board is informed about cybersecurity risks"
+    remediation_steps:
+      - "Define board reporting package for cybersecurity"
+      - "Include metrics, incidents, and risk trends in board reports"
+      - "Document board meeting minutes covering cybersecurity topics"
+    assertion_name: null
+  ITEM106.C4:
+    summary: "Describe management role in cybersecurity"
+    remediation_steps:
+      - "Document CISO/CTO responsibilities for cybersecurity"
+      - "Define management committee structure for cyber risk"
+      - "Describe management processes for incident escalation"
+    assertion_name: null
+  ITEM106.C5:
+    summary: "Describe management cybersecurity expertise"
+    remediation_steps:
+      - "Document relevant experience and certifications of cyber leadership"
+      - "Ensure cybersecurity team has adequate expertise"
+      - "Provide ongoing professional development for security leadership"
+    assertion_name: "training_completion_rate"
+  ITEM106.C6:
+    summary: "Describe management processes for preventing and detecting incidents"
+    remediation_steps:
+      - "Document incident prevention and detection capabilities"
+      - "Describe SIEM, EDR, and monitoring infrastructure"
+      - "Explain how incidents are detected, assessed, and escalated"
+    assertion_name: "siem_monitoring_active"
+  ITEM106.C7:
+    summary: "Describe management cybersecurity reporting processes"
+    remediation_steps:
+      - "Document internal cybersecurity reporting cadence"
+      - "Define metrics and KPIs reported to management"
+      - "Establish process for ad-hoc incident reporting to leadership"
+    assertion_name: null
+  ANN.1:
+    summary: "Include cybersecurity risk management disclosure in annual 10-K"
+    remediation_steps:
+      - "Prepare annual cybersecurity disclosure section for 10-K"
+      - "Update risk management program description"
+      - "Describe any material changes to cybersecurity strategy"
+    assertion_name: "policy_reviewed_within_year"
+  ANN.2:
+    summary: "Update on previously reported incidents"
+    remediation_steps:
+      - "Review and update status of previously disclosed incidents"
+      - "Document remediation progress and remaining exposure"
+    assertion_name: null
+  ANN.3:
+    summary: "Disclose aggregation of individually immaterial incidents"
+    remediation_steps:
+      - "Track all cybersecurity incidents regardless of individual materiality"
+      - "Assess whether aggregated incidents become material"
+      - "Disclose if combined impact crosses materiality threshold"
+    assertion_name: null

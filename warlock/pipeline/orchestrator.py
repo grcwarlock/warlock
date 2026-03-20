@@ -128,16 +128,19 @@ class Pipeline:
                 stats.connectors_failed += 1
                 stats.errors.extend(cr.errors)
 
-            # Persist connector run
+            # Persist connector run (flush deferred to end of connector batch — #44)
             db_run = self._persist_connector_run(session, cr)
+            # Capture ID as a plain string so it survives expunge_all (#54)
+            connector_run_id = db_run.id
 
             for raw_event in cr.events:
                 # Persist raw event
-                db_raw = self._persist_raw_event(session, raw_event, db_run.id)
+                db_raw = self._persist_raw_event(session, raw_event, connector_run_id)
+                raw_event_id = db_raw.id  # capture before potential expunge
                 stats.raw_events_collected += 1
                 self.bus.publish(PipelineEvent(
                     event_type="raw_event.created",
-                    payload_id=db_raw.id,
+                    payload_id=raw_event_id,
                     metadata={"source": raw_event.source, "event_type": raw_event.event_type},
                 ))
 
@@ -146,20 +149,21 @@ class Pipeline:
                     findings = self.normalizers.normalize(raw_event)
                 except Exception as norm_exc:
                     stats.normalizer_failures += 1
-                    stats.errors.append(f"Normalization failed for {db_raw.id}: {norm_exc}")
-                    log.exception("Normalizer failed for raw event %s", db_raw.id)
+                    stats.errors.append(f"Normalization failed for {raw_event_id}: {norm_exc}")
+                    log.exception("Normalizer failed for raw event %s", raw_event_id)
                     continue
                 if not findings:
                     stats.events_without_findings += 1
                 # Accumulate for OPA stage (avoids re-normalization later)
                 all_normalized_findings.extend(findings)
                 for finding in findings:
-                    finding.raw_event_id = db_raw.id
+                    finding.raw_event_id = raw_event_id
                     db_finding = self._persist_finding(session, finding)
+                    finding_id = db_finding.id  # capture before potential expunge
                     stats.findings_normalized += 1
                     self.bus.publish(PipelineEvent(
                         event_type="finding.normalized",
-                        payload_id=db_finding.id,
+                        payload_id=finding_id,
                         metadata={"severity": finding.severity, "type": finding.observation_type},
                     ))
 
@@ -172,7 +176,7 @@ class Pipeline:
                     if mapped.mappings:
                         self.bus.publish(PipelineEvent(
                             event_type="finding.mapped",
-                            payload_id=db_finding.id,
+                            payload_id=finding_id,
                             metadata={
                                 "mapping_count": len(mapped.mappings),
                                 "frameworks": list({m.framework for m in mapped.mappings}),
@@ -183,10 +187,11 @@ class Pipeline:
                     results = self.assessor.assess(mapped, raw_data=raw_event.raw_data)
                     for result in results:
                         db_result = self._persist_result(session, result)
+                        result_id = db_result.id  # capture before potential expunge
                         stats.results_assessed += 1
                         self.bus.publish(PipelineEvent(
                             event_type="control.assessed",
-                            payload_id=db_result.id,
+                            payload_id=result_id,
                             metadata={
                                 "framework": result.framework,
                                 "control_id": result.control_id,
@@ -194,6 +199,12 @@ class Pipeline:
                                 "severity": result.severity,
                             },
                         ))
+
+            # #44: Flush once per connector batch instead of per record.
+            # #54: Expunge all ORM objects to release identity-map memory.
+            #      All IDs needed downstream have been captured as plain strings above.
+            session.flush()
+            session.expunge_all()
 
         # Stage 5 (optional): OPA compliance evaluation across all frameworks
         if self.opa_evaluator is not None:
@@ -232,14 +243,24 @@ class Pipeline:
         if dialect == "postgresql":
             # pg_advisory_lock blocks until the lock is available; use
             # pg_try_advisory_lock to detect contention immediately.
+            # In PgBouncer transaction-pool mode, session-level advisory locks
+            # are disallowed because the connection may be reassigned between
+            # statements. Use the transaction-scoped variant instead.
             from sqlalchemy import text
+            from warlock.config import get_settings
+            settings = get_settings()
+            pgbouncer_mode = str(getattr(settings, "pgbouncer_mode", "false")).lower() == "true"
+            if pgbouncer_mode:
+                lock_fn = "pg_try_advisory_xact_lock"
+            else:
+                lock_fn = "pg_try_advisory_lock"
             result = session.execute(
-                text("SELECT pg_try_advisory_lock(7301839201)")  # fixed Warlock pipeline key
+                text(f"SELECT {lock_fn}(7301839201)")  # fixed Warlock pipeline key
             ).scalar()
             if not result:
                 raise PipelineConcurrencyError(
                     "Another pipeline run is already in progress "
-                    "(pg_try_advisory_lock returned false). "
+                    f"({lock_fn} returned false). "
                     "Wait for the current run to complete."
                 )
         else:
@@ -466,7 +487,7 @@ class Pipeline:
             duration_seconds=cr.duration_seconds,
         )
         session.add(db_run)
-        session.flush()
+        # No flush here — deferred to per-connector batch flush (#44)
         return db_run
 
     def _persist_raw_event(
@@ -484,7 +505,7 @@ class Pipeline:
             ingested_at=raw.observed_at,
         )
         session.add(db_raw)
-        session.flush()
+        # No flush here — deferred to per-connector batch flush (#44)
         return db_raw
 
     def _persist_finding(self, session: Session, f: FindingData) -> models.Finding:
@@ -508,7 +529,7 @@ class Pipeline:
             sha256=f.sha256,
         )
         session.add(db_finding)
-        session.flush()
+        # No flush here — deferred to per-connector batch flush (#44)
         return db_finding
 
     def _persist_mapping(self, session: Session, m) -> models.ControlMapping:
@@ -524,7 +545,7 @@ class Pipeline:
             monitoring_frequency=m.monitoring_frequency or None,
         )
         session.add(db_mapping)
-        session.flush()
+        # No flush here — deferred to per-connector batch flush (#44)
         return db_mapping
 
     def _persist_result(self, session: Session, r: ControlResultData) -> models.ControlResult:
@@ -550,5 +571,5 @@ class Pipeline:
             assessor=r.assessor,
         )
         session.add(db_result)
-        session.flush()
+        # No flush here — deferred to per-connector batch flush (#44)
         return db_result

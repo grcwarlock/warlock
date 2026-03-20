@@ -91,3 +91,42 @@ resource "google_org_policy_policy" "os_login" {
     }
   }
 }
+
+# ── #41: Warlock self-registration evidence ───────────────────────────
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL for self-registration evidence. Set to null to disable."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API authentication."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+resource "terraform_data" "warlock_evidence" {
+  count = var.warlock_api_endpoint != null ? 1 : 0
+
+  triggers_replace = [google_logging_project_sink.audit.id]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
+        -H "Authorization: Bearer ${var.warlock_api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "module": "gcp/secure-project-baseline",
+          "resource_id": "${google_logging_project_sink.audit.id}",
+          "control_ids": ["AU-2", "AC-3", "SC-28"],
+          "attributes": {
+            "project_id": "${var.project_id}",
+            "region": "${var.region}",
+            "log_retention_days": ${var.log_retention_days}
+          }
+        }' || true
+    EOT
+  }
+}

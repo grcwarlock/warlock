@@ -276,3 +276,43 @@ resource "aws_s3_account_public_access_block" "block" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# ── #41: Warlock self-registration evidence ───────────────────────────
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL for self-registration evidence. Set to null to disable."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API authentication."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+resource "terraform_data" "warlock_evidence" {
+  count = var.warlock_api_endpoint != null ? 1 : 0
+
+  triggers_replace = [aws_cloudtrail.main.arn]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
+        -H "Authorization: Bearer ${var.warlock_api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "module": "aws/secure-account-baseline",
+          "resource_id": "${aws_cloudtrail.main.arn}",
+          "control_ids": ["AU-2", "AU-6", "SC-28", "AC-6"],
+          "attributes": {
+            "cloudtrail_name": "${var.cloudtrail_name}",
+            "guardduty_enabled": ${var.enable_guardduty},
+            "security_hub_enabled": ${var.enable_security_hub},
+            "log_retention_days": ${var.log_retention_days}
+          }
+        }' || true
+    EOT
+  }
+}

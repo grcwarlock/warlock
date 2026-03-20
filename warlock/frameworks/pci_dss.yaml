@@ -1,0 +1,771 @@
+framework_id: pci_dss
+control_families:
+  R1:
+    name: Install and Maintain Network Security Controls
+    controls:
+      R1.1:
+        checks:
+        - id: pci_1_1_network_security_controls
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+        monitoring_frequency: quarterly
+      R1.2:
+        checks:
+        - id: pci_1_2_restrict_inbound_outbound
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - network_security_group
+          - compute_firewall_rule
+        monitoring_frequency: quarterly
+      R1.3:
+        checks:
+        - id: pci_1_3_restrict_cardholder_access
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - network_security_group
+          - compute_firewall_rule
+        monitoring_frequency: quarterly
+      R1.4:
+        checks:
+        - id: pci_1_4_personal_firewall
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: quarterly
+      R1.5:
+        checks:
+        - id: pci_1_5_security_controls_managed
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          - config_recorders
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+          - aws_config
+        monitoring_frequency: quarterly
+  R2:
+    name: Apply Secure Configurations to All System Components
+    controls:
+      R2.1:
+        checks:
+        - id: pci_2_1_secure_config_standards
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - wiz_config_findings
+          resource_types:
+          - aws_config
+          - compliance_standard
+        monitoring_frequency: quarterly
+      R2.2:
+        checks:
+        - id: pci_2_2_system_components_configured
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - wiz_config_findings
+          resource_types:
+          - aws_config
+          - compliance_standard
+        monitoring_frequency: quarterly
+      R2.3:
+        checks:
+        - id: pci_2_3_wireless_environments
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+        monitoring_frequency: quarterly
+  R3:
+    name: Protect Stored Account Data
+    controls:
+      R3.1:
+        checks:
+        - id: pci_3_1_minimize_data_storage
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+        monitoring_frequency: quarterly
+      R3.2:
+        checks:
+        - id: pci_3_2_no_sensitive_auth_data
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - purview_dlp_policies
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - dlp_policy
+        monitoring_frequency: quarterly
+      R3.3:
+        checks:
+        - id: pci_3_3_sad_protected
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - purview_dlp_policies
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - dlp_policy
+        monitoring_frequency: quarterly
+      R3.4:
+        checks:
+        - id: pci_3_4_pan_protected
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - key_vault
+        monitoring_frequency: quarterly
+      R3.5:
+        checks:
+        - id: pci_3_5_pan_secured_wherever_stored
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - key_vault
+        monitoring_frequency: quarterly
+      R3.6:
+        checks:
+        - id: pci_3_6_crypto_keys_protected
+          event_types:
+          - key_vault
+          - s3_buckets
+          resource_types:
+          - key_vault
+          - s3_bucket
+        monitoring_frequency: quarterly
+      R3.7:
+        checks:
+        - id: pci_3_7_crypto_key_management
+          event_types:
+          - key_vault
+          resource_types:
+          - key_vault
+        monitoring_frequency: quarterly
+  R4:
+    name: Protect Cardholder Data with Strong Cryptography During Transmission
+    controls:
+      R4.1:
+        checks:
+        - id: pci_4_1_strong_crypto_transmission
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+        monitoring_frequency: quarterly
+      R4.2:
+        checks:
+        - id: pci_4_2_pan_secured_messaging
+          event_types:
+          - purview_dlp_policies
+          resource_types:
+          - dlp_policy
+        monitoring_frequency: quarterly
+  R5:
+    name: Protect All Systems and Networks from Malicious Software
+    controls:
+      R5.1:
+        checks:
+        - id: pci_5_1_antimalware_processes
+          event_types:
+          - falcon_device_details
+          - falcon_detection_details
+          - defender_machines
+          - defender_alerts
+          - s1_agents
+          - s1_threats
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: weekly
+      R5.2:
+        checks:
+        - id: pci_5_2_malware_detected_addressed
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: weekly
+      R5.3:
+        checks:
+        - id: pci_5_3_antimalware_active
+          event_types:
+          - falcon_device_details
+          - falcon_devices
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: weekly
+      R5.4:
+        checks:
+        - id: pci_5_4_antiphishing_mechanisms
+          event_types:
+          - kb4_phishing_results
+          - kb4_training_enrollments
+          resource_types:
+          - phishing_result
+          - training_enrollment
+        monitoring_frequency: quarterly
+  R6:
+    name: Develop and Maintain Secure Systems and Software
+    controls:
+      R6.1:
+        checks:
+        - id: pci_6_1_secure_development
+          event_types:
+          - snyk_issues
+          - sonarqube_issues
+          resource_types:
+          - code_vulnerability
+          - code_quality_issue
+        monitoring_frequency: monthly
+      R6.2:
+        checks:
+        - id: pci_6_2_bespoke_custom_software
+          event_types:
+          - snyk_issues
+          - sonarqube_issues
+          resource_types:
+          - code_vulnerability
+          - code_quality_issue
+        monitoring_frequency: monthly
+      R6.3:
+        checks:
+        - id: pci_6_3_security_vulnerabilities_identified
+          event_types:
+          - vuln_export
+          - wiz_vuln_findings
+          - defender_vulnerabilities
+          - falcon_vulnerabilities
+          resource_types:
+          - vulnerability
+          - endpoint
+        monitoring_frequency: monthly
+      R6.4:
+        checks:
+        - id: pci_6_4_public_facing_web_apps
+          event_types:
+          - vuln_export
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - vulnerability
+          - recommendation
+        monitoring_frequency: monthly
+      R6.5:
+        checks:
+        - id: pci_6_5_change_management
+          event_types:
+          - snow_change_requests
+          - config_recorders
+          - cloudtrail_trails
+          resource_types:
+          - itsm_change_request
+          - aws_config
+          - cloudtrail
+        monitoring_frequency: monthly
+  R7:
+    name: Restrict Access to System Components and Cardholder Data by Business Need to Know
+    controls:
+      R7.1:
+        checks:
+        - id: pci_7_1_access_need_to_know
+          event_types:
+          - iam_credential_report
+          - iam_policies
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          - sailpoint_roles
+          resource_types:
+          - iam_user
+          - iam_policy
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+          - sailpoint_role
+        monitoring_frequency: quarterly
+      R7.2:
+        checks:
+        - id: pci_7_2_access_appropriately_assigned
+          event_types:
+          - iam_credential_report
+          - iam_policies
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          - sailpoint_roles
+          - cyberark_accounts
+          resource_types:
+          - iam_user
+          - iam_policy
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+          - sailpoint_role
+          - cyberark_account
+        monitoring_frequency: quarterly
+      R7.3:
+        checks:
+        - id: pci_7_3_access_managed_via_system
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+        monitoring_frequency: quarterly
+  R8:
+    name: Identify Users and Authenticate Access to System Components
+    controls:
+      R8.1:
+        checks:
+        - id: pci_8_1_user_identification
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+        monitoring_frequency: weekly
+      R8.2:
+        checks:
+        - id: pci_8_2_user_id_management
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+        monitoring_frequency: weekly
+      R8.3:
+        checks:
+        - id: pci_8_3_strong_authentication
+          event_types:
+          - iam_credential_report
+          - iam_account_summary
+          - okta_users
+          - okta_policies
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - iam_account
+          - okta_user
+          - okta_policy
+          - entra_user
+          - entra_conditional_access_policy
+        monitoring_frequency: weekly
+      R8.4:
+        checks:
+        - id: pci_8_4_mfa_implemented
+          event_types:
+          - iam_credential_report
+          - iam_account_summary
+          - okta_users
+          - okta_policies
+          - entra_users
+          - entra_conditional_access_policies
+          - cyberark_accounts
+          resource_types:
+          - iam_user
+          - iam_account
+          - okta_user
+          - okta_policy
+          - entra_user
+          - entra_conditional_access_policy
+          - cyberark_account
+        monitoring_frequency: weekly
+      R8.5:
+        checks:
+        - id: pci_8_5_mfa_systems
+          event_types:
+          - okta_policies
+          - entra_conditional_access_policies
+          resource_types:
+          - okta_policy
+          - entra_conditional_access_policy
+        monitoring_frequency: weekly
+      R8.6:
+        checks:
+        - id: pci_8_6_application_system_accounts
+          event_types:
+          - iam_credential_report
+          - entra_service_principals
+          - entra_app_registrations
+          resource_types:
+          - iam_user
+          - entra_service_principal
+          - entra_app_registration
+        monitoring_frequency: monthly
+  R9:
+    name: Restrict Physical Access to Cardholder Data
+    controls:
+      R9.1:
+        checks:
+        - id: pci_9_1_physical_access_restricted
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
+        monitoring_frequency: quarterly
+      R9.2:
+        checks:
+        - id: pci_9_2_physical_access_managed
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
+        monitoring_frequency: quarterly
+      R9.3:
+        checks:
+        - id: pci_9_3_physical_access_authorized
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
+        monitoring_frequency: quarterly
+      R9.4:
+        checks:
+        - id: pci_9_4_media_physically_secured
+          event_types:
+          - asset_export
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
+        monitoring_frequency: quarterly
+      R9.5:
+        checks:
+        - id: pci_9_5_pos_devices_protected
+          event_types:
+          - asset_inventory
+          resource_types:
+          - host
+        monitoring_frequency: quarterly
+  R10:
+    name: Log and Monitor All Access to System Components and Cardholder Data
+    controls:
+      R10.1:
+        checks:
+        - id: pci_10_1_audit_logging
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+        monitoring_frequency: weekly
+      R10.2:
+        checks:
+        - id: pci_10_2_audit_logs_capture_events
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          - config_recorders
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+          - aws_config
+        monitoring_frequency: weekly
+      R10.3:
+        checks:
+        - id: pci_10_3_audit_logs_protected
+          event_types:
+          - cloudtrail_trails
+          - s3_buckets
+          resource_types:
+          - cloudtrail
+          - s3_bucket
+        monitoring_frequency: weekly
+      R10.4:
+        checks:
+        - id: pci_10_4_audit_logs_reviewed
+          event_types:
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          resource_types:
+          - splunk_notable_event
+          - splunk_correlation_rule
+          - sentinel_incident
+          - sentinel_analytics_rule
+        monitoring_frequency: weekly
+      R10.5:
+        checks:
+        - id: pci_10_5_audit_log_history
+          event_types:
+          - cloudtrail_trails
+          - s3_buckets
+          resource_types:
+          - cloudtrail
+          - s3_bucket
+        monitoring_frequency: monthly
+      R10.6:
+        checks:
+        - id: pci_10_6_time_synchronization
+          event_types:
+          - config_recorders
+          resource_types:
+          - aws_config
+        monitoring_frequency: monthly
+      R10.7:
+        checks:
+        - id: pci_10_7_audit_log_failures
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          - monitor_alerts
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
+          - azure_monitor
+        monitoring_frequency: weekly
+  R11:
+    name: Test Security of Systems and Networks Regularly
+    controls:
+      R11.1:
+        checks:
+        - id: pci_11_1_wireless_access_points
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+        monitoring_frequency: quarterly
+      R11.2:
+        checks:
+        - id: pci_11_2_wireless_aps_identified
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+        monitoring_frequency: quarterly
+      R11.3:
+        checks:
+        - id: pci_11_3_external_internal_vulns
+          event_types:
+          - vuln_export
+          - wiz_vuln_findings
+          - defender_vulnerabilities
+          - falcon_vulnerabilities
+          resource_types:
+          - vulnerability
+          - endpoint
+          - host
+        monitoring_frequency: quarterly
+      R11.4:
+        checks:
+        - id: pci_11_4_penetration_testing
+          event_types:
+          - compliance_audits
+          - confluence_pages
+          resource_types:
+          - compliance_standard
+          - grc_document
+        monitoring_frequency: quarterly
+      R11.5:
+        checks:
+        - id: pci_11_5_network_intrusions_detected
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - guardduty
+          - securityhub
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      R11.6:
+        checks:
+        - id: pci_11_6_unauthorized_changes_detected
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          resource_types:
+          - aws_config
+          - cloudtrail
+        monitoring_frequency: weekly
+  R12:
+    name: Support Information Security with Organizational Policies and Programs
+    controls:
+      R12.1:
+        checks:
+        - id: pci_12_1_security_policy
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      R12.2:
+        checks:
+        - id: pci_12_2_acceptable_use
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      R12.3:
+        checks:
+        - id: pci_12_3_risk_assessment
+          event_types:
+          - snow_risks
+          - vuln_export
+          - wiz_issues
+          resource_types:
+          - itsm_risk
+          - vulnerability
+        monitoring_frequency: quarterly
+      R12.4:
+        checks:
+        - id: pci_12_4_pci_compliance_managed
+          event_types:
+          - compliance_audits
+          - compliance_posture
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+        monitoring_frequency: quarterly
+      R12.5:
+        checks:
+        - id: pci_12_5_pci_scope_documented
+          event_types:
+          - prisma_assets
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
+        monitoring_frequency: quarterly
+      R12.6:
+        checks:
+        - id: pci_12_6_security_awareness
+          event_types:
+          - kb4_training_enrollments
+          - kb4_phishing_results
+          resource_types:
+          - training_enrollment
+          - phishing_result
+        monitoring_frequency: quarterly
+      R12.7:
+        checks:
+        - id: pci_12_7_personnel_screened
+          event_types:
+          - workday_employees
+          - workday_background_checks
+          resource_types:
+          - hr_employee
+          - hr_background_check
+        monitoring_frequency: quarterly
+      R12.8:
+        checks:
+        - id: pci_12_8_tpsp_managed
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      R12.9:
+        checks:
+        - id: pci_12_9_tpsp_support_pci
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      R12.10:
+        checks:
+        - id: pci_12_10_incident_response
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          - defender_alerts
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: quarterly

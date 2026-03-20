@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -73,3 +74,26 @@ def _safe_call(handler: Handler, event: PipelineEvent) -> None:
         handler(event)
     except Exception:
         log.exception("Handler %s failed for event %s", handler.__name__, event.event_type)
+
+
+# ---------------------------------------------------------------------------
+# Auto-registration of subscribers at import time (#34)
+# ---------------------------------------------------------------------------
+
+def _register_default_subscribers(bus: "EventBus") -> None:
+    """Register built-in subscribers when their config is present.
+
+    Called once when a new EventBus is created (or by the queue factory).
+    Subscribers are only registered when the relevant environment variables
+    are set so that default test runs remain unaffected.
+    """
+    webhook_urls = os.environ.get("WLK_WEBHOOK_URLS", "").strip()
+    if webhook_urls:
+        from warlock.export.alerts import WebhookSubscriber
+        subscriber = WebhookSubscriber()
+        for event_type in ("finding.normalized", "control.assessed"):
+            bus.subscribe(event_type, subscriber)
+        log.info(
+            "WebhookSubscriber registered for %d URL(s)",
+            len([u for u in webhook_urls.split(",") if u.strip()]),
+        )

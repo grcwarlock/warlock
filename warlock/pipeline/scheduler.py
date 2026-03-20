@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass
+from concurrent.futures import Future, ThreadPoolExecutor
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -25,6 +26,7 @@ DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
     "cadence_check": {"interval_minutes": 60, "enabled": True},        # after each collect
     "retention_purge": {"interval_minutes": 10080, "enabled": True},  # weekly
     "ccm_stale_check": {"interval_minutes": 60, "enabled": True},     # CCM stale control scan
+    "risk_reeval_check": {"interval_minutes": 360, "enabled": True},  # risk acceptance re-eval (6h)
 }
 
 
@@ -37,6 +39,8 @@ class ScheduleState:
     last_run: datetime | None = None
     run_count: int = 0
     last_error: str | None = None
+    # #38: track the in-flight Future so we can detect overlapping runs
+    _future: Future | None = field(default=None, repr=False, compare=False)
 
 
 # ---------------------------------------------------------------------------
@@ -51,6 +55,9 @@ class PipelineScheduler:
     ticks every second and dispatches any schedule that is due.
     """
 
+    # #38: maximum concurrent schedule workers
+    _POOL_SIZE = 4
+
     def __init__(self, interval_minutes: int = 60):
         """Initialize scheduler.
 
@@ -62,6 +69,8 @@ class PipelineScheduler:
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
+        # #38: thread pool so schedule handlers don't block the main loop
+        self._pool: ThreadPoolExecutor | None = None
 
         # Build schedule states
         self._schedules: dict[str, ScheduleState] = {}
@@ -83,6 +92,11 @@ class PipelineScheduler:
                 return
             self._running = True
             self._stop_event.clear()
+            # #38: create worker pool alongside the scheduler thread
+            self._pool = ThreadPoolExecutor(
+                max_workers=self._POOL_SIZE,
+                thread_name_prefix="warlock-sched-worker",
+            )
 
         self._thread = threading.Thread(
             target=self._run_loop,
@@ -103,6 +117,10 @@ class PipelineScheduler:
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=10)
         self._thread = None
+        # #38: shut down the pool after the scheduler loop exits
+        if self._pool is not None:
+            self._pool.shutdown(wait=False)
+            self._pool = None
         log.info("Scheduler stopped")
 
     def _run_loop(self) -> None:
@@ -133,13 +151,18 @@ class PipelineScheduler:
                     break
 
     def _dispatch(self, schedule_name: str) -> None:
-        """Execute the handler for a schedule."""
+        """Submit the handler for a schedule to the worker pool.
+
+        If the previous run of this schedule is still in flight, the dispatch
+        is skipped to prevent overlapping executions of the same schedule.
+        """
         handlers: dict[str, Callable[[], None]] = {
             "pipeline_collect": self._execute_collect,
             "posture_snapshot": self._execute_snapshot,
             "cadence_check": self._execute_cadence,
             "retention_purge": self._execute_retention,
             "ccm_stale_check": self._execute_ccm_stale,
+            "risk_reeval_check": self._execute_risk_reeval,
         }
 
         handler = handlers.get(schedule_name)
@@ -148,6 +171,34 @@ class PipelineScheduler:
             return
 
         sched = self._schedules[schedule_name]
+
+        # #38: prevent overlapping executions of the same schedule
+        with self._lock:
+            if sched._future is not None and not sched._future.done():
+                log.warning(
+                    "Schedule '%s' still running — skipping overlap", schedule_name
+                )
+                return
+            pool = self._pool
+
+        if pool is None:
+            # Pool not available (scheduler stopped); run inline as fallback
+            self._run_handler(schedule_name, handler, sched)
+            return
+
+        def _worker():
+            self._run_handler(schedule_name, handler, sched)
+
+        with self._lock:
+            sched._future = pool.submit(_worker)
+
+    def _run_handler(
+        self,
+        schedule_name: str,
+        handler: Callable[[], None],
+        sched: ScheduleState,
+    ) -> None:
+        """Execute a schedule handler and record the outcome."""
         try:
             handler()
             with self._lock:
@@ -276,6 +327,25 @@ class PipelineScheduler:
             )
         else:
             log.info("CCM stale check: all controls current")
+
+    def _execute_risk_reeval(self) -> None:
+        """Check active risk acceptances for re-evaluation triggers."""
+        from warlock.db.engine import get_session, init_db
+        from warlock.workflows.risk_acceptance import RiskAcceptanceManager
+
+        init_db()
+        manager = RiskAcceptanceManager()
+
+        with get_session() as session:
+            triggered = manager.evaluate_triggers(session)
+
+        if triggered:
+            log.warning(
+                "Risk re-evaluation check: %d acceptance(s) triggered for review",
+                len(triggered),
+            )
+        else:
+            log.info("Risk re-evaluation check: no acceptances triggered")
 
     @property
     def status(self) -> dict[str, Any]:

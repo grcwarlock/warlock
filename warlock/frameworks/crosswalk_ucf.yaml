@@ -3076,3 +3076,657 @@ crosswalks:
     target_framework: iso_27701
     target_control: A.7.4.9
     confidence: 0.90
+
+  # ============================================================
+  # HIPAA Crosswalk Mappings
+  # ============================================================
+
+  # UCF-GOV-1 (Policies) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-GOV-1
+    target_framework: hipaa
+    target_control: "164.316(a)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-GOV-1
+    target_framework: hipaa
+    target_control: "164.316(b)"
+    confidence: 0.90
+
+  # UCF-IAM-1 (Account Lifecycle) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: hipaa
+    target_control: "164.312(a)(1)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: hipaa
+    target_control: "164.312(d)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: hipaa
+    target_control: "164.312(a)(1)"
+    confidence: 0.85
+
+  # UCF-DAT-1 (Encryption at Rest) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: hipaa
+    target_control: "164.312(a)(2)(iv)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: hipaa
+    target_control: "164.312(e)(1)"
+    confidence: 0.90
+
+  # UCF-LOG-1 (Audit Logging) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: hipaa
+    target_control: "164.312(b)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-2
+    target_framework: hipaa
+    target_control: "164.308(a)(5)(ii)(C)"
+    confidence: 0.85
+
+  # UCF-THR-2 (Incident Handling) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: hipaa
+    target_control: "164.308(a)(6)(i)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: hipaa
+    target_control: "164.308(a)(6)(ii)"
+    confidence: 0.90
+
+  # UCF-HRS-3 (Training) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: hipaa
+    target_control: "164.308(a)(5)(i)"
+    confidence: 0.90
+
+  # UCF-BCP-1 (Contingency) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: hipaa
+    target_control: "164.308(a)(7)(i)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: hipaa
+    target_control: "164.308(a)(7)(ii)(A)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: hipaa
+    target_control: "164.308(a)(7)(ii)(B)"
+    confidence: 0.90
+
+  # UCF-RSK-1 (Risk Assessment) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: hipaa
+    target_control: "164.308(a)(1)(ii)(A)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-RSK-2
+    target_framework: hipaa
+    target_control: "164.308(a)(1)(ii)(B)"
+    confidence: 0.90
+
+  # UCF-PHY-1 (Perimeters) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: hipaa
+    target_control: "164.310(a)(1)"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PHY-2
+    target_framework: hipaa
+    target_control: "164.310(a)(2)(ii)"
+    confidence: 0.85
+
+  # UCF-PRV-1 (Purpose Limitation) → HIPAA
+  - source_framework: ucf
+    source_control: UCF-PRV-1
+    target_framework: hipaa
+    target_control: "164.502(a)"
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-5
+    target_framework: hipaa
+    target_control: "164.502(b)"
+    confidence: 0.85
+
+  # ============================================================
+  # CMMC L2 Crosswalk Mappings
+  # ============================================================
+
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: cmmc_l2
+    target_control: "AC.L2-3.1.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: cmmc_l2
+    target_control: "IA.L2-3.5.3"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: cmmc_l2
+    target_control: "AC.L2-3.1.2"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-4
+    target_framework: cmmc_l2
+    target_control: "AC.L2-3.1.5"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-5
+    target_framework: cmmc_l2
+    target_control: "AC.L2-3.1.12"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-6
+    target_framework: cmmc_l2
+    target_control: "AC.L2-3.1.1"
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: cmmc_l2
+    target_control: "IA.L2-3.5.7"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: cmmc_l2
+    target_control: "AU.L2-3.3.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-3
+    target_framework: cmmc_l2
+    target_control: "AU.L2-3.3.8"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: cmmc_l2
+    target_control: "CM.L2-3.4.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: cmmc_l2
+    target_control: "CM.L2-3.4.3"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: cmmc_l2
+    target_control: "SC.L2-3.13.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: cmmc_l2
+    target_control: "SI.L2-3.14.2"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: cmmc_l2
+    target_control: "RA.L2-3.11.2"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: cmmc_l2
+    target_control: "IR.L2-3.6.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: cmmc_l2
+    target_control: "PS.L2-3.9.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: cmmc_l2
+    target_control: "AT.L2-3.2.1"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: cmmc_l2
+    target_control: "SC.L2-3.13.16"
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: cmmc_l2
+    target_control: "PE.L2-3.10.1"
+    confidence: 0.90
+
+  # ============================================================
+  # FedRAMP Crosswalk Mappings
+  # ============================================================
+
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: fedramp
+    target_control: AC-2
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: fedramp
+    target_control: IA-2
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-4
+    target_framework: fedramp
+    target_control: AC-6
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: fedramp
+    target_control: AU-2
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-5
+    target_framework: fedramp
+    target_control: CA-7
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: fedramp
+    target_control: CM-2
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: fedramp
+    target_control: CM-3
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: fedramp
+    target_control: SC-7
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: fedramp
+    target_control: RA-5
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: fedramp
+    target_control: IR-4
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-BCP-1
+    target_framework: fedramp
+    target_control: CP-2
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: fedramp
+    target_control: RA-3
+    confidence: 0.90
+
+  # ============================================================
+  # GDPR Crosswalk Mappings
+  # ============================================================
+
+  - source_framework: ucf
+    source_control: UCF-PRV-1
+    target_framework: gdpr
+    target_control: ART5.1.B
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-2
+    target_framework: gdpr
+    target_control: ART6.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-2
+    target_framework: gdpr
+    target_control: ART7
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: gdpr
+    target_control: ART15
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: gdpr
+    target_control: ART17
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-3
+    target_framework: gdpr
+    target_control: ART20
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-PRV-4
+    target_framework: gdpr
+    target_control: ART35
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-5
+    target_framework: gdpr
+    target_control: ART5.1.C
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PRV-7
+    target_framework: gdpr
+    target_control: ART46
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: gdpr
+    target_control: ART32.1.A
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: gdpr
+    target_control: ART33
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: gdpr
+    target_control: ART34
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-GOV-4
+    target_framework: gdpr
+    target_control: ART37
+    confidence: 0.85
+
+  # ============================================================
+  # PCI DSS 4.0 Crosswalk Mappings
+  # ============================================================
+
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: pci_dss
+    target_control: R1.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-NET-2
+    target_framework: pci_dss
+    target_control: R1.3
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-NET-3
+    target_framework: pci_dss
+    target_control: R1.2
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: pci_dss
+    target_control: R2.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: pci_dss
+    target_control: R3.5
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-3
+    target_framework: pci_dss
+    target_control: R3.6
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: pci_dss
+    target_control: R4.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: pci_dss
+    target_control: R5.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DEV-2
+    target_framework: pci_dss
+    target_control: R6.2
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: pci_dss
+    target_control: R6.3
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-CFG-2
+    target_framework: pci_dss
+    target_control: R6.5
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: pci_dss
+    target_control: R7.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: pci_dss
+    target_control: R8.4
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-7
+    target_framework: pci_dss
+    target_control: R8.3
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-PHY-1
+    target_framework: pci_dss
+    target_control: R9.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-1
+    target_framework: pci_dss
+    target_control: R10.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-2
+    target_framework: pci_dss
+    target_control: R10.4
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-VLN-1
+    target_framework: pci_dss
+    target_control: R11.3
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-VLN-4
+    target_framework: pci_dss
+    target_control: R11.4
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: pci_dss
+    target_control: R11.5
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-1
+    target_framework: pci_dss
+    target_control: R12.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: pci_dss
+    target_control: R12.6
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-HRS-1
+    target_framework: pci_dss
+    target_control: R12.7
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-TPM-3
+    target_framework: pci_dss
+    target_control: R12.8
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: pci_dss
+    target_control: R12.10
+    confidence: 0.90
+
+  # ============================================================
+  # NIST CSF 2.0 Crosswalk Mappings
+  # ============================================================
+
+  - source_framework: ucf
+    source_control: UCF-GOV-1
+    target_framework: nist_csf
+    target_control: GV.PO-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-GOV-2
+    target_framework: nist_csf
+    target_control: GV.RR-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: nist_csf
+    target_control: GV.RR-01
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: nist_csf
+    target_control: ID.RA-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-RSK-2
+    target_framework: nist_csf
+    target_control: ID.RA-05
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: nist_csf
+    target_control: GV.SC-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-1
+    target_framework: nist_csf
+    target_control: PR.AA-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-2
+    target_framework: nist_csf
+    target_control: PR.AA-03
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-3
+    target_framework: nist_csf
+    target_control: PR.AA-04
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-IAM-6
+    target_framework: nist_csf
+    target_control: PR.AA-05
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-HRS-3
+    target_framework: nist_csf
+    target_control: PR.AT-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-1
+    target_framework: nist_csf
+    target_control: PR.DS-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-DAT-2
+    target_framework: nist_csf
+    target_control: PR.DS-02
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-BCP-2
+    target_framework: nist_csf
+    target_control: PR.DS-11
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-CFG-1
+    target_framework: nist_csf
+    target_control: PR.PS-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-NET-1
+    target_framework: nist_csf
+    target_control: PR.IR-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: nist_csf
+    target_control: DE.AE-02
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-1
+    target_framework: nist_csf
+    target_control: DE.CM-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-EPP-2
+    target_framework: nist_csf
+    target_control: DE.CM-09
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: nist_csf
+    target_control: RS.MA-01
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-BCP-3
+    target_framework: nist_csf
+    target_control: RC.RP-01
+    confidence: 0.90
+
+  # ============================================================
+  # SEC Cybersecurity Disclosure Rules Crosswalk Mappings
+  # ============================================================
+
+  - source_framework: ucf
+    source_control: UCF-THR-2
+    target_framework: sec_cyber
+    target_control: ITEM105.1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-THR-3
+    target_framework: sec_cyber
+    target_control: ITEM105.2
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: sec_cyber
+    target_control: ITEM106.B1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-RSK-1
+    target_framework: sec_cyber
+    target_control: ITEM106.B2
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-RSK-5
+    target_framework: sec_cyber
+    target_control: ITEM106.B3
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: sec_cyber
+    target_control: ITEM106.C1
+    confidence: 0.90
+  - source_framework: ucf
+    source_control: UCF-GOV-3
+    target_framework: sec_cyber
+    target_control: ITEM106.C4
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-LOG-6
+    target_framework: sec_cyber
+    target_control: ITEM106.C6
+    confidence: 0.85
+  - source_framework: ucf
+    source_control: UCF-GOV-1
+    target_framework: sec_cyber
+    target_control: ANN.1
+    confidence: 0.85

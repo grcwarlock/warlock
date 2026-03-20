@@ -8,16 +8,26 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from sqlalchemy.orm import Session
 
-from warlock.db.models import RiskAcceptance
+from warlock.db.models import ControlResult, RiskAcceptance
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
 _ACTIVE_STATUSES = frozenset({"active"})
 _TERMINAL_STATUSES = frozenset({"expired", "revoked"})
+
+# Severity ordering for severity_change trigger evaluation
+_SEVERITY_ORDER: dict[str, int] = {
+    "low": 0,
+    "moderate": 1,
+    "medium": 1,
+    "high": 2,
+    "critical": 3,
+}
 
 
 class RiskAcceptanceManager:
@@ -136,3 +146,129 @@ class RiskAcceptanceManager:
             )
 
         return query.order_by(RiskAcceptance.expiry_date).all()
+
+    def evaluate_triggers(
+        self,
+        session: Session,
+    ) -> list[dict[str, Any]]:
+        """Scan active risk acceptances and check auto re-evaluation triggers.
+
+        For each active (non-expired) risk acceptance with auto_reeval_triggers
+        configured, evaluates:
+
+        - **severity_change**: If the latest ControlResult for the accepted
+          control has a severity higher than the acceptance's risk_level,
+          the acceptance needs re-evaluation.
+        - **new_finding**: If any ControlResult for the accepted control
+          was assessed after the acceptance was approved (or created),
+          the acceptance needs re-evaluation.
+        - **time_elapsed**: If more than ``days`` have passed since the
+          acceptance was approved (or created), it needs periodic review.
+          Distinct from expiry — this is a mid-lifecycle check.
+
+        Returns:
+            List of dicts describing acceptances needing re-evaluation,
+            each containing ``acceptance_id``, ``framework``, ``control_id``,
+            ``triggered_by`` (list of trigger names), and ``details``.
+        """
+        now = datetime.now(timezone.utc)
+
+        actives = (
+            session.query(RiskAcceptance)
+            .filter(
+                RiskAcceptance.status.in_(_ACTIVE_STATUSES),
+                RiskAcceptance.expiry_date > now,
+            )
+            .all()
+        )
+
+        results: list[dict[str, Any]] = []
+
+        for ra in actives:
+            triggers = ra.auto_reeval_triggers or {}
+            if not triggers:
+                continue
+
+            triggered_by: list[str] = []
+            details: dict[str, Any] = {}
+            baseline_dt = ensure_aware(ra.approved_at) or ensure_aware(ra.created_at) or now
+
+            # --- severity_change trigger ---
+            if triggers.get("severity_change"):
+                latest_result = (
+                    session.query(ControlResult)
+                    .filter(
+                        ControlResult.framework == ra.framework,
+                        ControlResult.control_id == ra.control_id,
+                    )
+                    .order_by(ControlResult.assessed_at.desc())
+                    .first()
+                )
+                if latest_result and latest_result.severity:
+                    accepted_level = _SEVERITY_ORDER.get(
+                        (ra.risk_level or "").lower(), 0
+                    )
+                    current_level = _SEVERITY_ORDER.get(
+                        latest_result.severity.lower(), 0
+                    )
+                    if current_level > accepted_level:
+                        triggered_by.append("severity_change")
+                        details["severity_change"] = {
+                            "accepted_risk_level": ra.risk_level,
+                            "current_severity": latest_result.severity,
+                        }
+
+            # --- new_finding trigger ---
+            if triggers.get("new_finding"):
+                new_result = (
+                    session.query(ControlResult)
+                    .filter(
+                        ControlResult.framework == ra.framework,
+                        ControlResult.control_id == ra.control_id,
+                        ControlResult.assessed_at > baseline_dt,
+                    )
+                    .first()
+                )
+                if new_result:
+                    triggered_by.append("new_finding")
+                    details["new_finding"] = {
+                        "finding_assessed_at": (
+                            new_result.assessed_at.isoformat()
+                            if new_result.assessed_at else None
+                        ),
+                    }
+
+            # --- time_elapsed trigger ---
+            time_elapsed_cfg = triggers.get("time_elapsed")
+            if time_elapsed_cfg:
+                elapsed_days = int(
+                    time_elapsed_cfg
+                    if isinstance(time_elapsed_cfg, (int, float))
+                    else time_elapsed_cfg.get("days", 90)
+                    if isinstance(time_elapsed_cfg, dict)
+                    else 90
+                )
+                days_since = (now - baseline_dt).total_seconds() / 86400.0
+                if days_since >= elapsed_days:
+                    triggered_by.append("time_elapsed")
+                    details["time_elapsed"] = {
+                        "threshold_days": elapsed_days,
+                        "actual_days": round(days_since, 1),
+                    }
+
+            if triggered_by:
+                results.append({
+                    "acceptance_id": ra.id,
+                    "framework": ra.framework,
+                    "control_id": ra.control_id,
+                    "risk_level": ra.risk_level,
+                    "triggered_by": triggered_by,
+                    "details": details,
+                })
+                log.warning(
+                    "Risk acceptance %s (%s/%s) triggered for re-evaluation: %s",
+                    ra.id, ra.framework, ra.control_id,
+                    ", ".join(triggered_by),
+                )
+
+        return results

@@ -1,0 +1,351 @@
+framework_id: eu_ai_act
+control_families:
+  ART5:
+    name: Prohibited AI Practices
+    controls:
+      ART5.1:
+        checks:
+        - id: eu_ai_5_1_prohibited_practices
+          event_types:
+          - prisma_policies
+          - confluence_pages
+          resource_types:
+          - policy
+          - grc_document
+        monitoring_frequency: quarterly
+  ART6:
+    name: High-Risk AI System Classification
+    controls:
+      ART6.1:
+        checks:
+        - id: eu_ai_6_1_classification
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART6.2:
+        checks:
+        - id: eu_ai_6_2_annex_iii_systems
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+  ART9:
+    name: Risk Management System
+    controls:
+      ART9.1:
+        checks:
+        - id: eu_ai_9_1_risk_mgmt_system
+          event_types:
+          - snow_risks
+          - confluence_pages
+          resource_types:
+          - itsm_risk
+          - grc_document
+        monitoring_frequency: quarterly
+      ART9.2:
+        checks:
+        - id: eu_ai_9_2_risk_identification
+          event_types:
+          - snow_risks
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - itsm_risk
+          - recommendation
+        monitoring_frequency: quarterly
+      ART9.3:
+        checks:
+        - id: eu_ai_9_3_testing_procedures
+          event_types:
+          - compliance_audits
+          - prisma_compliance
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+        monitoring_frequency: quarterly
+      ART9.4:
+        checks:
+        - id: eu_ai_9_4_risk_measures
+          event_types:
+          - snow_risks
+          resource_types:
+          - itsm_risk
+        monitoring_frequency: quarterly
+  ART10:
+    name: Data and Data Governance
+    controls:
+      ART10.1:
+        checks:
+        - id: eu_ai_10_1_training_data
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+        monitoring_frequency: quarterly
+      ART10.2:
+        checks:
+        - id: eu_ai_10_2_data_governance
+          event_types:
+          - onetrust_data_maps
+          - s3_buckets
+          resource_types:
+          - privacy_data_map
+          - s3_bucket
+        monitoring_frequency: quarterly
+      ART10.3:
+        checks:
+        - id: eu_ai_10_3_data_relevant
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART10.4:
+        checks:
+        - id: eu_ai_10_4_data_bias_examined
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART10.5:
+        checks:
+        - id: eu_ai_10_5_personal_data
+          event_types:
+          - onetrust_consent_records
+          - onetrust_data_maps
+          resource_types:
+          - privacy_consent
+          - privacy_data_map
+        monitoring_frequency: quarterly
+  ART11:
+    name: Technical Documentation
+    controls:
+      ART11.1:
+        checks:
+        - id: eu_ai_11_1_technical_doc
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+  ART12:
+    name: Record-Keeping
+    controls:
+      ART12.1:
+        checks:
+        - id: eu_ai_12_1_automatic_logging
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+        monitoring_frequency: monthly
+      ART12.2:
+        checks:
+        - id: eu_ai_12_2_traceability
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+        monitoring_frequency: monthly
+  ART13:
+    name: Transparency and Provision of Information
+    controls:
+      ART13.1:
+        checks:
+        - id: eu_ai_13_1_transparency
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART13.2:
+        checks:
+        - id: eu_ai_13_2_output_interpretation
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART13.3:
+        checks:
+        - id: eu_ai_13_3_deployer_info
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+  ART14:
+    name: Human Oversight
+    controls:
+      ART14.1:
+        checks:
+        - id: eu_ai_14_1_human_oversight_design
+          event_types:
+          - okta_system_log
+          - entra_directory_audits
+          - cyberark_recordings
+          resource_types:
+          - okta_event
+          - entra_audit
+          - cyberark_account
+        monitoring_frequency: quarterly
+      ART14.2:
+        checks:
+        - id: eu_ai_14_2_oversight_measures
+          event_types:
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - okta_event
+          - entra_audit
+        monitoring_frequency: quarterly
+      ART14.3:
+        checks:
+        - id: eu_ai_14_3_human_understand
+          event_types:
+          - confluence_pages
+          - kb4_training_enrollments
+          resource_types:
+          - grc_document
+          - training_enrollment
+        monitoring_frequency: quarterly
+      ART14.4:
+        checks:
+        - id: eu_ai_14_4_override_capability
+          event_types:
+          - okta_system_log
+          - entra_directory_audits
+          resource_types:
+          - okta_event
+          - entra_audit
+        monitoring_frequency: quarterly
+  ART15:
+    name: Accuracy, Robustness and Cybersecurity
+    controls:
+      ART15.1:
+        checks:
+        - id: eu_ai_15_1_accuracy_levels
+          event_types:
+          - compliance_audits
+          resource_types:
+          - compliance_standard
+        monitoring_frequency: quarterly
+      ART15.2:
+        checks:
+        - id: eu_ai_15_2_robustness
+          event_types:
+          - compliance_audits
+          resource_types:
+          - compliance_standard
+        monitoring_frequency: quarterly
+      ART15.3:
+        checks:
+        - id: eu_ai_15_3_resilience
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - scc_findings
+          resource_types:
+          - endpoint
+          - recommendation
+        monitoring_frequency: quarterly
+      ART15.4:
+        checks:
+        - id: eu_ai_15_4_cybersecurity
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - guardduty
+          - securityhub
+          - ec2_security_group
+          - network_security_group
+        monitoring_frequency: quarterly
+  ART26:
+    name: Obligations for Deployers of High-Risk AI
+    controls:
+      ART26.1:
+        checks:
+        - id: eu_ai_26_1_deployer_use
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART26.2:
+        checks:
+        - id: eu_ai_26_2_deployer_monitoring
+          event_types:
+          - monitor_alerts
+          - splunk_notable_events
+          - sentinel_incidents
+          resource_types:
+          - azure_monitor
+          - splunk_notable_event
+          - sentinel_incident
+        monitoring_frequency: monthly
+      ART26.5:
+        checks:
+        - id: eu_ai_26_5_dpia
+          event_types:
+          - onetrust_data_maps
+          resource_types:
+          - privacy_data_map
+        monitoring_frequency: quarterly
+  ART50:
+    name: Transparency Obligations for AI Systems
+    controls:
+      ART50.1:
+        checks:
+        - id: eu_ai_50_1_human_interaction
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      ART50.2:
+        checks:
+        - id: eu_ai_50_2_synthetic_content
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+  ART72:
+    name: Post-Market Monitoring
+    controls:
+      ART72.1:
+        checks:
+        - id: eu_ai_72_1_monitoring_system
+          event_types:
+          - monitor_alerts
+          - scc_findings
+          - wiz_issues
+          resource_types:
+          - azure_monitor
+          - recommendation
+        monitoring_frequency: monthly
+      ART72.2:
+        checks:
+        - id: eu_ai_72_2_monitoring_plan
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly

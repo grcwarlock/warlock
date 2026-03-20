@@ -102,3 +102,42 @@ resource "aws_cloudwatch_metric_alarm" "root_usage" {
   alarm_actions       = [aws_sns_topic.security_alerts.arn]
   tags                = local.common_tags
 }
+
+# ── #41: Warlock self-registration evidence ───────────────────────────
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL for self-registration evidence. Set to null to disable."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API authentication."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+resource "terraform_data" "warlock_evidence" {
+  count = var.warlock_api_endpoint != null ? 1 : 0
+
+  triggers_replace = [aws_iam_role.grc_auditor.arn]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
+        -H "Authorization: Bearer ${var.warlock_api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "module": "aws/iam-baseline",
+          "resource_id": "${aws_iam_role.grc_auditor.arn}",
+          "control_ids": ["AC-2", "AC-6", "IA-2"],
+          "attributes": {
+            "auditor_role_name": "${aws_iam_role.grc_auditor.name}",
+            "mfa_enforcement_policy": "RequireMFAForConsole",
+            "root_usage_alarm": "RootAccountUsage"
+          }
+        }' || true
+    EOT
+  }
+}

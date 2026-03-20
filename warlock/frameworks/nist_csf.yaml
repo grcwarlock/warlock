@@ -1,0 +1,1060 @@
+framework_id: nist_csf
+control_families:
+  GV:
+    name: Govern
+    controls:
+      GV.OC-01:
+        checks:
+        - id: gv_oc_01_org_context
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      GV.OC-02:
+        checks:
+        - id: gv_oc_02_stakeholder_expectations
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      GV.OC-03:
+        checks:
+        - id: gv_oc_03_legal_regulatory
+          event_types:
+          - confluence_pages
+          - compliance_audits
+          resource_types:
+          - grc_document
+          - compliance_standard
+        monitoring_frequency: quarterly
+      GV.OC-04:
+        checks:
+        - id: gv_oc_04_critical_objectives
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      GV.OC-05:
+        checks:
+        - id: gv_oc_05_risk_outcomes
+          event_types:
+          - snow_risks
+          resource_types:
+          - itsm_risk
+        monitoring_frequency: quarterly
+      GV.RM-01:
+        checks:
+        - id: gv_rm_01_risk_mgmt_objectives
+          event_types:
+          - confluence_pages
+          - snow_risks
+          resource_types:
+          - grc_document
+          - itsm_risk
+        monitoring_frequency: quarterly
+      GV.RM-02:
+        checks:
+        - id: gv_rm_02_risk_appetite
+          event_types:
+          - confluence_pages
+          - snow_risks
+          resource_types:
+          - grc_document
+          - itsm_risk
+        monitoring_frequency: quarterly
+      GV.RM-03:
+        checks:
+        - id: gv_rm_03_risk_mgmt_activities
+          event_types:
+          - snow_risks
+          - vuln_export
+          - wiz_issues
+          resource_types:
+          - itsm_risk
+          - vulnerability
+        monitoring_frequency: quarterly
+      GV.RM-04:
+        checks:
+        - id: gv_rm_04_strategic_direction
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      GV.RM-05:
+        checks:
+        - id: gv_rm_05_communication_lines
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      GV.RM-06:
+        checks:
+        - id: gv_rm_06_standardized_method
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      GV.RM-07:
+        checks:
+        - id: gv_rm_07_strategic_opportunities
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+      GV.RR-01:
+        checks:
+        - id: gv_rr_01_leadership_accountable
+          event_types:
+          - sailpoint_identities
+          - sailpoint_roles
+          - workday_employees
+          resource_types:
+          - sailpoint_identity
+          - sailpoint_role
+          - hr_employee
+        monitoring_frequency: quarterly
+      GV.RR-02:
+        checks:
+        - id: gv_rr_02_roles_communicated
+          event_types:
+          - sailpoint_identities
+          - sailpoint_roles
+          resource_types:
+          - sailpoint_identity
+          - sailpoint_role
+        monitoring_frequency: quarterly
+      GV.RR-03:
+        checks:
+        - id: gv_rr_03_resources_adequate
+          event_types:
+          - workday_employees
+          resource_types:
+          - hr_employee
+        monitoring_frequency: quarterly
+      GV.RR-04:
+        checks:
+        - id: gv_rr_04_cybersecurity_in_hr
+          event_types:
+          - workday_employees
+          - kb4_training_enrollments
+          resource_types:
+          - hr_employee
+          - training_enrollment
+        monitoring_frequency: quarterly
+      GV.PO-01:
+        checks:
+        - id: gv_po_01_policy_established
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      GV.PO-02:
+        checks:
+        - id: gv_po_02_policy_communicated
+          event_types:
+          - confluence_pages
+          - snow_policies
+          resource_types:
+          - grc_document
+          - itsm_policy
+        monitoring_frequency: quarterly
+      GV.SC-01:
+        checks:
+        - id: gv_sc_01_supply_chain_program
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-02:
+        checks:
+        - id: gv_sc_02_supplier_roles
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-03:
+        checks:
+        - id: gv_sc_03_supply_chain_integrated
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-04:
+        checks:
+        - id: gv_sc_04_supplier_prioritized
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-05:
+        checks:
+        - id: gv_sc_05_supplier_requirements
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-06:
+        checks:
+        - id: gv_sc_06_supplier_planning
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-07:
+        checks:
+        - id: gv_sc_07_supply_chain_risk_managed
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-08:
+        checks:
+        - id: gv_sc_08_supplier_assessed
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-09:
+        checks:
+        - id: gv_sc_09_supply_chain_monitored
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      GV.SC-10:
+        checks:
+        - id: gv_sc_10_supplier_post_contract
+          event_types:
+          - ssc_companies
+          resource_types:
+          - vendor_company
+        monitoring_frequency: quarterly
+  ID:
+    name: Identify
+    controls:
+      ID.AM-01:
+        checks:
+        - id: id_am_01_asset_inventory
+          event_types:
+          - prisma_assets
+          - asset_export
+          - asset_inventory
+          - falcon_devices
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+          - host
+          - agent
+        monitoring_frequency: monthly
+      ID.AM-02:
+        checks:
+        - id: id_am_02_software_inventory
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          - s1_agents
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: monthly
+      ID.AM-03:
+        checks:
+        - id: id_am_03_data_flows
+          event_types:
+          - onetrust_data_maps
+          - ec2_security_groups
+          - network_security_groups
+          resource_types:
+          - privacy_data_map
+          - ec2_security_group
+          - network_security_group
+        monitoring_frequency: monthly
+      ID.AM-04:
+        checks:
+        - id: id_am_04_external_services
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          - entra_service_principals
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+          - entra_service_principal
+        monitoring_frequency: monthly
+      ID.AM-05:
+        checks:
+        - id: id_am_05_asset_prioritization
+          event_types:
+          - prisma_assets
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
+        monitoring_frequency: monthly
+      ID.AM-07:
+        checks:
+        - id: id_am_07_asset_ownership
+          event_types:
+          - prisma_assets
+          - asset_inventory
+          resource_types:
+          - host
+          - agent
+        monitoring_frequency: monthly
+      ID.AM-08:
+        checks:
+        - id: id_am_08_systems_decommissioned
+          event_types:
+          - asset_inventory
+          - asset_export
+          resource_types:
+          - host
+          - agent
+        monitoring_frequency: monthly
+      ID.RA-01:
+        checks:
+        - id: id_ra_01_vuln_identified
+          event_types:
+          - vuln_export
+          - wiz_vuln_findings
+          - defender_vulnerabilities
+          - falcon_vulnerabilities
+          resource_types:
+          - vulnerability
+          - endpoint
+          - host
+        monitoring_frequency: monthly
+      ID.RA-02:
+        checks:
+        - id: id_ra_02_threat_intel
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - scc_findings
+          resource_types:
+          - endpoint
+          - recommendation
+        monitoring_frequency: monthly
+      ID.RA-03:
+        checks:
+        - id: id_ra_03_threats_identified
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - scc_findings
+          resource_types:
+          - guardduty
+          - securityhub
+        monitoring_frequency: monthly
+      ID.RA-04:
+        checks:
+        - id: id_ra_04_impact_likelihood
+          event_types:
+          - snow_risks
+          - wiz_issues
+          - prisma_alerts
+          resource_types:
+          - itsm_risk
+          - recommendation
+        monitoring_frequency: monthly
+      ID.RA-05:
+        checks:
+        - id: id_ra_05_risk_responses
+          event_types:
+          - snow_risks
+          - wiz_issues
+          resource_types:
+          - itsm_risk
+        monitoring_frequency: monthly
+      ID.RA-06:
+        checks:
+        - id: id_ra_06_risk_prioritized
+          event_types:
+          - snow_risks
+          resource_types:
+          - itsm_risk
+        monitoring_frequency: monthly
+      ID.RA-07:
+        checks:
+        - id: id_ra_07_risk_changes_managed
+          event_types:
+          - snow_risks
+          - snow_change_requests
+          resource_types:
+          - itsm_risk
+          - itsm_change_request
+        monitoring_frequency: monthly
+      ID.RA-08:
+        checks:
+        - id: id_ra_08_vuln_disclosure
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: monthly
+      ID.RA-09:
+        checks:
+        - id: id_ra_09_procurement_risk
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      ID.RA-10:
+        checks:
+        - id: id_ra_10_critical_suppliers
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: quarterly
+      ID.IM-01:
+        checks:
+        - id: id_im_01_improvements_identified
+          event_types:
+          - compliance_audits
+          - compliance_posture
+          resource_types:
+          - compliance_standard
+          - compliance_requirement
+        monitoring_frequency: quarterly
+      ID.IM-02:
+        checks:
+        - id: id_im_02_improvements_prioritized
+          event_types:
+          - snow_risks
+          - defender_recommendations
+          resource_types:
+          - itsm_risk
+          - recommendation
+        monitoring_frequency: quarterly
+      ID.IM-03:
+        checks:
+        - id: id_im_03_improvements_implemented
+          event_types:
+          - snow_change_requests
+          resource_types:
+          - itsm_change_request
+        monitoring_frequency: quarterly
+      ID.IM-04:
+        checks:
+        - id: id_im_04_improvements_communicated
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: quarterly
+  PR:
+    name: Protect
+    controls:
+      PR.AA-01:
+        checks:
+        - id: pr_aa_01_identity_mgmt
+          event_types:
+          - iam_credential_report
+          - iam_users
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - iam_user
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+        monitoring_frequency: weekly
+      PR.AA-02:
+        checks:
+        - id: pr_aa_02_identity_proofing
+          event_types:
+          - okta_users
+          - entra_users
+          - sailpoint_identities
+          resource_types:
+          - okta_user
+          - entra_user
+          - sailpoint_identity
+        monitoring_frequency: monthly
+      PR.AA-03:
+        checks:
+        - id: pr_aa_03_authentication
+          event_types:
+          - iam_credential_report
+          - okta_users
+          - okta_policies
+          - entra_users
+          - entra_conditional_access_policies
+          resource_types:
+          - iam_user
+          - okta_user
+          - okta_policy
+          - entra_user
+          - entra_conditional_access_policy
+        monitoring_frequency: weekly
+      PR.AA-04:
+        checks:
+        - id: pr_aa_04_access_assertions
+          event_types:
+          - iam_policies
+          - okta_policies
+          - entra_conditional_access_policies
+          - sailpoint_roles
+          resource_types:
+          - iam_policy
+          - okta_policy
+          - entra_conditional_access_policy
+          - sailpoint_role
+        monitoring_frequency: weekly
+      PR.AA-05:
+        checks:
+        - id: pr_aa_05_access_permissions
+          event_types:
+          - iam_credential_report
+          - sailpoint_identities
+          - sailpoint_certifications
+          resource_types:
+          - iam_user
+          - sailpoint_identity
+          - sailpoint_certification
+        monitoring_frequency: monthly
+      PR.AA-06:
+        checks:
+        - id: pr_aa_06_physical_access
+          event_types:
+          - verkada_access_events
+          - verkada_doors
+          resource_types:
+          - physical_access_event
+          - physical_door
+        monitoring_frequency: monthly
+      PR.AT-01:
+        checks:
+        - id: pr_at_01_awareness_training
+          event_types:
+          - kb4_training_enrollments
+          - kb4_phishing_results
+          resource_types:
+          - training_enrollment
+          - phishing_result
+        monitoring_frequency: quarterly
+      PR.AT-02:
+        checks:
+        - id: pr_at_02_privileged_training
+          event_types:
+          - kb4_training_enrollments
+          resource_types:
+          - training_enrollment
+        monitoring_frequency: quarterly
+      PR.DS-01:
+        checks:
+        - id: pr_ds_01_data_at_rest
+          event_types:
+          - s3_buckets
+          - storage_accounts
+          - storage_buckets
+          - key_vault
+          resource_types:
+          - s3_bucket
+          - storage_account
+          - storage_bucket
+          - key_vault
+        monitoring_frequency: monthly
+      PR.DS-02:
+        checks:
+        - id: pr_ds_02_data_in_transit
+          event_types:
+          - ec2_security_groups
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - network_security_group
+          - compute_firewall_rule
+        monitoring_frequency: monthly
+      PR.DS-10:
+        checks:
+        - id: pr_ds_10_data_in_use
+          event_types:
+          - purview_dlp_policies
+          resource_types:
+          - dlp_policy
+        monitoring_frequency: monthly
+      PR.DS-11:
+        checks:
+        - id: pr_ds_11_backups
+          event_types:
+          - veeam_backup_sessions
+          - veeam_restore_points
+          resource_types:
+          - backup_session
+          - backup_restore_point
+        monitoring_frequency: monthly
+      PR.PS-01:
+        checks:
+        - id: pr_ps_01_config_mgmt
+          event_types:
+          - config_recorders
+          - policy_compliance
+          - wiz_config_findings
+          resource_types:
+          - aws_config
+          - compliance_standard
+        monitoring_frequency: monthly
+      PR.PS-02:
+        checks:
+        - id: pr_ps_02_software_maintained
+          event_types:
+          - vuln_export
+          - wiz_vuln_findings
+          - defender_vulnerabilities
+          resource_types:
+          - vulnerability
+          - endpoint
+        monitoring_frequency: monthly
+      PR.PS-03:
+        checks:
+        - id: pr_ps_03_hardware_maintained
+          event_types:
+          - asset_inventory
+          - asset_export
+          resource_types:
+          - host
+          - agent
+        monitoring_frequency: monthly
+      PR.PS-04:
+        checks:
+        - id: pr_ps_04_log_generation
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+        monitoring_frequency: monthly
+      PR.PS-05:
+        checks:
+        - id: pr_ps_05_installation_execution
+          event_types:
+          - falcon_device_details
+          - defender_machines
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: monthly
+      PR.PS-06:
+        checks:
+        - id: pr_ps_06_secure_development
+          event_types:
+          - snyk_issues
+          - sonarqube_issues
+          resource_types:
+          - code_vulnerability
+          - code_quality_issue
+        monitoring_frequency: monthly
+      PR.IR-01:
+        checks:
+        - id: pr_ir_01_network_protected
+          event_types:
+          - ec2_security_groups
+          - ec2_network_acls
+          - network_security_groups
+          - compute_firewall_rules
+          resource_types:
+          - ec2_security_group
+          - ec2_network_acl
+          - network_security_group
+          - compute_firewall_rule
+        monitoring_frequency: weekly
+      PR.IR-02:
+        checks:
+        - id: pr_ir_02_tech_resilience
+          event_types:
+          - veeam_backup_sessions
+          - config_recorders
+          resource_types:
+          - backup_session
+          - aws_config
+        monitoring_frequency: monthly
+      PR.IR-03:
+        checks:
+        - id: pr_ir_03_platform_security
+          event_types:
+          - config_recorders
+          - policy_compliance
+          resource_types:
+          - aws_config
+          - compliance_standard
+        monitoring_frequency: monthly
+      PR.IR-04:
+        checks:
+        - id: pr_ir_04_resource_adequacy
+          event_types:
+          - asset_inventory
+          resource_types:
+          - host
+        monitoring_frequency: monthly
+  DE:
+    name: Detect
+    controls:
+      DE.CM-01:
+        checks:
+        - id: de_cm_01_network_monitoring
+          event_types:
+          - guardduty_detectors
+          - securityhub_hub
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - guardduty
+          - securityhub
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      DE.CM-02:
+        checks:
+        - id: de_cm_02_physical_env_monitoring
+          event_types:
+          - verkada_access_events
+          resource_types:
+          - physical_access_event
+        monitoring_frequency: weekly
+      DE.CM-03:
+        checks:
+        - id: de_cm_03_personnel_activity
+          event_types:
+          - okta_system_log
+          - entra_sign_ins
+          - entra_risky_users
+          resource_types:
+          - okta_event
+          - entra_sign_in
+          - entra_user
+        monitoring_frequency: weekly
+      DE.CM-06:
+        checks:
+        - id: de_cm_06_external_service_monitoring
+          event_types:
+          - ssc_companies
+          - ssc_factors
+          resource_types:
+          - vendor_company
+          - vendor_risk_factor
+        monitoring_frequency: monthly
+      DE.CM-09:
+        checks:
+        - id: de_cm_09_computing_monitoring
+          event_types:
+          - falcon_detection_details
+          - defender_alerts
+          - s1_threats
+          - wiz_issues
+          resource_types:
+          - endpoint
+          - endpoint_fleet
+        monitoring_frequency: weekly
+      DE.AE-02:
+        checks:
+        - id: de_ae_02_events_analyzed
+          event_types:
+          - splunk_notable_events
+          - splunk_correlation_rules
+          - sentinel_incidents
+          - sentinel_analytics_rules
+          resource_types:
+          - splunk_notable_event
+          - splunk_correlation_rule
+          - sentinel_incident
+          - sentinel_analytics_rule
+        monitoring_frequency: weekly
+      DE.AE-03:
+        checks:
+        - id: de_ae_03_events_correlated
+          event_types:
+          - splunk_correlation_rules
+          - sentinel_analytics_rules
+          - elastic_detection_rules
+          resource_types:
+          - splunk_correlation_rule
+          - sentinel_analytics_rule
+          - elastic_detection_rule
+        monitoring_frequency: weekly
+      DE.AE-04:
+        checks:
+        - id: de_ae_04_impact_estimated
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      DE.AE-06:
+        checks:
+        - id: de_ae_06_events_declared
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      DE.AE-07:
+        checks:
+        - id: de_ae_07_events_aggregated
+          event_types:
+          - splunk_notable_events
+          - sentinel_incidents
+          resource_types:
+          - splunk_notable_event
+          - sentinel_incident
+        monitoring_frequency: weekly
+      DE.AE-08:
+        checks:
+        - id: de_ae_08_events_declared_incidents
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+  RS:
+    name: Respond
+    controls:
+      RS.MA-01:
+        checks:
+        - id: rs_ma_01_incident_managed
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.MA-02:
+        checks:
+        - id: rs_ma_02_incidents_triaged
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.MA-03:
+        checks:
+        - id: rs_ma_03_incidents_escalated
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.MA-04:
+        checks:
+        - id: rs_ma_04_incidents_mitigated
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.MA-05:
+        checks:
+        - id: rs_ma_05_new_vulns_mitigated
+          event_types:
+          - vuln_export
+          - wiz_vuln_findings
+          resource_types:
+          - vulnerability
+          - endpoint
+        monitoring_frequency: monthly
+      RS.AN-03:
+        checks:
+        - id: rs_an_03_analysis_performed
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.AN-06:
+        checks:
+        - id: rs_an_06_actions_recorded
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.AN-07:
+        checks:
+        - id: rs_an_07_data_collected
+          event_types:
+          - cloudtrail_trails
+          - audit_logs
+          - activity_log
+          resource_types:
+          - cloudtrail
+          - gcp_audit
+          - azure_activity
+        monitoring_frequency: weekly
+      RS.AN-08:
+        checks:
+        - id: rs_an_08_integrity_declared
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.CO-02:
+        checks:
+        - id: rs_co_02_internal_stakeholders
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+      RS.CO-03:
+        checks:
+        - id: rs_co_03_external_stakeholders
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: weekly
+  RC:
+    name: Recover
+    controls:
+      RC.RP-01:
+        checks:
+        - id: rc_rp_01_recovery_executed
+          event_types:
+          - veeam_backup_sessions
+          - veeam_restore_points
+          resource_types:
+          - backup_session
+          - backup_restore_point
+        monitoring_frequency: monthly
+      RC.RP-02:
+        checks:
+        - id: rc_rp_02_recovery_actions
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: monthly
+      RC.RP-03:
+        checks:
+        - id: rc_rp_03_data_integrity_verified
+          event_types:
+          - config_recorders
+          - cloudtrail_trails
+          resource_types:
+          - aws_config
+          - cloudtrail
+        monitoring_frequency: monthly
+      RC.RP-04:
+        checks:
+        - id: rc_rp_04_operations_restored
+          event_types:
+          - veeam_backup_sessions
+          resource_types:
+          - backup_session
+        monitoring_frequency: monthly
+      RC.RP-05:
+        checks:
+        - id: rc_rp_05_integrity_of_restored
+          event_types:
+          - config_recorders
+          resource_types:
+          - aws_config
+        monitoring_frequency: monthly
+      RC.RP-06:
+        checks:
+        - id: rc_rp_06_end_of_recovery
+          event_types:
+          - sentinel_incidents
+          - splunk_notable_events
+          resource_types:
+          - sentinel_incident
+          - splunk_notable_event
+        monitoring_frequency: monthly
+      RC.CO-03:
+        checks:
+        - id: rc_co_03_recovery_communicated
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: monthly
+      RC.CO-04:
+        checks:
+        - id: rc_co_04_public_updates
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: monthly

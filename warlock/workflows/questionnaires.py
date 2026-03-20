@@ -1,7 +1,15 @@
-"""Vendor questionnaire management — templates, lifecycle, scoring, AI suggestions."""
+"""Vendor questionnaire management — templates, lifecycle, scoring, AI suggestions.
+
+#46 additions:
+- auto_respond(session, questionnaire_id) — bulk-populate ai_suggested_answers from
+  control results + finding evidence via keyword matching.
+- suggest_response(session, question_text) — on-demand suggestion for a free-text
+  question using the same evidence corpus.
+"""
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -10,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     ControlResult,
+    Finding,
     Questionnaire,
     QuestionnaireTemplate,
 )
@@ -643,4 +652,284 @@ class QuestionnaireManager:
             "overdue": overdue_count,
             "templates": template_count,
             "avg_risk_score": round(float(avg_risk), 1) if avg_risk else None,
+        }
+
+    # ------------------------------------------------------------------
+    # #46: AI Auto-Response — keyword-matched evidence from pipeline data
+    # ------------------------------------------------------------------
+
+    def _build_evidence_corpus(self, session: Session) -> dict[str, Any]:
+        """Build a reusable evidence corpus from ControlResult + Finding tables.
+
+        Returns:
+            {
+              "results": list[ControlResult],
+              "findings": list[Finding],
+              "compliant_controls": set[str],   # "framework control_id"
+              "non_compliant_controls": set[str],
+              "finding_index": {word: [Finding, ...]},
+              "result_index": {word: [ControlResult, ...]},
+            }
+        """
+        results: list[ControlResult] = session.query(ControlResult).all()
+        findings: list[Finding] = session.query(Finding).all()
+
+        compliant: set[str] = set()
+        non_compliant: set[str] = set()
+        result_index: dict[str, list[ControlResult]] = {}
+
+        for r in results:
+            key = f"{r.framework} {r.control_id}"
+            if r.status == "compliant":
+                compliant.add(key)
+            elif r.status == "non_compliant":
+                non_compliant.add(key)
+
+            # Index by words from assertion_name
+            for word in self._tokenize(r.assertion_name or ""):
+                result_index.setdefault(word, []).append(r)
+
+        finding_index: dict[str, list[Finding]] = {}
+        for f in findings:
+            for word in self._tokenize(f.title or ""):
+                finding_index.setdefault(word, []).append(f)
+
+        return {
+            "results": results,
+            "findings": findings,
+            "compliant_controls": compliant,
+            "non_compliant_controls": non_compliant,
+            "result_index": result_index,
+            "finding_index": finding_index,
+        }
+
+    @staticmethod
+    def _tokenize(text: str) -> list[str]:
+        """Extract lowercase words of 3+ characters from text."""
+        return [w.lower() for w in re.findall(r"[a-zA-Z]{3,}", text)]
+
+    @staticmethod
+    def _score_question_against_corpus(
+        question_text: str,
+        mapped_controls: list[str],
+        corpus: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Return a relevance-scored evidence bundle for a single question.
+
+        Matching strategy (in priority order):
+        1. Exact control ID match against mapped_controls
+        2. Keyword overlap between question text and assertion_name / finding title
+        """
+        compliant = corpus["compliant_controls"]
+        non_compliant = corpus["non_compliant_controls"]
+        result_index = corpus["result_index"]
+        finding_index = corpus["finding_index"]
+
+        matched_compliant: list[str] = []
+        matched_non_compliant: list[str] = []
+        evidence_snippets: list[str] = []
+        remediation_snippets: list[str] = []
+
+        # --- Strategy 1: mapped control IDs ---
+        for control_ref in mapped_controls:
+            norm = control_ref.replace(" ", "").replace("-", "").lower()
+            for key in compliant:
+                if norm in key.replace(" ", "").replace("-", "").lower():
+                    matched_compliant.append(key)
+                    break
+            for key in non_compliant:
+                if norm in key.replace(" ", "").replace("-", "").lower():
+                    matched_non_compliant.append(key)
+                    break
+
+        # --- Strategy 2: keyword matching ---
+        question_words = QuestionnaireManager._tokenize(question_text)
+        seen_result_ids: set[str] = set()
+        seen_finding_ids: set[str] = set()
+
+        for word in question_words:
+            for r in result_index.get(word, []):
+                if r.id not in seen_result_ids:
+                    seen_result_ids.add(r.id)
+                    key = f"{r.framework} {r.control_id}"
+                    if r.assertion_passed is True:
+                        matched_compliant.append(key)
+                        if r.assertion_name:
+                            evidence_snippets.append(r.assertion_name)
+                    elif r.assertion_passed is False:
+                        matched_non_compliant.append(key)
+                        if r.remediation_summary:
+                            remediation_snippets.append(r.remediation_summary[:120])
+            for f in finding_index.get(word, []):
+                if f.id not in seen_finding_ids:
+                    seen_finding_ids.add(f.id)
+                    evidence_snippets.append(f.title[:100])
+
+        return {
+            "matched_compliant": matched_compliant,
+            "matched_non_compliant": matched_non_compliant,
+            "evidence_snippets": evidence_snippets[:5],
+            "remediation_snippets": remediation_snippets[:3],
+        }
+
+    def auto_respond(self, session: Session, questionnaire_id: str) -> Questionnaire:
+        """Bulk-populate ai_suggested_answers from control results + finding evidence.
+
+        For each question in the questionnaire template:
+        - Searches ControlResult.assertion_name and Finding.title for keyword matches
+          against the question text, plus mapped_controls control ID matching.
+        - For yes/no questions: "Yes, [evidence]" if passing assertion found,
+          else "No, [gap with remediation plan]".
+        - For text questions: composes answer from relevant finding summaries.
+
+        Persists results to questionnaire.ai_suggested_answers.
+        """
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if not template:
+            raise ValueError(f"Template not found: {q.template_id}")
+
+        corpus = self._build_evidence_corpus(session)
+        suggestions: dict[str, dict] = {}
+
+        for question in template.questions:
+            qid = question["id"]
+            question_text = question.get("text", "")
+            mapped_controls = question.get("mapped_controls", [])
+            response_type = question.get("response_type", "text")
+
+            evidence = self._score_question_against_corpus(
+                question_text, mapped_controls, corpus
+            )
+
+            n_compliant = len(evidence["matched_compliant"])
+            n_non_compliant = len(evidence["matched_non_compliant"])
+
+            if n_compliant == 0 and n_non_compliant == 0:
+                # No matching evidence — skip
+                continue
+
+            if response_type == "yes_no":
+                if n_compliant >= n_non_compliant:
+                    snippets = "; ".join(evidence["evidence_snippets"][:3]) or "pipeline evidence"
+                    answer = f"Yes, {snippets}."
+                    confidence = round(n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1)
+                else:
+                    remediations = "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                    answer = f"No, {remediations}."
+                    confidence = round(n_non_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1)
+            else:
+                # Text question — compose from finding summaries
+                parts: list[str] = []
+                if evidence["evidence_snippets"]:
+                    parts.append("Evidence: " + "; ".join(evidence["evidence_snippets"][:3]) + ".")
+                if evidence["matched_compliant"]:
+                    parts.append(
+                        f"Compliant controls: {', '.join(evidence['matched_compliant'][:3])}."
+                    )
+                if evidence["matched_non_compliant"]:
+                    parts.append(
+                        f"Non-compliant controls: {', '.join(evidence['matched_non_compliant'][:3])}."
+                    )
+                answer = " ".join(parts) if parts else "No automated evidence available."
+                confidence = round(
+                    n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1
+                )
+
+            source_controls = (evidence["matched_compliant"] + evidence["matched_non_compliant"])[:5]
+            suggestions[qid] = {
+                "answer": answer,
+                "confidence": min(confidence, 100.0),
+                "source": f"Control results: {', '.join(source_controls)}" if source_controls else "Keyword match",
+            }
+
+        q.ai_suggested_answers = suggestions
+        q.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return q
+
+    def suggest_response(self, session: Session, question_text: str) -> dict[str, Any]:
+        """On-demand suggestion for a free-text question.
+
+        Given a raw question string, searches ControlResult and Finding
+        evidence and returns a suggested answer with confidence and sources.
+
+        Returns a dict (not persisted to DB):
+            {
+              "question": str,
+              "suggested_answer": str,
+              "confidence": float,      # 0-100
+              "sources": list[str],     # control keys used as evidence
+              "evidence_snippets": list[str],
+            }
+        """
+        if not question_text or not question_text.strip():
+            return {
+                "question": question_text,
+                "suggested_answer": "No question text provided.",
+                "confidence": 0.0,
+                "sources": [],
+                "evidence_snippets": [],
+            }
+
+        corpus = self._build_evidence_corpus(session)
+        evidence = self._score_question_against_corpus(
+            question_text,
+            mapped_controls=[],  # no pre-mapped controls for ad-hoc questions
+            corpus=corpus,
+        )
+
+        n_compliant = len(evidence["matched_compliant"])
+        n_non_compliant = len(evidence["matched_non_compliant"])
+        total = n_compliant + n_non_compliant
+
+        # Detect yes/no phrasing heuristically
+        yes_no_patterns = re.compile(
+            r"\b(do you|does your|have you|is there|are there|can you|will you)\b",
+            re.IGNORECASE,
+        )
+        is_yes_no = bool(yes_no_patterns.search(question_text))
+
+        if total == 0:
+            return {
+                "question": question_text,
+                "suggested_answer": "No automated evidence found in the compliance pipeline.",
+                "confidence": 0.0,
+                "sources": [],
+                "evidence_snippets": [],
+            }
+
+        if is_yes_no:
+            if n_compliant >= n_non_compliant:
+                snippets = "; ".join(evidence["evidence_snippets"][:3]) or "pipeline evidence"
+                answer = f"Yes, {snippets}."
+            else:
+                remediations = "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                answer = f"No, {remediations}."
+        else:
+            parts: list[str] = []
+            if evidence["evidence_snippets"]:
+                parts.append("Evidence: " + "; ".join(evidence["evidence_snippets"][:3]) + ".")
+            if evidence["matched_compliant"]:
+                parts.append(f"Compliant controls: {', '.join(evidence['matched_compliant'][:3])}.")
+            if evidence["matched_non_compliant"]:
+                parts.append(f"Non-compliant controls: {', '.join(evidence['matched_non_compliant'][:3])}.")
+            answer = " ".join(parts) if parts else "No automated evidence available."
+
+        confidence = round(n_compliant / max(total, 1) * 100, 1)
+        sources = (evidence["matched_compliant"] + evidence["matched_non_compliant"])[:5]
+
+        return {
+            "question": question_text,
+            "suggested_answer": answer,
+            "confidence": min(confidence, 100.0),
+            "sources": sources,
+            "evidence_snippets": evidence["evidence_snippets"],
         }

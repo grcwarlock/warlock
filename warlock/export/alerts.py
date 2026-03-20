@@ -2,11 +2,20 @@
 
 When controls degrade past thresholds, sends notifications
 to configured channels (Slack webhook, PagerDuty, email, generic webhook).
+
+Also provides WebhookSubscriber — an EventBus subscriber that forwards
+pipeline events (finding.normalized, control.assessed) to configured
+outbound webhook URLs with HMAC-SHA256 request signing.
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import logging
+import os
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -24,6 +33,127 @@ log = logging.getLogger(__name__)
 
 TIMEOUT = 15.0
 MAX_RETRIES = 1
+
+# ---------------------------------------------------------------------------
+# WebhookSubscriber (#34)
+# ---------------------------------------------------------------------------
+
+_WEBHOOK_EVENT_TYPES = {"finding.normalized", "control.assessed"}
+_WEBHOOK_MAX_RETRIES = 3
+
+
+class WebhookSubscriber:
+    """EventBus subscriber that POSTs pipeline events to configured URLs.
+
+    Subscribes to ``finding.normalized`` and ``control.assessed`` events and
+    forwards them via HTTP POST with an HMAC-SHA256 signature so recipients can
+    verify authenticity.
+
+    Configuration (read from environment at construction time):
+        WLK_WEBHOOK_URLS   — comma-separated list of target URLs
+        WLK_WEBHOOK_SECRET — shared secret for HMAC-SHA256 signing (optional)
+
+    The signature is placed in the ``X-Warlock-Signature`` request header as
+    ``sha256=<hex-digest>`` of the raw JSON body.  Retries up to 3 times with
+    exponential backoff (1s, 2s, 4s).
+    """
+
+    def __init__(
+        self,
+        urls: list[str] | None = None,
+        secret: str = "",
+    ) -> None:
+        if urls is None:
+            raw = os.environ.get("WLK_WEBHOOK_URLS", "")
+            urls = [u.strip() for u in raw.split(",") if u.strip()]
+        if not secret:
+            secret = os.environ.get("WLK_WEBHOOK_SECRET", "")
+        self.urls: list[str] = urls
+        self._secret: str = secret
+
+    # ------------------------------------------------------------------
+    # EventBus handler interface
+    # ------------------------------------------------------------------
+
+    def __call__(self, event: Any) -> None:
+        """Handle a PipelineEvent — called by the EventBus."""
+        if not self.urls:
+            return
+        if event.event_type not in _WEBHOOK_EVENT_TYPES:
+            return
+        self._deliver(event)
+
+    # Friendly name used by _safe_call in bus.py for log messages
+    __name__ = "WebhookSubscriber"
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _build_payload(self, event: Any) -> dict[str, Any]:
+        """Serialise a PipelineEvent into a plain dict."""
+        return {
+            "id": event.id,
+            "event_type": event.event_type,
+            "payload_id": event.payload_id,
+            "timestamp": event.timestamp.isoformat(),
+            "metadata": event.metadata,
+        }
+
+    def _sign(self, body: bytes) -> str:
+        """Return ``sha256=<hex>`` HMAC signature for *body*."""
+        if not self._secret:
+            return ""
+        digest = hmac.new(self._secret.encode(), body, hashlib.sha256).hexdigest()
+        return f"sha256={digest}"
+
+    def _deliver(self, event: Any) -> None:
+        """POST the event to every configured URL with retry + backoff."""
+        payload_dict = self._build_payload(event)
+        body = json.dumps(payload_dict, default=str).encode()
+        signature = self._sign(body)
+
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if signature:
+            headers["X-Warlock-Signature"] = signature
+
+        for url in self.urls:
+            self._post_with_retry(url, body, headers, event.event_type)
+
+    def _post_with_retry(
+        self,
+        url: str,
+        body: bytes,
+        headers: dict[str, str],
+        event_type: str,
+    ) -> None:
+        """POST *body* to *url*, retrying up to _WEBHOOK_MAX_RETRIES times."""
+        if not _HAS_HTTPX:
+            log.error("httpx not installed — cannot deliver webhook event")
+            return
+
+        for attempt in range(_WEBHOOK_MAX_RETRIES):
+            try:
+                resp = httpx.post(url, content=body, headers=headers, timeout=TIMEOUT)
+                resp.raise_for_status()
+                log.debug(
+                    "Webhook delivered: event=%s url=%s status=%d",
+                    event_type, url, resp.status_code,
+                )
+                return
+            except Exception as exc:
+                wait = 2 ** attempt  # 1s, 2s, 4s
+                if attempt < _WEBHOOK_MAX_RETRIES - 1:
+                    log.warning(
+                        "Webhook POST failed (attempt %d/%d): url=%s error=%s — retrying in %ds",
+                        attempt + 1, _WEBHOOK_MAX_RETRIES, url, exc, wait,
+                    )
+                    time.sleep(wait)
+                else:
+                    log.error(
+                        "Webhook POST failed after %d attempts: url=%s error=%s",
+                        _WEBHOOK_MAX_RETRIES, url, exc,
+                    )
 
 
 # ---------------------------------------------------------------------------

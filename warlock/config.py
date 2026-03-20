@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "sqlite:///warlock.db"
+    database_read_url: str = ""  # Read replica URL; falls back to database_url when empty
+    pgbouncer_mode: bool = False  # When True: pool_size=1, max_overflow=0, no prepared stmts
 
     # Pipeline
     pipeline_batch_size: int = 500
@@ -262,3 +264,19 @@ def get_settings() -> Settings:
     if _settings is None:
         _settings = Settings()
     return _settings
+
+
+# Risk appetite defaults — importable by warlock.assessors.risk_appetite
+# to avoid circular imports, defined here alongside other pipeline config.
+risk_appetite_defaults: dict[str, dict[str, float]] = {
+    "nist_800_53": {"max_ale": 2_000_000.0, "max_var95": 5_000_000.0, "max_high_findings": 10},
+    "soc2": {"max_ale": 1_500_000.0, "max_var95": 3_500_000.0, "max_high_findings": 5},
+    "iso_27001": {"max_ale": 1_500_000.0, "max_var95": 4_000_000.0, "max_high_findings": 8},
+    "fedramp": {"max_ale": 1_000_000.0, "max_var95": 3_000_000.0, "max_high_findings": 3},
+    "hipaa": {"max_ale": 1_000_000.0, "max_var95": 3_000_000.0, "max_high_findings": 5},
+    "cmmc_l2": {"max_ale": 1_500_000.0, "max_var95": 4_000_000.0, "max_high_findings": 5},
+    "gdpr": {"max_ale": 2_000_000.0, "max_var95": 5_000_000.0, "max_high_findings": 5},
+    "ucf": {"max_ale": 1_500_000.0, "max_var95": 4_000_000.0, "max_high_findings": 8},
+    "iso_27701": {"max_ale": 1_500_000.0, "max_var95": 4_000_000.0, "max_high_findings": 5},
+    "iso_42001": {"max_ale": 1_500_000.0, "max_var95": 4_000_000.0, "max_high_findings": 5},
+}

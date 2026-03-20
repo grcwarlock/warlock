@@ -193,3 +193,42 @@ resource "aws_vpc_endpoint" "dynamodb" {
 }
 
 data "aws_region" "current" {}
+
+# ── #41: Warlock self-registration evidence ───────────────────────────
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL for self-registration evidence. Set to null to disable."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API authentication."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+resource "terraform_data" "warlock_evidence" {
+  count = var.warlock_api_endpoint != null ? 1 : 0
+
+  triggers_replace = [aws_vpc.main.id]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
+        -H "Authorization: Bearer ${var.warlock_api_token}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "module": "aws/compliant-vpc",
+          "resource_id": "${aws_vpc.main.id}",
+          "control_ids": ["SC-7", "AU-2"],
+          "attributes": {
+            "vpc_cidr": "${var.vpc_cidr}",
+            "flow_logs_enabled": ${var.enable_flow_logs},
+            "flow_log_retention_days": ${var.flow_log_retention_days}
+          }
+        }' || true
+    EOT
+  }
+}
