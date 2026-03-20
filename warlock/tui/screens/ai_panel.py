@@ -264,10 +264,10 @@ class AIPanelScreen(VerticalScroll):
             from warlock.ai.service import get_ai_service
 
             svc = get_ai_service()
-            if svc.provider is not None:
+            if svc.is_available():
                 self._ai_available = True
-                provider_name = getattr(svc.provider, "name", "unknown")
-                model_name = getattr(svc.provider, "model", "unknown")
+                provider_name = getattr(svc, "_provider", "unknown")
+                model_name = getattr(svc, "_model", "unknown")
                 status_bar.update(
                     f"[green bold]AI Enabled[/]  |  "
                     f"Provider: {provider_name}  |  "
