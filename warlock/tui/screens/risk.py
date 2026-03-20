@@ -14,12 +14,9 @@ from typing import Any
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import Screen
 from textual.widgets import (
     Button,
     DataTable,
-    Footer,
-    Header,
     Label,
     LoadingIndicator,
     Markdown,
@@ -198,15 +195,10 @@ RISK_SCREEN_CSS = """\
 # ---------------------------------------------------------------------------
 
 
-class RiskScreen(Screen):
+class RiskScreen(VerticalScroll):
     """FAIR Monte Carlo risk dashboard."""
 
-    CSS = RISK_SCREEN_CSS
-    BINDINGS = [
-        ("escape", "app.pop_screen", "Back"),
-        ("r", "run_analysis", "Run Analysis"),
-        ("n", "ai_narrative", "AI Narrative"),
-    ]
+    DEFAULT_CSS = RISK_SCREEN_CSS
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -215,7 +207,6 @@ class RiskScreen(Screen):
         self._selected_framework: str = ""
 
     def compose(self) -> ComposeResult:
-        yield Header()
         with Container(id="risk-screen"):
             # Top bar: framework selector + action buttons
             with Horizontal(id="controls-bar"):
@@ -253,7 +244,6 @@ class RiskScreen(Screen):
                 "to start a FAIR Monte Carlo simulation.",
                 id="no-data-label",
             )
-        yield Footer()
 
     def on_mount(self) -> None:
         self.query_one("#loading-area").display = False
@@ -310,7 +300,7 @@ class RiskScreen(Screen):
     @work(thread=True, exclusive=True, group="risk-analysis")
     def _run_analysis_worker(self, framework: str) -> None:
         """Run FAIR simulation in a background thread."""
-        self.call_from_thread(self._show_loading, True)
+        self.app.call_from_thread(self._show_loading, True)
 
         try:
             from warlock.assessors.risk_engine import RiskEngine
@@ -331,16 +321,16 @@ class RiskScreen(Screen):
                 except StopIteration:
                     pass
 
-            self.call_from_thread(self._display_results, portfolio)
+            self.app.call_from_thread(self._display_results, portfolio)
         except Exception as exc:
             log.exception("Risk analysis failed")
-            self.call_from_thread(
+            self.app.call_from_thread(
                 self.notify,
                 f"Analysis failed: {exc}",
                 severity="error",
             )
         finally:
-            self.call_from_thread(self._show_loading, False)
+            self.app.call_from_thread(self._show_loading, False)
 
     @work(thread=True, exclusive=True, group="ai-narrative")
     def _generate_narrative_worker(self) -> None:
@@ -348,7 +338,7 @@ class RiskScreen(Screen):
         if not self._portfolio:
             return
 
-        self.call_from_thread(
+        self.app.call_from_thread(
             self.notify, "Generating AI risk narrative...", severity="information"
         )
 
@@ -363,17 +353,17 @@ class RiskScreen(Screen):
             )
 
             if result.ai_used and result.value:
-                self.call_from_thread(self._display_narrative, result.value)
+                self.app.call_from_thread(self._display_narrative, result.value)
             else:
                 reason = result.fallback_reason or "AI not available"
-                self.call_from_thread(
+                self.app.call_from_thread(
                     self.notify,
                     f"AI narrative unavailable: {reason}",
                     severity="warning",
                 )
         except Exception as exc:
             log.exception("AI narrative generation failed")
-            self.call_from_thread(
+            self.app.call_from_thread(
                 self.notify,
                 f"Narrative failed: {exc}",
                 severity="error",

@@ -15,11 +15,8 @@ from typing import Any
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.screen import Screen
 from textual.widgets import (
     Button,
-    Footer,
-    Header,
     Input,
     Label,
     Markdown,
@@ -181,13 +178,10 @@ AI_PANEL_CSS = """\
 # ---------------------------------------------------------------------------
 
 
-class AIPanelScreen(Screen):
+class AIPanelScreen(VerticalScroll):
     """Interactive AI reasoning interface."""
 
-    CSS = AI_PANEL_CSS
-    BINDINGS = [
-        ("escape", "app.pop_screen", "Back"),
-    ]
+    DEFAULT_CSS = AI_PANEL_CSS
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -199,7 +193,6 @@ class AIPanelScreen(Screen):
         self._messages: list[dict[str, str]] = []
 
     def compose(self) -> ComposeResult:
-        yield Header()
         with Container(id="ai-screen"):
             # Left column: conversation
             with Vertical(id="conversation-column"):
@@ -255,7 +248,6 @@ class AIPanelScreen(Screen):
             ),
             id="setup-guide",
         )
-        yield Footer()
 
     def on_mount(self) -> None:
         self._check_ai_status()
@@ -355,8 +347,8 @@ class AIPanelScreen(Screen):
                 entity_data = self._fetch_entity(session, entity_type, entity_id)
                 if entity_data:
                     self._entity_data = entity_data
-                    self.call_from_thread(self._display_context, entity_data)
-                    self.call_from_thread(
+                    self.app.call_from_thread(self._display_context, entity_data)
+                    self.app.call_from_thread(
                         self._add_system_message,
                         f"Loaded {entity_type} {entity_id[:8]}... Ready for questions.",
                     )
@@ -364,7 +356,7 @@ class AIPanelScreen(Screen):
                     self._session_id = str(uuid.uuid4())
                     self._messages.clear()
                 else:
-                    self.call_from_thread(
+                    self.app.call_from_thread(
                         self.notify,
                         f"{entity_type} '{entity_id}' not found.",
                         severity="warning",
@@ -376,7 +368,7 @@ class AIPanelScreen(Screen):
                     pass
         except Exception as exc:
             log.exception("Failed to load entity")
-            self.call_from_thread(self.notify, f"Load failed: {exc}", severity="error")
+            self.app.call_from_thread(self.notify, f"Load failed: {exc}", severity="error")
 
     def _fetch_entity(
         self, session: Any, entity_type: str, entity_id: str
@@ -452,7 +444,7 @@ class AIPanelScreen(Screen):
     @work(thread=True, exclusive=True, group="ai-response")
     def _get_ai_response_worker(self, message: str) -> None:
         """Call the AI service in a background thread."""
-        self.call_from_thread(self._add_typing_indicator)
+        self.app.call_from_thread(self._add_typing_indicator)
 
         try:
             from warlock.ai.service import get_ai_service
@@ -471,28 +463,28 @@ class AIPanelScreen(Screen):
                 context=context,
             )
 
-            self.call_from_thread(self._remove_typing_indicator)
+            self.app.call_from_thread(self._remove_typing_indicator)
 
             if result.ai_used and result.value:
                 response_text = str(result.value)
                 self._messages.append({"role": "assistant", "content": response_text})
                 latency = result.latency_ms
                 model = result.model
-                self.call_from_thread(
+                self.app.call_from_thread(
                     self._add_ai_bubble,
                     response_text,
                     f"{model} | {latency}ms",
                 )
             else:
                 reason = result.fallback_reason or "AI unavailable"
-                self.call_from_thread(
+                self.app.call_from_thread(
                     self._add_system_message,
                     f"AI could not respond: {reason}",
                 )
         except Exception as exc:
             log.exception("AI conversation failed")
-            self.call_from_thread(self._remove_typing_indicator)
-            self.call_from_thread(
+            self.app.call_from_thread(self._remove_typing_indicator)
+            self.app.call_from_thread(
                 self._add_system_message,
                 f"Error: {exc}",
             )

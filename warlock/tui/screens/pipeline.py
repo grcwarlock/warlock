@@ -13,12 +13,9 @@ from typing import Any
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.screen import Screen
 from textual.widgets import (
     Button,
     DataTable,
-    Footer,
-    Header,
     Label,
     RichLog,
 )
@@ -123,22 +120,16 @@ PIPELINE_SCREEN_CSS = """\
 # ---------------------------------------------------------------------------
 
 
-class PipelineScreen(Screen):
+class PipelineScreen(VerticalScroll):
     """Pipeline operations and connector health view."""
 
-    CSS = PIPELINE_SCREEN_CSS
-    BINDINGS = [
-        ("escape", "app.pop_screen", "Back"),
-        ("r", "refresh_data", "Refresh"),
-        ("p", "run_pipeline", "Run Pipeline"),
-    ]
+    DEFAULT_CSS = PIPELINE_SCREEN_CSS
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._pipeline_running = False
 
     def compose(self) -> ComposeResult:
-        yield Header()
         with Container(id="pipeline-screen"):
             with Horizontal(id="top-bar"):
                 yield Button(
@@ -170,7 +161,6 @@ class PipelineScreen(Screen):
                 "No pipeline data. Run 'warlock collect' or demo seed first.",
                 id="no-data-label",
             )
-        yield Footer()
 
     def on_mount(self) -> None:
         # Set up connector table columns
@@ -395,10 +385,10 @@ class PipelineScreen(Screen):
         """Execute the pipeline in a background thread with live logging."""
         self._pipeline_running = True
         rich_log = self.query_one("#log-panel", RichLog)
-        self.call_from_thread(self._show_log_panel, True)
+        self.app.call_from_thread(self._show_log_panel, True)
 
         def _log_line(msg: str) -> None:
-            self.call_from_thread(rich_log.write, msg)
+            self.app.call_from_thread(rich_log.write, msg)
 
         try:
             _log_line("[bold]Starting pipeline collection...[/]")
@@ -452,12 +442,12 @@ class PipelineScreen(Screen):
                     pass
 
             # Refresh the tables
-            self.call_from_thread(self._load_data)
+            self.app.call_from_thread(self._load_data)
 
         except Exception as exc:
             log.exception("Pipeline run failed")
             _log_line(f"\n[red bold]Pipeline failed: {exc}[/]")
-            self.call_from_thread(self.notify, f"Pipeline failed: {exc}", severity="error")
+            self.app.call_from_thread(self.notify, f"Pipeline failed: {exc}", severity="error")
         finally:
             self._pipeline_running = False
 
