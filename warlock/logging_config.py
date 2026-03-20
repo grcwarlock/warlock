@@ -56,10 +56,12 @@ def configure_logging():
     if settings.log_format.lower() == "json":
         handler.setFormatter(JSONFormatter())
     else:
-        handler.setFormatter(logging.Formatter(
-            "%(asctime)s %(levelname)-8s [%(correlation_id)s] %(name)s — %(message)s",
-            datefmt="%H:%M:%S",
-        ))
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(levelname)-8s [%(correlation_id)s] %(name)s — %(message)s",
+                datefmt="%H:%M:%S",
+            )
+        )
 
     # Add correlation filter
     handler.addFilter(CorrelationFilter())

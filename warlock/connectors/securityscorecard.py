@@ -30,7 +30,9 @@ class SecurityScorecardConnector(BaseConnector):
         try:
             import httpx  # noqa: F401
         except ImportError:
-            errors.append("httpx not installed. Install with: pip install warlock[securityscorecard]")
+            errors.append(
+                "httpx not installed. Install with: pip install warlock[securityscorecard]"
+            )
         if not self.get_secret("WLK_SSC_API_TOKEN"):
             errors.append("WLK_SSC_API_TOKEN env var is not set")
         return errors
@@ -78,17 +80,19 @@ class SecurityScorecardConnector(BaseConnector):
                 portfolios = body.get("entries", body) if isinstance(body, dict) else body
                 if not isinstance(portfolios, list):
                     portfolios = [portfolios]
-                result.events.append(RawEventData(
-                    source="securityscorecard",
-                    source_type=SourceType.GRC,
-                    provider="securityscorecard",
-                    event_type="ssc_portfolios",
-                    raw_data={
-                        "endpoint": "/portfolios",
-                        "response": portfolios,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="securityscorecard",
+                        source_type=SourceType.GRC,
+                        provider="securityscorecard",
+                        event_type="ssc_portfolios",
+                        raw_data={
+                            "endpoint": "/portfolios",
+                            "response": portfolios,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("SSC portfolios failed: %s", e)
                 result.errors.append(f"portfolios: {e}")
@@ -114,17 +118,19 @@ class SecurityScorecardConnector(BaseConnector):
                     result.errors.append(f"portfolio_{portfolio_id}_companies: {e}")
 
             if all_companies:
-                result.events.append(RawEventData(
-                    source="securityscorecard",
-                    source_type=SourceType.GRC,
-                    provider="securityscorecard",
-                    event_type="ssc_companies",
-                    raw_data={
-                        "endpoint": "/portfolios/{id}/companies",
-                        "response": all_companies,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="securityscorecard",
+                        source_type=SourceType.GRC,
+                        provider="securityscorecard",
+                        event_type="ssc_companies",
+                        raw_data={
+                            "endpoint": "/portfolios/{id}/companies",
+                            "response": all_companies,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
 
             # 3. Risk factors per company
             all_factors = []
@@ -140,25 +146,29 @@ class SecurityScorecardConnector(BaseConnector):
                     resp.raise_for_status()
                     body = resp.json()
                     factors = body.get("entries", body) if isinstance(body, dict) else body
-                    all_factors.append({
-                        "domain": domain,
-                        "factors": factors if isinstance(factors, list) else [factors],
-                    })
+                    all_factors.append(
+                        {
+                            "domain": domain,
+                            "factors": factors if isinstance(factors, list) else [factors],
+                        }
+                    )
                 except Exception as e:
                     log.debug("SSC factors for %s failed: %s", domain, e)
 
             if all_factors:
-                result.events.append(RawEventData(
-                    source="securityscorecard",
-                    source_type=SourceType.GRC,
-                    provider="securityscorecard",
-                    event_type="ssc_factors",
-                    raw_data={
-                        "endpoint": "/companies/{domain}/factors",
-                        "response": all_factors,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="securityscorecard",
+                        source_type=SourceType.GRC,
+                        provider="securityscorecard",
+                        event_type="ssc_factors",
+                        raw_data={
+                            "endpoint": "/companies/{domain}/factors",
+                            "response": all_factors,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
 
             # 4. High/critical issues per company
             all_issues = []
@@ -180,17 +190,19 @@ class SecurityScorecardConnector(BaseConnector):
                     log.debug("SSC issues for %s failed: %s", domain, e)
 
             if all_issues:
-                result.events.append(RawEventData(
-                    source="securityscorecard",
-                    source_type=SourceType.GRC,
-                    provider="securityscorecard",
-                    event_type="ssc_issues",
-                    raw_data={
-                        "endpoint": "/companies/{domain}/issues",
-                        "response": all_issues,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="securityscorecard",
+                        source_type=SourceType.GRC,
+                        provider="securityscorecard",
+                        event_type="ssc_issues",
+                        raw_data={
+                            "endpoint": "/companies/{domain}/issues",
+                            "response": all_issues,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
 
         finally:
             client.close()

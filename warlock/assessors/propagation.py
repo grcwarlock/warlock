@@ -183,7 +183,11 @@ class AssertionPropagator:
                 added += 1
                 log.debug(
                     "Crosswalk propagated %s → %s/%s from %s/%s",
-                    assertion_name, tgt_fw, tgt_ctrl, src_fw, src_ctrl,
+                    assertion_name,
+                    tgt_fw,
+                    tgt_ctrl,
+                    src_fw,
+                    src_ctrl,
                 )
 
         log.info("Crosswalk propagation: added %d assertion binding(s)", added)
@@ -231,7 +235,11 @@ class AssertionPropagator:
                 added += 1
                 log.debug(
                     "Enhancement inherited %s → %s/%s from %s/%s",
-                    assertion_name, fw, ctrl_id, fw, parent_id,
+                    assertion_name,
+                    fw,
+                    ctrl_id,
+                    fw,
+                    parent_id,
                 )
 
         # Second sweep: catch enhancements that exist in crosswalk YAML but
@@ -257,7 +265,11 @@ class AssertionPropagator:
                     added += 1
                     log.debug(
                         "Enhancement (crosswalk sweep) inherited %s → %s/%s from %s/%s",
-                        assertion_name, fw, ctrl_id, fw, parent_id,
+                        assertion_name,
+                        fw,
+                        ctrl_id,
+                        fw,
+                        parent_id,
                     )
 
         log.info("Enhancement propagation: added %d assertion binding(s)", added)

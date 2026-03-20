@@ -33,15 +33,17 @@ TIMEOUT = 90.0  # narrative generation can be longer than single-control assessm
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ImplementationNarrative:
     """AI-generated implementation statement for a control."""
+
     control_id: str
     framework: str
-    narrative: str             # The implementation description
-    status_summary: str        # One-line status ("Fully implemented via ...")
-    evidence_summary: str      # What evidence was used
-    gaps: list[str]            # Identified gaps
+    narrative: str  # The implementation description
+    status_summary: str  # One-line status ("Fully implemented via ...")
+    evidence_summary: str  # What evidence was used
+    gaps: list[str]  # Identified gaps
     confidence: float = 0.0
     model: str = ""
 
@@ -49,14 +51,15 @@ class ImplementationNarrative:
 @dataclass
 class RemediationPlan:
     """AI-generated remediation plan for a non-compliant finding."""
+
     control_id: str
     framework: str
-    title: str                 # Short title for the POA&M item
-    description: str           # Detailed description of the gap
-    risk_statement: str        # Why this matters
+    title: str  # Short title for the POA&M item
+    description: str  # Detailed description of the gap
+    risk_statement: str  # Why this matters
     remediation_steps: list[str]
-    priority: str              # critical, high, medium, low
-    estimated_effort: str      # e.g., "2-4 hours", "1-2 sprints"
+    priority: str  # critical, high, medium, low
+    estimated_effort: str  # e.g., "2-4 hours", "1-2 sprints"
     milestones: list[dict[str, str]]  # [{title, target_date}]
     confidence: float = 0.0
     model: str = ""
@@ -65,15 +68,16 @@ class RemediationPlan:
 @dataclass
 class ControlEvidence:
     """Aggregated evidence for a single control — input to the narrator."""
+
     framework: str
     control_id: str
     control_family: str
-    statuses: list[str]                # all assessment statuses
-    findings: list[dict[str, Any]]     # finding summaries
+    statuses: list[str]  # all assessment statuses
+    findings: list[dict[str, Any]]  # finding summaries
     assertion_results: list[dict[str, Any]]  # assertion outcomes
-    ai_assessments: list[str]          # any existing AI assessments
-    resources: list[dict[str, str]]    # resource_id, resource_type, resource_name
-    sources: list[str]                 # provider names
+    ai_assessments: list[str]  # any existing AI assessments
+    resources: list[dict[str, str]]  # resource_id, resource_type, resource_name
+    sources: list[str]  # provider names
     # Phase 2-5 context
     compensating_controls: list[dict[str, Any]] = field(default_factory=list)
     risk_acceptances: list[dict[str, Any]] = field(default_factory=list)
@@ -239,6 +243,7 @@ def _build_impl_prompt(evidence: ControlEvidence) -> str:
     """Build the user prompt for implementation narrative generation."""
     # Aggregate status
     from collections import Counter
+
     status_counts = Counter(evidence.statuses)
     dominant_status = status_counts.most_common(1)[0][0] if status_counts else "not_assessed"
 
@@ -287,13 +292,9 @@ def _build_remediation_prompt(evidence: ControlEvidence) -> str:
     """Build the user prompt for remediation plan generation."""
     # Filter to non-compliant findings only
     non_compliant = [
-        f for f in evidence.findings
-        if f.get("status") in ("non_compliant", "partial")
+        f for f in evidence.findings if f.get("status") in ("non_compliant", "partial")
     ]
-    failed_assertions = [
-        a for a in evidence.assertion_results
-        if not a.get("passed", True)
-    ]
+    failed_assertions = [a for a in evidence.assertion_results if not a.get("passed", True)]
 
     prompt_data = {
         "control": {
@@ -309,7 +310,9 @@ def _build_remediation_prompt(evidence: ControlEvidence) -> str:
 
     # Phase 2-5 context for remediation-aware plans
     if evidence.compensating_controls:
-        prompt_data["existing_compensating_controls"] = _sanitize_field(evidence.compensating_controls)
+        prompt_data["existing_compensating_controls"] = _sanitize_field(
+            evidence.compensating_controls
+        )
     if evidence.risk_acceptances:
         prompt_data["active_risk_acceptances"] = _sanitize_field(evidence.risk_acceptances)
     if evidence.poams:
@@ -327,7 +330,10 @@ def _build_remediation_prompt(evidence: ControlEvidence) -> str:
 # Response parsing
 # ---------------------------------------------------------------------------
 
-def _parse_impl_response(text: str, control_id: str, framework: str, model: str) -> ImplementationNarrative:
+
+def _parse_impl_response(
+    text: str, control_id: str, framework: str, model: str
+) -> ImplementationNarrative:
     """Parse AI response into an ImplementationNarrative."""
     text = text.strip()
     if text.startswith("```"):
@@ -362,7 +368,9 @@ def _parse_impl_response(text: str, control_id: str, framework: str, model: str)
     )
 
 
-def _parse_remediation_response(text: str, control_id: str, framework: str, model: str) -> RemediationPlan:
+def _parse_remediation_response(
+    text: str, control_id: str, framework: str, model: str
+) -> RemediationPlan:
     """Parse AI response into a RemediationPlan."""
     text = text.strip()
     if text.startswith("```"):
@@ -410,6 +418,7 @@ def _parse_remediation_response(text: str, control_id: str, framework: str, mode
 # ---------------------------------------------------------------------------
 # Narrator — the main interface
 # ---------------------------------------------------------------------------
+
 
 class AINarrator:
     """Generates framework-aware compliance narratives using LLM providers.
@@ -501,7 +510,9 @@ class AINarrator:
         }
         resp = httpx.post(
             "https://api.anthropic.com/v1/messages",
-            headers=headers, json=payload, timeout=TIMEOUT,
+            headers=headers,
+            json=payload,
+            timeout=TIMEOUT,
         )
         resp.raise_for_status()
         return resp.json()["content"][0]["text"]
@@ -526,8 +537,7 @@ class AINarrator:
 
     def _call_gemini(self, system: str, user: str) -> str:
         url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model}:generateContent"
+            f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         )
         headers = {"x-goog-api-key": self.api_key}
         payload = {
@@ -559,6 +569,7 @@ class AINarrator:
 # ---------------------------------------------------------------------------
 # Evidence aggregation helper
 # ---------------------------------------------------------------------------
+
 
 def aggregate_control_evidence(
     session: Any,
@@ -621,23 +632,27 @@ def aggregate_control_evidence(
         findings_data.append(finding_summary)
 
         if r.assertion_name:
-            assertion_data.append({
-                "assertion": r.assertion_name,
-                "passed": r.assertion_passed,
-                "findings": r.assertion_findings or [],
-                "remediation": r.remediation_summary,
-            })
+            assertion_data.append(
+                {
+                    "assertion": r.assertion_name,
+                    "passed": r.assertion_passed,
+                    "findings": r.assertion_findings or [],
+                    "remediation": r.remediation_summary,
+                }
+            )
 
         if r.ai_assessment:
             ai_data.append(r.ai_assessment)
 
         if finding and finding.resource_id and finding.resource_id not in seen_resources:
             seen_resources.add(finding.resource_id)
-            resources.append({
-                "resource_id": finding.resource_id,
-                "resource_type": finding.resource_type or "",
-                "resource_name": finding.resource_name or "",
-            })
+            resources.append(
+                {
+                    "resource_id": finding.resource_id,
+                    "resource_type": finding.resource_type or "",
+                    "resource_name": finding.resource_name or "",
+                }
+            )
 
         if finding and finding.provider:
             sources.append(finding.provider)
@@ -658,8 +673,11 @@ def aggregate_control_evidence(
     # inheritance, posture trends, and cadence status
     # ------------------------------------------------------------------
     from warlock.db.models import (
-        CompensatingControl, RiskAcceptance, POAM,
-        ControlInheritance, PostureSnapshot,
+        CompensatingControl,
+        RiskAcceptance,
+        POAM,
+        ControlInheritance,
+        PostureSnapshot,
     )
 
     __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
@@ -675,8 +693,12 @@ def aggregate_control_evidence(
         .all()
     )
     cc_data = [
-        {"title": cc.title, "status": cc.status, "effectiveness": cc.effectiveness_score,
-         "expiry_date": cc.expiry_date.isoformat() if cc.expiry_date else None}
+        {
+            "title": cc.title,
+            "status": cc.status,
+            "effectiveness": cc.effectiveness_score,
+            "expiry_date": cc.expiry_date.isoformat() if cc.expiry_date else None,
+        }
         for cc in cc_rows
     ]
 
@@ -691,8 +713,11 @@ def aggregate_control_evidence(
         .all()
     )
     ra_data = [
-        {"risk_level": ra.risk_level, "approved_by": ra.approved_by,
-         "expiry_date": ra.expiry_date.isoformat() if ra.expiry_date else None}
+        {
+            "risk_level": ra.risk_level,
+            "approved_by": ra.approved_by,
+            "expiry_date": ra.expiry_date.isoformat() if ra.expiry_date else None,
+        }
         for ra in ra_rows
     ]
 
@@ -707,8 +732,14 @@ def aggregate_control_evidence(
         .all()
     )
     poam_data = [
-        {"status": p.status, "severity": p.severity, "delay_count": p.delay_count,
-         "scheduled_completion": p.scheduled_completion.isoformat() if p.scheduled_completion else None}
+        {
+            "status": p.status,
+            "severity": p.severity,
+            "delay_count": p.delay_count,
+            "scheduled_completion": p.scheduled_completion.isoformat()
+            if p.scheduled_completion
+            else None,
+        }
         for p in poam_rows
     ]
 
@@ -755,10 +786,14 @@ def aggregate_control_evidence(
     # Cadence status
     cadence_data = None
     from warlock.db.models import ControlMapping as CM2
+
     freq = (
         session.query(CM2.monitoring_frequency)
-        .filter(CM2.framework == framework, CM2.control_id == control_id,
-                CM2.monitoring_frequency.isnot(None))
+        .filter(
+            CM2.framework == framework,
+            CM2.control_id == control_id,
+            CM2.monitoring_frequency.isnot(None),
+        )
         .first()
     )
     if freq:

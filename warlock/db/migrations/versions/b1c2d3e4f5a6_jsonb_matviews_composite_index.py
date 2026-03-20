@@ -22,14 +22,15 @@ Applies three P0 performance enhancements:
       (framework, status, assessed_at) — covers the primary dashboard filter
       pattern and eliminates full table scans on posture rollup queries.
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = 'b1c2d3e4f5a6'
-down_revision: Union[str, Sequence[str], None] = 'a1b2c3d4e5f6'
+revision: str = "b1c2d3e4f5a6"
+down_revision: Union[str, Sequence[str], None] = "a1b2c3d4e5f6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -42,10 +43,10 @@ def upgrade() -> None:
     # ------------------------------------------------------------------
     # #11: Composite index on control_results (runs on both SQLite and PG)
     # ------------------------------------------------------------------
-    with op.batch_alter_table('control_results', schema=None) as batch_op:
+    with op.batch_alter_table("control_results", schema=None) as batch_op:
         batch_op.create_index(
-            'idx_result_fw_status_assessed',
-            ['framework', 'status', 'assessed_at'],
+            "idx_result_fw_status_assessed",
+            ["framework", "status", "assessed_at"],
         )
 
     # ------------------------------------------------------------------
@@ -60,56 +61,89 @@ def upgrade() -> None:
     jsonb = sa.dialects.postgresql.JSONB()
 
     # raw_events.raw_data
-    op.alter_column('raw_events', 'raw_data', type_=jsonb,
-                    existing_nullable=False,
-                    postgresql_using='raw_data::jsonb')
+    op.alter_column(
+        "raw_events",
+        "raw_data",
+        type_=jsonb,
+        existing_nullable=False,
+        postgresql_using="raw_data::jsonb",
+    )
 
     # findings.detail
-    op.alter_column('findings', 'detail', type_=jsonb,
-                    existing_nullable=False,
-                    postgresql_using='detail::jsonb')
+    op.alter_column(
+        "findings", "detail", type_=jsonb, existing_nullable=False, postgresql_using="detail::jsonb"
+    )
 
     # control_mappings.crosswalk_path
-    op.alter_column('control_mappings', 'crosswalk_path', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='crosswalk_path::jsonb')
+    op.alter_column(
+        "control_mappings",
+        "crosswalk_path",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="crosswalk_path::jsonb",
+    )
 
     # control_results.assertion_findings
-    op.alter_column('control_results', 'assertion_findings', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='assertion_findings::jsonb')
+    op.alter_column(
+        "control_results",
+        "assertion_findings",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="assertion_findings::jsonb",
+    )
 
     # control_results.remediation_steps
-    op.alter_column('control_results', 'remediation_steps', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='remediation_steps::jsonb')
+    op.alter_column(
+        "control_results",
+        "remediation_steps",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="remediation_steps::jsonb",
+    )
 
     # control_results.evidence_ids
-    op.alter_column('control_results', 'evidence_ids', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='evidence_ids::jsonb')
+    op.alter_column(
+        "control_results",
+        "evidence_ids",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="evidence_ids::jsonb",
+    )
 
     # posture_snapshots.evidence_sources
-    op.alter_column('posture_snapshots', 'evidence_sources', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='evidence_sources::jsonb')
+    op.alter_column(
+        "posture_snapshots",
+        "evidence_sources",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="evidence_sources::jsonb",
+    )
 
     # change_events.detail
-    op.alter_column('change_events', 'detail', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='detail::jsonb')
+    op.alter_column(
+        "change_events",
+        "detail",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="detail::jsonb",
+    )
 
     # audit_evidence_requests.evidence_ids
-    op.alter_column('audit_evidence_requests', 'evidence_ids', type_=jsonb,
-                    existing_nullable=True,
-                    postgresql_using='evidence_ids::jsonb')
+    op.alter_column(
+        "audit_evidence_requests",
+        "evidence_ids",
+        type_=jsonb,
+        existing_nullable=True,
+        postgresql_using="evidence_ids::jsonb",
+    )
 
     # ------------------------------------------------------------------
     # #10: Materialized views for coverage, posture, and framework rollups
     # ------------------------------------------------------------------
     conn = op.get_bind()
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE MATERIALIZED VIEW IF NOT EXISTS mv_coverage_summary AS
         SELECT
             framework,
@@ -118,14 +152,18 @@ def upgrade() -> None:
             COUNT(DISTINCT control_id)  AS control_count
         FROM control_results
         GROUP BY framework, status
-    """))
-    conn.execute(sa.text(
-        "CREATE UNIQUE INDEX IF NOT EXISTS "
-        "uix_mv_coverage_summary_fw_status "
-        "ON mv_coverage_summary (framework, status)"
-    ))
+    """)
+    )
+    conn.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS "
+            "uix_mv_coverage_summary_fw_status "
+            "ON mv_coverage_summary (framework, status)"
+        )
+    )
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE MATERIALIZED VIEW IF NOT EXISTS mv_latest_posture AS
         SELECT DISTINCT ON (framework, control_id)
             framework,
@@ -136,14 +174,18 @@ def upgrade() -> None:
             created_at
         FROM posture_snapshots
         ORDER BY framework, control_id, created_at DESC
-    """))
-    conn.execute(sa.text(
-        "CREATE UNIQUE INDEX IF NOT EXISTS "
-        "uix_mv_latest_posture_fw_ctrl "
-        "ON mv_latest_posture (framework, control_id)"
-    ))
+    """)
+    )
+    conn.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS "
+            "uix_mv_latest_posture_fw_ctrl "
+            "ON mv_latest_posture (framework, control_id)"
+        )
+    )
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE MATERIALIZED VIEW IF NOT EXISTS mv_framework_rollup AS
         SELECT
             framework,
@@ -164,20 +206,23 @@ def upgrade() -> None:
             )                                                   AS compliance_pct
         FROM control_results
         GROUP BY framework
-    """))
-    conn.execute(sa.text(
-        "CREATE UNIQUE INDEX IF NOT EXISTS "
-        "uix_mv_framework_rollup_fw "
-        "ON mv_framework_rollup (framework)"
-    ))
+    """)
+    )
+    conn.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS "
+            "uix_mv_framework_rollup_fw "
+            "ON mv_framework_rollup (framework)"
+        )
+    )
 
 
 def downgrade() -> None:
     # ------------------------------------------------------------------
     # #11: Drop composite index (both dialects)
     # ------------------------------------------------------------------
-    with op.batch_alter_table('control_results', schema=None) as batch_op:
-        batch_op.drop_index('idx_result_fw_status_assessed')
+    with op.batch_alter_table("control_results", schema=None) as batch_op:
+        batch_op.drop_index("idx_result_fw_status_assessed")
 
     if not _is_postgresql():
         return
@@ -195,30 +240,66 @@ def downgrade() -> None:
     # ------------------------------------------------------------------
     json_type = sa.dialects.postgresql.JSON()
 
-    op.alter_column('audit_evidence_requests', 'evidence_ids', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='evidence_ids::json')
-    op.alter_column('change_events', 'detail', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='detail::json')
-    op.alter_column('posture_snapshots', 'evidence_sources', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='evidence_sources::json')
-    op.alter_column('control_results', 'evidence_ids', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='evidence_ids::json')
-    op.alter_column('control_results', 'remediation_steps', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='remediation_steps::json')
-    op.alter_column('control_results', 'assertion_findings', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='assertion_findings::json')
-    op.alter_column('control_mappings', 'crosswalk_path', type_=json_type,
-                    existing_nullable=True,
-                    postgresql_using='crosswalk_path::json')
-    op.alter_column('findings', 'detail', type_=json_type,
-                    existing_nullable=False,
-                    postgresql_using='detail::json')
-    op.alter_column('raw_events', 'raw_data', type_=json_type,
-                    existing_nullable=False,
-                    postgresql_using='raw_data::json')
+    op.alter_column(
+        "audit_evidence_requests",
+        "evidence_ids",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="evidence_ids::json",
+    )
+    op.alter_column(
+        "change_events",
+        "detail",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="detail::json",
+    )
+    op.alter_column(
+        "posture_snapshots",
+        "evidence_sources",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="evidence_sources::json",
+    )
+    op.alter_column(
+        "control_results",
+        "evidence_ids",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="evidence_ids::json",
+    )
+    op.alter_column(
+        "control_results",
+        "remediation_steps",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="remediation_steps::json",
+    )
+    op.alter_column(
+        "control_results",
+        "assertion_findings",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="assertion_findings::json",
+    )
+    op.alter_column(
+        "control_mappings",
+        "crosswalk_path",
+        type_=json_type,
+        existing_nullable=True,
+        postgresql_using="crosswalk_path::json",
+    )
+    op.alter_column(
+        "findings",
+        "detail",
+        type_=json_type,
+        existing_nullable=False,
+        postgresql_using="detail::json",
+    )
+    op.alter_column(
+        "raw_events",
+        "raw_data",
+        type_=json_type,
+        existing_nullable=False,
+        postgresql_using="raw_data::json",
+    )

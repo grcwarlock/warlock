@@ -30,10 +30,7 @@ class SecurityScorecardNormalizer(BaseNormalizer):
     }
 
     def can_handle(self, raw_event: RawEventData) -> bool:
-        return (
-            raw_event.source == "securityscorecard"
-            and raw_event.event_type in self.HANDLERS
-        )
+        return raw_event.source == "securityscorecard" and raw_event.event_type in self.HANDLERS
 
     def normalize(self, raw_event: RawEventData) -> list[FindingData]:
         handler_name = self.HANDLERS[raw_event.event_type]
@@ -61,21 +58,23 @@ class SecurityScorecardNormalizer(BaseNormalizer):
             portfolio_id = portfolio.get("id", "")
             name = portfolio.get("name", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"SSC portfolio: {name}",
-                detail={
-                    "portfolio_id": portfolio_id,
-                    "name": name,
-                    "description": portfolio.get("description", ""),
-                    "company_count": portfolio.get("total", portfolio.get("company_count", 0)),
-                },
-                resource_id=portfolio_id,
-                resource_type="vendor_portfolio",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"SSC portfolio: {name}",
+                    detail={
+                        "portfolio_id": portfolio_id,
+                        "name": name,
+                        "description": portfolio.get("description", ""),
+                        "company_count": portfolio.get("total", portfolio.get("company_count", 0)),
+                    },
+                    resource_id=portfolio_id,
+                    resource_type="vendor_portfolio",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -105,26 +104,28 @@ class SecurityScorecardNormalizer(BaseNormalizer):
                     obs_type = "alert"
                     severity = "medium"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"SSC vendor: {name} (score: {score})"
-                      + (" -- low score" if severity in ("critical", "high") else ""),
-                detail={
-                    "domain": domain,
-                    "name": name,
-                    "score": score,
-                    "portfolio_id": portfolio_id,
-                    "grade": company.get("grade", ""),
-                    "industry": company.get("industry", ""),
-                    "size": company.get("size", ""),
-                    "last_score_change": company.get("last_score_change", 0),
-                },
-                resource_id=domain,
-                resource_type="vendor_company",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"SSC vendor: {name} (score: {score})"
+                    + (" -- low score" if severity in ("critical", "high") else ""),
+                    detail={
+                        "domain": domain,
+                        "name": name,
+                        "score": score,
+                        "portfolio_id": portfolio_id,
+                        "grade": company.get("grade", ""),
+                        "industry": company.get("industry", ""),
+                        "size": company.get("size", ""),
+                        "last_score_change": company.get("last_score_change", 0),
+                    },
+                    resource_id=domain,
+                    resource_type="vendor_company",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -146,22 +147,24 @@ class SecurityScorecardNormalizer(BaseNormalizer):
                 severity = _GRADE_SEVERITY.get(grade, "info")
                 obs_type = "misconfiguration" if grade in ("F", "D", "C") else "inventory"
 
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type=obs_type,
-                    title=f"SSC factor: {factor_name} ({grade}) for {domain}",
-                    detail={
-                        "domain": domain,
-                        "factor_name": factor_name,
-                        "grade": grade,
-                        "score": score,
-                        "issue_count": factor.get("issue_count", 0),
-                    },
-                    resource_id=f"{domain}/{factor_name}",
-                    resource_type="vendor_risk_factor",
-                    resource_name=f"{factor_name} ({domain})",
-                    severity=severity,
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type=obs_type,
+                        title=f"SSC factor: {factor_name} ({grade}) for {domain}",
+                        detail={
+                            "domain": domain,
+                            "factor_name": factor_name,
+                            "grade": grade,
+                            "score": score,
+                            "issue_count": factor.get("issue_count", 0),
+                        },
+                        resource_id=f"{domain}/{factor_name}",
+                        resource_type="vendor_risk_factor",
+                        resource_name=f"{factor_name} ({domain})",
+                        severity=severity,
+                    )
+                )
 
         return findings
 
@@ -183,25 +186,27 @@ class SecurityScorecardNormalizer(BaseNormalizer):
             first_seen = issue.get("first_seen_time", "")
             last_seen = issue.get("last_seen_time", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="vulnerability",
-                title=f"SSC issue: {issue_type} for {domain} ({severity_raw})",
-                detail={
-                    "domain": domain,
-                    "type": issue_type,
-                    "severity": severity_raw,
-                    "count": count,
-                    "first_seen": first_seen,
-                    "last_seen": last_seen,
-                    "detail_url": detail_url,
-                    "issue": issue,
-                },
-                resource_id=f"{domain}/{issue_type}",
-                resource_type="vendor_issue",
-                resource_name=f"{issue_type} ({domain})",
-                severity=severity_raw,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title=f"SSC issue: {issue_type} for {domain} ({severity_raw})",
+                    detail={
+                        "domain": domain,
+                        "type": issue_type,
+                        "severity": severity_raw,
+                        "count": count,
+                        "first_seen": first_seen,
+                        "last_seen": last_seen,
+                        "detail_url": detail_url,
+                        "issue": issue,
+                    },
+                    resource_id=f"{domain}/{issue_type}",
+                    resource_type="vendor_issue",
+                    resource_name=f"{issue_type} ({domain})",
+                    severity=severity_raw,
+                )
+            )
 
         return findings
 

@@ -1,4 +1,4 @@
-.PHONY: install test lint migrate dev clean seed help
+.PHONY: install test lint migrate dev clean seed help qa qa-quick verify-docs demo cli
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -11,6 +11,15 @@ test: ## Run test suite
 
 lint: ## Run linter
 	ruff check warlock/
+
+qa: ## Run full QA gate (must pass before commit)
+	./scripts/qa.sh
+
+qa-quick: ## Quick QA (lint + test only, ~30s)
+	./scripts/qa.sh --quick
+
+verify-docs: ## Check documentation counts match reality
+	.venv/bin/python scripts/verify_docs.py --verbose
 
 migrate: ## Run database migrations
 	alembic upgrade head

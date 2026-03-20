@@ -63,11 +63,7 @@ class DataSiloManager:
                 continue
 
             # Check if silo already exists by location (resource_id)
-            existing = (
-                session.query(DataSilo)
-                .filter(DataSilo.location == resource_id)
-                .first()
-            )
+            existing = session.query(DataSilo).filter(DataSilo.location == resource_id).first()
 
             silo_type = self.STORAGE_RESOURCE_TYPES.get(
                 finding.resource_type, finding.resource_type
@@ -227,9 +223,13 @@ class DataSiloManager:
                 title_lower = finding.title.lower()
                 if "encrypt" in title_lower and "not" in title_lower:
                     silo.encrypted_at_rest = False
-                elif "logging" in title_lower and ("disabled" in title_lower or "not" in title_lower):
+                elif "logging" in title_lower and (
+                    "disabled" in title_lower or "not" in title_lower
+                ):
                     silo.access_logging_enabled = False
-                elif "backup" in title_lower and ("disabled" in title_lower or "not" in title_lower):
+                elif "backup" in title_lower and (
+                    "disabled" in title_lower or "not" in title_lower
+                ):
                     silo.backup_enabled = False
 
         silo.updated_at = datetime.now(timezone.utc)
@@ -247,10 +247,14 @@ class DataSiloManager:
             session.query(Finding)
             .filter(
                 Finding.resource_id == silo.location,
-                Finding.resource_type.in_([
-                    "purview_scan", "macie_finding", "dlp_result",
-                    "sensitive_data_discovery",
-                ]),
+                Finding.resource_type.in_(
+                    [
+                        "purview_scan",
+                        "macie_finding",
+                        "dlp_result",
+                        "sensitive_data_discovery",
+                    ]
+                ),
             )
             .order_by(Finding.observed_at.desc())
             .all()
@@ -280,12 +284,14 @@ class DataSiloManager:
             if isinstance(fields, list):
                 for field in fields:
                     if isinstance(field, dict):
-                        scan_findings.append({
-                            "field_name": field.get("field_name", field.get("name", "unknown")),
-                            "data_type": field.get("data_type", field.get("type", "unknown")),
-                            "sample_masked": field.get("sample_masked", "***"),
-                            "confidence": field.get("confidence", 0.8),
-                        })
+                        scan_findings.append(
+                            {
+                                "field_name": field.get("field_name", field.get("name", "unknown")),
+                                "data_type": field.get("data_type", field.get("type", "unknown")),
+                                "sample_masked": field.get("sample_masked", "***"),
+                                "confidence": field.get("confidence", 0.8),
+                            }
+                        )
                         sensitive_count += 1
 
             # Update data type flags from DLP findings
@@ -293,13 +299,19 @@ class DataSiloManager:
             if isinstance(data_types, list):
                 for dt in data_types:
                     dt_lower = str(dt).lower()
-                    if any(term in dt_lower for term in ["pii", "personal", "ssn", "email", "phone"]):
+                    if any(
+                        term in dt_lower for term in ["pii", "personal", "ssn", "email", "phone"]
+                    ):
                         silo.contains_pii = True
                     if any(term in dt_lower for term in ["phi", "health", "medical", "hipaa"]):
                         silo.contains_phi = True
-                    if any(term in dt_lower for term in ["pci", "credit_card", "card_number", "cvv"]):
+                    if any(
+                        term in dt_lower for term in ["pci", "credit_card", "card_number", "cvv"]
+                    ):
                         silo.contains_pci = True
-                    if any(term in dt_lower for term in ["credential", "password", "secret", "api_key"]):
+                    if any(
+                        term in dt_lower for term in ["credential", "password", "secret", "api_key"]
+                    ):
                         silo.contains_credentials = True
 
             if detail.get("total_records"):
@@ -390,7 +402,8 @@ class DataSiloManager:
         total = (
             session.query(func.count(DataSilo.id))
             .filter(DataSilo.is_active == True)  # noqa: E712
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         # By type
@@ -424,17 +437,20 @@ class DataSiloManager:
         pii_count = (
             session.query(func.count(DataSilo.id))
             .filter(DataSilo.contains_pii == True, DataSilo.is_active == True)  # noqa: E712
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         phi_count = (
             session.query(func.count(DataSilo.id))
             .filter(DataSilo.contains_phi == True, DataSilo.is_active == True)  # noqa: E712
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         pci_count = (
             session.query(func.count(DataSilo.id))
             .filter(DataSilo.contains_pci == True, DataSilo.is_active == True)  # noqa: E712
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         unprotected_count = len(self.unprotected(session))

@@ -21,16 +21,17 @@ log = logging.getLogger(__name__)
 # Mapping output
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ControlMappingData:
     finding_id: str
     framework: str
     control_id: str
     control_family: str = ""
-    mapping_method: str = "explicit"   # explicit, resource_rule, keyword, crosswalk
+    mapping_method: str = "explicit"  # explicit, resource_rule, keyword, crosswalk
     confidence: float = 1.0
     crosswalk_path: list[str] = field(default_factory=list)
-    monitoring_frequency: str = ""     # daily, weekly, monthly, quarterly, annual
+    monitoring_frequency: str = ""  # daily, weekly, monthly, quarterly, annual
     id: str = field(default_factory=lambda: str(uuid4()))
 
 
@@ -44,9 +45,11 @@ class MappedFinding:
 # Mapping rules
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ExplicitRule:
     """Direct mapping: source event_type + check → control."""
+
     source: str
     event_type: str
     framework: str
@@ -58,6 +61,7 @@ class ExplicitRule:
 @dataclass
 class ResourceRule:
     """Resource-type based: any finding about 'iam_user' → these controls."""
+
     resource_type: str
     framework: str
     control_ids: list[str] = field(default_factory=list)
@@ -68,6 +72,7 @@ class ResourceRule:
 @dataclass
 class CrosswalkEdge:
     """Maps a control in one framework to a control in another."""
+
     source_framework: str
     source_control: str
     target_framework: str
@@ -80,6 +85,7 @@ class CrosswalkEdge:
 # Control Mapper
 # ---------------------------------------------------------------------------
 
+
 class ControlMapper:
     """Maps findings to framework controls using layered rules."""
 
@@ -88,7 +94,9 @@ class ControlMapper:
         self._resource_rules: list[ResourceRule] = []
         self._crosswalk_graph: dict[tuple[str, str], list[CrosswalkEdge]] = defaultdict(list)
         self._active_frameworks: set[str] = set()
-        self._monitoring_frequencies: dict[tuple[str, str], str] = {}  # (framework, control_id) -> frequency
+        self._monitoring_frequencies: dict[
+            tuple[str, str], str
+        ] = {}  # (framework, control_id) -> frequency
         # #23: Dict indexes for O(1) lookup instead of O(n) linear scan
         self._explicit_by_event_type: dict[str, list[ExplicitRule]] = defaultdict(list)
         self._explicit_wildcard_rules: list[ExplicitRule] = []
@@ -139,23 +147,27 @@ class ControlMapper:
                 for check in control.get("checks", []):
                     # Explicit rules from event_types
                     for event_type in check.get("event_types", []):
-                        self.add_explicit_rule(ExplicitRule(
-                            source=check.get("source", "*"),
-                            event_type=event_type,
-                            framework=framework_id,
-                            control_id=control_id,
-                            control_family=family_id,
-                            monitoring_frequency=freq,
-                        ))
+                        self.add_explicit_rule(
+                            ExplicitRule(
+                                source=check.get("source", "*"),
+                                event_type=event_type,
+                                framework=framework_id,
+                                control_id=control_id,
+                                control_family=family_id,
+                                monitoring_frequency=freq,
+                            )
+                        )
                     # Resource rules
                     for resource_type in check.get("resource_types", []):
-                        self.add_resource_rule(ResourceRule(
-                            resource_type=resource_type,
-                            framework=framework_id,
-                            control_ids=[control_id],
-                            control_family=family_id,
-                            monitoring_frequency=freq,
-                        ))
+                        self.add_resource_rule(
+                            ResourceRule(
+                                resource_type=resource_type,
+                                framework=framework_id,
+                                control_ids=[control_id],
+                                control_family=family_id,
+                                monitoring_frequency=freq,
+                            )
+                        )
 
     def load_crosswalk_yaml(self, crosswalks: list[dict[str, Any]]) -> None:
         """Load crosswalk edges from config.
@@ -184,15 +196,17 @@ class ControlMapper:
             key = (rule.framework, rule.control_id)
             if key not in seen:
                 seen.add(key)
-                mappings.append(ControlMappingData(
-                    finding_id=finding.id,
-                    framework=rule.framework,
-                    control_id=rule.control_id,
-                    control_family=rule.control_family,
-                    mapping_method="explicit",
-                    confidence=1.0,
-                    monitoring_frequency=rule.monitoring_frequency,
-                ))
+                mappings.append(
+                    ControlMappingData(
+                        finding_id=finding.id,
+                        framework=rule.framework,
+                        control_id=rule.control_id,
+                        control_family=rule.control_family,
+                        mapping_method="explicit",
+                        confidence=1.0,
+                        monitoring_frequency=rule.monitoring_frequency,
+                    )
+                )
 
         # Priority 2: Resource-type rules
         # #23: Use dict index for O(1) lookup instead of linear scan
@@ -202,15 +216,17 @@ class ControlMapper:
                     key = (rule.framework, ctrl_id)
                     if key not in seen:
                         seen.add(key)
-                        mappings.append(ControlMappingData(
-                            finding_id=finding.id,
-                            framework=rule.framework,
-                            control_id=ctrl_id,
-                            control_family=rule.control_family,
-                            mapping_method="resource_rule",
-                            confidence=0.85,
-                            monitoring_frequency=rule.monitoring_frequency,
-                        ))
+                        mappings.append(
+                            ControlMappingData(
+                                finding_id=finding.id,
+                                framework=rule.framework,
+                                control_id=ctrl_id,
+                                control_family=rule.control_family,
+                                mapping_method="resource_rule",
+                                confidence=0.85,
+                                monitoring_frequency=rule.monitoring_frequency,
+                            )
+                        )
 
         # Priority 3: Crosswalk — expand existing mappings to other frameworks
         crosswalked: list[ControlMappingData] = []
@@ -225,18 +241,20 @@ class ControlMapper:
                         (edge.target_framework, edge.target_control),
                         m.monitoring_frequency,
                     )
-                    crosswalked.append(ControlMappingData(
-                        finding_id=finding.id,
-                        framework=edge.target_framework,
-                        control_id=edge.target_control,
-                        mapping_method="crosswalk",
-                        confidence=min(m.confidence, edge.confidence),
-                        crosswalk_path=[
-                            f"{m.framework}:{m.control_id}",
-                            f"{edge.target_framework}:{edge.target_control}",
-                        ],
-                        monitoring_frequency=target_freq,
-                    ))
+                    crosswalked.append(
+                        ControlMappingData(
+                            finding_id=finding.id,
+                            framework=edge.target_framework,
+                            control_id=edge.target_control,
+                            mapping_method="crosswalk",
+                            confidence=min(m.confidence, edge.confidence),
+                            crosswalk_path=[
+                                f"{m.framework}:{m.control_id}",
+                                f"{edge.target_framework}:{edge.target_control}",
+                            ],
+                            monitoring_frequency=target_freq,
+                        )
+                    )
 
         mappings.extend(crosswalked)
         return MappedFinding(finding=finding, mappings=mappings)

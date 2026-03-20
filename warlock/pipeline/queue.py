@@ -152,9 +152,7 @@ def _safe_call(handler: Handler, event: PipelineEvent) -> None:
     try:
         handler(event)
     except Exception:
-        log.exception(
-            "Handler %s failed for event %s", handler.__name__, event.event_type
-        )
+        log.exception("Handler %s failed for event %s", handler.__name__, event.event_type)
 
 
 # ---------------------------------------------------------------------------
@@ -172,9 +170,7 @@ class RedisStreamBus:
 
     def __init__(self, config: QueueConfig) -> None:
         if not _redis_available:
-            raise RuntimeError(
-                "redis package is not installed — run `pip install redis`"
-            )
+            raise RuntimeError("redis package is not installed — run `pip install redis`")
 
         self._config = config
         self._client: _redis_mod.Redis = _redis_mod.Redis.from_url(  # type: ignore[union-attr]
@@ -561,9 +557,7 @@ class SQSBus:
 
     def __init__(self, config: QueueConfig) -> None:
         if not _boto3_available:
-            raise RuntimeError(
-                "boto3 package is not installed — run `pip install boto3`"
-            )
+            raise RuntimeError("boto3 package is not installed — run `pip install boto3`")
 
         self._config = config
         self._prefix = config.stream_prefix
@@ -842,6 +836,7 @@ def create_bus_from_settings() -> EventBus | RedisStreamBus | KafkaBus | SQSBus:
     ``"memory"``, returns the in-memory EventBus.
     """
     from warlock.config import get_settings
+
     settings = get_settings()
 
     backend = settings.queue_backend.lower()

@@ -89,9 +89,7 @@ class _StdlibEncryptor:
         blocks = (length // 32) + 1
         stream = b""
         for i in range(blocks):
-            stream += hashlib.sha256(
-                self._key + nonce + i.to_bytes(4, "big")
-            ).digest()
+            stream += hashlib.sha256(self._key + nonce + i.to_bytes(4, "big")).digest()
         return stream[:length]
 
 
@@ -120,9 +118,7 @@ class FieldEncryptor:
             # #16: Use a per-deployment salt derived from the encryption key
             # instead of a static salt. The salt is deterministic per-key so
             # existing ciphertext remains decryptable with the same key.
-            salt = hashlib.sha256(
-                key_bytes + b"warlock-grc-field-enc-v1"
-            ).digest()[:16]
+            salt = hashlib.sha256(key_bytes + b"warlock-grc-field-enc-v1").digest()[:16]
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
@@ -142,6 +138,7 @@ class FieldEncryptor:
                     "Install cryptography: pip install cryptography"
                 )
             import warnings
+
             warnings.warn(
                 "Using stdlib XOR encryption fallback — NOT safe for production. "
                 "Install the 'cryptography' package for Fernet encryption.",
@@ -205,8 +202,7 @@ def mask_sensitive(
             result[k] = mask_sensitive(v, fields)
         elif isinstance(v, list):
             result[k] = [
-                mask_sensitive(item, fields) if isinstance(item, dict) else item
-                for item in v
+                mask_sensitive(item, fields) if isinstance(item, dict) else item for item in v
             ]
         else:
             result[k] = v

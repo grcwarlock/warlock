@@ -70,35 +70,45 @@ class SentinelConnector(BaseConnector):
         base = self._workspace_url
 
         checks: list[tuple[str, str]] = [
-            (f"{base}/providers/Microsoft.SecurityInsights/incidents?api-version={API_VERSION}"
-             "&$filter=properties/severity eq 'High' or properties/severity eq 'Critical'"
-             "&$top=200",
-             "sentinel_incidents"),
-            (f"{base}/providers/Microsoft.SecurityInsights/alertRules?api-version={API_VERSION}",
-             "sentinel_analytics_rules"),
-            (f"{base}/providers/Microsoft.SecurityInsights/hunts?api-version={API_VERSION}",
-             "sentinel_hunting_queries"),
-            (f"{base}/providers/Microsoft.SecurityInsights/dataConnectors?api-version={API_VERSION}",
-             "sentinel_data_connectors"),
+            (
+                f"{base}/providers/Microsoft.SecurityInsights/incidents?api-version={API_VERSION}"
+                "&$filter=properties/severity eq 'High' or properties/severity eq 'Critical'"
+                "&$top=200",
+                "sentinel_incidents",
+            ),
+            (
+                f"{base}/providers/Microsoft.SecurityInsights/alertRules?api-version={API_VERSION}",
+                "sentinel_analytics_rules",
+            ),
+            (
+                f"{base}/providers/Microsoft.SecurityInsights/hunts?api-version={API_VERSION}",
+                "sentinel_hunting_queries",
+            ),
+            (
+                f"{base}/providers/Microsoft.SecurityInsights/dataConnectors?api-version={API_VERSION}",
+                "sentinel_data_connectors",
+            ),
         ]
 
         with httpx.Client(timeout=self.config.timeout_seconds) as client:
             for url, event_type in checks:
                 try:
                     data = self._paginate(client, url, headers)
-                    result.events.append(RawEventData(
-                        source="sentinel",
-                        source_type=SourceType.SIEM,
-                        provider="sentinel",
-                        event_type=event_type,
-                        raw_data={
-                            "subscription_id": self._sub_id,
-                            "resource_group": self._rg,
-                            "workspace": self._ws,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="sentinel",
+                            source_type=SourceType.SIEM,
+                            provider="sentinel",
+                            event_type=event_type,
+                            raw_data={
+                                "subscription_id": self._sub_id,
+                                "resource_group": self._rg,
+                                "workspace": self._ws,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Sentinel %s failed: %s", event_type, e)
                     result.errors.append(f"{event_type}: {e}")
@@ -142,12 +152,16 @@ class SentinelConnector(BaseConnector):
         client_secret = self.get_secret("AZURE_CLIENT_SECRET")
         token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
 
-        resp = httpx.post(token_url, data={
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "scope": "https://management.azure.com/.default",
-        }, timeout=30)
+        resp = httpx.post(
+            token_url,
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "https://management.azure.com/.default",
+            },
+            timeout=30,
+        )
         resp.raise_for_status()
         return resp.json()["access_token"]
 

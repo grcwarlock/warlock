@@ -111,10 +111,7 @@ def strip_secrets(data: dict) -> dict:
         elif isinstance(val, dict):
             out[key] = strip_secrets(val)
         elif isinstance(val, list):
-            out[key] = [
-                strip_secrets(item) if isinstance(item, dict) else item
-                for item in val
-            ]
+            out[key] = [strip_secrets(item) if isinstance(item, dict) else item for item in val]
         else:
             out[key] = val
     return out

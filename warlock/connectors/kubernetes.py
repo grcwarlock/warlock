@@ -89,18 +89,20 @@ class KubernetesConnector(BaseConnector):
             for endpoint, event_type, params in K8S_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, params)
-                    result.events.append(RawEventData(
-                        source="kubernetes",
-                        source_type=SourceType.CLOUD,
-                        provider="kubernetes",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "api_url": api_url,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="kubernetes",
+                            source_type=SourceType.CLOUD,
+                            provider="kubernetes",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "api_url": api_url,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Kubernetes %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")

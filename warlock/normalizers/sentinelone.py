@@ -78,27 +78,29 @@ class SentinelOneNormalizer(BaseNormalizer):
             file_path = threat_info.get("filePath", threat.get("filePath", ""))
             engines = threat_info.get("engines", [])
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"SentinelOne threat: {threat_name} on {hostname} ({classification})",
-                detail={
-                    "threat_id": threat_id,
-                    "threat_name": threat_name,
-                    "classification": classification,
-                    "confidence_level": confidence,
-                    "mitigation_status": status,
-                    "file_path": file_path,
-                    "engines": engines,
-                    "agent_id": agent_id,
-                    "hostname": hostname,
-                    "os_name": os_name,
-                },
-                resource_id=agent_id,
-                resource_type="endpoint",
-                resource_name=hostname,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"SentinelOne threat: {threat_name} on {hostname} ({classification})",
+                    detail={
+                        "threat_id": threat_id,
+                        "threat_name": threat_name,
+                        "classification": classification,
+                        "confidence_level": confidence,
+                        "mitigation_status": status,
+                        "file_path": file_path,
+                        "engines": engines,
+                        "agent_id": agent_id,
+                        "hostname": hostname,
+                        "os_name": os_name,
+                    },
+                    resource_id=agent_id,
+                    resource_type="endpoint",
+                    resource_name=hostname,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -142,29 +144,32 @@ class SentinelOneNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "policy_violation"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"SentinelOne agent {hostname}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "agent_id": agent_id,
-                    "hostname": hostname,
-                    "os_name": os_name,
-                    "os_version": os_version,
-                    "agent_version": agent_version,
-                    "is_active": is_active,
-                    "is_up_to_date": is_up_to_date,
-                    "infected": infected,
-                    "network_status": network_status,
-                    "scan_status": scan_status,
-                    "threat_count": agent.get("activeThreats", 0),
-                    "issues": issues,
-                },
-                resource_id=agent_id,
-                resource_type="endpoint",
-                resource_name=hostname,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"SentinelOne agent {hostname}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "agent_id": agent_id,
+                        "hostname": hostname,
+                        "os_name": os_name,
+                        "os_version": os_version,
+                        "agent_version": agent_version,
+                        "is_active": is_active,
+                        "is_up_to_date": is_up_to_date,
+                        "infected": infected,
+                        "network_status": network_status,
+                        "scan_status": scan_status,
+                        "threat_count": agent.get("activeThreats", 0),
+                        "issues": issues,
+                    },
+                    resource_id=agent_id,
+                    resource_type="endpoint",
+                    resource_name=hostname,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -175,16 +180,18 @@ class SentinelOneNormalizer(BaseNormalizer):
         total = raw.raw_data.get("total", 0)
         apps = raw.raw_data.get("records", [])
 
-        findings = [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"SentinelOne — {total} installed application(s) tracked",
-            detail={"total_applications": total},
-            resource_id="sentinelone:applications",
-            resource_type="application_inventory",
-            resource_name="application-inventory",
-            severity="info",
-        )]
+        findings = [
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"SentinelOne — {total} installed application(s) tracked",
+                detail={"total_applications": total},
+                resource_id="sentinelone:applications",
+                resource_type="application_inventory",
+                resource_name="application-inventory",
+                severity="info",
+            )
+        ]
 
         # Flag applications with known risk indicators
         for app in apps:
@@ -192,22 +199,24 @@ class SentinelOneNormalizer(BaseNormalizer):
             if risk and risk.lower() in ("high", "critical"):
                 app_name = app.get("name", "unknown")
                 agent_name = app.get("agentComputerName", "unknown")
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="vulnerability",
-                    title=f"High-risk application: {app_name} on {agent_name}",
-                    detail={
-                        "application_name": app_name,
-                        "version": app.get("version", ""),
-                        "publisher": app.get("publisher", ""),
-                        "risk_level": risk,
-                        "agent_computer_name": agent_name,
-                    },
-                    resource_id=app.get("agentId", ""),
-                    resource_type="application",
-                    resource_name=app_name,
-                    severity="high" if risk.lower() == "high" else "critical",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="vulnerability",
+                        title=f"High-risk application: {app_name} on {agent_name}",
+                        detail={
+                            "application_name": app_name,
+                            "version": app.get("version", ""),
+                            "publisher": app.get("publisher", ""),
+                            "risk_level": risk,
+                            "agent_computer_name": agent_name,
+                        },
+                        resource_id=app.get("agentId", ""),
+                        resource_type="application",
+                        resource_name=app_name,
+                        severity="high" if risk.lower() == "high" else "critical",
+                    )
+                )
 
         return findings
 
@@ -239,22 +248,25 @@ class SentinelOneNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"SentinelOne policy: {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "policy_id": policy_id,
-                    "name": name,
-                    "is_default": is_default,
-                    "scope": scope,
-                    "issues": issues,
-                },
-                resource_id=policy_id,
-                resource_type="policy",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"SentinelOne policy: {name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "policy_id": policy_id,
+                        "name": name,
+                        "is_default": is_default,
+                        "scope": scope,
+                        "issues": issues,
+                    },
+                    resource_id=policy_id,
+                    resource_type="policy",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 

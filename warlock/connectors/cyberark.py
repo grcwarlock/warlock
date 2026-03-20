@@ -38,7 +38,9 @@ class CyberArkConnector(BaseConnector):
         except ImportError:
             errors.append("httpx not installed. Install with: pip install warlock[cyberark]")
         if not self.config.settings.get("base_url"):
-            errors.append("'base_url' must be set in connector settings (e.g. 'https://pvwa.company.com')")
+            errors.append(
+                "'base_url' must be set in connector settings (e.g. 'https://pvwa.company.com')"
+            )
         if not self.get_secret("CYBERARK_USERNAME"):
             errors.append("CYBERARK_USERNAME env var is not set")
         if not self.get_secret("CYBERARK_PASSWORD"):
@@ -97,18 +99,20 @@ class CyberArkConnector(BaseConnector):
             for endpoint, event_type, params in CYBERARK_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, params)
-                    result.events.append(RawEventData(
-                        source="cyberark",
-                        source_type=SourceType.IAM,
-                        provider="cyberark",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "base_url": base_url,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="cyberark",
+                            source_type=SourceType.IAM,
+                            provider="cyberark",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "base_url": base_url,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("CyberArk %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")
@@ -122,18 +126,20 @@ class CyberArkConnector(BaseConnector):
                 resp.raise_for_status()
                 body = resp.json()
                 accounts = body.get("value", body.get("accounts", []))
-                result.events.append(RawEventData(
-                    source="cyberark",
-                    source_type=SourceType.IAM,
-                    provider="cyberark",
-                    event_type="cyberark_password_compliance",
-                    raw_data={
-                        "endpoint": "/PasswordVault/api/Accounts (password compliance)",
-                        "base_url": base_url,
-                        "response": accounts,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="cyberark",
+                        source_type=SourceType.IAM,
+                        provider="cyberark",
+                        event_type="cyberark_password_compliance",
+                        raw_data={
+                            "endpoint": "/PasswordVault/api/Accounts (password compliance)",
+                            "base_url": base_url,
+                            "response": accounts,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("CyberArk password compliance check failed: %s", e)
                 result.errors.append(f"password_compliance: {e}")

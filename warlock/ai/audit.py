@@ -150,10 +150,7 @@ class AIAuditLog:
                 self._total_errors += 1
             if self._flush_cb is not None:
                 self._unflushed.append(entry)
-                if (
-                    self._flush_threshold > 0
-                    and len(self._unflushed) >= self._flush_threshold
-                ):
+                if self._flush_threshold > 0 and len(self._unflushed) >= self._flush_threshold:
                     self._flush_locked()
 
     def flush(self) -> int:
@@ -195,9 +192,7 @@ class AIAuditLog:
         with self._lock:
             return [e for e in self._entries if e.session_id == session_id]
 
-    def get_by_entity(
-        self, entity_type: str, entity_id: str
-    ) -> list[AIAuditEntry]:
+    def get_by_entity(self, entity_type: str, entity_id: str) -> list[AIAuditEntry]:
         """Return all entries for a specific entity, oldest first."""
         with self._lock:
             return [

@@ -22,6 +22,7 @@ from typing import Any
 
 try:
     import httpx
+
     _HAS_HTTPX = True
 except ImportError:
     httpx = None  # type: ignore
@@ -138,21 +139,29 @@ class WebhookSubscriber:
                 resp.raise_for_status()
                 log.debug(
                     "Webhook delivered: event=%s url=%s status=%d",
-                    event_type, url, resp.status_code,
+                    event_type,
+                    url,
+                    resp.status_code,
                 )
                 return
             except Exception as exc:
-                wait = 2 ** attempt  # 1s, 2s, 4s
+                wait = 2**attempt  # 1s, 2s, 4s
                 if attempt < _WEBHOOK_MAX_RETRIES - 1:
                     log.warning(
                         "Webhook POST failed (attempt %d/%d): url=%s error=%s — retrying in %ds",
-                        attempt + 1, _WEBHOOK_MAX_RETRIES, url, exc, wait,
+                        attempt + 1,
+                        _WEBHOOK_MAX_RETRIES,
+                        url,
+                        exc,
+                        wait,
                     )
                     time.sleep(wait)
                 else:
                     log.error(
                         "Webhook POST failed after %d attempts: url=%s error=%s",
-                        _WEBHOOK_MAX_RETRIES, url, exc,
+                        _WEBHOOK_MAX_RETRIES,
+                        url,
+                        exc,
                     )
 
 
@@ -160,16 +169,16 @@ class WebhookSubscriber:
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AlertConfig:
     """Configuration for a single alert channel."""
+
     channel: str  # "slack", "pagerduty", "webhook", "email"
     url: str = ""  # webhook URL
     api_key: str = ""  # for PagerDuty routing key
     threshold_score: float = 70.0  # posture score below which to alert
-    threshold_status: list[str] = field(
-        default_factory=lambda: ["non_compliant"]
-    )
+    threshold_status: list[str] = field(default_factory=lambda: ["non_compliant"])
     frameworks: list[str] = field(default_factory=list)  # empty = all
     severities: list[str] = field(default_factory=list)  # empty = all
     enabled: bool = True
@@ -178,6 +187,7 @@ class AlertConfig:
 @dataclass
 class AlertResult:
     """Result of an alert send attempt."""
+
     channel: str
     framework: str
     control_id: str
@@ -191,6 +201,7 @@ class AlertResult:
 # ---------------------------------------------------------------------------
 # Slack Block Kit message builder
 # ---------------------------------------------------------------------------
+
 
 def _build_slack_blocks(posture: ControlPosture) -> dict[str, Any]:
     """Build a Slack Block Kit message for a posture alert."""
@@ -276,9 +287,8 @@ def _build_slack_blocks(posture: ControlPosture) -> dict[str, Any]:
 # PagerDuty Events API v2 payload
 # ---------------------------------------------------------------------------
 
-def _build_pagerduty_payload(
-    config: AlertConfig, posture: ControlPosture
-) -> dict[str, Any]:
+
+def _build_pagerduty_payload(config: AlertConfig, posture: ControlPosture) -> dict[str, Any]:
     """Build a PagerDuty Events API v2 trigger payload."""
     severity_map = {
         "non_compliant": "critical",
@@ -317,6 +327,7 @@ def _build_pagerduty_payload(
 # Generic webhook payload
 # ---------------------------------------------------------------------------
 
+
 def _build_webhook_payload(posture: ControlPosture) -> dict[str, Any]:
     """Build a generic JSON webhook payload."""
     return {
@@ -339,6 +350,7 @@ def _build_webhook_payload(posture: ControlPosture) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # AlertRouter
 # ---------------------------------------------------------------------------
+
 
 class AlertRouter:
     """Evaluates posture against thresholds and routes alerts to channels."""
@@ -401,9 +413,7 @@ class AlertRouter:
         # Alert if either condition is met
         return status_match or score_match
 
-    def _send_alert(
-        self, config: AlertConfig, posture: ControlPosture
-    ) -> AlertResult:
+    def _send_alert(self, config: AlertConfig, posture: ControlPosture) -> AlertResult:
         """Dispatch to the appropriate channel sender."""
         senders = {
             "slack": self.send_slack,
@@ -433,7 +443,9 @@ class AlertRouter:
             error = str(e)
             log.exception(
                 "Alert send failed: channel=%s framework=%s control=%s",
-                config.channel, posture.framework, posture.control_id,
+                config.channel,
+                posture.framework,
+                posture.control_id,
             )
 
         return AlertResult(
@@ -565,7 +577,10 @@ class AlertRouter:
                 if attempt < MAX_RETRIES:
                     log.warning(
                         "Alert POST to %s failed (attempt %d/%d): %s",
-                        url, attempt + 1, 1 + MAX_RETRIES, e,
+                        url,
+                        attempt + 1,
+                        1 + MAX_RETRIES,
+                        e,
                     )
 
         log.error("Alert POST to %s failed after retries: %s", url, last_error)

@@ -84,22 +84,24 @@ class OktaNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "policy_violation"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Okta user: {login}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "user_id": user.get("id", ""),
-                    "login": login,
-                    "status": status,
-                    "last_login": last_login_str,
-                    "issues": issues,
-                },
-                resource_id=user.get("id", ""),
-                resource_type="okta_user",
-                resource_name=login,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Okta user: {login}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user_id": user.get("id", ""),
+                        "login": login,
+                        "status": status,
+                        "last_login": last_login_str,
+                        "issues": issues,
+                    },
+                    resource_id=user.get("id", ""),
+                    resource_type="okta_user",
+                    resource_name=login,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -110,16 +112,18 @@ class OktaNormalizer(BaseNormalizer):
         groups = raw.raw_data.get("response", [])
         for group in groups:
             profile = group.get("profile", {})
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Okta group: {profile.get('name', '?')}",
-                detail=group,
-                resource_id=group.get("id", ""),
-                resource_type="okta_group",
-                resource_name=profile.get("name", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Okta group: {profile.get('name', '?')}",
+                    detail=group,
+                    resource_id=group.get("id", ""),
+                    resource_type="okta_group",
+                    resource_name=profile.get("name", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- System Log --
@@ -159,23 +163,25 @@ class OktaNormalizer(BaseNormalizer):
                 target_name = target[0].get("displayName", "unknown") if target else "unknown"
                 title = f"Privilege grant: {actor} → {target_name}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "event_type": event_type,
-                    "outcome": outcome,
-                    "actor": actor,
-                    "actor_id": actor_id,
-                    "issues": issues,
-                    "event": event,
-                },
-                resource_id=actor_id,
-                resource_type="okta_event",
-                resource_name=actor,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "event_type": event_type,
+                        "outcome": outcome,
+                        "actor": actor,
+                        "actor_id": actor_id,
+                        "issues": issues,
+                        "event": event,
+                    },
+                    resource_id=actor_id,
+                    resource_type="okta_event",
+                    resource_name=actor,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -214,22 +220,24 @@ class OktaNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Okta policy: {name}" + (f" — {len(issues)} issues" if issues else ""),
-                detail={
-                    "policy_id": policy.get("id", ""),
-                    "policy_type": policy_type,
-                    "name": name,
-                    "issues": issues,
-                    "policy": policy,
-                },
-                resource_id=policy.get("id", ""),
-                resource_type="okta_policy",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Okta policy: {name}" + (f" — {len(issues)} issues" if issues else ""),
+                    detail={
+                        "policy_id": policy.get("id", ""),
+                        "policy_type": policy_type,
+                        "name": name,
+                        "issues": issues,
+                        "policy": policy,
+                    },
+                    resource_id=policy.get("id", ""),
+                    resource_type="okta_policy",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -239,16 +247,18 @@ class OktaNormalizer(BaseNormalizer):
         findings = []
         apps = raw.raw_data.get("response", [])
         for app in apps:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Okta application: {app.get('label', '?')}",
-                detail=app,
-                resource_id=app.get("id", ""),
-                resource_type="okta_application",
-                resource_name=app.get("label", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Okta application: {app.get('label', '?')}",
+                    detail=app,
+                    resource_id=app.get("id", ""),
+                    resource_type="okta_application",
+                    resource_name=app.get("label", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- Factors --
@@ -273,21 +283,24 @@ class OktaNormalizer(BaseNormalizer):
                 obs_type = "misconfiguration"
 
             factor_types = [f.get("factorType", "unknown") for f in active_factors]
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"MFA factors for user {user_id}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "user_id": user_id,
-                    "active_factor_count": len(active_factors),
-                    "factor_types": factor_types,
-                    "issues": issues,
-                },
-                resource_id=user_id,
-                resource_type="okta_user_factors",
-                resource_name=user_id,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"MFA factors for user {user_id}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user_id": user_id,
+                        "active_factor_count": len(active_factors),
+                        "factor_types": factor_types,
+                        "issues": issues,
+                    },
+                    resource_id=user_id,
+                    resource_type="okta_user_factors",
+                    resource_name=user_id,
+                    severity=severity,
+                )
+            )
 
         return findings
 

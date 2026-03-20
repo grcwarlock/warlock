@@ -72,89 +72,97 @@ class IntuneNormalizer(BaseNormalizer):
                 issues.append("outdated_os")
 
             # Emit inventory finding for every device
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Intune device: {name} ({os_name} {os_version})",
-                detail={
-                    "device_id": device_id,
-                    "device_name": name,
-                    "operating_system": os_name,
-                    "os_version": os_version,
-                    "compliance_state": compliance_state,
-                    "is_encrypted": is_encrypted,
-                    "model": model,
-                    "manufacturer": manufacturer,
-                    "user_principal_name": user_principal,
-                    "last_sync_date_time": last_sync,
-                    "management_agent": management_agent,
-                },
-                resource_id=device_id,
-                resource_type="mdm_device",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Intune device: {name} ({os_name} {os_version})",
+                    detail={
+                        "device_id": device_id,
+                        "device_name": name,
+                        "operating_system": os_name,
+                        "os_version": os_version,
+                        "compliance_state": compliance_state,
+                        "is_encrypted": is_encrypted,
+                        "model": model,
+                        "manufacturer": manufacturer,
+                        "user_principal_name": user_principal,
+                        "last_sync_date_time": last_sync,
+                        "management_agent": management_agent,
+                    },
+                    resource_id=device_id,
+                    resource_type="mdm_device",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
             # Non-compliant -> policy_violation
             if compliance_state in ("noncompliant", "conflict", "error"):
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"Non-compliant device: {name} (state: {compliance_state})",
-                    detail={
-                        "device_id": device_id,
-                        "device_name": name,
-                        "compliance_state": compliance_state,
-                        "operating_system": os_name,
-                        "os_version": os_version,
-                        "user_principal_name": user_principal,
-                        "issue": "device_non_compliant",
-                    },
-                    resource_id=device_id,
-                    resource_type="mdm_device",
-                    resource_name=name,
-                    severity="high",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"Non-compliant device: {name} (state: {compliance_state})",
+                        detail={
+                            "device_id": device_id,
+                            "device_name": name,
+                            "compliance_state": compliance_state,
+                            "operating_system": os_name,
+                            "os_version": os_version,
+                            "user_principal_name": user_principal,
+                            "issue": "device_non_compliant",
+                        },
+                        resource_id=device_id,
+                        resource_type="mdm_device",
+                        resource_name=name,
+                        severity="high",
+                    )
+                )
 
             # Unencrypted -> misconfiguration
             if not is_encrypted:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Unencrypted device: {name}",
-                    detail={
-                        "device_id": device_id,
-                        "device_name": name,
-                        "is_encrypted": False,
-                        "operating_system": os_name,
-                        "user_principal_name": user_principal,
-                        "issue": "device_not_encrypted",
-                    },
-                    resource_id=device_id,
-                    resource_type="mdm_device",
-                    resource_name=name,
-                    severity="high",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Unencrypted device: {name}",
+                        detail={
+                            "device_id": device_id,
+                            "device_name": name,
+                            "is_encrypted": False,
+                            "operating_system": os_name,
+                            "user_principal_name": user_principal,
+                            "issue": "device_not_encrypted",
+                        },
+                        resource_id=device_id,
+                        resource_type="mdm_device",
+                        resource_name=name,
+                        severity="high",
+                    )
+                )
 
             # Outdated OS -> misconfiguration
             if self._is_outdated_os(os_name, os_version):
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Outdated OS on device: {name} ({os_name} {os_version})",
-                    detail={
-                        "device_id": device_id,
-                        "device_name": name,
-                        "operating_system": os_name,
-                        "os_version": os_version,
-                        "user_principal_name": user_principal,
-                        "issue": "outdated_os",
-                    },
-                    resource_id=device_id,
-                    resource_type="mdm_device",
-                    resource_name=name,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Outdated OS on device: {name} ({os_name} {os_version})",
+                        detail={
+                            "device_id": device_id,
+                            "device_name": name,
+                            "operating_system": os_name,
+                            "os_version": os_version,
+                            "user_principal_name": user_principal,
+                            "issue": "outdated_os",
+                        },
+                        resource_id=device_id,
+                        resource_type="mdm_device",
+                        resource_name=name,
+                        severity="medium",
+                    )
+                )
 
         return findings
 
@@ -172,22 +180,24 @@ class IntuneNormalizer(BaseNormalizer):
             created = policy.get("createdDateTime", "")
             last_modified = policy.get("lastModifiedDateTime", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Intune compliance policy: {name}",
-                detail={
-                    "policy_id": policy_id,
-                    "display_name": name,
-                    "description": description,
-                    "created_date_time": created,
-                    "last_modified_date_time": last_modified,
-                },
-                resource_id=policy_id,
-                resource_type="mdm_policy",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Intune compliance policy: {name}",
+                    detail={
+                        "policy_id": policy_id,
+                        "display_name": name,
+                        "description": description,
+                        "created_date_time": created,
+                        "last_modified_date_time": last_modified,
+                    },
+                    resource_id=policy_id,
+                    resource_type="mdm_policy",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -213,26 +223,28 @@ class IntuneNormalizer(BaseNormalizer):
                 obs_type = "policy_violation"
                 severity = "high"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=(
-                    f"Compliance state: {display_name} — {compliance}"
-                    + (f" (policy: {policy_name})" if policy_name else "")
-                ),
-                detail={
-                    "state_id": state_id,
-                    "device_id": device_id,
-                    "display_name": display_name,
-                    "compliance_state": compliance,
-                    "policy_name": policy_name,
-                    "user_principal_name": user_principal,
-                },
-                resource_id=device_id or state_id,
-                resource_type="mdm_compliance_state",
-                resource_name=display_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=(
+                        f"Compliance state: {display_name} — {compliance}"
+                        + (f" (policy: {policy_name})" if policy_name else "")
+                    ),
+                    detail={
+                        "state_id": state_id,
+                        "device_id": device_id,
+                        "display_name": display_name,
+                        "compliance_state": compliance,
+                        "policy_name": policy_name,
+                        "user_principal_name": user_principal,
+                    },
+                    resource_id=device_id or state_id,
+                    resource_type="mdm_compliance_state",
+                    resource_name=display_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 

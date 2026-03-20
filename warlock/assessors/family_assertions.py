@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 # Evidence helpers — shared across multiple family assertions
 # ---------------------------------------------------------------------------
 
+
 def _any_true(detail: dict[str, Any], *keys: str) -> bool:
     """Return True if any of the given keys in detail is truthy."""
     return any(detail.get(k) for k in keys)
@@ -40,15 +41,31 @@ def _any_true(detail: dict[str, Any], *keys: str) -> bool:
 def _status_ok(detail: dict[str, Any]) -> bool:
     """Return True if a generic status field signals passing/active state."""
     status = str(detail.get("status") or detail.get("state") or "").lower()
-    return status in ("active", "enabled", "compliant", "completed", "ok", "pass", "passed", "normal")
+    return status in (
+        "active",
+        "enabled",
+        "compliant",
+        "completed",
+        "ok",
+        "pass",
+        "passed",
+        "normal",
+    )
 
 
 def _status_bad(detail: dict[str, Any]) -> bool:
     """Return True if a generic status field signals a failure state."""
     status = str(detail.get("status") or detail.get("state") or "").lower()
     return status in (
-        "non_compliant", "noncompliant", "failed", "fail", "error",
-        "disabled", "inactive", "expired", "overdue",
+        "non_compliant",
+        "noncompliant",
+        "failed",
+        "fail",
+        "error",
+        "disabled",
+        "inactive",
+        "expired",
+        "overdue",
     )
 
 
@@ -110,13 +127,21 @@ def _eval_domain(
 # NIST 800-53 family assertions (20 families)
 # ---------------------------------------------------------------------------
 
+
 @_engine.assertion("family_ac_default")
 def family_ac_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """AC — Access Control: looks for IAM, MFA, access review, or policy evidence."""
     domain_keys = [
-        "mfa_active", "mfa_enabled", "factors", "enrolled_factors",
-        "authenticationMethods", "policies", "access_policy", "user",
-        "grantControls", "complianceState",
+        "mfa_active",
+        "mfa_enabled",
+        "factors",
+        "enrolled_factors",
+        "authenticationMethods",
+        "policies",
+        "access_policy",
+        "user",
+        "grantControls",
+        "complianceState",
     ]
     return _eval_domain(detail, domain_keys, "access_control")
 
@@ -125,8 +150,12 @@ def family_ac_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_at_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """AT — Awareness & Training: looks for training completion evidence."""
     domain_keys = [
-        "completion_pct", "completion_rate", "enrollment_status",
-        "training_completed", "campaign_name", "course_name",
+        "completion_pct",
+        "completion_rate",
+        "enrollment_status",
+        "training_completed",
+        "campaign_name",
+        "course_name",
     ]
     return _eval_domain(detail, domain_keys, "security_training")
 
@@ -135,8 +164,15 @@ def family_at_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_au_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """AU — Audit & Accountability: looks for logging and trail evidence."""
     domain_keys = [
-        "trail", "logName", "log_name", "operationName", "audit_log",
-        "cloudtrail_enabled", "detectors", "HubArn", "IsMultiRegionTrail",
+        "trail",
+        "logName",
+        "log_name",
+        "operationName",
+        "audit_log",
+        "cloudtrail_enabled",
+        "detectors",
+        "HubArn",
+        "IsMultiRegionTrail",
     ]
     return _eval_domain(detail, domain_keys, "audit_logging")
 
@@ -145,8 +181,12 @@ def family_au_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_ca_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """CA — Security Assessment: looks for assessment/recorder evidence."""
     domain_keys = [
-        "recorder", "assessment_id", "scan_id", "assessment_status",
-        "last_assessed", "assessment_date",
+        "recorder",
+        "assessment_id",
+        "scan_id",
+        "assessment_status",
+        "last_assessed",
+        "assessment_date",
     ]
     return _eval_domain(detail, domain_keys, "security_assessment")
 
@@ -155,8 +195,12 @@ def family_ca_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_cm_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """CM — Configuration Management: looks for config recorder / change management."""
     domain_keys = [
-        "recorder", "configuration", "baseline", "change_id",
-        "config_recorder", "component_count",
+        "recorder",
+        "configuration",
+        "baseline",
+        "change_id",
+        "config_recorder",
+        "component_count",
     ]
     return _eval_domain(detail, domain_keys, "configuration_management")
 
@@ -165,8 +209,13 @@ def family_cm_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_cp_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """CP — Contingency Planning: looks for backup and recovery evidence."""
     domain_keys = [
-        "backup_status", "recovery_point", "rpo_met", "last_backup",
-        "job_name", "backup_count", "recovery_plan",
+        "backup_status",
+        "recovery_point",
+        "rpo_met",
+        "last_backup",
+        "job_name",
+        "backup_count",
+        "recovery_plan",
     ]
     return _eval_domain(detail, domain_keys, "contingency_planning")
 
@@ -175,8 +224,13 @@ def family_cp_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_ia_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """IA — Identification & Authentication: looks for auth and identity evidence."""
     domain_keys = [
-        "mfa_active", "mfa_enabled", "password_policy", "authentication",
-        "identity_provider", "user_id", "credential",
+        "mfa_active",
+        "mfa_enabled",
+        "password_policy",
+        "authentication",
+        "identity_provider",
+        "user_id",
+        "credential",
     ]
     return _eval_domain(detail, domain_keys, "identification_authentication")
 
@@ -185,8 +239,13 @@ def family_ia_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_ir_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """IR — Incident Response: looks for SIEM and incident evidence."""
     domain_keys = [
-        "incident_id", "alert_id", "detection_rules", "siem_rules",
-        "enabled_rules", "playbook", "runbook",
+        "incident_id",
+        "alert_id",
+        "detection_rules",
+        "siem_rules",
+        "enabled_rules",
+        "playbook",
+        "runbook",
     ]
     return _eval_domain(detail, domain_keys, "incident_response")
 
@@ -195,7 +254,10 @@ def family_ir_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_ma_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """MA — Maintenance: looks for patch/maintenance schedule evidence."""
     domain_keys = [
-        "maintenance_date", "patch_status", "last_patch", "maintenance_window",
+        "maintenance_date",
+        "patch_status",
+        "last_patch",
+        "maintenance_window",
         "scheduled_maintenance",
     ]
     return _eval_domain(detail, domain_keys, "maintenance")
@@ -205,7 +267,10 @@ def family_ma_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_mp_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """MP — Media Protection: looks for encryption and DLP evidence."""
     domain_keys = [
-        "encryption", "dlp_policy", "media_sanitization", "data_classification",
+        "encryption",
+        "dlp_policy",
+        "media_sanitization",
+        "data_classification",
         "ServerSideEncryptionConfiguration",
     ]
     return _eval_domain(detail, domain_keys, "media_protection")
@@ -215,7 +280,10 @@ def family_mp_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_pe_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """PE — Physical & Environmental Protection: looks for physical access evidence."""
     domain_keys = [
-        "physical_access", "badge_event", "facility_id", "visitor_log",
+        "physical_access",
+        "badge_event",
+        "facility_id",
+        "visitor_log",
         "physical_control",
     ]
     return _eval_domain(detail, domain_keys, "physical_protection")
@@ -225,8 +293,13 @@ def family_pe_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_pl_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """PL — Planning: looks for policy/planning document evidence."""
     domain_keys = [
-        "policy_id", "plan_id", "document_id", "last_updated", "reviewed_at",
-        "policy_name", "plan_name",
+        "policy_id",
+        "plan_id",
+        "document_id",
+        "last_updated",
+        "reviewed_at",
+        "policy_name",
+        "plan_name",
     ]
     return _eval_domain(detail, domain_keys, "security_planning")
 
@@ -235,7 +308,10 @@ def family_pl_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_pm_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """PM — Program Management: looks for program-level governance evidence."""
     domain_keys = [
-        "program_id", "governance", "risk_register", "poam_count",
+        "program_id",
+        "governance",
+        "risk_register",
+        "poam_count",
         "security_program",
     ]
     return _eval_domain(detail, domain_keys, "program_management")
@@ -245,8 +321,12 @@ def family_pm_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_ps_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """PS — Personnel Security: looks for HR and personnel records."""
     domain_keys = [
-        "background_check_status", "employment_agreement", "nda_signed",
-        "employee_id", "onboarding_complete", "termination_date",
+        "background_check_status",
+        "employment_agreement",
+        "nda_signed",
+        "employee_id",
+        "onboarding_complete",
+        "termination_date",
     ]
     return _eval_domain(detail, domain_keys, "personnel_security")
 
@@ -255,8 +335,11 @@ def family_ps_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_pt_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """PT — PII Processing & Transparency: looks for privacy evidence."""
     domain_keys = [
-        "privacy_notice", "consent_recorded", "data_subject_request",
-        "pii_inventory", "privacy_assessment",
+        "privacy_notice",
+        "consent_recorded",
+        "data_subject_request",
+        "pii_inventory",
+        "privacy_assessment",
     ]
     return _eval_domain(detail, domain_keys, "pii_transparency")
 
@@ -265,7 +348,10 @@ def family_pt_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_ra_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """RA — Risk Assessment: looks for vulnerability scan and risk evidence."""
     domain_keys = [
-        "risk_score", "last_scan_date", "scan_count", "vulnerability_count",
+        "risk_score",
+        "last_scan_date",
+        "scan_count",
+        "vulnerability_count",
         "risk_assessment_date",
     ]
     return _eval_domain(detail, domain_keys, "risk_assessment")
@@ -275,8 +361,12 @@ def family_ra_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_sa_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SA — System & Services Acquisition: looks for SDLC/code security evidence."""
     domain_keys = [
-        "code_scan", "sast_result", "dependency_check", "approval_status",
-        "change_id", "severity",
+        "code_scan",
+        "sast_result",
+        "dependency_check",
+        "approval_status",
+        "change_id",
+        "severity",
     ]
     return _eval_domain(detail, domain_keys, "system_acquisition")
 
@@ -285,8 +375,13 @@ def family_sa_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_sc_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SC — System & Communications Protection: looks for network/encryption evidence."""
     domain_keys = [
-        "IpPermissions", "security_group", "encryption", "tls_enabled",
-        "firewall_rule", "network_policy", "vaultUri",
+        "IpPermissions",
+        "security_group",
+        "encryption",
+        "tls_enabled",
+        "firewall_rule",
+        "network_policy",
+        "vaultUri",
     ]
     return _eval_domain(detail, domain_keys, "system_communications")
 
@@ -295,8 +390,13 @@ def family_sc_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_si_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SI — System & Information Integrity: looks for AV, patching, and SIEM evidence."""
     domain_keys = [
-        "detectors", "agent_status", "sensor_status", "detection_rules",
-        "last_scan_date", "patch_status", "malware_protection",
+        "detectors",
+        "agent_status",
+        "sensor_status",
+        "detection_rules",
+        "last_scan_date",
+        "patch_status",
+        "malware_protection",
     ]
     return _eval_domain(detail, domain_keys, "system_integrity")
 
@@ -305,8 +405,11 @@ def family_si_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 def family_sr_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SR — Supply Chain Risk Management: looks for vendor/supplier evidence."""
     domain_keys = [
-        "vendor_id", "supplier_name", "third_party_assessment",
-        "contract_id", "supply_chain_risk",
+        "vendor_id",
+        "supplier_name",
+        "third_party_assessment",
+        "contract_id",
+        "supply_chain_risk",
     ]
     return _eval_domain(detail, domain_keys, "supply_chain")
 
@@ -315,12 +418,17 @@ def family_sr_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
 # ISO 27001 clause-group assertions (Annex A groups A.5–A.8)
 # ---------------------------------------------------------------------------
 
+
 @_engine.assertion("family_iso_a5_default")
 def family_iso_a5_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """ISO A.5 — Organisational controls: policy and governance evidence."""
     domain_keys = [
-        "policy_id", "policy_name", "governance", "last_updated",
-        "risk_register", "threat_intelligence",
+        "policy_id",
+        "policy_name",
+        "governance",
+        "last_updated",
+        "risk_register",
+        "threat_intelligence",
     ]
     return _eval_domain(detail, domain_keys, "iso_a5_organisational")
 
@@ -329,8 +437,11 @@ def family_iso_a5_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]
 def family_iso_a6_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """ISO A.6 — People controls: personnel and HR evidence."""
     domain_keys = [
-        "employee_id", "background_check_status", "nda_signed",
-        "training_completed", "employment_agreement",
+        "employee_id",
+        "background_check_status",
+        "nda_signed",
+        "training_completed",
+        "employment_agreement",
     ]
     return _eval_domain(detail, domain_keys, "iso_a6_people")
 
@@ -339,8 +450,11 @@ def family_iso_a6_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]
 def family_iso_a7_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """ISO A.7 — Physical controls: physical access and facility evidence."""
     domain_keys = [
-        "physical_access", "badge_event", "facility_id",
-        "clean_desk", "physical_inventory",
+        "physical_access",
+        "badge_event",
+        "facility_id",
+        "clean_desk",
+        "physical_inventory",
     ]
     return _eval_domain(detail, domain_keys, "iso_a7_physical")
 
@@ -349,8 +463,13 @@ def family_iso_a7_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]
 def family_iso_a8_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """ISO A.8 — Technological controls: technical security evidence."""
     domain_keys = [
-        "mfa_active", "encryption", "IpPermissions", "detectors",
-        "patch_status", "vulnerability_count", "dlp_policy",
+        "mfa_active",
+        "encryption",
+        "IpPermissions",
+        "detectors",
+        "patch_status",
+        "vulnerability_count",
+        "dlp_policy",
     ]
     return _eval_domain(detail, domain_keys, "iso_a8_technological")
 
@@ -358,6 +477,7 @@ def family_iso_a8_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]
 # ---------------------------------------------------------------------------
 # SOC 2 criteria group assertions
 # ---------------------------------------------------------------------------
+
 
 @_engine.assertion("family_soc2_cc1_default")
 def family_soc2_cc1_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -398,7 +518,10 @@ def family_soc2_cc5_default(detail: dict, raw_data: dict) -> tuple[bool, list[st
 def family_soc2_cc6_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SOC 2 CC6 — Logical & Physical Access."""
     domain_keys = [
-        "mfa_active", "mfa_enabled", "access_policy", "IpPermissions",
+        "mfa_active",
+        "mfa_enabled",
+        "access_policy",
+        "IpPermissions",
         "physical_access",
     ]
     return _eval_domain(detail, domain_keys, "soc2_cc6_access")
@@ -408,8 +531,12 @@ def family_soc2_cc6_default(detail: dict, raw_data: dict) -> tuple[bool, list[st
 def family_soc2_cc7_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SOC 2 CC7 — System Operations."""
     domain_keys = [
-        "detectors", "trail", "detection_rules", "incident_id",
-        "alert_id", "audit_log",
+        "detectors",
+        "trail",
+        "detection_rules",
+        "incident_id",
+        "alert_id",
+        "audit_log",
     ]
     return _eval_domain(detail, domain_keys, "soc2_cc7_operations")
 
@@ -439,8 +566,10 @@ def family_soc2_a1_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_soc2_c1_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """SOC 2 C1 — Confidentiality."""
     domain_keys = [
-        "encryption", "ServerSideEncryptionConfiguration",
-        "data_classification", "dlp_policy",
+        "encryption",
+        "ServerSideEncryptionConfiguration",
+        "data_classification",
+        "dlp_policy",
     ]
     return _eval_domain(detail, domain_keys, "soc2_c1_confidentiality")
 
@@ -463,12 +592,16 @@ def family_soc2_pi1_default(detail: dict, raw_data: dict) -> tuple[bool, list[st
 # HIPAA section assertions
 # ---------------------------------------------------------------------------
 
+
 @_engine.assertion("family_hipaa_308_default")
 def family_hipaa_308_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """HIPAA 164.308 — Administrative Safeguards."""
     domain_keys = [
-        "risk_assessment_date", "training_completed", "incident_id",
-        "contingency_plan", "business_associate_id",
+        "risk_assessment_date",
+        "training_completed",
+        "incident_id",
+        "contingency_plan",
+        "business_associate_id",
     ]
     return _eval_domain(detail, domain_keys, "hipaa_administrative")
 
@@ -477,8 +610,11 @@ def family_hipaa_308_default(detail: dict, raw_data: dict) -> tuple[bool, list[s
 def family_hipaa_310_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """HIPAA 164.310 — Physical Safeguards."""
     domain_keys = [
-        "physical_access", "facility_id", "workstation_policy",
-        "media_disposal", "badge_event",
+        "physical_access",
+        "facility_id",
+        "workstation_policy",
+        "media_disposal",
+        "badge_event",
     ]
     return _eval_domain(detail, domain_keys, "hipaa_physical")
 
@@ -487,8 +623,12 @@ def family_hipaa_310_default(detail: dict, raw_data: dict) -> tuple[bool, list[s
 def family_hipaa_312_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """HIPAA 164.312 — Technical Safeguards."""
     domain_keys = [
-        "mfa_active", "encryption", "audit_log", "automatic_logoff",
-        "authentication", "access_control",
+        "mfa_active",
+        "encryption",
+        "audit_log",
+        "automatic_logoff",
+        "authentication",
+        "access_control",
     ]
     return _eval_domain(detail, domain_keys, "hipaa_technical")
 
@@ -497,7 +637,9 @@ def family_hipaa_312_default(detail: dict, raw_data: dict) -> tuple[bool, list[s
 def family_hipaa_314_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """HIPAA 164.314 — Organizational Requirements."""
     domain_keys = [
-        "business_associate_id", "contract_id", "baa_signed",
+        "business_associate_id",
+        "contract_id",
+        "baa_signed",
         "group_health_plan",
     ]
     return _eval_domain(detail, domain_keys, "hipaa_organizational")
@@ -507,7 +649,10 @@ def family_hipaa_314_default(detail: dict, raw_data: dict) -> tuple[bool, list[s
 def family_hipaa_316_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """HIPAA 164.316 — Policies & Procedures."""
     domain_keys = [
-        "policy_id", "last_updated", "procedure_id", "documentation_date",
+        "policy_id",
+        "last_updated",
+        "procedure_id",
+        "documentation_date",
     ]
     return _eval_domain(detail, domain_keys, "hipaa_policies")
 
@@ -515,6 +660,7 @@ def family_hipaa_316_default(detail: dict, raw_data: dict) -> tuple[bool, list[s
 # ---------------------------------------------------------------------------
 # CMMC L2 domain assertions (mirrors NIST families)
 # ---------------------------------------------------------------------------
+
 
 @_engine.assertion("family_cmmc_ac_default")
 def family_cmmc_ac_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -598,6 +744,7 @@ def family_cmmc_si_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 # UCF domain assertions (20 domains)
 # ---------------------------------------------------------------------------
 
+
 @_engine.assertion("family_ucf_gov_default")
 def family_ucf_gov_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF GOV — Governance."""
@@ -635,8 +782,11 @@ def family_ucf_hrs_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_net_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF NET — Network Security."""
     domain_keys = [
-        "IpPermissions", "security_group", "firewall_rule",
-        "network_policy", "segmentation",
+        "IpPermissions",
+        "security_group",
+        "firewall_rule",
+        "network_policy",
+        "segmentation",
     ]
     return _eval_domain(detail, domain_keys, "ucf_network")
 
@@ -651,8 +801,11 @@ def family_ucf_log_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_dat_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF DAT — Data Protection."""
     domain_keys = [
-        "encryption", "dlp_policy", "data_classification",
-        "ServerSideEncryptionConfiguration", "backup_status",
+        "encryption",
+        "dlp_policy",
+        "data_classification",
+        "ServerSideEncryptionConfiguration",
+        "backup_status",
     ]
     return _eval_domain(detail, domain_keys, "ucf_data_protection")
 
@@ -661,8 +814,11 @@ def family_ucf_dat_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_epp_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF EPP — Endpoint Protection."""
     domain_keys = [
-        "agent_status", "sensor_status", "complianceState",
-        "last_seen", "isActive",
+        "agent_status",
+        "sensor_status",
+        "complianceState",
+        "last_seen",
+        "isActive",
     ]
     return _eval_domain(detail, domain_keys, "ucf_endpoint_protection")
 
@@ -677,7 +833,10 @@ def family_ucf_rsk_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_thr_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF THR — Threat Management."""
     domain_keys = [
-        "detectors", "threat_intelligence", "indicators", "alert_id",
+        "detectors",
+        "threat_intelligence",
+        "indicators",
+        "alert_id",
         "detection_rules",
     ]
     return _eval_domain(detail, domain_keys, "ucf_threat_management")
@@ -687,8 +846,11 @@ def family_ucf_thr_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_vln_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF VLN — Vulnerability Management."""
     domain_keys = [
-        "vulnerability_count", "last_scan_date", "cve_id",
-        "severity", "scan_count",
+        "vulnerability_count",
+        "last_scan_date",
+        "cve_id",
+        "severity",
+        "scan_count",
     ]
     return _eval_domain(detail, domain_keys, "ucf_vulnerability_mgmt")
 
@@ -709,7 +871,10 @@ def family_ucf_bcp_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_mon_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF MON — Monitoring."""
     domain_keys = [
-        "monitoring_enabled", "detectors", "siem_rules", "enabled_rules",
+        "monitoring_enabled",
+        "detectors",
+        "siem_rules",
+        "enabled_rules",
         "detection_rules",
     ]
     return _eval_domain(detail, domain_keys, "ucf_monitoring")
@@ -719,7 +884,10 @@ def family_ucf_mon_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_com_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF COM — Communications Security."""
     domain_keys = [
-        "tls_enabled", "encryption", "IpPermissions", "network_policy",
+        "tls_enabled",
+        "encryption",
+        "IpPermissions",
+        "network_policy",
     ]
     return _eval_domain(detail, domain_keys, "ucf_communications")
 
@@ -728,8 +896,11 @@ def family_ucf_com_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_tpm_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF TPM — Third-Party Management."""
     domain_keys = [
-        "vendor_id", "supplier_name", "third_party_assessment",
-        "contract_id", "baa_signed",
+        "vendor_id",
+        "supplier_name",
+        "third_party_assessment",
+        "contract_id",
+        "baa_signed",
     ]
     return _eval_domain(detail, domain_keys, "ucf_third_party")
 
@@ -738,8 +909,11 @@ def family_ucf_tpm_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_dev_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF DEV — Secure Development."""
     domain_keys = [
-        "code_scan", "sast_result", "dependency_check",
-        "severity", "change_id",
+        "code_scan",
+        "sast_result",
+        "dependency_check",
+        "severity",
+        "change_id",
     ]
     return _eval_domain(detail, domain_keys, "ucf_secure_development")
 
@@ -754,8 +928,11 @@ def family_ucf_phy_default(detail: dict, raw_data: dict) -> tuple[bool, list[str
 def family_ucf_pri_default(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """UCF PRI — Privacy."""
     domain_keys = [
-        "privacy_notice", "consent_recorded", "pii_inventory",
-        "data_subject_request", "gdpr_lawful_basis",
+        "privacy_notice",
+        "consent_recorded",
+        "pii_inventory",
+        "data_subject_request",
+        "gdpr_lawful_basis",
     ]
     return _eval_domain(detail, domain_keys, "ucf_privacy")
 
@@ -873,6 +1050,7 @@ _UCF_CTRL_RE = re.compile(r"^UCF-([A-Z]+)-\d+")
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def get_family_assertion(framework: str, control_id: str) -> str | None:
     """Return the family-level default assertion name for a control, or None.
 
@@ -953,7 +1131,7 @@ def register_family_assertions(engine: "AssertionEngine") -> int:
         Number of new bindings registered.
     """
     bound = 0
-    for (fw, ctrl_id) in list(engine._control_assertions.keys()):
+    for fw, ctrl_id in list(engine._control_assertions.keys()):
         # Already has a binding — skip
         if engine.get_assertion_for_control(fw, ctrl_id):
             continue

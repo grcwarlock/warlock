@@ -68,6 +68,7 @@ def get_engine():
                 cursor = dbapi_conn.cursor()
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
+
     return _engine
 
 
@@ -166,4 +167,5 @@ def get_read_session() -> Generator[Session, None, None]:
 def init_db():
     """Create all tables. For development — use Alembic in production."""
     from warlock.db.models import Base  # noqa: F811
+
     Base.metadata.create_all(get_engine())

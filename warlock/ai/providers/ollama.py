@@ -147,7 +147,10 @@ class OllamaProvider(BaseProvider):
             t0 = self._now_ms()
             try:
                 resp = httpx.post(
-                    url, headers=headers, json=payload, timeout=self.timeout,
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=self.timeout,
                     follow_redirects=True,
                 )
                 resp.raise_for_status()
@@ -203,7 +206,9 @@ class OllamaProvider(BaseProvider):
 
                 t0 = self._now_ms()
                 try:
-                    resp = await client.post(url, headers=headers, json=payload, follow_redirects=True)
+                    resp = await client.post(
+                        url, headers=headers, json=payload, follow_redirects=True
+                    )
                     resp.raise_for_status()
                     latency = self._now_ms() - t0
                     return self._parse_body(resp.json(), self.model, latency)

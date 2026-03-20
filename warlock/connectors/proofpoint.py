@@ -106,17 +106,19 @@ class ProofpointConnector(BaseConnector):
                     body = resp.json()
                     data = body.get(response_key, [])
 
-                    result.events.append(RawEventData(
-                        source="proofpoint",
-                        source_type=SourceType.EMAIL,
-                        provider="proofpoint",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="proofpoint",
+                            source_type=SourceType.EMAIL,
+                            provider="proofpoint",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Proofpoint %s failed: %s", endpoint, e)
                     result.errors.append(f"{event_type}: {e}")

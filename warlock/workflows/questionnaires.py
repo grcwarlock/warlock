@@ -38,142 +38,182 @@ class QuestionnaireManager:
     # Built-in SIG Lite core security questions
     SIG_LITE_QUESTIONS = [
         {
-            "id": "SL-01", "category": "Information Security Program",
+            "id": "SL-01",
+            "category": "Information Security Program",
             "text": "Does your organization have a formal information security program?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Looking for documented security policies and dedicated security personnel.",
             "mapped_controls": ["NIST AC-1", "SOC2 CC1.1", "ISO A.5.1.1"],
         },
         {
-            "id": "SL-02", "category": "Information Security Program",
+            "id": "SL-02",
+            "category": "Information Security Program",
             "text": "Do you have a dedicated information security team or officer (CISO)?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "CISO or equivalent security leadership role.",
             "mapped_controls": ["NIST PM-2", "SOC2 CC1.2"],
         },
         {
-            "id": "SL-03", "category": "Access Control",
+            "id": "SL-03",
+            "category": "Access Control",
             "text": "Do you enforce multi-factor authentication for all user accounts?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "MFA on VPN, email, admin consoles, and production systems.",
             "mapped_controls": ["NIST IA-2", "SOC2 CC6.1"],
         },
         {
-            "id": "SL-04", "category": "Access Control",
+            "id": "SL-04",
+            "category": "Access Control",
             "text": "Do you perform periodic access reviews (at least quarterly)?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Regular review and recertification of user access rights.",
             "mapped_controls": ["NIST AC-2", "SOC2 CC6.2", "ISO A.9.2.5"],
         },
         {
-            "id": "SL-05", "category": "Access Control",
+            "id": "SL-05",
+            "category": "Access Control",
             "text": "Is the principle of least privilege enforced across systems?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Users receive minimum access needed for their role.",
             "mapped_controls": ["NIST AC-6", "SOC2 CC6.3"],
         },
         {
-            "id": "SL-06", "category": "Data Protection",
+            "id": "SL-06",
+            "category": "Data Protection",
             "text": "Is data encrypted at rest and in transit?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "AES-256 at rest, TLS 1.2+ in transit.",
             "mapped_controls": ["NIST SC-8", "NIST SC-28", "SOC2 CC6.1"],
         },
         {
-            "id": "SL-07", "category": "Data Protection",
+            "id": "SL-07",
+            "category": "Data Protection",
             "text": "Do you have a data classification policy?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Formal classification scheme (public, internal, confidential, restricted).",
             "mapped_controls": ["NIST RA-2", "ISO A.8.2.1"],
         },
         {
-            "id": "SL-08", "category": "Data Protection",
+            "id": "SL-08",
+            "category": "Data Protection",
             "text": "Do you have a data retention and disposal policy?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Defined retention periods and secure disposal procedures.",
             "mapped_controls": ["NIST SI-12", "ISO A.8.3.2"],
         },
         {
-            "id": "SL-09", "category": "Vulnerability Management",
+            "id": "SL-09",
+            "category": "Vulnerability Management",
             "text": "Do you perform regular vulnerability scanning (at least monthly)?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Automated scanning of infrastructure and applications.",
             "mapped_controls": ["NIST RA-5", "SOC2 CC7.1"],
         },
         {
-            "id": "SL-10", "category": "Vulnerability Management",
+            "id": "SL-10",
+            "category": "Vulnerability Management",
             "text": "Do you have a patch management program with defined SLAs?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Critical patches within 72 hours, high within 30 days.",
             "mapped_controls": ["NIST SI-2", "SOC2 CC7.1"],
         },
         {
-            "id": "SL-11", "category": "Incident Response",
+            "id": "SL-11",
+            "category": "Incident Response",
             "text": "Do you have a documented incident response plan?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Written IR plan with roles, escalation, and communication procedures.",
             "mapped_controls": ["NIST IR-1", "SOC2 CC7.3", "ISO A.16.1.1"],
         },
         {
-            "id": "SL-12", "category": "Incident Response",
+            "id": "SL-12",
+            "category": "Incident Response",
             "text": "Do you notify customers of security breaches within 72 hours?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Contractual or regulatory breach notification timeline.",
             "mapped_controls": ["NIST IR-6", "SOC2 CC7.4"],
         },
         {
-            "id": "SL-13", "category": "Business Continuity",
+            "id": "SL-13",
+            "category": "Business Continuity",
             "text": "Do you have documented business continuity and disaster recovery plans?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "BCP/DR plans tested at least annually.",
             "mapped_controls": ["NIST CP-2", "SOC2 A1.2", "ISO A.17.1.1"],
         },
         {
-            "id": "SL-14", "category": "Business Continuity",
+            "id": "SL-14",
+            "category": "Business Continuity",
             "text": "What are your Recovery Time Objective (RTO) and Recovery Point Objective (RPO)?",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Specify RTO and RPO for critical systems.",
             "mapped_controls": ["NIST CP-10", "SOC2 A1.2"],
         },
         {
-            "id": "SL-15", "category": "Third-Party Risk",
+            "id": "SL-15",
+            "category": "Third-Party Risk",
             "text": "Do you assess the security posture of your third-party vendors?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Vendor risk management program with periodic assessments.",
             "mapped_controls": ["NIST SA-9", "SOC2 CC9.2", "ISO A.15.1.1"],
         },
         {
-            "id": "SL-16", "category": "Compliance",
+            "id": "SL-16",
+            "category": "Compliance",
             "text": "What compliance certifications do you hold? (Select all that apply)",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "SOC 2 Type II, ISO 27001, PCI DSS, HIPAA, FedRAMP, etc.",
             "mapped_controls": ["NIST CA-2", "SOC2 CC4.1"],
         },
         {
-            "id": "SL-17", "category": "Compliance",
+            "id": "SL-17",
+            "category": "Compliance",
             "text": "Do you undergo regular third-party security audits?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Annual penetration testing and/or independent audits.",
             "mapped_controls": ["NIST CA-7", "SOC2 CC4.1"],
         },
         {
-            "id": "SL-18", "category": "Personnel Security",
+            "id": "SL-18",
+            "category": "Personnel Security",
             "text": "Do you perform background checks on employees with access to customer data?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Pre-employment screening for roles handling sensitive data.",
             "mapped_controls": ["NIST PS-3", "SOC2 CC1.4", "ISO A.7.1.1"],
         },
         {
-            "id": "SL-19", "category": "Personnel Security",
+            "id": "SL-19",
+            "category": "Personnel Security",
             "text": "Do you require security awareness training for all employees?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Annual security awareness training with phishing simulations.",
             "mapped_controls": ["NIST AT-2", "SOC2 CC1.4", "ISO A.7.2.2"],
         },
         {
-            "id": "SL-20", "category": "Network Security",
+            "id": "SL-20",
+            "category": "Network Security",
             "text": "Do you segment your network and restrict access between zones?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "Network segmentation between production, corporate, and DMZ.",
             "mapped_controls": ["NIST SC-7", "SOC2 CC6.6", "ISO A.13.1.3"],
         },
@@ -181,72 +221,92 @@ class QuestionnaireManager:
 
     DDQ_QUESTIONS = [
         {
-            "id": "DDQ-01", "category": "General",
+            "id": "DDQ-01",
+            "category": "General",
             "text": "Provide a brief description of your company and the services you provide.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Company overview, services, and scope of engagement.",
             "mapped_controls": [],
         },
         {
-            "id": "DDQ-02", "category": "General",
+            "id": "DDQ-02",
+            "category": "General",
             "text": "How many employees does your organization have?",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Total headcount.",
             "mapped_controls": [],
         },
         {
-            "id": "DDQ-03", "category": "Data Handling",
+            "id": "DDQ-03",
+            "category": "Data Handling",
             "text": "What types of customer data will you process, store, or transmit?",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "PII, PHI, financial data, credentials, etc.",
             "mapped_controls": ["NIST RA-2"],
         },
         {
-            "id": "DDQ-04", "category": "Data Handling",
+            "id": "DDQ-04",
+            "category": "Data Handling",
             "text": "Where will customer data be stored? Specify geographic locations.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Data residency requirements.",
             "mapped_controls": ["NIST PE-18"],
         },
         {
-            "id": "DDQ-05", "category": "Data Handling",
+            "id": "DDQ-05",
+            "category": "Data Handling",
             "text": "Do you use sub-processors to handle customer data? If so, list them.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Sub-processor disclosure for GDPR/privacy compliance.",
             "mapped_controls": ["NIST SA-9"],
         },
         {
-            "id": "DDQ-06", "category": "Security Architecture",
+            "id": "DDQ-06",
+            "category": "Security Architecture",
             "text": "Describe your cloud infrastructure and hosting environment.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "AWS, Azure, GCP, on-premise, hybrid.",
             "mapped_controls": ["NIST SC-7"],
         },
         {
-            "id": "DDQ-07", "category": "Security Architecture",
+            "id": "DDQ-07",
+            "category": "Security Architecture",
             "text": "Do you have a SOC 2 Type II report? If so, provide the audit period.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Most recent SOC 2 Type II report details.",
             "mapped_controls": ["NIST CA-2", "SOC2 CC4.1"],
         },
         {
-            "id": "DDQ-08", "category": "Security Architecture",
+            "id": "DDQ-08",
+            "category": "Security Architecture",
             "text": "Describe your logging and monitoring capabilities.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "SIEM, log retention, alerting, and monitoring coverage.",
             "mapped_controls": ["NIST AU-6", "SOC2 CC7.2"],
         },
         {
-            "id": "DDQ-09", "category": "Privacy",
+            "id": "DDQ-09",
+            "category": "Privacy",
             "text": "Do you have a privacy policy? Provide a link.",
-            "response_type": "text", "required": True,
+            "response_type": "text",
+            "required": True,
             "help_text": "Public privacy policy URL.",
             "mapped_controls": [],
         },
         {
-            "id": "DDQ-10", "category": "Privacy",
+            "id": "DDQ-10",
+            "category": "Privacy",
             "text": "Are you GDPR compliant? Do you support data subject access requests (DSARs)?",
-            "response_type": "yes_no", "required": True,
+            "response_type": "yes_no",
+            "required": True,
             "help_text": "GDPR compliance and DSAR handling process.",
             "mapped_controls": [],
         },
@@ -473,11 +533,13 @@ class QuestionnaireManager:
 
             if resp is None:
                 if required:
-                    risk_findings.append({
-                        "question_id": qid,
-                        "finding": f"Required question unanswered: {question['text'][:80]}",
-                        "severity": "medium",
-                    })
+                    risk_findings.append(
+                        {
+                            "question_id": qid,
+                            "finding": f"Required question unanswered: {question['text'][:80]}",
+                            "severity": "medium",
+                        }
+                    )
                     risk_weight += weight
             else:
                 answer = resp.get("answer") if isinstance(resp, dict) else resp
@@ -486,11 +548,13 @@ class QuestionnaireManager:
                     positive = question.get("positive_answer", "yes")
                     if str(answer).lower() not in (positive.lower(), "true", "t"):
                         severity = "high" if required else "medium"
-                        risk_findings.append({
-                            "question_id": qid,
-                            "finding": f"Negative response: {question['text'][:80]}",
-                            "severity": severity,
-                        })
+                        risk_findings.append(
+                            {
+                                "question_id": qid,
+                                "finding": f"Negative response: {question['text'][:80]}",
+                                "severity": severity,
+                            }
+                        )
                         risk_weight += weight
 
         q.risk_score = round((risk_weight / total_weight * 100) if total_weight > 0 else 0, 1)
@@ -585,8 +649,13 @@ class QuestionnaireManager:
     ) -> Questionnaire:
         """Transition questionnaire status."""
         valid_statuses = {
-            "draft", "sent", "in_progress", "completed",
-            "reviewed", "accepted", "rejected",
+            "draft",
+            "sent",
+            "in_progress",
+            "completed",
+            "reviewed",
+            "accepted",
+            "rejected",
         }
         valid_transitions = {
             "draft": {"sent", "in_progress"},
@@ -608,8 +677,7 @@ class QuestionnaireManager:
         allowed = valid_transitions.get(q.status, set())
         if new_status not in allowed:
             raise ValueError(
-                f"Cannot transition from '{q.status}' to '{new_status}'. "
-                f"Allowed: {allowed}"
+                f"Cannot transition from '{q.status}' to '{new_status}'. Allowed: {allowed}"
             )
 
         # Prevent advancing to completion-dependent statuses with 0% completion
@@ -666,7 +734,8 @@ class QuestionnaireManager:
         template_count = (
             session.query(func.count(QuestionnaireTemplate.id))
             .filter(QuestionnaireTemplate.is_active == True)  # noqa: E712
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         # Average risk score of scored questionnaires
@@ -835,9 +904,7 @@ class QuestionnaireManager:
             mapped_controls = question.get("mapped_controls", [])
             response_type = question.get("response_type", "text")
 
-            evidence = self._score_question_against_corpus(
-                question_text, mapped_controls, corpus
-            )
+            evidence = self._score_question_against_corpus(question_text, mapped_controls, corpus)
 
             n_compliant = len(evidence["matched_compliant"])
             n_non_compliant = len(evidence["matched_non_compliant"])
@@ -852,9 +919,13 @@ class QuestionnaireManager:
                     answer = f"Yes, {snippets}."
                     confidence = round(n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1)
                 else:
-                    remediations = "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                    remediations = (
+                        "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                    )
                     answer = f"No, {remediations}."
-                    confidence = round(n_non_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1)
+                    confidence = round(
+                        n_non_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1
+                    )
             else:
                 # Text question — compose from finding summaries
                 parts: list[str] = []
@@ -869,15 +940,17 @@ class QuestionnaireManager:
                         f"Non-compliant controls: {', '.join(evidence['matched_non_compliant'][:3])}."
                     )
                 answer = " ".join(parts) if parts else "No automated evidence available."
-                confidence = round(
-                    n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1
-                )
+                confidence = round(n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1)
 
-            source_controls = (evidence["matched_compliant"] + evidence["matched_non_compliant"])[:5]
+            source_controls = (evidence["matched_compliant"] + evidence["matched_non_compliant"])[
+                :5
+            ]
             suggestions[qid] = {
                 "answer": answer,
                 "confidence": min(confidence, 100.0),
-                "source": f"Control results: {', '.join(source_controls)}" if source_controls else "Keyword match",
+                "source": f"Control results: {', '.join(source_controls)}"
+                if source_controls
+                else "Keyword match",
             }
 
         q.ai_suggested_answers = suggestions
@@ -941,7 +1014,9 @@ class QuestionnaireManager:
                 snippets = "; ".join(evidence["evidence_snippets"][:3]) or "pipeline evidence"
                 answer = f"Yes, {snippets}."
             else:
-                remediations = "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                remediations = (
+                    "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                )
                 answer = f"No, {remediations}."
         else:
             parts: list[str] = []
@@ -950,7 +1025,9 @@ class QuestionnaireManager:
             if evidence["matched_compliant"]:
                 parts.append(f"Compliant controls: {', '.join(evidence['matched_compliant'][:3])}.")
             if evidence["matched_non_compliant"]:
-                parts.append(f"Non-compliant controls: {', '.join(evidence['matched_non_compliant'][:3])}.")
+                parts.append(
+                    f"Non-compliant controls: {', '.join(evidence['matched_non_compliant'][:3])}."
+                )
             answer = " ".join(parts) if parts else "No automated evidence available."
 
         confidence = round(n_compliant / max(total, 1) * 100, 1)
@@ -994,7 +1071,9 @@ class QuestionnaireManager:
         response_type = question.get("response_type", "text")
 
         evidence = self._score_question_against_corpus(
-            question_text, mapped_controls, corpus,
+            question_text,
+            mapped_controls,
+            corpus,
         )
 
         n_compliant = len(evidence["matched_compliant"])
@@ -1013,7 +1092,8 @@ class QuestionnaireManager:
                 snippets = "; ".join(evidence["evidence_snippets"][:3]) or "pipeline evidence"
                 answer = f"Yes, {snippets}."
                 confidence = round(
-                    n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1,
+                    n_compliant / max(n_compliant + n_non_compliant, 1) * 100,
+                    1,
                 )
             else:
                 remediations = (
@@ -1021,7 +1101,8 @@ class QuestionnaireManager:
                 )
                 answer = f"No, {remediations}."
                 confidence = round(
-                    n_non_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1,
+                    n_non_compliant / max(n_compliant + n_non_compliant, 1) * 100,
+                    1,
                 )
         else:
             parts: list[str] = []
@@ -1037,12 +1118,11 @@ class QuestionnaireManager:
                 )
             answer = " ".join(parts) if parts else "No automated evidence available."
             confidence = round(
-                n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1,
+                n_compliant / max(n_compliant + n_non_compliant, 1) * 100,
+                1,
             )
 
-        source_controls = (
-            evidence["matched_compliant"] + evidence["matched_non_compliant"]
-        )[:5]
+        source_controls = (evidence["matched_compliant"] + evidence["matched_non_compliant"])[:5]
 
         return {
             "answer": answer,
@@ -1088,11 +1168,7 @@ class QuestionnaireManager:
         """
         from warlock.ai import get_ai_service, AITask
 
-        q = (
-            session.query(Questionnaire)
-            .filter(Questionnaire.id == questionnaire_id)
-            .first()
-        )
+        q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
         if not q:
             raise ValueError(f"Questionnaire not found: {questionnaire_id}")
 
@@ -1115,7 +1191,9 @@ class QuestionnaireManager:
 
             # Build evidence context for this question
             evidence = self._score_question_against_corpus(
-                question_text, mapped_controls, corpus,
+                question_text,
+                mapped_controls,
+                corpus,
             )
 
             context = {
@@ -1161,8 +1239,7 @@ class QuestionnaireManager:
         session.flush()
 
         log.info(
-            "ai_respond for questionnaire %s: %d/%d questions answered, "
-            "%d AI-generated",
+            "ai_respond for questionnaire %s: %d/%d questions answered, %d AI-generated",
             questionnaire_id,
             len(suggestions),
             len(template.questions),

@@ -109,18 +109,20 @@ class IntuneConnector(BaseConnector):
                         log.warning("Intune %s: capped at 10k records", event_type)
                         break
 
-                result.events.append(RawEventData(
-                    source="intune",
-                    source_type=SourceType.MDM,
-                    provider="intune",
-                    event_type=event_type,
-                    raw_data={
-                        "endpoint": endpoint,
-                        "records": all_records,
-                        "total": len(all_records),
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="intune",
+                        source_type=SourceType.MDM,
+                        provider="intune",
+                        event_type=event_type,
+                        raw_data={
+                            "endpoint": endpoint,
+                            "records": all_records,
+                            "total": len(all_records),
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Intune %s failed: %s", endpoint, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -136,9 +138,7 @@ class IntuneConnector(BaseConnector):
             import httpx
 
             tenant_id = self._get_tenant_id()
-            token_url = (
-                f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
-            )
+            token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
             resp = httpx.post(
                 token_url,
                 data={
@@ -156,14 +156,10 @@ class IntuneConnector(BaseConnector):
             return ""
 
     def _get_tenant_id(self) -> str:
-        return self.config.settings.get("tenant_id", "") or self.get_secret(
-            "WLK_INTUNE_TENANT_ID"
-        )
+        return self.config.settings.get("tenant_id", "") or self.get_secret("WLK_INTUNE_TENANT_ID")
 
     def _get_client_id(self) -> str:
-        return self.config.settings.get("client_id", "") or self.get_secret(
-            "WLK_INTUNE_CLIENT_ID"
-        )
+        return self.config.settings.get("client_id", "") or self.get_secret("WLK_INTUNE_CLIENT_ID")
 
     def _get_client_secret(self) -> str:
         return self.config.settings.get("client_secret", "") or self.get_secret(

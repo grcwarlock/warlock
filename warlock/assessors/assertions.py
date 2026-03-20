@@ -17,6 +17,7 @@ from warlock.assessors.engine import engine
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get(d: dict, *keys: str, default: Any = None) -> Any:
     """Safely traverse nested dict keys."""
     current = d
@@ -45,6 +46,7 @@ def _days_since(date_str: str | None) -> int | None:
 # ---------------------------------------------------------------------------
 # Assertions
 # ---------------------------------------------------------------------------
+
 
 @engine.assertion("mfa_enabled")
 def mfa_enabled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -77,7 +79,9 @@ def mfa_enabled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
             return True, []
         credentials = detail.get("credentials", {})
         if isinstance(credentials, dict) and credentials.get("provider", {}).get("type") == "OKTA":
-            reasons.append(f"Okta user {detail.get('login', detail.get('email', 'unknown'))} — no MFA factors enrolled")
+            reasons.append(
+                f"Okta user {detail.get('login', detail.get('email', 'unknown'))} — no MFA factors enrolled"
+            )
             return False, reasons
 
     # Entra ID shape
@@ -98,7 +102,12 @@ def mfa_enabled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
         return True, []
 
     # If we have identity data but no MFA evidence, flag it
-    user_id = detail.get("user") or detail.get("login") or detail.get("userPrincipalName") or detail.get("displayName")
+    user_id = (
+        detail.get("user")
+        or detail.get("login")
+        or detail.get("userPrincipalName")
+        or detail.get("displayName")
+    )
     if user_id:
         reasons.append(f"User {user_id} — no MFA evidence found")
         return False, reasons
@@ -242,7 +251,9 @@ def no_open_security_groups(detail: dict, raw_data: dict) -> tuple[bool, list[st
         open_ports = [i for i in issues if i.startswith("open_to_world")]
         if open_ports:
             sg_id = _get(detail, "security_group", "GroupId", default="unknown")
-            reasons.append(f"Security group {sg_id} has unrestricted ingress: {', '.join(open_ports)}")
+            reasons.append(
+                f"Security group {sg_id} has unrestricted ingress: {', '.join(open_ports)}"
+            )
             return False, reasons
 
     # GCP firewall rule shape
@@ -272,10 +283,14 @@ def no_open_security_groups(detail: dict, raw_data: dict) -> tuple[bool, list[st
     if isinstance(nsg_rules, list):
         for rule in nsg_rules:
             props = rule.get("properties", rule)
-            if (props.get("access") == "Allow"
-                    and props.get("direction") == "Inbound"
-                    and props.get("sourceAddressPrefix") in ("*", "0.0.0.0/0")):
-                reasons.append(f"Azure NSG rule {props.get('name', '?')} allows unrestricted inbound")
+            if (
+                props.get("access") == "Allow"
+                and props.get("direction") == "Inbound"
+                and props.get("sourceAddressPrefix") in ("*", "0.0.0.0/0")
+            ):
+                reasons.append(
+                    f"Azure NSG rule {props.get('name', '?')} allows unrestricted inbound"
+                )
 
     if reasons:
         return False, reasons
@@ -293,7 +308,9 @@ def encryption_at_rest(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
         # Check in raw_data for encryption info
         bucket_encryption = _get(raw_data, "encryption", default=None)
         if bucket_encryption is None:
-            reasons.append(f"S3 bucket {detail.get('Name', '?')} — no encryption configuration found")
+            reasons.append(
+                f"S3 bucket {detail.get('Name', '?')} — no encryption configuration found"
+            )
 
     # Azure storage account
     azure_encryption = detail.get("encryption", {})
@@ -308,7 +325,9 @@ def encryption_at_rest(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     detail.get("defaultObjectAcl", [])
     if detail.get("kind") == "storage#bucket":
         bucket_encryption = detail.get("encryption", {})
-        if not isinstance(bucket_encryption, dict) or not bucket_encryption.get("defaultKmsKeyName"):
+        if not isinstance(bucket_encryption, dict) or not bucket_encryption.get(
+            "defaultKmsKeyName"
+        ):
             # GCS uses Google-managed keys by default, which is acceptable
             pass
 
@@ -415,7 +434,9 @@ def no_public_storage(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
                     reasons.append(f"Storage has public ACL grant: {uri}")
 
     # S3 public access block
-    public_access = detail.get("PublicAccessBlockConfiguration", detail.get("public_access_block", {}))
+    public_access = detail.get(
+        "PublicAccessBlockConfiguration", detail.get("public_access_block", {})
+    )
     if isinstance(public_access, dict) and public_access:
         if not public_access.get("BlockPublicAcls", True):
             reasons.append("BlockPublicAcls is not enabled")
@@ -445,7 +466,12 @@ def endpoint_protection_active(detail: dict, raw_data: dict) -> tuple[bool, list
 
     # CrowdStrike device shape
     status = detail.get("status") or detail.get("agent_status") or detail.get("sensor_status")
-    hostname = detail.get("hostname") or detail.get("computerDnsName") or detail.get("computer_name") or "unknown"
+    hostname = (
+        detail.get("hostname")
+        or detail.get("computerDnsName")
+        or detail.get("computer_name")
+        or "unknown"
+    )
 
     if status is not None:
         status_lower = str(status).lower()
@@ -540,7 +566,9 @@ def privileged_access_managed(detail: dict, raw_data: dict) -> tuple[bool, list[
     # Check if account is managed
     secret_mgmt = detail.get("secretManagement", detail.get("secret_management", {}))
     if isinstance(secret_mgmt, dict):
-        auto_mgmt = secret_mgmt.get("automaticManagementEnabled", secret_mgmt.get("automatic_management"))
+        auto_mgmt = secret_mgmt.get(
+            "automaticManagementEnabled", secret_mgmt.get("automatic_management")
+        )
         if auto_mgmt is False:
             account_name = detail.get("name") or detail.get("userName") or "unknown"
             reasons.append(f"Privileged account {account_name} — automatic management disabled")
@@ -550,7 +578,9 @@ def privileged_access_managed(detail: dict, raw_data: dict) -> tuple[bool, list[
             days = _days_since(str(last_modified))
             if days is not None and days > 90:
                 account_name = detail.get("name") or detail.get("userName") or "unknown"
-                reasons.append(f"Privileged account {account_name} — password not rotated in {days} days")
+                reasons.append(
+                    f"Privileged account {account_name} — password not rotated in {days} days"
+                )
                 return False, reasons
 
     # CyberArk compliance shape
@@ -713,25 +743,25 @@ for _ctrl, _assertion in _SOC2_BINDINGS:
 # ---------------------------------------------------------------------------
 
 _ISO27001_BINDINGS: list[tuple[str, str]] = [
-    ("A.5.7", "guardduty_enabled"),          # Threat intelligence
-    ("A.5.15", "mfa_enabled"),               # Access control
-    ("A.5.16", "access_reviews_current"),     # Identity management
+    ("A.5.7", "guardduty_enabled"),  # Threat intelligence
+    ("A.5.15", "mfa_enabled"),  # Access control
+    ("A.5.16", "access_reviews_current"),  # Identity management
     ("A.5.17", "password_policy_compliant"),  # Authentication information
-    ("A.5.23", "config_recorder_enabled"),    # Cloud services
-    ("A.5.25", "siem_monitoring_active"),     # Assessment of security events
-    ("A.5.26", "siem_monitoring_active"),     # Response to incidents
-    ("A.6.5", "access_reviews_current"),      # After termination
-    ("A.8.1", "device_compliant"),             # User endpoint devices
-    ("A.8.2", "privileged_access_managed"),   # Privileged access rights
-    ("A.8.5", "mfa_enabled"),                 # Secure authentication
+    ("A.5.23", "config_recorder_enabled"),  # Cloud services
+    ("A.5.25", "siem_monitoring_active"),  # Assessment of security events
+    ("A.5.26", "siem_monitoring_active"),  # Response to incidents
+    ("A.6.5", "access_reviews_current"),  # After termination
+    ("A.8.1", "device_compliant"),  # User endpoint devices
+    ("A.8.2", "privileged_access_managed"),  # Privileged access rights
+    ("A.8.5", "mfa_enabled"),  # Secure authentication
     ("A.8.7", "endpoint_protection_active"),  # Protection against malware
     ("A.8.8", "vulnerability_scan_current"),  # Management of technical vulnerabilities
-    ("A.8.9", "config_recorder_enabled"),     # Configuration management
-    ("A.8.15", "cloudtrail_enabled"),         # Logging
-    ("A.8.16", "siem_monitoring_active"),     # Monitoring activities
-    ("A.8.20", "no_open_security_groups"),    # Networks security
-    ("A.8.22", "no_open_security_groups"),    # Segregation of networks
-    ("A.8.24", "encryption_at_rest"),         # Use of cryptography
+    ("A.8.9", "config_recorder_enabled"),  # Configuration management
+    ("A.8.15", "cloudtrail_enabled"),  # Logging
+    ("A.8.16", "siem_monitoring_active"),  # Monitoring activities
+    ("A.8.20", "no_open_security_groups"),  # Networks security
+    ("A.8.22", "no_open_security_groups"),  # Segregation of networks
+    ("A.8.24", "encryption_at_rest"),  # Use of cryptography
 ]
 
 for _ctrl, _assertion in _ISO27001_BINDINGS:
@@ -743,14 +773,14 @@ for _ctrl, _assertion in _ISO27001_BINDINGS:
 # ---------------------------------------------------------------------------
 
 _ISO27701_BINDINGS: list[tuple[str, str]] = [
-    ("CL6.5.2.1", "mfa_enabled"),            # Access control
-    ("CL6.5.3.1", "encryption_at_rest"),      # Cryptographic controls
-    ("CL6.6.2.1", "cloudtrail_enabled"),      # Event logging
-    ("CL6.8.2.1", "no_open_security_groups"), # Network security
-    ("CL6.9.3.1", "encryption_at_rest"),      # Protection of records
-    ("A.7.4.5", "encryption_at_rest"),        # PII de-identification and deletion
-    ("A.7.4.9", "encryption_at_rest"),        # PII transmission controls
-    ("B.8.4.3", "encryption_at_rest"),        # Processor PII transmission
+    ("CL6.5.2.1", "mfa_enabled"),  # Access control
+    ("CL6.5.3.1", "encryption_at_rest"),  # Cryptographic controls
+    ("CL6.6.2.1", "cloudtrail_enabled"),  # Event logging
+    ("CL6.8.2.1", "no_open_security_groups"),  # Network security
+    ("CL6.9.3.1", "encryption_at_rest"),  # Protection of records
+    ("A.7.4.5", "encryption_at_rest"),  # PII de-identification and deletion
+    ("A.7.4.9", "encryption_at_rest"),  # PII transmission controls
+    ("B.8.4.3", "encryption_at_rest"),  # Processor PII transmission
 ]
 
 for _ctrl, _assertion in _ISO27701_BINDINGS:
@@ -762,9 +792,9 @@ for _ctrl, _assertion in _ISO27701_BINDINGS:
 # ---------------------------------------------------------------------------
 
 _ISO42001_BINDINGS: list[tuple[str, str]] = [
-    ("A.6.2.12", "siem_monitoring_active"),      # AI system operation and monitoring
-    ("A.9.3", "mfa_enabled"),                    # Misuse prevention — access
-    ("A.9.4", "access_reviews_current"),         # Human oversight — reviews
+    ("A.6.2.12", "siem_monitoring_active"),  # AI system operation and monitoring
+    ("A.9.3", "mfa_enabled"),  # Misuse prevention — access
+    ("A.9.4", "access_reviews_current"),  # Human oversight — reviews
 ]
 
 for _ctrl, _assertion in _ISO42001_BINDINGS:
@@ -774,6 +804,7 @@ for _ctrl, _assertion in _ISO42001_BINDINGS:
 # ---------------------------------------------------------------------------
 # Assertions — new connectors
 # ---------------------------------------------------------------------------
+
 
 @engine.assertion("background_check_completed")
 def background_check_completed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -790,6 +821,7 @@ def background_check_completed(detail: dict, raw_data: dict) -> tuple[bool, list
         return False, reasons
     return True, []
 
+
 @engine.assertion("employment_agreement_signed")
 def employment_agreement_signed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """Check that employment agreements and NDAs are signed."""
@@ -804,6 +836,7 @@ def employment_agreement_signed(detail: dict, raw_data: dict) -> tuple[bool, lis
     if reasons:
         return False, reasons
     return True, []
+
 
 @engine.assertion("change_request_approved")
 def change_request_approved(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -821,6 +854,7 @@ def change_request_approved(detail: dict, raw_data: dict) -> tuple[bool, list[st
         return False, reasons
     return True, []
 
+
 @engine.assertion("training_completion_rate")
 def training_completion_rate(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """Check security awareness training completion meets threshold."""
@@ -830,7 +864,9 @@ def training_completion_rate(detail: dict, raw_data: dict) -> tuple[bool, list[s
     if completion_pct is not None:
         if float(completion_pct) < 95.0:
             campaign = detail.get("campaign_name") or detail.get("name") or "unknown"
-            reasons.append(f"Training campaign '{campaign}' completion at {completion_pct}% (target: 95%)")
+            reasons.append(
+                f"Training campaign '{campaign}' completion at {completion_pct}% (target: 95%)"
+            )
             return False, reasons
         return True, []
     # Individual enrollment level
@@ -840,6 +876,7 @@ def training_completion_rate(detail: dict, raw_data: dict) -> tuple[bool, list[s
         reasons.append(f"User {user} training status: {status}")
         return False, reasons
     return True, []
+
 
 @engine.assertion("phishing_failure_rate")
 def phishing_failure_rate(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -856,6 +893,7 @@ def phishing_failure_rate(detail: dict, raw_data: dict) -> tuple[bool, list[str]
         return False, reasons
     return True, []
 
+
 @engine.assertion("no_critical_code_vulns")
 def no_critical_code_vulns(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """Check that no critical/high code vulnerabilities are open."""
@@ -864,9 +902,12 @@ def no_critical_code_vulns(detail: dict, raw_data: dict) -> tuple[bool, list[str
     if str(severity).lower() in ("critical", "high"):
         title = detail.get("title") or detail.get("issue_title") or "unknown"
         pkg = detail.get("package") or detail.get("package_name") or ""
-        reasons.append(f"Open {severity} code vulnerability: {title}" + (f" in {pkg}" if pkg else ""))
+        reasons.append(
+            f"Open {severity} code vulnerability: {title}" + (f" in {pkg}" if pkg else "")
+        )
         return False, reasons
     return True, []
+
 
 @engine.assertion("backup_job_successful")
 def backup_job_successful(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -884,6 +925,7 @@ def backup_job_successful(detail: dict, raw_data: dict) -> tuple[bool, list[str]
         return False, reasons
     return True, []
 
+
 @engine.assertion("device_compliant")
 def device_compliant(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """Check that managed devices pass compliance policies."""
@@ -900,11 +942,14 @@ def device_compliant(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
         return False, reasons
     return True, []
 
+
 @engine.assertion("policy_reviewed_within_year")
 def policy_reviewed_within_year(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
     """Check that policy/procedure documents have been reviewed within 365 days."""
     reasons = []
-    last_updated = detail.get("last_updated") or detail.get("modified_date") or detail.get("updated_at")
+    last_updated = (
+        detail.get("last_updated") or detail.get("modified_date") or detail.get("updated_at")
+    )
     if last_updated:
         days = _days_since(str(last_updated))
         if days is not None and days > 365:
@@ -912,6 +957,7 @@ def policy_reviewed_within_year(detail: dict, raw_data: dict) -> tuple[bool, lis
             reasons.append(f"Document '{title}' last updated {days} days ago (>365)")
             return False, reasons
     return True, []
+
 
 @engine.assertion("dlp_policies_active")
 def dlp_policies_active(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
@@ -1114,24 +1160,24 @@ for _ctrl, _assertion in _NIST_CSF_BINDINGS:
 # ---------------------------------------------------------------------------
 
 _ISO42001_EXTRA_BINDINGS: list[tuple[str, str]] = [
-    ("A.2.2", "policy_reviewed_within_year"),       # AI policy document review
-    ("A.2.4", "policy_reviewed_within_year"),       # AI lifecycle policy review
-    ("A.3.2", "access_reviews_current"),            # Roles and responsibilities
-    ("A.4.3", "training_completion_rate"),           # Competence — training
-    ("A.4.4", "training_completion_rate"),           # Awareness — training
-    ("A.5.2", "vulnerability_scan_current"),        # Impact assessment — scanning
-    ("A.5.4", "guardduty_enabled"),                 # Ongoing impact monitoring
-    ("A.6.1.2", "policy_reviewed_within_year"),     # Responsible AI principles
-    ("A.6.2.3", "config_recorder_enabled"),         # Verification/validation
-    ("A.6.2.5", "encryption_at_rest"),              # Data management — encryption
-    ("A.6.2.6", "no_public_storage"),               # Data preparation — no public
-    ("A.6.2.11", "change_request_approved"),        # System deployment — change mgmt
-    ("A.7.2", "config_recorder_enabled"),           # Data quality
-    ("A.7.3", "cloudtrail_enabled"),                # Data provenance — audit trail
-    ("A.7.4", "encryption_at_rest"),                # Data preparation — encrypted
-    ("A.7.5", "cloudtrail_enabled"),                # Acquiring data — audit
-    ("A.9.3", "no_open_security_groups"),           # Misuse prevention — network
-    ("A.10.3", "access_reviews_current"),           # Supplier monitoring — reviews
+    ("A.2.2", "policy_reviewed_within_year"),  # AI policy document review
+    ("A.2.4", "policy_reviewed_within_year"),  # AI lifecycle policy review
+    ("A.3.2", "access_reviews_current"),  # Roles and responsibilities
+    ("A.4.3", "training_completion_rate"),  # Competence — training
+    ("A.4.4", "training_completion_rate"),  # Awareness — training
+    ("A.5.2", "vulnerability_scan_current"),  # Impact assessment — scanning
+    ("A.5.4", "guardduty_enabled"),  # Ongoing impact monitoring
+    ("A.6.1.2", "policy_reviewed_within_year"),  # Responsible AI principles
+    ("A.6.2.3", "config_recorder_enabled"),  # Verification/validation
+    ("A.6.2.5", "encryption_at_rest"),  # Data management — encryption
+    ("A.6.2.6", "no_public_storage"),  # Data preparation — no public
+    ("A.6.2.11", "change_request_approved"),  # System deployment — change mgmt
+    ("A.7.2", "config_recorder_enabled"),  # Data quality
+    ("A.7.3", "cloudtrail_enabled"),  # Data provenance — audit trail
+    ("A.7.4", "encryption_at_rest"),  # Data preparation — encrypted
+    ("A.7.5", "cloudtrail_enabled"),  # Acquiring data — audit
+    ("A.9.3", "no_open_security_groups"),  # Misuse prevention — network
+    ("A.10.3", "access_reviews_current"),  # Supplier monitoring — reviews
 ]
 
 for _ctrl, _assertion in _ISO42001_EXTRA_BINDINGS:
@@ -1143,18 +1189,18 @@ for _ctrl, _assertion in _ISO42001_EXTRA_BINDINGS:
 # ---------------------------------------------------------------------------
 
 _EU_AI_ACT_BINDINGS: list[tuple[str, str]] = [
-    ("ART9.1", "policy_reviewed_within_year"),       # Risk management system
-    ("ART9.2", "vulnerability_scan_current"),        # Risk identification
-    ("ART10.1", "encryption_at_rest"),               # Training data protection
-    ("ART10.2", "encryption_at_rest"),               # Data governance
-    ("ART12.1", "cloudtrail_enabled"),               # Automatic logging
-    ("ART12.2", "cloudtrail_enabled"),               # Traceability
-    ("ART14.1", "access_reviews_current"),           # Human oversight
-    ("ART14.3", "training_completion_rate"),          # Human understanding
-    ("ART15.3", "endpoint_protection_active"),       # Resilience
-    ("ART15.4", "guardduty_enabled"),                # Cybersecurity
-    ("ART15.4", "no_open_security_groups"),           # Cybersecurity — network
-    ("ART26.2", "siem_monitoring_active"),            # Deployer monitoring
+    ("ART9.1", "policy_reviewed_within_year"),  # Risk management system
+    ("ART9.2", "vulnerability_scan_current"),  # Risk identification
+    ("ART10.1", "encryption_at_rest"),  # Training data protection
+    ("ART10.2", "encryption_at_rest"),  # Data governance
+    ("ART12.1", "cloudtrail_enabled"),  # Automatic logging
+    ("ART12.2", "cloudtrail_enabled"),  # Traceability
+    ("ART14.1", "access_reviews_current"),  # Human oversight
+    ("ART14.3", "training_completion_rate"),  # Human understanding
+    ("ART15.3", "endpoint_protection_active"),  # Resilience
+    ("ART15.4", "guardduty_enabled"),  # Cybersecurity
+    ("ART15.4", "no_open_security_groups"),  # Cybersecurity — network
+    ("ART26.2", "siem_monitoring_active"),  # Deployer monitoring
 ]
 
 for _ctrl, _assertion in _EU_AI_ACT_BINDINGS:
@@ -1166,12 +1212,12 @@ for _ctrl, _assertion in _EU_AI_ACT_BINDINGS:
 # ---------------------------------------------------------------------------
 
 _SEC_CYBER_BINDINGS: list[tuple[str, str]] = [
-    ("ITEM105.1", "siem_monitoring_active"),          # Incident determination
-    ("ITEM106.B1", "policy_reviewed_within_year"),    # Risk management program
-    ("ITEM106.B2", "vulnerability_scan_current"),     # Risk assessment process
-    ("ITEM106.C5", "training_completion_rate"),        # Management expertise
-    ("ITEM106.C6", "siem_monitoring_active"),          # Prevention/detection
-    ("ANN.1", "policy_reviewed_within_year"),          # Annual disclosure
+    ("ITEM105.1", "siem_monitoring_active"),  # Incident determination
+    ("ITEM106.B1", "policy_reviewed_within_year"),  # Risk management program
+    ("ITEM106.B2", "vulnerability_scan_current"),  # Risk assessment process
+    ("ITEM106.C5", "training_completion_rate"),  # Management expertise
+    ("ITEM106.C6", "siem_monitoring_active"),  # Prevention/detection
+    ("ANN.1", "policy_reviewed_within_year"),  # Annual disclosure
 ]
 
 for _ctrl, _assertion in _SEC_CYBER_BINDINGS:
@@ -1278,280 +1324,355 @@ for _ctrl, _assertion in _CMMC_L2_BINDINGS:
 # Remediation guidance
 # ---------------------------------------------------------------------------
 
-engine.set_remediation("mfa_enabled", {
-    "summary": "Enable multi-factor authentication for all users with console/interactive access.",
-    "steps": [
-        "Identify all users without MFA enabled",
-        "Enforce MFA via IAM policy, Okta sign-on policy, or Entra ID Conditional Access",
-        "Require hardware security keys or authenticator apps (avoid SMS)",
-        "Verify MFA enrollment via credential report or IdP dashboard",
-    ],
-    "console_path": "IAM > Users > Security credentials > MFA",
-})
+engine.set_remediation(
+    "mfa_enabled",
+    {
+        "summary": "Enable multi-factor authentication for all users with console/interactive access.",
+        "steps": [
+            "Identify all users without MFA enabled",
+            "Enforce MFA via IAM policy, Okta sign-on policy, or Entra ID Conditional Access",
+            "Require hardware security keys or authenticator apps (avoid SMS)",
+            "Verify MFA enrollment via credential report or IdP dashboard",
+        ],
+        "console_path": "IAM > Users > Security credentials > MFA",
+    },
+)
 
-engine.set_remediation("no_root_access_keys", {
-    "summary": "Remove all access keys from the root/admin account.",
-    "steps": [
-        "Sign in as the root user",
-        "Navigate to Security Credentials",
-        "Delete all active access keys",
-        "Use IAM users or roles for programmatic access instead",
-    ],
-    "console_path": "IAM > Root user > Security credentials",
-})
+engine.set_remediation(
+    "no_root_access_keys",
+    {
+        "summary": "Remove all access keys from the root/admin account.",
+        "steps": [
+            "Sign in as the root user",
+            "Navigate to Security Credentials",
+            "Delete all active access keys",
+            "Use IAM users or roles for programmatic access instead",
+        ],
+        "console_path": "IAM > Root user > Security credentials",
+    },
+)
 
-engine.set_remediation("cloudtrail_enabled", {
-    "summary": "Enable CloudTrail with multi-region logging and log file validation.",
-    "steps": [
-        "Create or update a trail to cover all regions",
-        "Enable log file validation",
-        "Configure S3 bucket with appropriate retention and encryption",
-        "Enable CloudWatch Logs integration for real-time alerting",
-    ],
-    "console_path": "CloudTrail > Trails",
-})
+engine.set_remediation(
+    "cloudtrail_enabled",
+    {
+        "summary": "Enable CloudTrail with multi-region logging and log file validation.",
+        "steps": [
+            "Create or update a trail to cover all regions",
+            "Enable log file validation",
+            "Configure S3 bucket with appropriate retention and encryption",
+            "Enable CloudWatch Logs integration for real-time alerting",
+        ],
+        "console_path": "CloudTrail > Trails",
+    },
+)
 
-engine.set_remediation("guardduty_enabled", {
-    "summary": "Enable GuardDuty (or equivalent threat detection) in all regions.",
-    "steps": [
-        "Enable GuardDuty in each AWS region",
-        "Configure a delegated administrator for multi-account setups",
-        "Enable S3 protection and EKS audit log monitoring",
-        "Set up SNS notifications for high-severity findings",
-    ],
-    "console_path": "GuardDuty > Settings",
-})
+engine.set_remediation(
+    "guardduty_enabled",
+    {
+        "summary": "Enable GuardDuty (or equivalent threat detection) in all regions.",
+        "steps": [
+            "Enable GuardDuty in each AWS region",
+            "Configure a delegated administrator for multi-account setups",
+            "Enable S3 protection and EKS audit log monitoring",
+            "Set up SNS notifications for high-severity findings",
+        ],
+        "console_path": "GuardDuty > Settings",
+    },
+)
 
-engine.set_remediation("securityhub_enabled", {
-    "summary": "Enable AWS SecurityHub for centralized security findings.",
-    "steps": [
-        "Enable SecurityHub in each region",
-        "Enable AWS Foundational Security Best Practices standard",
-        "Enable CIS AWS Foundations Benchmark standard",
-        "Configure cross-region aggregation",
-    ],
-    "console_path": "SecurityHub > Settings",
-})
+engine.set_remediation(
+    "securityhub_enabled",
+    {
+        "summary": "Enable AWS SecurityHub for centralized security findings.",
+        "steps": [
+            "Enable SecurityHub in each region",
+            "Enable AWS Foundational Security Best Practices standard",
+            "Enable CIS AWS Foundations Benchmark standard",
+            "Configure cross-region aggregation",
+        ],
+        "console_path": "SecurityHub > Settings",
+    },
+)
 
-engine.set_remediation("no_open_security_groups", {
-    "summary": "Restrict security group ingress rules to remove unrestricted access on sensitive ports.",
-    "steps": [
-        "Identify security groups with 0.0.0.0/0 ingress on sensitive ports (22, 3389, DB ports)",
-        "Replace broad CIDR rules with specific IP ranges or security group references",
-        "Use AWS Systems Manager Session Manager instead of SSH where possible",
-        "Implement network segmentation with VPC endpoints",
-    ],
-    "console_path": "VPC > Security Groups",
-})
+engine.set_remediation(
+    "no_open_security_groups",
+    {
+        "summary": "Restrict security group ingress rules to remove unrestricted access on sensitive ports.",
+        "steps": [
+            "Identify security groups with 0.0.0.0/0 ingress on sensitive ports (22, 3389, DB ports)",
+            "Replace broad CIDR rules with specific IP ranges or security group references",
+            "Use AWS Systems Manager Session Manager instead of SSH where possible",
+            "Implement network segmentation with VPC endpoints",
+        ],
+        "console_path": "VPC > Security Groups",
+    },
+)
 
-engine.set_remediation("encryption_at_rest", {
-    "summary": "Enable encryption at rest for all storage resources.",
-    "steps": [
-        "Enable default encryption on S3 buckets (SSE-S3 or SSE-KMS)",
-        "Enable encryption for EBS volumes, RDS instances, and DynamoDB tables",
-        "For Azure, verify Storage Service Encryption is enabled",
-        "For GCP, verify Cloud KMS keys are configured or Google-managed encryption is active",
-    ],
-    "console_path": "S3 > Bucket > Properties > Default encryption",
-})
+engine.set_remediation(
+    "encryption_at_rest",
+    {
+        "summary": "Enable encryption at rest for all storage resources.",
+        "steps": [
+            "Enable default encryption on S3 buckets (SSE-S3 or SSE-KMS)",
+            "Enable encryption for EBS volumes, RDS instances, and DynamoDB tables",
+            "For Azure, verify Storage Service Encryption is enabled",
+            "For GCP, verify Cloud KMS keys are configured or Google-managed encryption is active",
+        ],
+        "console_path": "S3 > Bucket > Properties > Default encryption",
+    },
+)
 
-engine.set_remediation("password_policy_compliant", {
-    "summary": "Update the password policy to meet compliance requirements.",
-    "steps": [
-        "Set minimum password length to 14 or more characters",
-        "Require uppercase, lowercase, numbers, and symbols",
-        "Configure password expiration (90 days recommended)",
-        "Enable password reuse prevention (24 passwords)",
-    ],
-    "console_path": "IAM > Account settings > Password policy",
-})
+engine.set_remediation(
+    "password_policy_compliant",
+    {
+        "summary": "Update the password policy to meet compliance requirements.",
+        "steps": [
+            "Set minimum password length to 14 or more characters",
+            "Require uppercase, lowercase, numbers, and symbols",
+            "Configure password expiration (90 days recommended)",
+            "Enable password reuse prevention (24 passwords)",
+        ],
+        "console_path": "IAM > Account settings > Password policy",
+    },
+)
 
-engine.set_remediation("config_recorder_enabled", {
-    "summary": "Enable AWS Config recorder to track all resource configurations.",
-    "steps": [
-        "Create a configuration recorder that records all resource types",
-        "Set up a delivery channel to an S3 bucket",
-        "Enable AWS Config rules for continuous compliance evaluation",
-        "Consider using conformance packs for framework-aligned rule sets",
-    ],
-    "console_path": "AWS Config > Settings",
-})
+engine.set_remediation(
+    "config_recorder_enabled",
+    {
+        "summary": "Enable AWS Config recorder to track all resource configurations.",
+        "steps": [
+            "Create a configuration recorder that records all resource types",
+            "Set up a delivery channel to an S3 bucket",
+            "Enable AWS Config rules for continuous compliance evaluation",
+            "Consider using conformance packs for framework-aligned rule sets",
+        ],
+        "console_path": "AWS Config > Settings",
+    },
+)
 
-engine.set_remediation("no_public_storage", {
-    "summary": "Remove public access from all storage buckets and accounts.",
-    "steps": [
-        "Enable S3 Block Public Access at the account level",
-        "Review and remove bucket policies granting public access",
-        "Remove ACLs granting access to AllUsers or AuthenticatedUsers",
-        "For Azure, disable public blob access on storage accounts",
-    ],
-    "console_path": "S3 > Block Public Access settings",
-})
+engine.set_remediation(
+    "no_public_storage",
+    {
+        "summary": "Remove public access from all storage buckets and accounts.",
+        "steps": [
+            "Enable S3 Block Public Access at the account level",
+            "Review and remove bucket policies granting public access",
+            "Remove ACLs granting access to AllUsers or AuthenticatedUsers",
+            "For Azure, disable public blob access on storage accounts",
+        ],
+        "console_path": "S3 > Block Public Access settings",
+    },
+)
 
-engine.set_remediation("endpoint_protection_active", {
-    "summary": "Ensure all endpoints have active EDR agents.",
-    "steps": [
-        "Identify endpoints with offline or inactive agents",
-        "Reinstall or restart agents on affected endpoints",
-        "Verify sensor policies enforce prevention mode",
-        "Implement automated alerting for agent health degradation",
-    ],
-    "console_path": "EDR Console > Host Management",
-})
+engine.set_remediation(
+    "endpoint_protection_active",
+    {
+        "summary": "Ensure all endpoints have active EDR agents.",
+        "steps": [
+            "Identify endpoints with offline or inactive agents",
+            "Reinstall or restart agents on affected endpoints",
+            "Verify sensor policies enforce prevention mode",
+            "Implement automated alerting for agent health degradation",
+        ],
+        "console_path": "EDR Console > Host Management",
+    },
+)
 
-engine.set_remediation("vulnerability_scan_current", {
-    "summary": "Ensure vulnerability scans are performed regularly (at least every 30 days).",
-    "steps": [
-        "Configure scheduled scans for all assets",
-        "Verify scan coverage includes all network segments",
-        "Remediate critical and high vulnerabilities within SLA",
-        "Review scan exclusions to minimize blind spots",
-    ],
-    "console_path": "Vulnerability Scanner > Scan Policies",
-})
+engine.set_remediation(
+    "vulnerability_scan_current",
+    {
+        "summary": "Ensure vulnerability scans are performed regularly (at least every 30 days).",
+        "steps": [
+            "Configure scheduled scans for all assets",
+            "Verify scan coverage includes all network segments",
+            "Remediate critical and high vulnerabilities within SLA",
+            "Review scan exclusions to minimize blind spots",
+        ],
+        "console_path": "Vulnerability Scanner > Scan Policies",
+    },
+)
 
-engine.set_remediation("privileged_access_managed", {
-    "summary": "Ensure all privileged accounts are managed through PAM with automatic rotation.",
-    "steps": [
-        "Onboard all privileged accounts to CyberArk (or equivalent PAM)",
-        "Enable automatic password management and rotation",
-        "Configure session recording for privileged sessions",
-        "Review and remediate non-compliant accounts",
-    ],
-    "console_path": "CyberArk > Accounts",
-})
+engine.set_remediation(
+    "privileged_access_managed",
+    {
+        "summary": "Ensure all privileged accounts are managed through PAM with automatic rotation.",
+        "steps": [
+            "Onboard all privileged accounts to CyberArk (or equivalent PAM)",
+            "Enable automatic password management and rotation",
+            "Configure session recording for privileged sessions",
+            "Review and remediate non-compliant accounts",
+        ],
+        "console_path": "CyberArk > Accounts",
+    },
+)
 
-engine.set_remediation("access_reviews_current", {
-    "summary": "Complete all outstanding access certification campaigns.",
-    "steps": [
-        "Identify overdue or expired certification campaigns",
-        "Escalate incomplete certifications to reviewers and managers",
-        "Revoke access for uncertified entitlements",
-        "Schedule recurring certification campaigns on a quarterly basis",
-    ],
-    "console_path": "SailPoint > Certifications",
-})
+engine.set_remediation(
+    "access_reviews_current",
+    {
+        "summary": "Complete all outstanding access certification campaigns.",
+        "steps": [
+            "Identify overdue or expired certification campaigns",
+            "Escalate incomplete certifications to reviewers and managers",
+            "Revoke access for uncertified entitlements",
+            "Schedule recurring certification campaigns on a quarterly basis",
+        ],
+        "console_path": "SailPoint > Certifications",
+    },
+)
 
-engine.set_remediation("siem_monitoring_active", {
-    "summary": "Ensure SIEM has active detection rules and connected data sources.",
-    "steps": [
-        "Review and enable detection rules aligned to MITRE ATT&CK",
-        "Verify all critical data sources are connected and ingesting",
-        "Configure alerting thresholds and notification channels",
-        "Test detection rules with simulated attack scenarios",
-    ],
-    "console_path": "SIEM > Detection Rules",
-})
+engine.set_remediation(
+    "siem_monitoring_active",
+    {
+        "summary": "Ensure SIEM has active detection rules and connected data sources.",
+        "steps": [
+            "Review and enable detection rules aligned to MITRE ATT&CK",
+            "Verify all critical data sources are connected and ingesting",
+            "Configure alerting thresholds and notification channels",
+            "Test detection rules with simulated attack scenarios",
+        ],
+        "console_path": "SIEM > Detection Rules",
+    },
+)
 
-engine.set_remediation("background_check_completed", {
-    "summary": "Ensure all employees have completed background checks before or shortly after hire.",
-    "steps": [
-        "Identify employees without completed background checks",
-        "Initiate background check process through HR/Workday",
-        "Set automated triggers for new hire background checks",
-        "Track completion status and follow up on delays",
-    ],
-    "console_path": "Workday > Staffing > Background Checks",
-})
+engine.set_remediation(
+    "background_check_completed",
+    {
+        "summary": "Ensure all employees have completed background checks before or shortly after hire.",
+        "steps": [
+            "Identify employees without completed background checks",
+            "Initiate background check process through HR/Workday",
+            "Set automated triggers for new hire background checks",
+            "Track completion status and follow up on delays",
+        ],
+        "console_path": "Workday > Staffing > Background Checks",
+    },
+)
 
-engine.set_remediation("employment_agreement_signed", {
-    "summary": "Ensure all employees have signed employment agreements and NDAs.",
-    "steps": [
-        "Identify employees without signed agreements",
-        "Send agreement documents for e-signature",
-        "Configure onboarding workflow to require signatures before system access",
-        "Audit quarterly for gaps",
-    ],
-    "console_path": "Workday > Documents > Agreements",
-})
+engine.set_remediation(
+    "employment_agreement_signed",
+    {
+        "summary": "Ensure all employees have signed employment agreements and NDAs.",
+        "steps": [
+            "Identify employees without signed agreements",
+            "Send agreement documents for e-signature",
+            "Configure onboarding workflow to require signatures before system access",
+            "Audit quarterly for gaps",
+        ],
+        "console_path": "Workday > Documents > Agreements",
+    },
+)
 
-engine.set_remediation("change_request_approved", {
-    "summary": "Ensure all changes have documented approval and rollback plans.",
-    "steps": [
-        "Review change management policy for approval requirements",
-        "Configure ServiceNow to require approval before implementation",
-        "Add rollback plan as required field on change request form",
-        "Audit emergency changes for post-implementation review",
-    ],
-    "console_path": "ServiceNow > Change Management",
-})
+engine.set_remediation(
+    "change_request_approved",
+    {
+        "summary": "Ensure all changes have documented approval and rollback plans.",
+        "steps": [
+            "Review change management policy for approval requirements",
+            "Configure ServiceNow to require approval before implementation",
+            "Add rollback plan as required field on change request form",
+            "Audit emergency changes for post-implementation review",
+        ],
+        "console_path": "ServiceNow > Change Management",
+    },
+)
 
-engine.set_remediation("training_completion_rate", {
-    "summary": "Ensure security awareness training completion meets organizational targets.",
-    "steps": [
-        "Identify users with overdue or incomplete training",
-        "Send reminder notifications through KnowBe4",
-        "Escalate chronic non-completers to management",
-        "Configure automated enrollment for new hires within 30 days",
-    ],
-    "console_path": "KnowBe4 > Training > Campaigns",
-})
+engine.set_remediation(
+    "training_completion_rate",
+    {
+        "summary": "Ensure security awareness training completion meets organizational targets.",
+        "steps": [
+            "Identify users with overdue or incomplete training",
+            "Send reminder notifications through KnowBe4",
+            "Escalate chronic non-completers to management",
+            "Configure automated enrollment for new hires within 30 days",
+        ],
+        "console_path": "KnowBe4 > Training > Campaigns",
+    },
+)
 
-engine.set_remediation("phishing_failure_rate", {
-    "summary": "Reduce phishing simulation click rate below organizational threshold.",
-    "steps": [
-        "Review phishing simulation results by department",
-        "Provide targeted training for high-risk users",
-        "Increase simulation frequency for repeat offenders",
-        "Report metrics to management quarterly",
-    ],
-    "console_path": "KnowBe4 > Phishing > Security Tests",
-})
+engine.set_remediation(
+    "phishing_failure_rate",
+    {
+        "summary": "Reduce phishing simulation click rate below organizational threshold.",
+        "steps": [
+            "Review phishing simulation results by department",
+            "Provide targeted training for high-risk users",
+            "Increase simulation frequency for repeat offenders",
+            "Report metrics to management quarterly",
+        ],
+        "console_path": "KnowBe4 > Phishing > Security Tests",
+    },
+)
 
-engine.set_remediation("no_critical_code_vulns", {
-    "summary": "Remediate critical and high severity code vulnerabilities.",
-    "steps": [
-        "Triage critical/high findings in Snyk dashboard",
-        "Apply available fixes and upgrade vulnerable packages",
-        "If no fix available, evaluate compensating controls or risk acceptance",
-        "Configure CI/CD to block merges with critical vulnerabilities",
-    ],
-    "console_path": "Snyk > Projects > Issues",
-})
+engine.set_remediation(
+    "no_critical_code_vulns",
+    {
+        "summary": "Remediate critical and high severity code vulnerabilities.",
+        "steps": [
+            "Triage critical/high findings in Snyk dashboard",
+            "Apply available fixes and upgrade vulnerable packages",
+            "If no fix available, evaluate compensating controls or risk acceptance",
+            "Configure CI/CD to block merges with critical vulnerabilities",
+        ],
+        "console_path": "Snyk > Projects > Issues",
+    },
+)
 
-engine.set_remediation("backup_job_successful", {
-    "summary": "Ensure backup jobs complete successfully and RPO targets are met.",
-    "steps": [
-        "Investigate failed backup job errors",
-        "Verify backup storage capacity and connectivity",
-        "Test restore from most recent backup",
-        "Configure alerting for backup failures",
-    ],
-    "console_path": "Veeam > Jobs > Last Session",
-})
+engine.set_remediation(
+    "backup_job_successful",
+    {
+        "summary": "Ensure backup jobs complete successfully and RPO targets are met.",
+        "steps": [
+            "Investigate failed backup job errors",
+            "Verify backup storage capacity and connectivity",
+            "Test restore from most recent backup",
+            "Configure alerting for backup failures",
+        ],
+        "console_path": "Veeam > Jobs > Last Session",
+    },
+)
 
-engine.set_remediation("device_compliant", {
-    "summary": "Ensure all managed devices meet compliance policies.",
-    "steps": [
-        "Review non-compliant devices in Intune portal",
-        "Enable disk encryption (BitLocker/FileVault) on non-encrypted devices",
-        "Push OS updates to devices with outdated versions",
-        "Configure conditional access to block non-compliant devices",
-    ],
-    "console_path": "Intune > Devices > Compliance",
-})
+engine.set_remediation(
+    "device_compliant",
+    {
+        "summary": "Ensure all managed devices meet compliance policies.",
+        "steps": [
+            "Review non-compliant devices in Intune portal",
+            "Enable disk encryption (BitLocker/FileVault) on non-encrypted devices",
+            "Push OS updates to devices with outdated versions",
+            "Configure conditional access to block non-compliant devices",
+        ],
+        "console_path": "Intune > Devices > Compliance",
+    },
+)
 
-engine.set_remediation("policy_reviewed_within_year", {
-    "summary": "Ensure all security policies and procedures are reviewed annually.",
-    "steps": [
-        "Identify documents not reviewed within 365 days",
-        "Assign document owners to review and update content",
-        "Update revision date and approval signatures",
-        "Schedule recurring annual review calendar reminders",
-    ],
-    "console_path": "Confluence > Space > Pages",
-})
+engine.set_remediation(
+    "policy_reviewed_within_year",
+    {
+        "summary": "Ensure all security policies and procedures are reviewed annually.",
+        "steps": [
+            "Identify documents not reviewed within 365 days",
+            "Assign document owners to review and update content",
+            "Update revision date and approval signatures",
+            "Schedule recurring annual review calendar reminders",
+        ],
+        "console_path": "Confluence > Space > Pages",
+    },
+)
 
-engine.set_remediation("dlp_policies_active", {
-    "summary": "Ensure DLP policies are enabled and actively monitoring data flows.",
-    "steps": [
-        "Review disabled DLP policies in Purview compliance portal",
-        "Enable policies or update if requirements have changed",
-        "Verify policy conditions and actions are correctly configured",
-        "Test policies with synthetic sensitive data",
-    ],
-    "console_path": "Microsoft Purview > Data Loss Prevention > Policies",
-})
+engine.set_remediation(
+    "dlp_policies_active",
+    {
+        "summary": "Ensure DLP policies are enabled and actively monitoring data flows.",
+        "steps": [
+            "Review disabled DLP policies in Purview compliance portal",
+            "Enable policies or update if requirements have changed",
+            "Verify policy conditions and actions are correctly configured",
+            "Test policies with synthetic sensitive data",
+        ],
+        "console_path": "Microsoft Purview > Data Loss Prevention > Policies",
+    },
+)
 
 
 # ---------------------------------------------------------------------------
@@ -1560,10 +1681,10 @@ engine.set_remediation("dlp_policies_active", {
 
 _GDPR_BINDINGS: list[tuple[str, str]] = [
     # Art 5 — Principles of Processing
-    ("Art5-1a", "policy_reviewed_within_year"),       # Lawfulness
-    ("Art5-1b", "policy_reviewed_within_year"),       # Purpose limitation
-    ("Art5-1f", "encryption_at_rest"),                # Integrity and confidentiality
-    ("Art5-1f", "dlp_policies_active"),               # Integrity and confidentiality
+    ("Art5-1a", "policy_reviewed_within_year"),  # Lawfulness
+    ("Art5-1b", "policy_reviewed_within_year"),  # Purpose limitation
+    ("Art5-1f", "encryption_at_rest"),  # Integrity and confidentiality
+    ("Art5-1f", "dlp_policies_active"),  # Integrity and confidentiality
     # Art 25 — Data Protection by Design
     ("Art25-1", "encryption_at_rest"),
     ("Art25-1", "no_public_storage"),
@@ -1591,26 +1712,26 @@ for _ctrl, _assertion in _GDPR_BINDINGS:
 
 _HIPAA_BINDINGS: list[tuple[str, str]] = [
     # 164.308 — Administrative Safeguards
-    ("164.308(a)(1)(i)", "vulnerability_scan_current"),       # Risk Analysis
-    ("164.308(a)(3)(i)", "background_check_completed"),       # Workforce Security
-    ("164.308(a)(3)(i)", "access_reviews_current"),           # Workforce Security
-    ("164.308(a)(4)(i)", "mfa_enabled"),                      # Access Management
-    ("164.308(a)(4)(i)", "privileged_access_managed"),        # Access Management
-    ("164.308(a)(5)(i)", "training_completion_rate"),          # Security Awareness
-    ("164.308(a)(5)(i)", "phishing_failure_rate"),             # Security Awareness
-    ("164.308(a)(6)(i)", "siem_monitoring_active"),            # Incident Response
+    ("164.308(a)(1)(i)", "vulnerability_scan_current"),  # Risk Analysis
+    ("164.308(a)(3)(i)", "background_check_completed"),  # Workforce Security
+    ("164.308(a)(3)(i)", "access_reviews_current"),  # Workforce Security
+    ("164.308(a)(4)(i)", "mfa_enabled"),  # Access Management
+    ("164.308(a)(4)(i)", "privileged_access_managed"),  # Access Management
+    ("164.308(a)(5)(i)", "training_completion_rate"),  # Security Awareness
+    ("164.308(a)(5)(i)", "phishing_failure_rate"),  # Security Awareness
+    ("164.308(a)(6)(i)", "siem_monitoring_active"),  # Incident Response
     # 164.312 — Technical Safeguards
-    ("164.312(a)(1)", "mfa_enabled"),                         # Access Control
-    ("164.312(a)(1)", "no_open_security_groups"),             # Access Control
-    ("164.312(a)(2)(iv)", "encryption_at_rest"),              # Encryption
-    ("164.312(b)", "cloudtrail_enabled"),                     # Audit Controls
-    ("164.312(b)", "config_recorder_enabled"),                # Audit Controls
-    ("164.312(c)(1)", "no_critical_code_vulns"),              # Integrity
-    ("164.312(d)", "mfa_enabled"),                            # Authentication
-    ("164.312(d)", "password_policy_compliant"),              # Authentication
-    ("164.312(e)(1)", "encryption_at_rest"),                  # Transmission Security
+    ("164.312(a)(1)", "mfa_enabled"),  # Access Control
+    ("164.312(a)(1)", "no_open_security_groups"),  # Access Control
+    ("164.312(a)(2)(iv)", "encryption_at_rest"),  # Encryption
+    ("164.312(b)", "cloudtrail_enabled"),  # Audit Controls
+    ("164.312(b)", "config_recorder_enabled"),  # Audit Controls
+    ("164.312(c)(1)", "no_critical_code_vulns"),  # Integrity
+    ("164.312(d)", "mfa_enabled"),  # Authentication
+    ("164.312(d)", "password_policy_compliant"),  # Authentication
+    ("164.312(e)(1)", "encryption_at_rest"),  # Transmission Security
     # 164.310 — Physical Safeguards
-    ("164.310(d)(1)", "device_compliant"),                    # Device Controls
+    ("164.310(d)(1)", "device_compliant"),  # Device Controls
 ]
 
 for _ctrl, _assertion in _HIPAA_BINDINGS:

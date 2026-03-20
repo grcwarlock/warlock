@@ -117,11 +117,7 @@ class EvidenceRetentionManager:
         finding_ids = {cr.finding_id for cr in results if cr.finding_id}
         findings: list[dict[str, Any]] = []
         if finding_ids:
-            finding_rows = (
-                session.query(Finding)
-                .filter(Finding.id.in_(finding_ids))
-                .all()
-            )
+            finding_rows = session.query(Finding).filter(Finding.id.in_(finding_ids)).all()
             findings = [
                 {
                     "id": f.id,
@@ -143,9 +139,7 @@ class EvidenceRetentionManager:
             RawEvent.ingested_at <= end,
         )
         if framework_sources:
-            raw_event_query = raw_event_query.filter(
-                RawEvent.source.in_(framework_sources)
-            )
+            raw_event_query = raw_event_query.filter(RawEvent.source.in_(framework_sources))
         raw_events = raw_event_query.all()
         raw_event_dicts = [
             {
@@ -268,7 +262,10 @@ class EvidenceRetentionManager:
         Each gap entry includes the control_id and the months lacking evidence.
         """
         verification = self.verify_evidence_period(
-            session, framework, period_start, period_end,
+            session,
+            framework,
+            period_start,
+            period_end,
         )
 
         if not verification["coverage"]:
@@ -287,12 +284,14 @@ class EvidenceRetentionManager:
                     missing_months.append(month_key)
 
             if missing_months:
-                gaps.append({
-                    "control_id": ctrl,
-                    "missing_months": missing_months,
-                    "gap_count": len(missing_months),
-                    "total_months": verification["months_checked"],
-                })
+                gaps.append(
+                    {
+                        "control_id": ctrl,
+                        "missing_months": missing_months,
+                        "gap_count": len(missing_months),
+                        "total_months": verification["months_checked"],
+                    }
+                )
 
         return gaps
 
@@ -412,9 +411,7 @@ def evaluate_evidence_quality(
             "has_content": bool(artifact.get("content") or artifact.get("data")),
             "has_hash": bool(artifact.get("hash") or artifact.get("sha256")),
             "metadata": {
-                k: v
-                for k, v in artifact.items()
-                if k not in ("content", "data", "body", "raw")
+                k: v for k, v in artifact.items() if k not in ("content", "data", "body", "raw")
             },
         }
         artifact_summaries.append(summary)

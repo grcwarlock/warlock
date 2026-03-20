@@ -29,11 +29,12 @@ TIMEOUT = 60.0
 # Result
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AIReasoningResult:
-    status: str                # compliant, non_compliant, partial, not_assessed
-    assessment: str            # narrative explanation
-    confidence: float          # 0.0 – 1.0
+    status: str  # compliant, non_compliant, partial, not_assessed
+    assessment: str  # narrative explanation
+    confidence: float  # 0.0 – 1.0
     model: str
     prompt_hash: str = ""
     context_factors: list[str] = None  # what context influenced the assessment
@@ -81,13 +82,14 @@ Respond ONLY with a JSON object (no markdown fences, no commentary):
 @dataclass
 class ComplianceContext:
     """Broader compliance context for AI reasoning — Phase 2-5 data."""
-    compensating_control: dict | None = None   # active CC if any
-    risk_acceptance: dict | None = None        # active RA if any
-    inheritance: dict | None = None            # inheritance info if any
-    posture_trend: dict | None = None          # recent trend data
-    cadence_status: dict | None = None         # monitoring freshness
-    drift_history: list | None = None          # recent drift events
-    system_context: dict | None = None         # system profile info
+
+    compensating_control: dict | None = None  # active CC if any
+    risk_acceptance: dict | None = None  # active RA if any
+    inheritance: dict | None = None  # inheritance info if any
+    posture_trend: dict | None = None  # recent trend data
+    cadence_status: dict | None = None  # monitoring freshness
+    drift_history: list | None = None  # recent drift events
+    system_context: dict | None = None  # system profile info
 
 
 def _build_user_prompt(
@@ -218,6 +220,7 @@ def _parse_response(text: str, model: str) -> AIReasoningResult:
 # Provider implementations
 # ---------------------------------------------------------------------------
 
+
 class AIReasoner:
     """Base class for AI reasoning providers."""
 
@@ -237,8 +240,13 @@ class AIReasoner:
 
 
 class AnthropicReasoner(AIReasoner):
-
-    def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+    def evaluate(
+        self,
+        finding: FindingData,
+        mapping: ControlMappingData,
+        raw_data: dict[str, Any],
+        context: ComplianceContext | None = None,
+    ) -> AIReasoningResult:
         user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
         prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = "https://api.anthropic.com/v1/messages"
@@ -264,12 +272,19 @@ class AnthropicReasoner(AIReasoner):
             return result
         except Exception as e:
             log.exception("Anthropic API call failed")
-            return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
+            return AIReasoningResult(
+                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+            )
 
 
 class OpenAIReasoner(AIReasoner):
-
-    def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+    def evaluate(
+        self,
+        finding: FindingData,
+        mapping: ControlMappingData,
+        raw_data: dict[str, Any],
+        context: ComplianceContext | None = None,
+    ) -> AIReasoningResult:
         user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
         prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = f"{self.base_url or 'https://api.openai.com'}/v1/chat/completions"
@@ -296,15 +311,24 @@ class OpenAIReasoner(AIReasoner):
             return result
         except Exception as e:
             log.exception("OpenAI API call failed")
-            return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
+            return AIReasoningResult(
+                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+            )
 
 
 class GeminiReasoner(AIReasoner):
-
-    def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+    def evaluate(
+        self,
+        finding: FindingData,
+        mapping: ControlMappingData,
+        raw_data: dict[str, Any],
+        context: ComplianceContext | None = None,
+    ) -> AIReasoningResult:
         user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
         prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        )
         headers = {"x-goog-api-key": self.api_key}
         payload = {
             "system_instruction": {"parts": [{"text": _SYSTEM_PROMPT}]},
@@ -321,13 +345,21 @@ class GeminiReasoner(AIReasoner):
             return result
         except Exception as e:
             log.exception("Gemini API call failed")
-            return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
+            return AIReasoningResult(
+                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+            )
 
 
 class OllamaReasoner(AIReasoner):
     """Ollama exposes an OpenAI-compatible endpoint."""
 
-    def evaluate(self, finding: FindingData, mapping: ControlMappingData, raw_data: dict[str, Any], context: ComplianceContext | None = None) -> AIReasoningResult:
+    def evaluate(
+        self,
+        finding: FindingData,
+        mapping: ControlMappingData,
+        raw_data: dict[str, Any],
+        context: ComplianceContext | None = None,
+    ) -> AIReasoningResult:
         user_prompt = _build_user_prompt(finding, mapping, raw_data, context)
         prompt_hash = _hash_prompt(_SYSTEM_PROMPT, user_prompt)
         url = f"{self.base_url or 'http://localhost:11434'}/v1/chat/completions"
@@ -343,7 +375,9 @@ class OllamaReasoner(AIReasoner):
             ],
         }
         try:
-            resp = httpx.post(url, headers=headers, json=payload, timeout=TIMEOUT, follow_redirects=True)
+            resp = httpx.post(
+                url, headers=headers, json=payload, timeout=TIMEOUT, follow_redirects=True
+            )
             resp.raise_for_status()
             body = resp.json()
             text = body["choices"][0]["message"]["content"]
@@ -352,7 +386,9 @@ class OllamaReasoner(AIReasoner):
             return result
         except Exception as e:
             log.exception("Ollama API call failed")
-            return AIReasoningResult(status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model)
+            return AIReasoningResult(
+                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -473,8 +509,12 @@ def build_compliance_context(
     compliance picture. If not called, the AI falls back to finding-only reasoning.
     """
     from warlock.db.models import (
-        CompensatingControl, RiskAcceptance, ControlInheritance,
-        ComplianceDrift, PostureSnapshot, SystemProfile,
+        CompensatingControl,
+        RiskAcceptance,
+        ControlInheritance,
+        ComplianceDrift,
+        PostureSnapshot,
+        SystemProfile,
     )
     from datetime import timedelta, timezone
     from datetime import datetime
@@ -577,6 +617,7 @@ def build_compliance_context(
     from warlock.db.models import ControlMapping
     from sqlalchemy import func
     from warlock.db.models import ControlResult
+
     freq_row = (
         session.query(ControlMapping.monitoring_frequency)
         .filter(
@@ -596,7 +637,13 @@ def build_compliance_context(
     )
     if freq_row and latest_evidence:
         frequency = freq_row[0]
-        freq_hours = {"daily": 24, "weekly": 168, "monthly": 720, "quarterly": 2160, "annual": 8760}.get(frequency, 720)
+        freq_hours = {
+            "daily": 24,
+            "weekly": 168,
+            "monthly": 720,
+            "quarterly": 2160,
+            "annual": 8760,
+        }.get(frequency, 720)
         if latest_evidence.tzinfo is None:
             latest_evidence = latest_evidence.replace(tzinfo=timezone.utc)
         hours_since = (now - latest_evidence).total_seconds() / 3600

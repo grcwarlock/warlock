@@ -28,13 +28,13 @@ log = logging.getLogger(__name__)
 # Per-endpoint rate limits: path -> (requests_per_minute, burst)
 # These override the default limits for security-sensitive endpoints.
 _ENDPOINT_LIMITS: dict[str, tuple[int, int]] = {
-    "/api/v1/auth/login": (10, 5),           # stricter: 10/min + 5 burst
-    "/api/v1/auth/register": (5, 2),         # very strict: 5/min + 2 burst
-    "/api/v1/trust/request-access": (10, 3), # public endpoint, strict
-    "/api/v1/ai/reason": (30, 5),            # expensive AI reasoning calls
-    "/api/v1/ai/converse": (30, 5),          # expensive AI conversation calls
-    "/api/v1/risk/analyze": (10, 2),         # Monte Carlo simulation
-    "/api/v1/pipeline/collect": (5, 2),      # full pipeline run
+    "/api/v1/auth/login": (10, 5),  # stricter: 10/min + 5 burst
+    "/api/v1/auth/register": (5, 2),  # very strict: 5/min + 2 burst
+    "/api/v1/trust/request-access": (10, 3),  # public endpoint, strict
+    "/api/v1/ai/reason": (30, 5),  # expensive AI reasoning calls
+    "/api/v1/ai/converse": (30, 5),  # expensive AI conversation calls
+    "/api/v1/risk/analyze": (10, 2),  # Monte Carlo simulation
+    "/api/v1/pipeline/collect": (5, 2),  # full pipeline run
 }
 
 
@@ -62,6 +62,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._lock = Lock()
 
         import multiprocessing
+
         workers = multiprocessing.cpu_count()  # rough proxy for worker count
         if workers > 1:
             log.warning(
@@ -80,6 +81,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if api_key:
             # Hash the key — never use raw key material as identity (H-4 fix)
             import hashlib
+
             return f"key:{hashlib.sha256(api_key.encode()).hexdigest()[:16]}"
         # Fall back to IP
         client = request.client
@@ -235,13 +237,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # ---------------------------------------------------------------------------
 
 # Paths that generate high-volume, low-value audit entries
-_SKIP_PATHS = frozenset({
-    "/api/v1/health",
-    "/health",
-    "/docs",
-    "/openapi.json",
-    "/redoc",
-})
+_SKIP_PATHS = frozenset(
+    {
+        "/api/v1/health",
+        "/health",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+    }
+)
 
 
 class RequestAuditMiddleware(BaseHTTPMiddleware):
@@ -261,6 +265,7 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         from warlock.logging_config import new_correlation_id
+
         cid = new_correlation_id()
 
         start = time.monotonic()
@@ -296,6 +301,7 @@ def _extract_identity(request: Request) -> str:
     api_key = request.headers.get("x-api-key")
     if api_key:
         import hashlib
+
         return f"apikey:{hashlib.sha256(api_key.encode()).hexdigest()[:12]}"
 
     auth = request.headers.get("authorization", "")
@@ -356,6 +362,7 @@ def register_middleware(app) -> None:
     """
     # S-6: Warn if running production without Redis-backed rate limiter
     import os
+
     wlk_env = os.environ.get("WLK_ENV", "").strip().lower()
     redis_url = os.environ.get("WLK_QUEUE_URL", "").strip()
     if wlk_env == "production" and not redis_url:

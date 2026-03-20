@@ -49,9 +49,7 @@ class PrismaConnector(BaseConnector):
 
     def collect(self) -> ConnectorResult:
         if httpx is None:
-            raise RuntimeError(
-                "PrismaConnector requires httpx. Install with: pip install httpx"
-            )
+            raise RuntimeError("PrismaConnector requires httpx. Install with: pip install httpx")
         result = ConnectorResult(
             connector_name=self.name,
             source="prisma",
@@ -126,14 +124,16 @@ class PrismaConnector(BaseConnector):
                 if not next_token or not items:
                     break
 
-            result.events.append(RawEventData(
-                source="prisma",
-                source_type=SourceType.CSPM,
-                provider="prisma",
-                event_type="prisma_alerts",
-                raw_data={"alerts": all_alerts},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="prisma",
+                    source_type=SourceType.CSPM,
+                    provider="prisma",
+                    event_type="prisma_alerts",
+                    raw_data={"alerts": all_alerts},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Prisma alerts collection failed: %s", e)
             result.errors.append(f"prisma_alerts: {e}")
@@ -141,22 +141,27 @@ class PrismaConnector(BaseConnector):
     def _collect_compliance(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect compliance posture summary."""
         try:
-            resp = client.get(f"{self._api_url}/compliance/posture", params={
-                "timeType": "relative",
-                "timeAmount": 24,
-                "timeUnit": "hour",
-            })
+            resp = client.get(
+                f"{self._api_url}/compliance/posture",
+                params={
+                    "timeType": "relative",
+                    "timeAmount": 24,
+                    "timeUnit": "hour",
+                },
+            )
             resp.raise_for_status()
             posture = resp.json()
 
-            result.events.append(RawEventData(
-                source="prisma",
-                source_type=SourceType.CSPM,
-                provider="prisma",
-                event_type="prisma_compliance",
-                raw_data={"compliance": posture},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="prisma",
+                    source_type=SourceType.CSPM,
+                    provider="prisma",
+                    event_type="prisma_compliance",
+                    raw_data={"compliance": posture},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Prisma compliance collection failed: %s", e)
             result.errors.append(f"prisma_compliance: {e}")
@@ -164,22 +169,27 @@ class PrismaConnector(BaseConnector):
     def _collect_assets(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect asset inventory."""
         try:
-            resp = client.post(f"{self._api_url}/v2/inventory", json={
-                "timeType": "relative",
-                "timeAmount": 24,
-                "timeUnit": "hour",
-            })
+            resp = client.post(
+                f"{self._api_url}/v2/inventory",
+                json={
+                    "timeType": "relative",
+                    "timeAmount": 24,
+                    "timeUnit": "hour",
+                },
+            )
             resp.raise_for_status()
             inventory = resp.json()
 
-            result.events.append(RawEventData(
-                source="prisma",
-                source_type=SourceType.CSPM,
-                provider="prisma",
-                event_type="prisma_assets",
-                raw_data={"inventory": inventory},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="prisma",
+                    source_type=SourceType.CSPM,
+                    provider="prisma",
+                    event_type="prisma_assets",
+                    raw_data={"inventory": inventory},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Prisma asset inventory failed: %s", e)
             result.errors.append(f"prisma_assets: {e}")
@@ -187,9 +197,12 @@ class PrismaConnector(BaseConnector):
     def _collect_policies(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect enabled policies."""
         try:
-            resp = client.get(f"{self._api_url}/v2/policy", params={
-                "policy.enabled": "true",
-            })
+            resp = client.get(
+                f"{self._api_url}/v2/policy",
+                params={
+                    "policy.enabled": "true",
+                },
+            )
             resp.raise_for_status()
             policies = resp.json()
             if isinstance(policies, list):
@@ -197,14 +210,16 @@ class PrismaConnector(BaseConnector):
             else:
                 policy_list = policies.get("items", policies.get("value", []))
 
-            result.events.append(RawEventData(
-                source="prisma",
-                source_type=SourceType.CSPM,
-                provider="prisma",
-                event_type="prisma_policies",
-                raw_data={"policies": policy_list},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="prisma",
+                    source_type=SourceType.CSPM,
+                    provider="prisma",
+                    event_type="prisma_policies",
+                    raw_data={"policies": policy_list},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Prisma policies collection failed: %s", e)
             result.errors.append(f"prisma_policies: {e}")

@@ -104,25 +104,27 @@ class WorkdayNormalizer(BaseNormalizer):
             elif issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "worker_id": wid,
-                    "descriptor": descriptor,
-                    "status": status,
-                    "hire_date": hire_date,
-                    "termination_date": termination_date,
-                    "department": department,
-                    "manager": manager,
-                    "issues": issues,
-                },
-                resource_id=wid,
-                resource_type="hr_employee",
-                resource_name=descriptor,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "worker_id": wid,
+                        "descriptor": descriptor,
+                        "status": status,
+                        "hire_date": hire_date,
+                        "termination_date": termination_date,
+                        "department": department,
+                        "manager": manager,
+                        "issues": issues,
+                    },
+                    resource_id=wid,
+                    resource_type="hr_employee",
+                    resource_name=descriptor,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -147,21 +149,23 @@ class WorkdayNormalizer(BaseNormalizer):
                 obs_type = "inventory"
                 title = f"Background check completed — {worker_name}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "worker_id": worker_id,
-                    "worker_name": worker_name,
-                    "status": status,
-                    "background_check": bg,
-                },
-                resource_id=worker_id,
-                resource_type="hr_employee",
-                resource_name=worker_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "worker_id": worker_id,
+                        "worker_name": worker_name,
+                        "status": status,
+                        "background_check": bg,
+                    },
+                    resource_id=worker_id,
+                    resource_type="hr_employee",
+                    resource_name=worker_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -179,71 +183,79 @@ class WorkdayNormalizer(BaseNormalizer):
 
             # Employment agreement check
             if not employment_agreement_signed:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"Employment agreement not signed — {worker_name}",
-                    detail={
-                        "worker_id": worker_id,
-                        "worker_name": worker_name,
-                        "agreement_type": "employment_agreement",
-                        "signed": False,
-                    },
-                    resource_id=worker_id,
-                    resource_type="hr_employee",
-                    resource_name=worker_name,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"Employment agreement not signed — {worker_name}",
+                        detail={
+                            "worker_id": worker_id,
+                            "worker_name": worker_name,
+                            "agreement_type": "employment_agreement",
+                            "signed": False,
+                        },
+                        resource_id=worker_id,
+                        resource_type="hr_employee",
+                        resource_name=worker_name,
+                        severity="medium",
+                    )
+                )
             else:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"Employment agreement signed — {worker_name}",
-                    detail={
-                        "worker_id": worker_id,
-                        "worker_name": worker_name,
-                        "agreement_type": "employment_agreement",
-                        "signed": True,
-                    },
-                    resource_id=worker_id,
-                    resource_type="hr_employee",
-                    resource_name=worker_name,
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"Employment agreement signed — {worker_name}",
+                        detail={
+                            "worker_id": worker_id,
+                            "worker_name": worker_name,
+                            "agreement_type": "employment_agreement",
+                            "signed": True,
+                        },
+                        resource_id=worker_id,
+                        resource_type="hr_employee",
+                        resource_name=worker_name,
+                        severity="info",
+                    )
+                )
 
             # NDA check
             if not nda_signed:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"NDA not signed — {worker_name}",
-                    detail={
-                        "worker_id": worker_id,
-                        "worker_name": worker_name,
-                        "agreement_type": "nda",
-                        "signed": False,
-                    },
-                    resource_id=worker_id,
-                    resource_type="hr_employee",
-                    resource_name=worker_name,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"NDA not signed — {worker_name}",
+                        detail={
+                            "worker_id": worker_id,
+                            "worker_name": worker_name,
+                            "agreement_type": "nda",
+                            "signed": False,
+                        },
+                        resource_id=worker_id,
+                        resource_type="hr_employee",
+                        resource_name=worker_name,
+                        severity="medium",
+                    )
+                )
             else:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"NDA signed — {worker_name}",
-                    detail={
-                        "worker_id": worker_id,
-                        "worker_name": worker_name,
-                        "agreement_type": "nda",
-                        "signed": True,
-                    },
-                    resource_id=worker_id,
-                    resource_type="hr_employee",
-                    resource_name=worker_name,
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"NDA signed — {worker_name}",
+                        detail={
+                            "worker_id": worker_id,
+                            "worker_name": worker_name,
+                            "agreement_type": "nda",
+                            "signed": True,
+                        },
+                        resource_id=worker_id,
+                        resource_type="hr_employee",
+                        resource_name=worker_name,
+                        severity="info",
+                    )
+                )
 
         return findings
 
@@ -262,22 +274,24 @@ class WorkdayNormalizer(BaseNormalizer):
 
             severity = DISCIPLINARY_SEVERITY.get(action_type.lower(), "medium")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Disciplinary action: {action_type} — {worker_name}",
-                detail={
-                    "worker_id": worker_id,
-                    "worker_name": worker_name,
-                    "action_type": action_type,
-                    "action_date": action_date,
-                    "reason": reason,
-                },
-                resource_id=worker_id,
-                resource_type="hr_disciplinary_action",
-                resource_name=worker_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Disciplinary action: {action_type} — {worker_name}",
+                    detail={
+                        "worker_id": worker_id,
+                        "worker_name": worker_name,
+                        "action_type": action_type,
+                        "action_date": action_date,
+                        "reason": reason,
+                    },
+                    resource_id=worker_id,
+                    resource_type="hr_disciplinary_action",
+                    resource_name=worker_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -312,21 +326,22 @@ class WorkdayNormalizer(BaseNormalizer):
             title = f"Job change ({change_type}): {descriptor}"
             if change_type.lower() == "transfer":
                 detail["access_review_note"] = (
-                    "Transfer detected — verify access review was triggered "
-                    "for department change"
+                    "Transfer detected — verify access review was triggered for department change"
                 )
                 title = f"Transfer: {descriptor} — {from_department} → {to_department}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=title,
-                detail=detail,
-                resource_id=wid,
-                resource_type="hr_job_change",
-                resource_name=descriptor,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=title,
+                    detail=detail,
+                    resource_id=wid,
+                    resource_type="hr_job_change",
+                    resource_name=descriptor,
+                    severity="info",
+                )
+            )
 
         return findings
 

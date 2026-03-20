@@ -435,8 +435,7 @@ _AUDIT_READINESS_USER = (
 )
 
 _EVIDENCE_EVALUATION_USER = (
-    "Evaluate the following evidence artifacts for audit sufficiency.\n\n"
-    + _EVIDENCE_WRAPPER
+    "Evaluate the following evidence artifacts for audit sufficiency.\n\n" + _EVIDENCE_WRAPPER
 )
 
 _DRIFT_EXPLANATION_USER = (
@@ -445,8 +444,7 @@ _DRIFT_EXPLANATION_USER = (
 )
 
 _VENDOR_RISK_ANALYSIS_USER = (
-    "Analyze the following vendor evidence and assess third-party risk.\n\n"
-    + _EVIDENCE_WRAPPER
+    "Analyze the following vendor evidence and assess third-party risk.\n\n" + _EVIDENCE_WRAPPER
 )
 
 _ISSUE_TRIAGE_USER = (
@@ -475,8 +473,7 @@ _CIS_NARRATIVE_USER = (
 )
 
 _FOLLOW_UP_USER = (
-    "Using the context below, answer the user's follow-up question.\n\n"
-    + _EVIDENCE_WRAPPER
+    "Using the context below, answer the user's follow-up question.\n\n" + _EVIDENCE_WRAPPER
 )
 
 

@@ -77,27 +77,29 @@ class GCPNormalizer(BaseNormalizer):
             elif finding_class == "VULNERABILITY":
                 obs_type = "vulnerability"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"SCC finding: {category}",
-                detail={
-                    "category": category,
-                    "finding_class": finding_class,
-                    "state": state,
-                    "severity": scc_severity,
-                    "resource_name": resource_name,
-                    "source_properties": finding.get("source_properties", {}),
-                    "external_uri": finding.get("external_uri", ""),
-                    "description": finding.get("description", ""),
-                },
-                resource_id=resource_name,
-                resource_type=finding.get("resource_name", "").split("/")[3]
-                if len(finding.get("resource_name", "").split("/")) > 3
-                else "gcp_resource",
-                resource_name=resource_name.split("/")[-1] if resource_name else "",
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"SCC finding: {category}",
+                    detail={
+                        "category": category,
+                        "finding_class": finding_class,
+                        "state": state,
+                        "severity": scc_severity,
+                        "resource_name": resource_name,
+                        "source_properties": finding.get("source_properties", {}),
+                        "external_uri": finding.get("external_uri", ""),
+                        "description": finding.get("description", ""),
+                    },
+                    resource_id=resource_name,
+                    resource_type=finding.get("resource_name", "").split("/")[3]
+                    if len(finding.get("resource_name", "").split("/")) > 3
+                    else "gcp_resource",
+                    resource_name=resource_name.split("/")[-1] if resource_name else "",
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -141,30 +143,31 @@ class GCPNormalizer(BaseNormalizer):
             # Check for external (non-service-account) members with owner
             if role == "roles/owner":
                 external = [
-                    m for m in members
+                    m
+                    for m in members
                     if not m.startswith("serviceAccount:")
                     and m not in ("allUsers", "allAuthenticatedUsers")
                 ]
                 if len(external) > 3:
                     issues.append(f"too_many_owners_{len(external)}")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"IAM binding: {role}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "role": role,
-                    "members": members,
-                    "member_count": len(members),
-                    "issues": issues,
-                },
-                resource_id=f"projects/{raw.raw_data.get('project_id', '')}/iam/{role}",
-                resource_type="iam_binding",
-                resource_name=role,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"IAM binding: {role}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "role": role,
+                        "members": members,
+                        "member_count": len(members),
+                        "issues": issues,
+                    },
+                    resource_id=f"projects/{raw.raw_data.get('project_id', '')}/iam/{role}",
+                    resource_type="iam_binding",
+                    resource_name=role,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -202,15 +205,11 @@ class GCPNormalizer(BaseNormalizer):
                                     start, end = port_spec.split("-")
                                     for p in sensitive_ports:
                                         if int(start) <= p <= int(end):
-                                            issues.append(
-                                                f"open_to_internet_port_{p}"
-                                            )
+                                            issues.append(f"open_to_internet_port_{p}")
                                 else:
                                     port = int(port_spec)
                                     if port in sensitive_ports:
-                                        issues.append(
-                                            f"open_to_internet_port_{port}"
-                                        )
+                                        issues.append(f"open_to_internet_port_{port}")
                             except (ValueError, TypeError):
                                 pass
 
@@ -222,18 +221,19 @@ class GCPNormalizer(BaseNormalizer):
 
             rule_name = rule.get("name", "unknown")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Firewall rule: {rule_name}" + (
-                    f" — {len(issues)} open ports" if issues else ""
-                ),
-                detail={"firewall_rule": rule, "issues": issues},
-                resource_id=rule.get("self_link", rule.get("id", "")),
-                resource_type="compute_firewall_rule",
-                resource_name=rule_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Firewall rule: {rule_name}"
+                    + (f" — {len(issues)} open ports" if issues else ""),
+                    detail={"firewall_rule": rule, "issues": issues},
+                    resource_id=rule.get("self_link", rule.get("id", "")),
+                    resource_type="compute_firewall_rule",
+                    resource_name=rule_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -261,18 +261,19 @@ class GCPNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"GCS bucket: {bucket_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={"bucket": bucket, "issues": issues},
-                resource_id=f"gs://{bucket_name}",
-                resource_type="storage_bucket",
-                resource_name=bucket_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"GCS bucket: {bucket_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={"bucket": bucket, "issues": issues},
+                    resource_id=f"gs://{bucket_name}",
+                    resource_type="storage_bucket",
+                    resource_name=bucket_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -301,23 +302,25 @@ class GCPNormalizer(BaseNormalizer):
             resource_type = resource.get("type", "")
             log_name = entry.get("log_name", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Audit log: {log_name.split('/')[-1] if log_name else 'unknown'} — {severity}",
-                detail={
-                    "log_name": log_name,
-                    "severity": severity,
-                    "resource_type": resource_type,
-                    "resource_labels": resource.get("labels", {}),
-                    "payload": entry.get("payload", {}),
-                    "timestamp": entry.get("timestamp", ""),
-                },
-                resource_id=str(resource.get("labels", {}).get("project_id", "")),
-                resource_type=resource_type or "gcp_audit",
-                resource_name=log_name.split("/")[-1] if log_name else "",
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Audit log: {log_name.split('/')[-1] if log_name else 'unknown'} — {severity}",
+                    detail={
+                        "log_name": log_name,
+                        "severity": severity,
+                        "resource_type": resource_type,
+                        "resource_labels": resource.get("labels", {}),
+                        "payload": entry.get("payload", {}),
+                        "timestamp": entry.get("timestamp", ""),
+                    },
+                    resource_id=str(resource.get("labels", {}).get("project_id", "")),
+                    resource_type=resource_type or "gcp_audit",
+                    resource_name=log_name.split("/")[-1] if log_name else "",
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -369,18 +372,19 @@ class GCPNormalizer(BaseNormalizer):
             base = self._base(raw)
             if location:
                 base["region"] = location
-            findings.append(FindingData(
-                **base,
-                observation_type=obs_type,
-                title=f"GKE cluster: {cluster_name}" + (
-                    f" — {len(issues)} issues" if issues else ""
-                ),
-                detail={"cluster": cluster, "issues": issues},
-                resource_id=cluster.get("self_link", ""),
-                resource_type="gke_cluster",
-                resource_name=cluster_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **base,
+                    observation_type=obs_type,
+                    title=f"GKE cluster: {cluster_name}"
+                    + (f" — {len(issues)} issues" if issues else ""),
+                    detail={"cluster": cluster, "issues": issues},
+                    resource_id=cluster.get("self_link", ""),
+                    resource_type="gke_cluster",
+                    resource_name=cluster_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 

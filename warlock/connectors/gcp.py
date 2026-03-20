@@ -29,9 +29,7 @@ class GCPConnector(BaseConnector):
         try:
             from google.auth import default as google_auth_default  # noqa: F401
         except ImportError:
-            errors.append(
-                "google-auth not installed. Install with: pip install warlock[gcp]"
-            )
+            errors.append("google-auth not installed. Install with: pip install warlock[gcp]")
         if not self.config.settings.get("project_id"):
             errors.append("project_id is required in connector settings")
         if not self.config.settings.get("organization_id"):
@@ -72,18 +70,20 @@ class GCPConnector(BaseConnector):
         for event_type, collector_fn in collectors:
             try:
                 data = collector_fn(project_id, organization_id)
-                result.events.append(RawEventData(
-                    source="gcp",
-                    source_type=SourceType.CLOUD,
-                    provider="gcp",
-                    event_type=event_type,
-                    raw_data={
-                        "project_id": project_id,
-                        "organization_id": organization_id,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="gcp",
+                        source_type=SourceType.CLOUD,
+                        provider="gcp",
+                        event_type=event_type,
+                        raw_data={
+                            "project_id": project_id,
+                            "organization_id": organization_id,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("GCP %s failed: %s", event_type, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -93,55 +93,43 @@ class GCPConnector(BaseConnector):
 
     # -- Collectors --
 
-    def _collect_scc_findings(
-        self, project_id: str, organization_id: str
-    ) -> dict:
+    def _collect_scc_findings(self, project_id: str, organization_id: str) -> dict:
         from google.cloud import securitycenter_v1
 
         client = securitycenter_v1.SecurityCenterClient()
         parent = f"organizations/{organization_id}/sources/-"
         findings = list(client.list_findings(request={"parent": parent}))
         return {
-            "findings": [
-                type(f.finding).to_dict(f.finding) for f in findings
-            ],
+            "findings": [type(f.finding).to_dict(f.finding) for f in findings],
         }
 
-    def _collect_iam_policies(
-        self, project_id: str, organization_id: str
-    ) -> dict:
+    def _collect_iam_policies(self, project_id: str, organization_id: str) -> dict:
         from google.cloud import resourcemanager_v3
 
         client = resourcemanager_v3.ProjectsClient()
-        policy = client.get_iam_policy(
-            request={"resource": f"projects/{project_id}"}
-        )
+        policy = client.get_iam_policy(request={"resource": f"projects/{project_id}"})
         bindings = []
         for binding in policy.bindings:
-            bindings.append({
-                "role": binding.role,
-                "members": list(binding.members),
-            })
+            bindings.append(
+                {
+                    "role": binding.role,
+                    "members": list(binding.members),
+                }
+            )
         return {
             "bindings": bindings,
         }
 
-    def _collect_firewall_rules(
-        self, project_id: str, organization_id: str
-    ) -> dict:
+    def _collect_firewall_rules(self, project_id: str, organization_id: str) -> dict:
         from google.cloud import compute_v1
 
         client = compute_v1.FirewallsClient()
         firewalls = list(client.list(project=project_id))
         return {
-            "firewall_rules": [
-                type(fw).to_dict(fw) for fw in firewalls
-            ],
+            "firewall_rules": [type(fw).to_dict(fw) for fw in firewalls],
         }
 
-    def _collect_storage_buckets(
-        self, project_id: str, organization_id: str
-    ) -> dict:
+    def _collect_storage_buckets(self, project_id: str, organization_id: str) -> dict:
         from google.cloud import storage
 
         client = storage.Client(project=project_id)
@@ -155,9 +143,9 @@ class GCPConnector(BaseConnector):
                     "versioning_enabled": b.versioning_enabled,
                     "iam_configuration": {
                         "uniform_bucket_level_access_enabled": (
-                            b.iam_configuration.get(
-                                "uniformBucketLevelAccess", {}
-                            ).get("enabled", False)
+                            b.iam_configuration.get("uniformBucketLevelAccess", {}).get(
+                                "enabled", False
+                            )
                             if isinstance(b.iam_configuration, dict)
                             else False
                         ),
@@ -168,9 +156,7 @@ class GCPConnector(BaseConnector):
             ],
         }
 
-    def _collect_audit_logs(
-        self, project_id: str, organization_id: str
-    ) -> dict:
+    def _collect_audit_logs(self, project_id: str, organization_id: str) -> dict:
         from google.cloud import logging as cloud_logging
 
         client = cloud_logging.Client(project=project_id)
@@ -201,18 +187,16 @@ class GCPConnector(BaseConnector):
             ],
         }
 
-    def _collect_gke_clusters(
-        self, project_id: str, organization_id: str
-    ) -> dict:
+    def _collect_gke_clusters(self, project_id: str, organization_id: str) -> dict:
         from google.cloud import container_v1
 
         client = container_v1.ClusterManagerClient()
         parent = f"projects/{project_id}/locations/-"
         response = client.list_clusters(parent=parent)
         return {
-            "clusters": [
-                type(c).to_dict(c) for c in response.clusters
-            ] if response.clusters else [],
+            "clusters": [type(c).to_dict(c) for c in response.clusters]
+            if response.clusters
+            else [],
         }
 
 

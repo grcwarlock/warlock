@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 _HAS_SDK = False
 try:
     from alibabacloud_tea_openapi import models as open_api_models  # noqa: F401
+
     _HAS_SDK = True
 except ImportError:
     pass
@@ -64,9 +65,7 @@ def _build_signed_params(
 
     # Build canonical query string
     sorted_keys = sorted(common.keys())
-    canonical = "&".join(
-        f"{_percent_encode(k)}={_percent_encode(common[k])}" for k in sorted_keys
-    )
+    canonical = "&".join(f"{_percent_encode(k)}={_percent_encode(common[k])}" for k in sorted_keys)
     string_to_sign = f"GET&{_percent_encode('/')}&{_percent_encode(canonical)}"
     signature = base64.b64encode(
         hmac.new(
@@ -87,9 +86,7 @@ class AlibabaConnector(BaseConnector):
         try:
             import httpx  # noqa: F401
         except ImportError:
-            errors.append(
-                "httpx not installed. Install with: pip install warlock[alibaba]"
-            )
+            errors.append("httpx not installed. Install with: pip install warlock[alibaba]")
         if not self._get_access_key_id():
             errors.append(
                 "Alibaba access_key_id not configured "
@@ -97,8 +94,7 @@ class AlibabaConnector(BaseConnector):
             )
         if not self._get_access_key_secret():
             errors.append(
-                "Alibaba access_key_secret not configured "
-                "(set WLK_ALIBABA_ACCESS_KEY_SECRET)"
+                "Alibaba access_key_secret not configured (set WLK_ALIBABA_ACCESS_KEY_SECRET)"
             )
         return errors
 
@@ -143,17 +139,19 @@ class AlibabaConnector(BaseConnector):
         for event_type, collector_fn in collectors:
             try:
                 data = collector_fn(ak_id, ak_secret, region)
-                result.events.append(RawEventData(
-                    source="alibaba",
-                    source_type=SourceType.CLOUD,
-                    provider="alibaba",
-                    event_type=event_type,
-                    raw_data={
-                        "region": region,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="alibaba",
+                        source_type=SourceType.CLOUD,
+                        provider="alibaba",
+                        event_type=event_type,
+                        raw_data={
+                            "region": region,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Alibaba %s failed: %s", event_type, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -176,7 +174,11 @@ class AlibabaConnector(BaseConnector):
         import httpx
 
         params = _build_signed_params(
-            ak_id, ak_secret, action, extra_params or {}, version,
+            ak_id,
+            ak_secret,
+            action,
+            extra_params or {},
+            version,
         )
         resp = httpx.get(
             endpoint,
@@ -189,10 +191,14 @@ class AlibabaConnector(BaseConnector):
     # -- Collectors --
 
     def _collect_security_alerts(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         data = self._api_call(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             endpoint="https://tds.aliyuncs.com",
             action="DescribeAlarmEventList",
             version="2018-12-03",
@@ -206,19 +212,19 @@ class AlibabaConnector(BaseConnector):
         }
 
     def _collect_ram_users(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         data = self._api_call(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             endpoint="https://ram.aliyuncs.com",
             action="ListUsers",
             version="2015-05-01",
         )
-        users = (
-            data.get("Users", {}).get("User", [])
-            if isinstance(data.get("Users"), dict)
-            else []
-        )
+        users = data.get("Users", {}).get("User", []) if isinstance(data.get("Users"), dict) else []
 
         # Enrich with MFA status per user
         enriched_users = []
@@ -226,7 +232,8 @@ class AlibabaConnector(BaseConnector):
             user_name = user.get("UserName", "")
             try:
                 mfa_data = self._api_call(
-                    ak_id, ak_secret,
+                    ak_id,
+                    ak_secret,
                     endpoint="https://ram.aliyuncs.com",
                     action="GetUserMFAInfo",
                     version="2015-05-01",
@@ -240,11 +247,15 @@ class AlibabaConnector(BaseConnector):
         return {"users": enriched_users}
 
     def _collect_actiontrail_events(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         endpoint = f"https://actiontrail.{region}.aliyuncs.com"
         data = self._api_call(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             endpoint=endpoint,
             action="LookupEvents",
             version="2020-07-06",
@@ -256,12 +267,16 @@ class AlibabaConnector(BaseConnector):
         }
 
     def _collect_security_groups(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         endpoint = "https://ecs.aliyuncs.com"
         # List security groups
         sg_data = self._api_call(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             endpoint=endpoint,
             action="DescribeSecurityGroups",
             version="2014-05-26",
@@ -279,7 +294,8 @@ class AlibabaConnector(BaseConnector):
             sg_id = sg.get("SecurityGroupId", "")
             try:
                 attr_data = self._api_call(
-                    ak_id, ak_secret,
+                    ak_id,
+                    ak_secret,
                     endpoint=endpoint,
                     action="DescribeSecurityGroupAttribute",
                     version="2014-05-26",
@@ -300,11 +316,15 @@ class AlibabaConnector(BaseConnector):
         return {"security_groups": enriched}
 
     def _collect_kms_keys(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         endpoint = f"https://kms.{region}.aliyuncs.com"
         list_data = self._api_call(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             endpoint=endpoint,
             action="ListKeys",
             version="2016-01-20",
@@ -322,7 +342,8 @@ class AlibabaConnector(BaseConnector):
             key_id = key.get("KeyId", "")
             try:
                 detail = self._api_call(
-                    ak_id, ak_secret,
+                    ak_id,
+                    ak_secret,
                     endpoint=endpoint,
                     action="DescribeKey",
                     version="2016-01-20",
@@ -336,26 +357,31 @@ class AlibabaConnector(BaseConnector):
         return {"keys": enriched}
 
     def _collect_config_compliance(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         endpoint = f"https://config.{region}.aliyuncs.com"
         data = self._api_call(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             endpoint=endpoint,
             action="ListCompliancePackEvaluationResults",
             version="2020-09-07",
             extra_params={"MaxResults": "100"},
         )
         return {
-            "results": data.get("EvaluationResults", {}).get(
-                "EvaluationResultList", []
-            )
+            "results": data.get("EvaluationResults", {}).get("EvaluationResultList", [])
             if isinstance(data.get("EvaluationResults"), dict)
             else [],
         }
 
     def _collect_oss_buckets(
-        self, ak_id: str, ak_secret: str, region: str,
+        self,
+        ak_id: str,
+        ak_secret: str,
+        region: str,
     ) -> dict:
         # OSS uses a slightly different API surface — list via the ECS-style endpoint
         # The ListBuckets API is XML-based; we use the GetService operation signed
@@ -363,7 +389,8 @@ class AlibabaConnector(BaseConnector):
 
         endpoint = f"https://oss-{region}.aliyuncs.com"
         params = _build_signed_params(
-            ak_id, ak_secret,
+            ak_id,
+            ak_secret,
             action="GetService",
             params={},
             version="2019-05-17",
@@ -377,6 +404,7 @@ class AlibabaConnector(BaseConnector):
         except Exception:
             # Parse XML response for bucket names
             import xml.etree.ElementTree as ET
+
             root = ET.fromstring(resp.text)
             ns = root.tag.split("}")[0] + "}" if "}" in root.tag else ""
             buckets_el = root.find(f"{ns}Buckets")
@@ -386,11 +414,13 @@ class AlibabaConnector(BaseConnector):
                     bucket_name = b.findtext(f"{ns}Name", "")
                     location = b.findtext(f"{ns}Location", "")
                     creation_date = b.findtext(f"{ns}CreationDate", "")
-                    buckets.append({
-                        "Name": bucket_name,
-                        "Location": location,
-                        "CreationDate": creation_date,
-                    })
+                    buckets.append(
+                        {
+                            "Name": bucket_name,
+                            "Location": location,
+                            "CreationDate": creation_date,
+                        }
+                    )
             data = {"Buckets": buckets}
 
         # Check ACL for each bucket
@@ -403,7 +433,8 @@ class AlibabaConnector(BaseConnector):
             bucket_name = bucket.get("Name", "")
             try:
                 acl_params = _build_signed_params(
-                    ak_id, ak_secret,
+                    ak_id,
+                    ak_secret,
                     action="GetBucketAcl",
                     params={"BucketName": bucket_name},
                     version="2019-05-17",
@@ -417,11 +448,10 @@ class AlibabaConnector(BaseConnector):
                     acl_data = acl_resp.json()
                 except Exception:
                     import xml.etree.ElementTree as ET
+
                     acl_root = ET.fromstring(acl_resp.text)
                     acl_ns = acl_root.tag.split("}")[0] + "}" if "}" in acl_root.tag else ""
-                    grant = acl_root.findtext(
-                        f".//{acl_ns}Grant", ""
-                    )
+                    grant = acl_root.findtext(f".//{acl_ns}Grant", "")
                     acl_data = {"Grant": grant}
                 bucket["ACL"] = acl_data
             except Exception:
@@ -430,7 +460,8 @@ class AlibabaConnector(BaseConnector):
             # Check encryption
             try:
                 enc_params = _build_signed_params(
-                    ak_id, ak_secret,
+                    ak_id,
+                    ak_secret,
                     action="GetBucketEncryption",
                     params={"BucketName": bucket_name},
                     version="2019-05-17",
@@ -440,9 +471,7 @@ class AlibabaConnector(BaseConnector):
                     params=enc_params,
                     timeout=15,
                 )
-                bucket["Encryption"] = (
-                    enc_resp.json() if enc_resp.status_code == 200 else {}
-                )
+                bucket["Encryption"] = enc_resp.json() if enc_resp.status_code == 200 else {}
             except Exception:
                 bucket["Encryption"] = {}
 
@@ -453,9 +482,8 @@ class AlibabaConnector(BaseConnector):
     # -- Auth helpers --
 
     def _get_access_key_id(self) -> str:
-        return (
-            self.config.settings.get("access_key_id", "")
-            or self.get_secret("WLK_ALIBABA_ACCESS_KEY_ID")
+        return self.config.settings.get("access_key_id", "") or self.get_secret(
+            "WLK_ALIBABA_ACCESS_KEY_ID"
         )
 
     def _get_access_key_secret(self) -> str:

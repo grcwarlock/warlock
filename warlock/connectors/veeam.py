@@ -40,18 +40,15 @@ class VeeamConnector(BaseConnector):
             errors.append("httpx not installed. Install with: pip install httpx")
         if not self._get_base_url():
             errors.append(
-                "Veeam base_url not configured "
-                "(set WLK_VEEAM_BASE_URL or config.settings.base_url)"
+                "Veeam base_url not configured (set WLK_VEEAM_BASE_URL or config.settings.base_url)"
             )
         if not self._get_username():
             errors.append(
-                "Veeam username not configured "
-                "(set WLK_VEEAM_USERNAME or config.settings.username)"
+                "Veeam username not configured (set WLK_VEEAM_USERNAME or config.settings.username)"
             )
         if not self._get_password():
             errors.append(
-                "Veeam password not configured "
-                "(set WLK_VEEAM_PASSWORD or config.settings.password)"
+                "Veeam password not configured (set WLK_VEEAM_PASSWORD or config.settings.password)"
             )
         return errors
 
@@ -108,18 +105,20 @@ class VeeamConnector(BaseConnector):
                     if isinstance(records, dict):
                         records = [records]
 
-                result.events.append(RawEventData(
-                    source="veeam",
-                    source_type=SourceType.BACKUP,
-                    provider="veeam",
-                    event_type=event_type,
-                    raw_data={
-                        "endpoint": endpoint,
-                        "records": records,
-                        "total": len(records),
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="veeam",
+                        source_type=SourceType.BACKUP,
+                        provider="veeam",
+                        event_type=event_type,
+                        raw_data={
+                            "endpoint": endpoint,
+                            "records": records,
+                            "total": len(records),
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Veeam %s failed: %s", endpoint, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -153,20 +152,14 @@ class VeeamConnector(BaseConnector):
             return ""
 
     def _get_base_url(self) -> str:
-        url = self.config.settings.get("base_url", "") or self.get_secret(
-            "WLK_VEEAM_BASE_URL"
-        )
+        url = self.config.settings.get("base_url", "") or self.get_secret("WLK_VEEAM_BASE_URL")
         return url.rstrip("/") if url else ""
 
     def _get_username(self) -> str:
-        return self.config.settings.get("username", "") or self.get_secret(
-            "WLK_VEEAM_USERNAME"
-        )
+        return self.config.settings.get("username", "") or self.get_secret("WLK_VEEAM_USERNAME")
 
     def _get_password(self) -> str:
-        return self.config.settings.get("password", "") or self.get_secret(
-            "WLK_VEEAM_PASSWORD"
-        )
+        return self.config.settings.get("password", "") or self.get_secret("WLK_VEEAM_PASSWORD")
 
     def _auth_headers(self, token: str) -> dict[str, str]:
         return {"Authorization": f"Bearer {token}", "Accept": "application/json"}

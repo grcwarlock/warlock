@@ -23,13 +23,17 @@ log = logging.getLogger(__name__)
 OKTA_ENDPOINTS: list[tuple[str, str, dict]] = [
     ("/api/v1/users", "okta_users", {"limit": "200"}),
     ("/api/v1/groups", "okta_groups", {"limit": "200"}),
-    ("/api/v1/logs", "okta_system_log", {
-        "limit": "1000",
-        "filter": 'eventType eq "user.session.start" or '
-                  'eventType eq "user.authentication.auth_via_mfa" or '
-                  'eventType eq "user.account.privilege.grant" or '
-                  'eventType eq "policy.evaluate_sign_on"',
-    }),
+    (
+        "/api/v1/logs",
+        "okta_system_log",
+        {
+            "limit": "1000",
+            "filter": 'eventType eq "user.session.start" or '
+            'eventType eq "user.authentication.auth_via_mfa" or '
+            'eventType eq "user.account.privilege.grant" or '
+            'eventType eq "policy.evaluate_sign_on"',
+        },
+    ),
     ("/api/v1/policies", "okta_policies", {"type": "PASSWORD"}),
     ("/api/v1/apps", "okta_applications", {"limit": "200"}),
 ]
@@ -90,18 +94,20 @@ class OktaConnector(BaseConnector):
             for endpoint, event_type, params in OKTA_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, params)
-                    result.events.append(RawEventData(
-                        source="okta",
-                        source_type=SourceType.IAM,
-                        provider="okta",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "domain": domain,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="okta",
+                            source_type=SourceType.IAM,
+                            provider="okta",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "domain": domain,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Okta %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")
@@ -125,18 +131,20 @@ class OktaConnector(BaseConnector):
                     except Exception:
                         pass
                 if factors_data:
-                    result.events.append(RawEventData(
-                        source="okta",
-                        source_type=SourceType.IAM,
-                        provider="okta",
-                        event_type="okta_factors",
-                        raw_data={
-                            "endpoint": "/api/v1/users/{id}/factors",
-                            "domain": domain,
-                            "response": factors_data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="okta",
+                            source_type=SourceType.IAM,
+                            provider="okta",
+                            event_type="okta_factors",
+                            raw_data={
+                                "endpoint": "/api/v1/users/{id}/factors",
+                                "domain": domain,
+                                "response": factors_data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
             except Exception as e:
                 log.debug("Okta factors collection failed: %s", e)
                 result.errors.append(f"factors: {e}")
@@ -179,6 +187,7 @@ class OktaConnector(BaseConnector):
                     # next URL is absolute, strip base
                     if url.startswith("https://"):
                         from urllib.parse import urlparse
+
                         parsed = urlparse(url)
                         url = parsed.path + ("?" + parsed.query if parsed.query else "")
                     break

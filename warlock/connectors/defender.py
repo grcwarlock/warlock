@@ -46,11 +46,17 @@ class DefenderConnector(BaseConnector):
         except ImportError:
             errors.append("msal not installed. Install with: pip install msal")
         if not self._get_tenant_id():
-            errors.append("Defender tenant_id not configured (set DEFENDER_TENANT_ID or config.settings.tenant_id)")
+            errors.append(
+                "Defender tenant_id not configured (set DEFENDER_TENANT_ID or config.settings.tenant_id)"
+            )
         if not self._get_client_id():
-            errors.append("Defender client_id not configured (set DEFENDER_CLIENT_ID or config.settings.client_id)")
+            errors.append(
+                "Defender client_id not configured (set DEFENDER_CLIENT_ID or config.settings.client_id)"
+            )
         if not self._get_client_secret():
-            errors.append("Defender client_secret not configured (set DEFENDER_CLIENT_SECRET or config.settings.client_secret)")
+            errors.append(
+                "Defender client_secret not configured (set DEFENDER_CLIENT_SECRET or config.settings.client_secret)"
+            )
         return errors
 
     def health_check(self) -> bool:
@@ -59,6 +65,7 @@ class DefenderConnector(BaseConnector):
             if not token:
                 return False
             import httpx
+
             resp = httpx.get(
                 f"{self._get_base_url()}/api/machines",
                 headers={"Authorization": f"Bearer {token}"},
@@ -108,18 +115,20 @@ class DefenderConnector(BaseConnector):
                         log.warning("Defender %s: capped at 10k records", event_type)
                         break
 
-                result.events.append(RawEventData(
-                    source="defender",
-                    source_type=SourceType.EDR,
-                    provider="defender",
-                    event_type=event_type,
-                    raw_data={
-                        "endpoint": endpoint,
-                        "records": all_records,
-                        "total": len(all_records),
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="defender",
+                        source_type=SourceType.EDR,
+                        provider="defender",
+                        event_type=event_type,
+                        raw_data={
+                            "endpoint": endpoint,
+                            "records": all_records,
+                            "total": len(all_records),
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Defender %s failed: %s", endpoint, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -133,6 +142,7 @@ class DefenderConnector(BaseConnector):
         """Acquire OAuth2 access token using client_credentials flow."""
         try:
             import msal
+
             authority = f"https://login.microsoftonline.com/{self._get_tenant_id()}"
             app = msal.ConfidentialClientApplication(
                 client_id=self._get_client_id(),
@@ -142,7 +152,10 @@ class DefenderConnector(BaseConnector):
             token_resp = app.acquire_token_for_client(scopes=[GRAPH_SCOPE])
             if token_resp and "access_token" in token_resp:
                 return token_resp["access_token"]
-            log.error("Defender token acquisition failed: %s", token_resp.get("error_description", "unknown"))
+            log.error(
+                "Defender token acquisition failed: %s",
+                token_resp.get("error_description", "unknown"),
+            )
             return ""
         except Exception as e:
             log.error("Defender token acquisition error: %s", e)
@@ -155,7 +168,9 @@ class DefenderConnector(BaseConnector):
         return self.config.settings.get("client_id", "") or self.get_secret("DEFENDER_CLIENT_ID")
 
     def _get_client_secret(self) -> str:
-        return self.config.settings.get("client_secret", "") or self.get_secret("DEFENDER_CLIENT_SECRET")
+        return self.config.settings.get("client_secret", "") or self.get_secret(
+            "DEFENDER_CLIENT_SECRET"
+        )
 
     def _get_base_url(self) -> str:
         return self.config.settings.get("base_url", DEFAULT_BASE_URL)

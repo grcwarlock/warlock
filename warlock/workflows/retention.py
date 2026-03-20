@@ -25,14 +25,14 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 FRAMEWORK_RETENTION: dict[str, int] = {
-    "hipaa": 2190,           # 6 years
-    "fedramp": 1095,         # 3 years
-    "nist_800_53": 1095,     # 3 years
-    "soc2": 365,             # 1 year
-    "iso_27001": 1095,       # 3 years
-    "iso_27701": 1095,       # 3 years (GDPR alignment)
-    "iso_42001": 1095,       # 3 years
-    "pci_dss": 365,          # 1 year
+    "hipaa": 2190,  # 6 years
+    "fedramp": 1095,  # 3 years
+    "nist_800_53": 1095,  # 3 years
+    "soc2": 365,  # 1 year
+    "iso_27001": 1095,  # 3 years
+    "iso_27701": 1095,  # 3 years (GDPR alignment)
+    "iso_42001": 1095,  # 3 years
+    "pci_dss": 365,  # 1 year
 }
 
 DEFAULT_RETENTION_DAYS = 1095  # 3 years fallback
@@ -54,10 +54,7 @@ class RetentionManager:
         if not frameworks:
             return DEFAULT_RETENTION_DAYS
 
-        days = [
-            FRAMEWORK_RETENTION.get(fw.lower(), DEFAULT_RETENTION_DAYS)
-            for fw in frameworks
-        ]
+        days = [FRAMEWORK_RETENTION.get(fw.lower(), DEFAULT_RETENTION_DAYS) for fw in frameworks]
         return max(days) if days else DEFAULT_RETENTION_DAYS
 
     def _has_active_hold(
@@ -122,7 +119,9 @@ class RetentionManager:
             days = self.get_retention_days(frameworks)
         else:
             # Use the shortest retention when no framework specified
-            days = min(FRAMEWORK_RETENTION.values()) if FRAMEWORK_RETENTION else DEFAULT_RETENTION_DAYS
+            days = (
+                min(FRAMEWORK_RETENTION.values()) if FRAMEWORK_RETENTION else DEFAULT_RETENTION_DAYS
+            )
         return datetime.now(timezone.utc) - timedelta(days=days)
 
     def identify_purgeable(
@@ -141,17 +140,12 @@ class RetentionManager:
         cutoff = ensure_aware(self._cutoff_date(frameworks if framework else None))
 
         raw_count = (
-            session.query(func.count(RawEvent.id))
-            .filter(RawEvent.ingested_at < cutoff)
-            .scalar()
+            session.query(func.count(RawEvent.id)).filter(RawEvent.ingested_at < cutoff).scalar()
             or 0
         )
 
         findings_count = (
-            session.query(func.count(Finding.id))
-            .filter(Finding.ingested_at < cutoff)
-            .scalar()
-            or 0
+            session.query(func.count(Finding.id)).filter(Finding.ingested_at < cutoff).scalar() or 0
         )
 
         results_count = (
@@ -207,16 +201,11 @@ class RetentionManager:
 
         # Count what would be purged
         raw_count = (
-            session.query(func.count(RawEvent.id))
-            .filter(RawEvent.ingested_at < cutoff)
-            .scalar()
+            session.query(func.count(RawEvent.id)).filter(RawEvent.ingested_at < cutoff).scalar()
             or 0
         )
         findings_count = (
-            session.query(func.count(Finding.id))
-            .filter(Finding.ingested_at < cutoff)
-            .scalar()
-            or 0
+            session.query(func.count(Finding.id)).filter(Finding.ingested_at < cutoff).scalar() or 0
         )
         results_count = (
             session.query(func.count(ControlResult.id))
@@ -395,9 +384,7 @@ class RetentionManager:
             or 0
         )
 
-        total_records = (
-            session.query(func.count(RawEvent.id)).scalar() or 0
-        )
+        total_records = session.query(func.count(RawEvent.id)).scalar() or 0
 
         purgeable = self.identify_purgeable(session)
         holds = self.active_holds(session)

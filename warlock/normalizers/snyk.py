@@ -62,9 +62,7 @@ class SnykNormalizer(BaseNormalizer):
 
             if last_tested_str:
                 try:
-                    last_tested = datetime.fromisoformat(
-                        last_tested_str.replace("Z", "+00:00")
-                    )
+                    last_tested = datetime.fromisoformat(last_tested_str.replace("Z", "+00:00"))
                     if last_tested < stale_threshold:
                         issues.append("not_tested_in_7_days")
                         severity = "medium"
@@ -77,26 +75,27 @@ class SnykNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Snyk project: {name}"
-                      + (f" -- {', '.join(issues)}" if issues else ""),
-                detail={
-                    "project_id": project_id,
-                    "name": name,
-                    "type": project_type,
-                    "last_tested_date": last_tested_str,
-                    "origin": attrs.get("origin", ""),
-                    "status": attrs.get("status", ""),
-                    "issues": issues,
-                    "project": project,
-                },
-                resource_id=project_id,
-                resource_type="code_project",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Snyk project: {name}" + (f" -- {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "project_id": project_id,
+                        "name": name,
+                        "type": project_type,
+                        "last_tested_date": last_tested_str,
+                        "origin": attrs.get("origin", ""),
+                        "status": attrs.get("status", ""),
+                        "issues": issues,
+                        "project": project,
+                    },
+                    resource_id=project_id,
+                    resource_type="code_project",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -113,8 +112,7 @@ class SnykNormalizer(BaseNormalizer):
 
             # Severity mapping from Snyk
             snyk_severity = (
-                attrs.get("effective_severity_level")
-                or attrs.get("severity", "medium")
+                attrs.get("effective_severity_level") or attrs.get("severity", "medium")
             ).lower()
             if snyk_severity not in ("critical", "high", "medium", "low"):
                 snyk_severity = "medium"
@@ -128,14 +126,9 @@ class SnykNormalizer(BaseNormalizer):
 
             cvss_score = attrs.get("cvss_score") or attrs.get("cvssScore")
             package_name = (
-                attrs.get("package_name")
-                or attrs.get("pkgName")
-                or attrs.get("package", "")
+                attrs.get("package_name") or attrs.get("pkgName") or attrs.get("package", "")
             )
-            package_version = (
-                attrs.get("package_version")
-                or attrs.get("version", "")
-            )
+            package_version = attrs.get("package_version") or attrs.get("version", "")
 
             # Fix availability
             is_fixable = attrs.get("is_fixable", attrs.get("isFixable", False))
@@ -148,30 +141,32 @@ class SnykNormalizer(BaseNormalizer):
                 first = coordinates[0] if isinstance(coordinates, list) else coordinates
                 project_name = first.get("project_name", "") if isinstance(first, dict) else ""
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="vulnerability",
-                title=f"Snyk: {title}" + (f" ({', '.join(cves)})" if cves else ""),
-                detail={
-                    "issue_id": issue_id,
-                    "title": title,
-                    "severity": snyk_severity,
-                    "cves": cves,
-                    "cvss_score": cvss_score,
-                    "package_name": package_name,
-                    "package_version": package_version,
-                    "is_fixable": is_fixable,
-                    "fix_versions": fix_versions,
-                    "exploit_maturity": attrs.get("exploit_maturity", ""),
-                    "language": attrs.get("language", ""),
-                    "project_name": project_name,
-                    "issue": issue,
-                },
-                resource_id=issue_id,
-                resource_type="code_vulnerability",
-                resource_name=f"{package_name}@{package_version}" if package_name else title,
-                severity=snyk_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title=f"Snyk: {title}" + (f" ({', '.join(cves)})" if cves else ""),
+                    detail={
+                        "issue_id": issue_id,
+                        "title": title,
+                        "severity": snyk_severity,
+                        "cves": cves,
+                        "cvss_score": cvss_score,
+                        "package_name": package_name,
+                        "package_version": package_version,
+                        "is_fixable": is_fixable,
+                        "fix_versions": fix_versions,
+                        "exploit_maturity": attrs.get("exploit_maturity", ""),
+                        "language": attrs.get("language", ""),
+                        "project_name": project_name,
+                        "issue": issue,
+                    },
+                    resource_id=issue_id,
+                    resource_type="code_vulnerability",
+                    resource_name=f"{package_name}@{package_version}" if package_name else title,
+                    severity=snyk_severity,
+                )
+            )
 
         return findings
 
@@ -206,22 +201,24 @@ class SnykNormalizer(BaseNormalizer):
             obs_type = "alert" if is_alert else "inventory"
             severity = "medium" if is_alert else "info"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Snyk audit: {event_type}" + (f" by {user_name}" if user_name else ""),
-                detail={
-                    "event_type": event_type,
-                    "user_id": user_id,
-                    "user_name": user_name,
-                    "created": created,
-                    "event": event,
-                },
-                resource_id=event.get("id", event.get("event_id", "")),
-                resource_type="code_audit_event",
-                resource_name=event_type,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Snyk audit: {event_type}" + (f" by {user_name}" if user_name else ""),
+                    detail={
+                        "event_type": event_type,
+                        "user_id": user_id,
+                        "user_name": user_name,
+                        "created": created,
+                        "event": event,
+                    },
+                    resource_id=event.get("id", event.get("event_id", "")),
+                    resource_type="code_audit_event",
+                    resource_name=event_type,
+                    severity=severity,
+                )
+            )
 
         return findings
 

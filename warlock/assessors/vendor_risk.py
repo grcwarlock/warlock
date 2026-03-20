@@ -27,17 +27,18 @@ log = logging.getLogger(__name__)
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Vendor:
     """Vendor metadata and assessment tracking."""
 
     name: str
     vendor_id: str = ""
-    criticality: str = "medium"          # critical, high, medium, low
-    data_sensitivity: str = "medium"     # critical, high, medium, low
+    criticality: str = "medium"  # critical, high, medium, low
+    data_sensitivity: str = "medium"  # critical, high, medium, low
     last_assessment_date: datetime | None = None
     assessment_frequency_days: int = 90  # expected reassessment cadence
-    security_score: float = 0.0          # 0-100, from SecurityScorecard
+    security_score: float = 0.0  # 0-100, from SecurityScorecard
     security_factors: dict[str, float] = field(default_factory=dict)
     issues: list[dict[str, Any]] = field(default_factory=list)
     sla_metrics: dict[str, Any] = field(default_factory=dict)
@@ -50,13 +51,13 @@ class VendorRiskScore:
 
     vendor_name: str
     vendor_id: str
-    overall_score: float              # 0-100, higher = lower risk
-    criticality_score: float          # 0-25
-    data_sensitivity_score: float     # 0-20
+    overall_score: float  # 0-100, higher = lower risk
+    criticality_score: float  # 0-25
+    data_sensitivity_score: float  # 0-20
     assessment_currency_score: float  # 0-20
-    security_posture_score: float     # 0-25
-    sla_compliance_score: float       # 0-10
-    risk_level: str                   # critical, high, medium, low
+    security_posture_score: float  # 0-25
+    sla_compliance_score: float  # 0-10
+    risk_level: str  # critical, high, medium, low
     issues_count: int = 0
     recommendations: list[str] = field(default_factory=list)
 
@@ -66,7 +67,7 @@ class VendorRiskScore:
 # ---------------------------------------------------------------------------
 
 _CRITICALITY_SCORES: dict[str, float] = {
-    "critical": 5.0,    # Most critical vendors = lowest score contribution
+    "critical": 5.0,  # Most critical vendors = lowest score contribution
     "high": 10.0,
     "medium": 18.0,
     "low": 25.0,
@@ -95,6 +96,7 @@ def _risk_level(score: float) -> str:
 # ---------------------------------------------------------------------------
 # VendorRiskEngine
 # ---------------------------------------------------------------------------
+
 
 class VendorRiskEngine:
     """Weighted composite scoring engine for vendor risk assessment."""
@@ -153,8 +155,7 @@ class VendorRiskEngine:
             )
         if sla < 5.0 and sla_metrics:
             recommendations.append(
-                f"Vendor {vendor.name} is not meeting SLA commitments; "
-                "review contractual terms."
+                f"Vendor {vendor.name} is not meeting SLA commitments; review contractual terms."
             )
 
         return VendorRiskScore(
@@ -273,11 +274,13 @@ class VendorRiskEngine:
             session.query(Finding)
             .filter(
                 Finding.provider == provider,
-                Finding.resource_type.in_([
-                    "vendor_company",
-                    "vendor_risk_factor",
-                    "vendor_issue",
-                ]),
+                Finding.resource_type.in_(
+                    [
+                        "vendor_company",
+                        "vendor_risk_factor",
+                        "vendor_issue",
+                    ]
+                ),
             )
             .order_by(Finding.observed_at.desc())
             .all()
@@ -312,7 +315,9 @@ class VendorRiskEngine:
             if f.resource_type == "vendor_company":
                 entry["security_score"] = detail.get("overall_score", entry["security_score"])
                 entry["criticality"] = detail.get("criticality", entry["criticality"])
-                entry["data_sensitivity"] = detail.get("data_sensitivity", entry["data_sensitivity"])
+                entry["data_sensitivity"] = detail.get(
+                    "data_sensitivity", entry["data_sensitivity"]
+                )
                 if f.observed_at:
                     if entry["last_observed"] is None or f.observed_at > entry["last_observed"]:
                         entry["last_observed"] = f.observed_at
@@ -323,27 +328,31 @@ class VendorRiskEngine:
                 entry["factors"][factor_name] = factor_score
 
             elif f.resource_type == "vendor_issue":
-                entry["issues"].append({
-                    "title": f.title,
-                    "severity": f.severity,
-                    "detail": detail,
-                    "observed_at": f.observed_at.isoformat() if f.observed_at else None,
-                })
+                entry["issues"].append(
+                    {
+                        "title": f.title,
+                        "severity": f.severity,
+                        "detail": detail,
+                        "observed_at": f.observed_at.isoformat() if f.observed_at else None,
+                    }
+                )
 
         # Build Vendor objects
         vendors: list[Vendor] = []
         for name, data in vendor_map.items():
-            vendors.append(Vendor(
-                name=data["name"],
-                vendor_id=data["vendor_id"],
-                criticality=data["criticality"],
-                data_sensitivity=data["data_sensitivity"],
-                last_assessment_date=data["last_observed"],
-                security_score=data["security_score"],
-                security_factors=data["factors"],
-                issues=data["issues"],
-                finding_ids=data["finding_ids"],
-            ))
+            vendors.append(
+                Vendor(
+                    name=data["name"],
+                    vendor_id=data["vendor_id"],
+                    criticality=data["criticality"],
+                    data_sensitivity=data["data_sensitivity"],
+                    last_assessment_date=data["last_observed"],
+                    security_score=data["security_score"],
+                    security_factors=data["factors"],
+                    issues=data["issues"],
+                    finding_ids=data["finding_ids"],
+                )
+            )
 
         log.info("Built %d vendor profiles from %s findings", len(vendors), provider)
         return vendors
@@ -431,11 +440,7 @@ def _create_vendor_risk_finding(
     # to the most recent raw event from this vendor's findings.
     raw_event_id = None
     if vendor.finding_ids:
-        source_finding = (
-            session.query(Finding)
-            .filter(Finding.id == vendor.finding_ids[0])
-            .first()
-        )
+        source_finding = session.query(Finding).filter(Finding.id == vendor.finding_ids[0]).first()
         if source_finding:
             raw_event_id = source_finding.raw_event_id
 
@@ -510,9 +515,7 @@ def analyze_concentration(
             "system_count": len(system_ids),
             "control_count": control_count,
             "system_ids": system_ids,
-            "concentration_score": round(
-                control_count / max(len(vendor_systems), 1), 2
-            ),
+            "concentration_score": round(control_count / max(len(vendor_systems), 1), 2),
         }
 
     highest = max(
@@ -556,12 +559,14 @@ def blast_radius(
     for profile in profiles:
         scopes = [s.lower() for s in (profile.connector_scope or [])]
         if vendor_lower in scopes:
-            affected_systems.append({
-                "id": profile.id,
-                "name": profile.name,
-                "acronym": profile.acronym,
-                "frameworks": profile.frameworks or [],
-            })
+            affected_systems.append(
+                {
+                    "id": profile.id,
+                    "name": profile.name,
+                    "acronym": profile.acronym,
+                    "frameworks": profile.frameworks or [],
+                }
+            )
             affected_system_ids.append(profile.id)
 
     affected_controls: list[dict[str, str]] = []

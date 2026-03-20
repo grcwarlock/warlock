@@ -84,15 +84,12 @@ class EvidenceVault:
         self.bucket: str = bucket or _get_bucket()
         self.base_path: str = base_path or _get_path()
         self.max_upload_bytes: int = (
-            max_upload_bytes
-            if max_upload_bytes is not None
-            else self.DEFAULT_MAX_UPLOAD_BYTES
+            max_upload_bytes if max_upload_bytes is not None else self.DEFAULT_MAX_UPLOAD_BYTES
         )
 
         if self.backend not in {"s3", "gcs", "local"}:
             raise ValueError(
-                f"Unsupported evidence backend: '{self.backend}'. "
-                "Choose 's3', 'gcs', or 'local'."
+                f"Unsupported evidence backend: '{self.backend}'. Choose 's3', 'gcs', or 'local'."
             )
 
         # Verify bucket exists for cloud backends at init time
@@ -143,12 +140,12 @@ class EvidenceVault:
             )
 
         # Sanitize filename — strip path separators and null bytes
-        safe_filename = re.sub(r'[/\\:\x00]', '_', filename)
-        safe_filename = re.sub(r'\.\.', '_', safe_filename)  # prevent traversal
-        if not re.match(r'^[\w\-. ]+$', safe_filename):
-            safe_filename = re.sub(r'[^\w\-.]', '_', safe_filename)
+        safe_filename = re.sub(r"[/\\:\x00]", "_", filename)
+        safe_filename = re.sub(r"\.\.", "_", safe_filename)  # prevent traversal
+        if not re.match(r"^[\w\-. ]+$", safe_filename):
+            safe_filename = re.sub(r"[^\w\-.]", "_", safe_filename)
         # Validate finding_id is UUID-like
-        if not re.match(r'^[\w\-]+$', finding_id):
+        if not re.match(r"^[\w\-]+$", finding_id):
             raise ValueError(f"Invalid finding_id: {finding_id}")
         evidence_id = f"{finding_id}/{uuid.uuid4()}-{safe_filename}"
 
@@ -216,9 +213,7 @@ class EvidenceVault:
         client = self._gcs_client()
         bucket_obj = client.bucket(self.bucket)
         if not bucket_obj.exists():
-            raise ValueError(
-                f"GCS bucket '{self.bucket}' does not exist or is not accessible"
-            )
+            raise ValueError(f"GCS bucket '{self.bucket}' does not exist or is not accessible")
 
     # ------------------------------------------------------------------
     # S3 backend
@@ -229,8 +224,7 @@ class EvidenceVault:
             import boto3  # type: ignore[import-untyped]
         except ImportError as exc:
             raise RuntimeError(
-                "boto3 is required for the S3 evidence backend. "
-                "Install it with: pip install boto3"
+                "boto3 is required for the S3 evidence backend. Install it with: pip install boto3"
             ) from exc
         return boto3.client("s3")
 

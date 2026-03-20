@@ -431,6 +431,7 @@ class AIAuditEntryResponse(BaseModel):
 
 # Module-level ConversationManager instance (shared across requests)
 from warlock.ai.conversation import ConversationManager as _ConversationManager  # noqa: E402
+
 _conversation_manager = _ConversationManager()
 
 
@@ -479,10 +480,12 @@ app = FastAPI(
 
 # Configure structured logging on module load
 from warlock.logging_config import configure_logging  # noqa: E402
+
 configure_logging()
 
 # CORS — configured via WLK_CORS_ORIGINS
 from warlock.config import get_settings as _get_cors_settings  # noqa: E402
+
 _cors_settings = _get_cors_settings()
 if _cors_settings.cors_origins:
     # S-10: Reject wildcard origin when credentials are enabled
@@ -493,6 +496,7 @@ if _cors_settings.cors_origins:
             "Set WLK_CORS_ORIGINS to specific origins, not '*'."
         )
     from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_settings.cors_origins,
@@ -515,6 +519,7 @@ async def request_size_limit_middleware(request: Request, call_next):
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > _MAX_CONTENT_LENGTH:
         from starlette.responses import Response
+
         return Response(
             content='{"detail":"Request body too large (max 10MB)"}',
             status_code=413,
@@ -544,6 +549,7 @@ if _policy_gate.enabled:
         # This middleware just attaches the gate to request state
         request.state.policy_gate = _policy_gate
         return await call_next(request)
+
 
 PREFIX = "/api/v1"
 
@@ -579,6 +585,7 @@ def health_ready(db: Session = Depends(get_db)):
     # DB check
     try:
         from sqlalchemy import text
+
         db.execute(text("SELECT 1"))
         checks["database"] = "ok"
     except Exception as e:
@@ -590,6 +597,7 @@ def health_ready(db: Session = Depends(get_db)):
     # Scheduler check
     try:
         from warlock.pipeline.scheduler import get_scheduler
+
         sched = get_scheduler()
         sched_status = sched.status
         checks["scheduler"] = "running" if sched_status.get("running") else "stopped"
@@ -656,6 +664,7 @@ def mfa_verify(body: MFAVerifyRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
     # MFA verified — issue tokens
     from warlock.api.auth import generate_refresh_token
+
     user = db.query(User).filter(User.id == body.user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
@@ -773,7 +782,9 @@ def revoke_api_key(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manage_keys")),
 ):
-    api_key = db.query(APIKey).filter(APIKey.id == key_id, APIKey.user_id == current_user.id).first()
+    api_key = (
+        db.query(APIKey).filter(APIKey.id == key_id, APIKey.user_id == current_user.id).first()
+    )
     if not api_key:
         raise HTTPException(status_code=404, detail="API key not found")
     api_key.is_active = False
@@ -787,6 +798,7 @@ def logout(
 ):
     """Revoke all tokens for the current user."""
     from datetime import datetime, timezone
+
     current_user.token_valid_after = datetime.now(timezone.utc)
     db.flush()
     return {"message": "All tokens revoked"}
@@ -846,6 +858,7 @@ def pipeline_collect(
         )
 
     import uuid
+
     run_id = str(uuid.uuid4())
     background_tasks.add_task(_run_pipeline_background, run_id, source)
     return {"status": "started", "run_id": run_id}
@@ -857,11 +870,7 @@ def pipeline_status(
     current_user: User = Depends(require_permission("read")),
 ):
     """Pipeline run status."""
-    latest_run = (
-        db.query(ConnectorRun)
-        .order_by(ConnectorRun.started_at.desc())
-        .first()
-    )
+    latest_run = db.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).first()
     is_running = db.query(ConnectorRun).filter(ConnectorRun.status == "running").count() > 0
 
     # Use cached event_count from ConnectorRun records to avoid 3 full-table
@@ -879,10 +888,16 @@ def pipeline_status(
         "last_run": {
             "id": latest_run.id if latest_run else None,
             "status": latest_run.status if latest_run else None,
-            "started_at": latest_run.started_at.isoformat() if latest_run and latest_run.started_at else None,
-            "completed_at": latest_run.completed_at.isoformat() if latest_run and latest_run.completed_at else None,
+            "started_at": latest_run.started_at.isoformat()
+            if latest_run and latest_run.started_at
+            else None,
+            "completed_at": latest_run.completed_at.isoformat()
+            if latest_run and latest_run.completed_at
+            else None,
             "duration_seconds": latest_run.duration_seconds if latest_run else None,
-        } if latest_run else None,
+        }
+        if latest_run
+        else None,
         "totals": {
             "raw_events": raw_count,
             "findings": finding_count,
@@ -907,7 +922,9 @@ def list_frameworks(
     # S-1: Apply ABAC scope filters
     base_q = apply_framework_scope(db.query(ControlMapping), ControlMapping, current_user)
     rows = (
-        base_q.with_entities(ControlMapping.framework, func.count(func.distinct(ControlMapping.control_id)))
+        base_q.with_entities(
+            ControlMapping.framework, func.count(func.distinct(ControlMapping.control_id))
+        )
         .group_by(ControlMapping.framework)
         .offset(offset)
         .limit(limit)
@@ -936,7 +953,9 @@ def list_controls(
         )
         .outerjoin(ControlResult, ControlResult.control_mapping_id == ControlMapping.id)
         .filter(ControlMapping.framework == framework_id)
-        .group_by(ControlMapping.framework, ControlMapping.control_id, ControlMapping.control_family)
+        .group_by(
+            ControlMapping.framework, ControlMapping.control_id, ControlMapping.control_family
+        )
         .offset(offset)
         .limit(limit)
         .all()
@@ -976,8 +995,7 @@ def list_findings(
         # The subquery form forces a full scan and hash lookup; a JOIN lets the
         # planner use the idx_mapping_control and idx_mapping_finding indexes.
         query = (
-            query
-            .join(ControlMapping, ControlMapping.finding_id == Finding.id)
+            query.join(ControlMapping, ControlMapping.finding_id == Finding.id)
             .filter(ControlMapping.framework == framework)
             .distinct()
         )
@@ -1147,7 +1165,13 @@ def results_coverage(
     fw_stats: dict[str, dict[str, int]] = {}
     for fw, st, cnt in rows:
         if fw not in fw_stats:
-            fw_stats[fw] = {"compliant": 0, "non_compliant": 0, "partial": 0, "not_assessed": 0, "total": 0}
+            fw_stats[fw] = {
+                "compliant": 0,
+                "non_compliant": 0,
+                "partial": 0,
+                "not_assessed": 0,
+                "total": 0,
+            }
         fw_stats[fw]["total"] += cnt
         if st == "compliant":
             fw_stats[fw]["compliant"] += cnt
@@ -1237,7 +1261,12 @@ def results_posture(
     if latest_date_subq:
         query = query.filter(PostureSnapshot.snapshot_date == latest_date_subq)
 
-    rows = query.order_by(PostureSnapshot.framework, PostureSnapshot.control_id).offset(offset).limit(limit).all()
+    rows = (
+        query.order_by(PostureSnapshot.framework, PostureSnapshot.control_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
     return [
         PostureResponse(
@@ -1545,7 +1574,10 @@ def export_oscal(
     elif body.export_type == "poam":
         return exporter.export_poam(db, body.framework, body.system_name)
     else:
-        raise HTTPException(status_code=400, detail=f"Unknown export_type: {body.export_type}. Use ar, ssp, or poam.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown export_type: {body.export_type}. Use ar, ssp, or poam.",
+        )
 
 
 # =========================================================================
@@ -1675,19 +1707,20 @@ def engagement_evidence(
     if eng.in_scope_controls:
         findings_query = findings_query.filter(ControlMapping.control_id.in_(eng.in_scope_controls))
     if eng.excluded_controls:
-        findings_query = findings_query.filter(~ControlMapping.control_id.in_(eng.excluded_controls))
+        findings_query = findings_query.filter(
+            ~ControlMapping.control_id.in_(eng.excluded_controls)
+        )
 
     findings_total = findings_query.count()
-    findings_rows = findings_query.order_by(Finding.observed_at.desc()).offset(offset).limit(limit).all()
+    findings_rows = (
+        findings_query.order_by(Finding.observed_at.desc()).offset(offset).limit(limit).all()
+    )
 
     # Results within the engagement period and framework
-    results_query = (
-        db.query(ControlResult)
-        .filter(
-            ControlResult.framework == eng.framework,
-            ControlResult.assessed_at >= eng.period_start,
-            ControlResult.assessed_at <= eng.period_end,
-        )
+    results_query = db.query(ControlResult).filter(
+        ControlResult.framework == eng.framework,
+        ControlResult.assessed_at >= eng.period_start,
+        ControlResult.assessed_at <= eng.period_end,
     )
     if eng.in_scope_controls:
         results_query = results_query.filter(ControlResult.control_id.in_(eng.in_scope_controls))
@@ -1695,7 +1728,9 @@ def engagement_evidence(
         results_query = results_query.filter(~ControlResult.control_id.in_(eng.excluded_controls))
 
     results_total = results_query.count()
-    results_rows = results_query.order_by(ControlResult.assessed_at.desc()).offset(offset).limit(limit).all()
+    results_rows = (
+        results_query.order_by(ControlResult.assessed_at.desc()).offset(offset).limit(limit).all()
+    )
 
     return EvidenceResponse(
         engagement_id=eng.id,
@@ -1932,7 +1967,9 @@ def deactivate_user(
     db.query(APIKey).filter(APIKey.user_id == user_id, APIKey.is_active == True).update(  # noqa: E712
         {"is_active": False}, synchronize_session="fetch"
     )
-    log.info("User %s deactivated: tokens revoked, %s API keys deactivated", user.email, user_id[:8])
+    log.info(
+        "User %s deactivated: tokens revoked, %s API keys deactivated", user.email, user_id[:8]
+    )
     return MessageResponse(message="User deactivated")
 
 
@@ -2023,9 +2060,7 @@ def analyze_risk(
 
     response = RiskAnalysisResponse(
         framework=req.framework,
-        scenarios=[
-            RiskScenarioResponse(**s) for s in result.get("scenarios", [])
-        ],
+        scenarios=[RiskScenarioResponse(**s) for s in result.get("scenarios", [])],
         portfolio=RiskPortfolioResponse(**result.get("portfolio", {})),
     )
 
@@ -2339,6 +2374,7 @@ def issues_summary(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     summary = mgr.summary(db, framework=framework)
     return IssueSummaryResponse(**summary)
@@ -2380,6 +2416,7 @@ def create_issue(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     issue = mgr.create_from_poam(
         db,
@@ -2465,6 +2502,7 @@ def transition_issue(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     try:
         issue = mgr.transition(db, issue_id, body.status, current_user.email, body.notes)
@@ -2481,6 +2519,7 @@ def assign_issue(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     try:
         issue = mgr.assign(db, issue_id, body.assigned_to, current_user.email)
@@ -2497,11 +2536,16 @@ def accept_risk_issue(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     try:
         issue = mgr.accept_risk(
-            db, issue_id, body.owner, body.justification,
-            body.expiry_days, actor=current_user.email,
+            db,
+            issue_id,
+            body.owner,
+            body.justification,
+            body.expiry_days,
+            actor=current_user.email,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -2516,6 +2560,7 @@ def add_issue_evidence(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     try:
         issue = mgr.add_evidence(db, issue_id, body.description, body.url, current_user.email)
@@ -2524,7 +2569,9 @@ def add_issue_evidence(
     return _issue_to_response(issue)
 
 
-@app.post(PREFIX + "/issues/{issue_id}/comments", response_model=IssueCommentResponse, status_code=201)
+@app.post(
+    PREFIX + "/issues/{issue_id}/comments", response_model=IssueCommentResponse, status_code=201
+)
 def add_issue_comment(
     issue_id: str,
     body: IssueCommentRequest,
@@ -2532,6 +2579,7 @@ def add_issue_comment(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     try:
         comment = mgr.add_comment(db, issue_id, current_user.email, body.content, body.comment_type)
@@ -2554,6 +2602,7 @@ def auto_create_issues(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.issues import IssueManager
+
     mgr = IssueManager()
     issues = mgr.auto_create_from_results(db, framework=body.framework)
     return [_issue_to_response(i) for i in issues]
@@ -2712,6 +2761,7 @@ def create_attestation(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.attestations import AttestationManager
+
     mgr = AttestationManager()
     try:
         att = mgr.create(
@@ -2746,6 +2796,7 @@ def submit_attestation(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.attestations import AttestationManager
+
     mgr = AttestationManager()
     try:
         att = mgr.submit(db, attestation_id, current_user.email)
@@ -2770,6 +2821,7 @@ def review_attestation(
             detail="Separation of duties: reviewer cannot be the same as preparer",
         )
     from warlock.workflows.attestations import AttestationManager
+
     mgr = AttestationManager()
     try:
         att = mgr.review(db, attestation_id, current_user.email, body.notes)
@@ -2798,6 +2850,7 @@ def approve_attestation(
             detail="Separation of duties: approver cannot be the same as reviewer",
         )
     from warlock.workflows.attestations import AttestationManager
+
     mgr = AttestationManager()
     try:
         att = mgr.approve(db, attestation_id, current_user.email)
@@ -2814,6 +2867,7 @@ def reject_attestation(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.attestations import AttestationManager
+
     mgr = AttestationManager()
     try:
         att = mgr.reject(db, attestation_id, current_user.email, body.reason)
@@ -2822,7 +2876,9 @@ def reject_attestation(
     return _attestation_to_response(att)
 
 
-@app.post(PREFIX + "/engagements/{engagement_id}/generate-assertion", response_model=AttestationResponse)
+@app.post(
+    PREFIX + "/engagements/{engagement_id}/generate-assertion", response_model=AttestationResponse
+)
 def generate_assertion(
     engagement_id: str,
     body: GenerateAssertionRequest,
@@ -2830,6 +2886,7 @@ def generate_assertion(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.attestations import AttestationManager
+
     mgr = AttestationManager()
     try:
         att = mgr.generate_management_assertion(db, engagement_id, body.framework)
@@ -2841,7 +2898,9 @@ def generate_assertion(
 # --- Audit Comments ---
 
 
-@app.get(PREFIX + "/engagements/{engagement_id}/comments", response_model=list[AuditCommentResponse])
+@app.get(
+    PREFIX + "/engagements/{engagement_id}/comments", response_model=list[AuditCommentResponse]
+)
 def list_engagement_comments(
     engagement_id: str,
     target_type: str | None = Query(None),
@@ -2860,7 +2919,11 @@ def list_engagement_comments(
     return [_audit_comment_to_response(c) for c in rows]
 
 
-@app.post(PREFIX + "/engagements/{engagement_id}/comments", response_model=AuditCommentResponse, status_code=201)
+@app.post(
+    PREFIX + "/engagements/{engagement_id}/comments",
+    response_model=AuditCommentResponse,
+    status_code=201,
+)
 def add_engagement_comment(
     engagement_id: str,
     body: AuditCommentCreateRequest,
@@ -2868,12 +2931,18 @@ def add_engagement_comment(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.attestations import AuditCollaboration
+
     collab = AuditCollaboration()
     try:
         comment = collab.add_comment(
-            db, engagement_id, body.target_type, body.target_id,
-            current_user.email, body.author_role or "practitioner",
-            body.content, body.parent_id,
+            db,
+            engagement_id,
+            body.target_type,
+            body.target_id,
+            current_user.email,
+            body.author_role or "practitioner",
+            body.content,
+            body.parent_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -2887,6 +2956,7 @@ def resolve_comment(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.attestations import AuditCollaboration
+
     collab = AuditCollaboration()
     try:
         comment = collab.resolve_comment(db, comment_id, current_user.email)
@@ -2895,13 +2965,17 @@ def resolve_comment(
     return _audit_comment_to_response(comment)
 
 
-@app.get(PREFIX + "/engagements/{engagement_id}/comments/unresolved", response_model=UnresolvedCountResponse)
+@app.get(
+    PREFIX + "/engagements/{engagement_id}/comments/unresolved",
+    response_model=UnresolvedCountResponse,
+)
 def unresolved_comments_count(
     engagement_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.attestations import AuditCollaboration
+
     collab = AuditCollaboration()
     count = collab.unresolved_count(db, engagement_id)
     return UnresolvedCountResponse(engagement_id=engagement_id, unresolved=count)
@@ -3057,10 +3131,11 @@ def list_systems(
     # S-12: Added pagination defaults
     # C-7: Apply ABAC framework scope filter
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     profiles = mgr.list_active(db)
     profiles = apply_framework_scope(profiles, current_user)
-    return [_system_profile_to_response(sp) for sp in profiles[offset:offset + limit]]
+    return [_system_profile_to_response(sp) for sp in profiles[offset : offset + limit]]
 
 
 @app.post(PREFIX + "/systems", response_model=SystemProfileResponse, status_code=201)
@@ -3070,6 +3145,7 @@ def create_system(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     kwargs = body.model_dump(exclude={"name", "description"}, exclude_none=True)
     try:
@@ -3085,6 +3161,7 @@ def expiring_systems(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     profiles = mgr.check_authorization_expiry(db)
     return [_system_profile_to_response(sp) for sp in profiles]
@@ -3110,6 +3187,7 @@ def update_system(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     kwargs = body.model_dump(exclude_none=True)
     # Convert date strings to datetimes
@@ -3146,6 +3224,7 @@ def system_findings(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     try:
         findings = mgr.scope_findings(db, system_id)
@@ -3176,6 +3255,7 @@ def system_posture(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     try:
         posture = mgr.posture_for_system(db, system_id, framework)
@@ -3191,6 +3271,7 @@ def system_ssp_header(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.system_profile import SystemProfileManager
+
     mgr = SystemProfileManager()
     sp = mgr.get(db, system_id)
     if not sp:
@@ -3239,6 +3320,7 @@ def retention_report(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.retention import RetentionManager
+
     mgr = RetentionManager()
     report = mgr.retention_report(db)
     return RetentionReportResponse(**report)
@@ -3251,6 +3333,7 @@ def retention_purge(
     current_user: User = Depends(require_permission("delete")),
 ):
     from warlock.workflows.retention import RetentionManager
+
     mgr = RetentionManager()
     result = mgr.purge_expired(db, dry_run=body.dry_run, framework=body.framework)
     return result
@@ -3263,6 +3346,7 @@ def create_legal_hold(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.retention import RetentionManager
+
     mgr = RetentionManager()
     hold_id = mgr.set_legal_hold(
         db,
@@ -3289,6 +3373,7 @@ def list_legal_holds(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.retention import RetentionManager
+
     mgr = RetentionManager()
     holds = mgr.active_holds(db)
     return [
@@ -3312,6 +3397,7 @@ def remove_legal_hold(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.retention import RetentionManager
+
     mgr = RetentionManager()
     removed = mgr.remove_legal_hold(db, hold_id, actor=current_user.email)
     if not removed:
@@ -3343,6 +3429,7 @@ def scheduler_status(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.pipeline.scheduler import get_scheduler
+
     sched = get_scheduler()
     return SchedulerStatusResponse(**sched.status)
 
@@ -3353,6 +3440,7 @@ def scheduler_start(
     current_user: User = Depends(require_permission("run_pipeline")),
 ):
     from warlock.pipeline.scheduler import get_scheduler
+
     interval = body.interval_minutes if body else 60
     sched = get_scheduler(interval_minutes=interval)
     sched.interval = interval * 60
@@ -3365,6 +3453,7 @@ def scheduler_stop(
     current_user: User = Depends(require_permission("run_pipeline")),
 ):
     from warlock.pipeline.scheduler import get_scheduler
+
     sched = get_scheduler()
     sched.stop()
     return SchedulerStatusResponse(**sched.status)
@@ -3383,9 +3472,10 @@ def list_tools(
 ):
     # S-12: Added pagination defaults
     from warlock.workflows.tool_config import ToolConfigManager
+
     mgr = ToolConfigManager()
     connectors = mgr.list_connectors()
-    return connectors[offset:offset + limit]
+    return connectors[offset : offset + limit]
 
 
 @app.post(PREFIX + "/tools/{provider}/test")
@@ -3395,6 +3485,7 @@ def test_tool(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.tool_config import ToolConfigManager
+
     mgr = ToolConfigManager()
     return mgr.test_connector(db, provider)
 
@@ -3405,6 +3496,7 @@ def test_all_tools(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.tool_config import ToolConfigManager
+
     mgr = ToolConfigManager()
     return mgr.test_all(db)
 
@@ -3415,6 +3507,7 @@ def tool_env_vars(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.tool_config import ToolConfigManager
+
     mgr = ToolConfigManager()
     return mgr.get_required_env_vars(provider)
 
@@ -3427,6 +3520,7 @@ def tool_history(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.tool_config import ToolConfigManager
+
     mgr = ToolConfigManager()
     return mgr.connection_history(db, provider, limit=limit)
 
@@ -3564,6 +3658,7 @@ def personnel_terminated_active(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.personnel import PersonnelManager
+
     mgr = PersonnelManager()
     rows = mgr.terminated_with_active_access(db)
     return [_personnel_to_response(p) for p in rows]
@@ -3575,6 +3670,7 @@ def personnel_summary(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.personnel import PersonnelManager
+
     mgr = PersonnelManager()
     return PersonnelSummaryResponse(**mgr.summary(db))
 
@@ -3585,6 +3681,7 @@ def personnel_sync(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.personnel import PersonnelManager
+
     mgr = PersonnelManager()
     result = mgr.sync_all(db)
     return PersonnelSyncResponse(**result)
@@ -3731,6 +3828,7 @@ def create_questionnaire_template(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     t = mgr.create_template(
         db,
@@ -3749,6 +3847,7 @@ def seed_questionnaire_templates(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     templates = mgr.seed_default_templates(db)
     return [_template_to_response(t) for t in templates]
@@ -3760,6 +3859,7 @@ def overdue_questionnaires(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     rows = mgr.overdue(db)
     return [_questionnaire_to_response(q) for q in rows]
@@ -3792,6 +3892,7 @@ def create_questionnaire_endpoint(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     try:
         q = mgr.create_questionnaire(
@@ -3819,7 +3920,10 @@ def get_questionnaire(
     return _questionnaire_to_response(q)
 
 
-@app.post(PREFIX + "/questionnaires/{questionnaire_id}/responses", response_model=QuestionnaireResponseModel)
+@app.post(
+    PREFIX + "/questionnaires/{questionnaire_id}/responses",
+    response_model=QuestionnaireResponseModel,
+)
 def submit_questionnaire_responses(
     questionnaire_id: str,
     body: QuestionnaireSubmitRequest,
@@ -3827,6 +3931,7 @@ def submit_questionnaire_responses(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     try:
         q = mgr.submit_bulk_responses(db, questionnaire_id, body.responses)
@@ -3835,13 +3940,16 @@ def submit_questionnaire_responses(
     return _questionnaire_to_response(q)
 
 
-@app.post(PREFIX + "/questionnaires/{questionnaire_id}/score", response_model=QuestionnaireResponseModel)
+@app.post(
+    PREFIX + "/questionnaires/{questionnaire_id}/score", response_model=QuestionnaireResponseModel
+)
 def score_questionnaire(
     questionnaire_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     try:
         q = mgr.score_responses(db, questionnaire_id)
@@ -3850,13 +3958,17 @@ def score_questionnaire(
     return _questionnaire_to_response(q)
 
 
-@app.post(PREFIX + "/questionnaires/{questionnaire_id}/ai-suggest", response_model=QuestionnaireResponseModel)
+@app.post(
+    PREFIX + "/questionnaires/{questionnaire_id}/ai-suggest",
+    response_model=QuestionnaireResponseModel,
+)
 def ai_suggest_questionnaire(
     questionnaire_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     try:
         q = mgr.ai_suggest_answers(db, questionnaire_id)
@@ -3865,7 +3977,10 @@ def ai_suggest_questionnaire(
     return _questionnaire_to_response(q)
 
 
-@app.post(PREFIX + "/questionnaires/{questionnaire_id}/transition", response_model=QuestionnaireResponseModel)
+@app.post(
+    PREFIX + "/questionnaires/{questionnaire_id}/transition",
+    response_model=QuestionnaireResponseModel,
+)
 def transition_questionnaire(
     questionnaire_id: str,
     body: QuestionnaireTransitionRequest,
@@ -3873,6 +3988,7 @@ def transition_questionnaire(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.questionnaires import QuestionnaireManager
+
     mgr = QuestionnaireManager()
     try:
         q = mgr.transition(db, questionnaire_id, body.status, actor=current_user.email)
@@ -4051,6 +4167,7 @@ def unclassified_data_silos(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.data_silos import DataSiloManager
+
     mgr = DataSiloManager()
     rows = mgr.unclassified(db)
     return [_data_silo_to_response(s) for s in rows]
@@ -4062,6 +4179,7 @@ def unprotected_data_silos(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.data_silos import DataSiloManager
+
     mgr = DataSiloManager()
     rows = mgr.unprotected(db)
     return [_data_silo_to_response(s) for s in rows]
@@ -4073,6 +4191,7 @@ def data_silo_summary(
     current_user: User = Depends(require_permission("read")),
 ):
     from warlock.workflows.data_silos import DataSiloManager
+
     mgr = DataSiloManager()
     return DataSiloSummaryResponse(**mgr.summary(db))
 
@@ -4083,6 +4202,7 @@ def discover_data_silos(
     current_user: User = Depends(require_permission("write")),
 ):
     from warlock.workflows.data_silos import DataSiloManager
+
     mgr = DataSiloManager()
     result = mgr.discover_from_findings(db)
     return MessageResponse(
@@ -4124,9 +4244,11 @@ def update_data_silo(
         k in update_data for k in ("contains_pii", "contains_phi", "contains_pci")
     ):
         from warlock.workflows.data_silos import DataSiloManager
+
         mgr = DataSiloManager()
         mgr.classify_silo(
-            db, silo_id,
+            db,
+            silo_id,
             classification=silo.data_classification or "unknown",
             contains_pii=silo.contains_pii,
             contains_phi=silo.contains_phi,
@@ -4201,6 +4323,7 @@ def list_poams(
 ):
     """List Plans of Action & Milestones."""
     from warlock.workflows.poam import POAMManager
+
     mgr = POAMManager()
     if overdue:
         rows = mgr.get_overdue(db)
@@ -4208,10 +4331,16 @@ def list_poams(
         rows = mgr.list_poams(db, framework=framework, status=status)
     return [
         {
-            "id": p.id, "framework": p.framework, "control_id": p.control_id,
-            "weakness_description": p.weakness_description, "severity": p.severity,
-            "status": p.status, "delay_count": p.delay_count or 0,
-            "scheduled_completion": p.scheduled_completion.isoformat() if p.scheduled_completion else None,
+            "id": p.id,
+            "framework": p.framework,
+            "control_id": p.control_id,
+            "weakness_description": p.weakness_description,
+            "severity": p.severity,
+            "status": p.status,
+            "delay_count": p.delay_count or 0,
+            "scheduled_completion": p.scheduled_completion.isoformat()
+            if p.scheduled_completion
+            else None,
             "milestones": p.milestones,
             "created_at": p.created_at.isoformat() if p.created_at else None,
         }
@@ -4229,6 +4358,7 @@ def extend_poam(
     """Extend a POA&M's scheduled completion date."""
     from warlock.workflows.poam import POAMManager
     from datetime import datetime as dt
+
     mgr = POAMManager()
     new_date = dt.fromisoformat(req.new_completion_date)
     poam = mgr.extend(db, poam_id, req.justification, new_date, req.approved_by)
@@ -4244,13 +4374,17 @@ def list_compensating_controls(
 ):
     """List compensating controls."""
     from warlock.workflows.compensating import CompensatingControlManager
+
     mgr = CompensatingControlManager()
     rows = mgr.list_controls(db, framework=framework, status=status)
     return [
         {
-            "id": c.id, "original_framework": c.original_framework,
-            "original_control_id": c.original_control_id, "title": c.title,
-            "status": c.status, "effectiveness_score": c.effectiveness_score,
+            "id": c.id,
+            "original_framework": c.original_framework,
+            "original_control_id": c.original_control_id,
+            "title": c.title,
+            "status": c.status,
+            "effectiveness_score": c.effectiveness_score,
             "expiry_date": c.expiry_date.isoformat() if c.expiry_date else None,
             "created_at": c.created_at.isoformat() if c.created_at else None,
         }
@@ -4268,12 +4402,16 @@ def list_risk_acceptances(
 ):
     """List risk acceptances."""
     from warlock.workflows.risk_acceptance import RiskAcceptanceManager
+
     mgr = RiskAcceptanceManager()
     rows = mgr.list_acceptances(db, framework=framework, status=status, expiring_days=expiring_days)
     return [
         {
-            "id": r.id, "framework": r.framework, "control_id": r.control_id,
-            "risk_level": r.risk_level, "status": r.status,
+            "id": r.id,
+            "framework": r.framework,
+            "control_id": r.control_id,
+            "risk_level": r.risk_level,
+            "status": r.status,
             "approved_by": r.approved_by,
             "expiry_date": r.expiry_date.isoformat() if r.expiry_date else None,
             "created_at": r.created_at.isoformat() if r.created_at else None,
@@ -4297,13 +4435,17 @@ def get_drift(
 ):
     """Get compliance drift events."""
     from warlock.assessors.drift import DriftDetector
+
     detector = DriftDetector()
     drifts = detector.get_drifts(db, framework=framework, days=days, direction=direction)
     return [
         {
-            "id": d.id, "framework": d.framework, "control_id": d.control_id,
+            "id": d.id,
+            "framework": d.framework,
+            "control_id": d.control_id,
             "drift_direction": d.drift_direction,
-            "previous_status": d.previous_status, "new_status": d.new_status,
+            "previous_status": d.previous_status,
+            "new_status": d.new_status,
             "correlated_changes": len(d.correlated_change_event_ids or []),
             "detected_at": d.detected_at.isoformat() if d.detected_at else None,
         }
@@ -4326,6 +4468,7 @@ def run_audit_simulation(
     """Simulate what an auditor would see at a future date."""
     from warlock.assessors.simulation import AuditSimulator
     from datetime import datetime as dt, timezone as tz
+
     sim = AuditSimulator()
     target = dt.fromisoformat(req.target_date).replace(tzinfo=tz.utc)
     result = sim.simulate(db, req.framework, target, system_id=req.system_id)
@@ -4352,6 +4495,7 @@ def get_effectiveness(
     instead of loading all rows and deduplicating in Python.
     """
     from datetime import timedelta
+
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Subquery: max snapshot_date per (framework, control_id)
@@ -4384,8 +4528,10 @@ def get_effectiveness(
 
     return [
         {
-            "framework": s.framework, "control_id": s.control_id,
-            "uptime_pct": s.uptime_pct, "mttr_hours": s.mttr_hours,
+            "framework": s.framework,
+            "control_id": s.control_id,
+            "uptime_pct": s.uptime_pct,
+            "mttr_hours": s.mttr_hours,
             "drift_count": s.drift_count,
         }
         for s in rows
@@ -4409,6 +4555,7 @@ def framework_diff_endpoint(
 ):
     """Compare two framework versions."""
     from warlock.frameworks.diff import FrameworkDiff
+
     differ = FrameworkDiff()
     result = differ.diff(req.old_version, req.new_version)
     return {
@@ -4431,12 +4578,18 @@ def impact_check_endpoint(
 ):
     """Check compliance impact of changed assertion/policy files."""
     from warlock.assessors.impact import ComplianceImpactAnalyzer
+
     analyzer = ComplianceImpactAnalyzer()
     result = analyzer.analyze(db, req.changed_files)
     return {
         "affected_controls": result.affected_controls,
         "predicted_flips": [
-            {"control": f.control, "framework": f.framework, "from_status": f.from_status, "to_status": f.to_status}
+            {
+                "control": f.control,
+                "framework": f.framework,
+                "from_status": f.from_status,
+                "to_status": f.to_status,
+            }
             for f in result.predicted_flips
         ],
     }
@@ -4455,6 +4608,7 @@ def gdpr_export(
 ):
     """Export all personal data for a data subject (GDPR Article 15)."""
     from warlock.workflows.gdpr import GDPRManager
+
     manager = GDPRManager()
     return manager.export_subject_data(db, email)
 
@@ -4471,6 +4625,7 @@ def gdpr_erase(
     referential integrity and audit trail.
     """
     from warlock.workflows.gdpr import GDPRManager
+
     manager = GDPRManager()
     result = manager.erase_subject_data(db, email, erased_by=current_user.email)
     return result
@@ -4573,21 +4728,21 @@ def dashboard_summary(
         else:
             trend = "stable"
 
-        frameworks_out.append({
-            "framework": fw,
-            "compliance_rate": rate,
-            "total_controls": total,
-            "compliant_controls": compliant,
-            "non_compliant_controls": agg["non_compliant"],
-            "trend": trend,
-        })
+        frameworks_out.append(
+            {
+                "framework": fw,
+                "compliance_rate": rate,
+                "total_controls": total,
+                "compliant_controls": compliant,
+                "non_compliant_controls": agg["non_compliant"],
+                "trend": trend,
+            }
+        )
 
     # -----------------------------------------------------------------
     # posture_score: overall weighted compliance percentage
     # -----------------------------------------------------------------
-    posture_score = (
-        round(total_compliant / total_controls * 100, 1) if total_controls else 0.0
-    )
+    posture_score = round(total_compliant / total_controls * 100, 1) if total_controls else 0.0
 
     # -----------------------------------------------------------------
     # top_risks: top 5 non-compliant controls by severity
@@ -4625,10 +4780,7 @@ def dashboard_summary(
     # recent_drift: last 5 compliance drift events
     # -----------------------------------------------------------------
     drift_rows = (
-        db.query(ComplianceDrift)
-        .order_by(ComplianceDrift.detected_at.desc())
-        .limit(5)
-        .all()
+        db.query(ComplianceDrift).order_by(ComplianceDrift.detected_at.desc()).limit(5).all()
     )
 
     recent_drift = []
@@ -4636,14 +4788,16 @@ def dashboard_summary(
         dt = d.detected_at
         if dt and dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
-        recent_drift.append({
-            "framework": d.framework,
-            "control_id": d.control_id,
-            "previous_status": d.previous_status,
-            "new_status": d.new_status,
-            "drift_direction": d.drift_direction,
-            "detected_at": dt.isoformat() if dt else None,
-        })
+        recent_drift.append(
+            {
+                "framework": d.framework,
+                "control_id": d.control_id,
+                "previous_status": d.previous_status,
+                "new_status": d.new_status,
+                "drift_direction": d.drift_direction,
+                "detected_at": dt.isoformat() if dt else None,
+            }
+        )
 
     # -----------------------------------------------------------------
     # open_issues: count by priority
@@ -4689,23 +4843,23 @@ def dashboard_summary(
         completed = run.completed_at
         if completed and completed.tzinfo is None:
             completed = completed.replace(tzinfo=timezone.utc)
-        connectors.append({
-            "provider": run.provider,
-            "source_type": run.source_type,
-            "status": run.status,
-            "event_count": run.event_count,
-            "error_count": run.error_count,
-            "started_at": started.isoformat() if started else None,
-            "completed_at": completed.isoformat() if completed else None,
-        })
+        connectors.append(
+            {
+                "provider": run.provider,
+                "source_type": run.source_type,
+                "status": run.status,
+                "event_count": run.event_count,
+                "error_count": run.error_count,
+                "started_at": started.isoformat() if started else None,
+                "completed_at": completed.isoformat() if completed else None,
+            }
+        )
 
     # -----------------------------------------------------------------
     # last_assessment: most recent pipeline completion
     # -----------------------------------------------------------------
     last_result = (
-        db.query(ControlResult.assessed_at)
-        .order_by(ControlResult.assessed_at.desc())
-        .first()
+        db.query(ControlResult.assessed_at).order_by(ControlResult.assessed_at.desc()).first()
     )
     last_assessment = None
     if last_result and last_result.assessed_at:
@@ -5071,7 +5225,9 @@ def ai_delete_conversation(
     with _conversation_manager._lock:
         session_obj = _conversation_manager._sessions.get(session_id)
         if session_obj is None:
-            raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
+            raise HTTPException(
+                status_code=404, detail="Conversation session not found or expired."
+            )
         del _conversation_manager._sessions[session_id]
 
     log.info("Conversation session %s deleted by user", session_id)
@@ -5091,7 +5247,7 @@ def ai_audit_log(
     """
     sessions = _conversation_manager.list_sessions()
     total = len(sessions)
-    page = sessions[offset: offset + limit]
+    page = sessions[offset : offset + limit]
 
     items = [
         {

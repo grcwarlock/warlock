@@ -93,25 +93,32 @@ class OVHConnector(BaseConnector):
                 try:
                     url = f"{base_url}/1.0{endpoint}"
                     headers = self._sign_request(
-                        app_key, app_secret, consumer_key,
-                        "GET", url, "", time_delta,
+                        app_key,
+                        app_secret,
+                        consumer_key,
+                        "GET",
+                        url,
+                        "",
+                        time_delta,
                     )
                     resp = client.get(url, headers=headers)
                     resp.raise_for_status()
                     data = resp.json()
 
-                    result.events.append(RawEventData(
-                        source="ovh",
-                        source_type=SourceType.CLOUD,
-                        provider="ovh",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "service_name": service_name,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="ovh",
+                            source_type=SourceType.CLOUD,
+                            provider="ovh",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "service_name": service_name,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("OVH %s failed: %s", event_type, e)
                     result.errors.append(f"{event_type}: {e}")
@@ -147,14 +154,16 @@ class OVHConnector(BaseConnector):
     ) -> dict[str, str]:
         """Build OVH API authentication headers with signature."""
         timestamp = str(int(time.time()) + time_delta)
-        to_sign = "+".join([
-            app_secret,
-            consumer_key,
-            method.upper(),
-            url,
-            body,
-            timestamp,
-        ])
+        to_sign = "+".join(
+            [
+                app_secret,
+                consumer_key,
+                method.upper(),
+                url,
+                body,
+                timestamp,
+            ]
+        )
         signature = "$1$" + hashlib.sha1(to_sign.encode("utf-8")).hexdigest()
 
         return {

@@ -69,6 +69,7 @@ log = logging.getLogger(__name__)
 # Minimal AuditEntry representation used by sinks
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AuditEntry:
     """Portable representation of a single audit log entry.
@@ -122,6 +123,7 @@ class AuditEntry:
 # Abstract base
 # ---------------------------------------------------------------------------
 
+
 class AuditLogSink(ABC):
     """Base class for all audit log shipping backends.
 
@@ -152,6 +154,7 @@ class AuditLogSink(ABC):
 # StdoutSink
 # ---------------------------------------------------------------------------
 
+
 class StdoutSink(AuditLogSink):
     """Write audit entries as JSON-lines to stdout.
 
@@ -177,6 +180,7 @@ class StdoutSink(AuditLogSink):
 # ---------------------------------------------------------------------------
 # S3AuditSink
 # ---------------------------------------------------------------------------
+
 
 class S3AuditSink(AuditLogSink):
     """Write JSON-lines batches to S3, optionally with Object Lock (WORM).
@@ -222,8 +226,7 @@ class S3AuditSink(AuditLogSink):
                 import boto3  # type: ignore[import-untyped]
             except ImportError as exc:
                 raise ImportError(
-                    "boto3 is required for S3AuditSink. "
-                    "Install it with: pip install boto3"
+                    "boto3 is required for S3AuditSink. Install it with: pip install boto3"
                 ) from exc
             kwargs: dict[str, Any] = {"region_name": self.region}
             if self.endpoint_url:
@@ -276,6 +279,7 @@ class S3AuditSink(AuditLogSink):
 # CloudWatchSink
 # ---------------------------------------------------------------------------
 
+
 class CloudWatchSink(AuditLogSink):
     """Send audit entries to an AWS CloudWatch Logs group.
 
@@ -314,8 +318,7 @@ class CloudWatchSink(AuditLogSink):
                 import boto3  # type: ignore[import-untyped]
             except ImportError as exc:
                 raise ImportError(
-                    "boto3 is required for CloudWatchSink. "
-                    "Install it with: pip install boto3"
+                    "boto3 is required for CloudWatchSink. Install it with: pip install boto3"
                 ) from exc
             self._client = boto3.client("logs", region_name=self.region)
         return self._client
@@ -354,7 +357,8 @@ class CloudWatchSink(AuditLogSink):
         client.put_log_events(**kwargs)
 
     def _split_into_chunks(
-        self, entries: list[AuditEntry],
+        self,
+        entries: list[AuditEntry],
     ) -> list[list[dict[str, Any]]]:
         """Split entries into CloudWatch-safe chunks."""
         chunks: list[list[dict[str, Any]]] = []
@@ -411,6 +415,7 @@ class CloudWatchSink(AuditLogSink):
 # SplunkHECSink
 # ---------------------------------------------------------------------------
 
+
 class SplunkHECSink(AuditLogSink):
     """Ship audit entries to Splunk via the HTTP Event Collector (HEC) API.
 
@@ -451,13 +456,9 @@ class SplunkHECSink(AuditLogSink):
         self.max_retries = max_retries
 
         if not self.hec_url:
-            raise ValueError(
-                "SplunkHECSink requires hec_url or WLK_SPLUNK_HEC_URL to be set."
-            )
+            raise ValueError("SplunkHECSink requires hec_url or WLK_SPLUNK_HEC_URL to be set.")
         if not self.token:
-            raise ValueError(
-                "SplunkHECSink requires token or WLK_SPLUNK_HEC_TOKEN to be set."
-            )
+            raise ValueError("SplunkHECSink requires token or WLK_SPLUNK_HEC_TOKEN to be set.")
 
     def _build_hec_payload(self, entries: list[AuditEntry]) -> str:
         """Serialise entries into a Splunk HEC JSON payload (space-separated objects)."""
@@ -483,8 +484,7 @@ class SplunkHECSink(AuditLogSink):
             import httpx  # type: ignore[import-untyped]
         except ImportError as exc:
             raise ImportError(
-                "httpx is required for SplunkHECSink. "
-                "Install it with: pip install httpx"
+                "httpx is required for SplunkHECSink. Install it with: pip install httpx"
             ) from exc
 
         payload = self._build_hec_payload(entries)
@@ -564,6 +564,7 @@ class SplunkHECSink(AuditLogSink):
 # BatchShipper
 # ---------------------------------------------------------------------------
 
+
 class BatchShipper:
     """Accumulate AuditEntry objects and ship in configurable batches.
 
@@ -631,6 +632,7 @@ class BatchShipper:
 # AuditEventSubscriber
 # ---------------------------------------------------------------------------
 
+
 class AuditEventSubscriber:
     """EventBus wildcard subscriber that converts PipelineEvents to AuditEntries.
 
@@ -671,7 +673,7 @@ class AuditEventSubscriber:
 
         entry = AuditEntry(
             id=event.id,
-            sequence=0,       # sentinel — hash chain is maintained by AuditTrail
+            sequence=0,  # sentinel — hash chain is maintained by AuditTrail
             previous_hash="",
             entry_hash="",
             action=event.event_type,
@@ -720,8 +722,7 @@ def create_sink(backend: str, **config: Any) -> AuditLogSink:
     cls = _BACKENDS.get(backend)
     if cls is None:
         raise ValueError(
-            f"Unknown audit sink backend {backend!r}. "
-            f"Choose from: {', '.join(sorted(_BACKENDS))}"
+            f"Unknown audit sink backend {backend!r}. Choose from: {', '.join(sorted(_BACKENDS))}"
         )
     return cls(**config)
 
@@ -748,7 +749,7 @@ def create_sink_from_env() -> AuditLogSink:
     config: dict[str, Any] = {}
     for key, value in os.environ.items():
         if key.startswith(prefix) and key != "WLK_AUDIT_SINK_BACKEND":
-            param = key[len(prefix):].lower()
+            param = key[len(prefix) :].lower()
             # Coerce obvious integer values
             if value.isdigit():
                 config[param] = int(value)

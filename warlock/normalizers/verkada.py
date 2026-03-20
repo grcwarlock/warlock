@@ -60,43 +60,47 @@ class VerkadaNormalizer(BaseNormalizer):
             event_type = event.get("event_type", "")
 
             # Inventory finding
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Access event: {user_name} at {door_name}",
-                detail={
-                    "event_id": event_id,
-                    "user_name": user_name,
-                    "door_name": door_name,
-                    "event_time": event_time_str,
-                    "event_type": event_type,
-                },
-                resource_id=f"verkada:access_event:{event_id}",
-                resource_type="physical_access_event",
-                resource_name=f"{user_name}@{door_name}",
-                severity="info",
-            ))
-
-            # After-hours access detection
-            event_dt = self._parse_dt(event_time_str)
-            if event_dt and self._is_after_hours(event_dt):
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="access_anomaly",
-                    title=f"After-hours access: {user_name} at {door_name} ({event_dt.strftime('%H:%M')})",
+                    observation_type="inventory",
+                    title=f"Access event: {user_name} at {door_name}",
                     detail={
                         "event_id": event_id,
                         "user_name": user_name,
                         "door_name": door_name,
                         "event_time": event_time_str,
-                        "hour": event_dt.hour,
-                        "issue": "after_hours_access",
+                        "event_type": event_type,
                     },
                     resource_id=f"verkada:access_event:{event_id}",
                     resource_type="physical_access_event",
                     resource_name=f"{user_name}@{door_name}",
-                    severity="medium",
-                ))
+                    severity="info",
+                )
+            )
+
+            # After-hours access detection
+            event_dt = self._parse_dt(event_time_str)
+            if event_dt and self._is_after_hours(event_dt):
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="access_anomaly",
+                        title=f"After-hours access: {user_name} at {door_name} ({event_dt.strftime('%H:%M')})",
+                        detail={
+                            "event_id": event_id,
+                            "user_name": user_name,
+                            "door_name": door_name,
+                            "event_time": event_time_str,
+                            "hour": event_dt.hour,
+                            "issue": "after_hours_access",
+                        },
+                        resource_id=f"verkada:access_event:{event_id}",
+                        resource_type="physical_access_event",
+                        resource_name=f"{user_name}@{door_name}",
+                        severity="medium",
+                    )
+                )
 
         return findings
 
@@ -115,40 +119,44 @@ class VerkadaNormalizer(BaseNormalizer):
             site = door.get("site", "")
 
             # Inventory finding
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Door: {door_name}",
-                detail={
-                    "door_id": door_id,
-                    "door_name": door_name,
-                    "lock_status": lock_status,
-                    "site": site,
-                },
-                resource_id=f"verkada:door:{door_id}",
-                resource_type="physical_door",
-                resource_name=door_name,
-                severity="info",
-            ))
-
-            # Unlocked door detection
-            if lock_status.lower() in ("unlocked", "open", "forced_open"):
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Unlocked door: {door_name} (status: {lock_status})",
+                    observation_type="inventory",
+                    title=f"Door: {door_name}",
                     detail={
                         "door_id": door_id,
                         "door_name": door_name,
                         "lock_status": lock_status,
                         "site": site,
-                        "issue": "door_unlocked",
                     },
                     resource_id=f"verkada:door:{door_id}",
                     resource_type="physical_door",
                     resource_name=door_name,
-                    severity="high",
-                ))
+                    severity="info",
+                )
+            )
+
+            # Unlocked door detection
+            if lock_status.lower() in ("unlocked", "open", "forced_open"):
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Unlocked door: {door_name} (status: {lock_status})",
+                        detail={
+                            "door_id": door_id,
+                            "door_name": door_name,
+                            "lock_status": lock_status,
+                            "site": site,
+                            "issue": "door_unlocked",
+                        },
+                        resource_id=f"verkada:door:{door_id}",
+                        resource_type="physical_door",
+                        resource_name=door_name,
+                        severity="high",
+                    )
+                )
 
         return findings
 
@@ -158,7 +166,9 @@ class VerkadaNormalizer(BaseNormalizer):
         """One inventory finding per card holder."""
         findings = []
         data = raw.raw_data.get("response", {})
-        users = data if isinstance(data, list) else data.get("card_holders", data.get("results", []))
+        users = (
+            data if isinstance(data, list) else data.get("card_holders", data.get("results", []))
+        )
 
         for user in users:
             user_id = str(user.get("user_id", user.get("id", "")))
@@ -167,22 +177,24 @@ class VerkadaNormalizer(BaseNormalizer):
             department = user.get("department", "")
             active = user.get("active", True)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Card holder: {name}",
-                detail={
-                    "user_id": user_id,
-                    "name": name,
-                    "email": email,
-                    "department": department,
-                    "active": active,
-                },
-                resource_id=f"verkada:user:{user_id}",
-                resource_type="physical_access_user",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Card holder: {name}",
+                    detail={
+                        "user_id": user_id,
+                        "name": name,
+                        "email": email,
+                        "department": department,
+                        "active": active,
+                    },
+                    resource_id=f"verkada:user:{user_id}",
+                    resource_type="physical_access_user",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 

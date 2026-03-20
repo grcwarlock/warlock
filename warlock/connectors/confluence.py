@@ -47,7 +47,10 @@ class ConfluenceConnector(BaseConnector):
             resp = httpx.get(
                 f"{base_url}/wiki/api/v2/spaces",
                 params={"limit": "1"},
-                auth=(self.get_secret("WLK_CONFLUENCE_USER"), self.get_secret("WLK_CONFLUENCE_API_TOKEN")),
+                auth=(
+                    self.get_secret("WLK_CONFLUENCE_USER"),
+                    self.get_secret("WLK_CONFLUENCE_API_TOKEN"),
+                ),
                 timeout=self.config.timeout_seconds,
             )
             return resp.status_code == 200
@@ -79,17 +82,19 @@ class ConfluenceConnector(BaseConnector):
                 # Collect pages for this space
                 try:
                     pages = self._paginate_pages(client, space_key)
-                    result.events.append(RawEventData(
-                        source="confluence",
-                        source_type=SourceType.GRC,
-                        provider="confluence",
-                        event_type="confluence_pages",
-                        raw_data={
-                            "space_key": space_key,
-                            "pages": pages,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="confluence",
+                            source_type=SourceType.GRC,
+                            provider="confluence",
+                            event_type="confluence_pages",
+                            raw_data={
+                                "space_key": space_key,
+                                "pages": pages,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
 
                     # Collect versions for each page
                     for page in pages:
@@ -98,19 +103,21 @@ class ConfluenceConnector(BaseConnector):
                             continue
                         try:
                             versions = self._get_page_versions(client, page_id)
-                            result.events.append(RawEventData(
-                                source="confluence",
-                                source_type=SourceType.GRC,
-                                provider="confluence",
-                                event_type="confluence_page_versions",
-                                raw_data={
-                                    "space_key": space_key,
-                                    "page_id": page_id,
-                                    "page_title": page.get("title", ""),
-                                    "versions": versions,
-                                },
-                                observed_at=datetime.now(timezone.utc),
-                            ))
+                            result.events.append(
+                                RawEventData(
+                                    source="confluence",
+                                    source_type=SourceType.GRC,
+                                    provider="confluence",
+                                    event_type="confluence_page_versions",
+                                    raw_data={
+                                        "space_key": space_key,
+                                        "page_id": page_id,
+                                        "page_title": page.get("title", ""),
+                                        "versions": versions,
+                                    },
+                                    observed_at=datetime.now(timezone.utc),
+                                )
+                            )
                         except Exception as e:
                             log.debug("Confluence page versions for %s failed: %s", page_id, e)
                             result.errors.append(f"page_versions/{page_id}: {e}")

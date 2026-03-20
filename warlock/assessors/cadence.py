@@ -21,9 +21,9 @@ log = logging.getLogger(__name__)
 FREQUENCY_HOURS: dict[str, float] = {
     "daily": 24.0,
     "weekly": 168.0,
-    "monthly": 720.0,      # 30 days
-    "quarterly": 2160.0,   # 90 days
-    "annual": 8760.0,      # 365 days
+    "monthly": 720.0,  # 30 days
+    "quarterly": 2160.0,  # 90 days
+    "annual": 8760.0,  # 365 days
 }
 
 
@@ -143,12 +143,18 @@ class CadenceChecker:
             required_hours = FREQUENCY_HOURS.get(frequency, 720.0)
 
             if latest is None:
-                cadences.append(MonitoringCadence(
-                    framework=framework, control_id=control_id,
-                    required_frequency=frequency, required_hours=required_hours,
-                    last_evidence_at=None, hours_since=None,
-                    is_stale=True, staleness_ratio=float("inf"),
-                ))
+                cadences.append(
+                    MonitoringCadence(
+                        framework=framework,
+                        control_id=control_id,
+                        required_frequency=frequency,
+                        required_hours=required_hours,
+                        last_evidence_at=None,
+                        hours_since=None,
+                        is_stale=True,
+                        staleness_ratio=float("inf"),
+                    )
+                )
                 continue
 
             if latest.tzinfo is None:
@@ -156,14 +162,18 @@ class CadenceChecker:
             hours_since = (now - latest).total_seconds() / 3600
             staleness_ratio = hours_since / required_hours if required_hours > 0 else 0.0
 
-            cadences.append(MonitoringCadence(
-                framework=framework, control_id=control_id,
-                required_frequency=frequency, required_hours=required_hours,
-                last_evidence_at=latest,
-                hours_since=round(hours_since, 2),
-                is_stale=staleness_ratio > 1.0,
-                staleness_ratio=round(staleness_ratio, 3),
-            ))
+            cadences.append(
+                MonitoringCadence(
+                    framework=framework,
+                    control_id=control_id,
+                    required_frequency=frequency,
+                    required_hours=required_hours,
+                    last_evidence_at=latest,
+                    hours_since=round(hours_since, 2),
+                    is_stale=staleness_ratio > 1.0,
+                    staleness_ratio=round(staleness_ratio, 3),
+                )
+            )
 
         return cadences
 
@@ -172,9 +182,7 @@ class CadenceChecker:
         session: Session,
     ) -> dict[str, list[MonitoringCadence]]:
         """Check cadence across all frameworks."""
-        framework_rows = (
-            session.query(distinct(ControlResult.framework)).all()
-        )
+        framework_rows = session.query(distinct(ControlResult.framework)).all()
         frameworks = sorted([row[0] for row in framework_rows])
         return {fw: self.check_framework(session, fw) for fw in frameworks}
 

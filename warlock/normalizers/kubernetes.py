@@ -63,24 +63,25 @@ class KubernetesNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"K8s namespace: {name}"
-                      + (f" -- {', '.join(issues)}" if issues else ""),
-                detail={
-                    "name": name,
-                    "uid": uid,
-                    "status": status,
-                    "labels": metadata.get("labels", {}),
-                    "annotations": metadata.get("annotations", {}),
-                    "issues": issues,
-                },
-                resource_id=uid,
-                resource_type="k8s_namespace",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"K8s namespace: {name}" + (f" -- {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "name": name,
+                        "uid": uid,
+                        "status": status,
+                        "labels": metadata.get("labels", {}),
+                        "annotations": metadata.get("annotations", {}),
+                        "issues": issues,
+                    },
+                    resource_id=uid,
+                    resource_type="k8s_namespace",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -99,36 +100,40 @@ class KubernetesNormalizer(BaseNormalizer):
             uid = metadata.get("uid", "")
             covered_namespaces.add(ns)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"K8s network policy: {ns}/{name}",
-                detail={
-                    "name": name,
-                    "namespace": ns,
-                    "uid": uid,
-                    "spec": policy.get("spec", {}),
-                },
-                resource_id=uid,
-                resource_type="k8s_network_policy",
-                resource_name=f"{ns}/{name}",
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"K8s network policy: {ns}/{name}",
+                    detail={
+                        "name": name,
+                        "namespace": ns,
+                        "uid": uid,
+                        "spec": policy.get("spec", {}),
+                    },
+                    resource_id=uid,
+                    resource_type="k8s_network_policy",
+                    resource_name=f"{ns}/{name}",
+                    severity="info",
+                )
+            )
 
         # Flag if no network policies exist at all
         if not policies:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="No Kubernetes network policies found in any namespace",
-                detail={
-                    "recommendation": "Define network policies to restrict pod-to-pod traffic",
-                },
-                resource_id="k8s_network_policies",
-                resource_type="k8s_network_policy",
-                resource_name="k8s_network_policies",
-                severity="high",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="No Kubernetes network policies found in any namespace",
+                    detail={
+                        "recommendation": "Define network policies to restrict pod-to-pod traffic",
+                    },
+                    resource_id="k8s_network_policies",
+                    resource_type="k8s_network_policy",
+                    resource_name="k8s_network_policies",
+                    severity="high",
+                )
+            )
 
         return findings
 
@@ -165,23 +170,25 @@ class KubernetesNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"K8s RBAC binding: {name} -> {role_name}"
-                      + (f" -- {', '.join(issues)}" if issues else ""),
-                detail={
-                    "name": name,
-                    "uid": uid,
-                    "role_ref": role_ref,
-                    "subjects": subjects,
-                    "issues": issues,
-                },
-                resource_id=uid,
-                resource_type="k8s_rbac_binding",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"K8s RBAC binding: {name} -> {role_name}"
+                    + (f" -- {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "name": name,
+                        "uid": uid,
+                        "role_ref": role_ref,
+                        "subjects": subjects,
+                        "issues": issues,
+                    },
+                    resource_id=uid,
+                    resource_type="k8s_rbac_binding",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -192,18 +199,20 @@ class KubernetesNormalizer(BaseNormalizer):
         webhooks = raw.raw_data.get("response", [])
 
         if not webhooks:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="No validating webhook configurations found",
-                detail={
-                    "recommendation": "Configure admission controllers for pod security enforcement",
-                },
-                resource_id="k8s_admission",
-                resource_type="k8s_admission_control",
-                resource_name="k8s_admission",
-                severity="medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="No validating webhook configurations found",
+                    detail={
+                        "recommendation": "Configure admission controllers for pod security enforcement",
+                    },
+                    resource_id="k8s_admission",
+                    resource_type="k8s_admission_control",
+                    resource_name="k8s_admission",
+                    severity="medium",
+                )
+            )
             return findings
 
         for webhook in webhooks:
@@ -212,21 +221,23 @@ class KubernetesNormalizer(BaseNormalizer):
             uid = metadata.get("uid", "")
             hooks = webhook.get("webhooks", [])
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"K8s validating webhook: {name} ({len(hooks)} hooks)",
-                detail={
-                    "name": name,
-                    "uid": uid,
-                    "webhook_count": len(hooks),
-                    "webhooks": [h.get("name", "") for h in hooks],
-                },
-                resource_id=uid,
-                resource_type="k8s_admission_control",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"K8s validating webhook: {name} ({len(hooks)} hooks)",
+                    detail={
+                        "name": name,
+                        "uid": uid,
+                        "webhook_count": len(hooks),
+                        "webhooks": [h.get("name", "") for h in hooks],
+                    },
+                    resource_id=uid,
+                    resource_type="k8s_admission_control",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -277,27 +288,29 @@ class KubernetesNormalizer(BaseNormalizer):
                         severity = "medium"
                     obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"K8s pod: {namespace}/{name}"
-                      + (f" -- {', '.join(issues)}" if issues else ""),
-                detail={
-                    "name": name,
-                    "namespace": namespace,
-                    "uid": uid,
-                    "container_count": len(containers),
-                    "node_name": spec.get("nodeName", ""),
-                    "service_account": spec.get("serviceAccountName", ""),
-                    "host_network": spec.get("hostNetwork", False),
-                    "host_pid": spec.get("hostPID", False),
-                    "issues": issues,
-                },
-                resource_id=uid,
-                resource_type="k8s_pod",
-                resource_name=f"{namespace}/{name}",
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"K8s pod: {namespace}/{name}"
+                    + (f" -- {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "name": name,
+                        "namespace": namespace,
+                        "uid": uid,
+                        "container_count": len(containers),
+                        "node_name": spec.get("nodeName", ""),
+                        "service_account": spec.get("serviceAccountName", ""),
+                        "host_network": spec.get("hostNetwork", False),
+                        "host_pid": spec.get("hostPID", False),
+                        "issues": issues,
+                    },
+                    resource_id=uid,
+                    resource_type="k8s_pod",
+                    resource_name=f"{namespace}/{name}",
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -322,32 +335,36 @@ class KubernetesNormalizer(BaseNormalizer):
 
             # Single replica in non-system namespaces
             if replicas <= 1 and namespace not in (
-                "kube-system", "kube-public", "kube-node-lease",
+                "kube-system",
+                "kube-public",
+                "kube-node-lease",
             ):
                 issues.append("single_replica")
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"K8s deployment: {namespace}/{name} ({replicas} replicas)"
-                      + (f" -- {', '.join(issues)}" if issues else ""),
-                detail={
-                    "name": name,
-                    "namespace": namespace,
-                    "uid": uid,
-                    "replicas": replicas,
-                    "ready_replicas": status.get("readyReplicas", 0),
-                    "available_replicas": status.get("availableReplicas", 0),
-                    "strategy": spec.get("strategy", {}).get("type", ""),
-                    "issues": issues,
-                },
-                resource_id=uid,
-                resource_type="k8s_deployment",
-                resource_name=f"{namespace}/{name}",
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"K8s deployment: {namespace}/{name} ({replicas} replicas)"
+                    + (f" -- {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "name": name,
+                        "namespace": namespace,
+                        "uid": uid,
+                        "replicas": replicas,
+                        "ready_replicas": status.get("readyReplicas", 0),
+                        "available_replicas": status.get("availableReplicas", 0),
+                        "strategy": spec.get("strategy", {}).get("type", ""),
+                        "issues": issues,
+                    },
+                    resource_id=uid,
+                    resource_type="k8s_deployment",
+                    resource_name=f"{namespace}/{name}",
+                    severity=severity,
+                )
+            )
 
         return findings
 

@@ -67,25 +67,27 @@ class AzureNormalizer(BaseNormalizer):
                 if any("security" in g.lower() for g in groups):
                     severity = "high"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="policy_violation",
-                title=f"Non-compliant policy: {policy_name}",
-                detail={
-                    "policy_definition_name": policy_name,
-                    "policy_assignment_name": state.get("policy_assignment_name", ""),
-                    "compliance_state": compliance,
-                    "resource_id": resource_id,
-                    "resource_type": state.get("resource_type", ""),
-                    "policy_definition_group_names": state.get(
-                        "policy_definition_group_names", []
-                    ),
-                },
-                resource_id=resource_id,
-                resource_type=state.get("resource_type", "azure_resource"),
-                resource_name=state.get("resource_name", ""),
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="policy_violation",
+                    title=f"Non-compliant policy: {policy_name}",
+                    detail={
+                        "policy_definition_name": policy_name,
+                        "policy_assignment_name": state.get("policy_assignment_name", ""),
+                        "compliance_state": compliance,
+                        "resource_id": resource_id,
+                        "resource_type": state.get("resource_type", ""),
+                        "policy_definition_group_names": state.get(
+                            "policy_definition_group_names", []
+                        ),
+                    },
+                    resource_id=resource_id,
+                    resource_type=state.get("resource_type", "azure_resource"),
+                    resource_name=state.get("resource_name", ""),
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -107,27 +109,27 @@ class AzureNormalizer(BaseNormalizer):
             alert_severity = alert.get("properties", {}).get("severity", "medium").lower()
             mapped_severity = severity_map.get(alert_severity, "medium")
             alert_name = alert.get("properties", {}).get("alertDisplayName", "Unknown alert")
-            resource_id = alert.get("properties", {}).get(
-                "compromisedEntity", alert.get("id", "")
-            )
+            resource_id = alert.get("properties", {}).get("compromisedEntity", alert.get("id", ""))
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Defender alert: {alert_name}",
-                detail={
-                    "alert_type": alert.get("properties", {}).get("alertType", ""),
-                    "alert_display_name": alert_name,
-                    "description": alert.get("properties", {}).get("description", ""),
-                    "status": alert.get("properties", {}).get("status", ""),
-                    "compromised_entity": resource_id,
-                    "intent": alert.get("properties", {}).get("intent", ""),
-                },
-                resource_id=resource_id,
-                resource_type="azure_defender_alert",
-                resource_name=alert_name,
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Defender alert: {alert_name}",
+                    detail={
+                        "alert_type": alert.get("properties", {}).get("alertType", ""),
+                        "alert_display_name": alert_name,
+                        "description": alert.get("properties", {}).get("description", ""),
+                        "status": alert.get("properties", {}).get("status", ""),
+                        "compromised_entity": resource_id,
+                        "intent": alert.get("properties", {}).get("intent", ""),
+                    },
+                    resource_id=resource_id,
+                    resource_type="azure_defender_alert",
+                    resource_name=alert_name,
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -157,27 +159,27 @@ class AzureNormalizer(BaseNormalizer):
                 obs_type = "inventory"
                 title = f"Failed sign-in: {user} — error={error_code}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "user_principal_name": user,
-                    "app_display_name": sign_in.get("appDisplayName", ""),
-                    "ip_address": sign_in.get("ipAddress", ""),
-                    "location": sign_in.get("location", {}),
-                    "risk_level": sign_in.get("riskLevelDuringSignIn", "none"),
-                    "error_code": error_code,
-                    "failure_reason": status.get("failureReason", ""),
-                    "conditional_access_status": sign_in.get(
-                        "conditionalAccessStatus", ""
-                    ),
-                },
-                resource_id=sign_in.get("userId", ""),
-                resource_type="entra_user",
-                resource_name=user,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "user_principal_name": user,
+                        "app_display_name": sign_in.get("appDisplayName", ""),
+                        "ip_address": sign_in.get("ipAddress", ""),
+                        "location": sign_in.get("location", {}),
+                        "risk_level": sign_in.get("riskLevelDuringSignIn", "none"),
+                        "error_code": error_code,
+                        "failure_reason": status.get("failureReason", ""),
+                        "conditional_access_status": sign_in.get("conditionalAccessStatus", ""),
+                    },
+                    resource_id=sign_in.get("userId", ""),
+                    resource_type="entra_user",
+                    resource_name=user,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -224,18 +226,18 @@ class AzureNormalizer(BaseNormalizer):
             nsg_name = nsg.get("name", "unknown")
             nsg_id = nsg.get("id", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"NSG {nsg_name}" + (
-                    f" — {len(issues)} open ports" if issues else ""
-                ),
-                detail={"nsg": nsg, "issues": issues},
-                resource_id=nsg_id,
-                resource_type="network_security_group",
-                resource_name=nsg_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"NSG {nsg_name}" + (f" — {len(issues)} open ports" if issues else ""),
+                    detail={"nsg": nsg, "issues": issues},
+                    resource_id=nsg_id,
+                    resource_type="network_security_group",
+                    resource_name=nsg_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -263,18 +265,19 @@ class AzureNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Key Vault: {vault_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={"vault": vault, "issues": issues},
-                resource_id=vault_id,
-                resource_type="key_vault",
-                resource_name=vault_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Key Vault: {vault_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={"vault": vault, "issues": issues},
+                    resource_id=vault_id,
+                    resource_type="key_vault",
+                    resource_name=vault_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -312,18 +315,19 @@ class AzureNormalizer(BaseNormalizer):
                 if "https_not_required" in issues or "public_blob_access_enabled" in issues:
                     severity = "high"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Storage account: {account_name}" + (
-                    f" — {len(issues)} issues" if issues else ""
-                ),
-                detail={"storage_account": account, "issues": issues},
-                resource_id=account_id,
-                resource_type="storage_account",
-                resource_name=account_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Storage account: {account_name}"
+                    + (f" — {len(issues)} issues" if issues else ""),
+                    detail={"storage_account": account, "issues": issues},
+                    resource_id=account_id,
+                    resource_type="storage_account",
+                    resource_name=account_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -344,23 +348,25 @@ class AzureNormalizer(BaseNormalizer):
             operation = entry.get("operation_name", {})
             op_value = operation.get("value", "") if isinstance(operation, dict) else str(operation)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Activity log: {op_value}" + (f" — {level}" if level else ""),
-                detail={
-                    "operation": op_value,
-                    "level": level,
-                    "caller": entry.get("caller", ""),
-                    "status": entry.get("status", {}),
-                    "resource_id": entry.get("resource_id", ""),
-                    "event_timestamp": entry.get("event_timestamp", ""),
-                },
-                resource_id=entry.get("resource_id", ""),
-                resource_type="azure_activity",
-                resource_name=op_value,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Activity log: {op_value}" + (f" — {level}" if level else ""),
+                    detail={
+                        "operation": op_value,
+                        "level": level,
+                        "caller": entry.get("caller", ""),
+                        "status": entry.get("status", {}),
+                        "resource_id": entry.get("resource_id", ""),
+                        "event_timestamp": entry.get("event_timestamp", ""),
+                    },
+                    resource_id=entry.get("resource_id", ""),
+                    resource_type="azure_activity",
+                    resource_name=op_value,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -385,26 +391,26 @@ class AzureNormalizer(BaseNormalizer):
             mapped_severity = severity_map.get(alert_severity, "medium")
             alert_name = properties.get("alert_rule", "Unknown alert")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Monitor alert: {alert_name}",
-                detail={
-                    "alert_rule": alert_name,
-                    "severity": alert_severity,
-                    "monitor_condition": properties.get("monitor_condition", ""),
-                    "target_resource": properties.get("target_resource", ""),
-                    "target_resource_type": properties.get(
-                        "target_resource_type", ""
-                    ),
-                    "signal_type": properties.get("signal_type", ""),
-                    "description": properties.get("description", ""),
-                },
-                resource_id=properties.get("target_resource", alert.get("id", "")),
-                resource_type=properties.get("target_resource_type", "azure_monitor"),
-                resource_name=alert_name,
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Monitor alert: {alert_name}",
+                    detail={
+                        "alert_rule": alert_name,
+                        "severity": alert_severity,
+                        "monitor_condition": properties.get("monitor_condition", ""),
+                        "target_resource": properties.get("target_resource", ""),
+                        "target_resource_type": properties.get("target_resource_type", ""),
+                        "signal_type": properties.get("signal_type", ""),
+                        "description": properties.get("description", ""),
+                    },
+                    resource_id=properties.get("target_resource", alert.get("id", "")),
+                    resource_type=properties.get("target_resource_type", "azure_monitor"),
+                    resource_name=alert_name,
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 

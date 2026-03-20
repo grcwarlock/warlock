@@ -75,7 +75,7 @@ class TenableConnector(BaseConnector):
         return httpx.Client(
             headers={
                 "X-ApiKeys": f"accessKey={self.get_secret('TENABLE_ACCESS_KEY')};"
-                             f"secretKey={self.get_secret('TENABLE_SECRET_KEY')}",
+                f"secretKey={self.get_secret('TENABLE_SECRET_KEY')}",
                 "Accept": "application/json",
             },
             timeout=self.config.timeout_seconds,
@@ -85,12 +85,15 @@ class TenableConnector(BaseConnector):
         """Export vulnerabilities with severity critical or high."""
         try:
             # Request a vuln export
-            resp = client.post(f"{self.BASE_URL}/vulns/export", json={
-                "filters": {
-                    "severity": ["critical", "high"],
+            resp = client.post(
+                f"{self.BASE_URL}/vulns/export",
+                json={
+                    "filters": {
+                        "severity": ["critical", "high"],
+                    },
+                    "num_assets": self.config.settings.get("export_chunk_size", 500),
                 },
-                "num_assets": self.config.settings.get("export_chunk_size", 500),
-            })
+            )
             resp.raise_for_status()
             export_uuid = resp.json().get("export_uuid", "")
             if not export_uuid:
@@ -100,14 +103,16 @@ class TenableConnector(BaseConnector):
             # Poll for export completion
             data = self._poll_export(client, "vulns", export_uuid)
 
-            result.events.append(RawEventData(
-                source="tenable",
-                source_type=SourceType.SCANNER,
-                provider="tenable",
-                event_type="vuln_export",
-                raw_data={"vulnerabilities": data, "export_uuid": export_uuid},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="tenable",
+                    source_type=SourceType.SCANNER,
+                    provider="tenable",
+                    event_type="vuln_export",
+                    raw_data={"vulnerabilities": data, "export_uuid": export_uuid},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Tenable vuln export failed: %s", e)
             result.errors.append(f"vuln_export: {e}")
@@ -115,9 +120,12 @@ class TenableConnector(BaseConnector):
     def _collect_assets(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Export asset inventory."""
         try:
-            resp = client.post(f"{self.BASE_URL}/assets/export", json={
-                "chunk_size": self.config.settings.get("export_chunk_size", 500),
-            })
+            resp = client.post(
+                f"{self.BASE_URL}/assets/export",
+                json={
+                    "chunk_size": self.config.settings.get("export_chunk_size", 500),
+                },
+            )
             resp.raise_for_status()
             export_uuid = resp.json().get("export_uuid", "")
             if not export_uuid:
@@ -126,14 +134,16 @@ class TenableConnector(BaseConnector):
 
             data = self._poll_export(client, "assets", export_uuid)
 
-            result.events.append(RawEventData(
-                source="tenable",
-                source_type=SourceType.SCANNER,
-                provider="tenable",
-                event_type="asset_export",
-                raw_data={"assets": data, "export_uuid": export_uuid},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="tenable",
+                    source_type=SourceType.SCANNER,
+                    provider="tenable",
+                    event_type="asset_export",
+                    raw_data={"assets": data, "export_uuid": export_uuid},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Tenable asset export failed: %s", e)
             result.errors.append(f"asset_export: {e}")
@@ -141,35 +151,42 @@ class TenableConnector(BaseConnector):
     def _collect_compliance(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect compliance audit results."""
         try:
-            resp = client.get(f"{self.BASE_URL}/compliance/export", params={
-                "num_findings": self.config.settings.get("export_chunk_size", 500),
-            })
+            resp = client.get(
+                f"{self.BASE_URL}/compliance/export",
+                params={
+                    "num_findings": self.config.settings.get("export_chunk_size", 500),
+                },
+            )
             resp.raise_for_status()
             export_uuid = resp.json().get("export_uuid", "")
             if not export_uuid:
                 # Fall back to listing audits
                 resp = client.get(f"{self.BASE_URL}/audit-log/v1/events", params={"limit": 1000})
                 resp.raise_for_status()
-                result.events.append(RawEventData(
-                    source="tenable",
-                    source_type=SourceType.SCANNER,
-                    provider="tenable",
-                    event_type="compliance_audits",
-                    raw_data={"audits": resp.json().get("events", [])},
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="tenable",
+                        source_type=SourceType.SCANNER,
+                        provider="tenable",
+                        event_type="compliance_audits",
+                        raw_data={"audits": resp.json().get("events", [])},
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
                 return
 
             data = self._poll_export(client, "compliance", export_uuid)
 
-            result.events.append(RawEventData(
-                source="tenable",
-                source_type=SourceType.SCANNER,
-                provider="tenable",
-                event_type="compliance_audits",
-                raw_data={"audits": data, "export_uuid": export_uuid},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="tenable",
+                    source_type=SourceType.SCANNER,
+                    provider="tenable",
+                    event_type="compliance_audits",
+                    raw_data={"audits": data, "export_uuid": export_uuid},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Tenable compliance collection failed: %s", e)
             result.errors.append(f"compliance_audits: {e}")
@@ -177,20 +194,25 @@ class TenableConnector(BaseConnector):
     def _collect_agents(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect agent status."""
         try:
-            resp = client.get(f"{self.BASE_URL}/scanners/1/agents", params={
-                "limit": self.config.settings.get("agent_limit", 5000),
-            })
+            resp = client.get(
+                f"{self.BASE_URL}/scanners/1/agents",
+                params={
+                    "limit": self.config.settings.get("agent_limit", 5000),
+                },
+            )
             resp.raise_for_status()
             agents = resp.json().get("agents", [])
 
-            result.events.append(RawEventData(
-                source="tenable",
-                source_type=SourceType.SCANNER,
-                provider="tenable",
-                event_type="agent_status",
-                raw_data={"agents": agents},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="tenable",
+                    source_type=SourceType.SCANNER,
+                    provider="tenable",
+                    event_type="agent_status",
+                    raw_data={"agents": agents},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Tenable agent collection failed: %s", e)
             result.errors.append(f"agent_status: {e}")

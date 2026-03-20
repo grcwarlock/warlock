@@ -83,18 +83,20 @@ class WorkdayConnector(BaseConnector):
             # 1. Workers — paginated worker list
             try:
                 workers = self._paginate(client, "/workers", {"limit": "100"})
-                result.events.append(RawEventData(
-                    source="workday",
-                    source_type=SourceType.HRIS,
-                    provider="workday",
-                    event_type="workday_employees",
-                    raw_data={
-                        "endpoint": "/workers",
-                        "tenant": tenant,
-                        "response": workers,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="workday",
+                        source_type=SourceType.HRIS,
+                        provider="workday",
+                        event_type="workday_employees",
+                        raw_data={
+                            "endpoint": "/workers",
+                            "tenant": tenant,
+                            "response": workers,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Workday /workers failed: %s", e)
                 result.errors.append(f"/workers: {e}")
@@ -117,26 +119,30 @@ class WorkdayConnector(BaseConnector):
                         detail = resp.json()
                         bg_status = detail.get("backgroundCheck", {})
                         if bg_status:
-                            bg_checks.append({
-                                "worker_id": wid,
-                                "worker_name": worker.get("descriptor", ""),
-                                "background_check": bg_status,
-                            })
+                            bg_checks.append(
+                                {
+                                    "worker_id": wid,
+                                    "worker_name": worker.get("descriptor", ""),
+                                    "background_check": bg_status,
+                                }
+                            )
                     except Exception:
                         pass
                 if bg_checks:
-                    result.events.append(RawEventData(
-                        source="workday",
-                        source_type=SourceType.HRIS,
-                        provider="workday",
-                        event_type="workday_background_checks",
-                        raw_data={
-                            "endpoint": "/workers/{id}",
-                            "tenant": tenant,
-                            "response": bg_checks,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="workday",
+                            source_type=SourceType.HRIS,
+                            provider="workday",
+                            event_type="workday_background_checks",
+                            raw_data={
+                                "endpoint": "/workers/{id}",
+                                "tenant": tenant,
+                                "response": bg_checks,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
             except Exception as e:
                 log.debug("Workday background checks failed: %s", e)
                 result.errors.append(f"background_checks: {e}")
@@ -145,18 +151,20 @@ class WorkdayConnector(BaseConnector):
             try:
                 agreements = self._fetch_custom_report(client, "employment_agreements")
                 if agreements:
-                    result.events.append(RawEventData(
-                        source="workday",
-                        source_type=SourceType.HRIS,
-                        provider="workday",
-                        event_type="workday_agreements",
-                        raw_data={
-                            "endpoint": "/custom_report/employment_agreements",
-                            "tenant": tenant,
-                            "response": agreements,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="workday",
+                            source_type=SourceType.HRIS,
+                            provider="workday",
+                            event_type="workday_agreements",
+                            raw_data={
+                                "endpoint": "/custom_report/employment_agreements",
+                                "tenant": tenant,
+                                "response": agreements,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
             except Exception as e:
                 log.debug("Workday agreements report failed: %s", e)
                 result.errors.append(f"agreements: {e}")
@@ -165,18 +173,20 @@ class WorkdayConnector(BaseConnector):
             try:
                 disciplinary = self._fetch_custom_report(client, "disciplinary_actions")
                 if disciplinary:
-                    result.events.append(RawEventData(
-                        source="workday",
-                        source_type=SourceType.HRIS,
-                        provider="workday",
-                        event_type="workday_disciplinary",
-                        raw_data={
-                            "endpoint": "/custom_report/disciplinary_actions",
-                            "tenant": tenant,
-                            "response": disciplinary,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="workday",
+                            source_type=SourceType.HRIS,
+                            provider="workday",
+                            event_type="workday_disciplinary",
+                            raw_data={
+                                "endpoint": "/custom_report/disciplinary_actions",
+                                "tenant": tenant,
+                                "response": disciplinary,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
             except Exception as e:
                 log.debug("Workday disciplinary report failed: %s", e)
                 result.errors.append(f"disciplinary: {e}")
@@ -187,18 +197,20 @@ class WorkdayConnector(BaseConnector):
                     client, "/workers", {"limit": "100", "search": "jobChange"}
                 )
                 if job_changes:
-                    result.events.append(RawEventData(
-                        source="workday",
-                        source_type=SourceType.HRIS,
-                        provider="workday",
-                        event_type="workday_job_changes",
-                        raw_data={
-                            "endpoint": "/workers?jobChange",
-                            "tenant": tenant,
-                            "response": job_changes,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="workday",
+                            source_type=SourceType.HRIS,
+                            provider="workday",
+                            event_type="workday_job_changes",
+                            raw_data={
+                                "endpoint": "/workers?jobChange",
+                                "tenant": tenant,
+                                "response": job_changes,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
             except Exception as e:
                 log.debug("Workday job changes failed: %s", e)
                 result.errors.append(f"job_changes: {e}")

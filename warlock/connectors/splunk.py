@@ -32,9 +32,7 @@ class SplunkConnector(BaseConnector):
         if not self.config.settings.get("base_url"):
             errors.append("Missing required setting: base_url (e.g. https://splunk:8089)")
         if not self.get_secret("SPLUNK_TOKEN") and not self.get_secret("SPLUNK_PASSWORD"):
-            errors.append(
-                "Set SPLUNK_TOKEN or SPLUNK_PASSWORD (with SPLUNK_USERNAME) env var"
-            )
+            errors.append("Set SPLUNK_TOKEN or SPLUNK_PASSWORD (with SPLUNK_USERNAME) env var")
         return errors
 
     def health_check(self) -> bool:
@@ -43,8 +41,11 @@ class SplunkConnector(BaseConnector):
 
             url = f"{self._base_url}/services/server/info"
             resp = httpx.get(
-                url, headers=self._auth_headers(), params={"output_mode": "json"},
-                verify=self._verify_ssl, timeout=30,
+                url,
+                headers=self._auth_headers(),
+                params={"output_mode": "json"},
+                verify=self._verify_ssl,
+                timeout=30,
             )
             return resp.status_code == 200
         except Exception:
@@ -102,17 +103,19 @@ class SplunkConnector(BaseConnector):
             for url, params, event_type in checks:
                 try:
                     data = self._fetch(client, url, headers, params, event_type)
-                    result.events.append(RawEventData(
-                        source="splunk",
-                        source_type=SourceType.SIEM,
-                        provider="splunk",
-                        event_type=event_type,
-                        raw_data={
-                            "base_url": self._base_url,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="splunk",
+                            source_type=SourceType.SIEM,
+                            provider="splunk",
+                            event_type=event_type,
+                            raw_data={
+                                "base_url": self._base_url,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Splunk %s failed: %s", event_type, e)
                     result.errors.append(f"{event_type}: {e}")
@@ -137,11 +140,17 @@ class SplunkConnector(BaseConnector):
         username = self.get_secret("SPLUNK_USERNAME")
         password = self.get_secret("SPLUNK_PASSWORD")
         import base64
+
         encoded = base64.b64encode(f"{username}:{password}".encode()).decode()
         return {"Authorization": f"Basic {encoded}"}
 
     def _fetch(
-        self, client, url: str, headers: dict, params: dict, event_type: str,
+        self,
+        client,
+        url: str,
+        headers: dict,
+        params: dict,
+        event_type: str,
     ) -> list[dict] | dict:
         """Fetch data from Splunk REST API. Handle search export vs normal endpoints."""
         if event_type == "splunk_notable_events":
@@ -149,6 +158,7 @@ class SplunkConnector(BaseConnector):
             resp = client.post(url, headers=headers, data=params)
             resp.raise_for_status()
             import json
+
             results = []
             for line in resp.text.strip().split("\n"):
                 line = line.strip()

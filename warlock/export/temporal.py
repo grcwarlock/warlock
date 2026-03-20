@@ -31,9 +31,11 @@ log = logging.getLogger(__name__)
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ControlEvidence:
     """Evidence collected for a single control within a time period."""
+
     control_id: str
     framework: str
     finding_count: int
@@ -49,6 +51,7 @@ class ControlEvidence:
 @dataclass
 class EvidencePackage:
     """Complete evidence package for a framework within a time period."""
+
     framework: str
     period_start: datetime
     period_end: datetime
@@ -59,14 +62,13 @@ class EvidencePackage:
     total_results: int
     evidence_by_control: dict[str, ControlEvidence]  # control_id -> evidence
     gaps: list[str]  # controls with no evidence in period
-    generated_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _iso(dt: datetime | None) -> str:
     """Datetime to ISO-8601 string."""
@@ -109,9 +111,7 @@ def _summarize_result(result: ControlResult) -> dict[str, Any]:
         "severity": result.severity,
         "assertion_name": result.assertion_name or "",
         "assertion_passed": result.assertion_passed,
-        "ai_assessment": (
-            result.ai_assessment[:200] if result.ai_assessment else ""
-        ),
+        "ai_assessment": (result.ai_assessment[:200] if result.ai_assessment else ""),
         "ai_confidence": result.ai_confidence,
         "assessor": result.assessor or "",
         "assessed_at": _iso(result.assessed_at),
@@ -122,6 +122,7 @@ def _summarize_result(result: ControlResult) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # TemporalPackager
 # ---------------------------------------------------------------------------
+
 
 class TemporalPackager:
     """Packages evidence scoped to specific time ranges."""
@@ -153,18 +154,13 @@ class TemporalPackager:
             end = end.replace(tzinfo=timezone.utc)
 
         # Query all ControlResults in period for this framework
-        results_query = (
-            session.query(ControlResult)
-            .filter(
-                ControlResult.framework == framework,
-                ControlResult.assessed_at >= start,
-                ControlResult.assessed_at <= end,
-            )
+        results_query = session.query(ControlResult).filter(
+            ControlResult.framework == framework,
+            ControlResult.assessed_at >= start,
+            ControlResult.assessed_at <= end,
         )
         if controls:
-            results_query = results_query.filter(
-                ControlResult.control_id.in_(controls)
-            )
+            results_query = results_query.filter(ControlResult.control_id.in_(controls))
 
         results: list[ControlResult] = results_query.all()
 
@@ -182,14 +178,9 @@ class TemporalPackager:
 
         # Also get findings directly in this period for this framework
         # (via ControlMapping) that might not have results yet
-        mapping_query = (
-            session.query(ControlMapping)
-            .filter(ControlMapping.framework == framework)
-        )
+        mapping_query = session.query(ControlMapping).filter(ControlMapping.framework == framework)
         if controls:
-            mapping_query = mapping_query.filter(
-                ControlMapping.control_id.in_(controls)
-            )
+            mapping_query = mapping_query.filter(ControlMapping.control_id.in_(controls))
         mappings = mapping_query.all()
         mapping_finding_ids = {m.finding_id for m in mappings}
 
@@ -273,9 +264,7 @@ class TemporalPackager:
                 statuses[r.status] = statuses.get(r.status, 0) + 1
 
             # Sources
-            sources = sorted(set(
-                f.provider for f in unique_findings if f.provider
-            ))
+            sources = sorted(set(f.provider for f in unique_findings if f.provider))
 
             # Time range
             timestamps: list[datetime] = []
@@ -343,11 +332,7 @@ class TemporalPackager:
         Raises:
             ValueError: If engagement not found.
         """
-        eng = (
-            session.query(AuditEngagement)
-            .filter(AuditEngagement.id == engagement_id)
-            .first()
-        )
+        eng = session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
         if not eng:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
@@ -417,8 +402,7 @@ class TemporalPackager:
             "gaps": package.gaps,
             "generated_at": _iso(package.generated_at),
             "evidence_by_control": {
-                cid: _serialize(ev)
-                for cid, ev in package.evidence_by_control.items()
+                cid: _serialize(ev) for cid, ev in package.evidence_by_control.items()
             },
         }
         return json.dumps(data, indent=2, default=_serialize)
@@ -436,31 +420,33 @@ class TemporalPackager:
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "framework",
-            "control_id",
-            "finding_id",
-            "title",
-            "observation_type",
-            "resource_id",
-            "resource_type",
-            "resource_name",
-            "account_id",
-            "region",
-            "source",
-            "source_type",
-            "provider",
-            "severity",
-            "confidence",
-            "observed_at",
-            "ingested_at",
-            "assessment_status",
-            "assertion_name",
-            "assertion_passed",
-            "assessor",
-            "assessed_at",
-            "remediation_summary",
-        ])
+        writer.writerow(
+            [
+                "framework",
+                "control_id",
+                "finding_id",
+                "title",
+                "observation_type",
+                "resource_id",
+                "resource_type",
+                "resource_name",
+                "account_id",
+                "region",
+                "source",
+                "source_type",
+                "provider",
+                "severity",
+                "confidence",
+                "observed_at",
+                "ingested_at",
+                "assessment_status",
+                "assertion_name",
+                "assertion_passed",
+                "assessor",
+                "assessed_at",
+                "remediation_summary",
+            ]
+        )
 
         for control_id, evidence in sorted(package.evidence_by_control.items()):
             # Build a lookup from finding_id to result(s)
@@ -474,7 +460,37 @@ class TemporalPackager:
 
                 if related_results:
                     for result in related_results:
-                        writer.writerow([
+                        writer.writerow(
+                            [
+                                evidence.framework,
+                                control_id,
+                                fid,
+                                finding.get("title", ""),
+                                finding.get("observation_type", ""),
+                                finding.get("resource_id", ""),
+                                finding.get("resource_type", ""),
+                                finding.get("resource_name", ""),
+                                finding.get("account_id", ""),
+                                finding.get("region", ""),
+                                finding.get("source", ""),
+                                finding.get("source_type", ""),
+                                finding.get("provider", ""),
+                                finding.get("severity", ""),
+                                finding.get("confidence", ""),
+                                finding.get("observed_at", ""),
+                                finding.get("ingested_at", ""),
+                                result.get("status", ""),
+                                result.get("assertion_name", ""),
+                                result.get("assertion_passed", ""),
+                                result.get("assessor", ""),
+                                result.get("assessed_at", ""),
+                                result.get("remediation_summary", ""),
+                            ]
+                        )
+                else:
+                    # Finding without a result in this period
+                    writer.writerow(
+                        [
                             evidence.framework,
                             control_id,
                             fid,
@@ -492,39 +508,13 @@ class TemporalPackager:
                             finding.get("confidence", ""),
                             finding.get("observed_at", ""),
                             finding.get("ingested_at", ""),
-                            result.get("status", ""),
-                            result.get("assertion_name", ""),
-                            result.get("assertion_passed", ""),
-                            result.get("assessor", ""),
-                            result.get("assessed_at", ""),
-                            result.get("remediation_summary", ""),
-                        ])
-                else:
-                    # Finding without a result in this period
-                    writer.writerow([
-                        evidence.framework,
-                        control_id,
-                        fid,
-                        finding.get("title", ""),
-                        finding.get("observation_type", ""),
-                        finding.get("resource_id", ""),
-                        finding.get("resource_type", ""),
-                        finding.get("resource_name", ""),
-                        finding.get("account_id", ""),
-                        finding.get("region", ""),
-                        finding.get("source", ""),
-                        finding.get("source_type", ""),
-                        finding.get("provider", ""),
-                        finding.get("severity", ""),
-                        finding.get("confidence", ""),
-                        finding.get("observed_at", ""),
-                        finding.get("ingested_at", ""),
-                        "",  # no assessment status
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                    ])
+                            "",  # no assessment status
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                        ]
+                    )
 
         return output.getvalue()

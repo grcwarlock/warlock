@@ -25,7 +25,9 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
 )
-from sqlalchemy import JSON as SQLiteJSON  # Generic JSON: maps to JSONB on PostgreSQL, JSON on SQLite
+from sqlalchemy import (
+    JSON as SQLiteJSON,
+)  # Generic JSON: maps to JSONB on PostgreSQL, JSON on SQLite
 from sqlalchemy import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -50,6 +52,7 @@ class Base(DeclarativeBase):
 # Stage 0: Connector runs — tracks each collection execution
 # ---------------------------------------------------------------------------
 
+
 class ConnectorRun(Base):
     __tablename__ = "connector_runs"
 
@@ -58,7 +61,9 @@ class ConnectorRun(Base):
     source = Column(String(50), nullable=False)
     source_type = Column(String(20), nullable=False)
     provider = Column(String(50), nullable=False)
-    status = Column(String(20), nullable=False, default="running")  # running, success, partial, error
+    status = Column(
+        String(20), nullable=False, default="running"
+    )  # running, success, partial, error
     event_count = Column(Integer, default=0)
     error_count = Column(Integer, default=0)
     errors = Column(SQLiteJSON, default=list)
@@ -73,15 +78,20 @@ class ConnectorRun(Base):
 # Stage 1: Raw events — verbatim data from sources. Never mutated.
 # ---------------------------------------------------------------------------
 
+
 class RawEvent(Base):
     __tablename__ = "raw_events"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    connector_run_id = Column(String(36), ForeignKey("connector_runs.id", ondelete="CASCADE"), nullable=False)
-    source = Column(String(50), nullable=False)          # "aws", "crowdstrike", "tenable"
-    source_type = Column(String(20), nullable=False)      # cloud, edr, scanner, siem, iam
-    provider = Column(String(50), nullable=False)         # specific product
-    event_type = Column(String(100), nullable=False)      # "iam_credential_report", "ec2_security_groups"
+    connector_run_id = Column(
+        String(36), ForeignKey("connector_runs.id", ondelete="CASCADE"), nullable=False
+    )
+    source = Column(String(50), nullable=False)  # "aws", "crowdstrike", "tenable"
+    source_type = Column(String(20), nullable=False)  # cloud, edr, scanner, siem, iam
+    provider = Column(String(50), nullable=False)  # specific product
+    event_type = Column(
+        String(100), nullable=False
+    )  # "iam_credential_report", "ec2_security_groups"
     raw_data = Column(JSONType, nullable=False)
     sha256 = Column(String(64), nullable=False)
     ingested_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
@@ -101,24 +111,31 @@ class RawEvent(Base):
 # Stage 2: Findings — normalized observations. The universal unit.
 # ---------------------------------------------------------------------------
 
+
 class Finding(Base):
     __tablename__ = "findings"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    raw_event_id = Column(String(36), ForeignKey("raw_events.id", ondelete="CASCADE"), nullable=False)
+    raw_event_id = Column(
+        String(36), ForeignKey("raw_events.id", ondelete="CASCADE"), nullable=False
+    )
 
     # What was observed
-    observation_type = Column(String(50), nullable=False)  # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
+    observation_type = Column(
+        String(50), nullable=False
+    )  # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
     title = Column(Text, nullable=False)
     detail = Column(JSONType, nullable=False)
 
     # What resource
-    resource_id = Column(Text)                  # ARN, Azure resource ID, hostname
-    resource_type = Column(String(100))         # ec2_instance, iam_user, okta_user
+    resource_id = Column(Text)  # ARN, Azure resource ID, hostname
+    resource_type = Column(String(100))  # ec2_instance, iam_user, okta_user
     resource_name = Column(Text)
     account_id = Column(String(100))
     region = Column(String(50))
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))  # Phase 3: multi-system scoping
+    system_profile_id = Column(
+        String(36), ForeignKey("system_profiles.id", ondelete="SET NULL")
+    )  # Phase 3: multi-system scoping
 
     # Source lineage
     source = Column(String(50), nullable=False)
@@ -126,7 +143,7 @@ class Finding(Base):
     provider = Column(String(50), nullable=False)
 
     # Severity as reported by source
-    severity = Column(String(20), nullable=False)   # critical, high, medium, low, info
+    severity = Column(String(20), nullable=False)  # critical, high, medium, low, info
     confidence = Column(Float, default=1.0)
 
     # Time
@@ -154,18 +171,21 @@ class Finding(Base):
 # Stage 3: Control mappings — finding ↔ framework controls (many-to-many)
 # ---------------------------------------------------------------------------
 
+
 class ControlMapping(Base):
     __tablename__ = "control_mappings"
 
     id = Column(String(36), primary_key=True, default=_uuid)
     finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False)
-    framework = Column(String(50), nullable=False)        # nist_800_53, soc2, iso_27001
-    control_id = Column(String(50), nullable=False)       # AC-2, CC6.1, A.9.2.1
+    framework = Column(String(50), nullable=False)  # nist_800_53, soc2, iso_27001
+    control_id = Column(String(50), nullable=False)  # AC-2, CC6.1, A.9.2.1
     control_family = Column(String(50))
-    mapping_method = Column(String(30), nullable=False)   # explicit, resource_rule, keyword, crosswalk
+    mapping_method = Column(
+        String(30), nullable=False
+    )  # explicit, resource_rule, keyword, crosswalk
     confidence = Column(Float, nullable=False)
-    crosswalk_path = Column(JSONType)                     # for transitive: ["nist:AC-2", "soc2:CC6.1"]
-    monitoring_frequency = Column(String(20))              # daily, weekly, monthly, quarterly, annual
+    crosswalk_path = Column(JSONType)  # for transitive: ["nist:AC-2", "soc2:CC6.1"]
+    monitoring_frequency = Column(String(20))  # daily, weekly, monthly, quarterly, annual
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
     finding = relationship("Finding", back_populates="control_mappings")
@@ -181,25 +201,32 @@ class ControlMapping(Base):
 # Stage 4: Control results — compliance determination per finding per control
 # ---------------------------------------------------------------------------
 
+
 class ControlResult(Base):
     __tablename__ = "control_results"
 
     id = Column(String(36), primary_key=True, default=_uuid)
     finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False)
-    control_mapping_id = Column(String(36), ForeignKey("control_mappings.id", ondelete="CASCADE"), nullable=False)
+    control_mapping_id = Column(
+        String(36), ForeignKey("control_mappings.id", ondelete="CASCADE"), nullable=False
+    )
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50), nullable=False)
 
-    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))  # Phase 3
+    system_profile_id = Column(
+        String(36), ForeignKey("system_profiles.id", ondelete="SET NULL")
+    )  # Phase 3
 
     # Determination
-    status = Column(String(20), nullable=False)         # compliant, non_compliant, partial, not_assessed, not_applicable, risk_accepted, inherited_compliant, inherited_at_risk
+    status = Column(
+        String(20), nullable=False
+    )  # compliant, non_compliant, partial, not_assessed, not_applicable, risk_accepted, inherited_compliant, inherited_at_risk
     severity = Column(String(20), nullable=False)
 
     # Tier 1: deterministic assertion
     assertion_name = Column(String(100))
     assertion_passed = Column(Boolean)
-    assertion_findings = Column(JSONType)                # specific failure reasons
+    assertion_findings = Column(JSONType)  # specific failure reasons
 
     # Tier 2: AI reasoning (nullable)
     ai_assessment = Column(Text)
@@ -212,9 +239,9 @@ class ControlResult(Base):
     console_path = Column(Text)
 
     # Lineage
-    evidence_ids = Column(JSONType)                      # [raw_event UUIDs] that informed this
+    evidence_ids = Column(JSONType)  # [raw_event UUIDs] that informed this
     assessed_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
-    assessor = Column(String(100), nullable=False)       # "assertion:mfa_check" or "ai:claude"
+    assessor = Column(String(100), nullable=False)  # "assertion:mfa_check" or "ai:claude"
 
     # Phase 5b: Auditor examination
     examined_at = Column(DateTime(timezone=True))
@@ -236,12 +263,14 @@ class ControlResult(Base):
 # Immutable Audit Trail — append-only evidence chain
 # ---------------------------------------------------------------------------
 
+
 class AuditEntry(Base):
     """Append-only audit log with hash chaining for tamper evidence.
 
     Each entry's hash includes the previous entry's hash, creating a
     verifiable chain. If any entry is modified or deleted, the chain breaks.
     """
+
     __tablename__ = "audit_entries"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -250,7 +279,9 @@ class AuditEntry(Base):
     entry_hash = Column(String(64), nullable=False)
 
     # What happened
-    action = Column(String(50), nullable=False)  # evidence_collected, finding_created, control_assessed, etc.
+    action = Column(
+        String(50), nullable=False
+    )  # evidence_collected, finding_created, control_assessed, etc.
     entity_type = Column(String(50), nullable=False)  # raw_event, finding, control_result, etc.
     entity_id = Column(String(36), nullable=False)
 
@@ -276,12 +307,14 @@ class AuditEntry(Base):
 # Posture Snapshots — periodic control-level rollups
 # ---------------------------------------------------------------------------
 
+
 class PostureSnapshot(Base):
     """Point-in-time compliance posture per control per framework.
 
     Created periodically (daily/weekly) to enable trend analysis,
     historical queries, and drift detection without scanning all findings.
     """
+
     __tablename__ = "posture_snapshots"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -301,7 +334,7 @@ class PostureSnapshot(Base):
     not_assessed_findings = Column(Integer, default=0)
 
     # Evidence sources
-    evidence_sources = Column(JSONType, default=list)    # ["aws", "okta", "crowdstrike"]
+    evidence_sources = Column(JSONType, default=list)  # ["aws", "okta", "crowdstrike"]
     evidence_freshness_hours = Column(Float)  # hours since newest evidence
 
     # Sufficiency
@@ -312,9 +345,9 @@ class PostureSnapshot(Base):
     system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))
 
     # Phase 4: effectiveness scoring
-    uptime_pct = Column(Float)           # % of time compliant over trailing window
-    mttr_hours = Column(Float)           # mean time to remediate
-    drift_count = Column(Integer)        # number of status changes in window
+    uptime_pct = Column(Float)  # % of time compliant over trailing window
+    mttr_hours = Column(Float)  # mean time to remediate
+    drift_count = Column(Integer)  # number of status changes in window
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
@@ -330,8 +363,10 @@ class PostureSnapshot(Base):
 # Users & RBAC
 # ---------------------------------------------------------------------------
 
+
 class User(Base):
     """Platform user with role-based access control."""
+
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -356,19 +391,18 @@ class User(Base):
     # MFA/TOTP fields (#21)
     mfa_enabled = Column(Boolean, default=False)
     mfa_secret = Column(String(64), nullable=True)  # TOTP secret (encrypted)
-    mfa_backup_codes = Column(JSON, nullable=True)   # hashed backup codes
+    mfa_backup_codes = Column(JSON, nullable=True)  # hashed backup codes
     mfa_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     # Refresh token (#58)
     refresh_token_hash = Column(String(64), nullable=True)
 
-    __table_args__ = (
-        Index("idx_user_role", "role"),
-    )
+    __table_args__ = (Index("idx_user_role", "role"),)
 
 
 class APIKey(Base):
     """API keys for programmatic access."""
+
     __tablename__ = "api_keys"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -391,8 +425,10 @@ class APIKey(Base):
 # Audit Engagements — scoped audit periods
 # ---------------------------------------------------------------------------
 
+
 class RiskAnalysis(Base):
     """FAIR Monte Carlo risk quantification results."""
+
     __tablename__ = "risk_analyses"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -417,6 +453,7 @@ class AuditEngagement(Base):
 
     e.g., "SOC 2 Type II 2025" covering Jan 1 - Dec 31 2025 for SOC 2 framework.
     """
+
     __tablename__ = "audit_engagements"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -451,6 +488,7 @@ class AuditEngagement(Base):
 
 class POAM(Base):
     """First-class POA&M entity for tracking remediation plans."""
+
     __tablename__ = "poams"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -467,7 +505,9 @@ class POAM(Base):
     # Lifecycle: draft -> open -> in_progress -> completed -> verified -> closed
     status = Column(String(20), nullable=False, default="draft")
 
-    milestones = Column(SQLiteJSON, default=list)  # [{description, due_date, completed_date, status}]
+    milestones = Column(
+        SQLiteJSON, default=list
+    )  # [{description, due_date, completed_date, status}]
     scheduled_completion = Column(DateTime(timezone=True))
     actual_completion = Column(DateTime(timezone=True))
     delay_count = Column(Integer, default=0)
@@ -500,6 +540,7 @@ class POAM(Base):
 
 class CompensatingControl(Base):
     """Documents alternative controls when primary control is non-compliant."""
+
     __tablename__ = "compensating_controls"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -540,6 +581,7 @@ class CompensatingControl(Base):
 
 class RiskAcceptance(Base):
     """Formal risk acceptance with AO-level approval and expiry."""
+
     __tablename__ = "risk_acceptances"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -562,7 +604,9 @@ class RiskAcceptance(Base):
     approved_by = Column(String(255))  # Must be AO-level
     approved_at = Column(DateTime(timezone=True))
     expiry_date = Column(DateTime(timezone=True), nullable=False)
-    auto_reeval_triggers = Column(SQLiteJSON, default=dict)  # {"severity_change": true, "new_finding": true}
+    auto_reeval_triggers = Column(
+        SQLiteJSON, default=dict
+    )  # {"severity_change": true, "new_finding": true}
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -581,6 +625,7 @@ class RiskAcceptance(Base):
 
 class Issue(Base):
     """Tracks remediation of non-compliant findings through their lifecycle."""
+
     __tablename__ = "issues"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -641,18 +686,19 @@ class Issue(Base):
 
 class IssueComment(Base):
     """Comments on issues for collaboration."""
+
     __tablename__ = "issue_comments"
 
     id = Column(String(36), primary_key=True, default=_uuid)
     issue_id = Column(String(36), ForeignKey("issues.id", ondelete="CASCADE"), nullable=False)
     author = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
-    comment_type = Column(String(20), default="comment")  # comment, status_change, assignment, evidence
+    comment_type = Column(
+        String(20), default="comment"
+    )  # comment, status_change, assignment, evidence
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
-    __table_args__ = (
-        Index("idx_comment_issue", "issue_id"),
-    )
+    __table_args__ = (Index("idx_comment_issue", "issue_id"),)
 
 
 # ---------------------------------------------------------------------------
@@ -662,6 +708,7 @@ class IssueComment(Base):
 
 class Attestation(Base):
     """Sign-off workflow for control assessments."""
+
     __tablename__ = "attestations"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -702,14 +749,19 @@ class Attestation(Base):
 
 class AuditComment(Base):
     """Auditor-practitioner collaboration comments."""
+
     __tablename__ = "audit_comments"
 
     id = Column(String(36), primary_key=True, default=_uuid)
     engagement_id = Column(String(36), ForeignKey("audit_engagements.id"), nullable=False)
 
     # What the comment is about
-    target_type = Column(String(30), nullable=False)  # "control", "finding", "attestation", "engagement"
-    target_id = Column(String(50), nullable=False)  # control_id, finding_id, attestation_id, or engagement_id
+    target_type = Column(
+        String(30), nullable=False
+    )  # "control", "finding", "attestation", "engagement"
+    target_id = Column(
+        String(50), nullable=False
+    )  # control_id, finding_id, attestation_id, or engagement_id
 
     # Content
     author = Column(String(255), nullable=False)
@@ -739,6 +791,7 @@ class AuditComment(Base):
 
 class LegalHold(Base):
     """Legal hold that prevents data purging during investigations or litigation."""
+
     __tablename__ = "legal_holds"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -772,6 +825,7 @@ class LegalHold(Base):
 
 class TrustAccessRequest(Base):
     """Tracks requests for compliance documentation via the trust portal."""
+
     __tablename__ = "trust_access_requests"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -800,6 +854,7 @@ class TrustDocument(Base):
     - nda:      requires NDA acceptance (approved TrustAccessRequest)
     - contract: requires active contract (highest gate)
     """
+
     __tablename__ = "trust_documents"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -807,7 +862,7 @@ class TrustDocument(Base):
     description = Column(Text, default="")
     classification_tier = Column(String(20), nullable=False, default="nda")
     # public | nda | contract
-    file_path = Column(Text, nullable=False)   # server-side storage path
+    file_path = Column(Text, nullable=False)  # server-side storage path
     content_type = Column(String(100), default="application/pdf")
     file_size_bytes = Column(Integer, default=0)
     uploaded_by = Column(String(255), nullable=False)
@@ -828,6 +883,7 @@ class TrustDocument(Base):
 
 class SystemProfile(Base):
     """Defines an authorization boundary / system for assessment scoping."""
+
     __tablename__ = "system_profiles"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -893,6 +949,7 @@ class SystemProfile(Base):
 
 class Personnel(Base):
     """Unified personnel record cross-referencing HR + IdP + training data."""
+
     __tablename__ = "personnel"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -956,6 +1013,7 @@ class Personnel(Base):
 
 class QuestionnaireTemplate(Base):
     """Reusable questionnaire templates (SIG, DDQ, CAIQ, custom)."""
+
     __tablename__ = "questionnaire_templates"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -971,13 +1029,12 @@ class QuestionnaireTemplate(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
-    __table_args__ = (
-        Index("idx_template_type", "template_type"),
-    )
+    __table_args__ = (Index("idx_template_type", "template_type"),)
 
 
 class Questionnaire(Base):
     """A questionnaire sent to a specific vendor."""
+
     __tablename__ = "questionnaires"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -993,7 +1050,9 @@ class Questionnaire(Base):
     completion_pct = Column(Float, default=0.0)
 
     # AI auto-answer
-    ai_suggested_answers = Column(SQLiteJSON, default=dict)  # {question_id: {answer, confidence, source}}
+    ai_suggested_answers = Column(
+        SQLiteJSON, default=dict
+    )  # {question_id: {answer, confidence, source}}
 
     # Scoring
     risk_score = Column(Float)  # 0-100 based on responses
@@ -1024,16 +1083,21 @@ class Questionnaire(Base):
 
 class DataSilo(Base):
     """Tracks discovered data stores and their sensitive data classification."""
+
     __tablename__ = "data_silos"
 
     id = Column(String(36), primary_key=True, default=_uuid)
     name = Column(String(255), nullable=False)
-    silo_type = Column(String(30), nullable=False)  # s3_bucket, rds_database, sharepoint_site, snowflake_db, github_repo
+    silo_type = Column(
+        String(30), nullable=False
+    )  # s3_bucket, rds_database, sharepoint_site, snowflake_db, github_repo
     provider = Column(String(30))  # aws, azure, gcp, github, sharepoint
     location = Column(String(500))  # ARN, URL, connection string (masked)
 
     # Classification
-    data_classification = Column(String(20), default="unknown")  # public, internal, confidential, restricted, unknown
+    data_classification = Column(
+        String(20), default="unknown"
+    )  # public, internal, confidential, restricted, unknown
     contains_pii = Column(Boolean, default=False)
     contains_phi = Column(Boolean, default=False)
     contains_pci = Column(Boolean, default=False)
@@ -1041,10 +1105,14 @@ class DataSilo(Base):
 
     # Scan results
     last_scan_date = Column(DateTime(timezone=True))
-    scan_status = Column(String(20), default="not_scanned")  # not_scanned, scanning, completed, error
+    scan_status = Column(
+        String(20), default="not_scanned"
+    )  # not_scanned, scanning, completed, error
     sensitive_field_count = Column(Integer, default=0)
     total_records = Column(Integer)
-    scan_findings = Column(SQLiteJSON, default=list)  # [{field_name, data_type, sample_masked, confidence}]
+    scan_findings = Column(
+        SQLiteJSON, default=list
+    )  # [{field_name, data_type, sample_masked, confidence}]
 
     # Protection status
     encrypted_at_rest = Column(Boolean)
@@ -1081,6 +1149,7 @@ class DataSilo(Base):
 
 class ControlInheritance(Base):
     """Maps control responsibility: inherited, shared, common, or system-specific."""
+
     __tablename__ = "control_inheritances"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1089,7 +1158,9 @@ class ControlInheritance(Base):
     control_id = Column(String(50), nullable=False)
 
     # Per NIST SP 800-53A / FedRAMP CRM
-    inheritance_type = Column(String(20), nullable=False)  # inherited, shared, common, system_specific
+    inheritance_type = Column(
+        String(20), nullable=False
+    )  # inherited, shared, common, system_specific
     provider_system_id = Column(String(36), ForeignKey("system_profiles.id"))
     provider_description = Column(Text)
     responsibility_description = Column(Text)
@@ -1113,6 +1184,7 @@ class ControlInheritance(Base):
 
 class SystemDependency(Base):
     """Models cross-system control inheritance dependencies."""
+
     __tablename__ = "system_dependencies"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1120,7 +1192,9 @@ class SystemDependency(Base):
     provider_system_id = Column(String(36), ForeignKey("system_profiles.id"), nullable=False)
 
     shared_controls = Column(SQLiteJSON, default=list)  # ["nist_800_53:AC-2", "soc2:CC6.1"]
-    dependency_type = Column(String(30), nullable=False)  # infrastructure, identity, network, application
+    dependency_type = Column(
+        String(30), nullable=False
+    )  # infrastructure, identity, network, application
     description = Column(Text)
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
@@ -1138,11 +1212,12 @@ class SystemDependency(Base):
 
 class ChangeEvent(Base):
     """Generic change event from cloud audit logs, CI/CD, ITSM, IaC."""
+
     __tablename__ = "change_events"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    source = Column(String(50), nullable=False)       # cloudtrail, github, servicenow, terraform
-    source_type = Column(String(30), nullable=False)   # cloud_audit, ci_cd, itsm, iac
+    source = Column(String(50), nullable=False)  # cloudtrail, github, servicenow, terraform
+    source_type = Column(String(30), nullable=False)  # cloud_audit, ci_cd, itsm, iac
     event_type = Column(String(100), nullable=False)
     actor = Column(String(255))
     action = Column(String(255), nullable=False)
@@ -1168,6 +1243,7 @@ class ChangeEvent(Base):
 
 class ComplianceDrift(Base):
     """Records compliance status changes with correlated change events."""
+
     __tablename__ = "compliance_drifts"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1203,6 +1279,7 @@ class ComplianceDrift(Base):
 
 class PolicyOverride(Base):
     """Custom Rego policies for ABAC escalation via OPA."""
+
     __tablename__ = "policy_overrides"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1213,9 +1290,7 @@ class PolicyOverride(Base):
     created_by = Column(String(255))
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
-    __table_args__ = (
-        Index("idx_policy_override_active", "is_active"),
-    )
+    __table_args__ = (Index("idx_policy_override_active", "is_active"),)
 
 
 # ---------------------------------------------------------------------------
@@ -1225,6 +1300,7 @@ class PolicyOverride(Base):
 
 class ExternalAuditor(Base):
     """Lightweight auditor account with magic-link authentication."""
+
     __tablename__ = "external_auditors"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1247,6 +1323,7 @@ class ExternalAuditor(Base):
 
 class AuditorEngagementAssignment(Base):
     """Junction table: auditor ↔ engagement (many-to-many)."""
+
     __tablename__ = "auditor_engagement_assignments"
 
     auditor_id = Column(String(36), ForeignKey("external_auditors.id"), primary_key=True)
@@ -1256,6 +1333,7 @@ class AuditorEngagementAssignment(Base):
 
 class EvidenceRequest(Base):
     """Auditor request for additional evidence during an engagement."""
+
     __tablename__ = "evidence_requests"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1265,7 +1343,9 @@ class EvidenceRequest(Base):
     control_id = Column(String(50))
     description = Column(Text, nullable=False)
 
-    status = Column(String(20), default="requested")  # requested -> in_progress -> fulfilled -> closed
+    status = Column(
+        String(20), default="requested"
+    )  # requested -> in_progress -> fulfilled -> closed
     fulfilled_by = Column(String(255))
     fulfilled_at = Column(DateTime(timezone=True))
     fulfillment_notes = Column(Text)

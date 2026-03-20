@@ -1,0 +1,230 @@
+/* Warlock GRC Platform — Textual CSS */
+
+/* ------------------------------------------------------------------ */
+/* Global                                                              */
+/* ------------------------------------------------------------------ */
+
+Screen {
+    background: $surface;
+}
+
+Header {
+    background: #1a1a2e;
+    color: #e0e0ff;
+    dock: top;
+}
+
+Footer {
+    background: #1a1a2e;
+    color: #8888aa;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tabbed navigation                                                   */
+/* ------------------------------------------------------------------ */
+
+TabbedContent {
+    height: 1fr;
+}
+
+ContentSwitcher {
+    height: 1fr;
+}
+
+TabPane {
+    padding: 0;
+    height: 1fr;
+}
+
+Tabs {
+    background: #16213e;
+    color: #8899bb;
+}
+
+Tab {
+    background: #16213e;
+    color: #8899bb;
+    padding: 0 2;
+}
+
+Tab:hover {
+    background: #1a2744;
+    color: #aabbdd;
+}
+
+Tab.-active {
+    background: #0f3460;
+    color: #e0e0ff;
+    text-style: bold;
+}
+
+Underline > .underline--bar {
+    color: #3a86ff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Data tables                                                         */
+/* ------------------------------------------------------------------ */
+
+DataTable {
+    background: $surface;
+    scrollbar-background: #1a1a2e;
+    scrollbar-color: #3a3a5e;
+    scrollbar-color-hover: #5a5a8e;
+}
+
+DataTable > .datatable--header {
+    background: #16213e;
+    color: #8899bb;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #0f3460;
+    color: #e0e0ff;
+}
+
+DataTable > .datatable--even-row {
+    background: #111128;
+}
+
+DataTable > .datatable--odd-row {
+    background: $surface;
+}
+
+/* ------------------------------------------------------------------ */
+/* Inputs and selects                                                  */
+/* ------------------------------------------------------------------ */
+
+Input {
+    background: #16213e;
+    color: #e0e0ff;
+    border: tall #3a3a5e;
+    padding: 0 1;
+}
+
+Input:focus {
+    border: tall #3a86ff;
+}
+
+Select {
+    background: #16213e;
+    color: #e0e0ff;
+    border: tall #3a3a5e;
+}
+
+SelectCurrent {
+    background: #16213e;
+    color: #e0e0ff;
+}
+
+SelectOverlay {
+    background: #16213e;
+    color: #e0e0ff;
+    border: tall #3a3a5e;
+}
+
+/* ------------------------------------------------------------------ */
+/* Framework selector                                                  */
+/* ------------------------------------------------------------------ */
+
+FrameworkSelector {
+    background: #111128;
+    border: solid #3a3a5e;
+}
+
+.fw-item {
+    background: #111128;
+    color: #8899bb;
+    height: 1;
+    padding: 0 1;
+}
+
+.fw-item:hover {
+    background: #1a2744;
+    color: #aabbdd;
+}
+
+.fw-item.--selected {
+    background: #0f3460;
+    color: #e0e0ff;
+    text-style: bold;
+}
+
+/* ------------------------------------------------------------------ */
+/* Section titles                                                      */
+/* ------------------------------------------------------------------ */
+
+.section-title {
+    color: #8899bb;
+    text-style: bold;
+    padding: 0;
+    margin: 1 0 0 0;
+    height: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* Panels / cards                                                      */
+/* ------------------------------------------------------------------ */
+
+PostureSummary {
+    background: #111128;
+    border: solid #3a86ff;
+}
+
+FrameworkCard {
+    background: #111128;
+    border: solid #3a3a5e;
+}
+
+FrameworkCard:hover {
+    border: solid #3a86ff;
+}
+
+IssueBox {
+    background: #111128;
+    border: solid #3a3a5e;
+}
+
+RiskPanel {
+    background: #111128;
+    border: solid #3a3a5e;
+}
+
+PipelinePanel {
+    background: #111128;
+    border: solid #3a3a5e;
+}
+
+AIPanel {
+    background: #111128;
+    border: solid #3a3a5e;
+}
+
+CoverageStatsPanel {
+    background: #111128;
+    border: solid #3a86ff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Placeholder tabs                                                    */
+/* ------------------------------------------------------------------ */
+
+.placeholder-tab {
+    padding: 2 4;
+    content-align: center middle;
+    text-align: center;
+    color: #555577;
+    height: 100%;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scrollbars                                                          */
+/* ------------------------------------------------------------------ */
+
+* {
+    scrollbar-background: #1a1a2e;
+    scrollbar-color: #3a3a5e;
+    scrollbar-color-hover: #5a5a8e;
+    scrollbar-color-active: #3a86ff;
+}

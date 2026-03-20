@@ -34,12 +34,14 @@ from warlock.db.models import (
     TrustDocument,
 )
 
+
 # ---------------------------------------------------------------------------
 # Download token signing — HMAC-SHA256, 1-hour TTL
 # ---------------------------------------------------------------------------
 # Load from settings — refuse hardcoded default in production
 def _get_download_secret() -> str:
     from warlock.config import get_settings
+
     s = get_settings()
     secret = getattr(s, "trust_portal_secret", "") or ""
     if not secret:
@@ -47,6 +49,7 @@ def _get_download_secret() -> str:
             raise RuntimeError("WLK_TRUST_PORTAL_SECRET must be set in production")
         secret = "wlk-trust-portal-dev-only-secret"
     return secret
+
 
 log = logging.getLogger(__name__)
 
@@ -75,13 +78,13 @@ def _bin_control_count(count: int) -> str:
 
 class FrameworkStatus(BaseModel):
     framework: str
-    posture_rating: str          # "Strong", "Moderate", "Needs Improvement"
-    total_controls: str          # S-7: Binned range string, not exact count
-    compliance_rate_band: str    # "90-100%", "70-89%", "50-69%", "Below 50%"
+    posture_rating: str  # "Strong", "Moderate", "Needs Improvement"
+    total_controls: str  # S-7: Binned range string, not exact count
+    compliance_rate_band: str  # "90-100%", "70-89%", "50-69%", "Below 50%"
 
 
 class TrustStatusResponse(BaseModel):
-    overall_rating: str          # "Strong", "Moderate", "Needs Improvement"
+    overall_rating: str  # "Strong", "Moderate", "Needs Improvement"
     frameworks: list[FrameworkStatus]
     last_assessment: str | None
     assessed_frameworks_count: int
@@ -142,9 +145,7 @@ async def trust_status(db: Session = Depends(get_db)):
 
     if latest_date:
         snapshots = (
-            db.query(PostureSnapshot)
-            .filter(PostureSnapshot.snapshot_date == latest_date)
-            .all()
+            db.query(PostureSnapshot).filter(PostureSnapshot.snapshot_date == latest_date).all()
         )
 
         # Aggregate by framework
@@ -170,9 +171,7 @@ async def trust_status(db: Session = Depends(get_db)):
 
         for fw, data in sorted(fw_data.items()):
             avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0
-            compliance_rate = (
-                (data["compliant"] / data["total"] * 100) if data["total"] else 0
-            )
+            compliance_rate = (data["compliant"] / data["total"] * 100) if data["total"] else 0
             overall_scores.append(avg_score)
 
             # Bin scores for public consumption — no exact counts
@@ -201,11 +200,7 @@ async def trust_status(db: Session = Depends(get_db)):
     overall = round(sum(overall_scores) / len(overall_scores), 1) if overall_scores else 0
 
     # Last assessment
-    last_result = (
-        db.query(ControlResult)
-        .order_by(ControlResult.assessed_at.desc())
-        .first()
-    )
+    last_result = db.query(ControlResult).order_by(ControlResult.assessed_at.desc()).first()
     last_assessment = None
     if last_result and last_result.assessed_at:
         dt = last_result.assessed_at
@@ -357,7 +352,7 @@ async def submit_access_request(
         )
 
     # S-17: Proper email validation with regex
-    if not body.contact_email or not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', body.contact_email):
+    if not body.contact_email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", body.contact_email):
         raise HTTPException(status_code=400, detail="A valid contact email is required.")
 
     req = TrustAccessRequest(
@@ -372,7 +367,9 @@ async def submit_access_request(
     db.add(req)
     db.flush()
 
-    log.info("Trust portal access request from %s (%s): %s", body.contact_name, body.company_name, req.id)
+    log.info(
+        "Trust portal access request from %s (%s): %s", body.contact_name, body.company_name, req.id
+    )
 
     return AccessRequestSubmitResponse(
         request_id=req.id,
@@ -473,12 +470,17 @@ async def upload_trust_document(
     # Validate file type
     _ALLOWED_TYPES = {"application/pdf", "image/png", "image/jpeg", "text/csv", "application/json"}
     if file.content_type and file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail=f"File type '{file.content_type}' not allowed. Allowed: {sorted(_ALLOWED_TYPES)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type '{file.content_type}' not allowed. Allowed: {sorted(_ALLOWED_TYPES)}",
+        )
 
     # Sanitize title and build a storage key
     safe_title = re.sub(r"[^\w\s\-.]", "", title)[:120].strip().replace(" ", "_")
     if not safe_title:
-        raise HTTPException(status_code=400, detail="Title must contain at least one alphanumeric character.")
+        raise HTTPException(
+            status_code=400, detail="Title must contain at least one alphanumeric character."
+        )
 
     import os
     import uuid
@@ -683,11 +685,7 @@ async def list_documents_for_access_request(
     Returns documents whose classification_tier is 'public' or 'nda' if the
     request is approved, 'public' only if still pending/denied.
     """
-    req = (
-        db.query(TrustAccessRequest)
-        .filter(TrustAccessRequest.id == request_id)
-        .first()
-    )
+    req = db.query(TrustAccessRequest).filter(TrustAccessRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Access request not found.")
 

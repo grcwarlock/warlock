@@ -40,13 +40,14 @@ except ImportError:  # pragma: no cover
 # Pure-Python statistical helpers
 # ---------------------------------------------------------------------------
 
+
 def _zscore(values: list[float]) -> list[float]:
     """Compute Z-scores using sample standard deviation."""
     if len(values) < 2:
         return [0.0] * len(values)
     mean = sum(values) / len(values)
     variance = sum((x - mean) ** 2 for x in values) / (len(values) - 1)
-    std = variance ** 0.5
+    std = variance**0.5
     if std < 1e-10:
         return [0.0] * len(values)
     return [(x - mean) / std for x in values]
@@ -91,10 +92,7 @@ def _covariance_matrix(data: list[list[float]]) -> list[list[float]]:
     cov = [[0.0] * n_features for _ in range(n_features)]
     for i in range(n_features):
         for j in range(i, n_features):
-            s = sum(
-                (data[k][i] - means[i]) * (data[k][j] - means[j])
-                for k in range(n_samples)
-            )
+            s = sum((data[k][i] - means[i]) * (data[k][j] - means[j]) for k in range(n_samples))
             val = s / (n_samples - 1) if n_samples > 1 else 0.0
             cov[i][j] = val
             cov[j][i] = val
@@ -147,11 +145,13 @@ def _mahalanobis_scores(data: list[list[float]]) -> list[float]:
         diff = [row[j] - means[j] for j in range(n_features)]
         if inv_cov is not None:
             # d^2 = diff^T @ inv_cov @ diff
-            tmp = [sum(diff[i] * inv_cov[i][j] for i in range(n_features)) for j in range(n_features)]
+            tmp = [
+                sum(diff[i] * inv_cov[i][j] for i in range(n_features)) for j in range(n_features)
+            ]
             d2 = sum(diff[j] * tmp[j] for j in range(n_features))
         else:
             # Fallback: simple Euclidean distance squared.
-            d2 = sum(d ** 2 for d in diff)
+            d2 = sum(d**2 for d in diff)
         scores.append(math.sqrt(max(d2, 0.0)))
     return scores
 
@@ -178,12 +178,13 @@ def _severity_from_score(score: float) -> str:
 # AnomalyResult
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AnomalyResult:
     """A single detected anomaly."""
 
-    anomaly_type: str          # drift, volume, timing, access, statistical
-    score: float               # 0.0 (normal) to 1.0 (extremely anomalous)
+    anomaly_type: str  # drift, volume, timing, access, statistical
+    score: float  # 0.0 (normal) to 1.0 (extremely anomalous)
     description: str
     evidence: dict[str, Any]
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -206,6 +207,7 @@ class AnomalyResult:
 # ---------------------------------------------------------------------------
 # ComplianceDriftDetector
 # ---------------------------------------------------------------------------
+
 
 class ComplianceDriftDetector:
     """Tracks compliance status over time per control and detects drift.
@@ -231,7 +233,7 @@ class ComplianceDriftDetector:
         self._history[key].append((status, timestamp))
         # Keep the window bounded.
         if len(self._history[key]) > self.window_size:
-            self._history[key] = self._history[key][-self.window_size:]
+            self._history[key] = self._history[key][-self.window_size :]
 
     def detect(self) -> list[AnomalyResult]:
         results: list[AnomalyResult] = []
@@ -245,46 +247,48 @@ class ComplianceDriftDetector:
             # --- Flip detection ---
             prev, curr = statuses[-2], statuses[-1]
             if prev == "compliant" and curr == "non_compliant":
-                results.append(AnomalyResult(
-                    anomaly_type="drift",
-                    score=0.85,
-                    description=(
-                        f"Control {framework}/{control_id} flipped from "
-                        f"compliant to non_compliant"
-                    ),
-                    evidence={
-                        "framework": framework,
-                        "control_id": control_id,
-                        "previous_status": prev,
-                        "current_status": curr,
-                        "detection_method": "flip",
-                    },
-                    timestamp=timestamps[-1],
-                ))
+                results.append(
+                    AnomalyResult(
+                        anomaly_type="drift",
+                        score=0.85,
+                        description=(
+                            f"Control {framework}/{control_id} flipped from "
+                            f"compliant to non_compliant"
+                        ),
+                        evidence={
+                            "framework": framework,
+                            "control_id": control_id,
+                            "previous_status": prev,
+                            "current_status": curr,
+                            "detection_method": "flip",
+                        },
+                        timestamp=timestamps[-1],
+                    )
+                )
 
             # --- Gradual degradation ---
-            non_compliant_count = sum(
-                1 for s in statuses if s == "non_compliant"
-            )
+            non_compliant_count = sum(1 for s in statuses if s == "non_compliant")
             ratio = non_compliant_count / len(statuses)
             if ratio >= self.degradation_threshold:
                 score = min(ratio, 1.0)
-                results.append(AnomalyResult(
-                    anomaly_type="drift",
-                    score=score,
-                    description=(
-                        f"Control {framework}/{control_id} shows degradation: "
-                        f"{ratio:.0%} non-compliant over last {len(statuses)} assessments"
-                    ),
-                    evidence={
-                        "framework": framework,
-                        "control_id": control_id,
-                        "non_compliance_ratio": round(ratio, 4),
-                        "window_size": len(statuses),
-                        "detection_method": "degradation",
-                    },
-                    timestamp=timestamps[-1],
-                ))
+                results.append(
+                    AnomalyResult(
+                        anomaly_type="drift",
+                        score=score,
+                        description=(
+                            f"Control {framework}/{control_id} shows degradation: "
+                            f"{ratio:.0%} non-compliant over last {len(statuses)} assessments"
+                        ),
+                        evidence={
+                            "framework": framework,
+                            "control_id": control_id,
+                            "non_compliance_ratio": round(ratio, 4),
+                            "window_size": len(statuses),
+                            "detection_method": "degradation",
+                        },
+                        timestamp=timestamps[-1],
+                    )
+                )
 
         return results
 
@@ -292,6 +296,7 @@ class ComplianceDriftDetector:
 # ---------------------------------------------------------------------------
 # VolumeAnomalyDetector
 # ---------------------------------------------------------------------------
+
 
 class VolumeAnomalyDetector:
     """Detects unusual event volumes per source/connector.
@@ -312,7 +317,7 @@ class VolumeAnomalyDetector:
     def feed(self, source: str, event_count: int, timestamp: datetime) -> None:
         self._history[source].append((event_count, timestamp))
         if len(self._history[source]) > self.window_size:
-            self._history[source] = self._history[source][-self.window_size:]
+            self._history[source] = self._history[source][-self.window_size :]
 
     def detect(self) -> list[AnomalyResult]:
         results: list[AnomalyResult] = []
@@ -347,23 +352,27 @@ class VolumeAnomalyDetector:
 
             if flagged:
                 direction = "spike" if latest_count > mean else "drop"
-                results.append(AnomalyResult(
-                    anomaly_type="volume",
-                    score=deviation,
-                    description=(
-                        f"Volume {direction} for source '{source}': "
-                        f"{latest_count:.0f} events vs rolling mean {mean:.1f}"
-                    ),
-                    evidence={
-                        "source": source,
-                        "current_count": latest_count,
-                        "rolling_mean": round(mean, 2),
-                        "rolling_std": round(std, 2),
-                        "direction": direction,
-                        "sigma": round(abs(latest_count - mean) / std, 2) if std > 1e-10 else None,
-                    },
-                    timestamp=latest_ts,
-                ))
+                results.append(
+                    AnomalyResult(
+                        anomaly_type="volume",
+                        score=deviation,
+                        description=(
+                            f"Volume {direction} for source '{source}': "
+                            f"{latest_count:.0f} events vs rolling mean {mean:.1f}"
+                        ),
+                        evidence={
+                            "source": source,
+                            "current_count": latest_count,
+                            "rolling_mean": round(mean, 2),
+                            "rolling_std": round(std, 2),
+                            "direction": direction,
+                            "sigma": round(abs(latest_count - mean) / std, 2)
+                            if std > 1e-10
+                            else None,
+                        },
+                        timestamp=latest_ts,
+                    )
+                )
 
         return results
 
@@ -371,6 +380,7 @@ class VolumeAnomalyDetector:
 # ---------------------------------------------------------------------------
 # AccessPatternDetector
 # ---------------------------------------------------------------------------
+
 
 class AccessPatternDetector:
     """Detects unusual IAM/access patterns.
@@ -409,22 +419,24 @@ class AccessPatternDetector:
 
             # --- New action detection ---
             if latest_action not in known_actions:
-                results.append(AnomalyResult(
-                    anomaly_type="access",
-                    score=0.75,
-                    description=(
-                        f"User '{user_id}' performed new action '{latest_action}' "
-                        f"never seen in history ({len(historical)} prior events)"
-                    ),
-                    evidence={
-                        "user_id": user_id,
-                        "action": latest_action,
-                        "resource": latest_resource,
-                        "known_actions": sorted(known_actions),
-                        "detection_method": "new_action",
-                    },
-                    timestamp=latest_ts,
-                ))
+                results.append(
+                    AnomalyResult(
+                        anomaly_type="access",
+                        score=0.75,
+                        description=(
+                            f"User '{user_id}' performed new action '{latest_action}' "
+                            f"never seen in history ({len(historical)} prior events)"
+                        ),
+                        evidence={
+                            "user_id": user_id,
+                            "action": latest_action,
+                            "resource": latest_resource,
+                            "known_actions": sorted(known_actions),
+                            "detection_method": "new_action",
+                        },
+                        timestamp=latest_ts,
+                    )
+                )
 
             # --- Timing anomaly ---
             hist_hours = [float(t.hour) for _, _, t in historical]
@@ -434,23 +446,25 @@ class AccessPatternDetector:
                 latest_z = abs(zscores[-1])
                 if latest_z > self.hour_zscore_threshold:
                     score = min(latest_z / 5.0 + 0.3, 1.0)
-                    results.append(AnomalyResult(
-                        anomaly_type="timing",
-                        score=score,
-                        description=(
-                            f"User '{user_id}' acted at unusual hour "
-                            f"{latest_ts.hour:02d}:00 (z-score {latest_z:.1f})"
-                        ),
-                        evidence={
-                            "user_id": user_id,
-                            "action": latest_action,
-                            "hour": latest_ts.hour,
-                            "hour_zscore": round(latest_z, 2),
-                            "mean_hour": round(_mean(hist_hours), 1),
-                            "detection_method": "timing",
-                        },
-                        timestamp=latest_ts,
-                    ))
+                    results.append(
+                        AnomalyResult(
+                            anomaly_type="timing",
+                            score=score,
+                            description=(
+                                f"User '{user_id}' acted at unusual hour "
+                                f"{latest_ts.hour:02d}:00 (z-score {latest_z:.1f})"
+                            ),
+                            evidence={
+                                "user_id": user_id,
+                                "action": latest_action,
+                                "hour": latest_ts.hour,
+                                "hour_zscore": round(latest_z, 2),
+                                "mean_hour": round(_mean(hist_hours), 1),
+                                "detection_method": "timing",
+                            },
+                            timestamp=latest_ts,
+                        )
+                    )
 
             # --- Resource breadth spike ---
             # Compare unique resources in last N events vs historical average per window.
@@ -458,27 +472,34 @@ class AccessPatternDetector:
             if len(events) > window * 2:
                 recent_resources = len({r for _, r, _ in events[-window:]})
                 # Average unique resources per window historically.
-                chunks = [events[i:i + window] for i in range(0, len(historical) - window + 1, window)]
+                chunks = [
+                    events[i : i + window] for i in range(0, len(historical) - window + 1, window)
+                ]
                 if chunks:
                     hist_breadths = [len({r for _, r, _ in chunk}) for chunk in chunks]
                     avg_breadth = _mean(hist_breadths)
-                    if avg_breadth > 0 and recent_resources > avg_breadth * self.resource_spike_factor:
+                    if (
+                        avg_breadth > 0
+                        and recent_resources > avg_breadth * self.resource_spike_factor
+                    ):
                         score = min(recent_resources / (avg_breadth * 5.0) + 0.3, 1.0)
-                        results.append(AnomalyResult(
-                            anomaly_type="access",
-                            score=score,
-                            description=(
-                                f"User '{user_id}' accessed {recent_resources} distinct "
-                                f"resources recently vs avg {avg_breadth:.1f}"
-                            ),
-                            evidence={
-                                "user_id": user_id,
-                                "recent_unique_resources": recent_resources,
-                                "avg_unique_resources": round(avg_breadth, 2),
-                                "detection_method": "resource_breadth",
-                            },
-                            timestamp=latest_ts,
-                        ))
+                        results.append(
+                            AnomalyResult(
+                                anomaly_type="access",
+                                score=score,
+                                description=(
+                                    f"User '{user_id}' accessed {recent_resources} distinct "
+                                    f"resources recently vs avg {avg_breadth:.1f}"
+                                ),
+                                evidence={
+                                    "user_id": user_id,
+                                    "recent_unique_resources": recent_resources,
+                                    "avg_unique_resources": round(avg_breadth, 2),
+                                    "detection_method": "resource_breadth",
+                                },
+                                timestamp=latest_ts,
+                            )
+                        )
 
         return results
 
@@ -486,6 +507,7 @@ class AccessPatternDetector:
 # ---------------------------------------------------------------------------
 # StatisticalAnomalyDetector
 # ---------------------------------------------------------------------------
+
 
 class StatisticalAnomalyDetector:
     """General-purpose multivariate anomaly detection on finding features.
@@ -573,12 +595,8 @@ class StatisticalAnomalyDetector:
         else:
             # Pure-Python fallback: precompute stats.
             n_features = len(self._feature_keys)
-            self._train_means = [
-                _mean([row[j] for row in matrix]) for j in range(n_features)
-            ]
-            self._train_stds = [
-                _stddev([row[j] for row in matrix]) for j in range(n_features)
-            ]
+            self._train_means = [_mean([row[j] for row in matrix]) for j in range(n_features)]
+            self._train_stds = [_stddev([row[j] for row in matrix]) for j in range(n_features)]
             self._train_data = matrix
             log.info(
                 "StatisticalAnomalyDetector fitted with Z-score/Mahalanobis fallback on %d samples",
@@ -608,20 +626,22 @@ class StatisticalAnomalyDetector:
                     # raw is negative for anomalies; more negative = more anomalous.
                     # Typical range is roughly -0.5 to 0.5; map to 0-1.
                     score = min(max(-raw, 0.0), 1.0)
-                    results.append(AnomalyResult(
-                        anomaly_type="statistical",
-                        score=score,
-                        description=(
-                            f"Statistical anomaly detected (IsolationForest, "
-                            f"raw_score={raw:.3f})"
-                        ),
-                        evidence={
-                            "features": features[i],
-                            "raw_score": round(float(raw), 4),
-                            "detection_method": "isolation_forest",
-                            "sample_index": i,
-                        },
-                    ))
+                    results.append(
+                        AnomalyResult(
+                            anomaly_type="statistical",
+                            score=score,
+                            description=(
+                                f"Statistical anomaly detected (IsolationForest, "
+                                f"raw_score={raw:.3f})"
+                            ),
+                            evidence={
+                                "features": features[i],
+                                "raw_score": round(float(raw), 4),
+                                "detection_method": "isolation_forest",
+                                "sample_index": i,
+                            },
+                        )
+                    )
         else:
             # Pure-Python: combined Z-score + Mahalanobis.
             results.extend(self._predict_fallback(features, matrix))
@@ -652,30 +672,32 @@ class StatisticalAnomalyDetector:
 
             if anomalous_features:
                 score = min(max_z / 6.0 + 0.3, 1.0)
-                results.append(AnomalyResult(
-                    anomaly_type="statistical",
-                    score=score,
-                    description=(
-                        f"Z-score anomaly on features: {', '.join(anomalous_features)} "
-                        f"(max z={max_z:.2f})"
-                    ),
-                    evidence={
-                        "features": features[i],
-                        "max_zscore": round(max_z, 4),
-                        "anomalous_features": anomalous_features,
-                        "detection_method": "zscore",
-                        "sample_index": i,
-                    },
-                ))
+                results.append(
+                    AnomalyResult(
+                        anomaly_type="statistical",
+                        score=score,
+                        description=(
+                            f"Z-score anomaly on features: {', '.join(anomalous_features)} "
+                            f"(max z={max_z:.2f})"
+                        ),
+                        evidence={
+                            "features": features[i],
+                            "max_zscore": round(max_z, 4),
+                            "anomalous_features": anomalous_features,
+                            "detection_method": "zscore",
+                            "sample_index": i,
+                        },
+                    )
+                )
 
         # Mahalanobis distance on the combined training + new data.
         if self._train_data and matrix:
             combined = self._train_data + matrix
             all_scores = _mahalanobis_scores(combined)
-            new_scores = all_scores[len(self._train_data):]
+            new_scores = all_scores[len(self._train_data) :]
 
             # Threshold: mean + k * std of the training distances.
-            train_distances = all_scores[:len(self._train_data)]
+            train_distances = all_scores[: len(self._train_data)]
             if train_distances:
                 dist_mean = _mean(train_distances)
                 dist_std = _stddev(train_distances)
@@ -701,21 +723,23 @@ class StatisticalAnomalyDetector:
                                     r.evidence["mahalanobis_distance"] = round(dist, 4)
                                     break
                         else:
-                            results.append(AnomalyResult(
-                                anomaly_type="statistical",
-                                score=score,
-                                description=(
-                                    f"Mahalanobis distance anomaly "
-                                    f"(d={dist:.2f}, threshold={threshold:.2f})"
-                                ),
-                                evidence={
-                                    "features": features[i],
-                                    "mahalanobis_distance": round(dist, 4),
-                                    "threshold": round(threshold, 4),
-                                    "detection_method": "mahalanobis",
-                                    "sample_index": i,
-                                },
-                            ))
+                            results.append(
+                                AnomalyResult(
+                                    anomaly_type="statistical",
+                                    score=score,
+                                    description=(
+                                        f"Mahalanobis distance anomaly "
+                                        f"(d={dist:.2f}, threshold={threshold:.2f})"
+                                    ),
+                                    evidence={
+                                        "features": features[i],
+                                        "mahalanobis_distance": round(dist, 4),
+                                        "threshold": round(threshold, 4),
+                                        "detection_method": "mahalanobis",
+                                        "sample_index": i,
+                                    },
+                                )
+                            )
 
         return results
 
@@ -723,6 +747,7 @@ class StatisticalAnomalyDetector:
 # ---------------------------------------------------------------------------
 # AnomalyEngine — orchestrator
 # ---------------------------------------------------------------------------
+
 
 class AnomalyEngine:
     """Tier 3 anomaly detection orchestrator.
@@ -749,9 +774,7 @@ class AnomalyEngine:
 
         # Feed control results into drift detector.
         control_results = (
-            session.query(ControlResult)
-            .order_by(ControlResult.assessed_at.asc())
-            .all()
+            session.query(ControlResult).order_by(ControlResult.assessed_at.asc()).all()
         )
         for cr in control_results:
             ts = cr.assessed_at or datetime.now(timezone.utc)
@@ -759,11 +782,7 @@ class AnomalyEngine:
         results.extend(self.drift_detector.detect())
 
         # Feed connector runs into volume detector.
-        connector_runs = (
-            session.query(ConnectorRun)
-            .order_by(ConnectorRun.started_at.asc())
-            .all()
-        )
+        connector_runs = session.query(ConnectorRun).order_by(ConnectorRun.started_at.asc()).all()
         for run in connector_runs:
             ts = run.started_at or datetime.now(timezone.utc)
             count = int(run.event_count or 0)
@@ -771,16 +790,17 @@ class AnomalyEngine:
         results.extend(self.volume_detector.detect())
 
         # Statistical analysis on recent findings.
-        findings_orm = (
-            session.query(Finding)
-            .order_by(Finding.observed_at.desc())
-            .limit(500)
-            .all()
-        )
+        findings_orm = session.query(Finding).order_by(Finding.observed_at.desc()).limit(500).all()
         if findings_orm:
             finding_features = []
             for f in findings_orm:
-                severity_map = {"critical": 1.0, "high": 0.8, "medium": 0.5, "low": 0.2, "info": 0.0}
+                severity_map = {
+                    "critical": 1.0,
+                    "high": 0.8,
+                    "medium": 0.5,
+                    "low": 0.2,
+                    "info": 0.0,
+                }
                 detail = f.detail or {}
                 resource_count = 0
                 for v in detail.values():
@@ -792,12 +812,14 @@ class AnomalyEngine:
                 if observed.tzinfo is None:
                     observed = observed.replace(tzinfo=timezone.utc)
                 delta = (datetime.now(timezone.utc) - observed).total_seconds()
-                finding_features.append({
-                    "severity_score": severity_map.get(f.severity, 0.0),
-                    "confidence": float(f.confidence or 1.0),
-                    "days_since_observed": max(delta / 86400.0, 0.0),
-                    "resource_count": float(resource_count),
-                })
+                finding_features.append(
+                    {
+                        "severity_score": severity_map.get(f.severity, 0.0),
+                        "confidence": float(f.confidence or 1.0),
+                        "days_since_observed": max(delta / 86400.0, 0.0),
+                        "resource_count": float(resource_count),
+                    }
+                )
 
             if len(finding_features) >= 10:
                 # Use the first 80% for training, predict on the last 20%.
@@ -814,9 +836,7 @@ class AnomalyEngine:
         if not findings:
             return []
 
-        features = [
-            StatisticalAnomalyDetector.extract_features(f) for f in findings
-        ]
+        features = [StatisticalAnomalyDetector.extract_features(f) for f in findings]
 
         if len(features) < 10:
             log.info(

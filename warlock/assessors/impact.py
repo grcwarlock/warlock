@@ -39,9 +39,7 @@ class ImpactResult:
     @property
     def has_risk(self) -> bool:
         """True if any predicted flips go to non_compliant."""
-        return any(
-            f.to_status == "non_compliant" for f in self.predicted_flips
-        )
+        return any(f.to_status == "non_compliant" for f in self.predicted_flips)
 
 
 class ComplianceImpactAnalyzer:
@@ -100,9 +98,7 @@ class ComplianceImpactAnalyzer:
                 continue
 
         # Resolve assertion names to affected controls via ControlResult
-        affected_controls = self._resolve_assertions(
-            session, assertion_names
-        )
+        affected_controls = self._resolve_assertions(session, assertion_names)
 
         # Resolve framework YAML changes to all controls in those frameworks
         for fw_name in framework_names:
@@ -121,25 +117,28 @@ class ComplianceImpactAnalyzer:
             current_status = ctrl.get("current_status", "unknown")
 
             if current_status == "compliant":
-                result.predicted_flips.append(PredictedFlip(
-                    framework=fw,
-                    control_id=cid,
-                    from_status="compliant",
-                    to_status="non_compliant",
-                    reason=f"Assertion '{ctrl.get('assertion', 'unknown')}' was modified",
-                ))
+                result.predicted_flips.append(
+                    PredictedFlip(
+                        framework=fw,
+                        control_id=cid,
+                        from_status="compliant",
+                        to_status="non_compliant",
+                        reason=f"Assertion '{ctrl.get('assertion', 'unknown')}' was modified",
+                    )
+                )
             elif current_status == "non_compliant":
-                result.predicted_flips.append(PredictedFlip(
-                    framework=fw,
-                    control_id=cid,
-                    from_status="non_compliant",
-                    to_status="compliant",
-                    reason=f"Assertion '{ctrl.get('assertion', 'unknown')}' was modified",
-                ))
+                result.predicted_flips.append(
+                    PredictedFlip(
+                        framework=fw,
+                        control_id=cid,
+                        from_status="non_compliant",
+                        to_status="compliant",
+                        reason=f"Assertion '{ctrl.get('assertion', 'unknown')}' was modified",
+                    )
+                )
 
         log.info(
-            "Impact analysis: %d changed files -> %d affected controls, "
-            "%d predicted flips",
+            "Impact analysis: %d changed files -> %d affected controls, %d predicted flips",
             len(changed_files),
             len(result.affected_controls),
             len(result.predicted_flips),
@@ -177,13 +176,15 @@ class ComplianceImpactAnalyzer:
                 key = (fw, cid)
                 if key not in seen:
                     seen.add(key)
-                    controls.append({
-                        "framework": fw,
-                        "control_id": cid,
-                        "current_status": status,
-                        "assertion": aname,
-                        "source": f"assertion:{name}",
-                    })
+                    controls.append(
+                        {
+                            "framework": fw,
+                            "control_id": cid,
+                            "current_status": status,
+                            "assertion": aname,
+                            "source": f"assertion:{name}",
+                        }
+                    )
 
         return controls
 
@@ -207,11 +208,13 @@ class ComplianceImpactAnalyzer:
 
         controls: list[dict] = []
         for fw, cid, status in results:
-            controls.append({
-                "framework": fw,
-                "control_id": cid,
-                "current_status": status,
-                "source": f"framework_yaml:{framework_name}",
-            })
+            controls.append(
+                {
+                    "framework": fw,
+                    "control_id": cid,
+                    "current_status": status,
+                    "source": f"framework_yaml:{framework_name}",
+                }
+            )
 
         return controls

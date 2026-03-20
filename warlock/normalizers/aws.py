@@ -69,6 +69,7 @@ class AWSNormalizer(BaseNormalizer):
 
         import csv
         from io import StringIO
+
         reader = csv.DictReader(StringIO(content))
 
         for row in reader:
@@ -93,23 +94,27 @@ class AWSNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"IAM user: {user}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "user": user,
-                    "mfa_active": mfa,
-                    "password_enabled": has_password,
-                    "access_key_1_active": key1_active,
-                    "access_key_2_active": key2_active,
-                    "issues": issues,
-                },
-                resource_id=f"arn:aws:iam::user/{user}" if user != "<root_account>" else "arn:aws:iam::root",
-                resource_type="iam_user",
-                resource_name=user,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"IAM user: {user}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user": user,
+                        "mfa_active": mfa,
+                        "password_enabled": has_password,
+                        "access_key_1_active": key1_active,
+                        "access_key_2_active": key2_active,
+                        "issues": issues,
+                    },
+                    resource_id=f"arn:aws:iam::user/{user}"
+                    if user != "<root_account>"
+                    else "arn:aws:iam::root",
+                    resource_type="iam_user",
+                    resource_name=user,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -117,16 +122,18 @@ class AWSNormalizer(BaseNormalizer):
         findings = []
         users = raw.raw_data.get("response", {}).get("Users", [])
         for user in users:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"IAM user: {user.get('UserName', 'unknown')}",
-                detail=user,
-                resource_id=user.get("Arn", ""),
-                resource_type="iam_user",
-                resource_name=user.get("UserName", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"IAM user: {user.get('UserName', 'unknown')}",
+                    detail=user,
+                    resource_id=user.get("Arn", ""),
+                    resource_type="iam_user",
+                    resource_name=user.get("UserName", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     def _normalize_password_policy(self, raw: RawEventData) -> list[FindingData]:
@@ -146,16 +153,19 @@ class AWSNormalizer(BaseNormalizer):
         if not policy.get("MaxPasswordAge", 0):
             issues.append("no_password_expiration")
 
-        return [FindingData(
-            **self._base(raw),
-            observation_type="misconfiguration" if issues else "inventory",
-            title="IAM password policy" + (f" — {len(issues)} issues" if issues else " — compliant"),
-            detail={"policy": policy, "issues": issues},
-            resource_id="arn:aws:iam::account-password-policy",
-            resource_type="iam_password_policy",
-            resource_name="account-password-policy",
-            severity="medium" if issues else "info",
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="misconfiguration" if issues else "inventory",
+                title="IAM password policy"
+                + (f" — {len(issues)} issues" if issues else " — compliant"),
+                detail={"policy": policy, "issues": issues},
+                resource_id="arn:aws:iam::account-password-policy",
+                resource_type="iam_password_policy",
+                resource_name="account-password-policy",
+                severity="medium" if issues else "info",
+            )
+        ]
 
     def _normalize_account_summary(self, raw: RawEventData) -> list[FindingData]:
         summary = raw.raw_data.get("response", {}).get("SummaryMap", {})
@@ -173,16 +183,18 @@ class AWSNormalizer(BaseNormalizer):
         elif "root_mfa_not_enabled" in issues:
             severity = "critical"
 
-        return [FindingData(
-            **self._base(raw),
-            observation_type="misconfiguration" if issues else "inventory",
-            title="AWS account summary" + (f" — {', '.join(issues)}" if issues else ""),
-            detail={"summary": summary, "issues": issues},
-            resource_id="arn:aws:iam::root",
-            resource_type="iam_account",
-            resource_name="account",
-            severity=severity,
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="misconfiguration" if issues else "inventory",
+                title="AWS account summary" + (f" — {', '.join(issues)}" if issues else ""),
+                detail={"summary": summary, "issues": issues},
+                resource_id="arn:aws:iam::root",
+                resource_type="iam_account",
+                resource_name="account",
+                severity=severity,
+            )
+        ]
 
     # -- EC2 / Networking --
 
@@ -206,32 +218,37 @@ class AWSNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Security group {sg.get('GroupId', '?')}" + (f" — {len(issues)} open ports" if issues else ""),
-                detail={"security_group": sg, "issues": issues},
-                resource_id=sg.get("GroupId", ""),
-                resource_type="ec2_security_group",
-                resource_name=sg.get("GroupName", ""),
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Security group {sg.get('GroupId', '?')}"
+                    + (f" — {len(issues)} open ports" if issues else ""),
+                    detail={"security_group": sg, "issues": issues},
+                    resource_id=sg.get("GroupId", ""),
+                    resource_type="ec2_security_group",
+                    resource_name=sg.get("GroupName", ""),
+                    severity=severity,
+                )
+            )
         return findings
 
     def _normalize_network_acls(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         acls = raw.raw_data.get("response", {}).get("NetworkAcls", [])
         for acl in acls:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Network ACL {acl.get('NetworkAclId', '?')}",
-                detail=acl,
-                resource_id=acl.get("NetworkAclId", ""),
-                resource_type="ec2_network_acl",
-                resource_name=acl.get("NetworkAclId", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Network ACL {acl.get('NetworkAclId', '?')}",
+                    detail=acl,
+                    resource_id=acl.get("NetworkAclId", ""),
+                    resource_type="ec2_network_acl",
+                    resource_name=acl.get("NetworkAclId", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- CloudTrail --
@@ -239,16 +256,18 @@ class AWSNormalizer(BaseNormalizer):
     def _normalize_cloudtrail(self, raw: RawEventData) -> list[FindingData]:
         trails = raw.raw_data.get("response", {}).get("trailList", [])
         if not trails:
-            return [FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="CloudTrail — no trails configured",
-                detail={"trails": [], "issues": ["no_trails"]},
-                resource_id="cloudtrail",
-                resource_type="cloudtrail",
-                resource_name="cloudtrail",
-                severity="critical",
-            )]
+            return [
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="CloudTrail — no trails configured",
+                    detail={"trails": [], "issues": ["no_trails"]},
+                    resource_id="cloudtrail",
+                    resource_type="cloudtrail",
+                    resource_name="cloudtrail",
+                    severity="critical",
+                )
+            ]
 
         findings = []
         for trail in trails:
@@ -258,16 +277,19 @@ class AWSNormalizer(BaseNormalizer):
             if not trail.get("LogFileValidationEnabled", False):
                 issues.append("no_log_validation")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration" if issues else "inventory",
-                title=f"CloudTrail: {trail.get('Name', '?')}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={"trail": trail, "issues": issues},
-                resource_id=trail.get("TrailARN", ""),
-                resource_type="cloudtrail",
-                resource_name=trail.get("Name", ""),
-                severity="medium" if issues else "info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration" if issues else "inventory",
+                    title=f"CloudTrail: {trail.get('Name', '?')}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={"trail": trail, "issues": issues},
+                    resource_id=trail.get("TrailARN", ""),
+                    resource_type="cloudtrail",
+                    resource_name=trail.get("Name", ""),
+                    severity="medium" if issues else "info",
+                )
+            )
         return findings
 
     # -- GuardDuty --
@@ -275,52 +297,60 @@ class AWSNormalizer(BaseNormalizer):
     def _normalize_guardduty(self, raw: RawEventData) -> list[FindingData]:
         detectors = raw.raw_data.get("response", {}).get("DetectorIds", [])
         if not detectors:
-            return [FindingData(
+            return [
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="GuardDuty — not enabled",
+                    detail={"detectors": [], "issues": ["not_enabled"]},
+                    resource_id="guardduty",
+                    resource_type="guardduty",
+                    resource_name="guardduty",
+                    severity="high",
+                )
+            ]
+        return [
+            FindingData(
                 **self._base(raw),
-                observation_type="misconfiguration",
-                title="GuardDuty — not enabled",
-                detail={"detectors": [], "issues": ["not_enabled"]},
+                observation_type="inventory",
+                title=f"GuardDuty — {len(detectors)} detector(s) active",
+                detail={"detectors": detectors},
                 resource_id="guardduty",
                 resource_type="guardduty",
                 resource_name="guardduty",
-                severity="high",
-            )]
-        return [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"GuardDuty — {len(detectors)} detector(s) active",
-            detail={"detectors": detectors},
-            resource_id="guardduty",
-            resource_type="guardduty",
-            resource_name="guardduty",
-            severity="info",
-        )]
+                severity="info",
+            )
+        ]
 
     # -- SecurityHub --
 
     def _normalize_securityhub(self, raw: RawEventData) -> list[FindingData]:
         hub = raw.raw_data.get("response", {})
         if not hub.get("HubArn"):
-            return [FindingData(
+            return [
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="SecurityHub — not enabled",
+                    detail={"hub": hub, "issues": ["not_enabled"]},
+                    resource_id="securityhub",
+                    resource_type="securityhub",
+                    resource_name="securityhub",
+                    severity="high",
+                )
+            ]
+        return [
+            FindingData(
                 **self._base(raw),
-                observation_type="misconfiguration",
-                title="SecurityHub — not enabled",
-                detail={"hub": hub, "issues": ["not_enabled"]},
-                resource_id="securityhub",
+                observation_type="inventory",
+                title="SecurityHub — enabled",
+                detail={"hub": hub},
+                resource_id=hub.get("HubArn", ""),
                 resource_type="securityhub",
                 resource_name="securityhub",
-                severity="high",
-            )]
-        return [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title="SecurityHub — enabled",
-            detail={"hub": hub},
-            resource_id=hub.get("HubArn", ""),
-            resource_type="securityhub",
-            resource_name="securityhub",
-            severity="info",
-        )]
+                severity="info",
+            )
+        ]
 
     # -- S3 --
 
@@ -328,16 +358,18 @@ class AWSNormalizer(BaseNormalizer):
         findings = []
         buckets = raw.raw_data.get("response", {}).get("Buckets", [])
         for bucket in buckets:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"S3 bucket: {bucket.get('Name', '?')}",
-                detail=bucket,
-                resource_id=f"arn:aws:s3:::{bucket.get('Name', '')}",
-                resource_type="s3_bucket",
-                resource_name=bucket.get("Name", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"S3 bucket: {bucket.get('Name', '?')}",
+                    detail=bucket,
+                    resource_id=f"arn:aws:s3:::{bucket.get('Name', '')}",
+                    resource_type="s3_bucket",
+                    resource_name=bucket.get("Name", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- Config --
@@ -345,31 +377,38 @@ class AWSNormalizer(BaseNormalizer):
     def _normalize_config_recorders(self, raw: RawEventData) -> list[FindingData]:
         recorders = raw.raw_data.get("response", {}).get("ConfigurationRecorders", [])
         if not recorders:
-            return [FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="AWS Config — no recorders configured",
-                detail={"recorders": [], "issues": ["not_enabled"]},
-                resource_id="config",
-                resource_type="aws_config",
-                resource_name="config",
-                severity="high",
-            )]
+            return [
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="AWS Config — no recorders configured",
+                    detail={"recorders": [], "issues": ["not_enabled"]},
+                    resource_id="config",
+                    resource_type="aws_config",
+                    resource_name="config",
+                    severity="high",
+                )
+            ]
         findings = []
         for rec in recorders:
             all_supported = rec.get("recordingGroup", {}).get("allSupported", False)
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory" if all_supported else "misconfiguration",
-                title=f"AWS Config recorder: {rec.get('name', '?')}" + ("" if all_supported else " — not recording all resources"),
-                detail={"recorder": rec, "issues": [] if all_supported else ["not_all_supported"]},
-                resource_id=f"config:{rec.get('name', '')}",
-                resource_type="aws_config",
-                resource_name=rec.get("name", ""),
-                severity="info" if all_supported else "medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory" if all_supported else "misconfiguration",
+                    title=f"AWS Config recorder: {rec.get('name', '?')}"
+                    + ("" if all_supported else " — not recording all resources"),
+                    detail={
+                        "recorder": rec,
+                        "issues": [] if all_supported else ["not_all_supported"],
+                    },
+                    resource_id=f"config:{rec.get('name', '')}",
+                    resource_type="aws_config",
+                    resource_name=rec.get("name", ""),
+                    severity="info" if all_supported else "medium",
+                )
+            )
         return findings
-
 
     # -- Config Compliance --
 
@@ -378,28 +417,36 @@ class AWSNormalizer(BaseNormalizer):
         findings = []
         results = raw.raw_data.get("response", {}).get("EvaluationResults", [])
         for result in results:
-            resource_id = result.get("EvaluationResultIdentifier", {}).get(
-                "EvaluationResultQualifier", {}
-            ).get("ResourceId", "")
-            resource_type = result.get("EvaluationResultIdentifier", {}).get(
-                "EvaluationResultQualifier", {}
-            ).get("ResourceType", "")
+            resource_id = (
+                result.get("EvaluationResultIdentifier", {})
+                .get("EvaluationResultQualifier", {})
+                .get("ResourceId", "")
+            )
+            resource_type = (
+                result.get("EvaluationResultIdentifier", {})
+                .get("EvaluationResultQualifier", {})
+                .get("ResourceType", "")
+            )
             compliance = result.get("ComplianceType", "")
-            rule_name = result.get("EvaluationResultIdentifier", {}).get(
-                "EvaluationResultQualifier", {}
-            ).get("ConfigRuleName", "")
+            rule_name = (
+                result.get("EvaluationResultIdentifier", {})
+                .get("EvaluationResultQualifier", {})
+                .get("ConfigRuleName", "")
+            )
 
             is_compliant = compliance == "COMPLIANT"
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory" if is_compliant else "misconfiguration",
-                title=f"Config rule {rule_name}: {compliance}",
-                detail=result,
-                resource_id=resource_id,
-                resource_type=resource_type,
-                resource_name=resource_id,
-                severity="info" if is_compliant else "medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory" if is_compliant else "misconfiguration",
+                    title=f"Config rule {rule_name}: {compliance}",
+                    detail=result,
+                    resource_id=resource_id,
+                    resource_type=resource_type,
+                    resource_name=resource_id,
+                    severity="info" if is_compliant else "medium",
+                )
+            )
         return findings
 
     # -- IAM Policies --
@@ -409,16 +456,18 @@ class AWSNormalizer(BaseNormalizer):
         findings = []
         policies = raw.raw_data.get("response", {}).get("Policies", [])
         for policy in policies:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"IAM policy: {policy.get('PolicyName', '?')}",
-                detail=policy,
-                resource_id=policy.get("Arn", ""),
-                resource_type="iam_policy",
-                resource_name=policy.get("PolicyName", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"IAM policy: {policy.get('PolicyName', '?')}",
+                    detail=policy,
+                    resource_id=policy.get("Arn", ""),
+                    resource_type="iam_policy",
+                    resource_name=policy.get("PolicyName", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- EC2 VPCs --
@@ -428,16 +477,18 @@ class AWSNormalizer(BaseNormalizer):
         findings = []
         vpcs = raw.raw_data.get("response", {}).get("Vpcs", [])
         for vpc in vpcs:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"VPC: {vpc.get('VpcId', '?')}",
-                detail=vpc,
-                resource_id=vpc.get("VpcId", ""),
-                resource_type="ec2_vpc",
-                resource_name=vpc.get("VpcId", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"VPC: {vpc.get('VpcId', '?')}",
+                    detail=vpc,
+                    resource_id=vpc.get("VpcId", ""),
+                    resource_type="ec2_vpc",
+                    resource_name=vpc.get("VpcId", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- EC2 Flow Logs --
@@ -446,28 +497,32 @@ class AWSNormalizer(BaseNormalizer):
         """Normalize VPC flow log configuration."""
         flow_logs = raw.raw_data.get("response", {}).get("FlowLogs", [])
         if not flow_logs:
-            return [FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="VPC flow logs - none configured",
-                detail={"flow_logs": [], "issues": ["no_flow_logs"]},
-                resource_id="vpc-flow-logs",
-                resource_type="ec2_flow_log",
-                resource_name="flow-logs",
-                severity="medium",
-            )]
+            return [
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="VPC flow logs - none configured",
+                    detail={"flow_logs": [], "issues": ["no_flow_logs"]},
+                    resource_id="vpc-flow-logs",
+                    resource_type="ec2_flow_log",
+                    resource_name="flow-logs",
+                    severity="medium",
+                )
+            ]
         findings = []
         for fl in flow_logs:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Flow log: {fl.get('FlowLogId', '?')}",
-                detail=fl,
-                resource_id=fl.get("FlowLogId", ""),
-                resource_type="ec2_flow_log",
-                resource_name=fl.get("FlowLogId", ""),
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Flow log: {fl.get('FlowLogId', '?')}",
+                    detail=fl,
+                    resource_id=fl.get("FlowLogId", ""),
+                    resource_type="ec2_flow_log",
+                    resource_name=fl.get("FlowLogId", ""),
+                    severity="info",
+                )
+            )
         return findings
 
     # -- CloudTrail Status --
@@ -480,16 +535,18 @@ class AWSNormalizer(BaseNormalizer):
         if not is_logging:
             issues.append("logging_disabled")
 
-        return [FindingData(
-            **self._base(raw),
-            observation_type="misconfiguration" if issues else "inventory",
-            title="CloudTrail status" + (" - logging disabled" if issues else " - active"),
-            detail={"status": status, "issues": issues},
-            resource_id=raw.raw_data.get("trail_arn", "cloudtrail"),
-            resource_type="cloudtrail",
-            resource_name="cloudtrail-status",
-            severity="high" if issues else "info",
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="misconfiguration" if issues else "inventory",
+                title="CloudTrail status" + (" - logging disabled" if issues else " - active"),
+                detail={"status": status, "issues": issues},
+                resource_id=raw.raw_data.get("trail_arn", "cloudtrail"),
+                resource_type="cloudtrail",
+                resource_name="cloudtrail-status",
+                severity="high" if issues else "info",
+            )
+        ]
 
 
 # Register

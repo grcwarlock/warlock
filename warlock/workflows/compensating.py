@@ -111,9 +111,7 @@ class CompensatingControlManager:
         query = session.query(CompensatingControl)
 
         if framework:
-            query = query.filter(
-                CompensatingControl.original_framework == framework
-            )
+            query = query.filter(CompensatingControl.original_framework == framework)
         if status:
             query = query.filter(CompensatingControl.status == status)
 

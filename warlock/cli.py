@@ -29,9 +29,12 @@ def _check_ai_available(use_ai: bool | None) -> bool:
         return False
     if use_ai is True:
         from warlock.ai.service import get_ai_service
+
         svc = get_ai_service()
         if not svc.is_available():
-            console.print("[dim](AI requested but not configured — run 'warlock ai configure' to enable)[/dim]")
+            console.print(
+                "[dim](AI requested but not configured — run 'warlock ai configure' to enable)[/dim]"
+            )
             return False
     return True
 
@@ -39,6 +42,7 @@ def _check_ai_available(use_ai: bool | None) -> bool:
 def _parse_ai_response(value) -> str:
     """Extract text from an AI response value, handling JSON wrapping."""
     import json as _json
+
     response_text = value if isinstance(value, str) else str(value)
     try:
         parsed = _json.loads(response_text)
@@ -59,7 +63,9 @@ def _ai_repl(svc, session_id: str, ctx, entity_label: str) -> None:
     entity_label: human-readable label shown in the REPL prompt
     """
     console.print(f"[cyan]Entering interactive AI session for {entity_label}.[/cyan]")
-    console.print("[dim]Type your question and press Enter. Type 'exit' or press Ctrl-C to quit.[/dim]\n")
+    console.print(
+        "[dim]Type your question and press Enter. Type 'exit' or press Ctrl-C to quit.[/dim]\n"
+    )
     while True:
         try:
             user_input = input("You: ").strip()
@@ -92,9 +98,7 @@ def _resolve_system_id(session, value: str) -> str:
         return sp.id
 
     # C-5: Try case-insensitive acronym match, warn on ambiguous
-    matches = session.query(SystemProfile).filter(
-        SystemProfile.acronym.ilike(value)
-    ).all()
+    matches = session.query(SystemProfile).filter(SystemProfile.acronym.ilike(value)).all()
     if len(matches) > 1:
         console.print(
             f"[yellow]Warning: ambiguous system match for '{value}'. "
@@ -106,9 +110,7 @@ def _resolve_system_id(session, value: str) -> str:
         return matches[0].id
 
     # C-5: Try partial UUID prefix, warn on ambiguous
-    matches = session.query(SystemProfile).filter(
-        SystemProfile.id.startswith(value)
-    ).all()
+    matches = session.query(SystemProfile).filter(SystemProfile.id.startswith(value)).all()
     if len(matches) > 1:
         console.print(
             f"[yellow]Warning: ambiguous system match for '{value}'. "
@@ -135,10 +137,42 @@ def cli(verbose: bool) -> None:
     )
 
 
+@cli.command("dashboard")
+@click.option(
+    "--web", is_flag=True, default=False, help="Serve dashboard in browser at http://localhost:8566"
+)
+@click.option("--port", default=8566, help="Port for web mode (default: 8566)")
+def dashboard(web: bool, port: int) -> None:
+    """Open the interactive TUI dashboard.
+
+    Default: runs in terminal. Use --web to serve in browser.
+    """
+    try:
+        from warlock.tui.app import WarlockDashboard
+    except ImportError as exc:
+        _error(f"TUI dependencies missing: {exc}\n  Install with: pip install 'warlock[tui]'")
+
+    if web:
+        try:
+            from textual_serve.server import Server
+        except ImportError:
+            _error("textual-serve not installed. Run: pip install textual-serve")
+        console.print(
+            f"[green]Warlock Dashboard — opening in browser at http://localhost:{port}[/green]"
+        )
+        console.print("[dim]Press Ctrl+C to stop[/dim]")
+        server = Server("warlock.tui.app:WarlockDashboard", host="localhost", port=port)
+        server.serve()
+    else:
+        app = WarlockDashboard()
+        app.run()
+
+
 @cli.command()
 def init() -> None:
     """Initialize the database."""
     from warlock.db.engine import init_db
+
     init_db()
     console.print("[green]Database initialized.[/green]")
 
@@ -157,9 +191,9 @@ def collect(source: tuple[str, ...]) -> None:
     pipeline = build_pipeline(bus, sources=source or None)
 
     # Wire up a simple event logger
-    bus.subscribe_all(lambda e: logging.getLogger("bus").debug(
-        "%s → %s", e.event_type, e.payload_id[:8]
-    ))
+    bus.subscribe_all(
+        lambda e: logging.getLogger("bus").debug("%s → %s", e.event_type, e.payload_id[:8])
+    )
 
     # Run
     with get_session() as session:
@@ -173,7 +207,14 @@ def collect(source: tuple[str, ...]) -> None:
 
 @cli.command()
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--status", default=None, type=click.Choice(["compliant", "non_compliant", "not_assessed", "partial"], case_sensitive=False), help="Filter by status")
+@click.option(
+    "--status",
+    default=None,
+    type=click.Choice(
+        ["compliant", "non_compliant", "not_assessed", "partial"], case_sensitive=False
+    ),
+    help="Filter by status",
+)
 @click.option("--limit", "-n", default=50, help="Max results")
 def results(framework: str | None, status: str | None, limit: int) -> None:
     """Query control results from the last pipeline run."""
@@ -215,7 +256,8 @@ def results(framework: str | None, status: str | None, limit: int) -> None:
             "info": "dim",
         }.get(r.severity, "")
         table.add_row(
-            r.framework, r.control_id,
+            r.framework,
+            r.control_id,
             f"[{status_style}]{r.status}[/]",
             f"[{sev_style}]{r.severity}[/]",
             r.assessor,
@@ -226,7 +268,9 @@ def results(framework: str | None, status: str | None, limit: int) -> None:
 
 @cli.command()
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for executive summary")
+@click.option(
+    "--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for executive summary"
+)
 def coverage(framework: str | None, use_ai: bool | None) -> None:
     """Show compliance coverage summary."""
     from sqlalchemy import func
@@ -298,7 +342,9 @@ def coverage(framework: str | None, use_ai: bool | None) -> None:
 
             svc = get_ai_service()
             if svc.is_task_enabled(AITask.EXECUTIVE_REPORT):
-                result = svc.reason(AITask.EXECUTIVE_REPORT, context={"frameworks": coverage_context})
+                result = svc.reason(
+                    AITask.EXECUTIVE_REPORT, context={"frameworks": coverage_context}
+                )
                 if result.ai_used:
                     console.print("\n[bold]AI Analysis:[/bold]")
                     value = result.value
@@ -334,7 +380,9 @@ def findings(ask: str | None) -> None:
     table.add_column("Source", style="dim")
 
     for f in rows:
-        sev_style = {"critical": "red bold", "high": "red", "medium": "yellow"}.get(f.severity, "dim")
+        sev_style = {"critical": "red bold", "high": "red", "medium": "yellow"}.get(
+            f.severity, "dim"
+        )
         table.add_row(
             f.observation_type,
             f.title[:80],
@@ -352,10 +400,13 @@ def findings(ask: str | None) -> None:
 
         svc = get_ai_service()
         if not svc.is_available():
-            console.print("[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]")
+            console.print(
+                "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+            )
             return
 
         import uuid
+
         session_id = uuid.uuid4().hex
         findings_summary = [
             {
@@ -427,8 +478,16 @@ def sources() -> None:
 @cli.command()
 @click.option("--source", "-s", required=True, help="Source identifier (e.g., webhook, manual)")
 @click.option("--provider", "-p", required=True, help="Provider name (e.g., crowdstrike, okta)")
-@click.option("--event-type", "-t", required=True, help="Event type label (e.g., falcon_detections)")
-@click.option("--input-file", "file_path", required=True, type=click.Path(exists=True), help="Path to JSON file")
+@click.option(
+    "--event-type", "-t", required=True, help="Event type label (e.g., falcon_detections)"
+)
+@click.option(
+    "--input-file",
+    "file_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to JSON file",
+)
 def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
     """Ingest a JSON file through the webhook receiver and pipeline."""
     import json
@@ -453,7 +512,10 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
     # Ingest through the webhook receiver
     receiver = WebhookReceiver()
     raw_events = receiver.ingest_batch(
-        payloads, source=source, provider=provider, event_type=event_type,
+        payloads,
+        source=source,
+        provider=provider,
+        event_type=event_type,
     )
 
     # Synthesise a ConnectorResult so the pipeline persistence works
@@ -468,6 +530,7 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
 
     # Run through stages 2-4 by feeding the connector result into the pipeline
     from warlock.pipeline.orchestrator import PipelineRunStats
+
     stats = PipelineRunStats()
 
     with get_session() as session:
@@ -497,17 +560,33 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
         session.flush()
 
     from datetime import datetime, timezone
+
     stats.completed_at = datetime.now(timezone.utc)
     _print_stats(stats)
 
 
 @cli.command()
-@click.option("-f", "--framework", default=None, help="Filter by framework (e.g. nist_800_53, iso_27001)")
-@click.option("-s", "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
+@click.option(
+    "-f", "--framework", default=None, help="Filter by framework (e.g. nist_800_53, iso_27001)"
+)
+@click.option(
+    "-s", "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata"
+)
 @click.option("-o", "--output", default=None, help="Output file path (default: stdout)")
-@click.option("--format", "fmt", type=click.Choice(["ar", "ssp", "poam"]), default="ar", help="OSCAL document type")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["ar", "ssp", "poam"]),
+    default="ar",
+    help="OSCAL document type",
+)
 @click.option("--description", default="", help="System description (for SSP)")
-@click.option("--ai/--no-ai", "use_ai", default=None, help="Use AI to generate framework-aware narratives (SSP/POA&M)")
+@click.option(
+    "--ai/--no-ai",
+    "use_ai",
+    default=None,
+    help="Use AI to generate framework-aware narratives (SSP/POA&M)",
+)
 def oscal(framework, system_name, output, fmt, description, use_ai):
     """Export assessment data in OSCAL JSON format.
 
@@ -527,26 +606,35 @@ def oscal(framework, system_name, output, fmt, description, use_ai):
     narrator = None
     if use_ai and fmt in ("ssp", "poam"):
         from warlock.assessors.ai_narrator import create_narrator
+
         narrator = create_narrator()
         if narrator is None:
-            console.print("[yellow]Warning: --ai requested but WLK_AI_PROVIDER / WLK_AI_API_KEY not configured. Falling back to deterministic output.[/yellow]")
+            console.print(
+                "[yellow]Warning: --ai requested but WLK_AI_PROVIDER / WLK_AI_API_KEY not configured. Falling back to deterministic output.[/yellow]"
+            )
         else:
             console.print(f"[cyan]AI narrator active: {narrator.provider}/{narrator.model}[/cyan]")
 
     with get_session() as session:
         if fmt == "ar":
-            data = exporter.export_assessment_results(session, framework=framework, system_name=system_name)
+            data = exporter.export_assessment_results(
+                session, framework=framework, system_name=system_name
+            )
         elif fmt == "ssp":
             if not framework:
                 raise click.UsageError("SSP export requires --framework (-f)")
             data = exporter.export_ssp(
-                session, framework=framework, system_name=system_name,
+                session,
+                framework=framework,
+                system_name=system_name,
                 description=description or f"{system_name} System Security Plan",
                 narrator=narrator,
             )
         elif fmt == "poam":
             data = exporter.export_poam(
-                session, framework=framework, system_name=system_name,
+                session,
+                framework=framework,
+                system_name=system_name,
                 narrator=narrator,
             )
 
@@ -620,7 +708,9 @@ def vendors(provider: str, threshold: float) -> None:
 @cli.command("policy-coverage")
 @click.option("-f", "--framework", required=True, help="Framework to check coverage for")
 @click.option("--no-rag", is_flag=True, help="Skip RAG matching, use keyword heuristics only")
-@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for governance analysis")
+@click.option(
+    "--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for governance analysis"
+)
 def policy_coverage(framework: str, no_rag: bool, use_ai: bool | None) -> None:
     """Check policy documentation coverage for a framework."""
     from warlock.assessors.policy_discovery import score_policy_coverage
@@ -635,7 +725,13 @@ def policy_coverage(framework: str, no_rag: bool, use_ai: bool | None) -> None:
         console.print(f"[dim]No controls found for framework '{framework}'.[/dim]")
         return
 
-    pct_style = "green" if coverage.coverage_pct >= 80 else "yellow" if coverage.coverage_pct >= 50 else "red"
+    pct_style = (
+        "green"
+        if coverage.coverage_pct >= 80
+        else "yellow"
+        if coverage.coverage_pct >= 50
+        else "red"
+    )
 
     console.print(f"\n[bold]Policy Coverage — {framework}[/bold]")
     console.print(f"  Total controls:       {coverage.total_controls}")
@@ -696,13 +792,28 @@ def policy_coverage(framework: str, no_rag: bool, use_ai: bool | None) -> None:
 
 
 @cli.command("issues")
-@click.option("--status", "-s", default=None, help="Filter by status (open, assigned, in_progress, etc.)")
-@click.option("--priority", "-p", default=None, help="Filter by priority (critical, high, medium, low)")
+@click.option(
+    "--status", "-s", default=None, help="Filter by status (open, assigned, in_progress, etc.)"
+)
+@click.option(
+    "--priority", "-p", default=None, help="Filter by priority (critical, high, medium, low)"
+)
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--assigned-to", default=None, help="Filter by assignee")
 @click.option("--limit", "-n", default=50, help="Max results")
-@click.option("--ask", default=None, help="Ask AI a question about the listed issues (e.g. 'What should I fix first?')")
-def issues(status: str | None, priority: str | None, framework: str | None, assigned_to: str | None, limit: int, ask: str | None) -> None:
+@click.option(
+    "--ask",
+    default=None,
+    help="Ask AI a question about the listed issues (e.g. 'What should I fix first?')",
+)
+def issues(
+    status: str | None,
+    priority: str | None,
+    framework: str | None,
+    assigned_to: str | None,
+    limit: int,
+    ask: str | None,
+) -> None:
     """List and manage compliance issues."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Issue
@@ -773,10 +884,13 @@ def issues(status: str | None, priority: str | None, framework: str | None, assi
 
         svc = get_ai_service()
         if not svc.is_available():
-            console.print("[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]")
+            console.print(
+                "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+            )
             return
 
         import uuid
+
         session_id = uuid.uuid4().hex
         issues_summary = [
             {
@@ -809,7 +923,12 @@ def issues(status: str | None, priority: str | None, framework: str | None, assi
 
 @cli.command("issues-auto-create")
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
-@click.option("--actor", default=None, envvar="WLK_CLI_ACTOR", help="Actor identity for audit trail (default: cli@warlock, env: WLK_CLI_ACTOR)")
+@click.option(
+    "--actor",
+    default=None,
+    envvar="WLK_CLI_ACTOR",
+    help="Actor identity for audit trail (default: cli@warlock, env: WLK_CLI_ACTOR)",
+)
 def issues_auto_create(framework: str | None, actor: str | None) -> None:
     """Auto-create issues from non-compliant control results."""
     from warlock.db.engine import get_session, init_db
@@ -825,7 +944,9 @@ def issues_auto_create(framework: str | None, actor: str | None) -> None:
         created = mgr.auto_create_from_results(session, framework=framework)
 
     if not created:
-        console.print("[dim]No new issues to create. All non-compliant results already have issues.[/dim]")
+        console.print(
+            "[dim]No new issues to create. All non-compliant results already have issues.[/dim]"
+        )
         return
 
     console.print(f"[green]Created {len(created)} issue(s):[/green]")
@@ -846,7 +967,9 @@ def systems_list() -> None:
         profiles = mgr.list_active(session)
 
     if not profiles:
-        console.print("[dim]No system profiles found. Create one with 'warlock systems-create'.[/dim]")
+        console.print(
+            "[dim]No system profiles found. Create one with 'warlock systems-create'.[/dim]"
+        )
         return
 
     table = Table(title=f"System Profiles ({len(profiles)})")
@@ -882,10 +1005,24 @@ def systems_list() -> None:
 @click.option("--name", "-n", required=True, help="System name")
 @click.option("--acronym", "-a", default=None, help="System acronym")
 @click.option("--description", "-d", default="", help="System description")
-@click.option("--impact", type=click.Choice(["low", "moderate", "high"]), default="moderate", help="Overall impact level")
-@click.option("--framework", "-f", multiple=True, help="Applicable frameworks (can specify multiple)")
+@click.option(
+    "--impact",
+    type=click.Choice(["low", "moderate", "high"]),
+    default="moderate",
+    help="Overall impact level",
+)
+@click.option(
+    "--framework", "-f", multiple=True, help="Applicable frameworks (can specify multiple)"
+)
 @click.option("--connector", "-c", multiple=True, help="Connector scope (can specify multiple)")
-def systems_create(name: str, acronym: str | None, description: str, impact: str, framework: tuple, connector: tuple) -> None:
+def systems_create(
+    name: str,
+    acronym: str | None,
+    description: str,
+    impact: str,
+    framework: tuple,
+    connector: tuple,
+) -> None:
     """Create a new system profile."""
     from warlock.db.engine import get_session, init_db
     from warlock.workflows.system_profile import SystemProfileManager
@@ -998,7 +1135,9 @@ def retention_report() -> None:
 
 @retention.command("purge")
 @click.option("--dry-run/--execute", default=True, help="Dry run (default) or actually delete")
-@click.option("--framework", "-f", default=None, help="Limit to a specific framework's retention period")
+@click.option(
+    "--framework", "-f", default=None, help="Limit to a specific framework's retention period"
+)
 def retention_purge(dry_run: bool, framework: str | None) -> None:
     """Purge records past their retention period."""
     from warlock.db.engine import get_session, init_db
@@ -1297,9 +1436,7 @@ def risk_invalidate(framework: str | None) -> None:
         result = engine.invalidate_cache(session, framework=framework)
 
     scope = f"framework '{framework}'" if framework else "all frameworks"
-    console.print(
-        f"[green]Invalidated {result['deleted']} cached entries for {scope}.[/green]"
-    )
+    console.print(f"[green]Invalidated {result['deleted']} cached entries for {scope}.[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -1368,7 +1505,13 @@ def ai_models() -> None:
 
 
 @ai.command("configure")
-@click.option("--provider", "-p", required=True, type=click.Choice(["anthropic", "openai", "gemini", "ollama"]), help="AI provider")
+@click.option(
+    "--provider",
+    "-p",
+    required=True,
+    type=click.Choice(["anthropic", "openai", "gemini", "ollama"]),
+    help="AI provider",
+)
 @click.option("--api-key", "-k", default=None, help="API key (or set WLK_AI_API_KEY)")
 @click.option("--model", "-m", default=None, help="Model to use (omit to see available models)")
 @click.option("--base-url", "-u", default="", help="Base URL (for Ollama cloud/local)")
@@ -1418,7 +1561,9 @@ def ai_configure(provider: str, api_key: str | None, model: str | None, base_url
 
 
 @ai.command("test")
-@click.option("--prompt", "-p", default="Respond with OK if you can read this.", help="Test prompt to send")
+@click.option(
+    "--prompt", "-p", default="Respond with OK if you can read this.", help="Test prompt to send"
+)
 def ai_test(prompt: str) -> None:
     """Send a test prompt to verify the AI provider is working."""
     from warlock.ai.service import get_ai_service
@@ -1432,13 +1577,19 @@ def ai_test(prompt: str) -> None:
     try:
         result = svc.reason(
             task=AITask.FOLLOW_UP,
-            context={"question": prompt, "entity_summary": "Test prompt", "compliance_context": "None"},
+            context={
+                "question": prompt,
+                "entity_summary": "Test prompt",
+                "compliance_context": "None",
+            },
         )
         if result.ai_used:
             console.print(f"[green]Response received ({result.latency_ms}ms):[/green]")
             console.print(f"  {result.value}")
             if result.token_usage:
-                console.print(f"  [dim]Tokens: {result.token_usage.input_tokens} in / {result.token_usage.output_tokens} out[/dim]")
+                console.print(
+                    f"  [dim]Tokens: {result.token_usage.input_tokens} in / {result.token_usage.output_tokens} out[/dim]"
+                )
         else:
             console.print(f"[yellow]AI not used: {result.fallback_reason}[/yellow]")
     except Exception as exc:
@@ -1452,7 +1603,9 @@ def ai_test(prompt: str) -> None:
 
 @cli.command("personnel")
 @click.option("--department", "-d", default=None, help="Filter by department")
-@click.option("--status", "-s", default=None, help="Filter by HR status (active, terminated, leave)")
+@click.option(
+    "--status", "-s", default=None, help="Filter by HR status (active, terminated, leave)"
+)
 @click.option("--flagged", is_flag=True, help="Show only flagged personnel")
 @click.option("--limit", "-n", default=50, help="Max results")
 def personnel_list(department: str | None, status: str | None, flagged: bool, limit: int) -> None:
@@ -1492,13 +1645,29 @@ def personnel_list(department: str | None, status: str | None, flagged: bool, li
         hr_style = {"active": "green", "terminated": "red", "leave": "yellow"}.get(
             p.hr_status or "", "dim"
         )
-        idp_style = {"active": "green", "ACTIVE": "green", "suspended": "yellow",
-                      "deprovisioned": "red"}.get(p.idp_status or "", "dim")
-        mfa_str = "[green]Yes[/]" if p.mfa_enabled else "[red]No[/]" if p.mfa_enabled is False else "[dim]?[/]"
+        idp_style = {
+            "active": "green",
+            "ACTIVE": "green",
+            "suspended": "yellow",
+            "deprovisioned": "red",
+        }.get(p.idp_status or "", "dim")
+        mfa_str = (
+            "[green]Yes[/]"
+            if p.mfa_enabled
+            else "[red]No[/]"
+            if p.mfa_enabled is False
+            else "[dim]?[/]"
+        )
         training_style = {"current": "green", "overdue": "red", "not_enrolled": "yellow"}.get(
             p.training_status or "", "dim"
         )
-        risk_style = "red bold" if (p.risk_score or 0) >= 50 else "yellow" if (p.risk_score or 0) > 0 else "green"
+        risk_style = (
+            "red bold"
+            if (p.risk_score or 0) >= 50
+            else "yellow"
+            if (p.risk_score or 0) > 0
+            else "green"
+        )
         flags_str = ", ".join(p.flags[:3]) if p.flags else ""
 
         table.add_row(
@@ -1532,8 +1701,10 @@ def personnel_sync() -> None:
 
     for source in ("hr", "idp", "training"):
         data = result.get(source, {})
-        console.print(f"  {source.upper():10s}  created={data.get('created', 0)}  "
-                      f"updated={data.get('updated', 0)}  flagged={data.get('flagged', 0)}")
+        console.print(
+            f"  {source.upper():10s}  created={data.get('created', 0)}  "
+            f"updated={data.get('updated', 0)}  flagged={data.get('flagged', 0)}"
+        )
 
     console.print(f"\n  Total personnel: {result.get('total_personnel', 0)}")
 
@@ -1542,11 +1713,14 @@ def personnel_sync() -> None:
         terminated = mgr.terminated_with_active_access(session)
 
     if terminated:
-        console.print(f"\n[red bold]CRITICAL: {len(terminated)} terminated employee(s) "
-                      f"still active in IdP:[/red bold]")
+        console.print(
+            f"\n[red bold]CRITICAL: {len(terminated)} terminated employee(s) "
+            f"still active in IdP:[/red bold]"
+        )
         for p in terminated[:10]:
-            console.print(f"  [red]• {p.full_name} ({p.email}) — HR: {p.hr_status}, "
-                          f"IdP: {p.idp_status}[/red]")
+            console.print(
+                f"  [red]• {p.full_name} ({p.email}) — HR: {p.hr_status}, IdP: {p.idp_status}[/red]"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -1588,24 +1762,36 @@ def questionnaires_list(status: str | None, vendor: str | None, limit: int) -> N
 
     for q_row in rows:
         status_style = {
-            "draft": "dim", "sent": "blue", "in_progress": "cyan",
-            "completed": "green", "reviewed": "green bold",
-            "accepted": "green bold", "rejected": "red",
+            "draft": "dim",
+            "sent": "blue",
+            "in_progress": "cyan",
+            "completed": "green",
+            "reviewed": "green bold",
+            "accepted": "green bold",
+            "rejected": "red",
         }.get(q_row.status, "")
         risk_style = ""
         if q_row.risk_score is not None:
-            risk_style = "red" if q_row.risk_score > 50 else "yellow" if q_row.risk_score > 25 else "green"
+            risk_style = (
+                "red" if q_row.risk_score > 50 else "yellow" if q_row.risk_score > 25 else "green"
+            )
 
         due_str = ""
         if q_row.due_date:
-            due_str = q_row.due_date.strftime("%Y-%m-%d") if hasattr(q_row.due_date, "strftime") else str(q_row.due_date)[:10]
+            due_str = (
+                q_row.due_date.strftime("%Y-%m-%d")
+                if hasattr(q_row.due_date, "strftime")
+                else str(q_row.due_date)[:10]
+            )
 
         table.add_row(
             q_row.id[:8],
             q_row.vendor_name,
             f"[{status_style}]{q_row.status}[/]",
             f"{q_row.completion_pct or 0:.0f}%",
-            f"[{risk_style}]{q_row.risk_score:.0f}[/]" if q_row.risk_score is not None else "[dim]—[/]",
+            f"[{risk_style}]{q_row.risk_score:.0f}[/]"
+            if q_row.risk_score is not None
+            else "[dim]—[/]",
             due_str,
         )
 
@@ -1630,8 +1816,10 @@ def questionnaires_seed() -> None:
 
     console.print(f"[green]Created {len(templates)} template(s):[/green]")
     for t in templates:
-        console.print(f"  [cyan]{t.id[:8]}[/cyan] {t.name} ({t.template_type}) — "
-                      f"{t.total_questions} questions")
+        console.print(
+            f"  [cyan]{t.id[:8]}[/cyan] {t.name} ({t.template_type}) — "
+            f"{t.total_questions} questions"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1640,11 +1828,15 @@ def questionnaires_seed() -> None:
 
 
 @cli.command("data-silos")
-@click.option("--type", "silo_type", default=None, help="Filter by silo type (s3_bucket, rds_database, ...)")
+@click.option(
+    "--type", "silo_type", default=None, help="Filter by silo type (s3_bucket, rds_database, ...)"
+)
 @click.option("--classification", "-c", default=None, help="Filter by classification")
 @click.option("--provider", "-p", default=None, help="Filter by cloud provider")
 @click.option("--limit", "-n", default=50, help="Max results")
-def data_silos_list(silo_type: str | None, classification: str | None, provider: str | None, limit: int) -> None:
+def data_silos_list(
+    silo_type: str | None, classification: str | None, provider: str | None, limit: int
+) -> None:
     """List discovered data silos."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import DataSilo
@@ -1679,8 +1871,11 @@ def data_silos_list(silo_type: str | None, classification: str | None, provider:
 
     for s in rows:
         class_style = {
-            "restricted": "red bold", "confidential": "red", "internal": "yellow",
-            "public": "green", "unknown": "dim",
+            "restricted": "red bold",
+            "confidential": "red",
+            "internal": "yellow",
+            "public": "green",
+            "unknown": "dim",
         }.get(s.data_classification or "unknown", "dim")
 
         def _bool_str(v):
@@ -1878,6 +2073,7 @@ def sufficiency_check(framework: str | None, below: float | None) -> None:
         else:
             from sqlalchemy import distinct
             from warlock.db.models import ControlResult
+
             fw_rows = session.query(distinct(ControlResult.framework)).all()
             scores = []
             for (fw,) in fw_rows:
@@ -1964,11 +2160,19 @@ def poams_list(framework: str | None, status: str | None, overdue: bool, limit: 
 
     for p in rows:
         due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "—"
-        status_style = "red" if p.status in ("draft", "open") else ("yellow" if p.status == "in_progress" else "green")
+        status_style = (
+            "red"
+            if p.status in ("draft", "open")
+            else ("yellow" if p.status == "in_progress" else "green")
+        )
         table.add_row(
-            p.id[:8], p.framework, p.control_id, p.severity,
+            p.id[:8],
+            p.framework,
+            p.control_id,
+            p.severity,
             f"[{status_style}]{p.status}[/{status_style}]",
-            due, str(p.delay_count or 0),
+            due,
+            str(p.delay_count or 0),
             (p.weakness_description or "")[:40],
         )
 
@@ -2006,8 +2210,13 @@ def compensating_list(framework: str | None, status: str | None) -> None:
         exp = c.expiry_date.strftime("%Y-%m-%d") if c.expiry_date else "—"
         eff = f"{c.effectiveness_score:.0f}" if c.effectiveness_score else "—"
         table.add_row(
-            c.id[:8], c.original_framework, c.original_control_id,
-            (c.title or "")[:30], c.status, eff, exp,
+            c.id[:8],
+            c.original_framework,
+            c.original_control_id,
+            (c.title or "")[:30],
+            c.status,
+            eff,
+            exp,
         )
 
     console.print(table)
@@ -2016,8 +2225,12 @@ def compensating_list(framework: str | None, status: str | None) -> None:
 @cli.command("risk-acceptances")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--status", "-s", default=None, help="Filter by status")
-@click.option("--expiring-soon", type=int, default=None, help="Show acceptances expiring within N days")
-def risk_acceptances_list(framework: str | None, status: str | None, expiring_soon: int | None) -> None:
+@click.option(
+    "--expiring-soon", type=int, default=None, help="Show acceptances expiring within N days"
+)
+def risk_acceptances_list(
+    framework: str | None, status: str | None, expiring_soon: int | None
+) -> None:
     """List risk acceptances."""
     from warlock.db.engine import get_session, init_db
     from warlock.workflows.risk_acceptance import RiskAcceptanceManager
@@ -2026,7 +2239,9 @@ def risk_acceptances_list(framework: str | None, status: str | None, expiring_so
     mgr = RiskAcceptanceManager()
 
     with get_session() as session:
-        rows = mgr.list_acceptances(session, framework=framework, status=status, expiring_days=expiring_soon)
+        rows = mgr.list_acceptances(
+            session, framework=framework, status=status, expiring_days=expiring_soon
+        )
 
     if not rows:
         console.print("[dim]No risk acceptances found.[/dim]")
@@ -2044,8 +2259,13 @@ def risk_acceptances_list(framework: str | None, status: str | None, expiring_so
     for r in rows:
         exp = r.expiry_date.strftime("%Y-%m-%d") if r.expiry_date else "—"
         table.add_row(
-            r.id[:8], r.framework, r.control_id, r.risk_level,
-            r.status, r.approved_by or "—", exp,
+            r.id[:8],
+            r.framework,
+            r.control_id,
+            r.risk_level,
+            r.status,
+            r.approved_by or "—",
+            exp,
         )
 
     console.print(table)
@@ -2084,12 +2304,19 @@ def inheritance_list(system: str, framework: str | None) -> None:
     table.add_column("Status")
 
     for ci in rows:
-        type_style = {"inherited": "cyan", "shared": "yellow", "common": "blue", "system_specific": "white"}.get(ci.inheritance_type, "white")
+        type_style = {
+            "inherited": "cyan",
+            "shared": "yellow",
+            "common": "blue",
+            "system_specific": "white",
+        }.get(ci.inheritance_type, "white")
         table.add_row(
-            ci.framework, ci.control_id,
+            ci.framework,
+            ci.control_id,
             f"[{type_style}]{ci.inheritance_type}[/{type_style}]",
             ci.provider_system_id[:8] if ci.provider_system_id else "—",
-            ci.evidence_requirement, ci.status,
+            ci.evidence_requirement,
+            ci.status,
         )
 
     console.print(table)
@@ -2108,8 +2335,8 @@ def dependencies_list(system: str | None) -> None:
         q = session.query(SystemDependency)
         if system:
             q = q.filter(
-                (SystemDependency.consumer_system_id == system) |
-                (SystemDependency.provider_system_id == system)
+                (SystemDependency.consumer_system_id == system)
+                | (SystemDependency.provider_system_id == system)
             )
         rows = q.all()
 
@@ -2128,8 +2355,10 @@ def dependencies_list(system: str | None) -> None:
         if len(d.shared_controls or []) > 3:
             ctrls += f" (+{len(d.shared_controls) - 3})"
         table.add_row(
-            d.consumer_system_id[:8], d.provider_system_id[:8],
-            d.dependency_type, ctrls,
+            d.consumer_system_id[:8],
+            d.provider_system_id[:8],
+            d.dependency_type,
+            ctrls,
         )
 
     console.print(table)
@@ -2172,9 +2401,11 @@ def drift_list(framework: str | None, days: int, direction: str | None) -> None:
         dir_style = "red" if d.drift_direction == "degraded" else "green"
         changes = len(d.correlated_change_event_ids or [])
         table.add_row(
-            d.framework, d.control_id,
+            d.framework,
+            d.control_id,
             f"[{dir_style}]{d.drift_direction}[/{dir_style}]",
-            d.previous_status, d.new_status,
+            d.previous_status,
+            d.new_status,
             str(changes),
             d.detected_at.strftime("%Y-%m-%d %H:%M") if d.detected_at else "—",
         )
@@ -2186,7 +2417,9 @@ def drift_list(framework: str | None, days: int, direction: str | None) -> None:
 @click.option("--framework", "-f", required=True, help="Framework to simulate")
 @click.option("--date", default=None, help="Target audit date (YYYY-MM-DD, default: +90 days)")
 @click.option("--system", default=None, help="System profile ID")
-@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for auditor simulation")
+@click.option(
+    "--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for auditor simulation"
+)
 def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool | None) -> None:
     """Simulate what an auditor would see at a future date."""
     from datetime import datetime as dt, timedelta
@@ -2208,7 +2441,9 @@ def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool |
         result = sim.simulate(session, framework, target, system_id=system)
 
     console.print(f"\n[bold]Audit Simulation: {framework} @ {date}[/bold]")
-    console.print(f"  Projected coverage: [{'green' if result.projected_coverage >= 80 else 'red'}]{result.projected_coverage:.1f}%[/]")
+    console.print(
+        f"  Projected coverage: [{'green' if result.projected_coverage >= 80 else 'red'}]{result.projected_coverage:.1f}%[/]"
+    )
     console.print(f"  Total controls:     {result.total_controls}")
     console.print(f"  Stale by date:      [yellow]{len(result.stale_controls)}[/yellow]")
     console.print(f"  Overdue POA&Ms:     [yellow]{len(result.overdue_poams)}[/yellow]")
@@ -2242,8 +2477,16 @@ def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool |
                         readiness_score = value.get("readiness_score")
                         actions = value.get("actions", [])
                         if readiness_score is not None:
-                            score_style = "green" if readiness_score >= 0.8 else "yellow" if readiness_score >= 0.5 else "red"
-                            console.print(f"  Readiness score: [{score_style}]{readiness_score:.0%}[/]")
+                            score_style = (
+                                "green"
+                                if readiness_score >= 0.8
+                                else "yellow"
+                                if readiness_score >= 0.5
+                                else "red"
+                            )
+                            console.print(
+                                f"  Readiness score: [{score_style}]{readiness_score:.0%}[/]"
+                            )
                         if assessment:
                             console.print(f"\n{assessment}")
                         if actions:
@@ -2269,6 +2512,7 @@ def effectiveness_report(framework: str | None, days: int) -> None:
     with get_session() as session:
         from datetime import timedelta
         from datetime import datetime, timezone
+
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         q = session.query(PostureSnapshot).filter(
@@ -2305,7 +2549,11 @@ def effectiveness_report(framework: str | None, days: int) -> None:
         uptime = f"{s.uptime_pct:.1f}" if s.uptime_pct is not None else "—"
         mttr = f"{s.mttr_hours:.1f}" if s.mttr_hours is not None else "—"
         drift = str(s.drift_count) if s.drift_count is not None else "—"
-        style = "red" if (s.uptime_pct or 0) < 80 else ("yellow" if (s.uptime_pct or 0) < 95 else "green")
+        style = (
+            "red"
+            if (s.uptime_pct or 0) < 80
+            else ("yellow" if (s.uptime_pct or 0) < 95 else "green")
+        )
         table.add_row(s.framework, s.control_id, f"[{style}]{uptime}[/{style}]", mttr, drift)
 
     console.print(table)
@@ -2317,8 +2565,20 @@ def effectiveness_report(framework: str | None, days: int) -> None:
 
 
 @cli.command("framework-diff")
-@click.option("--old", "old_path", required=True, type=click.Path(exists=True), help="Path to old framework YAML")
-@click.option("--new", "new_path", required=True, type=click.Path(exists=True), help="Path to new framework YAML")
+@click.option(
+    "--old",
+    "old_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to old framework YAML",
+)
+@click.option(
+    "--new",
+    "new_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to new framework YAML",
+)
 def framework_diff_cmd(old_path: str, new_path: str) -> None:
     """Compare two framework versions and show control changes."""
     from warlock.frameworks.diff import FrameworkDiff
@@ -2353,13 +2613,41 @@ def framework_diff_cmd(old_path: str, new_path: str) -> None:
 
 @cli.command("remediate")
 @click.argument("item_id")
-@click.option("--action", "-a", type=click.Choice(["show", "assign", "transition", "accept-risk", "extend", "comment"]), default="show", help="Action to take")
-@click.option("--to", "to_value", required=False, help="Target value (email for assign, status for transition, days for extend)")
+@click.option(
+    "--action",
+    "-a",
+    type=click.Choice(["show", "assign", "transition", "accept-risk", "extend", "comment"]),
+    default="show",
+    help="Action to take",
+)
+@click.option(
+    "--to",
+    "to_value",
+    required=False,
+    help="Target value (email for assign, status for transition, days for extend)",
+)
 @click.option("--reason", required=False, help="Reason or comment text")
-@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for remediation guidance")
-@click.option("--ask", default=None, help="Ask AI a question about this item (interactive reasoning)")
-@click.option("--actor", default=None, envvar="WLK_CLI_ACTOR", help="Actor identity for audit trail (default: cli@warlock, env: WLK_CLI_ACTOR)")
-def remediate(item_id: str, action: str, to_value: str | None, reason: str | None, use_ai: bool | None, ask: str | None, actor: str | None) -> None:
+@click.option(
+    "--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for remediation guidance"
+)
+@click.option(
+    "--ask", default=None, help="Ask AI a question about this item (interactive reasoning)"
+)
+@click.option(
+    "--actor",
+    default=None,
+    envvar="WLK_CLI_ACTOR",
+    help="Actor identity for audit trail (default: cli@warlock, env: WLK_CLI_ACTOR)",
+)
+def remediate(
+    item_id: str,
+    action: str,
+    to_value: str | None,
+    reason: str | None,
+    use_ai: bool | None,
+    ask: str | None,
+    actor: str | None,
+) -> None:
     """Show remediation guidance and take action on issues/POA&Ms.
 
     Default (no --action) shows the full remediation plan: what's wrong,
@@ -2410,6 +2698,7 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
         # --- ACTION MODE ---
         if issue:
             from warlock.workflows.issues import IssueManager
+
             mgr = IssueManager()
 
             actor = _get_actor()
@@ -2420,14 +2709,18 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                 console.print(f"[green]Issue {issue.id[:8]} assigned to {to_value}[/green]")
             elif action == "transition":
                 if not to_value:
-                    _error("--to <status> required. Valid: open, assigned, in_progress, resolved, closed, verified, risk_accepted")
+                    _error(
+                        "--to <status> required. Valid: open, assigned, in_progress, resolved, closed, verified, risk_accepted"
+                    )
                 try:
                     mgr.transition(session, issue.id, to_value, actor=actor)
                     console.print(f"[green]Issue {issue.id[:8]} → {to_value}[/green]")
                 except ValueError as e:
                     _error(str(e))
             elif action == "accept-risk":
-                mgr.accept_risk(session, issue.id, reason=reason or "Accepted via CLI", accepted_by=actor)
+                mgr.accept_risk(
+                    session, issue.id, reason=reason or "Accepted via CLI", accepted_by=actor
+                )
                 console.print(f"[green]Issue {issue.id[:8]} risk accepted[/green]")
             elif action == "comment":
                 if not reason:
@@ -2435,16 +2728,21 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                 mgr.add_comment(session, issue.id, author=actor, content=reason)
                 console.print(f"[green]Comment added to issue {issue.id[:8]}[/green]")
             elif action == "extend":
-                _error("--action extend is not supported for issues. Use --action transition to change issue state.")
+                _error(
+                    "--action extend is not supported for issues. Use --action transition to change issue state."
+                )
 
         elif poam:
             from warlock.workflows.poam import POAMManager
+
             mgr = POAMManager()
             actor = _get_actor()
 
             if action == "transition":
                 if not to_value:
-                    _error("--to <status> required. Valid: open, in_progress, remediated, verified, completed, risk_accepted, cancelled")
+                    _error(
+                        "--to <status> required. Valid: open, in_progress, remediated, verified, completed, risk_accepted, cancelled"
+                    )
                 try:
                     mgr.transition(session, poam.id, to_value, actor=actor)
                     console.print(f"[green]POA&M {poam.id[:8]} → {to_value}[/green]")
@@ -2458,9 +2756,18 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                 except ValueError:
                     _error("--to must be number of days")
                 from datetime import datetime, timedelta, timezone
+
                 new_date = datetime.now(timezone.utc) + timedelta(days=days)
-                mgr.extend(session, poam.id, justification=reason or "Extended via CLI", new_date=new_date, approved_by=actor)
-                console.print(f"[green]POA&M {poam.id[:8]} extended by {days} days (new deadline: {new_date.date()})[/green]")
+                mgr.extend(
+                    session,
+                    poam.id,
+                    justification=reason or "Extended via CLI",
+                    new_date=new_date,
+                    approved_by=actor,
+                )
+                console.print(
+                    f"[green]POA&M {poam.id[:8]} extended by {days} days (new deadline: {new_date.date()})[/green]"
+                )
             elif action == "assign":
                 _error("POA&Ms cannot be assigned directly. Assign the linked issue instead.")
             elif action == "accept-risk":
@@ -2474,22 +2781,29 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                     _error("--reason <text> required")
                 # Add comment on linked issue if one exists, otherwise record as audit note
                 from warlock.db.models import Issue
+
                 linked_issue = session.query(Issue).filter(Issue.poam_id == poam.id).first()
                 if linked_issue:
                     from warlock.workflows.issues import IssueManager
+
                     issue_mgr = IssueManager()
                     issue_mgr.add_comment(session, linked_issue.id, author=actor, content=reason)
-                    console.print(f"[green]Comment added to linked issue {linked_issue.id[:8]} for POA&M {poam.id[:8]}[/green]")
+                    console.print(
+                        f"[green]Comment added to linked issue {linked_issue.id[:8]} for POA&M {poam.id[:8]}[/green]"
+                    )
                 else:
                     # Store as audit note in delay_justifications (the only list field available)
                     from datetime import datetime, timezone
+
                     notes = list(poam.delay_justifications or [])
-                    notes.append({
-                        "date": datetime.now(timezone.utc).isoformat(),
-                        "justification": reason,
-                        "approved_by": actor,
-                        "type": "comment",
-                    })
+                    notes.append(
+                        {
+                            "date": datetime.now(timezone.utc).isoformat(),
+                            "justification": reason,
+                            "approved_by": actor,
+                            "type": "comment",
+                        }
+                    )
                     poam.delay_justifications = notes
                     session.commit()
                     console.print(f"[green]Audit note added to POA&M {poam.id[:8]}[/green]")
@@ -2501,7 +2815,9 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
 
             svc = get_ai_service()
             if not svc.is_available():
-                console.print("[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]")
+                console.print(
+                    "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+                )
                 return
 
             entity_type = "issue" if issue else "poam"
@@ -2526,6 +2842,7 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                 }
 
             import uuid
+
             session_id = uuid.uuid4().hex
 
             ctx = ConversationContext(
@@ -2599,14 +2916,16 @@ def _show_remediation_for_issue(session, issue) -> None:
 
     # Header
     console.print()
-    console.print(Panel(
-        f"[bold]{issue.title}[/bold]\n\n"
-        f"ID: {issue.id[:8]}  |  Framework: {issue.framework}  |  Control: {issue.control_id}\n"
-        f"Status: [yellow]{issue.status}[/yellow]  |  Priority: {issue.priority}  |  "
-        f"Assigned: {issue.assigned_to or '[dim]unassigned[/dim]'}",
-        title="[bold red]Issue[/bold red]",
-        border_style="red",
-    ))
+    console.print(
+        Panel(
+            f"[bold]{issue.title}[/bold]\n\n"
+            f"ID: {issue.id[:8]}  |  Framework: {issue.framework}  |  Control: {issue.control_id}\n"
+            f"Status: [yellow]{issue.status}[/yellow]  |  Priority: {issue.priority}  |  "
+            f"Assigned: {issue.assigned_to or '[dim]unassigned[/dim]'}",
+            title="[bold red]Issue[/bold red]",
+            border_style="red",
+        )
+    )
 
     # Description
     if issue.description:
@@ -2615,7 +2934,9 @@ def _show_remediation_for_issue(session, issue) -> None:
     # Get the control result for remediation data
     result = None
     if issue.control_result_id:
-        result = session.query(ControlResult).filter(ControlResult.id == issue.control_result_id).first()
+        result = (
+            session.query(ControlResult).filter(ControlResult.id == issue.control_result_id).first()
+        )
 
     # Remediation steps from assertion engine
     if result and result.remediation_summary:
@@ -2630,6 +2951,7 @@ def _show_remediation_for_issue(session, issue) -> None:
 
     if not (result and result.remediation_summary):
         from warlock.assessors.remediation_loader import get_remediation
+
         guidance = get_remediation(issue.framework, issue.control_id)
         if guidance:
             # Display from KB instead
@@ -2650,8 +2972,8 @@ def _show_remediation_for_issue(session, issue) -> None:
     console.print("\n[bold cyan]CLI actions:[/bold cyan]")
     console.print(f"  warlock remediate {issue.id[:8]} -a assign --to <email>")
     console.print(f"  warlock remediate {issue.id[:8]} -a transition --to in_progress")
-    console.print(f"  warlock remediate {issue.id[:8]} -a comment --reason \"<update>\"")
-    console.print(f"  warlock remediate {issue.id[:8]} -a accept-risk --reason \"<justification>\"")
+    console.print(f'  warlock remediate {issue.id[:8]} -a comment --reason "<update>"')
+    console.print(f'  warlock remediate {issue.id[:8]} -a accept-risk --reason "<justification>"')
 
     # Evidence needed
     console.print("\n[bold]Evidence to collect:[/bold]")
@@ -2664,9 +2986,19 @@ def _show_remediation_for_issue(session, issue) -> None:
         console.print(f"  Control {issue.control_id} must show as compliant")
 
     # Related items
-    related_poam = session.query(POAM).filter(POAM.control_id == issue.control_id, POAM.framework == issue.framework).first()
-    related_cc = session.query(CompensatingControl).filter(CompensatingControl.original_control_id == issue.control_id).first()
-    related_ra = session.query(RiskAcceptance).filter(RiskAcceptance.control_id == issue.control_id).first()
+    related_poam = (
+        session.query(POAM)
+        .filter(POAM.control_id == issue.control_id, POAM.framework == issue.framework)
+        .first()
+    )
+    related_cc = (
+        session.query(CompensatingControl)
+        .filter(CompensatingControl.original_control_id == issue.control_id)
+        .first()
+    )
+    related_ra = (
+        session.query(RiskAcceptance).filter(RiskAcceptance.control_id == issue.control_id).first()
+    )
 
     if related_poam or related_cc or related_ra:
         console.print("\n[bold]Related items:[/bold]")
@@ -2675,7 +3007,9 @@ def _show_remediation_for_issue(session, issue) -> None:
         if related_cc:
             console.print(f"  Compensating control: {related_cc.title} ({related_cc.status})")
         if related_ra:
-            console.print(f"  Risk acceptance: {related_ra.id[:8]} ({related_ra.status}, expires {related_ra.expiry_date})")
+            console.print(
+                f"  Risk acceptance: {related_ra.id[:8]} ({related_ra.status}, expires {related_ra.expiry_date})"
+            )
 
     console.print()
 
@@ -2687,19 +3021,23 @@ def _show_remediation_for_poam(session, poam) -> None:
     from warlock.db.models import CompensatingControl, ControlResult, RiskAcceptance
 
     console.print()
-    console.print(Panel(
-        f"[bold]{poam.weakness_description}[/bold]\n\n"
-        f"ID: {poam.id[:8]}  |  Framework: {poam.framework}  |  Control: {poam.control_id}\n"
-        f"Status: [yellow]{poam.status}[/yellow]  |  Severity: {poam.severity}  |  "
-        f"Due: {poam.scheduled_completion or '[dim]no deadline[/dim]'}  |  Delays: {poam.delay_count}",
-        title="[bold red]POA&M[/bold red]",
-        border_style="red",
-    ))
+    console.print(
+        Panel(
+            f"[bold]{poam.weakness_description}[/bold]\n\n"
+            f"ID: {poam.id[:8]}  |  Framework: {poam.framework}  |  Control: {poam.control_id}\n"
+            f"Status: [yellow]{poam.status}[/yellow]  |  Severity: {poam.severity}  |  "
+            f"Due: {poam.scheduled_completion or '[dim]no deadline[/dim]'}  |  Delays: {poam.delay_count}",
+            title="[bold red]POA&M[/bold red]",
+            border_style="red",
+        )
+    )
 
     # Get remediation from linked control result
     result = None
     if poam.control_result_id:
-        result = session.query(ControlResult).filter(ControlResult.id == poam.control_result_id).first()
+        result = (
+            session.query(ControlResult).filter(ControlResult.id == poam.control_result_id).first()
+        )
         if result and result.remediation_summary:
             console.print("\n[bold green]How to fix:[/bold green]")
             console.print(f"  {result.remediation_summary}")
@@ -2712,6 +3050,7 @@ def _show_remediation_for_poam(session, poam) -> None:
 
     if not (result and result.remediation_summary):
         from warlock.assessors.remediation_loader import get_remediation
+
         guidance = get_remediation(poam.framework, poam.control_id)
         if guidance:
             # Display from KB instead
@@ -2741,7 +3080,7 @@ def _show_remediation_for_poam(session, poam) -> None:
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to open")
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to in_progress")
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to remediated")
-    console.print(f"  warlock remediate {poam.id[:8]} -a extend --to 30 --reason \"<justification>\"")
+    console.print(f'  warlock remediate {poam.id[:8]} -a extend --to 30 --reason "<justification>"')
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to risk_accepted")
 
     # Compensating controls
@@ -2754,13 +3093,21 @@ def _show_remediation_for_poam(session, poam) -> None:
     ra = session.query(RiskAcceptance).filter(RiskAcceptance.poam_id == poam.id).first()
     if ra:
         console.print("\n[bold]Risk acceptance:[/bold]")
-        console.print(f"  {ra.status} — expires {ra.expiry_date} — approved by {ra.approved_by or 'pending'}")
+        console.print(
+            f"  {ra.status} — expires {ra.expiry_date} — approved by {ra.approved_by or 'pending'}"
+        )
 
     console.print()
 
 
 @cli.command("architecture")
-@click.option("--format", "fmt", type=click.Choice(["terminal", "svg", "png"]), default="terminal", help="Output format")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["terminal", "svg", "png"]),
+    default="terminal",
+    help="Output format",
+)
 @click.option("--output", "-o", default=None, help="Output file path (for svg/png)")
 def architecture_diagram(fmt: str, output: str | None) -> None:
     """Render a live architecture diagram from the seeded database."""
@@ -2814,15 +3161,16 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
         fw_counts = dict(
             s.query(ControlResult.framework, func.count(ControlResult.id))
-            .group_by(ControlResult.framework).all()
+            .group_by(ControlResult.framework)
+            .all()
         )
         source_counts = dict(
-            s.query(Finding.source, func.count(Finding.id))
-            .group_by(Finding.source).all()
+            s.query(Finding.source, func.count(Finding.id)).group_by(Finding.source).all()
         )
         status_counts = dict(
             s.query(ControlResult.status, func.count(ControlResult.id))
-            .group_by(ControlResult.status).all()
+            .group_by(ControlResult.status)
+            .all()
         )
 
         # System dependencies for the diagram
@@ -2836,14 +3184,18 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
         tree = Tree("[bold cyan]Warlock GRC Platform[/bold cyan]")
 
         pipeline = tree.add("[bold green]Pipeline[/bold green]")
-        stage1 = pipeline.add(f"[yellow]Stage 1:[/yellow] Connectors — {connector_count} runs → {raw_count} raw events")
+        stage1 = pipeline.add(
+            f"[yellow]Stage 1:[/yellow] Connectors — {connector_count} runs → {raw_count} raw events"
+        )
         for src, cnt in sorted(source_counts.items(), key=lambda x: -x[1])[:10]:
             stage1.add(f"{src}: {cnt} findings")
         if len(source_counts) > 10:
             stage1.add(f"[dim]... and {len(source_counts) - 10} more sources[/dim]")
         pipeline.add(f"[yellow]Stage 2:[/yellow] Normalizers — {finding_count} findings")
         pipeline.add(f"[yellow]Stage 3:[/yellow] Control Mapper — {result_count:,} control results")
-        stage4 = pipeline.add(f"[yellow]Stage 4:[/yellow] Assessor — {status_counts.get('compliant', 0):,} compliant, {status_counts.get('non_compliant', 0):,} non-compliant, {status_counts.get('not_assessed', 0):,} not assessed")
+        stage4 = pipeline.add(
+            f"[yellow]Stage 4:[/yellow] Assessor — {status_counts.get('compliant', 0):,} compliant, {status_counts.get('non_compliant', 0):,} non-compliant, {status_counts.get('not_assessed', 0):,} not assessed"
+        )
         stage4.add("Tier 1: 25 deterministic assertions")
         stage4.add("Tier 2: AI reasoning (optional)")
         stage4.add("Tier 3: OPA policy evaluation (616 policies)")
@@ -2855,25 +3207,35 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
         sys_tree = tree.add(f"[bold green]Systems[/bold green] ({len(systems)} profiles)")
         for sp in systems:
-            style = {"authorized": "green", "in_process": "yellow", "not_authorized": "red"}.get(sp.authorization_status or "", "white")
-            node = sys_tree.add(f"[bold]{sp.acronym}[/bold] — {sp.name} ([{style}]{sp.authorization_status}[/{style}], {sp.overall_impact} impact)")
+            style = {"authorized": "green", "in_process": "yellow", "not_authorized": "red"}.get(
+                sp.authorization_status or "", "white"
+            )
+            node = sys_tree.add(
+                f"[bold]{sp.acronym}[/bold] — {sp.name} ([{style}]{sp.authorization_status}[/{style}], {sp.overall_impact} impact)"
+            )
             if sp.frameworks:
                 node.add(f"Frameworks: {', '.join(sp.frameworks)}")
             if sp.connector_scope:
                 node.add(f"Connectors: {', '.join(sp.connector_scope)}")
 
         gov = tree.add("[bold green]Governance[/bold green]")
-        gov.add(f"Issues: {issue_count}  |  POA&Ms: {poam_count}  |  Compensating: {cc_count}  |  Risk Acceptances: {ra_count}")
+        gov.add(
+            f"Issues: {issue_count}  |  POA&Ms: {poam_count}  |  Compensating: {cc_count}  |  Risk Acceptances: {ra_count}"
+        )
         gov.add(f"Inheritances: {inheritance_count}  |  Dependencies: {dep_count}")
 
         intel = tree.add("[bold green]Intelligence[/bold green]")
         intel.add(f"Drifts: {drift_count}  |  Snapshots: {snapshot_count}")
 
         assets = tree.add("[bold green]Assets & People[/bold green]")
-        assets.add(f"Personnel: {personnel_count}  |  Data Silos: {silo_count}  |  Engagements: {engagement_count}  |  Legal Holds: {hold_count}")
+        assets.add(
+            f"Personnel: {personnel_count}  |  Data Silos: {silo_count}  |  Engagements: {engagement_count}  |  Legal Holds: {hold_count}"
+        )
 
         console.print()
-        console.print(Panel(tree, title="[bold]Live Architecture[/bold]", border_style="cyan", expand=False))
+        console.print(
+            Panel(tree, title="[bold]Live Architecture[/bold]", border_style="cyan", expand=False)
+        )
         console.print()
         return
 
@@ -2884,12 +3246,38 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
     # Build d2 source from live data
     sorted(source_counts.items(), key=lambda x: -x[1])[:15]
     source_groups = {
-        "Cloud": ["aws", "azure", "gcp", "oci", "ibm_cloud", "alibaba", "digitalocean", "huawei", "ovh", "cloudflare"],
+        "Cloud": [
+            "aws",
+            "azure",
+            "gcp",
+            "oci",
+            "ibm_cloud",
+            "alibaba",
+            "digitalocean",
+            "huawei",
+            "ovh",
+            "cloudflare",
+        ],
         "Identity": ["okta", "entra_id", "cyberark", "sailpoint", "vault"],
         "Endpoint": ["crowdstrike", "defender", "sentinelone", "intune"],
         "SIEM": ["sentinel", "splunk", "elastic"],
         "Scanners": ["tenable", "qualys", "wiz", "prisma"],
-        "Other": ["servicenow", "workday", "knowbe4", "confluence", "onetrust", "snyk", "github", "proofpoint", "purview", "veeam", "verkada", "mlflow", "securityscorecard", "kubernetes"],
+        "Other": [
+            "servicenow",
+            "workday",
+            "knowbe4",
+            "confluence",
+            "onetrust",
+            "snyk",
+            "github",
+            "proofpoint",
+            "purview",
+            "veeam",
+            "verkada",
+            "mlflow",
+            "securityscorecard",
+            "kubernetes",
+        ],
     }
 
     d2 = []
@@ -2898,13 +3286,13 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # Connectors container
     d2.append("connectors: Connectors (40 sources) {")
-    d2.append("  style.fill: \"#1a1a2e\"")
-    d2.append("  style.font-color: \"#e0e0e0\"")
+    d2.append('  style.fill: "#1a1a2e"')
+    d2.append('  style.font-color: "#e0e0e0"')
     for group_name, members in source_groups.items():
         active = [m for m in members if m in source_counts]
         if active:
             d2.append(f"  {group_name.lower()}: {group_name} ({len(active)}) {{")
-            d2.append("    style.fill: \"#16213e\"")
+            d2.append('    style.fill: "#16213e"')
             for src in active:
                 cnt = source_counts[src]
                 d2.append(f"    {src}: {src} ({cnt})")
@@ -2914,8 +3302,8 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # Pipeline
     d2.append("pipeline: Pipeline {")
-    d2.append("  style.fill: \"#0f3460\"")
-    d2.append("  style.font-color: \"#e0e0e0\"")
+    d2.append('  style.fill: "#0f3460"')
+    d2.append('  style.font-color: "#e0e0e0"')
     d2.append(f"  normalize: Normalize\\n{finding_count} findings")
     d2.append(f"  map: Map Controls\\n{result_count:,} results")
     d2.append("  assess: Assess {")
@@ -2931,8 +3319,8 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # Frameworks
     d2.append("frameworks: Frameworks (10) {")
-    d2.append("  style.fill: \"#533483\"")
-    d2.append("  style.font-color: \"#e0e0e0\"")
+    d2.append('  style.fill: "#533483"')
+    d2.append('  style.font-color: "#e0e0e0"')
     for fw, cnt in sorted(fw_counts.items(), key=lambda x: -x[1]):
         d2.append(f"  {fw}: {fw.upper().replace('_', ' ')}\\n{cnt:,} results")
     d2.append("}")
@@ -2940,19 +3328,21 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # Systems
     d2.append("systems: Authorization Boundaries {")
-    d2.append("  style.fill: \"#1a1a2e\"")
-    d2.append("  style.font-color: \"#e0e0e0\"")
+    d2.append('  style.fill: "#1a1a2e"')
+    d2.append('  style.font-color: "#e0e0e0"')
     for sp in systems:
         fws = ", ".join(sp.frameworks or [])
         conns = ", ".join(sp.connector_scope or [])
-        d2.append(f"  {sp.acronym}: {sp.acronym} — {sp.name}\\n{sp.authorization_status} | {sp.overall_impact} impact\\nFrameworks: {fws}\\nConnectors: {conns}")
+        d2.append(
+            f"  {sp.acronym}: {sp.acronym} — {sp.name}\\n{sp.authorization_status} | {sp.overall_impact} impact\\nFrameworks: {fws}\\nConnectors: {conns}"
+        )
     d2.append("}")
     d2.append("")
 
     # Governance
     d2.append("governance: Governance {")
-    d2.append("  style.fill: \"#e94560\"")
-    d2.append("  style.font-color: \"#ffffff\"")
+    d2.append('  style.fill: "#e94560"')
+    d2.append('  style.font-color: "#ffffff"')
     d2.append(f"  issues: Issues ({issue_count})")
     d2.append(f"  poams: POA&Ms ({poam_count})")
     d2.append(f"  compensating: Compensating ({cc_count})")
@@ -2962,8 +3352,8 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # Intelligence
     d2.append("intelligence: Intelligence {")
-    d2.append("  style.fill: \"#0f3460\"")
-    d2.append("  style.font-color: \"#e0e0e0\"")
+    d2.append('  style.fill: "#0f3460"')
+    d2.append('  style.font-color: "#e0e0e0"')
     d2.append(f"  drift: Compliance Drift ({drift_count})")
     d2.append(f"  posture: Posture Trends ({snapshot_count} snapshots)")
     d2.append("}")
@@ -2971,8 +3361,8 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # Assets
     d2.append("assets: Assets & People {")
-    d2.append("  style.fill: \"#16213e\"")
-    d2.append("  style.font-color: \"#e0e0e0\"")
+    d2.append('  style.fill: "#16213e"')
+    d2.append('  style.font-color: "#e0e0e0"')
     d2.append(f"  personnel: Personnel ({personnel_count})")
     d2.append(f"  silos: Data Silos ({silo_count})")
     d2.append(f"  engagements: Audit Engagements ({engagement_count})")
@@ -3023,9 +3413,21 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
             d2_out = out_path.rsplit(".", 1)[0] + ".d2"
             with open(d2_out, "w") as f:
                 f.write(d2_source)
-            console.print(f"[yellow]d2 source written to {d2_out} — render manually with: d2 {d2_out} output.svg[/yellow]")
+            console.print(
+                f"[yellow]d2 source written to {d2_out} — render manually with: d2 {d2_out} output.svg[/yellow]"
+            )
     finally:
         os.unlink(d2_file)
+
+
+# --- Trogon interactive command browser (optional dependency) ---
+try:
+    from trogon import tui as _trogon_tui
+
+    # trogon.tui is a decorator that adds a 'tui' command to a Click group
+    _trogon_tui(command="tui", help="Open interactive command browser")(cli)
+except ImportError:
+    pass
 
 
 if __name__ == "__main__":

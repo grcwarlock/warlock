@@ -26,6 +26,7 @@ from warlock.normalizers.base import FindingData
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_raw_event(
     source: str = "aws",
     event_type: str = "iam_credential_report",
@@ -71,6 +72,7 @@ def _make_finding(
 # PolicyRegistry tests
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyRegistry:
     """Tests for the PolicyRegistry scanner."""
 
@@ -81,15 +83,11 @@ class TestPolicyRegistry:
 
         # We know there are 296 non-test policy files and 12 UCF ones we just added
         # Not all will map (terraform excluded), but we should have a substantial count
-        assert len(policy_map) > 200, (
-            f"Expected 200+ policies in registry, got {len(policy_map)}"
-        )
+        assert len(policy_map) > 200, f"Expected 200+ policies in registry, got {len(policy_map)}"
 
         # Should have multiple frameworks
         frameworks = registry.list_frameworks()
-        assert len(frameworks) >= 5, (
-            f"Expected 5+ frameworks, got {frameworks}"
-        )
+        assert len(frameworks) >= 5, f"Expected 5+ frameworks, got {frameworks}"
 
         # Verify known frameworks are present
         for fw in ["nist_800_53", "soc2", "iso_27001", "cmmc", "hipaa"]:
@@ -145,9 +143,7 @@ class TestPolicyRegistry:
         registry = PolicyRegistry()
         nist_policies = registry.get_framework_policies("nist_800_53")
         assert len(nist_policies) > 50
-        assert all(
-            pkg.startswith("nist.") for pkg in nist_policies
-        )
+        assert all(pkg.startswith("nist.") for pkg in nist_policies)
 
     def test_cache_invalidation(self):
         """Invalidate should force re-scan on next access."""
@@ -162,6 +158,7 @@ class TestPolicyRegistry:
 # ---------------------------------------------------------------------------
 # NormalizedDataAssembler tests
 # ---------------------------------------------------------------------------
+
 
 class TestDataAssembler:
     """Tests for the NormalizedDataAssembler."""
@@ -299,6 +296,7 @@ class TestDataAssembler:
 # ---------------------------------------------------------------------------
 # OPAComplianceEvaluator tests
 # ---------------------------------------------------------------------------
+
 
 class TestOPAEvaluator:
     """Tests for the OPAComplianceEvaluator."""
@@ -458,6 +456,7 @@ class TestOPAEvaluator:
 # UCF policy registration test
 # ---------------------------------------------------------------------------
 
+
 class TestUCFPolicies:
     """Tests that UCF policies are correctly registered and mapped."""
 
@@ -485,8 +484,7 @@ class TestUCFPolicies:
 
         for expected in expected_ucf_controls:
             assert expected in ucf_controls, (
-                f"UCF control {expected} not found in registry. "
-                f"Found: {sorted(ucf_controls)}"
+                f"UCF control {expected} not found in registry. Found: {sorted(ucf_controls)}"
             )
 
     def test_ucf_framework_listed(self):

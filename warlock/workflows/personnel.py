@@ -74,7 +74,9 @@ class PersonnelManager:
 
             if detail.get("termination_date"):
                 try:
-                    person.termination_date = datetime.fromisoformat(str(detail["termination_date"]))
+                    person.termination_date = datetime.fromisoformat(
+                        str(detail["termination_date"])
+                    )
                 except (ValueError, TypeError):
                     pass
 
@@ -112,10 +114,15 @@ class PersonnelManager:
             idp_findings = (
                 session.query(Finding)
                 .filter(
-                    Finding.resource_type.in_([
-                        "okta_user", "entra_user", "google_user",
-                        "iam_user", "idp_user",
-                    ])
+                    Finding.resource_type.in_(
+                        [
+                            "okta_user",
+                            "entra_user",
+                            "google_user",
+                            "iam_user",
+                            "idp_user",
+                        ]
+                    )
                 )
                 .all()
             )
@@ -179,10 +186,14 @@ class PersonnelManager:
             training_findings = (
                 session.query(Finding)
                 .filter(
-                    Finding.resource_type.in_([
-                        "training_enrollment", "phishing_result",
-                        "knowbe4_user", "training_completion",
-                    ])
+                    Finding.resource_type.in_(
+                        [
+                            "training_enrollment",
+                            "phishing_result",
+                            "knowbe4_user",
+                            "training_completion",
+                        ]
+                    )
                 )
                 .all()
             )
@@ -229,10 +240,12 @@ class PersonnelManager:
             if detail.get("completions") or detail.get("campaign"):
                 existing = person.training_completions or []
                 if detail.get("campaign"):
-                    existing.append({
-                        "campaign": detail["campaign"],
-                        "completed_date": detail.get("completed_date", now.isoformat()),
-                    })
+                    existing.append(
+                        {
+                            "campaign": detail["campaign"],
+                            "completed_date": detail.get("completed_date", now.isoformat()),
+                        }
+                    )
                 elif detail.get("completions"):
                     existing.extend(detail["completions"])
                 person.training_completions = existing
@@ -280,13 +293,16 @@ class PersonnelManager:
 
             # Terminated in HR but still active in IdP
             if person.hr_status in ("terminated", "inactive") and person.idp_status in (
-                "active", "ACTIVE"
+                "active",
+                "ACTIVE",
             ):
                 flags.append("terminated_but_active_idp")
 
             # Active employee without background check
             if person.hr_status == "active" and person.background_check_status in (
-                None, "not_started", "pending",
+                None,
+                "not_started",
+                "pending",
             ):
                 flags.append("no_background_check")
 
@@ -350,9 +366,14 @@ class PersonnelManager:
 
     def summary(self, session: Session) -> dict:
         """Return personnel stats: total, by status, by department, flagged count."""
-        total = session.query(func.count(Personnel.id)).filter(
-            Personnel.is_active == True  # noqa: E712
-        ).scalar() or 0
+        total = (
+            session.query(func.count(Personnel.id))
+            .filter(
+                Personnel.is_active == True  # noqa: E712
+            )
+            .scalar()
+            or 0
+        )
 
         # By HR status
         status_rows = (
@@ -379,7 +400,8 @@ class PersonnelManager:
                 Personnel.is_active == True,  # noqa: E712
                 Personnel.risk_score > 0,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         # Terminated with active access
@@ -393,7 +415,8 @@ class PersonnelManager:
                 Personnel.mfa_enabled == False,  # noqa: E712
                 Personnel.idp_status.in_(["active", "ACTIVE"]),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         return {

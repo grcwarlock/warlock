@@ -25,12 +25,15 @@ log = logging.getLogger(__name__)
 # Finding — the universal normalized unit
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FindingData:
     raw_event_id: str
 
     # What was observed
-    observation_type: str      # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
+    observation_type: (
+        str  # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
+    )
     title: str
     detail: dict[str, Any]
 
@@ -47,7 +50,7 @@ class FindingData:
     provider: str = ""
 
     # Severity as reported by source
-    severity: str = "info"     # critical, high, medium, low, info
+    severity: str = "info"  # critical, high, medium, low, info
     confidence: float = 1.0
 
     # Time
@@ -59,9 +62,14 @@ class FindingData:
     @property
     def sha256(self) -> str:
         content = json.dumps(
-            {"type": self.observation_type, "detail": self.detail,
-             "resource_id": self.resource_id, "resource_type": self.resource_type},
-            sort_keys=True, default=str,
+            {
+                "type": self.observation_type,
+                "detail": self.detail,
+                "resource_id": self.resource_id,
+                "resource_type": self.resource_type,
+            },
+            sort_keys=True,
+            default=str,
         )
         return hashlib.sha256(content.encode()).hexdigest()
 
@@ -69,6 +77,7 @@ class FindingData:
 # ---------------------------------------------------------------------------
 # Normalizer contract
 # ---------------------------------------------------------------------------
+
 
 class BaseNormalizer(ABC):
     """Transform raw events from a specific source into Findings.
@@ -93,6 +102,7 @@ class BaseNormalizer(ABC):
 # Normalizer registry
 # ---------------------------------------------------------------------------
 
+
 class NormalizerRegistry:
     """Finds the right normalizer for a given raw event."""
 
@@ -110,7 +120,9 @@ class NormalizerRegistry:
         if raw_event.raw_data is None:
             log.warning(
                 "Skipping event %s with null raw_data (source=%s, event_type=%s)",
-                raw_event.id, raw_event.source, raw_event.event_type,
+                raw_event.id,
+                raw_event.source,
+                raw_event.event_type,
             )
             return []
         for normalizer in self._normalizers:
@@ -120,12 +132,14 @@ class NormalizerRegistry:
                 except Exception:
                     log.exception(
                         "Normalizer %s failed on event %s",
-                        type(normalizer).__name__, raw_event.id,
+                        type(normalizer).__name__,
+                        raw_event.id,
                     )
                     return []
         log.warning(
             "No normalizer found for source=%s event_type=%s",
-            raw_event.source, raw_event.event_type,
+            raw_event.source,
+            raw_event.event_type,
         )
         return []
 

@@ -53,6 +53,7 @@ def _get_shipper() -> Any:
             return _shipper
         try:
             from warlock.export.audit_sink import BatchShipper, create_sink_from_env
+
             sink = create_sink_from_env()
             _shipper = BatchShipper(sink)
             log.info("AuditTrail: BatchShipper initialised with %r sink", audit_backend)
@@ -148,6 +149,7 @@ class AuditTrail:
                 created_at = entry.created_at
                 if created_at is None:
                     from datetime import datetime
+
                     created_at = datetime.now(timezone.utc)
                 elif created_at.tzinfo is None:
                     created_at = created_at.replace(tzinfo=timezone.utc)
@@ -181,11 +183,7 @@ class AuditTrail:
         Uses yield_per(500) to stream results instead of loading the entire
         audit trail into memory at once, preventing OOM on large chains.
         """
-        entries = (
-            self.session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.asc())
-            .yield_per(500)
-        )
+        entries = self.session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).yield_per(500)
 
         errors: list[str] = []
         prev_hash = "genesis"

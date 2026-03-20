@@ -16,8 +16,10 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+
 try:
     from sqlalchemy.dialects import sqlite
+
     SQLiteJSON = sqlite.JSON
 except ImportError:
     SQLiteJSON = sa.JSON
@@ -34,18 +36,10 @@ def upgrade() -> None:
         batch_op.add_column(
             sa.Column("mfa_enabled", sa.Boolean(), nullable=True, server_default="0")
         )
-        batch_op.add_column(
-            sa.Column("mfa_secret", sa.String(64), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("mfa_backup_codes", sa.JSON(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("mfa_verified_at", sa.DateTime(timezone=True), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("refresh_token_hash", sa.String(64), nullable=True)
-        )
+        batch_op.add_column(sa.Column("mfa_secret", sa.String(64), nullable=True))
+        batch_op.add_column(sa.Column("mfa_backup_codes", sa.JSON(), nullable=True))
+        batch_op.add_column(sa.Column("mfa_verified_at", sa.DateTime(timezone=True), nullable=True))
+        batch_op.add_column(sa.Column("refresh_token_hash", sa.String(64), nullable=True))
 
 
 def downgrade() -> None:

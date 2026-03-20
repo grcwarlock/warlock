@@ -140,9 +140,7 @@ class OpenAIProvider(BaseProvider):
 
             t0 = self._now_ms()
             try:
-                resp = httpx.post(
-                    url, headers=headers, json=payload, timeout=self.timeout
-                )
+                resp = httpx.post(url, headers=headers, json=payload, timeout=self.timeout)
                 resp.raise_for_status()
                 latency = self._now_ms() - t0
                 return self._parse_body(resp.json(), self.model, latency)

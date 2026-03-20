@@ -42,9 +42,7 @@ class DigitalOceanConnector(BaseConnector):
         try:
             import httpx  # noqa: F401
         except ImportError:
-            errors.append(
-                "httpx not installed. Install with: pip install warlock[digitalocean]"
-            )
+            errors.append("httpx not installed. Install with: pip install warlock[digitalocean]")
         if not self.get_secret("WLK_DIGITALOCEAN_TOKEN"):
             errors.append("WLK_DIGITALOCEAN_TOKEN env var is not set")
         return errors
@@ -86,17 +84,19 @@ class DigitalOceanConnector(BaseConnector):
             for endpoint, event_type, response_key in DO_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, response_key)
-                    result.events.append(RawEventData(
-                        source="digitalocean",
-                        source_type=SourceType.CLOUD,
-                        provider="digitalocean",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="digitalocean",
+                            source_type=SourceType.CLOUD,
+                            provider="digitalocean",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("DigitalOcean %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")
@@ -104,17 +104,19 @@ class DigitalOceanConnector(BaseConnector):
             # Spaces — uses a separate endpoint (S3-compatible listing)
             try:
                 spaces = self._collect_spaces(client)
-                result.events.append(RawEventData(
-                    source="digitalocean",
-                    source_type=SourceType.CLOUD,
-                    provider="digitalocean",
-                    event_type="do_spaces",
-                    raw_data={
-                        "endpoint": "/v2/spaces",
-                        "response": spaces,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="digitalocean",
+                        source_type=SourceType.CLOUD,
+                        provider="digitalocean",
+                        event_type="do_spaces",
+                        raw_data={
+                            "endpoint": "/v2/spaces",
+                            "response": spaces,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("DigitalOcean spaces failed: %s", e)
                 result.errors.append(f"spaces: {e}")
@@ -134,18 +136,14 @@ class DigitalOceanConnector(BaseConnector):
             "Content-Type": "application/json",
         }
 
-    def _paginate(
-        self, client, endpoint: str, response_key: str
-    ) -> list:
+    def _paginate(self, client, endpoint: str, response_key: str) -> list:
         """Follow DigitalOcean page-based pagination."""
         all_items: list = []
         page = 1
         per_page = 200
 
         while True:
-            resp = client.get(
-                endpoint, params={"page": page, "per_page": per_page}
-            )
+            resp = client.get(endpoint, params={"page": page, "per_page": per_page})
             resp.raise_for_status()
             body = resp.json()
 
@@ -172,9 +170,7 @@ class DigitalOceanConnector(BaseConnector):
         per_page = 200
 
         while True:
-            resp = client.get(
-                "/v2/spaces", params={"page": page, "per_page": per_page}
-            )
+            resp = client.get("/v2/spaces", params={"page": page, "per_page": per_page})
             resp.raise_for_status()
             body = resp.json()
 

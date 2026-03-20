@@ -43,8 +43,7 @@ class VaultConnector(BaseConnector):
         # Require either direct token or AppRole credentials
         has_token = bool(self.get_secret("WLK_VAULT_TOKEN"))
         has_approle = bool(
-            self.get_secret("WLK_VAULT_ROLE_ID")
-            and self.get_secret("WLK_VAULT_SECRET_ID")
+            self.get_secret("WLK_VAULT_ROLE_ID") and self.get_secret("WLK_VAULT_SECRET_ID")
         )
         if not has_token and not has_approle:
             errors.append(
@@ -96,17 +95,19 @@ class VaultConnector(BaseConnector):
                     resp = client.get(endpoint)
                     resp.raise_for_status()
                     data = resp.json()
-                    result.events.append(RawEventData(
-                        source="vault",
-                        source_type=SourceType.IAM,
-                        provider="vault",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="vault",
+                            source_type=SourceType.IAM,
+                            provider="vault",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Vault %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")

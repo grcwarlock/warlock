@@ -41,8 +41,10 @@ class ElasticConnector(BaseConnector):
 
             url = f"{self._base_url}/_cluster/health"
             resp = httpx.get(
-                url, headers=self._auth_headers(),
-                verify=self._verify_ssl, timeout=30,
+                url,
+                headers=self._auth_headers(),
+                verify=self._verify_ssl,
+                timeout=30,
             )
             return resp.status_code == 200
         except Exception:
@@ -111,17 +113,19 @@ class ElasticConnector(BaseConnector):
                     resp.raise_for_status()
                     data = resp.json()
 
-                    result.events.append(RawEventData(
-                        source="elastic",
-                        source_type=SourceType.SIEM,
-                        provider="elastic",
-                        event_type=event_type,
-                        raw_data={
-                            "base_url": self._base_url,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="elastic",
+                            source_type=SourceType.SIEM,
+                            provider="elastic",
+                            event_type=event_type,
+                            raw_data={
+                                "base_url": self._base_url,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Elastic %s failed: %s", event_type, e)
                     result.errors.append(f"{event_type}: {e}")

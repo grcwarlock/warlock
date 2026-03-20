@@ -67,8 +67,6 @@ def create_provider(
     cls = _PROVIDERS.get(provider_name)
     if not cls:
         known = ", ".join(sorted(_PROVIDERS))
-        raise ValueError(
-            f"Unknown provider: {provider_name!r}. Supported providers: {known}"
-        )
+        raise ValueError(f"Unknown provider: {provider_name!r}. Supported providers: {known}")
     log.debug("Creating provider %r with model %r", provider_name, model)
     return cls(api_key=api_key, model=model, base_url=base_url)

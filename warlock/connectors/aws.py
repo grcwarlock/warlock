@@ -72,6 +72,7 @@ class AWSConnector(BaseConnector):
     def health_check(self) -> bool:
         try:
             import boto3
+
             sts = boto3.client("sts", **self._client_kwargs())
             sts.get_caller_identity()
             return True
@@ -103,20 +104,22 @@ class AWSConnector(BaseConnector):
                 for method_spec, event_type in checks:
                     try:
                         data = self._call(client, method_spec)
-                        result.events.append(RawEventData(
-                            source="aws",
-                            source_type=SourceType.CLOUD,
-                            provider="aws",
-                            event_type=event_type,
-                            raw_data={
-                                "service": service,
-                                "method": method_spec,
-                                "region": region,
-                                "account_id": self.config.settings.get("account_id", ""),
-                                "response": data,
-                            },
-                            observed_at=datetime.now(timezone.utc),
-                        ))
+                        result.events.append(
+                            RawEventData(
+                                source="aws",
+                                source_type=SourceType.CLOUD,
+                                provider="aws",
+                                event_type=event_type,
+                                raw_data={
+                                    "service": service,
+                                    "method": method_spec,
+                                    "region": region,
+                                    "account_id": self.config.settings.get("account_id", ""),
+                                    "response": data,
+                                },
+                                observed_at=datetime.now(timezone.utc),
+                            )
+                        )
                     except Exception as e:
                         log.debug("AWS %s/%s/%s failed: %s", service, method_spec, region, e)
                         result.errors.append(f"{service}/{method_spec}/{region}: {e}")
@@ -129,10 +132,11 @@ class AWSConnector(BaseConnector):
         role_arn = self.config.settings.get("assume_role_arn", "")
         if role_arn:
             import boto3
+
             sts = boto3.client("sts")
-            creds = sts.assume_role(
-                RoleArn=role_arn, RoleSessionName="warlock-collector"
-            )["Credentials"]
+            creds = sts.assume_role(RoleArn=role_arn, RoleSessionName="warlock-collector")[
+                "Credentials"
+            ]
             kwargs = {
                 "aws_access_key_id": creds["AccessKeyId"],
                 "aws_secret_access_key": creds["SecretAccessKey"],

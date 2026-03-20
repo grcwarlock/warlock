@@ -79,24 +79,26 @@ class IBMCloudNormalizer(BaseNormalizer):
             resource_url = occ.get("resource_url", "")
             note_name = occ.get("note_name", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"IBM finding: {note_name.split('/')[-1] if note_name else kind}",
-                detail={
-                    "kind": kind,
-                    "severity": sev,
-                    "note_name": note_name,
-                    "resource_url": resource_url,
-                    "finding": occ.get("finding", {}),
-                    "context": occ.get("context", {}),
-                    "remediation": occ.get("remediation", ""),
-                },
-                resource_id=resource_url,
-                resource_type=occ.get("context", {}).get("resource_type", "ibm_resource"),
-                resource_name=resource_url.split("/")[-1] if resource_url else "",
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"IBM finding: {note_name.split('/')[-1] if note_name else kind}",
+                    detail={
+                        "kind": kind,
+                        "severity": sev,
+                        "note_name": note_name,
+                        "resource_url": resource_url,
+                        "finding": occ.get("finding", {}),
+                        "context": occ.get("context", {}),
+                        "remediation": occ.get("remediation", ""),
+                    },
+                    resource_id=resource_url,
+                    resource_type=occ.get("context", {}).get("resource_type", "ibm_resource"),
+                    resource_name=resource_url.split("/")[-1] if resource_url else "",
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -131,24 +133,24 @@ class IBMCloudNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"IAM user: {user_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "iam_id": user_id,
-                    "email": email,
-                    "state": state,
-                    "settings": settings,
-                    "issues": issues,
-                },
-                resource_id=user_id,
-                resource_type="iam_user",
-                resource_name=user_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"IAM user: {user_name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "iam_id": user_id,
+                        "email": email,
+                        "state": state,
+                        "settings": settings,
+                        "issues": issues,
+                    },
+                    resource_id=user_id,
+                    resource_type="iam_user",
+                    resource_name=user_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -165,23 +167,25 @@ class IBMCloudNormalizer(BaseNormalizer):
             member_count = group.get("membership_count", 0)
             is_federated = group.get("is_federated", False)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"IAM access group: {group_name}",
-                detail={
-                    "group_id": group_id,
-                    "name": group_name,
-                    "description": group.get("description", ""),
-                    "membership_count": member_count,
-                    "is_federated": is_federated,
-                    "created_at": group.get("created_at", ""),
-                },
-                resource_id=group_id,
-                resource_type="iam_access_group",
-                resource_name=group_name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"IAM access group: {group_name}",
+                    detail={
+                        "group_id": group_id,
+                        "name": group_name,
+                        "description": group.get("description", ""),
+                        "membership_count": member_count,
+                        "is_federated": is_federated,
+                        "created_at": group.get("created_at", ""),
+                    },
+                    resource_id=group_id,
+                    resource_type="iam_access_group",
+                    resource_name=group_name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -212,24 +216,26 @@ class IBMCloudNormalizer(BaseNormalizer):
             target = event.get("target", {})
             initiator = event.get("initiator", {})
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Activity event: {action} — {level}",
-                detail={
-                    "action": action,
-                    "level": level,
-                    "outcome": outcome,
-                    "target": target,
-                    "initiator": initiator,
-                    "message": event.get("message", ""),
-                    "timestamp": event.get("eventTime", event.get("_ts", "")),
-                },
-                resource_id=target.get("id", ""),
-                resource_type=target.get("typeURI", "ibm_activity"),
-                resource_name=target.get("name", action),
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Activity event: {action} — {level}",
+                    detail={
+                        "action": action,
+                        "level": level,
+                        "outcome": outcome,
+                        "target": target,
+                        "initiator": initiator,
+                        "message": event.get("message", ""),
+                        "timestamp": event.get("eventTime", event.get("_ts", "")),
+                    },
+                    resource_id=target.get("id", ""),
+                    resource_type=target.get("typeURI", "ibm_activity"),
+                    resource_name=target.get("name", action),
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -275,28 +281,29 @@ class IBMCloudNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Key Protect key: {key_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "key_id": key_id,
-                    "name": key_name,
-                    "state": resolved_state,
-                    "extractable": extractable,
-                    "algorithm_type": key.get("algorithmType", ""),
-                    "created_by": key.get("createdBy", ""),
-                    "creation_date": key.get("creationDate", ""),
-                    "last_rotate_date": key.get("lastRotateDate", ""),
-                    "issues": issues,
-                },
-                resource_id=key_id,
-                resource_type="kms_key",
-                resource_name=key_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Key Protect key: {key_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "key_id": key_id,
+                        "name": key_name,
+                        "state": resolved_state,
+                        "extractable": extractable,
+                        "algorithm_type": key.get("algorithmType", ""),
+                        "created_by": key.get("createdBy", ""),
+                        "creation_date": key.get("creationDate", ""),
+                        "last_rotate_date": key.get("lastRotateDate", ""),
+                        "issues": issues,
+                    },
+                    resource_id=key_id,
+                    resource_type="kms_key",
+                    resource_name=key_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -340,21 +347,22 @@ class IBMCloudNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"VPC security group: {sg_name}" + (
-                    f" — {len(issues)} open ports" if issues else ""
-                ),
-                detail={
-                    "security_group": sg,
-                    "issues": issues,
-                },
-                resource_id=sg_id,
-                resource_type="vpc_security_group",
-                resource_name=sg_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"VPC security group: {sg_name}"
+                    + (f" — {len(issues)} open ports" if issues else ""),
+                    detail={
+                        "security_group": sg,
+                        "issues": issues,
+                    },
+                    resource_id=sg_id,
+                    resource_type="vpc_security_group",
+                    resource_name=sg_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -378,26 +386,29 @@ class IBMCloudNormalizer(BaseNormalizer):
                 control_id = control.get("id", control.get("control_id", ""))
                 control_name = control.get("control_name", control.get("description", ""))
 
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"Compliance control failed: {control_name or control_id}",
-                    detail={
-                        "profile_id": profile_id,
-                        "profile_name": profile_name,
-                        "control_id": control_id,
-                        "control_name": control_name,
-                        "status": status,
-                        "severity": control.get("severity", ""),
-                        "assessment": control.get("assessment", {}),
-                        "remediation": control.get("remediation", ""),
-                    },
-                    resource_id=f"{profile_id}/{control_id}",
-                    resource_type="compliance_control",
-                    resource_name=control_name or control_id,
-                    severity=control.get("severity", "medium").lower()
-                    if control.get("severity") else "medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"Compliance control failed: {control_name or control_id}",
+                        detail={
+                            "profile_id": profile_id,
+                            "profile_name": profile_name,
+                            "control_id": control_id,
+                            "control_name": control_name,
+                            "status": status,
+                            "severity": control.get("severity", ""),
+                            "assessment": control.get("assessment", {}),
+                            "remediation": control.get("remediation", ""),
+                        },
+                        resource_id=f"{profile_id}/{control_id}",
+                        resource_type="compliance_control",
+                        resource_name=control_name or control_id,
+                        severity=control.get("severity", "medium").lower()
+                        if control.get("severity")
+                        else "medium",
+                    )
+                )
 
         return findings
 

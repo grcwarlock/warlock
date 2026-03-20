@@ -8,18 +8,32 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
 from warlock.db.models import (
-    Base, ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult,
+    Base,
+    ConnectorRun,
+    RawEvent,
+    Finding,
+    ControlMapping,
+    ControlResult,
 )
 from warlock.pipeline.bus import EventBus, PipelineEvent
 from warlock.connectors.base import (
-    BaseConnector, ConnectorConfig, ConnectorRegistry, ConnectorResult,
-    RawEventData, SourceType,
+    BaseConnector,
+    ConnectorConfig,
+    ConnectorRegistry,
+    ConnectorResult,
+    RawEventData,
+    SourceType,
 )
 from warlock.normalizers.base import BaseNormalizer, FindingData, NormalizerRegistry
 from warlock.normalizers.aws import AWSNormalizer
 from warlock.normalizers.generic import GenericNormalizer
 from warlock.mappers.control_mapper import (
-    ControlMapper, ControlMappingData, ExplicitRule, ResourceRule, CrosswalkEdge, MappedFinding,
+    ControlMapper,
+    ControlMappingData,
+    ExplicitRule,
+    ResourceRule,
+    CrosswalkEdge,
+    MappedFinding,
 )
 from warlock.assessors.engine import AssertionEngine, Assessor, ControlResultData
 from warlock.assessors.ai_reasoning import AIReasoningResult, create_reasoner
@@ -30,6 +44,7 @@ from warlock.pipeline.orchestrator import Pipeline
 # ===================================================================
 # 1. EVENT BUS
 # ===================================================================
+
 
 def test_event_bus():
     bus = EventBus()
@@ -49,7 +64,7 @@ def test_event_bus():
     assert len(all_events) == 1, "subscribe_all receives everything"
 
     # Error handling — handlers that throw don't crash publish
-    bus.subscribe("error.test", lambda e: 1/0)
+    bus.subscribe("error.test", lambda e: 1 / 0)
     try:
         bus.publish(PipelineEvent(event_type="error.test", payload_id="err"))
         assert True, "handler exception doesn't crash publish"
@@ -67,25 +82,35 @@ def test_event_bus():
 # 2. RAW EVENT DATA
 # ===================================================================
 
+
 def test_raw_event_data():
     raw = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
-        event_type="test", raw_data={"key": "value"},
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
+        event_type="test",
+        raw_data={"key": "value"},
     )
     assert len(raw.id) == 36, "has UUID id"
     assert len(raw.sha256) == 64, "has sha256"
 
     # Same data -> same hash
     raw2 = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
-        event_type="test", raw_data={"key": "value"},
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
+        event_type="test",
+        raw_data={"key": "value"},
     )
     assert raw.sha256 == raw2.sha256, "deterministic sha256"
 
     # Different data -> different hash
     raw3 = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
-        event_type="test", raw_data={"key": "other"},
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
+        event_type="test",
+        raw_data={"key": "other"},
     )
     assert raw.sha256 != raw3.sha256, "different data -> different sha256"
 
@@ -94,29 +119,48 @@ def test_raw_event_data():
 # 3. CONNECTOR REGISTRY
 # ===================================================================
 
+
 def test_connector_registry():
     class GoodConnector(BaseConnector):
-        def validate(self): return []
-        def health_check(self): return True
+        def validate(self):
+            return []
+
+        def health_check(self):
+            return True
+
         def collect(self):
             r = ConnectorResult(
-                connector_name=self.name, source="test",
-                source_type=SourceType.CUSTOM, provider="test",
+                connector_name=self.name,
+                source="test",
+                source_type=SourceType.CUSTOM,
+                provider="test",
             )
-            r.events.append(RawEventData(
-                source="test", source_type=SourceType.CUSTOM, provider="test",
-                event_type="test_event", raw_data={"x": 1},
-            ))
+            r.events.append(
+                RawEventData(
+                    source="test",
+                    source_type=SourceType.CUSTOM,
+                    provider="test",
+                    event_type="test_event",
+                    raw_data={"x": 1},
+                )
+            )
             r.complete()
             return r
 
     class BadConnector(BaseConnector):
-        def validate(self): return ["Missing API key"]
-        def health_check(self): return False
-        def collect(self): return ConnectorResult(
-            connector_name=self.name, source="bad",
-            source_type=SourceType.CUSTOM, provider="bad",
-        )
+        def validate(self):
+            return ["Missing API key"]
+
+        def health_check(self):
+            return False
+
+        def collect(self):
+            return ConnectorResult(
+                connector_name=self.name,
+                source="bad",
+                source_type=SourceType.CUSTOM,
+                provider="bad",
+            )
 
     reg = ConnectorRegistry()
     reg.register("good", GoodConnector)
@@ -154,15 +198,23 @@ def test_connector_registry():
 # 4. CONNECTOR RESULT
 # ===================================================================
 
+
 def test_connector_result():
     r = ConnectorResult(
-        connector_name="test", source="test",
-        source_type=SourceType.CUSTOM, provider="test",
+        connector_name="test",
+        source="test",
+        source_type=SourceType.CUSTOM,
+        provider="test",
     )
-    r.events.append(RawEventData(
-        source="test", source_type=SourceType.CUSTOM, provider="test",
-        event_type="e1", raw_data={},
-    ))
+    r.events.append(
+        RawEventData(
+            source="test",
+            source_type=SourceType.CUSTOM,
+            provider="test",
+            event_type="e1",
+            raw_data={},
+        )
+    )
     r.complete()
     assert r.status == "success", "success when events and no errors"
     assert r.duration_seconds is not None, "duration computed"
@@ -170,21 +222,30 @@ def test_connector_result():
 
     # Partial
     r2 = ConnectorResult(
-        connector_name="test", source="test",
-        source_type=SourceType.CUSTOM, provider="test",
+        connector_name="test",
+        source="test",
+        source_type=SourceType.CUSTOM,
+        provider="test",
     )
-    r2.events.append(RawEventData(
-        source="test", source_type=SourceType.CUSTOM, provider="test",
-        event_type="e1", raw_data={},
-    ))
+    r2.events.append(
+        RawEventData(
+            source="test",
+            source_type=SourceType.CUSTOM,
+            provider="test",
+            event_type="e1",
+            raw_data={},
+        )
+    )
     r2.errors.append("some error")
     r2.complete()
     assert r2.status == "partial", "partial when events + errors"
 
     # Error
     r3 = ConnectorResult(
-        connector_name="test", source="test",
-        source_type=SourceType.CUSTOM, provider="test",
+        connector_name="test",
+        source="test",
+        source_type=SourceType.CUSTOM,
+        provider="test",
     )
     r3.errors.append("fatal")
     r3.complete()
@@ -195,40 +256,63 @@ def test_connector_result():
 # 5. NORMALIZER REGISTRY
 # ===================================================================
 
+
 def test_normalizer_registry():
     reg = NormalizerRegistry()
 
     class TestNormalizer(BaseNormalizer):
-        def can_handle(self, raw): return raw.source == "test"
+        def can_handle(self, raw):
+            return raw.source == "test"
+
         def normalize(self, raw):
-            return [FindingData(
-                raw_event_id=raw.id, observation_type="test",
-                title="test finding", detail={}, source="test",
-                source_type=SourceType.CUSTOM, provider="test",
-            )]
+            return [
+                FindingData(
+                    raw_event_id=raw.id,
+                    observation_type="test",
+                    title="test finding",
+                    detail={},
+                    source="test",
+                    source_type=SourceType.CUSTOM,
+                    provider="test",
+                )
+            ]
 
     reg.register(TestNormalizer())
 
-    raw = RawEventData(source="test", source_type=SourceType.CUSTOM,
-                       provider="test", event_type="e1", raw_data={})
+    raw = RawEventData(
+        source="test", source_type=SourceType.CUSTOM, provider="test", event_type="e1", raw_data={}
+    )
     findings = reg.normalize(raw)
     assert len(findings) == 1, "normalizer produces findings"
     assert findings[0].observation_type == "test", "finding has correct type"
 
     # Unhandled source returns empty
-    raw2 = RawEventData(source="unknown", source_type=SourceType.CUSTOM,
-                        provider="unknown", event_type="e1", raw_data={})
+    raw2 = RawEventData(
+        source="unknown",
+        source_type=SourceType.CUSTOM,
+        provider="unknown",
+        event_type="e1",
+        raw_data={},
+    )
     findings2 = reg.normalize(raw2)
     assert len(findings2) == 0, "unhandled source returns empty"
 
     # Normalizer that throws returns empty (not crash)
     class CrashNormalizer(BaseNormalizer):
-        def can_handle(self, raw): return raw.source == "crash"
-        def normalize(self, raw): raise RuntimeError("boom")
+        def can_handle(self, raw):
+            return raw.source == "crash"
+
+        def normalize(self, raw):
+            raise RuntimeError("boom")
 
     reg.register(CrashNormalizer())
-    raw3 = RawEventData(source="crash", source_type=SourceType.CUSTOM,
-                        provider="crash", event_type="e1", raw_data={})
+    raw3 = RawEventData(
+        source="crash",
+        source_type=SourceType.CUSTOM,
+        provider="crash",
+        event_type="e1",
+        raw_data={},
+    )
     findings3 = reg.normalize(raw3)
     assert len(findings3) == 0, "crashing normalizer returns empty"
 
@@ -237,27 +321,33 @@ def test_normalizer_registry():
 # 6. AWS NORMALIZER — detailed checks
 # ===================================================================
 
+
 def test_aws_normalizer():
     norm = AWSNormalizer()
 
     # Credential report
     raw = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
         event_type="iam_credential_report",
         raw_data={
-            "region": "us-east-1", "account_id": "111111111111",
-            "response": {"Content": (
-                "user,arn,user_creation_time,password_enabled,password_last_used,"
-                "password_last_changed,password_next_rotation,mfa_active,"
-                "access_key_1_active,access_key_1_last_rotated,"
-                "access_key_2_active,access_key_2_last_rotated\n"
-                "<root_account>,arn:aws:iam::111:root,2020-01-01,not_supported,"
-                "2024-01-01,not_supported,not_supported,true,true,2023-01-01,false,N/A\n"
-                "good-user,arn:aws:iam::111:user/good-user,2024-01-01,true,"
-                "2024-06-01,2024-01-01,N/A,true,false,N/A,false,N/A\n"
-                "bad-user,arn:aws:iam::111:user/bad-user,2024-01-01,true,"
-                "2024-06-01,2024-01-01,N/A,false,true,2024-01-01,false,N/A\n"
-            )},
+            "region": "us-east-1",
+            "account_id": "111111111111",
+            "response": {
+                "Content": (
+                    "user,arn,user_creation_time,password_enabled,password_last_used,"
+                    "password_last_changed,password_next_rotation,mfa_active,"
+                    "access_key_1_active,access_key_1_last_rotated,"
+                    "access_key_2_active,access_key_2_last_rotated\n"
+                    "<root_account>,arn:aws:iam::111:root,2020-01-01,not_supported,"
+                    "2024-01-01,not_supported,not_supported,true,true,2023-01-01,false,N/A\n"
+                    "good-user,arn:aws:iam::111:user/good-user,2024-01-01,true,"
+                    "2024-06-01,2024-01-01,N/A,true,false,N/A,false,N/A\n"
+                    "bad-user,arn:aws:iam::111:user/bad-user,2024-01-01,true,"
+                    "2024-06-01,2024-01-01,N/A,false,true,2024-01-01,false,N/A\n"
+                )
+            },
         },
     )
     assert norm.can_handle(raw), "can handle credential report"
@@ -280,18 +370,41 @@ def test_aws_normalizer():
 
     # Security groups
     raw_sg = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
         event_type="ec2_security_groups",
         raw_data={
-            "region": "us-east-1", "account_id": "111111111111",
-            "response": {"SecurityGroups": [
-                {"GroupId": "sg-bad", "GroupName": "open",
-                 "IpPermissions": [{"FromPort": 22, "ToPort": 22, "IpProtocol": "tcp",
-                                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}]}]},
-                {"GroupId": "sg-good", "GroupName": "closed",
-                 "IpPermissions": [{"FromPort": 443, "ToPort": 443, "IpProtocol": "tcp",
-                                    "IpRanges": [{"CidrIp": "10.0.0.0/8"}]}]},
-            ]},
+            "region": "us-east-1",
+            "account_id": "111111111111",
+            "response": {
+                "SecurityGroups": [
+                    {
+                        "GroupId": "sg-bad",
+                        "GroupName": "open",
+                        "IpPermissions": [
+                            {
+                                "FromPort": 22,
+                                "ToPort": 22,
+                                "IpProtocol": "tcp",
+                                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                            }
+                        ],
+                    },
+                    {
+                        "GroupId": "sg-good",
+                        "GroupName": "closed",
+                        "IpPermissions": [
+                            {
+                                "FromPort": 443,
+                                "ToPort": 443,
+                                "IpProtocol": "tcp",
+                                "IpRanges": [{"CidrIp": "10.0.0.0/8"}],
+                            }
+                        ],
+                    },
+                ]
+            },
         },
     )
     sg_findings = norm.normalize(raw_sg)
@@ -301,14 +414,19 @@ def test_aws_normalizer():
 
     # Can't handle unknown event type
     raw_unk = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
-        event_type="unknown_type", raw_data={},
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
+        event_type="unknown_type",
+        raw_data={},
     )
     assert not norm.can_handle(raw_unk), "rejects unknown event type"
 
     # Empty credential report
     raw_empty = RawEventData(
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
         event_type="iam_credential_report",
         raw_data={"region": "us-east-1", "account_id": "111", "response": {"Content": ""}},
     )
@@ -320,12 +438,15 @@ def test_aws_normalizer():
 # 7. GENERIC NORMALIZER
 # ===================================================================
 
+
 def test_generic_normalizer():
     norm = GenericNormalizer()
 
     # Structured payload with common fields
     raw = RawEventData(
-        source="webhook", source_type=SourceType.CUSTOM, provider="custom",
+        source="webhook",
+        source_type=SourceType.CUSTOM,
+        provider="custom",
         event_type="alert",
         raw_data={"title": "Test Alert", "severity": "high", "description": "Something bad"},
     )
@@ -337,20 +458,27 @@ def test_generic_normalizer():
 
     # Completely empty payload
     raw_empty = RawEventData(
-        source="webhook", source_type=SourceType.CUSTOM, provider="custom",
-        event_type="unknown", raw_data={},
+        source="webhook",
+        source_type=SourceType.CUSTOM,
+        provider="custom",
+        event_type="unknown",
+        raw_data={},
     )
     findings_empty = norm.normalize(raw_empty)
     assert len(findings_empty) >= 1, "empty payload still produces a finding"
 
     # Payload with list of items
     raw_list = RawEventData(
-        source="webhook", source_type=SourceType.CUSTOM, provider="custom",
+        source="webhook",
+        source_type=SourceType.CUSTOM,
+        provider="custom",
         event_type="batch",
-        raw_data={"alerts": [
-            {"title": "Alert 1", "severity": "critical"},
-            {"title": "Alert 2", "severity": "low"},
-        ]},
+        raw_data={
+            "alerts": [
+                {"title": "Alert 1", "severity": "critical"},
+                {"title": "Alert 2", "severity": "low"},
+            ]
+        },
     )
     findings_list = norm.normalize(raw_list)
     assert len(findings_list) >= 2, "list payload fans out"
@@ -360,30 +488,50 @@ def test_generic_normalizer():
 # 8. CONTROL MAPPER
 # ===================================================================
 
+
 def test_control_mapper():
     mapper = ControlMapper()
 
     # Explicit rule
-    mapper.add_explicit_rule(ExplicitRule(
-        source="aws", event_type="misconfiguration",
-        framework="nist", control_id="AC-2", control_family="AC",
-    ))
+    mapper.add_explicit_rule(
+        ExplicitRule(
+            source="aws",
+            event_type="misconfiguration",
+            framework="nist",
+            control_id="AC-2",
+            control_family="AC",
+        )
+    )
     # Resource rule
-    mapper.add_resource_rule(ResourceRule(
-        resource_type="iam_user", framework="nist",
-        control_ids=["AC-2", "IA-2"], control_family="AC",
-    ))
+    mapper.add_resource_rule(
+        ResourceRule(
+            resource_type="iam_user",
+            framework="nist",
+            control_ids=["AC-2", "IA-2"],
+            control_family="AC",
+        )
+    )
     # Crosswalk
-    mapper.add_crosswalk(CrosswalkEdge(
-        source_framework="nist", source_control="AC-2",
-        target_framework="soc2", target_control="CC6.1",
-        confidence=0.9,
-    ))
+    mapper.add_crosswalk(
+        CrosswalkEdge(
+            source_framework="nist",
+            source_control="AC-2",
+            target_framework="soc2",
+            target_control="CC6.1",
+            confidence=0.9,
+        )
+    )
 
     finding = FindingData(
-        raw_event_id="raw-1", observation_type="misconfiguration",
-        title="test", detail={}, source="aws", source_type=SourceType.CLOUD,
-        provider="aws", resource_type="iam_user", severity="high",
+        raw_event_id="raw-1",
+        observation_type="misconfiguration",
+        title="test",
+        detail={},
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
+        resource_type="iam_user",
+        severity="high",
     )
 
     mapped = mapper.map(finding)
@@ -408,9 +556,15 @@ def test_control_mapper():
 
     # Finding with no matching rules
     finding2 = FindingData(
-        raw_event_id="raw-2", observation_type="inventory",
-        title="test", detail={}, source="gcp", source_type=SourceType.CLOUD,
-        provider="gcp", resource_type="gke_cluster", severity="info",
+        raw_event_id="raw-2",
+        observation_type="inventory",
+        title="test",
+        detail={},
+        source="gcp",
+        source_type=SourceType.CLOUD,
+        provider="gcp",
+        resource_type="gke_cluster",
+        severity="info",
     )
     mapped2 = mapper.map(finding2)
     assert len(mapped2.mappings) == 0, "unmatched finding returns empty mappings"
@@ -419,6 +573,7 @@ def test_control_mapper():
 # ===================================================================
 # 9. ASSERTION ENGINE
 # ===================================================================
+
 
 def test_assertion_engine():
     eng = AssertionEngine()
@@ -468,6 +623,7 @@ def test_assertion_engine():
 # 10. ASSESSOR
 # ===================================================================
 
+
 def test_assessor():
     eng = AssertionEngine()
 
@@ -483,16 +639,24 @@ def test_assessor():
     assessor = Assessor(engine=eng)
 
     finding = FindingData(
-        raw_event_id="r1", observation_type="misconfiguration",
-        title="No MFA", detail={"mfa_active": False},
-        source="aws", source_type=SourceType.CLOUD, provider="aws",
+        raw_event_id="r1",
+        observation_type="misconfiguration",
+        title="No MFA",
+        detail={"mfa_active": False},
+        source="aws",
+        source_type=SourceType.CLOUD,
+        provider="aws",
         severity="high",
     )
     mapping_bound = ControlMappingData(
-        finding_id=finding.id, framework="nist", control_id="IA-2",
+        finding_id=finding.id,
+        framework="nist",
+        control_id="IA-2",
     )
     mapping_unbound = ControlMappingData(
-        finding_id=finding.id, framework="nist", control_id="ZZ-99",
+        finding_id=finding.id,
+        framework="nist",
+        control_id="ZZ-99",
     )
     mapped = MappedFinding(finding=finding, mappings=[mapping_bound, mapping_unbound])
 
@@ -513,12 +677,15 @@ def test_assessor():
 # 11. WEBHOOK RECEIVER
 # ===================================================================
 
+
 def test_webhook_receiver():
     receiver = WebhookReceiver()
 
     raw = receiver.ingest(
         payload={"alert": "test", "severity": "high"},
-        source="webhook", provider="pagerduty", event_type="incident",
+        source="webhook",
+        provider="pagerduty",
+        event_type="incident",
     )
     assert isinstance(raw, RawEventData), "returns RawEventData"
     assert raw.source == "webhook", "source is webhook"
@@ -530,7 +697,9 @@ def test_webhook_receiver():
     # Batch
     events = receiver.ingest_batch(
         payloads=[{"a": 1}, {"b": 2}],
-        source="manual", provider="csv", event_type="upload",
+        source="manual",
+        provider="csv",
+        event_type="upload",
     )
     assert len(events) == 2, "batch returns correct count"
     assert events[0].id != events[1].id, "batch events have different ids"
@@ -539,6 +708,7 @@ def test_webhook_receiver():
 # ===================================================================
 # 12. DATABASE PERSISTENCE (via Pipeline)
 # ===================================================================
+
 
 def test_database_persistence():
     engine_db = create_engine("sqlite:///:memory:")
@@ -549,30 +719,49 @@ def test_database_persistence():
     bus = EventBus()
 
     class SimpleConnector(BaseConnector):
-        def validate(self): return []
-        def health_check(self): return True
+        def validate(self):
+            return []
+
+        def health_check(self):
+            return True
+
         def collect(self):
             r = ConnectorResult(
-                connector_name=self.name, source="test",
-                source_type=SourceType.CUSTOM, provider="test",
+                connector_name=self.name,
+                source="test",
+                source_type=SourceType.CUSTOM,
+                provider="test",
             )
-            r.events.append(RawEventData(
-                source="test", source_type=SourceType.CUSTOM, provider="test",
-                event_type="simple_event",
-                raw_data={"message": "hello"},
-            ))
+            r.events.append(
+                RawEventData(
+                    source="test",
+                    source_type=SourceType.CUSTOM,
+                    provider="test",
+                    event_type="simple_event",
+                    raw_data={"message": "hello"},
+                )
+            )
             r.complete()
             return r
 
     class SimpleNormalizer(BaseNormalizer):
-        def can_handle(self, raw): return raw.source == "test"
+        def can_handle(self, raw):
+            return raw.source == "test"
+
         def normalize(self, raw):
-            return [FindingData(
-                raw_event_id=raw.id, observation_type="test",
-                title="Test finding", detail={"test": True},
-                source="test", source_type=SourceType.CUSTOM, provider="test",
-                resource_type="test_resource", severity="medium",
-            )]
+            return [
+                FindingData(
+                    raw_event_id=raw.id,
+                    observation_type="test",
+                    title="Test finding",
+                    detail={"test": True},
+                    source="test",
+                    source_type=SourceType.CUSTOM,
+                    provider="test",
+                    resource_type="test_resource",
+                    severity="medium",
+                )
+            ]
 
     connectors = ConnectorRegistry()
     connectors.register("test", SimpleConnector)
@@ -582,17 +771,24 @@ def test_database_persistence():
     normalizers.register(SimpleNormalizer())
 
     mapper = ControlMapper()
-    mapper.add_resource_rule(ResourceRule(
-        resource_type="test_resource", framework="nist",
-        control_ids=["TEST-1"], control_family="TEST",
-    ))
+    mapper.add_resource_rule(
+        ResourceRule(
+            resource_type="test_resource",
+            framework="nist",
+            control_ids=["TEST-1"],
+            control_family="TEST",
+        )
+    )
 
     eng = AssertionEngine()
     assessor = Assessor(engine=eng)
 
     pipeline = Pipeline(
-        connectors=connectors, normalizers=normalizers,
-        mapper=mapper, assessor=assessor, bus=bus,
+        connectors=connectors,
+        normalizers=normalizers,
+        mapper=mapper,
+        assessor=assessor,
+        bus=bus,
     )
     stats = pipeline.run(session)
     session.commit()
@@ -626,11 +822,13 @@ def test_database_persistence():
 # 13. FRAMEWORK YAML LOADING
 # ===================================================================
 
+
 def test_framework_loading():
     from warlock.pipeline.loader import load_framework_configs
 
     mapper = ControlMapper()
     from pathlib import Path
+
     framework_dir = str(Path(__file__).resolve().parent.parent / "warlock" / "frameworks")
     load_framework_configs(framework_dir, mapper)
 
@@ -646,17 +844,28 @@ def test_framework_loading():
 # 14. ASSERTIONS LIBRARY
 # ===================================================================
 
+
 def test_assertions_library():
     from warlock.assessors.engine import engine
     from warlock.assessors import assertions  # noqa: F401 — triggers registration
 
     # Verify all 15 registered
     expected = [
-        "mfa_enabled", "no_root_access_keys", "cloudtrail_enabled",
-        "guardduty_enabled", "securityhub_enabled", "no_open_security_groups",
-        "encryption_at_rest", "password_policy_compliant", "config_recorder_enabled",
-        "no_public_storage", "endpoint_protection_active", "vulnerability_scan_current",
-        "privileged_access_managed", "access_reviews_current", "siem_monitoring_active",
+        "mfa_enabled",
+        "no_root_access_keys",
+        "cloudtrail_enabled",
+        "guardduty_enabled",
+        "securityhub_enabled",
+        "no_open_security_groups",
+        "encryption_at_rest",
+        "password_policy_compliant",
+        "config_recorder_enabled",
+        "no_public_storage",
+        "endpoint_protection_active",
+        "vulnerability_scan_current",
+        "privileged_access_managed",
+        "access_reviews_current",
+        "siem_monitoring_active",
     ]
     for name in expected:
         assert name in engine._assertions, f"assertion '{name}' registered"
@@ -689,15 +898,18 @@ def test_assertions_library():
     assert len(reasons) >= 2, "multiple issues reported"
 
     # Verify control bindings exist
-    assert "mfa_enabled" in (engine.get_assertion_for_control("nist_800_53", "IA-2") or []), \
+    assert "mfa_enabled" in (engine.get_assertion_for_control("nist_800_53", "IA-2") or []), (
         "IA-2 bound to mfa_enabled"
-    assert "cloudtrail_enabled" in (engine.get_assertion_for_control("nist_800_53", "AU-2") or []), \
-        "AU-2 bound to cloudtrail_enabled"
+    )
+    assert "cloudtrail_enabled" in (
+        engine.get_assertion_for_control("nist_800_53", "AU-2") or []
+    ), "AU-2 bound to cloudtrail_enabled"
 
 
 # ===================================================================
 # 15. ALL CONNECTOR TYPES IMPORTABLE
 # ===================================================================
+
 
 def test_all_connectors_importable():
     from warlock.pipeline.loader import load_all_connectors
@@ -705,10 +917,23 @@ def test_all_connectors_importable():
 
     load_all_connectors()
     expected = [
-        "aws", "azure", "gcp", "crowdstrike", "defender", "sentinelone",
-        "okta", "entra_id", "cyberark", "sailpoint",
-        "tenable", "qualys", "wiz", "prisma",
-        "sentinel", "splunk", "elastic",
+        "aws",
+        "azure",
+        "gcp",
+        "crowdstrike",
+        "defender",
+        "sentinelone",
+        "okta",
+        "entra_id",
+        "cyberark",
+        "sailpoint",
+        "tenable",
+        "qualys",
+        "wiz",
+        "prisma",
+        "sentinel",
+        "splunk",
+        "elastic",
     ]
     for provider in expected:
         assert provider in registry.list_types(), f"connector '{provider}' registered"
@@ -717,6 +942,7 @@ def test_all_connectors_importable():
 # ===================================================================
 # 16. ALL NORMALIZERS IMPORTABLE
 # ===================================================================
+
 
 def test_all_normalizers_importable():
     from warlock.pipeline.loader import load_all_normalizers
@@ -734,6 +960,7 @@ def test_all_normalizers_importable():
 # ===================================================================
 # 17. AI REASONING RESULT
 # ===================================================================
+
 
 def test_ai_reasoning():
     result = AIReasoningResult(
@@ -762,6 +989,7 @@ def test_ai_reasoning():
 # ===================================================================
 # 18. PIPELINE STATS
 # ===================================================================
+
 
 def test_pipeline_stats():
     from warlock.pipeline.orchestrator import PipelineRunStats

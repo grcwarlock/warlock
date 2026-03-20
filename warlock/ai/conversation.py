@@ -36,12 +36,8 @@ class ConversationSession:
     entity_id: str
     entity_data: dict[str, Any]
     messages: list[dict[str, str]] = field(default_factory=list)
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    last_activity: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_activity: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @property
     def message_count(self) -> int:
@@ -135,9 +131,7 @@ class ConversationManager:
             if session_id and session_id in self._sessions:
                 session = self._sessions[session_id]
                 if session.is_expired(self._ttl):
-                    log.debug(
-                        "Session %s expired, creating replacement", session_id
-                    )
+                    log.debug("Session %s expired, creating replacement", session_id)
                     del self._sessions[session_id]
                 else:
                     session.touch()
@@ -178,9 +172,7 @@ class ConversationManager:
     # Messages
     # ------------------------------------------------------------------
 
-    def add_message(
-        self, session_id: str, role: str, content: str
-    ) -> None:
+    def add_message(self, session_id: str, role: str, content: str) -> None:
         """Append a message to a session.
 
         Raises ``KeyError`` if the session does not exist or is expired.
@@ -248,11 +240,7 @@ class ConversationManager:
         Returns the number of sessions removed.
         """
         with self._lock:
-            expired_ids = [
-                sid
-                for sid, s in self._sessions.items()
-                if s.is_expired(self._ttl)
-            ]
+            expired_ids = [sid for sid, s in self._sessions.items() if s.is_expired(self._ttl)]
             for sid in expired_ids:
                 del self._sessions[sid]
             if expired_ids:
@@ -272,11 +260,7 @@ class ConversationManager:
     def list_sessions(self) -> list[dict[str, Any]]:
         """Return summary dicts for all active sessions."""
         with self._lock:
-            return [
-                s.to_dict()
-                for s in self._sessions.values()
-                if not s.is_expired(self._ttl)
-            ]
+            return [s.to_dict() for s in self._sessions.values() if not s.is_expired(self._ttl)]
 
     # ------------------------------------------------------------------
     # Internal

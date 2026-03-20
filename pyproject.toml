@@ -20,6 +20,8 @@ dependencies = [
     "bcrypt>=4.1",          # #14: Password hashing (was optional, now required)
     "PyJWT>=2.8",           # #14: JWT tokens (was optional, now required)
     "cryptography>=42.0",   # #14: Fernet field encryption (was optional, now required)
+    "textual>=0.50",
+    "plotext>=5.2",
 ]
 
 [project.optional-dependencies]
@@ -43,6 +45,10 @@ gcp = [
 ]
 ai = []  # codebase uses raw httpx; no SDK deps needed
 monitoring = ["prometheus-client>=0.20"]
+tui = [
+    "trogon>=0.5",
+    "textual-dev>=1.0",
+]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4", "pip-audit>=2.7"]
 
 [project.scripts]
