@@ -9119,13 +9119,14 @@ def main():
     framework_dir = str(Path(__file__).resolve().parent.parent / "warlock" / "frameworks")
     load_framework_configs(framework_dir, mapper)
 
-    # Wire AI reasoning if configured (WLK_AI_PROVIDER + WLK_AI_API_KEY)
+    # Wire AI reasoning (default: Ollama Cloud / qwen3-coder:30b)
+    # Override with WLK_AI_PROVIDER, WLK_AI_API_KEY, WLK_AI_MODEL, WLK_AI_BASE_URL
     ai_reasoner = None
     try:
         from warlock.config import get_settings
         from warlock.assessors.ai_reasoning import create_reasoner
         settings = get_settings()
-        if settings.ai_provider and settings.ai_api_key:
+        if getattr(settings, "ai_enabled", True) and settings.ai_provider and settings.ai_api_key:
             ai_reasoner = create_reasoner(
                 provider=settings.ai_provider,
                 api_key=settings.ai_api_key,
@@ -9133,6 +9134,8 @@ def main():
                 base_url=getattr(settings, "ai_base_url", ""),
             )
             print(f"       AI reasoning enabled: {settings.ai_provider}/{settings.ai_model}")
+        elif settings.ai_provider and not settings.ai_api_key:
+            print(f"       AI provider '{settings.ai_provider}' configured but no API key — deterministic only")
     except Exception:
         pass  # No AI — deterministic only
 

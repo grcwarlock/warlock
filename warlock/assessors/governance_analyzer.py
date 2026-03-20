@@ -16,6 +16,7 @@ import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -620,6 +621,109 @@ class GovernanceAnalyzer:
         )
 
         return gaps
+
+    def analyze_with_ai(
+        self,
+        session: Session,
+        framework: str = "nist_800_53",
+    ) -> dict[str, Any]:
+        """AI-enhanced governance coverage analysis.
+
+        Calls ``AIService.reason(AITask.GOVERNANCE_ANALYSIS, ...)`` with
+        the current policy statuses, control mappings, and coverage data
+        to produce an enriched analysis with AI-generated insights and
+        recommendations.
+
+        When AI is off or fails, falls back to the deterministic
+        ``score_policy_coverage()`` result wrapped in a compatible dict.
+
+        Args:
+            session: SQLAlchemy database session.
+            framework: Framework identifier (default ``"nist_800_53"``).
+
+        Returns:
+            A dict containing coverage data plus AI analysis.  When AI
+            is used, the dict includes ``analysis`` and
+            ``recommendations`` keys from the model.  When falling back,
+            contains ``coverage_score`` (the ``CoverageScore`` as a dict)
+            and ``ai_used: False``.
+        """
+        from warlock.ai import get_ai_service, AITask
+
+        # Gather deterministic data
+        coverage = self.score_policy_coverage(session, framework)
+        policies = self.analyze_policy_content(session)
+        gaps = self.identify_policy_gaps(session, framework)
+
+        coverage_data = {
+            "framework": coverage.framework,
+            "total_required": coverage.total_required,
+            "covered": coverage.covered,
+            "current": coverage.current,
+            "reviewed": coverage.reviewed,
+            "coverage_pct": coverage.coverage_pct,
+            "current_pct": coverage.current_pct,
+            "reviewed_pct": coverage.reviewed_pct,
+        }
+
+        policy_data = [
+            {
+                "title": p.page_title,
+                "is_stale": p.is_stale,
+                "is_reviewed": p.is_reviewed,
+                "matched_areas": p.matched_policy_areas,
+                "days_since_modified": p.days_since_modified,
+            }
+            for p in policies[:30]  # Cap to avoid prompt bloat
+        ]
+
+        gap_data = [
+            {
+                "control_id": g.control_id,
+                "required_document": g.required_document,
+                "status": g.status,
+                "details": g.details,
+            }
+            for g in gaps[:20]
+        ]
+
+        def _fallback() -> dict[str, Any]:
+            return {
+                "coverage_score": coverage_data,
+                "gaps": gap_data,
+                "ai_used": False,
+            }
+
+        ai = get_ai_service()
+        context = {
+            "framework": framework,
+            "policies": policy_data,
+            "coverage_data": coverage_data,
+            "gaps": gap_data,
+        }
+
+        result = ai.reason(
+            task=AITask.GOVERNANCE_ANALYSIS,
+            context=context,
+            fallback=_fallback,
+        )
+
+        if result.ai_used and isinstance(result.value, dict):
+            return {
+                "coverage_score": coverage_data,
+                "gaps": gap_data,
+                "ai_analysis": result.value.get("analysis", ""),
+                "ai_recommendations": result.value.get("recommendations", []),
+                "ai_used": True,
+                "ai_model": result.model,
+                "ai_confidence": result.confidence,
+            }
+
+        # Fallback path
+        value = result.value
+        if isinstance(value, dict):
+            return value
+        return _fallback()
 
     @staticmethod
     def _get_policy_map(framework: str) -> dict[str, list[str]]:

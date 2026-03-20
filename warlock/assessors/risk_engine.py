@@ -941,6 +941,96 @@ class RiskEngine:
     # Cache invalidation
     # -------------------------------------------------------------------------
 
+    def generate_narrative(
+        self,
+        session: Session,
+        framework: str,
+        portfolio_result: dict[str, Any],
+    ) -> dict[str, str | None] | None:
+        """Generate AI-written risk narratives from portfolio simulation results.
+
+        Calls ``AIService.reason(AITask.RISK_NARRATIVE, ...)`` with the
+        portfolio result data, scenario details, and posture data to
+        produce audience-targeted summaries.
+
+        When AI is off or unavailable, returns ``None`` so that the
+        caller can fall back to showing raw numbers directly.
+
+        Args:
+            session: SQLAlchemy database session (used for posture lookup).
+            framework: Framework identifier (e.g. ``"nist_800_53"``).
+            portfolio_result: The dict returned by ``analyze_framework_risk()``
+                or ``simulate_portfolio()`` -- must contain ``portfolio`` and
+                ``scenarios`` keys.
+
+        Returns:
+            A dict with three audience-targeted narrative strings when AI
+            succeeds::
+
+                {
+                    "technical_summary": "...",
+                    "insurance_summary": "...",
+                    "board_summary": "...",
+                }
+
+            Returns ``None`` when AI is off or the call fails, signaling
+            the caller to present raw quantitative data instead.
+        """
+        from warlock.ai import get_ai_service, AITask
+
+        ai = get_ai_service()
+
+        # Gather posture data for additional context
+        aggregator = PostureAggregator()
+        postures = aggregator.aggregate_framework(session, framework)
+        posture_data = [
+            {
+                "control_id": p.control_id,
+                "posture_score": p.posture_score,
+                "framework": p.framework,
+            }
+            for p in postures[:50]  # Cap to avoid prompt bloat
+        ]
+
+        context: dict[str, Any] = {
+            "framework": framework,
+            "portfolio_result": portfolio_result,
+            "scenarios": portfolio_result.get("scenarios", []),
+            "posture_data": posture_data,
+        }
+
+        result = ai.reason(
+            task=AITask.RISK_NARRATIVE,
+            context=context,
+            fallback=lambda: None,
+        )
+
+        if not result.ai_used or result.value is None:
+            log.debug(
+                "generate_narrative for %s: AI not used (reason=%s)",
+                framework,
+                result.fallback_reason,
+            )
+            return None
+
+        # Parse the AI response into the expected structure
+        value = result.value
+        if isinstance(value, dict):
+            narrative_text = value.get("narrative", "")
+            return {
+                "technical_summary": value.get("technical_summary", narrative_text),
+                "insurance_summary": value.get("insurance_summary", narrative_text),
+                "board_summary": value.get("board_summary", narrative_text),
+            }
+
+        # Raw string response -- use for all three summaries
+        text = str(value)
+        return {
+            "technical_summary": text,
+            "insurance_summary": text,
+            "board_summary": text,
+        }
+
     def invalidate_cache(
         self,
         session: Session,

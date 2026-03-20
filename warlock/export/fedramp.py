@@ -277,6 +277,7 @@ async def _assess_control_async(
                     headers=headers,
                     json=payload,
                     timeout=_AI_TIMEOUT,
+                    follow_redirects=True,
                 )
                 resp.raise_for_status()
                 body = resp.json()
@@ -511,47 +512,85 @@ class FedRAMPPackageGenerator:
         # 3. Parallel AI assessment for controls missing ai_assessment
         # ------------------------------------------------------------------
         needs_assessment: list[tuple[str, str, list[str]]] = []
-        if ai_provider and ai_api_key and ai_model:
-            for cid, meta in control_meta.items():
-                if cid in ctrl_has_ai:
-                    continue
-                existing_evidence = ctrl_details.get(cid, [])
-                # Only call the model if there is at least some evidence to
-                # reason over; controls with zero data produce nothing useful.
-                if existing_evidence:
-                    needs_assessment.append((cid, meta.get("title", ""), existing_evidence))
+        for cid, meta in control_meta.items():
+            if cid in ctrl_has_ai:
+                continue
+            existing_evidence = ctrl_details.get(cid, [])
+            # Only call the model if there is at least some evidence to
+            # reason over; controls with zero data produce nothing useful.
+            if existing_evidence:
+                needs_assessment.append((cid, meta.get("title", ""), existing_evidence))
 
         ai_results: dict[str, str] = {}
         if needs_assessment:
             t0 = time.monotonic()
-            semaphore = asyncio.Semaphore(_AI_CONCURRENCY)
-            async with httpx.AsyncClient() as client:
-                tasks = [
-                    _assess_control_async(
-                        client=client,
-                        provider=ai_provider,
-                        model=ai_model,
-                        api_key=ai_api_key,
-                        base_url=ai_base_url,
-                        control_id=cid,
-                        control_title=title,
-                        evidence_snippets=evidence,
-                        semaphore=semaphore,
+
+            # -- preferred path: AIService.reason_batch() ------------------
+            from warlock.ai import get_ai_service, AITask
+
+            _ai_svc = get_ai_service()
+            if _ai_svc.is_available():
+                batch_tasks = [
+                    (
+                        AITask.SSP_NARRATIVE,
+                        {
+                            "control_id": cid,
+                            "control_title": title,
+                            "evidence": evidence,
+                        },
+                        None,
                     )
                     for cid, title, evidence in needs_assessment
                 ]
-                gathered: list[tuple[str, str]] = await asyncio.gather(
-                    *tasks, return_exceptions=False
+                concurrency = getattr(
+                    _ai_svc._settings, "ai_batch_concurrency", _AI_CONCURRENCY
                 )
-            elapsed = time.monotonic() - t0
-            ai_results = {cid: text for cid, text in gathered if text}
-            log.info(
-                "SSP export: %d controls assessed in %.1fs (parallel)",
-                len(ai_results),
-                elapsed,
-            )
-        else:
-            if needs_assessment:
+                batch_results = await _ai_svc.reason_batch(batch_tasks, concurrency=concurrency)
+                for (cid, _title, _ev), result in zip(needs_assessment, batch_results):
+                    if result.ai_used and result.value:
+                        # SSP_NARRATIVE responds with {"narrative": "..."} or plain text
+                        if isinstance(result.value, dict):
+                            text = result.value.get("narrative", "")
+                        else:
+                            text = str(result.value)
+                        if text:
+                            ai_results[cid] = text
+                elapsed = time.monotonic() - t0
+                log.info(
+                    "SSP export: %d controls assessed via AIService in %.1fs",
+                    len(ai_results),
+                    elapsed,
+                )
+
+            # -- fallback path: inline httpx (existing logic) --------------
+            elif ai_provider and ai_api_key and ai_model:
+                semaphore = asyncio.Semaphore(_AI_CONCURRENCY)
+                async with httpx.AsyncClient() as client:
+                    inline_tasks = [
+                        _assess_control_async(
+                            client=client,
+                            provider=ai_provider,
+                            model=ai_model,
+                            api_key=ai_api_key,
+                            base_url=ai_base_url,
+                            control_id=cid,
+                            control_title=title,
+                            evidence_snippets=evidence,
+                            semaphore=semaphore,
+                        )
+                        for cid, title, evidence in needs_assessment
+                    ]
+                    gathered: list[tuple[str, str]] = await asyncio.gather(
+                        *inline_tasks, return_exceptions=False
+                    )
+                elapsed = time.monotonic() - t0
+                ai_results = {cid: text for cid, text in gathered if text}
+                log.info(
+                    "SSP export: %d controls assessed in %.1fs (parallel)",
+                    len(ai_results),
+                    elapsed,
+                )
+            else:
                 log.debug(
                     "SSP export: AI provider not configured — "
                     "%d controls skipped (sequential fallback)",
@@ -913,32 +952,72 @@ class FedRAMPPackageGenerator:
         ai_results: dict[str, str] = {}
         if needs_assessment:
             t0 = time.monotonic()
-            semaphore = asyncio.Semaphore(_AI_CONCURRENCY)
-            async with httpx.AsyncClient() as client:
-                tasks = [
-                    _assess_control_async(
-                        client=client,
-                        provider=ai_provider,
-                        model=ai_model,
-                        api_key=ai_api_key,
-                        base_url=ai_base_url,
-                        control_id=cid,
-                        control_title=title,
-                        evidence_snippets=evidence,
-                        semaphore=semaphore,
+
+            # -- preferred path: AIService.reason_batch() ------------------
+            from warlock.ai import get_ai_service, AITask
+
+            _ai_svc = get_ai_service()
+            if _ai_svc.is_available():
+                batch_tasks = [
+                    (
+                        AITask.CIS_NARRATIVE,
+                        {
+                            "control_id": cid,
+                            "control_title": title,
+                            "evidence": evidence,
+                        },
+                        None,
                     )
                     for cid, title, evidence in needs_assessment
                 ]
-                gathered: list[tuple[str, str]] = await asyncio.gather(
-                    *tasks, return_exceptions=False
+                concurrency = getattr(
+                    _ai_svc._settings, "ai_batch_concurrency", _AI_CONCURRENCY
                 )
-            elapsed = time.monotonic() - t0
-            ai_results = {cid: text for cid, text in gathered if text}
-            log.info(
-                "CIS export: %d controls assessed in %.1fs (parallel)",
-                len(ai_results),
-                elapsed,
-            )
+                batch_results = await _ai_svc.reason_batch(batch_tasks, concurrency=concurrency)
+                for (cid, _title, _ev), result in zip(needs_assessment, batch_results):
+                    if result.ai_used and result.value:
+                        # CIS_NARRATIVE responds with {"narrative": "..."} or plain text
+                        if isinstance(result.value, dict):
+                            text = result.value.get("narrative", "")
+                        else:
+                            text = str(result.value)
+                        if text:
+                            ai_results[cid] = text
+                elapsed = time.monotonic() - t0
+                log.info(
+                    "CIS export: %d controls assessed via AIService in %.1fs",
+                    len(ai_results),
+                    elapsed,
+                )
+
+            # -- fallback path: inline httpx (existing logic) --------------
+            elif ai_provider and ai_api_key and ai_model:
+                semaphore = asyncio.Semaphore(_AI_CONCURRENCY)
+                async with httpx.AsyncClient() as client:
+                    inline_tasks = [
+                        _assess_control_async(
+                            client=client,
+                            provider=ai_provider,
+                            model=ai_model,
+                            api_key=ai_api_key,
+                            base_url=ai_base_url,
+                            control_id=cid,
+                            control_title=title,
+                            evidence_snippets=evidence,
+                            semaphore=semaphore,
+                        )
+                        for cid, title, evidence in needs_assessment
+                    ]
+                    gathered: list[tuple[str, str]] = await asyncio.gather(
+                        *inline_tasks, return_exceptions=False
+                    )
+                elapsed = time.monotonic() - t0
+                ai_results = {cid: text for cid, text in gathered if text}
+                log.info(
+                    "CIS export: %d controls assessed in %.1fs (parallel)",
+                    len(ai_results),
+                    elapsed,
+                )
 
         # Merge AI results and strip internal flag
         for entry in entries:

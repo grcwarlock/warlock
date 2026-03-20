@@ -1,6 +1,6 @@
 # Warlock Demo Setup
 
-**Requirements:** Python 3.12+, pip, git. Optional: [OPA](https://www.openpolicyagent.org/docs/latest/#running-opa) for policy evaluation.
+**Requirements:** Python 3.12+, pip, git. Optional: [OPA](https://www.openpolicyagent.org/docs/latest/#running-opa) for policy evaluation. Optional: Ollama Cloud API key for AI-powered compliance reasoning.
 
 ---
 
@@ -16,8 +16,20 @@ That's it. The script:
 1. Creates a virtualenv and installs dependencies
 2. Starts the OPA server with 670 Rego policies (if OPA is installed)
 3. Runs database migrations
-4. Seeds 40 connectors, 547+ findings, 29,207 control results across 10 frameworks
-5. Starts the API server on port 8000
+4. Seeds 40 connectors, 547+ findings, 29,207 control results across 14 frameworks
+5. Enables AI reasoning if `WLK_AI_API_KEY` is set (default: Ollama Cloud / qwen3-coder:30b)
+6. Starts the API server on port 8000
+
+### AI Reasoning (optional)
+
+Set your Ollama Cloud API key to enable Tier 2 AI-powered compliance assessments:
+
+```bash
+export WLK_AI_API_KEY=your-ollama-cloud-key
+./scripts/demo.sh
+```
+
+Without a key, the demo runs in deterministic-only mode (Tier 1 assertions + OPA). With a key, the pipeline also generates AI narrative assessments for controls where deterministic logic is inconclusive.
 
 When it finishes you'll see:
 

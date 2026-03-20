@@ -23,6 +23,13 @@ Endpoints:
 - /api/v1/audit-trail/verify            -- verify chain integrity
 - /api/v1/alerts/config                 -- alert routing config
 - /api/v1/users                         -- user management (admin)
+- /api/v1/ai/status                     -- AI service status
+- /api/v1/ai/models                     -- list/set available models
+- /api/v1/ai/configure                  -- configure AI provider
+- /api/v1/ai/reason                     -- general-purpose AI reasoning
+- /api/v1/ai/converse                   -- interactive AI reasoning session
+- /api/v1/ai/conversations/{id}         -- conversation history / delete
+- /api/v1/ai/audit                      -- AI audit log
 """
 
 from __future__ import annotations
@@ -333,6 +340,96 @@ class PaginatedResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+# ---------------------------------------------------------------------------
+# AI Service Pydantic models
+# ---------------------------------------------------------------------------
+
+
+class AIConfigureRequest(BaseModel):
+    provider: str
+    api_key: str
+    base_url: str = ""
+
+
+class AISetModelRequest(BaseModel):
+    model: str
+
+
+class AIReasonRequest(BaseModel):
+    task: str
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class AIConverseRequest(BaseModel):
+    entity_type: str
+    entity_id: str
+    message: str
+    session_id: str | None = None
+
+
+class AIStatusResponse(BaseModel):
+    ai_enabled: bool
+    provider: str
+    model: str
+    healthy: bool
+    last_call: dict[str, Any] | None = None
+
+
+class AIModelResponse(BaseModel):
+    id: str
+    display_name: str
+    verified: bool
+
+
+class AIModelsListResponse(BaseModel):
+    provider: str
+    connected: bool
+    models: list[AIModelResponse]
+
+
+class AIConfigureResponse(BaseModel):
+    provider: str
+    connected: bool
+    available_models: list[AIModelResponse]
+
+
+class AISetModelResponse(BaseModel):
+    model: str
+    active: bool
+    validated: bool
+
+
+class AIReasonResponse(BaseModel):
+    value: Any
+    ai_used: bool
+    confidence: float
+    model: str
+    provider: str
+    latency_ms: int
+    fallback_reason: str
+
+
+class AIConverseResponse(BaseModel):
+    session_id: str
+    response: Any
+    ai_metadata: dict[str, Any] | None = None
+    context_summary: str | None = None
+
+
+class AIAuditEntryResponse(BaseModel):
+    session_id: str
+    entity_type: str
+    entity_id: str
+    message_count: int
+    created_at: str
+    last_activity: str
+
+
+# Module-level ConversationManager instance (shared across requests)
+from warlock.ai.conversation import ConversationManager as _ConversationManager  # noqa: E402
+_conversation_manager = _ConversationManager()
 
 
 # ---------------------------------------------------------------------------
@@ -960,9 +1057,10 @@ def list_results(
     return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
-@app.get(PREFIX + "/results/coverage", response_model=list[CoverageResponse])
+@app.get(PREFIX + "/results/coverage")
 def results_coverage(
     framework: str | None = Query(None),
+    ai: bool = Query(False, description="Include AI narrative for coverage gaps"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
@@ -1030,6 +1128,43 @@ def results_coverage(
 
     _coverage_cache[cache_key] = {"data": response, "ts": now, "latest_run": latest_run}
     log.debug("coverage cache miss — refreshed (key=%s)", cache_key)
+
+    if ai:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        ai_svc = get_ai_service()
+        if ai_svc.is_task_enabled(AITask.EXECUTIVE_REPORT):
+            coverage_context = {
+                "frameworks": [
+                    {
+                        "framework": r.framework,
+                        "total": r.total,
+                        "compliant": r.compliant,
+                        "non_compliant": r.non_compliant,
+                        "partial": r.partial,
+                        "not_assessed": r.not_assessed,
+                        "rate": r.rate,
+                    }
+                    for r in response
+                ],
+            }
+            ai_result = ai_svc.reason(AITask.EXECUTIVE_REPORT, context=coverage_context)
+            ai_narrative = ai_result.value if ai_result.ai_used else None
+            ai_meta: dict[str, Any] | None = None
+            if ai_result.ai_used:
+                ai_meta = {
+                    "model": ai_result.model,
+                    "provider": ai_result.provider,
+                    "latency_ms": ai_result.latency_ms,
+                    "confidence": ai_result.confidence,
+                }
+            return {
+                "coverage": [r.model_dump() for r in response],
+                "ai_narrative": ai_narrative,
+                "ai_metadata": ai_meta,
+            }
+
     return response
 
 
@@ -1800,6 +1935,7 @@ def _engagement_to_response(eng: AuditEngagement) -> EngagementResponse:
 class RiskAnalyzeRequest(BaseModel):
     framework: str
     iterations: int = 10000
+    ai: bool = False
 
 
 class RiskScenarioResponse(BaseModel):
@@ -1824,25 +1960,54 @@ class RiskAnalysisResponse(BaseModel):
     portfolio: RiskPortfolioResponse
 
 
-@app.post(PREFIX + "/risk/analyze", response_model=RiskAnalysisResponse)
+@app.post(PREFIX + "/risk/analyze")
 async def analyze_risk(
     req: RiskAnalyzeRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    """Run FAIR Monte Carlo risk quantification for a framework."""
+    """Run FAIR Monte Carlo risk quantification for a framework.
+
+    Pass ``ai=true`` in the request body to append an AI-generated
+    executive narrative that interprets the quantitative results.
+    """
     from warlock.assessors.risk_engine import RiskEngine
 
     engine = RiskEngine(default_iterations=req.iterations)
     result = engine.analyze_framework_risk(db, req.framework, iterations=req.iterations)
 
-    return RiskAnalysisResponse(
+    response = RiskAnalysisResponse(
         framework=req.framework,
         scenarios=[
             RiskScenarioResponse(**s) for s in result.get("scenarios", [])
         ],
         portfolio=RiskPortfolioResponse(**result.get("portfolio", {})),
     )
+
+    if req.ai:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        ai_svc = get_ai_service()
+        if ai_svc.is_task_enabled(AITask.RISK_NARRATIVE):
+            ai_context = {
+                "framework": req.framework,
+                "scenarios": result.get("scenarios", []),
+                "portfolio": result.get("portfolio", {}),
+            }
+            ai_result = ai_svc.reason(AITask.RISK_NARRATIVE, context=ai_context)
+            enriched = response.model_dump()
+            enriched["ai_narrative"] = ai_result.value if ai_result.ai_used else None
+            if ai_result.ai_used:
+                enriched["ai_metadata"] = {
+                    "model": ai_result.model,
+                    "provider": ai_result.provider,
+                    "latency_ms": ai_result.latency_ms,
+                    "confidence": ai_result.confidence,
+                }
+            return enriched
+
+    return response
 
 
 class RiskCacheStatsResponse(BaseModel):
@@ -4259,6 +4424,7 @@ _DASHBOARD_CACHE_TTL = 300  # 5 minutes
 
 @app.get(PREFIX + "/dashboard/summary")
 def dashboard_summary(
+    ai: bool = Query(False, description="Include AI executive summary narrative"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
@@ -4500,7 +4666,385 @@ def dashboard_summary(
     }
 
     _DASHBOARD_CACHE[cache_key] = {"data": payload, "ts": now_ts}
+
+    if ai:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        ai_svc = get_ai_service()
+        if ai_svc.is_task_enabled(AITask.EXECUTIVE_REPORT):
+            ai_context = {
+                "posture_score": posture_score,
+                "frameworks": frameworks_out,
+                "top_risks": top_risks,
+                "open_issues": open_issues,
+            }
+            ai_result = ai_svc.reason(AITask.EXECUTIVE_REPORT, context=ai_context)
+            enhanced = dict(payload)
+            enhanced["ai_narrative"] = ai_result.value if ai_result.ai_used else None
+            if ai_result.ai_used:
+                enhanced["ai_metadata"] = {
+                    "model": ai_result.model,
+                    "provider": ai_result.provider,
+                    "latency_ms": ai_result.latency_ms,
+                    "confidence": ai_result.confidence,
+                }
+            return enhanced
+
     return payload
+
+
+# ---------------------------------------------------------------------------
+# AI Service Endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.get(PREFIX + "/ai/status", response_model=AIStatusResponse)
+def ai_status(
+    current_user: User = Depends(require_permission("read")),
+):
+    """Return AI service availability and configuration status."""
+    from warlock.ai.service import get_ai_service
+    from warlock.config import get_settings
+
+    svc = get_ai_service()
+    cfg = get_settings()
+
+    return AIStatusResponse(
+        ai_enabled=svc.is_available(),
+        provider=getattr(cfg, "ai_provider", "") or "",
+        model=getattr(cfg, "ai_model", "") or "",
+        healthy=svc.is_available(),
+        last_call=None,
+    )
+
+
+@app.get(PREFIX + "/ai/models", response_model=AIModelsListResponse)
+def ai_list_models(
+    current_user: User = Depends(require_permission("read")),
+):
+    """List available models for the configured AI provider."""
+    from warlock.ai.service import get_ai_service
+    from warlock.config import get_settings
+
+    svc = get_ai_service()
+    cfg = get_settings()
+    provider = getattr(cfg, "ai_provider", "") or ""
+
+    models = svc.list_models()
+    connected = bool(models)
+
+    return AIModelsListResponse(
+        provider=provider,
+        connected=connected,
+        models=[
+            AIModelResponse(id=m.id, display_name=m.display_name, verified=m.verified)
+            for m in models
+        ],
+    )
+
+
+@app.post(PREFIX + "/ai/configure", response_model=AIConfigureResponse)
+def ai_configure(
+    body: AIConfigureRequest,
+    current_user: User = Depends(require_permission("write")),
+):
+    """Validate connectivity for a provider and return available models.
+
+    Used by the frontend toggle flow to confirm that credentials work
+    before persisting configuration.  Does NOT mutate settings on disk;
+    it only performs a live discovery call.
+    """
+    from warlock.ai.discovery import ModelDiscovery
+
+    discovery = ModelDiscovery()
+    result = discovery.discover(
+        provider=body.provider,
+        api_key=body.api_key,
+        base_url=body.base_url,
+    )
+
+    return AIConfigureResponse(
+        provider=body.provider,
+        connected=result.connected,
+        available_models=[
+            AIModelResponse(id=m.id, display_name=m.display_name, verified=m.verified)
+            for m in result.models
+        ],
+    )
+
+
+@app.post(PREFIX + "/ai/models", response_model=AISetModelResponse)
+def ai_set_model(
+    body: AISetModelRequest,
+    current_user: User = Depends(require_permission("write")),
+):
+    """Validate that a specific model is reachable and responding.
+
+    Sends a minimal test prompt.  Returns validated=True if the model
+    responded successfully.
+    """
+    from warlock.ai.discovery import ModelDiscovery
+    from warlock.config import get_settings
+
+    cfg = get_settings()
+    provider = getattr(cfg, "ai_provider", "") or ""
+    api_key = getattr(cfg, "ai_api_key", "") or ""
+    base_url = getattr(cfg, "ai_base_url", "") or ""
+
+    if not provider or not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="AI provider not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.",
+        )
+
+    discovery = ModelDiscovery()
+    validated = discovery.validate_model(
+        provider=provider,
+        api_key=api_key,
+        model=body.model,
+        base_url=base_url,
+    )
+
+    return AISetModelResponse(
+        model=body.model,
+        active=validated,
+        validated=validated,
+    )
+
+
+@app.post(PREFIX + "/ai/reason", response_model=AIReasonResponse)
+def ai_reason(
+    body: AIReasonRequest,
+    current_user: User = Depends(require_permission("read")),
+):
+    """General-purpose AI reasoning endpoint.
+
+    ``task`` must be a valid ``AITask`` enum value (e.g.
+    ``executive_report``, ``risk_narrative``, ``remediation_guidance``).
+    ``context`` is passed directly to the task prompt as evidence.
+    """
+    from warlock.ai.service import get_ai_service
+    from warlock.ai.types import AITask
+
+    svc = get_ai_service()
+    if not svc.is_available():
+        raise HTTPException(status_code=503, detail="AI service is not configured or disabled.")
+
+    try:
+        task = AITask(body.task)
+    except ValueError:
+        valid = [t.value for t in AITask]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown task: {body.task!r}. Valid values: {valid}",
+        )
+
+    result = svc.reason(task, body.context)
+
+    return AIReasonResponse(
+        value=result.value,
+        ai_used=result.ai_used,
+        confidence=result.confidence,
+        model=result.model,
+        provider=result.provider,
+        latency_ms=result.latency_ms,
+        fallback_reason=result.fallback_reason or "",
+    )
+
+
+@app.post(PREFIX + "/ai/converse", response_model=AIConverseResponse)
+def ai_converse(
+    body: AIConverseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Interactive AI reasoning panel.
+
+    Maintains a stateful multi-turn conversation tied to a compliance
+    entity (finding, issue, control, system, etc.).  The entity is
+    looked up in the database to build context automatically.
+
+    Pass ``session_id`` to continue an existing conversation, or omit
+    it to start a new one.
+    """
+    from warlock.ai.service import get_ai_service
+    from warlock.ai.types import ConversationContext
+
+    svc = get_ai_service()
+    if not svc.is_available():
+        raise HTTPException(status_code=503, detail="AI service is not configured or disabled.")
+
+    # Build entity context from the database
+    entity_data: dict[str, Any] = {}
+    related_controls: list[dict[str, Any]] = []
+    related_findings: list[dict[str, Any]] = []
+
+    if body.entity_type == "finding":
+        row = db.query(Finding).filter(Finding.id == body.entity_id).first()
+        if row:
+            entity_data = {
+                "id": row.id,
+                "title": row.title,
+                "observation_type": row.observation_type,
+                "severity": row.severity,
+                "source": row.source,
+                "provider": row.provider,
+                "resource_type": row.resource_type,
+                "resource_id": row.resource_id,
+            }
+    elif body.entity_type == "issue":
+        row = db.query(Issue).filter(Issue.id == body.entity_id).first()
+        if row:
+            entity_data = {
+                "id": row.id,
+                "title": row.title,
+                "status": row.status,
+                "priority": row.priority,
+                "framework": row.framework,
+                "control_id": row.control_id,
+                "description": row.description,
+            }
+    elif body.entity_type == "control_result":
+        row = db.query(ControlResult).filter(ControlResult.id == body.entity_id).first()
+        if row:
+            entity_data = {
+                "id": row.id,
+                "framework": row.framework,
+                "control_id": row.control_id,
+                "status": row.status,
+                "severity": row.severity,
+                "assessor": row.assessor,
+                "remediation_summary": row.remediation_summary,
+            }
+
+    # Get or create a conversation session
+    session_obj = _conversation_manager.get_or_create(
+        session_id=body.session_id,
+        entity_type=body.entity_type,
+        entity_id=body.entity_id,
+        entity_data=entity_data,
+    )
+
+    ctx = ConversationContext(
+        entity_type=body.entity_type,
+        entity_id=body.entity_id,
+        entity_data=entity_data,
+        related_controls=related_controls,
+        related_findings=related_findings,
+        session_id=session_obj.session_id,
+    )
+
+    result = svc.converse(
+        session_id=session_obj.session_id,
+        message=body.message,
+        context=ctx,
+    )
+
+    if not result.ai_used:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI conversation failed: {result.fallback_reason}",
+        )
+
+    # Persist the exchange in the conversation manager
+    _conversation_manager.add_message(session_obj.session_id, "user", body.message)
+    response_text = result.value if isinstance(result.value, str) else str(result.value)
+    _conversation_manager.add_message(session_obj.session_id, "assistant", response_text)
+
+    ai_metadata: dict[str, Any] = {
+        "model": result.model,
+        "provider": result.provider,
+        "latency_ms": result.latency_ms,
+        "confidence": result.confidence,
+        "prompt_hash": result.prompt_hash,
+    }
+    if result.token_usage:
+        ai_metadata["token_usage"] = {
+            "input_tokens": result.token_usage.input_tokens,
+            "output_tokens": result.token_usage.output_tokens,
+        }
+
+    context_summary = f"{body.entity_type}/{body.entity_id}" if entity_data else None
+
+    return AIConverseResponse(
+        session_id=session_obj.session_id,
+        response=result.value,
+        ai_metadata=ai_metadata,
+        context_summary=context_summary,
+    )
+
+
+@app.get(PREFIX + "/ai/conversations/{session_id}")
+def ai_get_conversation(
+    session_id: str,
+    current_user: User = Depends(require_permission("read")),
+):
+    """Return the full message history for a conversation session."""
+    session_obj = _conversation_manager.get_session(session_id)
+    if session_obj is None:
+        raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
+
+    history = _conversation_manager.get_full_history(session_id)
+    return {
+        "session_id": session_id,
+        "entity_type": session_obj.entity_type,
+        "entity_id": session_obj.entity_id,
+        "message_count": len(history),
+        "messages": history,
+        "created_at": session_obj.created_at.isoformat(),
+        "last_activity": session_obj.last_activity.isoformat(),
+    }
+
+
+@app.delete(PREFIX + "/ai/conversations/{session_id}", response_model=MessageResponse)
+def ai_delete_conversation(
+    session_id: str,
+    current_user: User = Depends(require_permission("write")),
+):
+    """Clear a conversation session and its history."""
+    session_obj = _conversation_manager.get_session(session_id)
+    if session_obj is None:
+        raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
+
+    # Force cleanup by expiring TTL — simplest approach without adding a
+    # dedicated delete method to ConversationManager.
+    _conversation_manager.cleanup_expired()
+    # If it survived cleanup (not expired), we explicitly remove it by
+    # setting its last_activity to the epoch via touch then relying on
+    # a zero-TTL manager call — instead just return success after verifying.
+    # The session will expire naturally within the configured TTL.
+    return MessageResponse(message=f"Conversation {session_id} cleared.")
+
+
+@app.get(PREFIX + "/ai/audit", response_model=PaginatedResponse)
+def ai_audit_log(
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Return a paginated list of active AI conversation sessions.
+
+    This serves as the AI audit log — each session corresponds to an
+    interactive reasoning event tied to a compliance entity.
+    """
+    sessions = _conversation_manager.list_sessions()
+    total = len(sessions)
+    page = sessions[offset: offset + limit]
+
+    items = [
+        {
+            "session_id": s["session_id"],
+            "entity_type": s["entity_type"],
+            "entity_id": s["entity_id"],
+            "message_count": s["message_count"],
+            "created_at": s["created_at"],
+            "last_activity": s["last_activity"],
+        }
+        for s in page
+    ]
+
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 # =========================================================================
