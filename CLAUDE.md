@@ -98,7 +98,7 @@ Must complete with 40 connectors succeeded, 0 failed.
 opa check policies/ && opa test policies/
 ```
 
-All 666+ OPA tests must pass.
+All 730+ OPA tests must pass.
 
 ### Step 5: Terraform validation
 
@@ -249,7 +249,7 @@ When you change the left column, you MUST update every file in the right column.
 warlock/
   connectors/    — 40 source connectors
   normalizers/   — 41 parsers (raw → FindingData)
-  mappers/       — control mapping (findings → 1,779 controls across 10 frameworks)
+  mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (100+ routes, ABAC-scoped)
   cli.py         — Click CLI (34 commands)
@@ -257,12 +257,12 @@ warlock/
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
-  frameworks/    — 10 framework YAMLs + crosswalks + baselines + inherited controls
+  frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
 tests/           — 190 pytest tests (9 files)
-policies/        — 634 OPA/Rego files (666 tests) across 7 frameworks
+policies/        — 670 OPA/Rego files (730 tests) across 7 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 10 frameworks
-terraform/       — 5 IaC modules (AWS, Azure, GCP)
+terraform/       — 12 IaC modules (AWS, Azure, GCP)
 .github/workflows/
   ci.yml             — Python lint + test + Docker build
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks

@@ -34,6 +34,7 @@ from __future__ import annotations
 import logging
 import os
 import pathlib
+import re
 import uuid
 from datetime import timedelta
 from typing import Any
@@ -118,7 +119,15 @@ class EvidenceVault:
         Returns:
             The evidence_id key (S3/GCS URI or relative local path).
         """
-        evidence_id = f"{finding_id}/{uuid.uuid4()}-{filename}"
+        # Sanitize filename — strip path separators and null bytes
+        safe_filename = re.sub(r'[/\\:\x00]', '_', filename)
+        safe_filename = re.sub(r'\.\.', '_', safe_filename)  # prevent traversal
+        if not re.match(r'^[\w\-. ]+$', safe_filename):
+            safe_filename = re.sub(r'[^\w\-.]', '_', safe_filename)
+        # Validate finding_id is UUID-like
+        if not re.match(r'^[\w\-]+$', finding_id):
+            raise ValueError(f"Invalid finding_id: {finding_id}")
+        evidence_id = f"{finding_id}/{uuid.uuid4()}-{safe_filename}"
 
         dispatch = {
             "s3": self._upload_s3,

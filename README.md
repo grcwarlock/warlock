@@ -7,7 +7,7 @@ Evidence flows through 4 immutable stages with SHA-256 integrity hashing at ever
 ```
 Stage 1: Connectors (40 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (41 parsers) → FindingData       → transform to universal findings
-Stage 3: Control Mapper           → ControlMappingData → map to 1,779 controls across 10 frameworks
+Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
 
@@ -320,7 +320,7 @@ warlock/
 
 ```bash
 make install    # Install dev dependencies
-make test       # Run 190 tests
+make test       # Run tests
 make lint       # Run ruff linter
 make migrate    # Run Alembic migrations
 make seed       # Populate demo data
