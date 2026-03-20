@@ -52,33 +52,71 @@ fi
 echo "[5/7] Seeding demo environment..."
 rm -f warlock.db
 export WLK_AI_ENABLED=false
-alembic upgrade head 2>&1 | tail -1
+alembic upgrade head 2>&1 | grep -v "^INFO"
 python scripts/demo_seed.py 2>&1 | grep -E "^\[|^  Raw|^  Find|^  Cont|^  Conn|^  Dur|Seed complete"
 echo ""
 
 # 6. AI configuration prompt
 echo "[6/7] AI Reasoning (optional)"
 echo ""
-echo "  Warlock supports AI-powered compliance reasoning via Ollama, Anthropic,"
-echo "  OpenAI, or Gemini. Paste your API key to enable, or press Enter to skip."
+echo "  Warlock supports AI-powered compliance reasoning."
+echo "  Press Enter at any prompt to skip and run in deterministic mode."
 echo ""
-printf "  API Key (Enter to skip): "
-read -r AI_KEY
-if [ -n "$AI_KEY" ]; then
-    export WLK_AI_ENABLED=true
-    export WLK_AI_API_KEY="$AI_KEY"
-    export WLK_AI_PROVIDER="${WLK_AI_PROVIDER:-ollama}"
-    export WLK_AI_MODEL="${WLK_AI_MODEL:-qwen3-coder:30b}"
-    export WLK_AI_BASE_URL="${WLK_AI_BASE_URL:-https://ollama.com}"
-    echo ""
-    echo "       AI enabled: ${WLK_AI_PROVIDER}/${WLK_AI_MODEL}"
-    echo "       Use --ai flag on commands: warlock coverage --ai"
-    echo "       Interactive reasoning:     warlock remediate <id> --ask"
+echo "  Providers: 1) Anthropic  2) OpenAI  3) Ollama  4) Gemini"
+printf "  Provider [1-4] (Enter to skip): "
+read -r AI_CHOICE
+if [ -n "$AI_CHOICE" ]; then
+    case "$AI_CHOICE" in
+        1|anthropic|Anthropic)
+            export WLK_AI_PROVIDER=anthropic
+            DEFAULT_MODEL="claude-sonnet-4-20250514"
+            export WLK_AI_BASE_URL=""
+            ;;
+        2|openai|OpenAI)
+            export WLK_AI_PROVIDER=openai
+            DEFAULT_MODEL="gpt-4o"
+            export WLK_AI_BASE_URL=""
+            ;;
+        3|ollama|Ollama)
+            export WLK_AI_PROVIDER=ollama
+            DEFAULT_MODEL="qwen3-coder:30b"
+            export WLK_AI_BASE_URL="https://ollama.com"
+            ;;
+        4|gemini|Gemini)
+            export WLK_AI_PROVIDER=gemini
+            DEFAULT_MODEL="gemini-2.0-flash"
+            export WLK_AI_BASE_URL=""
+            ;;
+        *)
+            echo "       Unknown provider. Skipping AI."
+            export WLK_AI_ENABLED=false
+            DEFAULT_MODEL=""
+            ;;
+    esac
+
+    if [ "$WLK_AI_ENABLED" != "false" ]; then
+        printf "  API Key: "
+        read -r AI_KEY
+        if [ -n "$AI_KEY" ]; then
+            export WLK_AI_API_KEY="$AI_KEY"
+            printf "  Model [${DEFAULT_MODEL}]: "
+            read -r AI_MODEL
+            export WLK_AI_MODEL="${AI_MODEL:-$DEFAULT_MODEL}"
+            export WLK_AI_ENABLED=true
+            echo ""
+            echo "       AI enabled: ${WLK_AI_PROVIDER}/${WLK_AI_MODEL}"
+            echo "       Use --ai flag on commands: warlock coverage --ai"
+            echo "       Interactive reasoning:     warlock remediate <id> --ask"
+        else
+            echo "       No API key provided. Skipping AI."
+            export WLK_AI_ENABLED=false
+        fi
+    fi
 else
     export WLK_AI_ENABLED=false
     echo ""
     echo "       Running in deterministic mode (no AI). You can enable later:"
-    echo "       export WLK_AI_PROVIDER=ollama WLK_AI_API_KEY=<key> WLK_AI_MODEL=qwen3-coder:30b WLK_AI_ENABLED=true"
+    echo "       export WLK_AI_PROVIDER=anthropic WLK_AI_API_KEY=<key> WLK_AI_MODEL=claude-sonnet-4-20250514 WLK_AI_ENABLED=true"
 fi
 echo ""
 
