@@ -4,7 +4,7 @@
 ###############################################################################
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.5, < 2.0"
   required_providers {
     # T-5: Azure provider upgrade path — ~> 3.80 → ~> 4.0
     # When upgrading to azurerm ~> 4.0:
@@ -150,9 +150,13 @@ resource "terraform_data" "warlock_evidence" {
   triggers_replace = [azurerm_resource_group.security.id]
 
   provisioner "local-exec" {
+    environment = {
+      WARLOCK_API_ENDPOINT = var.warlock_api_endpoint
+      WARLOCK_API_TOKEN    = var.warlock_api_token
+    }
     command = <<-EOT
-      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
-        -H "Authorization: Bearer ${var.warlock_api_token}" \
+      curl -sf -X POST "$WARLOCK_API_ENDPOINT/api/v1/evidence" \
+        -H "Authorization: Bearer $WARLOCK_API_TOKEN" \
         -H "Content-Type: application/json" \
         -d '{
           "module": "azure/secure-subscription-baseline",

@@ -107,8 +107,6 @@ class FieldEncryptor:
     falling back to a stdlib-only XOR+HMAC scheme otherwise.
     """
 
-    _SALT = b"warlock-grc-field-enc-v1"
-
     def __init__(self, key: str | None = None):
         self.key = key or os.environ.get("WLK_ENCRYPTION_KEY", "")
         if not self.key:
@@ -119,16 +117,36 @@ class FieldEncryptor:
         key_bytes = self.key.encode("utf-8")
 
         if _HAS_FERNET:
+            # #16: Use a per-deployment salt derived from the encryption key
+            # instead of a static salt. The salt is deterministic per-key so
+            # existing ciphertext remains decryptable with the same key.
+            salt = hashlib.sha256(
+                key_bytes + b"warlock-grc-field-enc-v1"
+            ).digest()[:16]
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
-                salt=self._SALT,
+                salt=salt,
                 iterations=480_000,
             )
             derived = base64.urlsafe_b64encode(kdf.derive(key_bytes))
             self._fernet = Fernet(derived)
             self._backend = "fernet"
         else:
+            # #15: Refuse to use XOR fallback in production
+            wlk_env = os.environ.get("WLK_ENV", "").strip().lower()
+            if wlk_env == "production":
+                raise RuntimeError(
+                    "CRITICAL: The 'cryptography' package is not installed. "
+                    "XOR-based encryption is NOT safe for production. "
+                    "Install cryptography: pip install cryptography"
+                )
+            import warnings
+            warnings.warn(
+                "Using stdlib XOR encryption fallback — NOT safe for production. "
+                "Install the 'cryptography' package for Fernet encryption.",
+                stacklevel=2,
+            )
             self._stdlib = _StdlibEncryptor(key_bytes)
             self._backend = "stdlib"
 
@@ -222,5 +240,10 @@ def detect_sensitive_fields(data: dict) -> list[str]:
         if isinstance(value, dict):
             nested = detect_sensitive_fields(value)
             found.extend(f"{key}.{n}" for n in nested)
+        elif isinstance(value, list):
+            for idx, item in enumerate(value):
+                if isinstance(item, dict):
+                    nested = detect_sensitive_fields(item)
+                    found.extend(f"{key}[{idx}].{n}" for n in nested)
 
     return found

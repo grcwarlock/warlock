@@ -20,3 +20,9 @@ exports/
 !.env.example
 Dockerfile*
 docker-compose*
+.github/
+terraform/
+policies/
+frameworks-oscal/
+docs/
+*.md

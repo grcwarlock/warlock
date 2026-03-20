@@ -70,21 +70,36 @@ class EvidenceVault:
     thread pool.
     """
 
+    # Default maximum upload size: 100 MB
+    DEFAULT_MAX_UPLOAD_BYTES: int = 100 * 1024 * 1024
+
     def __init__(
         self,
         backend: str | None = None,
         bucket: str | None = None,
         base_path: str | None = None,
+        max_upload_bytes: int | None = None,
     ) -> None:
         self.backend: str = (backend or _get_backend()).lower()
         self.bucket: str = bucket or _get_bucket()
         self.base_path: str = base_path or _get_path()
+        self.max_upload_bytes: int = (
+            max_upload_bytes
+            if max_upload_bytes is not None
+            else self.DEFAULT_MAX_UPLOAD_BYTES
+        )
 
         if self.backend not in {"s3", "gcs", "local"}:
             raise ValueError(
                 f"Unsupported evidence backend: '{self.backend}'. "
                 "Choose 's3', 'gcs', or 'local'."
             )
+
+        # Verify bucket exists for cloud backends at init time
+        if self.backend == "s3":
+            self._check_s3_bucket()
+        elif self.backend == "gcs":
+            self._check_gcs_bucket()
 
         log.debug("EvidenceVault initialised: backend=%s", self.backend)
 
@@ -119,6 +134,14 @@ class EvidenceVault:
         Returns:
             The evidence_id key (S3/GCS URI or relative local path).
         """
+        # Validate file size
+        if len(file_bytes) > self.max_upload_bytes:
+            raise ValueError(
+                f"File size {len(file_bytes)} bytes exceeds maximum "
+                f"allowed size of {self.max_upload_bytes} bytes "
+                f"({self.max_upload_bytes / (1024 * 1024):.0f} MB)"
+            )
+
         # Sanitize filename — strip path separators and null bytes
         safe_filename = re.sub(r'[/\\:\x00]', '_', filename)
         safe_filename = re.sub(r'\.\.', '_', safe_filename)  # prevent traversal
@@ -169,6 +192,33 @@ class EvidenceVault:
             "local": self._list_local,
         }
         return dispatch[self.backend](finding_id)
+
+    # ------------------------------------------------------------------
+    # Bucket existence checks
+    # ------------------------------------------------------------------
+
+    def _check_s3_bucket(self) -> None:
+        """Verify the configured S3 bucket exists."""
+        if not self.bucket:
+            raise ValueError("WLK_EVIDENCE_BUCKET must be set for the S3 backend")
+        client = self._s3_client()
+        try:
+            client.head_bucket(Bucket=self.bucket)
+        except Exception as exc:
+            raise ValueError(
+                f"S3 bucket '{self.bucket}' does not exist or is not accessible: {exc}"
+            ) from exc
+
+    def _check_gcs_bucket(self) -> None:
+        """Verify the configured GCS bucket exists."""
+        if not self.bucket:
+            raise ValueError("WLK_EVIDENCE_BUCKET must be set for the GCS backend")
+        client = self._gcs_client()
+        bucket_obj = client.bucket(self.bucket)
+        if not bucket_obj.exists():
+            raise ValueError(
+                f"GCS bucket '{self.bucket}' does not exist or is not accessible"
+            )
 
     # ------------------------------------------------------------------
     # S3 backend

@@ -98,7 +98,7 @@ Must complete with 40 connectors succeeded, 0 failed.
 opa check policies/ && opa test policies/
 ```
 
-All 730+ OPA tests must pass.
+All OPA tests must pass.
 
 ### Step 5: Terraform validation
 
@@ -112,7 +112,7 @@ done
 cd /Users/jsn/Coding/GitHub/warlock
 ```
 
-All 5 modules must pass.
+All 12 modules must pass.
 
 ### Step 6: Import smoke test
 
@@ -247,28 +247,28 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 40 source connectors
+  connectors/    — 41 source connectors
   normalizers/   — 41 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
-  api/           — FastAPI REST API (100+ routes, ABAC-scoped)
-  cli.py         — Click CLI (34 commands)
-  db/            — SQLAlchemy models (34) + Alembic migrations (8)
+  api/           — FastAPI REST API (139 routes, ABAC-scoped)
+  cli.py         — Click CLI (38 commands)
+  db/            — SQLAlchemy models (34) + Alembic migrations (11)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
 tests/           — 190 pytest tests (9 files)
-policies/        — 670 OPA/Rego files (730 tests) across 7 frameworks
-frameworks-oscal/ — OSCAL catalog/profile JSON for 10 frameworks
+policies/        — 670 OPA/Rego files across 8 frameworks
+frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
 .github/workflows/
   ci.yml             — Python lint + test + Docker build
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command full demo (DB + OPA + seed + API)
-  demo_seed.py   — 40 mock connectors, 547+ findings, 26K results
+  demo_seed.py   — 40 mock connectors, 547+ findings, 29K results
   demo_api.sh    — API query helper with auto-auth
 ```
 
@@ -293,29 +293,33 @@ Two GitHub Actions workflows run on every push/PR:
 ### `.github/workflows/compliance-gate.yaml` — Compliance CI
 - **Triggers:** push/PR that touches `policies/`, `terraform/`, `frameworks-oscal/`, `warlock/frameworks/`, `warlock/assessors/`
 - **4 jobs run in parallel:**
-  - OPA Policy Validation — syntax check, 631+ tests, policy count regression guard (min 300), test coverage check
-  - Terraform Validation — `terraform validate` + `terraform fmt -check` on all 5 modules
+  - OPA Policy Validation — syntax check, policy count regression guard (min 300), test coverage check
+  - Terraform Validation — `terraform validate` + `terraform fmt -check` on all 12 modules
   - OSCAL Package Validation — all JSON files parse correctly
   - Framework YAML Validation — all YAMLs have valid v2 dict-based structure
 
 If you touch policies or terraform, both CI workflows run. Fix failures locally before pushing.
 
-## Frameworks (10 total)
+## Frameworks (14 total)
 
 | Framework | Pipeline YAML | Rego Policies | OSCAL Package | Active in Demo |
 |---|---|---|---|---|
-| NIST 800-53 | nist_800_53.yaml (1,176 controls) | 284 files | Yes | Yes |
+| NIST 800-53 | nist_800_53.yaml (1,176 controls) | 286 files | Yes | Yes |
 | ISO 27001 | iso_27001.yaml (93 controls) | 186 files | Yes | Yes |
 | ISO 27701 | iso_27701.yaml (95 controls) | — | Yes | Yes |
 | ISO 42001 | iso_42001.yaml (39 controls) | — | Yes | Yes |
 | SOC 2 | soc2.yaml (46 controls) | 26 files | Yes | Yes |
-| UCF | ucf.yaml (115 controls) | 12 files | Yes | Yes |
+| UCF | ucf.yaml (115 controls) | 24 files | Yes | Yes |
 | FedRAMP | fedramp.yaml (26 controls) | — | Yes | Yes |
 | HIPAA | hipaa.yaml (64 controls) | 40 files | Yes | Yes |
 | CMMC L2 | cmmc_l2.yaml (110 controls) | 50 files | Yes | Yes |
 | GDPR | gdpr.yaml (15 controls) | — | Yes | Yes |
+| PCI DSS v4.0 | pci_dss.yaml (63 controls) | 24 files | Yes | Yes |
+| NIST CSF 2.0 | nist_csf.yaml (101 controls) | — | — | Yes |
+| EU AI Act | eu_ai_act.yaml (33 controls) | — | — | Yes |
+| SEC Cyber | sec_cyber.yaml (20 controls) | — | — | Yes |
 
-**"Active in Demo"** means the framework produces control results in the demo seed. All 10 frameworks are now wired with event_types and produce control results.
+**"Active in Demo"** means the framework produces control results in the demo seed. All 14 frameworks are wired with event_types and produce control results.
 
 ## Security-Critical Config Defaults
 

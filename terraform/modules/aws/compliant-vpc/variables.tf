@@ -23,9 +23,13 @@ variable "vpc_cidr" {
 }
 
 variable "availability_zones" {
-  description = "AZs for subnet placement"
+  description = "AZs for subnet placement — must be explicitly provided (no default to avoid region assumptions)"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+
+  validation {
+    condition     = length(var.availability_zones) >= 1
+    error_message = "At least one availability zone must be provided."
+  }
 }
 
 variable "public_subnet_cidrs" {

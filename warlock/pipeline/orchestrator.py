@@ -34,7 +34,7 @@ class PipelineConcurrencyError(RuntimeError):
 
 @dataclass
 class PipelineRunStats:
-    run_id: str = ""
+    run_id: str = field(default_factory=lambda: str(__import__("uuid").uuid4()))
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: datetime | None = None
 
@@ -106,14 +106,22 @@ class Pipeline:
         """
         self._acquire_concurrency_lock(session)
 
+        try:
+            return self._run_inner(session)
+        finally:
+            # #9: Always release the lock file handle on exit
+            self._release_concurrency_lock()
+
+    def _run_inner(self, session: Session) -> PipelineRunStats:
+        """Inner pipeline execution. Lock is held by caller."""
         stats = PipelineRunStats()
 
         # Enhancement #8: propagate run_id into every log record for this run
         from warlock.logging_config import correlation_id as _correlation_id
-        if stats.run_id:
-            _correlation_id.set(stats.run_id)
+        # #10: run_id is now auto-generated UUID, always truthy
+        _correlation_id.set(stats.run_id)
 
-        log.info("Pipeline run starting")
+        log.info("Pipeline run starting (run_id=%s)", stats.run_id)
 
         # Accumulate already-normalized findings so Stage 5 (OPA) can reuse them
         # directly instead of re-normalizing the same raw events a second time.
@@ -290,6 +298,27 @@ class Pipeline:
                     "fcntl not available; pipeline concurrency lock is disabled on this platform"
                 )
 
+    def _release_concurrency_lock(self) -> None:
+        """Release the pipeline concurrency lock (#9 fix).
+
+        Explicitly unlocks via fcntl.LOCK_UN before closing the file handle.
+        This ensures the lock is released immediately rather than waiting for
+        GC, which matters when multiple Pipeline instances are created in the
+        same process (e.g., test suites).
+        """
+        lock_file = getattr(self, "_lock_file", None)
+        if lock_file is not None:
+            try:
+                import fcntl
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+            except Exception:
+                pass
+            try:
+                lock_file.close()
+            except Exception:
+                pass
+            self._lock_file = None
+
     # -- Integrity verification --
 
     def verify_integrity(self, session: Session, run_id: str | None = None) -> dict:
@@ -424,7 +453,11 @@ class Pipeline:
                     try:
                         all_findings.extend(self.normalizers.normalize(raw_event))
                     except Exception:
-                        pass  # Already logged during main loop
+                        log.debug(
+                            "OPA fallback normalization failed for event %s",
+                            raw_event.id,
+                            exc_info=True,
+                        )
 
             # Assemble the normalized data document
             assembler = NormalizedDataAssembler()
@@ -436,15 +469,25 @@ class Pipeline:
             )
             policy_map = registry.policy_map
 
-            # Determine which frameworks to evaluate
-            frameworks = settings.opa_frameworks if settings.opa_frameworks else None
-
-            # Evaluate
-            opa_results = self.opa_evaluator.evaluate_all(
-                normalized_data=normalized_data,
-                policy_map=policy_map,
-                frameworks=frameworks,
+            # Determine which frameworks to evaluate — per-framework batch
+            # calls reduce ~592 serial HTTP requests to ~7 (one per framework).
+            configured_frameworks: list[str] | None = (
+                settings.opa_frameworks if settings.opa_frameworks else None
             )
+
+            # Derive framework set from the policy map, filtered by config
+            all_fw_set: set[str] = {fw for fw, _cid in policy_map.values()}
+            if configured_frameworks:
+                all_fw_set &= set(configured_frameworks)
+
+            opa_results: list[ControlResultData] = []
+            for fw in sorted(all_fw_set):
+                fw_results = self.opa_evaluator.evaluate_framework(
+                    framework=fw,
+                    normalized_data=normalized_data,
+                    policy_map=policy_map,
+                )
+                opa_results.extend(fw_results)
 
             # Persist results
             for result in opa_results:

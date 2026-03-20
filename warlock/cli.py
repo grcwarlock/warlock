@@ -3,12 +3,66 @@
 from __future__ import annotations
 
 import logging
+import os
 
 import click
 from rich.console import Console
 from rich.table import Table
 
 console = Console()
+
+
+def _error(msg: str) -> None:
+    """Print error to stderr and exit with code 1."""
+    console.print(f"[red]{msg}[/red]")
+    raise SystemExit(1)
+
+
+def _get_actor() -> str:
+    """Return the actor identity from env or default."""
+    return os.environ.get("WLK_CLI_ACTOR", "cli@warlock")
+
+
+def _parse_ai_response(value) -> str:
+    """Extract text from an AI response value, handling JSON wrapping."""
+    import json as _json
+    response_text = value if isinstance(value, str) else str(value)
+    try:
+        parsed = _json.loads(response_text)
+        response_text = parsed.get("response") or str(parsed)
+    except (ValueError, KeyError):
+        pass
+    return response_text
+
+
+def _ai_repl(svc, session_id: str, ctx, entity_label: str) -> None:
+    """Run an interactive AI conversation REPL.
+
+    Parameters
+    ----------
+    svc: AI service instance
+    session_id: conversation session ID
+    ctx: ConversationContext for the AI service
+    entity_label: human-readable label shown in the REPL prompt
+    """
+    console.print(f"[cyan]Entering interactive AI session for {entity_label}.[/cyan]")
+    console.print("[dim]Type your question and press Enter. Type 'exit' or press Ctrl-C to quit.[/dim]\n")
+    while True:
+        try:
+            user_input = input("You: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n[dim]Session ended.[/dim]")
+            break
+        if not user_input or user_input.lower() in ("exit", "quit", "q"):
+            console.print("[dim]Session ended.[/dim]")
+            break
+        result = svc.converse(session_id=session_id, message=user_input, context=ctx)
+        if result.ai_used:
+            response_text = _parse_ai_response(result.value)
+            console.print(f"AI: {response_text}\n")
+        else:
+            console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
+            break
 
 
 def _resolve_system_id(session, value: str) -> str:
@@ -100,6 +154,8 @@ def collect(source: tuple[str, ...]) -> None:
 
     # Report
     _print_stats(stats)
+    if stats.errors:
+        raise SystemExit(1)
 
 
 @cli.command()
@@ -273,8 +329,8 @@ def findings(ask: str | None) -> None:
 
     console.print(table)
 
-    # --ask: AI question about the listed findings
-    if ask and ask.strip():
+    # --ask: AI question about the listed findings (or REPL if empty)
+    if ask is not None:
         from warlock.ai.service import get_ai_service
         from warlock.ai.types import ConversationContext
 
@@ -301,20 +357,16 @@ def findings(ask: str | None) -> None:
             entity_data={"findings": findings_summary, "count": len(rows)},
             session_id=session_id,
         )
-        result = svc.converse(session_id=session_id, message=ask.strip(), context=ctx)
-        if result.ai_used:
-            console.print("\n[bold]AI:[/bold]")
-            value = result.value
-            response_text = value if isinstance(value, str) else str(value)
-            try:
-                import json as _json
-                parsed = _json.loads(response_text)
-                response_text = parsed.get("response") or str(parsed)
-            except Exception:
-                pass
-            console.print(response_text)
+        question = ask.strip() if ask.strip() else None
+        if question:
+            result = svc.converse(session_id=session_id, message=question, context=ctx)
+            if result.ai_used:
+                console.print("\n[bold]AI:[/bold]")
+                console.print(_parse_ai_response(result.value))
+            else:
+                console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
         else:
-            console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
+            _ai_repl(svc, session_id, ctx, f"findings ({len(rows)} items)")
 
 
 @cli.command()
@@ -439,8 +491,8 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
 @click.option("-o", "--output", default=None, help="Output file path (default: stdout)")
 @click.option("--format", "fmt", type=click.Choice(["ar", "ssp", "poam"]), default="ar", help="OSCAL document type")
 @click.option("--description", default="", help="System description (for SSP)")
-@click.option("--ai/--no-ai", default=False, help="Use AI to generate framework-aware narratives (SSP/POA&M)")
-def oscal(framework, system_name, output, fmt, description, ai):
+@click.option("--ai/--no-ai", "use_ai", default=None, help="Use AI to generate framework-aware narratives (SSP/POA&M)")
+def oscal(framework, system_name, output, fmt, description, use_ai):
     """Export assessment data in OSCAL JSON format.
 
     Use --ai with SSP or POA&M to generate rich, framework-aware narratives.
@@ -457,7 +509,7 @@ def oscal(framework, system_name, output, fmt, description, ai):
 
     # Set up AI narrator if requested
     narrator = None
-    if ai and fmt in ("ssp", "poam"):
+    if use_ai and fmt in ("ssp", "poam"):
         from warlock.assessors.ai_narrator import create_narrator
         narrator = create_narrator()
         if narrator is None:
@@ -470,8 +522,7 @@ def oscal(framework, system_name, output, fmt, description, ai):
             data = exporter.export_assessment_results(session, framework=framework, system_name=system_name)
         elif fmt == "ssp":
             if not framework:
-                console.print("[red]SSP export requires --framework[/red]")
-                raise SystemExit(1)
+                raise click.UsageError("SSP export requires --framework (-f)")
             data = exporter.export_ssp(
                 session, framework=framework, system_name=system_name,
                 description=description or f"{system_name} System Security Plan",
@@ -696,8 +747,8 @@ def issues(status: str | None, priority: str | None, framework: str | None, assi
 
     console.print(table)
 
-    # --ask: AI question about the listed issues
-    if ask and ask.strip():
+    # --ask: AI question about the listed issues (or REPL if empty)
+    if ask is not None:
         from warlock.ai.service import get_ai_service
         from warlock.ai.types import ConversationContext
 
@@ -725,28 +776,28 @@ def issues(status: str | None, priority: str | None, framework: str | None, assi
             entity_data={"issues": issues_summary, "count": len(rows)},
             session_id=session_id,
         )
-        result = svc.converse(session_id=session_id, message=ask.strip(), context=ctx)
-        if result.ai_used:
-            console.print("\n[bold]AI:[/bold]")
-            value = result.value
-            response_text = value if isinstance(value, str) else str(value)
-            try:
-                import json as _json
-                parsed = _json.loads(response_text)
-                response_text = parsed.get("response") or str(parsed)
-            except Exception:
-                pass
-            console.print(response_text)
+        question = ask.strip() if ask.strip() else None
+        if question:
+            result = svc.converse(session_id=session_id, message=question, context=ctx)
+            if result.ai_used:
+                console.print("\n[bold]AI:[/bold]")
+                console.print(_parse_ai_response(result.value))
+            else:
+                console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
         else:
-            console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
+            _ai_repl(svc, session_id, ctx, f"issues ({len(rows)} items)")
 
 
 @cli.command("issues-auto-create")
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
-def issues_auto_create(framework: str | None) -> None:
+@click.option("--actor", default=None, envvar="WLK_CLI_ACTOR", help="Actor identity for audit trail (default: cli@warlock, env: WLK_CLI_ACTOR)")
+def issues_auto_create(framework: str | None, actor: str | None) -> None:
     """Auto-create issues from non-compliant control results."""
     from warlock.db.engine import get_session, init_db
     from warlock.workflows.issues import IssueManager
+
+    if actor:
+        os.environ["WLK_CLI_ACTOR"] = actor
 
     init_db()
     mgr = IssueManager()
@@ -2135,7 +2186,8 @@ def framework_diff_cmd(old_path: str, new_path: str) -> None:
 @click.option("--reason", required=False, help="Reason or comment text")
 @click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for remediation guidance")
 @click.option("--ask", default=None, help="Ask AI a question about this item (interactive reasoning)")
-def remediate(item_id: str, action: str, to_value: str | None, reason: str | None, use_ai: bool | None, ask: str | None) -> None:
+@click.option("--actor", default=None, envvar="WLK_CLI_ACTOR", help="Actor identity for audit trail (default: cli@warlock, env: WLK_CLI_ACTOR)")
+def remediate(item_id: str, action: str, to_value: str | None, reason: str | None, use_ai: bool | None, ask: str | None, actor: str | None) -> None:
     """Show remediation guidance and take action on issues/POA&Ms.
 
     Default (no --action) shows the full remediation plan: what's wrong,
@@ -2162,6 +2214,10 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
         POAM,
     )
 
+    # If --actor was passed, override the env-based default
+    if actor:
+        os.environ["WLK_CLI_ACTOR"] = actor
+
     init_db()
     with get_session() as session:
         # Try to find as issue first, then POA&M
@@ -2169,8 +2225,7 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
         poam = session.query(POAM).filter(POAM.id.startswith(item_id)).first()
 
         if not issue and not poam:
-            console.print(f"[red]Not found: {item_id}. Use 'warlock issues' or 'warlock poams' to find IDs.[/red]")
-            return
+            _error(f"Not found: {item_id}. Use 'warlock issues' or 'warlock poams' to find IDs.")
 
         # --- SHOW MODE: full remediation plan ---
         if action == "show":
@@ -2185,69 +2240,87 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
             from warlock.workflows.issues import IssueManager
             mgr = IssueManager()
 
+            actor = _get_actor()
             if action == "assign":
                 if not to_value:
-                    console.print("[red]--to <email> required[/red]")
-                    return
-                mgr.assign(session, issue.id, to_value, assigned_by="cli@warlock")
+                    _error("--to <email> required")
+                mgr.assign(session, issue.id, to_value, assigned_by=actor)
                 console.print(f"[green]Issue {issue.id[:8]} assigned to {to_value}[/green]")
             elif action == "transition":
                 if not to_value:
-                    console.print("[red]--to <status> required. Valid: open, assigned, in_progress, resolved, closed, verified, risk_accepted[/red]")
-                    return
+                    _error("--to <status> required. Valid: open, assigned, in_progress, resolved, closed, verified, risk_accepted")
                 try:
-                    mgr.transition(session, issue.id, to_value, actor="cli@warlock")
+                    mgr.transition(session, issue.id, to_value, actor=actor)
                     console.print(f"[green]Issue {issue.id[:8]} → {to_value}[/green]")
                 except ValueError as e:
-                    console.print(f"[red]{e}[/red]")
+                    _error(str(e))
             elif action == "accept-risk":
-                mgr.accept_risk(session, issue.id, reason=reason or "Accepted via CLI", accepted_by="cli@warlock")
+                mgr.accept_risk(session, issue.id, reason=reason or "Accepted via CLI", accepted_by=actor)
                 console.print(f"[green]Issue {issue.id[:8]} risk accepted[/green]")
             elif action == "comment":
                 if not reason:
-                    console.print("[red]--reason <text> required[/red]")
-                    return
-                mgr.add_comment(session, issue.id, author="cli@warlock", content=reason)
+                    _error("--reason <text> required")
+                mgr.add_comment(session, issue.id, author=actor, content=reason)
                 console.print(f"[green]Comment added to issue {issue.id[:8]}[/green]")
             elif action == "extend":
-                console.print("[yellow]Use --action transition to change issue state[/yellow]")
+                _error("--action extend is not supported for issues. Use --action transition to change issue state.")
 
         elif poam:
             from warlock.workflows.poam import POAMManager
             mgr = POAMManager()
+            actor = _get_actor()
 
             if action == "transition":
                 if not to_value:
-                    console.print("[red]--to <status> required. Valid: open, in_progress, remediated, verified, completed, risk_accepted, cancelled[/red]")
-                    return
+                    _error("--to <status> required. Valid: open, in_progress, remediated, verified, completed, risk_accepted, cancelled")
                 try:
-                    mgr.transition(session, poam.id, to_value, actor="cli@warlock")
+                    mgr.transition(session, poam.id, to_value, actor=actor)
                     console.print(f"[green]POA&M {poam.id[:8]} → {to_value}[/green]")
                 except ValueError as e:
-                    console.print(f"[red]{e}[/red]")
+                    _error(str(e))
             elif action == "extend":
                 if not to_value:
-                    console.print("[red]--to <days> required[/red]")
-                    return
+                    _error("--to <days> required")
                 try:
                     days = int(to_value)
                 except ValueError:
-                    console.print("[red]--to must be number of days[/red]")
-                    return
+                    _error("--to must be number of days")
                 from datetime import datetime, timedelta, timezone
                 new_date = datetime.now(timezone.utc) + timedelta(days=days)
-                mgr.extend(session, poam.id, justification=reason or "Extended via CLI", new_date=new_date, approved_by="cli@warlock")
+                mgr.extend(session, poam.id, justification=reason or "Extended via CLI", new_date=new_date, approved_by=actor)
                 console.print(f"[green]POA&M {poam.id[:8]} extended by {days} days (new deadline: {new_date.date()})[/green]")
             elif action == "assign":
-                console.print("[yellow]Assign the linked issue instead[/yellow]")
+                _error("POA&Ms cannot be assigned directly. Assign the linked issue instead.")
             elif action == "accept-risk":
                 try:
-                    mgr.transition(session, poam.id, "risk_accepted", transitioned_by="cli@warlock")
+                    mgr.transition(session, poam.id, "risk_accepted", transitioned_by=actor)
                     console.print(f"[green]POA&M {poam.id[:8]} → risk_accepted[/green]")
                 except ValueError as e:
-                    console.print(f"[red]{e}[/red]")
+                    _error(str(e))
             elif action == "comment":
-                console.print("[yellow]POA&M comments not yet implemented — comment on the linked issue[/yellow]")
+                if not reason:
+                    _error("--reason <text> required")
+                # Add comment on linked issue if one exists, otherwise record as audit note
+                from warlock.db.models import Issue
+                linked_issue = session.query(Issue).filter(Issue.poam_id == poam.id).first()
+                if linked_issue:
+                    from warlock.workflows.issues import IssueManager
+                    issue_mgr = IssueManager()
+                    issue_mgr.add_comment(session, linked_issue.id, author=actor, content=reason)
+                    console.print(f"[green]Comment added to linked issue {linked_issue.id[:8]} for POA&M {poam.id[:8]}[/green]")
+                else:
+                    # Store as audit note in delay_justifications (the only list field available)
+                    from datetime import datetime, timezone
+                    notes = list(poam.delay_justifications or [])
+                    notes.append({
+                        "date": datetime.now(timezone.utc).isoformat(),
+                        "justification": reason,
+                        "approved_by": actor,
+                        "type": "comment",
+                    })
+                    poam.delay_justifications = notes
+                    session.commit()
+                    console.print(f"[green]Audit note added to POA&M {poam.id[:8]}[/green]")
 
         # --ask: interactive AI reasoning about this item
         if ask is not None:
@@ -2290,52 +2363,17 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                 session_id=session_id,
             )
 
-            # If --ask was passed with a value, use that as the question.
-            # If it was passed as a bare flag (empty string), enter REPL mode.
             question = ask.strip() if ask.strip() else None
 
             if question:
                 result = svc.converse(session_id=session_id, message=question, context=ctx)
                 if result.ai_used:
                     console.print("\n[bold]AI:[/bold]")
-                    value = result.value
-                    response_text = value if isinstance(value, str) else str(value)
-                    try:
-                        import json as _json
-                        parsed = _json.loads(response_text)
-                        response_text = parsed.get("response") or str(parsed)
-                    except Exception:
-                        pass
-                    console.print(response_text)
+                    console.print(_parse_ai_response(result.value))
                 else:
                     console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
             else:
-                # REPL mode: interactive conversation until 'exit' or Ctrl-C
-                console.print(f"[cyan]Entering interactive AI session for {entity_type} {entity_id[:8]}.[/cyan]")
-                console.print("[dim]Type your question and press Enter. Type 'exit' or press Ctrl-C to quit.[/dim]\n")
-                while True:
-                    try:
-                        user_input = input("You: ").strip()
-                    except (KeyboardInterrupt, EOFError):
-                        console.print("\n[dim]Session ended.[/dim]")
-                        break
-                    if not user_input or user_input.lower() in ("exit", "quit", "q"):
-                        console.print("[dim]Session ended.[/dim]")
-                        break
-                    result = svc.converse(session_id=session_id, message=user_input, context=ctx)
-                    if result.ai_used:
-                        value = result.value
-                        response_text = value if isinstance(value, str) else str(value)
-                        try:
-                            import json as _json
-                            parsed = _json.loads(response_text)
-                            response_text = parsed.get("response") or str(parsed)
-                        except Exception:
-                            pass
-                        console.print(f"AI: {response_text}\n")
-                    else:
-                        console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
-                        break
+                _ai_repl(svc, session_id, ctx, f"{entity_type} {entity_id[:8]}")
             return
 
         # --ai: AI-enhanced remediation guidance appended to show mode
@@ -2666,8 +2704,7 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     # --- SVG/PNG mode: d2 diagram ---
     if not shutil.which("d2"):
-        console.print("[red]d2 not installed. Install with: brew install d2[/red]")
-        return
+        _error("d2 not installed. Install with: brew install d2")
 
     # Build d2 source from live data
     sorted(source_counts.items(), key=lambda x: -x[1])[:15]

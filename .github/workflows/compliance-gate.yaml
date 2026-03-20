@@ -17,6 +17,10 @@ on:
       - 'warlock/frameworks/**'
       - 'warlock/assessors/**'
 
+# #27: Restrict default permissions to read-only
+permissions:
+  contents: read
+
 jobs:
   opa-policies:
     name: OPA Policy Validation
@@ -133,7 +137,13 @@ jobs:
       - name: Install conftest
         run: |
           CONFTEST_VERSION="0.57.0"
+          # #29: Verify download checksum to prevent supply-chain attacks
+          CONFTEST_SHA256="ccb3bf7c90e7e704f5376f6e0b7b1cc4bbb3ade06eb1b685a7e9c2240060eab3"
           wget -q "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" -O /tmp/conftest.tar.gz
+          echo "${CONFTEST_SHA256}  /tmp/conftest.tar.gz" | sha256sum -c - || {
+            echo "::error::Conftest checksum verification failed!"
+            exit 1
+          }
           tar -xzf /tmp/conftest.tar.gz -C /tmp
           sudo mv /tmp/conftest /usr/local/bin/conftest
           conftest --version

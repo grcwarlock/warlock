@@ -27,8 +27,6 @@ from warlock.db.models import AuditEntry
 
 log = logging.getLogger(__name__)
 
-_audit_lock = threading.Lock()
-
 # ---------------------------------------------------------------------------
 # Module-level BatchShipper — initialised once, shared across AuditTrail
 # instances in the same process.
@@ -81,48 +79,61 @@ class AuditTrail:
         evidence_sha256: str = "",
         metadata: dict | None = None,
     ) -> AuditEntry:
-        """Record an action in the immutable audit trail."""
-        with _audit_lock:
-            # Get the last entry for chain linking
-            last = (
-                self.session.query(AuditEntry)
-                .order_by(AuditEntry.sequence.desc())
-                .with_for_update()
-                .first()
-            )
+        """Record an action in the immutable audit trail.
 
-            prev_hash = last.entry_hash if last else "genesis"
-            sequence = int(last.sequence + 1) if last else 1
+        Uses DB-level SELECT ... FOR UPDATE to serialise sequence assignment
+        across multiple workers/processes.  The row lock on the most recent
+        audit entry prevents concurrent transactions from reading the same
+        sequence number.  The flush is performed inside the same transaction
+        so that the new row is visible to the next ``FOR UPDATE`` reader
+        before the application-level call returns.
+        """
+        # Get the last entry for chain linking.
+        # with_for_update() acquires a row-level lock in PostgreSQL,
+        # preventing concurrent workers from reading the same sequence.
+        # In SQLite (single-writer), this is a no-op but safe.
+        last = (
+            self.session.query(AuditEntry)
+            .order_by(AuditEntry.sequence.desc())
+            .with_for_update()
+            .first()
+        )
 
-            # Compute this entry's hash (includes previous hash for chaining).
-            # Timestamp is deliberately excluded so verify_chain() can recompute
-            # the hash deterministically from stored columns.
-            content = json.dumps(
-                {
-                    "sequence": sequence,
-                    "previous_hash": prev_hash,
-                    "action": action,
-                    "entity_type": entity_type,
-                    "entity_id": entity_id,
-                    "actor": actor,
-                    "evidence_sha256": evidence_sha256,
-                },
-                sort_keys=True,
-            )
-            entry_hash = hashlib.sha256(content.encode()).hexdigest()
+        prev_hash = last.entry_hash if last else "genesis"
+        sequence = int(last.sequence + 1) if last else 1
 
-            entry = AuditEntry(
-                sequence=sequence,
-                previous_hash=prev_hash,
-                entry_hash=entry_hash,
-                action=action,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                actor=actor,
-                evidence_sha256=evidence_sha256,
-                extra=metadata or {},
-            )
-            self.session.add(entry)
+        # Compute this entry's hash (includes previous hash for chaining).
+        # Timestamp is deliberately excluded so verify_chain() can recompute
+        # the hash deterministically from stored columns.
+        content = json.dumps(
+            {
+                "sequence": sequence,
+                "previous_hash": prev_hash,
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "actor": actor,
+                "evidence_sha256": evidence_sha256,
+            },
+            sort_keys=True,
+        )
+        entry_hash = hashlib.sha256(content.encode()).hexdigest()
+
+        entry = AuditEntry(
+            sequence=sequence,
+            previous_hash=prev_hash,
+            entry_hash=entry_hash,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            actor=actor,
+            evidence_sha256=evidence_sha256,
+            extra=metadata or {},
+        )
+        self.session.add(entry)
+        # Flush inside the transaction so the new row's FOR UPDATE lock is
+        # visible to the next concurrent reader before we release control.
+        self.session.flush()
 
         # Ship to external sink outside the DB lock so a slow/failing sink
         # does not block audit writes or hold the lock longer than necessary.
@@ -165,11 +176,15 @@ class AuditTrail:
         return entry
 
     def verify_chain(self) -> tuple[bool, list[str]]:
-        """Verify the entire audit chain is intact. Returns (valid, errors)."""
+        """Verify the entire audit chain is intact. Returns (valid, errors).
+
+        Uses yield_per(500) to stream results instead of loading the entire
+        audit trail into memory at once, preventing OOM on large chains.
+        """
         entries = (
             self.session.query(AuditEntry)
             .order_by(AuditEntry.sequence.asc())
-            .all()
+            .yield_per(500)
         )
 
         errors: list[str] = []

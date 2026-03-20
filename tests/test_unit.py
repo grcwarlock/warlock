@@ -27,25 +27,11 @@ from warlock.connectors.webhook import WebhookReceiver
 from warlock.pipeline.orchestrator import Pipeline
 
 
-PASS = 0
-FAIL = 0
-
-
-def check(name, condition, detail=""):
-    global PASS, FAIL
-    if condition:
-        PASS += 1
-    else:
-        FAIL += 1
-        print(f"  FAIL: {name} — {detail}")
-
-
 # ===================================================================
 # 1. EVENT BUS
 # ===================================================================
 
 def test_event_bus():
-    print("\n--- Event Bus ---")
     bus = EventBus()
     received = []
 
@@ -53,28 +39,28 @@ def test_event_bus():
     bus.publish(PipelineEvent(event_type="test.event", payload_id="abc"))
     bus.publish(PipelineEvent(event_type="other.event", payload_id="xyz"))
 
-    check("subscribe receives matching events", len(received) == 1)
-    check("subscribe ignores non-matching events", received[0].payload_id == "abc")
+    assert len(received) == 1, "subscribe receives matching events"
+    assert received[0].payload_id == "abc", "subscribe ignores non-matching events"
 
     # Wildcard
     all_events = []
     bus.subscribe_all(lambda e: all_events.append(e))
     bus.publish(PipelineEvent(event_type="any.thing", payload_id="123"))
-    check("subscribe_all receives everything", len(all_events) == 1)
+    assert len(all_events) == 1, "subscribe_all receives everything"
 
     # Error handling — handlers that throw don't crash publish
     bus.subscribe("error.test", lambda e: 1/0)
     try:
         bus.publish(PipelineEvent(event_type="error.test", payload_id="err"))
-        check("handler exception doesn't crash publish", True)
+        assert True, "handler exception doesn't crash publish"
     except Exception:
-        check("handler exception doesn't crash publish", False, "Exception propagated")
+        assert False, "handler exception doesn't crash publish — Exception propagated"
 
     # Clear
     bus.clear()
     before = len(received)
     bus.publish(PipelineEvent(event_type="test.event", payload_id="after"))
-    check("clear removes all subscriptions", len(received) == before)
+    assert len(received) == before, "clear removes all subscriptions"
 
 
 # ===================================================================
@@ -82,27 +68,26 @@ def test_event_bus():
 # ===================================================================
 
 def test_raw_event_data():
-    print("\n--- RawEventData ---")
     raw = RawEventData(
         source="aws", source_type=SourceType.CLOUD, provider="aws",
         event_type="test", raw_data={"key": "value"},
     )
-    check("has UUID id", len(raw.id) == 36)
-    check("has sha256", len(raw.sha256) == 64)
+    assert len(raw.id) == 36, "has UUID id"
+    assert len(raw.sha256) == 64, "has sha256"
 
-    # Same data → same hash
+    # Same data -> same hash
     raw2 = RawEventData(
         source="aws", source_type=SourceType.CLOUD, provider="aws",
         event_type="test", raw_data={"key": "value"},
     )
-    check("deterministic sha256", raw.sha256 == raw2.sha256)
+    assert raw.sha256 == raw2.sha256, "deterministic sha256"
 
-    # Different data → different hash
+    # Different data -> different hash
     raw3 = RawEventData(
         source="aws", source_type=SourceType.CLOUD, provider="aws",
         event_type="test", raw_data={"key": "other"},
     )
-    check("different data → different sha256", raw.sha256 != raw3.sha256)
+    assert raw.sha256 != raw3.sha256, "different data -> different sha256"
 
 
 # ===================================================================
@@ -110,8 +95,6 @@ def test_raw_event_data():
 # ===================================================================
 
 def test_connector_registry():
-    print("\n--- Connector Registry ---")
-
     class GoodConnector(BaseConnector):
         def validate(self): return []
         def health_check(self): return True
@@ -139,32 +122,32 @@ def test_connector_registry():
     reg.register("good", GoodConnector)
     reg.register("bad", BadConnector)
 
-    check("list_types returns registered", set(reg.list_types()) == {"good", "bad"})
+    assert set(reg.list_types()) == {"good", "bad"}, "list_types returns registered"
 
     # Good connector creates successfully
     conn = reg.create(ConnectorConfig(name="g1", source_type=SourceType.CUSTOM, provider="good"))
-    check("good connector created", conn is not None)
-    check("active list updated", "g1" in reg.list_active())
+    assert conn is not None, "good connector created"
+    assert "g1" in reg.list_active(), "active list updated"
 
     # Bad connector fails validation
     try:
         reg.create(ConnectorConfig(name="b1", source_type=SourceType.CUSTOM, provider="bad"))
-        check("bad connector rejected", False, "Should have raised ValueError")
+        assert False, "bad connector rejected — Should have raised ValueError"
     except ValueError:
-        check("bad connector rejected", True)
+        pass  # expected
 
     # Unknown provider
     try:
         reg.create(ConnectorConfig(name="u1", source_type=SourceType.CUSTOM, provider="unknown"))
-        check("unknown provider rejected", False)
+        assert False, "unknown provider rejected"
     except ValueError:
-        check("unknown provider rejected", True)
+        pass  # expected
 
     # collect_all
     results = reg.collect_all()
-    check("collect_all returns results", len(results) == 1)
-    check("collect_all result has events", results[0].event_count == 1)
-    check("collect_all result status", results[0].status == "success")
+    assert len(results) == 1, "collect_all returns results"
+    assert results[0].event_count == 1, "collect_all result has events"
+    assert results[0].status == "success", "collect_all result status"
 
 
 # ===================================================================
@@ -172,7 +155,6 @@ def test_connector_registry():
 # ===================================================================
 
 def test_connector_result():
-    print("\n--- ConnectorResult ---")
     r = ConnectorResult(
         connector_name="test", source="test",
         source_type=SourceType.CUSTOM, provider="test",
@@ -182,9 +164,9 @@ def test_connector_result():
         event_type="e1", raw_data={},
     ))
     r.complete()
-    check("success when events and no errors", r.status == "success")
-    check("duration computed", r.duration_seconds is not None)
-    check("event_count property", r.event_count == 1)
+    assert r.status == "success", "success when events and no errors"
+    assert r.duration_seconds is not None, "duration computed"
+    assert r.event_count == 1, "event_count property"
 
     # Partial
     r2 = ConnectorResult(
@@ -197,7 +179,7 @@ def test_connector_result():
     ))
     r2.errors.append("some error")
     r2.complete()
-    check("partial when events + errors", r2.status == "partial")
+    assert r2.status == "partial", "partial when events + errors"
 
     # Error
     r3 = ConnectorResult(
@@ -206,7 +188,7 @@ def test_connector_result():
     )
     r3.errors.append("fatal")
     r3.complete()
-    check("error when only errors", r3.status == "error")
+    assert r3.status == "error", "error when only errors"
 
 
 # ===================================================================
@@ -214,7 +196,6 @@ def test_connector_result():
 # ===================================================================
 
 def test_normalizer_registry():
-    print("\n--- Normalizer Registry ---")
     reg = NormalizerRegistry()
 
     class TestNormalizer(BaseNormalizer):
@@ -231,14 +212,14 @@ def test_normalizer_registry():
     raw = RawEventData(source="test", source_type=SourceType.CUSTOM,
                        provider="test", event_type="e1", raw_data={})
     findings = reg.normalize(raw)
-    check("normalizer produces findings", len(findings) == 1)
-    check("finding has correct type", findings[0].observation_type == "test")
+    assert len(findings) == 1, "normalizer produces findings"
+    assert findings[0].observation_type == "test", "finding has correct type"
 
     # Unhandled source returns empty
     raw2 = RawEventData(source="unknown", source_type=SourceType.CUSTOM,
                         provider="unknown", event_type="e1", raw_data={})
     findings2 = reg.normalize(raw2)
-    check("unhandled source returns empty", len(findings2) == 0)
+    assert len(findings2) == 0, "unhandled source returns empty"
 
     # Normalizer that throws returns empty (not crash)
     class CrashNormalizer(BaseNormalizer):
@@ -249,7 +230,7 @@ def test_normalizer_registry():
     raw3 = RawEventData(source="crash", source_type=SourceType.CUSTOM,
                         provider="crash", event_type="e1", raw_data={})
     findings3 = reg.normalize(raw3)
-    check("crashing normalizer returns empty", len(findings3) == 0)
+    assert len(findings3) == 0, "crashing normalizer returns empty"
 
 
 # ===================================================================
@@ -257,7 +238,6 @@ def test_normalizer_registry():
 # ===================================================================
 
 def test_aws_normalizer():
-    print("\n--- AWS Normalizer ---")
     norm = AWSNormalizer()
 
     # Credential report
@@ -280,23 +260,23 @@ def test_aws_normalizer():
             )},
         },
     )
-    check("can handle credential report", norm.can_handle(raw))
+    assert norm.can_handle(raw), "can handle credential report"
     findings = norm.normalize(raw)
-    check("credential report produces 3 findings", len(findings) == 3)
+    assert len(findings) == 3, "credential report produces 3 findings"
 
     root = [f for f in findings if "root" in f.resource_id]
-    check("root account found", len(root) == 1)
-    check("root has critical severity (access keys)", root[0].severity == "critical")
+    assert len(root) == 1, "root account found"
+    assert root[0].severity == "critical", "root has critical severity (access keys)"
 
     bad = [f for f in findings if "bad-user" in f.title]
-    check("bad-user found", len(bad) == 1)
-    check("bad-user is high severity (no MFA)", bad[0].severity == "high")
-    check("bad-user is misconfiguration", bad[0].observation_type == "misconfiguration")
+    assert len(bad) == 1, "bad-user found"
+    assert bad[0].severity == "high", "bad-user is high severity (no MFA)"
+    assert bad[0].observation_type == "misconfiguration", "bad-user is misconfiguration"
 
     good = [f for f in findings if "good-user" in f.title]
-    check("good-user found", len(good) == 1)
-    check("good-user is info severity", good[0].severity == "info")
-    check("good-user is inventory", good[0].observation_type == "inventory")
+    assert len(good) == 1, "good-user found"
+    assert good[0].severity == "info", "good-user is info severity"
+    assert good[0].observation_type == "inventory", "good-user is inventory"
 
     # Security groups
     raw_sg = RawEventData(
@@ -315,16 +295,16 @@ def test_aws_normalizer():
         },
     )
     sg_findings = norm.normalize(raw_sg)
-    check("security groups produce 2 findings", len(sg_findings) == 2)
+    assert len(sg_findings) == 2, "security groups produce 2 findings"
     open_sg = [f for f in sg_findings if f.severity == "high"]
-    check("open SG is high severity", len(open_sg) == 1)
+    assert len(open_sg) == 1, "open SG is high severity"
 
     # Can't handle unknown event type
     raw_unk = RawEventData(
         source="aws", source_type=SourceType.CLOUD, provider="aws",
         event_type="unknown_type", raw_data={},
     )
-    check("rejects unknown event type", not norm.can_handle(raw_unk))
+    assert not norm.can_handle(raw_unk), "rejects unknown event type"
 
     # Empty credential report
     raw_empty = RawEventData(
@@ -333,7 +313,7 @@ def test_aws_normalizer():
         raw_data={"region": "us-east-1", "account_id": "111", "response": {"Content": ""}},
     )
     empty_findings = norm.normalize(raw_empty)
-    check("empty credential report returns empty", len(empty_findings) == 0)
+    assert len(empty_findings) == 0, "empty credential report returns empty"
 
 
 # ===================================================================
@@ -341,7 +321,6 @@ def test_aws_normalizer():
 # ===================================================================
 
 def test_generic_normalizer():
-    print("\n--- Generic Normalizer ---")
     norm = GenericNormalizer()
 
     # Structured payload with common fields
@@ -350,11 +329,11 @@ def test_generic_normalizer():
         event_type="alert",
         raw_data={"title": "Test Alert", "severity": "high", "description": "Something bad"},
     )
-    check("can handle any event", norm.can_handle(raw))
+    assert norm.can_handle(raw), "can handle any event"
     findings = norm.normalize(raw)
-    check("structured payload produces finding", len(findings) >= 1)
-    check("extracts severity", findings[0].severity == "high")
-    check("extracts title", "Test Alert" in findings[0].title)
+    assert len(findings) >= 1, "structured payload produces finding"
+    assert findings[0].severity == "high", "extracts severity"
+    assert "Test Alert" in findings[0].title, "extracts title"
 
     # Completely empty payload
     raw_empty = RawEventData(
@@ -362,7 +341,7 @@ def test_generic_normalizer():
         event_type="unknown", raw_data={},
     )
     findings_empty = norm.normalize(raw_empty)
-    check("empty payload still produces a finding", len(findings_empty) >= 1)
+    assert len(findings_empty) >= 1, "empty payload still produces a finding"
 
     # Payload with list of items
     raw_list = RawEventData(
@@ -374,7 +353,7 @@ def test_generic_normalizer():
         ]},
     )
     findings_list = norm.normalize(raw_list)
-    check("list payload fans out", len(findings_list) >= 2)
+    assert len(findings_list) >= 2, "list payload fans out"
 
 
 # ===================================================================
@@ -382,7 +361,6 @@ def test_generic_normalizer():
 # ===================================================================
 
 def test_control_mapper():
-    print("\n--- Control Mapper ---")
     mapper = ControlMapper()
 
     # Explicit rule
@@ -409,24 +387,24 @@ def test_control_mapper():
     )
 
     mapped = mapper.map(finding)
-    check("produces mappings", len(mapped.mappings) > 0)
+    assert len(mapped.mappings) > 0, "produces mappings"
 
     frameworks = {m.framework for m in mapped.mappings}
-    check("maps to NIST", "nist" in frameworks)
-    check("crosswalks to SOC2", "soc2" in frameworks)
+    assert "nist" in frameworks, "maps to NIST"
+    assert "soc2" in frameworks, "crosswalks to SOC2"
 
     controls = {m.control_id for m in mapped.mappings}
-    check("explicit rule maps AC-2", "AC-2" in controls)
-    check("resource rule maps IA-2", "IA-2" in controls)
-    check("crosswalk maps CC6.1", "CC6.1" in controls)
+    assert "AC-2" in controls, "explicit rule maps AC-2"
+    assert "IA-2" in controls, "resource rule maps IA-2"
+    assert "CC6.1" in controls, "crosswalk maps CC6.1"
 
     # Verify no duplicates
     pairs = [(m.framework, m.control_id) for m in mapped.mappings]
-    check("no duplicate mappings", len(pairs) == len(set(pairs)))
+    assert len(pairs) == len(set(pairs)), "no duplicate mappings"
 
     # Crosswalk confidence is min(chain)
     cw = [m for m in mapped.mappings if m.mapping_method == "crosswalk"]
-    check("crosswalk has confidence", len(cw) > 0 and cw[0].confidence == 0.9)
+    assert len(cw) > 0 and cw[0].confidence == 0.9, "crosswalk has confidence"
 
     # Finding with no matching rules
     finding2 = FindingData(
@@ -435,7 +413,7 @@ def test_control_mapper():
         provider="gcp", resource_type="gke_cluster", severity="info",
     )
     mapped2 = mapper.map(finding2)
-    check("unmatched finding returns empty mappings", len(mapped2.mappings) == 0)
+    assert len(mapped2.mappings) == 0, "unmatched finding returns empty mappings"
 
 
 # ===================================================================
@@ -443,7 +421,6 @@ def test_control_mapper():
 # ===================================================================
 
 def test_assertion_engine():
-    print("\n--- Assertion Engine ---")
     eng = AssertionEngine()
 
     @eng.assertion("test_pass")
@@ -465,26 +442,26 @@ def test_assertion_engine():
 
     # Pass
     passed, reasons = eng.evaluate("test_pass", {}, {})
-    check("passing assertion returns True", passed is True)
-    check("passing assertion returns empty reasons", len(reasons) == 0)
+    assert passed is True, "passing assertion returns True"
+    assert len(reasons) == 0, "passing assertion returns empty reasons"
 
     # Fail
     passed, reasons = eng.evaluate("test_fail", {}, {})
-    check("failing assertion returns False", passed is False)
-    check("failing assertion returns reasons", len(reasons) == 1)
+    assert passed is False, "failing assertion returns False"
+    assert len(reasons) == 1, "failing assertion returns reasons"
 
     # Crash
     passed, reasons = eng.evaluate("test_crash", {}, {})
-    check("crashing assertion returns False", passed is False)
-    check("crashing assertion returns error reason", "error" in reasons[0].lower())
+    assert passed is False, "crashing assertion returns False"
+    assert "error" in reasons[0].lower(), "crashing assertion returns error reason"
 
     # Unknown assertion
     passed, reasons = eng.evaluate("nonexistent", {}, {})
-    check("unknown assertion returns False", passed is False)
+    assert passed is False, "unknown assertion returns False"
 
     # Control binding lookup
-    check("bound control found", eng.get_assertion_for_control("nist", "AC-1") == ["test_pass"])
-    check("unbound control returns None", eng.get_assertion_for_control("nist", "ZZ-99") is None)
+    assert eng.get_assertion_for_control("nist", "AC-1") == ["test_pass"], "bound control found"
+    assert eng.get_assertion_for_control("nist", "ZZ-99") is None, "unbound control returns None"
 
 
 # ===================================================================
@@ -492,7 +469,6 @@ def test_assertion_engine():
 # ===================================================================
 
 def test_assessor():
-    print("\n--- Assessor ---")
     eng = AssertionEngine()
 
     @eng.assertion("check_mfa")
@@ -521,16 +497,16 @@ def test_assessor():
     mapped = MappedFinding(finding=finding, mappings=[mapping_bound, mapping_unbound])
 
     results = assessor.assess(mapped)
-    check("produces result per mapping", len(results) == 2)
+    assert len(results) == 2, "produces result per mapping"
 
     bound_result = [r for r in results if r.control_id == "IA-2"][0]
-    check("bound control is non_compliant", bound_result.status == "non_compliant")
-    check("assertion ran", "check_mfa" in bound_result.assertion_name)
-    check("has remediation", bound_result.remediation_summary == "Enable MFA")
-    check("has evidence ids", len(bound_result.evidence_ids) > 0)
+    assert bound_result.status == "non_compliant", "bound control is non_compliant"
+    assert "check_mfa" in bound_result.assertion_name, "assertion ran"
+    assert bound_result.remediation_summary == "Enable MFA", "has remediation"
+    assert len(bound_result.evidence_ids) > 0, "has evidence ids"
 
     unbound_result = [r for r in results if r.control_id == "ZZ-99"][0]
-    check("unbound control is not_assessed", unbound_result.status == "not_assessed")
+    assert unbound_result.status == "not_assessed", "unbound control is not_assessed"
 
 
 # ===================================================================
@@ -538,27 +514,26 @@ def test_assessor():
 # ===================================================================
 
 def test_webhook_receiver():
-    print("\n--- Webhook Receiver ---")
     receiver = WebhookReceiver()
 
     raw = receiver.ingest(
         payload={"alert": "test", "severity": "high"},
         source="webhook", provider="pagerduty", event_type="incident",
     )
-    check("returns RawEventData", isinstance(raw, RawEventData))
-    check("source is webhook", raw.source == "webhook")
-    check("provider is pagerduty", raw.provider == "pagerduty")
-    check("event_type is incident", raw.event_type == "incident")
-    check("raw_data preserved", raw.raw_data["alert"] == "test")
-    check("has sha256", len(raw.sha256) == 64)
+    assert isinstance(raw, RawEventData), "returns RawEventData"
+    assert raw.source == "webhook", "source is webhook"
+    assert raw.provider == "pagerduty", "provider is pagerduty"
+    assert raw.event_type == "incident", "event_type is incident"
+    assert raw.raw_data["alert"] == "test", "raw_data preserved"
+    assert len(raw.sha256) == 64, "has sha256"
 
     # Batch
     events = receiver.ingest_batch(
         payloads=[{"a": 1}, {"b": 2}],
         source="manual", provider="csv", event_type="upload",
     )
-    check("batch returns correct count", len(events) == 2)
-    check("batch events have different ids", events[0].id != events[1].id)
+    assert len(events) == 2, "batch returns correct count"
+    assert events[0].id != events[1].id, "batch events have different ids"
 
 
 # ===================================================================
@@ -566,7 +541,6 @@ def test_webhook_receiver():
 # ===================================================================
 
 def test_database_persistence():
-    print("\n--- Database Persistence ---")
     engine_db = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine_db)
     Session = sessionmaker(bind=engine_db, expire_on_commit=False)
@@ -624,26 +598,26 @@ def test_database_persistence():
     session.commit()
 
     # Verify all tables populated
-    check("connector_runs persisted", session.query(ConnectorRun).count() == 1)
-    check("raw_events persisted", session.query(RawEvent).count() == 1)
-    check("findings persisted", session.query(Finding).count() == 1)
-    check("control_mappings persisted", session.query(ControlMapping).count() == 1)
-    check("control_results persisted", session.query(ControlResult).count() == 1)
+    assert session.query(ConnectorRun).count() == 1, "connector_runs persisted"
+    assert session.query(RawEvent).count() == 1, "raw_events persisted"
+    assert session.query(Finding).count() == 1, "findings persisted"
+    assert session.query(ControlMapping).count() == 1, "control_mappings persisted"
+    assert session.query(ControlResult).count() == 1, "control_results persisted"
 
     # Verify relationships
     finding = session.query(Finding).first()
-    check("finding links to raw_event", finding.raw_event_id is not None)
+    assert finding.raw_event_id is not None, "finding links to raw_event"
     raw = session.query(RawEvent).first()
-    check("raw_event links to connector_run", raw.connector_run_id is not None)
+    assert raw.connector_run_id is not None, "raw_event links to connector_run"
     mapping = session.query(ControlMapping).first()
-    check("mapping links to finding", mapping.finding_id == finding.id)
+    assert mapping.finding_id == finding.id, "mapping links to finding"
     result = session.query(ControlResult).first()
-    check("result links to mapping", result.control_mapping_id == mapping.id)
-    check("result links to finding", result.finding_id == finding.id)
+    assert result.control_mapping_id == mapping.id, "result links to mapping"
+    assert result.finding_id == finding.id, "result links to finding"
 
     # Verify sha256 integrity
-    check("raw_event has sha256", len(raw.sha256) == 64)
-    check("finding has sha256", len(finding.sha256) == 64)
+    assert len(raw.sha256) == 64, "raw_event has sha256"
+    assert len(finding.sha256) == 64, "finding has sha256"
 
     session.close()
 
@@ -653,7 +627,6 @@ def test_database_persistence():
 # ===================================================================
 
 def test_framework_loading():
-    print("\n--- Framework YAML Loading ---")
     from warlock.pipeline.loader import load_framework_configs
 
     mapper = ControlMapper()
@@ -661,12 +634,12 @@ def test_framework_loading():
     framework_dir = str(Path(__file__).resolve().parent.parent / "warlock" / "frameworks")
     load_framework_configs(framework_dir, mapper)
 
-    check("explicit rules loaded", len(mapper._explicit_rules) > 100)
-    check("resource rules loaded", len(mapper._resource_rules) > 100)
-    check("crosswalk edges loaded", sum(len(v) for v in mapper._crosswalk_graph.values()) > 30)
-    check("nist framework active", "nist_800_53" in mapper._active_frameworks)
-    check("soc2 framework active", "soc2" in mapper._active_frameworks)
-    check("iso 27001 in crosswalks", "iso_27001" in mapper._active_frameworks)
+    assert len(mapper._explicit_rules) > 100, "explicit rules loaded"
+    assert len(mapper._resource_rules) > 100, "resource rules loaded"
+    assert sum(len(v) for v in mapper._crosswalk_graph.values()) > 30, "crosswalk edges loaded"
+    assert "nist_800_53" in mapper._active_frameworks, "nist framework active"
+    assert "soc2" in mapper._active_frameworks, "soc2 framework active"
+    assert "iso_27001" in mapper._active_frameworks, "iso 27001 in crosswalks"
 
 
 # ===================================================================
@@ -674,7 +647,6 @@ def test_framework_loading():
 # ===================================================================
 
 def test_assertions_library():
-    print("\n--- Assertions Library ---")
     from warlock.assessors.engine import engine
     from warlock.assessors import assertions  # noqa: F401 — triggers registration
 
@@ -687,40 +659,40 @@ def test_assertions_library():
         "privileged_access_managed", "access_reviews_current", "siem_monitoring_active",
     ]
     for name in expected:
-        check(f"assertion '{name}' registered", name in engine._assertions)
+        assert name in engine._assertions, f"assertion '{name}' registered"
 
     # Test MFA assertion with different inputs (uses finding detail fields, not issues list)
     fn = engine._assertions["mfa_enabled"]
     passed, reasons = fn({"mfa_active": True, "password_enabled": True}, {})
-    check("mfa_enabled passes when MFA active", passed)
+    assert passed, "mfa_enabled passes when MFA active"
 
     passed, reasons = fn({"mfa_active": False, "password_enabled": True, "user": "test-user"}, {})
-    check("mfa_enabled fails when MFA inactive + console access", not passed)
-    check("mfa_enabled gives reason", len(reasons) > 0)
+    assert not passed, "mfa_enabled fails when MFA inactive + console access"
+    assert len(reasons) > 0, "mfa_enabled gives reason"
 
     # Test with empty detail — fail-closed when no MFA evidence
     passed, reasons = fn({}, {})
-    check("mfa_enabled fails closed on empty detail", not passed)  # no recognizable fields = fail closed
+    assert not passed, "mfa_enabled fails closed on empty detail"
 
     # Test no_open_security_groups
     fn_sg = engine._assertions["no_open_security_groups"]
     passed, reasons = fn_sg({"issues": ["open_to_world_port_22"]}, {})
-    check("open SG detected", not passed)
+    assert not passed, "open SG detected"
 
     passed, reasons = fn_sg({"issues": []}, {})
-    check("closed SG passes", passed)
+    assert passed, "closed SG passes"
 
     # Test password_policy
     fn_pw = engine._assertions["password_policy_compliant"]
     passed, reasons = fn_pw({"issues": ["min_length_under_14", "no_symbols_required"]}, {})
-    check("bad password policy detected", not passed)
-    check("multiple issues reported", len(reasons) >= 2)
+    assert not passed, "bad password policy detected"
+    assert len(reasons) >= 2, "multiple issues reported"
 
     # Verify control bindings exist
-    check("IA-2 bound to mfa_enabled",
-          "mfa_enabled" in (engine.get_assertion_for_control("nist_800_53", "IA-2") or []))
-    check("AU-2 bound to cloudtrail_enabled",
-          "cloudtrail_enabled" in (engine.get_assertion_for_control("nist_800_53", "AU-2") or []))
+    assert "mfa_enabled" in (engine.get_assertion_for_control("nist_800_53", "IA-2") or []), \
+        "IA-2 bound to mfa_enabled"
+    assert "cloudtrail_enabled" in (engine.get_assertion_for_control("nist_800_53", "AU-2") or []), \
+        "AU-2 bound to cloudtrail_enabled"
 
 
 # ===================================================================
@@ -728,7 +700,6 @@ def test_assertions_library():
 # ===================================================================
 
 def test_all_connectors_importable():
-    print("\n--- All Connectors Importable ---")
     from warlock.pipeline.loader import load_all_connectors
     from warlock.connectors.base import registry
 
@@ -740,7 +711,7 @@ def test_all_connectors_importable():
         "sentinel", "splunk", "elastic",
     ]
     for provider in expected:
-        check(f"connector '{provider}' registered", provider in registry.list_types())
+        assert provider in registry.list_types(), f"connector '{provider}' registered"
 
 
 # ===================================================================
@@ -748,17 +719,16 @@ def test_all_connectors_importable():
 # ===================================================================
 
 def test_all_normalizers_importable():
-    print("\n--- All Normalizers Importable ---")
     from warlock.pipeline.loader import load_all_normalizers
     from warlock.normalizers.base import registry
 
     load_all_normalizers()
-    check("18+ normalizers registered", len(registry._normalizers) >= 18)
+    assert len(registry._normalizers) >= 18, "18+ normalizers registered"
 
     # Verify each normalizer has can_handle and normalize methods
     for n in registry._normalizers:
-        check(f"{type(n).__name__} has can_handle", hasattr(n, "can_handle"))
-        check(f"{type(n).__name__} has normalize", hasattr(n, "normalize"))
+        assert hasattr(n, "can_handle"), f"{type(n).__name__} has can_handle"
+        assert hasattr(n, "normalize"), f"{type(n).__name__} has normalize"
 
 
 # ===================================================================
@@ -766,28 +736,27 @@ def test_all_normalizers_importable():
 # ===================================================================
 
 def test_ai_reasoning():
-    print("\n--- AI Reasoning ---")
     result = AIReasoningResult(
         status="non_compliant",
         assessment="Control is not met because MFA is disabled.",
         confidence=0.85,
         model="claude-sonnet-4",
     )
-    check("AIReasoningResult fields", result.status == "non_compliant")
-    check("AIReasoningResult confidence", result.confidence == 0.85)
+    assert result.status == "non_compliant", "AIReasoningResult fields"
+    assert result.confidence == 0.85, "AIReasoningResult confidence"
 
     # Factory function
     try:
         reasoner = create_reasoner("ollama", "", "llama3", "http://localhost:11434")
-        check("create_reasoner works", reasoner is not None)
+        assert reasoner is not None, "create_reasoner works"
     except Exception as e:
-        check("create_reasoner works", False, str(e))
+        assert False, f"create_reasoner works — {e}"
 
     try:
         create_reasoner("nonexistent", "", "model", "")
-        check("create_reasoner rejects unknown provider", False)
+        assert False, "create_reasoner rejects unknown provider"
     except ValueError:
-        check("create_reasoner rejects unknown provider", True)
+        pass  # expected
 
 
 # ===================================================================
@@ -795,48 +764,16 @@ def test_ai_reasoning():
 # ===================================================================
 
 def test_pipeline_stats():
-    print("\n--- Pipeline Stats ---")
     from warlock.pipeline.orchestrator import PipelineRunStats
 
     stats = PipelineRunStats()
-    check("initial stats are zero", stats.raw_events_collected == 0)
-    check("duration is None before completion", stats.duration_seconds is None)
+    assert stats.raw_events_collected == 0, "initial stats are zero"
+    assert stats.duration_seconds is None, "duration is None before completion"
 
     stats.raw_events_collected = 10
     stats.findings_normalized = 5
     stats.controls_mapped = 20
     stats.results_assessed = 20
     stats.completed_at = datetime.now(timezone.utc)
-    check("duration computed after completion", stats.duration_seconds is not None)
-    check("duration is positive", stats.duration_seconds >= 0)
-
-
-# ===================================================================
-# RUN ALL
-# ===================================================================
-
-if __name__ == "__main__":
-    test_event_bus()
-    test_raw_event_data()
-    test_connector_registry()
-    test_connector_result()
-    test_normalizer_registry()
-    test_aws_normalizer()
-    test_generic_normalizer()
-    test_control_mapper()
-    test_assertion_engine()
-    test_assessor()
-    test_webhook_receiver()
-    test_database_persistence()
-    test_framework_loading()
-    test_assertions_library()
-    test_all_connectors_importable()
-    test_all_normalizers_importable()
-    test_ai_reasoning()
-    test_pipeline_stats()
-
-    print(f"\n{'='*60}")
-    print(f"  {PASS} passed, {FAIL} failed")
-    print(f"{'='*60}")
-    if FAIL > 0:
-        exit(1)
+    assert stats.duration_seconds is not None, "duration computed after completion"
+    assert stats.duration_seconds >= 0, "duration is positive"

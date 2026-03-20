@@ -3,7 +3,7 @@
 ###############################################################################
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.5, < 2.0"
   required_providers {
     aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
@@ -38,7 +38,7 @@ resource "aws_iam_role_policy_attachment" "auditor_security_audit" {
 # ── MFA Enforcement Policy ───────────────────────────────────────────
 
 resource "aws_iam_policy" "require_mfa" {
-  name        = "RequireMFAForConsole"
+  name        = "${var.name_prefix}-RequireMFAForConsole"
   description = "Deny console access without MFA (AC-2, IA-2)"
   policy = jsonencode({
     Version = "2012-10-17"
@@ -124,9 +124,13 @@ resource "terraform_data" "warlock_evidence" {
   triggers_replace = [aws_iam_role.grc_auditor.arn]
 
   provisioner "local-exec" {
+    environment = {
+      WARLOCK_API_ENDPOINT = var.warlock_api_endpoint
+      WARLOCK_API_TOKEN    = var.warlock_api_token
+    }
     command = <<-EOT
-      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
-        -H "Authorization: Bearer ${var.warlock_api_token}" \
+      curl -sf -X POST "$WARLOCK_API_ENDPOINT/api/v1/evidence" \
+        -H "Authorization: Bearer $WARLOCK_API_TOKEN" \
         -H "Content-Type: application/json" \
         -d '{
           "module": "aws/iam-baseline",
@@ -134,7 +138,7 @@ resource "terraform_data" "warlock_evidence" {
           "control_ids": ["AC-2", "AC-6", "IA-2"],
           "attributes": {
             "auditor_role_name": "${aws_iam_role.grc_auditor.name}",
-            "mfa_enforcement_policy": "RequireMFAForConsole",
+            "mfa_enforcement_policy": "${var.name_prefix}-RequireMFAForConsole",
             "root_usage_alarm": "RootAccountUsage"
           }
         }' || true

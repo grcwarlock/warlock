@@ -201,14 +201,22 @@ class OPAComplianceEvaluator:
             raise RuntimeError("OPA client unavailable (httpx not installed)")
 
         # Derive the framework namespace root from any package path.
-        # Package paths look like "warlock.nist_800_53.ac_2" so the root
-        # is "warlock/nist_800_53" (first two segments).
+        # Package paths look like "nist.ac.ac_2" so the root
+        # is "nist/ac" (first two segments).
         sample_pkg = next(iter(fw_packages))
         segments = sample_pkg.replace(".", "/").split("/")
         framework_root = "/".join(segments[:2]) if len(segments) >= 2 else segments[0]
 
         batch_url = f"{self.base_url}/{framework_root}"
         payload = {"input": {"normalized_data": normalized_data}}
+
+        # Build a reverse index: last segment of package path -> full package
+        # path.  This is more robust than reconstructing from sample_pkg
+        # because packages can have varying depths within a framework.
+        last_segment_to_pkg: dict[str, str] = {}
+        for pkg in fw_packages:
+            last_seg = pkg.rsplit(".", 1)[-1]
+            last_segment_to_pkg[last_seg] = pkg
 
         results: list[ControlResultData] = []
         batch_succeeded = False
@@ -232,9 +240,13 @@ class OPAComplianceEvaluator:
                     if not isinstance(result_data, dict):
                         continue
 
-                    # Reconstruct the package path so we can look up the
-                    # canonical control_id from the policy_map.
-                    pkg_path = f"{sample_pkg.rsplit('.', 1)[0]}.{rule_name}"
+                    # Resolve the package path from the rule_name using the
+                    # reverse index.  Fall back to the old heuristic if the
+                    # rule_name doesn't match any known last segment.
+                    pkg_path = last_segment_to_pkg.get(
+                        rule_name,
+                        f"{sample_pkg.rsplit('.', 1)[0]}.{rule_name}",
+                    )
                     # Prefer the policy_map control_id; fall back to the
                     # value embedded in the result itself.
                     control_id = fw_packages.get(
@@ -312,7 +324,10 @@ class OPAComplianceEvaluator:
         policy_map: dict[str, tuple[str, str]] | None = None,
         frameworks: list[str] | None = None,
     ) -> list[ControlResultData]:
-        """Evaluate policies across all (or selected) frameworks.
+        """Evaluate all registered policies using batch per-framework evaluation.
+
+        Delegates to ``evaluate_framework()`` for each unique framework,
+        reducing ~592 HTTP calls to ~7 (one per framework).
 
         Parameters
         ----------
@@ -328,30 +343,16 @@ class OPAComplianceEvaluator:
             log.warning("No policy map provided -- skipping OPA evaluation")
             return []
 
-        results: list[ControlResultData] = []
-
-        for package_path, (fw, control_id) in policy_map.items():
+        # Collect unique frameworks from the policy map
+        discovered_frameworks: set[str] = set()
+        for _pkg, (fw, _ctrl_id) in policy_map.items():
             if frameworks and fw not in frameworks:
                 continue
+            discovered_frameworks.add(fw)
 
-            opa_result = self.evaluate_policy(package_path, normalized_data)
-            if opa_result is None:
-                continue
+        all_results: list[ControlResultData] = []
+        for fw in sorted(discovered_frameworks):
+            results = self.evaluate_framework(fw, normalized_data, policy_map=policy_map)
+            all_results.extend(results)
 
-            status = "compliant" if opa_result.compliant else "non_compliant"
-            cr = ControlResultData(
-                finding_id="",
-                control_mapping_id="",
-                framework=fw,
-                control_id=control_id,
-                status=status,
-                severity=opa_result.severity,
-                assertion_name=package_path,
-                assertion_passed=opa_result.compliant,
-                assertion_findings=opa_result.findings,
-                assessor=f"opa:{package_path}",
-                assessed_at=datetime.now(timezone.utc),
-            )
-            results.append(cr)
-
-        return results
+        return all_results

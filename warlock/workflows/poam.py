@@ -17,7 +17,7 @@ from warlock.utils import ensure_aware
 log = logging.getLogger(__name__)
 
 # Terminal statuses that should not be considered "open"
-_CLOSED_STATUSES = frozenset({"completed", "verified", "closed", "risk_accepted"})
+_CLOSED_STATUSES = frozenset({"completed", "verified", "closed", "risk_accepted", "cancelled"})
 
 # W-2: Valid POA&M status transitions
 VALID_TRANSITIONS: dict[str, set[str]] = {
@@ -143,6 +143,14 @@ class POAMManager:
                 f"Cannot extend POA&M {poam_id} in status '{poam.status}'"
             )
 
+        # Reject past dates — extensions must be into the future
+        now = datetime.now(timezone.utc)
+        if new_date <= now:
+            raise ValueError(
+                f"Cannot extend POA&M {poam_id} to a past or current date: "
+                f"{new_date.isoformat()}"
+            )
+
         poam.delay_count = (poam.delay_count or 0) + 1
 
         justifications = list(poam.delay_justifications or [])
@@ -195,6 +203,8 @@ class POAMManager:
             old_status = poam.status
             poam.status = new_status
             poam.updated_by = actor
+            if new_status == "risk_accepted":
+                poam.actual_completion = datetime.now(timezone.utc)
             session.flush()
             log.info(
                 "POA&M %s transitioned %s -> %s by %s",

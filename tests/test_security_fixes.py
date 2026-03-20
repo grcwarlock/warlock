@@ -175,7 +175,7 @@ class TestLegacyPasswordReHash:
         # Verify password is now bcrypt or pbkdf2
         updated = session.query(User).filter_by(email="legacy@acme.com").one()
         assert not updated.hashed_password.startswith("legacy_salt:")
-        assert updated.hashed_password.startswith(("$2b$", "pbkdf2:"))
+        assert updated.hashed_password.startswith(("$2b$", "bcrypt:", "pbkdf2:"))
 
 
 # ---------------------------------------------------------------------------

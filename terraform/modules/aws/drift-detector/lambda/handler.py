@@ -26,7 +26,19 @@ STATE_BUCKET = os.environ["TF_STATE_BUCKET"]
 STATE_KEY = os.environ["TF_STATE_KEY"]
 SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
 WARLOCK_API_ENDPOINT = os.environ.get("WARLOCK_API_ENDPOINT", "")
-WARLOCK_API_TOKEN = os.environ.get("WARLOCK_API_TOKEN", "")
+WARLOCK_API_TOKEN_SSM_PARAM = os.environ.get("WARLOCK_API_TOKEN_SSM_PARAM", "")
+
+# Cold-start: resolve API token from SSM Parameter Store SecureString
+_ssm_client = boto3.client("ssm")
+WARLOCK_API_TOKEN = ""
+if WARLOCK_API_TOKEN_SSM_PARAM:
+    try:
+        _resp = _ssm_client.get_parameter(
+            Name=WARLOCK_API_TOKEN_SSM_PARAM, WithDecryption=True
+        )
+        WARLOCK_API_TOKEN = _resp["Parameter"]["Value"]
+    except Exception:  # noqa: BLE001
+        logger.warning("Failed to read API token from SSM param %s", WARLOCK_API_TOKEN_SSM_PARAM)
 
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
@@ -165,8 +177,11 @@ def _get_config_resource(
 # Security-critical attributes that must match — keyed by Terraform resource type
 _CRITICAL_ATTRS: dict[str, list[tuple[str, str]]] = {
     "aws_s3_bucket": [
-        # (tf_attr_path, config_attr_path)
-        # These are simplified — real mapping depends on Config schema
+        ("server_side_encryption_configuration", "serverSideEncryptionConfiguration"),
+        ("versioning", "versioningConfiguration"),
+        ("logging", "loggingConfiguration"),
+        ("acl", "accessControlList"),
+        ("public_access_block_configuration", "publicAccessBlockConfiguration"),
     ],
     "aws_kms_key": [
         ("enable_key_rotation", "keyRotationStatus"),

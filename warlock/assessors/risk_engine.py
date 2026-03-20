@@ -125,6 +125,37 @@ DEFAULT_SCENARIO_CATALOG: dict[str, dict[str, Any]] = {
         "frequency_min": 0.5, "frequency_mode": 3, "frequency_max": 10,
         "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
     },
+    # SOC 2 TSC family mappings — alias to equivalent NIST families
+    "CC": {  # Common Criteria -> Access Control
+        "name": "unauthorized_access",
+        "description": "Unauthorized access to information systems",
+        "frequency_min": 1, "frequency_mode": 5, "frequency_max": 20,
+        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+    },
+    "A": {  # Availability -> Continuity Planning
+        "name": "service_disruption",
+        "description": "Business continuity and disaster recovery failure",
+        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
+        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+    },
+    "PI": {  # Processing Integrity -> System and Information Integrity
+        "name": "malware",
+        "description": "Malware infection and propagation",
+        "frequency_min": 2, "frequency_mode": 8, "frequency_max": 30,
+        "impact_min": 25_000, "impact_mode": 150_000, "impact_max": 1_500_000,
+    },
+    "C": {  # Confidentiality -> System and Communications Protection
+        "name": "data_exfiltration",
+        "description": "Data exfiltration through communication channels",
+        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 12,
+        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 10_000_000,
+    },
+    "P": {  # Privacy -> Program Management
+        "name": "unassessed_risk",
+        "description": "Unidentified or unassessed privacy risks materializing",
+        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 10,
+        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+    },
 }
 
 
@@ -369,7 +400,7 @@ class RiskEngine:
         )
 
         if _HAS_NUMPY:
-            # --- Vectorized path (10-20x faster than per-iteration loop) ---
+            # --- Fully vectorized path (#24 fix) ---
             gen = rng if rng is not None else np.random.default_rng()
             freq_arr = np.maximum(0, np.asarray(frequencies, dtype=np.float64))
 
@@ -379,16 +410,36 @@ class RiskEngine:
             reduction = scenario.control_effectiveness
             loss_scale = 1.0 - reduction
 
-            for i, event_count in enumerate(event_counts):
-                if event_count == 0:
-                    annual_losses.append(0.0)
-                    continue
-                losses = _pert_samples(
+            # Total events across all iterations
+            total_events = int(event_counts.sum())
+            if total_events > 0:
+                # Generate all PERT samples at once instead of per-iteration
+                all_losses = _pert_samples(
                     scenario.impact_min, scenario.impact_mode, scenario.impact_max,
-                    int(event_count), rng=gen,
+                    total_events, rng=gen,
                 )
-                total_loss = sum(losses) * loss_scale
-                annual_losses.append(total_loss)
+                loss_arr = np.asarray(all_losses, dtype=np.float64)
+                # Fully vectorized: use cumsum + split-by-offset to sum
+                # losses per iteration without a Python loop
+                cumsum = np.cumsum(loss_arr)
+                offsets = np.cumsum(event_counts)
+                # Per-iteration sums via cumsum differences
+                per_iter_sums = np.empty(n, dtype=np.float64)
+                per_iter_sums[0] = cumsum[offsets[0] - 1] if event_counts[0] > 0 else 0.0
+                mask_nonzero = event_counts > 0
+                # For iterations 1..n-1, sum = cumsum[end] - cumsum[start-1]
+                per_iter_sums[1:] = np.where(
+                    mask_nonzero[1:],
+                    cumsum[np.clip(offsets[1:] - 1, 0, total_events - 1)]
+                    - cumsum[np.clip(offsets[:-1] - 1, 0, total_events - 1)],
+                    0.0,
+                )
+                # Zero out iterations with no events
+                per_iter_sums[~mask_nonzero] = 0.0
+                per_iter_sums *= loss_scale
+                annual_losses = per_iter_sums.tolist()
+            else:
+                annual_losses = [0.0] * n
         else:
             # --- Pure-Python fallback ---
             for freq in frequencies:
@@ -788,9 +839,11 @@ class RiskEngine:
         summary: dict[str, dict[str, Any]] = {}
 
         for framework in sorted(frameworks):
-            # Determine whether a valid cache entry exists *before* calling
-            # analyze_framework_risk so we can accurately report hit/miss.
-            hit = self._cache_hit(session, framework, cache_ttl_hours)
+            # Record hit/miss counters before the call so we can detect
+            # whether analyze_framework_risk found a cache hit, without
+            # duplicating the posture aggregation that _cache_hit performs.
+            with self._stats_lock:
+                hits_before = self._cache_hits
 
             t0 = datetime.now(timezone.utc)
             try:
@@ -801,8 +854,11 @@ class RiskEngine:
                 )
             except Exception as exc:  # pragma: no cover
                 log.exception("precompute_all_frameworks: error processing %s", framework)
-                summary[framework] = {"cached": hit, "duration_ms": 0, "error": str(exc)}
+                summary[framework] = {"cached": False, "duration_ms": 0, "error": str(exc)}
                 continue
+
+            with self._stats_lock:
+                hit = self._cache_hits > hits_before
 
             duration_ms = int(
                 (datetime.now(timezone.utc) - t0).total_seconds() * 1000

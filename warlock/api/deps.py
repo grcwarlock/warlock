@@ -52,35 +52,40 @@ def get_current_user(
     # Try API key first
     if x_api_key:
         user, api_key = authenticate_api_key(db, x_api_key)
-        if user:
-            role_perms = PERMISSIONS.get(user.role, set())
-            # Intersect with API key scopes if scopes are defined
-            if api_key:
-                if api_key.scopes:  # Non-empty scopes: intersect with role
-                    effective = role_perms & set(api_key.scopes)
-                else:  # Empty scopes list: no permissions (not full permissions)
-                    effective = set()
-                    log.warning("API key %s has empty scopes — no permissions granted", api_key.id[:8])
-            else:
-                effective = role_perms
-            # S-9: Set request.state.user so OPA policy gate can read it
-            request.state.user = user
-            return AuthContext(
-                user=user,
-                effective_permissions=effective,
-                via_api_key=True,
-                api_key_id=api_key.id if api_key else None,
+        if not user:
+            # #25: Raise 401 immediately on invalid API key — do NOT fall through
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
             )
+        role_perms = PERMISSIONS.get(user.role, set())
+        # Intersect with API key scopes if scopes are defined
+        if api_key:
+            if api_key.scopes:  # Non-empty scopes: intersect with role
+                effective = role_perms & set(api_key.scopes)
+            else:  # Empty scopes list: no permissions (not full permissions)
+                effective = set()
+                log.warning("API key %s has empty scopes — no permissions granted", api_key.id[:8])
+        else:
+            effective = role_perms
+        # S-9: Set request.state.user so OPA policy gate can read it
+        request.state.user = user
+        return AuthContext(
+            user=user,
+            effective_permissions=effective,
+            via_api_key=True,
+            api_key_id=api_key.id if api_key else None,
+        )
 
     # Try JWT bearer token
     if authorization and authorization.startswith("Bearer "):
         token = authorization[7:]
         try:
             payload = decode_access_token(token)
-        except ValueError as exc:
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=str(exc),
+                detail="Invalid or expired token",
             )
         user_id = payload.get("sub")
         if not user_id:

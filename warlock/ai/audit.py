@@ -12,7 +12,6 @@ tracking, and confidence scores for quality monitoring.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import threading
 import uuid
@@ -273,10 +272,6 @@ class AIAuditLog:
         return d
 
 
-def hash_prompt(system_prompt: str, user_prompt: str) -> str:
-    """SHA-256 hash of the full prompt for reproducibility tracking.
-
-    Mirrors ``warlock.assessors.ai_reasoning._hash_prompt``.
-    """
-    combined = f"{system_prompt}\n---\n{user_prompt}"
-    return hashlib.sha256(combined.encode()).hexdigest()
+# Re-export for backwards compatibility -- canonical implementation lives
+# in ``warlock.ai.sanitize``.
+from warlock.ai.sanitize import hash_prompt  # noqa: E402, F401

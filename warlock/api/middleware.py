@@ -12,6 +12,7 @@ from collections import defaultdict
 from threading import Lock
 from typing import Callable
 
+from fastapi import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -30,6 +31,10 @@ _ENDPOINT_LIMITS: dict[str, tuple[int, int]] = {
     "/api/v1/auth/login": (10, 5),           # stricter: 10/min + 5 burst
     "/api/v1/auth/register": (5, 2),         # very strict: 5/min + 2 burst
     "/api/v1/trust/request-access": (10, 3), # public endpoint, strict
+    "/api/v1/ai/reason": (30, 5),            # expensive AI reasoning calls
+    "/api/v1/ai/converse": (30, 5),          # expensive AI conversation calls
+    "/api/v1/risk/analyze": (10, 2),         # Monte Carlo simulation
+    "/api/v1/pipeline/collect": (5, 2),      # full pipeline run
 }
 
 
@@ -125,6 +130,73 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     del self._windows[k]
 
         return await call_next(request)
+
+
+# ---------------------------------------------------------------------------
+# Request Body Size Enforcement
+# ---------------------------------------------------------------------------
+
+# Maximum request body size in bytes (10 MB default).
+# Content-Length alone is insufficient — chunked Transfer-Encoding bypasses it.
+_MAX_BODY_BYTES = 10 * 1024 * 1024
+
+
+class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
+    """Enforce a hard cap on request body size regardless of Transfer-Encoding.
+
+    The Content-Length header is advisory and absent on chunked requests.
+    This middleware wraps the receive callable to track actual bytes read
+    and aborts with 413 if the limit is exceeded.
+    """
+
+    def __init__(self, app, max_bytes: int = _MAX_BODY_BYTES) -> None:
+        super().__init__(app)
+        self.max_bytes = max_bytes
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Fast-reject based on Content-Length when present
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                if int(content_length) > self.max_bytes:
+                    return Response(
+                        content='{"detail":"Request body too large"}',
+                        status_code=413,
+                        media_type="application/json",
+                    )
+            except ValueError:
+                pass  # malformed header — let body-reading check handle it
+
+        # Wrap the ASGI receive to count actual bytes (catches chunked encoding)
+        bytes_read = 0
+        max_bytes = self.max_bytes
+        original_receive = request._receive  # type: ignore[attr-defined]
+
+        async def limited_receive():
+            nonlocal bytes_read
+            message = await original_receive()
+            if message.get("type") == "http.request":
+                body = message.get("body", b"")
+                bytes_read += len(body)
+                if bytes_read > max_bytes:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Request body too large",
+                    )
+            return message
+
+        request._receive = limited_receive  # type: ignore[attr-defined]
+
+        try:
+            return await call_next(request)
+        except HTTPException as exc:
+            if exc.status_code == 413:
+                return Response(
+                    content='{"detail":"Request body too large"}',
+                    status_code=413,
+                    media_type="application/json",
+                )
+            raise
 
 
 # ---------------------------------------------------------------------------
@@ -295,5 +367,6 @@ def register_middleware(app) -> None:
         )
 
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RequestBodyLimitMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(RequestAuditMiddleware)

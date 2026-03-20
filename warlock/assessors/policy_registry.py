@@ -120,6 +120,8 @@ _FRAMEWORK_MAP: dict[str, tuple[str, Any]] = {
     "cmmc": ("cmmc", _cmmc_control_id),
     "hipaa": ("hipaa", _hipaa_control_id),
     "ucf": ("ucf", _ucf_control_id),
+    "gdpr": ("gdpr", lambda parts: parts[2].upper().replace("_", "-") if len(parts) >= 3 else ""),
+    "pci_dss": ("pci_dss", lambda parts: parts[2].upper().replace("_", ".") if len(parts) >= 3 else ""),
 }
 
 

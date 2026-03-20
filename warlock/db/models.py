@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import (
+    BigInteger,
     Column,
     DateTime,
     Float,
@@ -92,6 +93,7 @@ class RawEvent(Base):
         Index("idx_raw_source", "source", "provider"),
         Index("idx_raw_ingested", "ingested_at"),
         Index("idx_raw_sha256", "sha256"),
+        Index("idx_raw_connector_run_id", "connector_run_id"),  # #20: FK index
     )
 
 
@@ -143,6 +145,8 @@ class Finding(Base):
         Index("idx_finding_observed", "observed_at"),
         Index("idx_finding_source", "source", "provider"),
         Index("idx_finding_type", "observation_type"),
+        Index("idx_finding_raw_event_id", "raw_event_id"),  # #20: FK index
+        Index("idx_finding_system_profile", "system_profile_id"),
     )
 
 
@@ -224,6 +228,7 @@ class ControlResult(Base):
         Index("idx_result_assessed", "assessed_at"),
         Index("idx_result_finding", "finding_id"),
         Index("idx_result_mapping", "control_mapping_id"),
+        Index("idx_result_system_profile", "system_profile_id"),
     )
 
 
@@ -240,7 +245,7 @@ class AuditEntry(Base):
     __tablename__ = "audit_entries"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    sequence = Column(Integer, nullable=False)  # monotonically increasing
+    sequence = Column(BigInteger, nullable=False)  # monotonically increasing
     previous_hash = Column(String(64), nullable=False, default="genesis")
     entry_hash = Column(String(64), nullable=False)
 
@@ -358,7 +363,6 @@ class User(Base):
     refresh_token_hash = Column(String(64), nullable=True)
 
     __table_args__ = (
-        Index("idx_user_email", "email"),
         Index("idx_user_role", "role"),
     )
 
@@ -484,6 +488,8 @@ class POAM(Base):
         Index("idx_poam_status", "status"),
         Index("idx_poam_completion", "scheduled_completion"),
         Index("idx_poam_system", "system_profile_id"),
+        Index("idx_poam_finding", "finding_id"),
+        Index("idx_poam_control_result", "control_result_id"),
     )
 
 

@@ -134,15 +134,19 @@ class EvidenceRetentionManager:
                 for f in finding_rows
             ]
 
-        # Raw events in period
-        raw_events = (
-            session.query(RawEvent)
-            .filter(
-                RawEvent.ingested_at >= start,
-                RawEvent.ingested_at <= end,
-            )
-            .all()
+        # Raw events in period, filtered by framework
+        # Derive event sources that belong to this framework from the
+        # control results already queried above.
+        framework_sources = {cr.source for cr in results if getattr(cr, "source", None)}
+        raw_event_query = session.query(RawEvent).filter(
+            RawEvent.ingested_at >= start,
+            RawEvent.ingested_at <= end,
         )
+        if framework_sources:
+            raw_event_query = raw_event_query.filter(
+                RawEvent.source.in_(framework_sources)
+            )
+        raw_events = raw_event_query.all()
         raw_event_dicts = [
             {
                 "id": re.id,
@@ -296,8 +300,6 @@ class EvidenceRetentionManager:
 # ---------------------------------------------------------------------------
 # AI-enhanced evidence quality evaluation
 # ---------------------------------------------------------------------------
-
-log = logging.getLogger(__name__)
 
 
 def _fallback_evidence_quality(

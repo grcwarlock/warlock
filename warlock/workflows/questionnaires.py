@@ -364,6 +364,20 @@ class QuestionnaireManager:
         if not q:
             raise ValueError(f"Questionnaire not found: {questionnaire_id}")
 
+        # Validate question_id exists in the template
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if template:
+            valid_ids = {qn["id"] for qn in (template.questions or [])}
+            if question_id not in valid_ids:
+                raise ValueError(
+                    f"Question '{question_id}' does not exist in template "
+                    f"'{template.id}'. Valid IDs: {sorted(valid_ids)}"
+                )
+
         responses = dict(q.responses or {})
         responses[question_id] = {
             "answer": answer,
@@ -372,14 +386,12 @@ class QuestionnaireManager:
         }
         q.responses = responses
 
-        # Recalculate completion
-        template = (
-            session.query(QuestionnaireTemplate)
-            .filter(QuestionnaireTemplate.id == q.template_id)
-            .first()
-        )
+        # Recalculate completion (already validated template above)
         if template and template.total_questions > 0:
-            q.completion_pct = round(len(responses) / template.total_questions * 100, 1)
+            q.completion_pct = min(
+                round(len(responses) / template.total_questions * 100, 1),
+                100.0,
+            )
 
         q.updated_at = datetime.now(timezone.utc)
         session.flush()
@@ -417,7 +429,10 @@ class QuestionnaireManager:
             .first()
         )
         if template and template.total_questions > 0:
-            q.completion_pct = round(len(existing) / template.total_questions * 100, 1)
+            q.completion_pct = min(
+                round(len(existing) / template.total_questions * 100, 1),
+                100.0,
+            )
 
         q.updated_at = datetime.now(timezone.utc)
         session.flush()
@@ -540,7 +555,7 @@ class QuestionnaireManager:
                         break
 
             if matched_compliant > 0 or matched_non_compliant > 0:
-                matched_compliant + matched_non_compliant
+                total_matched = matched_compliant + matched_non_compliant
                 if question.get("response_type") == "yes_no":
                     answer = "Yes" if matched_compliant > matched_non_compliant else "No"
                 else:
@@ -549,7 +564,7 @@ class QuestionnaireManager:
                         f"{', '.join(source_controls[:3])}"
                     )
 
-                confidence = round(matched_compliant / max(len(mapped), 1) * 100, 1)
+                confidence = round(matched_compliant / max(total_matched, 1) * 100, 1)
                 suggestions[qid] = {
                     "answer": answer,
                     "confidence": min(confidence, 100.0),
@@ -596,6 +611,14 @@ class QuestionnaireManager:
                 f"Cannot transition from '{q.status}' to '{new_status}'. "
                 f"Allowed: {allowed}"
             )
+
+        # Prevent advancing to completion-dependent statuses with 0% completion
+        if new_status in ("completed", "reviewed", "accepted"):
+            if (q.completion_pct or 0.0) <= 0.0:
+                raise ValueError(
+                    f"Cannot transition to '{new_status}' with 0% completion. "
+                    "Submit responses before advancing."
+                )
 
         now = datetime.now(timezone.utc)
         q.status = new_status
