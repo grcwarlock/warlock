@@ -160,7 +160,8 @@ When you change the left column, you MUST update every file in the right column.
 | OPA policies (`policies/`) | `opa check` + `opa test`, input schema matches normalizer output |
 | OSCAL packages (`frameworks-oscal/`) | Validate JSON, check control IDs match pipeline YAML, update README.md counts |
 | Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader doesn't crash, update README.md framework table |
-| CI workflows (`.github/workflows/`) | Test the workflow logic locally before pushing — CI failures block all PRs |
+| CLI command (`warlock/cli.py`) | `.github/workflows/ci.yml` CLI smoke test list, README.md, DEMO.md, CONTRIBUTING.md |
+| CI workflows (`.github/workflows/`) | Verify command/group names match actual CLI, test locally before pushing — CI failures block all PRs |
 
 ---
 
