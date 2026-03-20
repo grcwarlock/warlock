@@ -166,6 +166,13 @@ Differentiation. Makes Warlock unique.
 - [ ] 121. scrubadub export sanitizer — redact PII from OSCAL/SSP/POA&M before sharing with third parties (S)
 - [ ] 122. pii-codex regulatory classification — enrich PII findings with GDPR/HIPAA category mapping (S) *(blocked: depends on Presidio)*
 
+### Developer Experience (1 item — new)
+- [ ] 123. Change `ai_enabled` default to `False` — AI should be opt-in, not on by default. Currently causes demo seed to make hundreds of Ollama Cloud calls on startup. (S)
+
+### Export & Reporting (2 items — new)
+- [ ] 124. Human-readable SSP export — Markdown/PDF with narrative implementation statements, not just OSCAL JSON. AI generates prose per control; deterministic fallback uses assertion + evidence summaries. (L)
+- [ ] 125. Audit package builder CLI — `warlock export audit-package --framework soc2 --format pdf` bundles SSP + AR + POA&M + evidence binder into a single downloadable package for auditors. (M)
+
 ---
 
 ## P3 — Roadmap (18 items)

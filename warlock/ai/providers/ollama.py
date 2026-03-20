@@ -59,7 +59,13 @@ class OllamaProvider(BaseProvider):
             timeout=timeout,
             max_retries=max_retries,
         )
-        self._base = (base_url or _DEFAULT_BASE).rstrip("/")
+        resolved = (base_url or _DEFAULT_BASE).rstrip("/")
+        # Ollama Cloud redirects api.ollama.com → ollama.com and drops
+        # the Authorization header on cross-origin redirect. Use the
+        # final URL directly to avoid the redirect + auth loss.
+        if resolved == "https://api.ollama.com":
+            resolved = "https://ollama.com"
+        self._base = resolved
 
     # ------------------------------------------------------------------
     # Internal helpers
