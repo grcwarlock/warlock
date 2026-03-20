@@ -24,6 +24,7 @@ DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
     "posture_snapshot": {"interval_minutes": 1440, "enabled": True},   # daily
     "cadence_check": {"interval_minutes": 60, "enabled": True},        # after each collect
     "retention_purge": {"interval_minutes": 10080, "enabled": True},  # weekly
+    "ccm_stale_check": {"interval_minutes": 60, "enabled": True},     # CCM stale control scan
 }
 
 
@@ -138,6 +139,7 @@ class PipelineScheduler:
             "posture_snapshot": self._execute_snapshot,
             "cadence_check": self._execute_cadence,
             "retention_purge": self._execute_retention,
+            "ccm_stale_check": self._execute_ccm_stale,
         }
 
         handler = handlers.get(schedule_name)
@@ -235,6 +237,45 @@ class PipelineScheduler:
             )
         else:
             log.info("Retention purge: nothing to purge")
+
+    def _execute_ccm_stale(self) -> None:
+        """Scan for controls that have not been assessed within their monitoring frequency."""
+        from warlock.config import get_settings
+        from warlock.db.engine import get_session, init_db
+        from warlock.pipeline.ccm import ContinuousControlMonitor
+        from warlock.pipeline.loader import build_pipeline
+
+        settings = get_settings()
+        if not settings.ccm_enabled:
+            log.debug("CCM stale check skipped — ccm_enabled=False")
+            return
+
+        init_db()
+        from warlock.pipeline.queue import create_bus_from_settings
+
+        bus = create_bus_from_settings()
+        pipeline = build_pipeline(bus)
+
+        monitor = ContinuousControlMonitor(
+            assessor=pipeline.assessor,
+            mapper=pipeline.mapper,
+            bus=bus,
+        )
+
+        with get_session() as session:
+            monitor.build_control_evidence_map(session)
+            stale = monitor.check_stale_controls(
+                session,
+                max_age_hours=settings.ccm_stale_threshold_hours,
+            )
+
+        if stale:
+            log.warning(
+                "CCM stale check: %d control(s) overdue for reassessment",
+                len(stale),
+            )
+        else:
+            log.info("CCM stale check: all controls current")
 
     @property
     def status(self) -> dict[str, Any]:

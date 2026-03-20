@@ -1275,3 +1275,66 @@ engine.set_remediation("dlp_policies_active", {
     ],
     "console_path": "Microsoft Purview > Data Loss Prevention > Policies",
 })
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — GDPR
+# ---------------------------------------------------------------------------
+
+_GDPR_BINDINGS: list[tuple[str, str]] = [
+    # Art 5 — Principles of Processing
+    ("Art5-1a", "policy_reviewed_within_year"),       # Lawfulness
+    ("Art5-1b", "policy_reviewed_within_year"),       # Purpose limitation
+    ("Art5-1f", "encryption_at_rest"),                # Integrity and confidentiality
+    ("Art5-1f", "dlp_policies_active"),               # Integrity and confidentiality
+    # Art 25 — Data Protection by Design
+    ("Art25-1", "encryption_at_rest"),
+    ("Art25-1", "no_public_storage"),
+    # Art 28 — Processor Obligations
+    ("Art28-1", "access_reviews_current"),
+    # Art 30 — Records of Processing
+    ("Art30-1", "policy_reviewed_within_year"),
+    # Art 32 — Security of Processing
+    ("Art32-1", "encryption_at_rest"),
+    ("Art32-1", "mfa_enabled"),
+    ("Art32-1", "no_open_security_groups"),
+    # Art 33 — Breach Notification
+    ("Art33-1", "siem_monitoring_active"),
+    # Art 35 — DPIA
+    ("Art35-1", "policy_reviewed_within_year"),
+]
+
+for _ctrl, _assertion in _GDPR_BINDINGS:
+    engine.bind_control("gdpr", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# Control bindings — HIPAA
+# ---------------------------------------------------------------------------
+
+_HIPAA_BINDINGS: list[tuple[str, str]] = [
+    # 164.308 — Administrative Safeguards
+    ("164.308(a)(1)(i)", "vulnerability_scan_current"),       # Risk Analysis
+    ("164.308(a)(3)(i)", "background_check_completed"),       # Workforce Security
+    ("164.308(a)(3)(i)", "access_reviews_current"),           # Workforce Security
+    ("164.308(a)(4)(i)", "mfa_enabled"),                      # Access Management
+    ("164.308(a)(4)(i)", "privileged_access_managed"),        # Access Management
+    ("164.308(a)(5)(i)", "training_completion_rate"),          # Security Awareness
+    ("164.308(a)(5)(i)", "phishing_failure_rate"),             # Security Awareness
+    ("164.308(a)(6)(i)", "siem_monitoring_active"),            # Incident Response
+    # 164.312 — Technical Safeguards
+    ("164.312(a)(1)", "mfa_enabled"),                         # Access Control
+    ("164.312(a)(1)", "no_open_security_groups"),             # Access Control
+    ("164.312(a)(2)(iv)", "encryption_at_rest"),              # Encryption
+    ("164.312(b)", "cloudtrail_enabled"),                     # Audit Controls
+    ("164.312(b)", "config_recorder_enabled"),                # Audit Controls
+    ("164.312(c)(1)", "no_critical_code_vulns"),              # Integrity
+    ("164.312(d)", "mfa_enabled"),                            # Authentication
+    ("164.312(d)", "password_policy_compliant"),              # Authentication
+    ("164.312(e)(1)", "encryption_at_rest"),                  # Transmission Security
+    # 164.310 — Physical Safeguards
+    ("164.310(d)(1)", "device_compliant"),                    # Device Controls
+]
+
+for _ctrl, _assertion in _HIPAA_BINDINGS:
+    engine.bind_control("hipaa", _ctrl, _assertion)

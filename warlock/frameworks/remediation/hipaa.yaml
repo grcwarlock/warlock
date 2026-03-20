@@ -1,0 +1,1103 @@
+controls:
+  "164.308(a)(1)(i)":
+    summary: "Implement policies and procedures to prevent, detect, contain, and correct security violations; conduct risk and vulnerability assessment of ePHI"
+    remediation_steps:
+      - "Identify all systems that create, receive, maintain, or transmit ePHI"
+      - "Conduct a comprehensive risk assessment using NIST SP 800-30 methodology"
+      - "Document all identified threats and vulnerabilities with severity ratings"
+      - "Assign risk levels and prioritize remediation based on likelihood and impact"
+      - "Review and update the risk assessment at least annually or after significant changes"
+    console_path: "Warlock > Risk Analysis > HIPAA"
+    recommended_reading:
+      - "45 CFR 164.308(a)(1)(i) -- Security Management Process"
+      - "NIST SP 800-66 Rev 2: HIPAA Security Rule Implementation Guide"
+      - "NIST SP 800-30 Rev 1: Guide for Conducting Risk Assessments"
+    evidence_types:
+      - "vulnerability_scan"
+      - "risk_assessment_document"
+    assertion_name: "vulnerability_scan_current"
+
+  "164.308(a)(1)(ii)(A)":
+    summary: "Implement security measures sufficient to reduce risks and vulnerabilities to ePHI to a reasonable and appropriate level"
+    remediation_steps:
+      - "Review current risk assessment findings and prioritize by severity"
+      - "Implement technical controls (encryption, access controls, monitoring) to address identified risks"
+      - "Deploy vulnerability scanning tools and schedule recurring scans"
+      - "Track remediation progress through a formal POA&M process"
+      - "Validate that implemented controls reduce residual risk to acceptable levels"
+    console_path: "Warlock > Risk Analysis > HIPAA > Risk Management"
+    recommended_reading:
+      - "45 CFR 164.308(a)(1)(ii)(A) -- Risk Analysis"
+      - "NIST SP 800-66 Rev 2: Section 4.1 -- Risk Analysis"
+      - "HHS Guidance on Risk Analysis Requirements"
+    evidence_types:
+      - "vulnerability_scan"
+      - "risk_assessment_document"
+      - "remediation_plan"
+    assertion_name: "risk_treatment_plan_current"
+
+  "164.308(a)(1)(ii)(B)":
+    summary: "Apply appropriate sanctions against workforce members who fail to comply with security policies and procedures"
+    remediation_steps:
+      - "Develop a formal sanctions policy that defines consequences for security violations"
+      - "Communicate the sanctions policy to all workforce members during onboarding and annually"
+      - "Integrate sanctions policy with HR disciplinary procedures"
+      - "Document all sanctions actions and maintain records for the required retention period"
+      - "Review sanctions policy annually and update based on incident trends"
+    console_path: "Warlock > Workforce > Sanctions Policy"
+    recommended_reading:
+      - "45 CFR 164.308(a)(1)(ii)(B) -- Sanction Policy"
+      - "NIST SP 800-66 Rev 2: Section 4.1 -- Sanction Policy"
+    evidence_types:
+      - "policy_document"
+      - "hr_disciplinary_record"
+    assertion_name: "sanctions_policy_current"
+
+  "164.308(a)(1)(ii)(C)":
+    summary: "Implement procedures to regularly review records of information system activity such as audit logs, access reports, and security incident tracking"
+    remediation_steps:
+      - "Enable audit logging on all systems that process, store, or transmit ePHI"
+      - "Configure centralized log aggregation (SIEM) for all ePHI systems"
+      - "Establish a regular schedule for audit log review (at minimum weekly)"
+      - "Define alerting rules for suspicious activity patterns"
+      - "Document log review activities and findings with timestamps and reviewer identity"
+    console_path: "Warlock > Audit > Log Review"
+    recommended_reading:
+      - "45 CFR 164.308(a)(1)(ii)(C) -- Information System Activity Review"
+      - "NIST SP 800-66 Rev 2: Section 4.1 -- Information System Activity Review"
+      - "NIST SP 800-92: Guide to Computer Security Log Management"
+    evidence_types:
+      - "audit_log"
+      - "log_review_record"
+    assertion_name: "audit_log_review_current"
+
+  "164.308(a)(2)":
+    summary: "Identify the security official responsible for development and implementation of HIPAA Security Rule policies and procedures"
+    remediation_steps:
+      - "Designate a specific individual as the HIPAA Security Officer"
+      - "Document the appointment in writing with defined responsibilities"
+      - "Ensure the Security Officer has appropriate authority and resources"
+      - "Communicate the Security Officer designation to all workforce members"
+      - "Review and update the designation when personnel changes occur"
+    console_path: "Warlock > Organization > Security Official"
+    recommended_reading:
+      - "45 CFR 164.308(a)(2) -- Assigned Security Responsibility"
+      - "NIST SP 800-66 Rev 2: Section 4.2 -- Assigned Security Responsibility"
+    evidence_types:
+      - "policy_document"
+      - "organizational_chart"
+    assertion_name: "security_officer_designated"
+
+  "164.308(a)(3)(i)":
+    summary: "Implement policies and procedures to ensure appropriate workforce access to ePHI and prevent unauthorized access"
+    remediation_steps:
+      - "Define access authorization policies based on job roles and minimum necessary standard"
+      - "Implement role-based access control (RBAC) for all ePHI systems"
+      - "Conduct periodic access reviews to verify workforce access remains appropriate"
+      - "Maintain an access authorization matrix mapping roles to ePHI access levels"
+      - "Document all access provisioning and deprovisioning actions"
+    console_path: "Warlock > Access Control > Workforce Access"
+    recommended_reading:
+      - "45 CFR 164.308(a)(3)(i) -- Workforce Security"
+      - "NIST SP 800-66 Rev 2: Section 4.3 -- Workforce Security"
+    evidence_types:
+      - "access_review_report"
+      - "iam_configuration"
+    assertion_name: "access_review_current"
+
+  "164.308(a)(3)(ii)(A)":
+    summary: "Implement procedures for authorization and/or supervision of workforce members who work with ePHI"
+    remediation_steps:
+      - "Define a formal access authorization process requiring manager approval"
+      - "Implement access request workflows with documented approval chains"
+      - "Establish supervision procedures for workforce members in ePHI areas"
+      - "Verify access authorization aligns with job function and minimum necessary"
+      - "Audit access authorization records quarterly"
+    console_path: "Warlock > Access Control > Authorization"
+    recommended_reading:
+      - "45 CFR 164.308(a)(3)(ii)(A) -- Authorization and/or Supervision"
+      - "NIST SP 800-66 Rev 2: Section 4.3 -- Authorization and/or Supervision"
+    evidence_types:
+      - "access_request_record"
+      - "iam_configuration"
+    assertion_name: "access_authorization_documented"
+
+  "164.308(a)(3)(ii)(B)":
+    summary: "Implement procedures to determine that workforce member access to ePHI is appropriate based on role and responsibilities"
+    remediation_steps:
+      - "Establish a clearance procedure that verifies role-based access need"
+      - "Conduct background checks where appropriate before granting ePHI access"
+      - "Implement a formal onboarding access provisioning process"
+      - "Perform periodic user access reviews to validate continued appropriateness"
+      - "Document access clearance decisions and retain for six years"
+    console_path: "Warlock > Access Control > Workforce Clearance"
+    recommended_reading:
+      - "45 CFR 164.308(a)(3)(ii)(B) -- Workforce Clearance Procedure"
+      - "NIST SP 800-66 Rev 2: Section 4.3 -- Workforce Clearance Procedure"
+    evidence_types:
+      - "access_review_report"
+      - "hr_record"
+    assertion_name: "workforce_clearance_current"
+
+  "164.308(a)(3)(ii)(C)":
+    summary: "Implement procedures for terminating access to ePHI when employment ends or as required by access authorization policy"
+    remediation_steps:
+      - "Establish a formal termination checklist that includes all ePHI system access revocation"
+      - "Integrate access termination with HR offboarding workflow for immediate revocation"
+      - "Disable accounts within 24 hours of employment termination"
+      - "Retrieve all physical access devices, keys, and tokens"
+      - "Audit terminated user accounts monthly to verify no residual access"
+    console_path: "Warlock > Access Control > Termination"
+    recommended_reading:
+      - "45 CFR 164.308(a)(3)(ii)(C) -- Termination Procedures"
+      - "NIST SP 800-66 Rev 2: Section 4.3 -- Termination Procedures"
+    evidence_types:
+      - "access_termination_record"
+      - "iam_configuration"
+    assertion_name: "terminated_access_revoked"
+
+  "164.308(a)(4)(i)":
+    summary: "Implement policies and procedures for authorizing access to ePHI consistent with the HIPAA Privacy Rule"
+    remediation_steps:
+      - "Define access authorization policies aligned with Privacy Rule minimum necessary"
+      - "Implement technical controls enforcing access policies (RBAC, attribute-based access)"
+      - "Establish workflows for requesting, approving, and provisioning ePHI access"
+      - "Conduct quarterly access reviews to ensure ongoing compliance with authorization policies"
+      - "Maintain documentation of all access authorization decisions"
+    console_path: "Warlock > Access Control > Information Access Management"
+    recommended_reading:
+      - "45 CFR 164.308(a)(4)(i) -- Information Access Management"
+      - "NIST SP 800-66 Rev 2: Section 4.4 -- Information Access Management"
+    evidence_types:
+      - "access_policy_document"
+      - "iam_configuration"
+    assertion_name: "access_management_policy_current"
+
+  "164.308(a)(4)(ii)(A)":
+    summary: "If a health care clearinghouse is part of a larger organization, protect ePHI from unauthorized access by the larger organization"
+    remediation_steps:
+      - "Implement network segmentation to isolate clearinghouse ePHI systems"
+      - "Deploy access controls restricting parent organization access to clearinghouse data"
+      - "Configure firewall rules and VLANs to enforce data separation"
+      - "Conduct periodic access reviews specific to cross-organizational boundaries"
+      - "Document isolation controls and test them annually"
+    console_path: "Warlock > Access Control > Isolation Controls"
+    recommended_reading:
+      - "45 CFR 164.308(a)(4)(ii)(A) -- Isolating Health Care Clearinghouse Functions"
+      - "NIST SP 800-66 Rev 2: Section 4.4 -- Isolating Health Care Clearinghouse Functions"
+    evidence_types:
+      - "network_diagram"
+      - "access_policy_document"
+    assertion_name: "clearinghouse_isolation_verified"
+
+  "164.308(a)(4)(ii)(B)":
+    summary: "Implement policies and procedures for granting access to ePHI based on the principle of least privilege"
+    remediation_steps:
+      - "Define access levels for each ePHI system based on job function"
+      - "Implement role-based access with least-privilege permissions"
+      - "Remove all standing admin access and implement just-in-time elevation"
+      - "Review access grants quarterly and remove unnecessary permissions"
+      - "Audit privileged access usage and investigate anomalies"
+    console_path: "Warlock > Access Control > Least Privilege"
+    recommended_reading:
+      - "45 CFR 164.308(a)(4)(ii)(B) -- Access Authorization"
+      - "NIST SP 800-66 Rev 2: Section 4.4 -- Access Authorization"
+    evidence_types:
+      - "iam_configuration"
+      - "access_review_report"
+    assertion_name: "least_privilege_enforced"
+
+  "164.308(a)(4)(ii)(C)":
+    summary: "Implement policies and procedures to establish, document, review, and modify user access rights"
+    remediation_steps:
+      - "Create a formal access modification process with approval workflows"
+      - "Document all access changes including who, what, when, and authorization"
+      - "Implement automated provisioning and deprovisioning where possible"
+      - "Review user access rights quarterly and upon role changes"
+      - "Maintain access modification audit trail for six years"
+    console_path: "Warlock > Access Control > Access Modification"
+    recommended_reading:
+      - "45 CFR 164.308(a)(4)(ii)(C) -- Access Establishment and Modification"
+      - "NIST SP 800-66 Rev 2: Section 4.4 -- Access Establishment and Modification"
+    evidence_types:
+      - "access_change_record"
+      - "iam_configuration"
+    assertion_name: "access_modification_documented"
+
+  "164.308(a)(5)(i)":
+    summary: "Implement a security awareness and training program for all workforce members"
+    remediation_steps:
+      - "Develop a comprehensive security awareness training curriculum covering ePHI handling"
+      - "Require all workforce members to complete initial training within 30 days of hire"
+      - "Conduct annual refresher training for all workforce members"
+      - "Include phishing simulation exercises at least quarterly"
+      - "Track training completion rates and follow up on non-compliance"
+    console_path: "Warlock > Training > Security Awareness"
+    recommended_reading:
+      - "45 CFR 164.308(a)(5)(i) -- Security Awareness and Training"
+      - "NIST SP 800-66 Rev 2: Section 4.5 -- Security Awareness and Training"
+      - "NIST SP 800-50: Building an Information Technology Security Awareness and Training Program"
+    evidence_types:
+      - "training_completion_record"
+      - "phishing_simulation_report"
+    assertion_name: "security_training_current"
+
+  "164.308(a)(5)(ii)(A)":
+    summary: "Provide periodic security updates and reminders to the workforce regarding threats, policy changes, and best practices"
+    remediation_steps:
+      - "Establish a regular cadence for security awareness communications (at least monthly)"
+      - "Distribute security bulletins addressing current threats relevant to ePHI"
+      - "Communicate policy changes promptly with acknowledgment tracking"
+      - "Use multiple channels (email, intranet, meetings) for security reminders"
+      - "Track delivery and engagement metrics for awareness communications"
+    console_path: "Warlock > Training > Security Reminders"
+    recommended_reading:
+      - "45 CFR 164.308(a)(5)(ii)(A) -- Security Reminders"
+      - "NIST SP 800-66 Rev 2: Section 4.5 -- Security Reminders"
+    evidence_types:
+      - "training_completion_record"
+      - "communication_record"
+    assertion_name: "security_reminders_current"
+
+  "164.308(a)(5)(ii)(B)":
+    summary: "Implement procedures for guarding against, detecting, and reporting malicious software"
+    remediation_steps:
+      - "Deploy endpoint detection and response (EDR) on all systems that access ePHI"
+      - "Configure real-time malware scanning with automatic quarantine"
+      - "Ensure anti-malware signatures update automatically at least daily"
+      - "Establish procedures for reporting suspected malware to the security team"
+      - "Monitor EDR coverage to ensure 100% deployment across ePHI systems"
+    console_path: "Warlock > Endpoint > Malware Protection"
+    recommended_reading:
+      - "45 CFR 164.308(a)(5)(ii)(B) -- Protection from Malicious Software"
+      - "NIST SP 800-66 Rev 2: Section 4.5 -- Protection from Malicious Software"
+    evidence_types:
+      - "endpoint_protection_report"
+      - "malware_scan_result"
+    assertion_name: "endpoint_protection_deployed"
+
+  "164.308(a)(5)(ii)(C)":
+    summary: "Implement procedures for monitoring login attempts and reporting discrepancies"
+    remediation_steps:
+      - "Configure authentication logging on all ePHI systems"
+      - "Set up alerts for failed login attempts exceeding threshold (e.g., 5 in 10 minutes)"
+      - "Monitor for login anomalies such as unusual locations, times, or devices"
+      - "Implement account lockout after consecutive failed attempts"
+      - "Review login monitoring reports weekly and investigate flagged events"
+    console_path: "Warlock > Monitoring > Login Activity"
+    recommended_reading:
+      - "45 CFR 164.308(a)(5)(ii)(C) -- Log-in Monitoring"
+      - "NIST SP 800-66 Rev 2: Section 4.5 -- Log-in Monitoring"
+    evidence_types:
+      - "authentication_log"
+      - "security_alert"
+    assertion_name: "login_monitoring_enabled"
+
+  "164.308(a)(5)(ii)(D)":
+    summary: "Implement procedures for creating, changing, and safeguarding passwords"
+    remediation_steps:
+      - "Establish a password policy requiring minimum 12 characters with complexity rules"
+      - "Implement password history (prevent reuse of last 12 passwords)"
+      - "Enforce password changes upon suspected compromise"
+      - "Deploy password managers for workforce members"
+      - "Prohibit password sharing and document the prohibition in policy"
+    console_path: "Warlock > Identity > Password Management"
+    recommended_reading:
+      - "45 CFR 164.308(a)(5)(ii)(D) -- Password Management"
+      - "NIST SP 800-66 Rev 2: Section 4.5 -- Password Management"
+      - "NIST SP 800-63B: Digital Identity Guidelines -- Authentication and Lifecycle Management"
+    evidence_types:
+      - "password_policy_config"
+      - "iam_configuration"
+    assertion_name: "password_policy_compliant"
+
+  "164.308(a)(6)(i)":
+    summary: "Implement policies and procedures to address security incidents"
+    remediation_steps:
+      - "Develop a formal incident response plan covering detection, analysis, containment, eradication, and recovery"
+      - "Define incident severity levels and corresponding response procedures"
+      - "Establish an incident response team with defined roles and contact information"
+      - "Create incident classification criteria specific to ePHI breaches"
+      - "Review and update the incident response plan annually and after each major incident"
+    console_path: "Warlock > Incident Response > HIPAA"
+    recommended_reading:
+      - "45 CFR 164.308(a)(6)(i) -- Security Incident Procedures"
+      - "NIST SP 800-66 Rev 2: Section 4.6 -- Security Incident Procedures"
+      - "NIST SP 800-61 Rev 2: Computer Security Incident Handling Guide"
+    evidence_types:
+      - "incident_response_plan"
+      - "policy_document"
+    assertion_name: "incident_response_plan_current"
+
+  "164.308(a)(6)(ii)":
+    summary: "Identify and respond to suspected or known security incidents; mitigate harmful effects and document outcomes"
+    remediation_steps:
+      - "Implement SIEM with detection rules for ePHI-related security events"
+      - "Establish 24/7 security monitoring or on-call rotation for incident detection"
+      - "Document all incident response actions with timestamps and responsible parties"
+      - "Conduct post-incident reviews and document lessons learned"
+      - "Report incidents to HHS when they qualify as breaches under the Breach Notification Rule"
+    console_path: "Warlock > Incident Response > Response and Mitigation"
+    recommended_reading:
+      - "45 CFR 164.308(a)(6)(ii) -- Response and Reporting"
+      - "NIST SP 800-66 Rev 2: Section 4.6 -- Response and Reporting"
+      - "HHS Breach Notification Rule (45 CFR 164.400-414)"
+    evidence_types:
+      - "incident_record"
+      - "security_alert"
+    assertion_name: "incident_response_operational"
+
+  "164.308(a)(7)(i)":
+    summary: "Establish and implement policies and procedures for responding to emergencies that damage systems containing ePHI"
+    remediation_steps:
+      - "Develop a contingency plan covering natural disasters, cyberattacks, and system failures"
+      - "Identify critical ePHI systems and their recovery priority order"
+      - "Define recovery time objectives (RTO) and recovery point objectives (RPO) for each system"
+      - "Establish emergency communication procedures and contact lists"
+      - "Review and update the contingency plan annually"
+    console_path: "Warlock > Business Continuity > Contingency Plan"
+    recommended_reading:
+      - "45 CFR 164.308(a)(7)(i) -- Contingency Plan"
+      - "NIST SP 800-66 Rev 2: Section 4.7 -- Contingency Plan"
+      - "NIST SP 800-34 Rev 1: Contingency Planning Guide for Federal Information Systems"
+    evidence_types:
+      - "contingency_plan"
+      - "business_impact_analysis"
+    assertion_name: "contingency_plan_current"
+
+  "164.308(a)(7)(ii)(A)":
+    summary: "Establish and implement procedures to create and maintain retrievable exact copies of ePHI"
+    remediation_steps:
+      - "Implement automated backup procedures for all ePHI systems"
+      - "Define backup frequency aligned with RPO requirements (at minimum daily)"
+      - "Store backups in geographically separate locations with encryption"
+      - "Test backup restoration monthly to verify data integrity"
+      - "Monitor backup job completion and alert on failures"
+    console_path: "Warlock > Business Continuity > Data Backup"
+    recommended_reading:
+      - "45 CFR 164.308(a)(7)(ii)(A) -- Data Backup Plan"
+      - "NIST SP 800-66 Rev 2: Section 4.7 -- Data Backup Plan"
+    evidence_types:
+      - "backup_report"
+      - "backup_test_record"
+    assertion_name: "backup_current"
+
+  "164.308(a)(7)(ii)(B)":
+    summary: "Establish and implement procedures to restore any loss of data"
+    remediation_steps:
+      - "Document disaster recovery procedures for each critical ePHI system"
+      - "Define recovery steps including order of operations and responsible parties"
+      - "Test recovery procedures quarterly using realistic scenarios"
+      - "Validate recovered data integrity against backup checksums"
+      - "Document recovery test results and update procedures based on findings"
+    console_path: "Warlock > Business Continuity > Disaster Recovery"
+    recommended_reading:
+      - "45 CFR 164.308(a)(7)(ii)(B) -- Disaster Recovery Plan"
+      - "NIST SP 800-66 Rev 2: Section 4.7 -- Disaster Recovery Plan"
+    evidence_types:
+      - "disaster_recovery_plan"
+      - "recovery_test_record"
+    assertion_name: "disaster_recovery_tested"
+
+  "164.308(a)(7)(ii)(C)":
+    summary: "Establish and implement procedures to enable continuation of critical business processes in emergency mode"
+    remediation_steps:
+      - "Identify critical business processes that require ePHI access during emergencies"
+      - "Define emergency mode operation procedures including manual workarounds"
+      - "Establish alternate processing sites or cloud-based failover capabilities"
+      - "Train personnel on emergency mode operations procedures"
+      - "Test emergency mode operations annually through tabletop or live exercises"
+    console_path: "Warlock > Business Continuity > Emergency Mode"
+    recommended_reading:
+      - "45 CFR 164.308(a)(7)(ii)(C) -- Emergency Mode Operation Plan"
+      - "NIST SP 800-66 Rev 2: Section 4.7 -- Emergency Mode Operation Plan"
+    evidence_types:
+      - "emergency_operations_plan"
+      - "exercise_report"
+    assertion_name: "emergency_mode_plan_current"
+
+  "164.308(a)(7)(ii)(D)":
+    summary: "Implement procedures for periodic testing and revision of contingency plans"
+    remediation_steps:
+      - "Schedule annual contingency plan testing including tabletop exercises and failover tests"
+      - "Conduct at least one full recovery test per year"
+      - "Document test scenarios, participants, results, and identified gaps"
+      - "Update contingency plans based on test findings and lessons learned"
+      - "Track corrective actions from test findings to completion"
+    console_path: "Warlock > Business Continuity > Plan Testing"
+    recommended_reading:
+      - "45 CFR 164.308(a)(7)(ii)(D) -- Testing and Revision Procedures"
+      - "NIST SP 800-66 Rev 2: Section 4.7 -- Testing and Revision Procedures"
+    evidence_types:
+      - "test_report"
+      - "contingency_plan"
+    assertion_name: "contingency_plan_tested"
+
+  "164.308(a)(7)(ii)(E)":
+    summary: "Assess the relative criticality of specific applications and data in support of contingency plan components"
+    remediation_steps:
+      - "Conduct a business impact analysis (BIA) for all ePHI processing systems"
+      - "Classify systems by criticality level (high, moderate, low)"
+      - "Define maximum tolerable downtime for each critical application"
+      - "Map dependencies between applications and supporting infrastructure"
+      - "Review and update criticality assessments annually or when systems change"
+    console_path: "Warlock > Business Continuity > Criticality Assessment"
+    recommended_reading:
+      - "45 CFR 164.308(a)(7)(ii)(E) -- Applications and Data Criticality Analysis"
+      - "NIST SP 800-66 Rev 2: Section 4.7 -- Applications and Data Criticality Analysis"
+    evidence_types:
+      - "business_impact_analysis"
+      - "asset_inventory"
+    assertion_name: "criticality_analysis_current"
+
+  "164.308(a)(8)":
+    summary: "Perform periodic technical and nontechnical evaluations of HIPAA Security Rule compliance"
+    remediation_steps:
+      - "Schedule annual compliance evaluations combining technical testing and policy review"
+      - "Engage independent assessors for nontechnical evaluations"
+      - "Conduct vulnerability scans and penetration tests as part of technical evaluation"
+      - "Document evaluation findings and track remediation through POA&M"
+      - "Perform interim evaluations when significant environmental or operational changes occur"
+    console_path: "Warlock > Compliance > HIPAA Evaluation"
+    recommended_reading:
+      - "45 CFR 164.308(a)(8) -- Evaluation"
+      - "NIST SP 800-66 Rev 2: Section 4.8 -- Evaluation"
+    evidence_types:
+      - "compliance_assessment"
+      - "vulnerability_scan"
+    assertion_name: "hipaa_evaluation_current"
+
+  "164.308(b)(1)":
+    summary: "Obtain satisfactory assurances from business associates that they will appropriately safeguard ePHI"
+    remediation_steps:
+      - "Maintain a complete inventory of all business associates that handle ePHI"
+      - "Execute Business Associate Agreements (BAAs) with all identified business associates"
+      - "Assess business associate security posture through questionnaires or third-party reports (SOC 2)"
+      - "Monitor business associate security ratings through continuous monitoring services"
+      - "Review and renew BAAs annually and when services change"
+    console_path: "Warlock > Vendor Risk > Business Associates"
+    recommended_reading:
+      - "45 CFR 164.308(b)(1) -- Business Associate Contracts"
+      - "NIST SP 800-66 Rev 2: Section 4.9 -- Business Associate Contracts"
+      - "HHS Guidance on Business Associate Agreements"
+    evidence_types:
+      - "vendor_assessment"
+      - "contract_document"
+    assertion_name: "baa_current"
+
+  "164.308(b)(3)":
+    summary: "Document the satisfactory assurances required by business associate contracts through written agreements"
+    remediation_steps:
+      - "Use a standardized BAA template that meets all HIPAA requirements"
+      - "Include provisions requiring the BA to implement safeguards, report incidents, and support audits"
+      - "Ensure BAAs address subcontractor requirements and flow-down provisions"
+      - "Maintain executed BAAs in a centralized document management system"
+      - "Track BAA expiration dates and initiate renewal 90 days before expiration"
+    console_path: "Warlock > Vendor Risk > BAA Management"
+    recommended_reading:
+      - "45 CFR 164.308(b)(3) -- Written Contract or Other Arrangement"
+      - "NIST SP 800-66 Rev 2: Section 4.9 -- Written Contract or Other Arrangement"
+    evidence_types:
+      - "contract_document"
+      - "vendor_assessment"
+    assertion_name: "baa_documented"
+
+  "164.310(a)(1)":
+    summary: "Implement policies and procedures to limit physical access to electronic information systems and facilities"
+    remediation_steps:
+      - "Conduct a physical security assessment of all facilities housing ePHI systems"
+      - "Implement physical access controls (badge readers, biometrics, locks) at entry points"
+      - "Establish visitor management procedures including sign-in, escort, and badge requirements"
+      - "Deploy surveillance systems (CCTV) at critical access points"
+      - "Review physical access logs monthly and investigate unauthorized access attempts"
+    console_path: "Warlock > Physical Security > Facility Access"
+    recommended_reading:
+      - "45 CFR 164.310(a)(1) -- Facility Access Controls"
+      - "NIST SP 800-66 Rev 2: Section 4.10 -- Facility Access Controls"
+    evidence_types:
+      - "physical_access_log"
+      - "facility_assessment"
+    assertion_name: "physical_access_controlled"
+
+  "164.310(a)(2)(i)":
+    summary: "Establish procedures that allow facility access for data restoration under disaster recovery and emergency mode operations"
+    remediation_steps:
+      - "Define emergency facility access procedures that bypass normal controls when necessary"
+      - "Maintain an emergency access list of authorized personnel"
+      - "Ensure break-glass physical access procedures are documented and tested"
+      - "Log all emergency facility access events for post-event review"
+      - "Coordinate with building management for after-hours emergency access"
+    console_path: "Warlock > Physical Security > Emergency Access"
+    recommended_reading:
+      - "45 CFR 164.310(a)(2)(i) -- Contingency Operations"
+      - "NIST SP 800-66 Rev 2: Section 4.10 -- Contingency Operations"
+    evidence_types:
+      - "emergency_access_procedure"
+      - "physical_access_log"
+    assertion_name: "emergency_physical_access_documented"
+
+  "164.310(a)(2)(ii)":
+    summary: "Implement policies and procedures to safeguard the facility and equipment from unauthorized physical access, tampering, and theft"
+    remediation_steps:
+      - "Install physical barriers (locked doors, security cages) around ePHI processing areas"
+      - "Deploy intrusion detection systems for server rooms and data centers"
+      - "Implement anti-tamper mechanisms on critical hardware"
+      - "Conduct periodic physical security audits and walkthroughs"
+      - "Establish and test alarm response procedures"
+    console_path: "Warlock > Physical Security > Facility Security Plan"
+    recommended_reading:
+      - "45 CFR 164.310(a)(2)(ii) -- Facility Security Plan"
+      - "NIST SP 800-66 Rev 2: Section 4.10 -- Facility Security Plan"
+    evidence_types:
+      - "facility_security_plan"
+      - "physical_security_assessment"
+    assertion_name: "facility_security_plan_current"
+
+  "164.310(a)(2)(iii)":
+    summary: "Implement procedures to control and validate a person's access to facilities based on their role or function"
+    remediation_steps:
+      - "Implement role-based physical access control tied to job function"
+      - "Establish visitor check-in procedures requiring identification and escort"
+      - "Control access to restricted areas (server rooms, wiring closets) with additional authentication"
+      - "Review physical access privileges quarterly during user access reviews"
+      - "Maintain visitor logs for a minimum of six years"
+    console_path: "Warlock > Physical Security > Access Validation"
+    recommended_reading:
+      - "45 CFR 164.310(a)(2)(iii) -- Access Control and Validation Procedures"
+      - "NIST SP 800-66 Rev 2: Section 4.10 -- Access Control and Validation Procedures"
+    evidence_types:
+      - "physical_access_log"
+      - "visitor_log"
+    assertion_name: "physical_access_validated"
+
+  "164.310(a)(2)(iv)":
+    summary: "Implement policies and procedures to document repairs and modifications to physical components related to security"
+    remediation_steps:
+      - "Create a maintenance log for all physical security components (doors, locks, cameras)"
+      - "Document all repairs and modifications with date, description, and responsible party"
+      - "Implement a change management process for physical security modifications"
+      - "Verify security functionality after any physical modification"
+      - "Retain maintenance records for the required retention period"
+    console_path: "Warlock > Physical Security > Maintenance Records"
+    recommended_reading:
+      - "45 CFR 164.310(a)(2)(iv) -- Maintenance Records"
+      - "NIST SP 800-66 Rev 2: Section 4.10 -- Maintenance Records"
+    evidence_types:
+      - "maintenance_record"
+      - "change_request"
+    assertion_name: "physical_maintenance_documented"
+
+  "164.310(b)":
+    summary: "Implement policies and procedures specifying proper workstation functions, use, and physical attributes for ePHI access"
+    remediation_steps:
+      - "Define workstation use policies specifying authorized activities on ePHI-capable workstations"
+      - "Specify physical security requirements for workstations (positioning, screen orientation)"
+      - "Implement endpoint management (MDM/EMM) for all workstations accessing ePHI"
+      - "Configure automatic screen lock after 15 minutes of inactivity"
+      - "Restrict ePHI access to organization-managed devices only"
+    console_path: "Warlock > Endpoint > Workstation Use"
+    recommended_reading:
+      - "45 CFR 164.310(b) -- Workstation Use"
+      - "NIST SP 800-66 Rev 2: Section 4.11 -- Workstation Use"
+    evidence_types:
+      - "endpoint_configuration"
+      - "policy_document"
+    assertion_name: "workstation_use_policy_current"
+
+  "164.310(c)":
+    summary: "Implement physical safeguards for all workstations that access ePHI to restrict access to authorized users"
+    remediation_steps:
+      - "Position workstations to prevent unauthorized viewing of ePHI (screen privacy filters)"
+      - "Secure workstations with cable locks in shared or public areas"
+      - "Implement clean desk policies for areas where ePHI is displayed or printed"
+      - "Restrict physical access to workstation areas to authorized personnel"
+      - "Conduct periodic physical security reviews of workstation placement"
+    console_path: "Warlock > Endpoint > Workstation Security"
+    recommended_reading:
+      - "45 CFR 164.310(c) -- Workstation Security"
+      - "NIST SP 800-66 Rev 2: Section 4.12 -- Workstation Security"
+    evidence_types:
+      - "physical_security_assessment"
+      - "endpoint_configuration"
+    assertion_name: "workstation_physical_security_verified"
+
+  "164.310(d)(1)":
+    summary: "Implement policies and procedures governing the receipt, removal, and movement of hardware and electronic media containing ePHI"
+    remediation_steps:
+      - "Establish a media handling policy covering receipt, storage, movement, and disposal"
+      - "Implement asset tracking for all hardware and media containing ePHI"
+      - "Require authorization for any movement of ePHI-containing media"
+      - "Use encrypted storage for all portable media containing ePHI"
+      - "Maintain chain-of-custody documentation for media movements"
+    console_path: "Warlock > Asset Management > Device and Media Controls"
+    recommended_reading:
+      - "45 CFR 164.310(d)(1) -- Device and Media Controls"
+      - "NIST SP 800-66 Rev 2: Section 4.13 -- Device and Media Controls"
+    evidence_types:
+      - "asset_inventory"
+      - "media_handling_policy"
+    assertion_name: "media_controls_current"
+
+  "164.310(d)(2)(i)":
+    summary: "Implement policies and procedures for final disposition of ePHI and hardware or electronic media on which it is stored"
+    remediation_steps:
+      - "Define data sanitization procedures aligned with NIST SP 800-88"
+      - "Use approved sanitization methods (clear, purge, destroy) based on media type"
+      - "Obtain certificates of destruction for all sanitized or destroyed media"
+      - "Maintain a disposal log with media identifier, method, date, and responsible party"
+      - "Verify sanitization effectiveness through spot-check verification"
+    console_path: "Warlock > Asset Management > Media Disposal"
+    recommended_reading:
+      - "45 CFR 164.310(d)(2)(i) -- Disposal"
+      - "NIST SP 800-66 Rev 2: Section 4.13 -- Disposal"
+      - "NIST SP 800-88 Rev 1: Guidelines for Media Sanitization"
+    evidence_types:
+      - "disposal_certificate"
+      - "asset_inventory"
+    assertion_name: "media_disposal_documented"
+
+  "164.310(d)(2)(ii)":
+    summary: "Implement procedures for removal of ePHI from electronic media before reuse"
+    remediation_steps:
+      - "Define media reuse procedures including approved data wiping techniques"
+      - "Use NIST SP 800-88 compliant tools for media sanitization (e.g., secure erase, degaussing)"
+      - "Verify sanitization completion before releasing media for reuse"
+      - "Document sanitization actions with verification evidence"
+      - "Train personnel on proper media reuse sanitization procedures"
+    console_path: "Warlock > Asset Management > Media Reuse"
+    recommended_reading:
+      - "45 CFR 164.310(d)(2)(ii) -- Media Re-use"
+      - "NIST SP 800-66 Rev 2: Section 4.13 -- Media Re-use"
+      - "NIST SP 800-88 Rev 1: Guidelines for Media Sanitization"
+    evidence_types:
+      - "sanitization_record"
+      - "asset_inventory"
+    assertion_name: "media_reuse_sanitized"
+
+  "164.310(d)(2)(iii)":
+    summary: "Maintain a record of movements of hardware and electronic media and any person responsible therefor"
+    remediation_steps:
+      - "Implement an asset management system that tracks hardware and media movements"
+      - "Require sign-out and sign-in procedures for all portable ePHI media"
+      - "Record movement details including date, origin, destination, and responsible party"
+      - "Conduct periodic physical inventory audits to verify asset locations"
+      - "Reconcile asset tracking records with physical inventory quarterly"
+    console_path: "Warlock > Asset Management > Media Accountability"
+    recommended_reading:
+      - "45 CFR 164.310(d)(2)(iii) -- Accountability"
+      - "NIST SP 800-66 Rev 2: Section 4.13 -- Accountability"
+    evidence_types:
+      - "asset_tracking_record"
+      - "asset_inventory"
+    assertion_name: "media_accountability_tracked"
+
+  "164.310(d)(2)(iv)":
+    summary: "Create a retrievable, exact copy of ePHI when needed before movement of equipment"
+    remediation_steps:
+      - "Implement pre-movement backup procedures for all ePHI-containing equipment"
+      - "Verify backup integrity through restoration testing before equipment movement"
+      - "Store backup copies in a secure, separate location"
+      - "Document backup creation as part of equipment movement authorization"
+      - "Maintain backup copies until equipment movement is confirmed successful"
+    console_path: "Warlock > Asset Management > Pre-Movement Backup"
+    recommended_reading:
+      - "45 CFR 164.310(d)(2)(iv) -- Data Backup and Storage"
+      - "NIST SP 800-66 Rev 2: Section 4.13 -- Data Backup and Storage"
+    evidence_types:
+      - "backup_report"
+      - "asset_tracking_record"
+    assertion_name: "pre_movement_backup_verified"
+
+  "164.312(a)(1)":
+    summary: "Implement technical policies and procedures for electronic information systems to allow access only to authorized persons or software programs"
+    remediation_steps:
+      - "Implement role-based access control (RBAC) on all ePHI information systems"
+      - "Enforce authentication before granting access to any ePHI system"
+      - "Configure network segmentation to isolate ePHI systems from general networks"
+      - "Deploy identity and access management (IAM) solutions across all ePHI environments"
+      - "Conduct quarterly access reviews and remove unnecessary access privileges"
+    console_path: "Warlock > Access Control > Technical Access"
+    recommended_reading:
+      - "45 CFR 164.312(a)(1) -- Access Control"
+      - "NIST SP 800-66 Rev 2: Section 4.14 -- Access Control"
+    evidence_types:
+      - "iam_configuration"
+      - "access_review_report"
+    assertion_name: "technical_access_control_enforced"
+
+  "164.312(a)(2)(i)":
+    summary: "Assign a unique name and/or number for identifying and tracking user identity"
+    remediation_steps:
+      - "Assign unique user identifiers to all workforce members and system accounts"
+      - "Prohibit shared or generic accounts for ePHI system access"
+      - "Implement centralized identity management (SSO/IdP) for consistent user identification"
+      - "Ensure all system actions can be attributed to individual users through unique IDs"
+      - "Audit for shared or generic accounts quarterly and remediate findings"
+    console_path: "Warlock > Identity > Unique User Identification"
+    recommended_reading:
+      - "45 CFR 164.312(a)(2)(i) -- Unique User Identification"
+      - "NIST SP 800-66 Rev 2: Section 4.14 -- Unique User Identification"
+    evidence_types:
+      - "iam_configuration"
+      - "user_inventory"
+    assertion_name: "unique_user_ids_enforced"
+
+  "164.312(a)(2)(ii)":
+    summary: "Establish and implement procedures for obtaining necessary ePHI during an emergency"
+    remediation_steps:
+      - "Define break-glass procedures for emergency ePHI access"
+      - "Create emergency access accounts with appropriate logging"
+      - "Require post-event review and documentation for all emergency access usage"
+      - "Test emergency access procedures semi-annually"
+      - "Ensure emergency access does not bypass audit logging"
+    console_path: "Warlock > Access Control > Emergency Access"
+    recommended_reading:
+      - "45 CFR 164.312(a)(2)(ii) -- Emergency Access Procedure"
+      - "NIST SP 800-66 Rev 2: Section 4.14 -- Emergency Access Procedure"
+    evidence_types:
+      - "emergency_access_procedure"
+      - "access_log"
+    assertion_name: "emergency_access_procedure_current"
+
+  "164.312(a)(2)(iii)":
+    summary: "Implement electronic procedures that terminate sessions after a predetermined time of inactivity"
+    remediation_steps:
+      - "Configure automatic session timeout of 15 minutes or less on all ePHI systems"
+      - "Implement session lock with re-authentication requirement"
+      - "Apply timeout settings to web applications, VPN connections, and remote desktop sessions"
+      - "Verify timeout configurations through technical testing"
+      - "Document timeout settings and exceptions with risk acceptance"
+    console_path: "Warlock > Access Control > Session Management"
+    recommended_reading:
+      - "45 CFR 164.312(a)(2)(iii) -- Automatic Logoff"
+      - "NIST SP 800-66 Rev 2: Section 4.14 -- Automatic Logoff"
+    evidence_types:
+      - "session_configuration"
+      - "technical_test_result"
+    assertion_name: "automatic_logoff_configured"
+
+  "164.312(a)(2)(iv)":
+    summary: "Implement a mechanism to encrypt and decrypt ePHI at rest"
+    remediation_steps:
+      - "Encrypt all ePHI at rest using AES-256 or equivalent NIST-approved algorithm"
+      - "Implement encryption on databases, file systems, and storage volumes"
+      - "Use cloud-native encryption services (AWS KMS, Azure Key Vault, GCP Cloud KMS)"
+      - "Manage encryption keys through a dedicated key management system with rotation"
+      - "Verify encryption coverage through automated scanning and report gaps"
+    console_path: "Warlock > Encryption > Data at Rest"
+    recommended_reading:
+      - "45 CFR 164.312(a)(2)(iv) -- Encryption and Decryption"
+      - "NIST SP 800-66 Rev 2: Section 4.14 -- Encryption and Decryption"
+      - "NIST SP 800-111: Guide to Storage Encryption Technologies for End User Devices"
+    evidence_types:
+      - "encryption_configuration"
+      - "key_management_report"
+    assertion_name: "encryption_at_rest_enabled"
+
+  "164.312(b)":
+    summary: "Implement mechanisms that record and examine activity in information systems that contain or use ePHI"
+    remediation_steps:
+      - "Enable audit logging on all ePHI systems (CloudTrail, Azure Activity Log, GCP Audit Log)"
+      - "Configure logs to capture access, authentication, and data modification events"
+      - "Centralize log collection in a SIEM with tamper-evident storage"
+      - "Retain audit logs for a minimum of six years per HIPAA requirements"
+      - "Implement automated alerting for high-risk audit events"
+    console_path: "Warlock > Audit > Audit Controls"
+    recommended_reading:
+      - "45 CFR 164.312(b) -- Audit Controls"
+      - "NIST SP 800-66 Rev 2: Section 4.15 -- Audit Controls"
+      - "NIST SP 800-92: Guide to Computer Security Log Management"
+    evidence_types:
+      - "audit_log_configuration"
+      - "log_review_record"
+    assertion_name: "audit_controls_enabled"
+
+  "164.312(c)(1)":
+    summary: "Implement policies and procedures to protect ePHI from improper alteration or destruction"
+    remediation_steps:
+      - "Implement data integrity controls (checksums, digital signatures) for ePHI"
+      - "Enable change tracking and version control on ePHI databases"
+      - "Configure file integrity monitoring on systems storing ePHI"
+      - "Implement database transaction logging to detect unauthorized modifications"
+      - "Review integrity monitoring alerts and investigate anomalies"
+    console_path: "Warlock > Data Integrity > Integrity Controls"
+    recommended_reading:
+      - "45 CFR 164.312(c)(1) -- Integrity"
+      - "NIST SP 800-66 Rev 2: Section 4.16 -- Integrity"
+    evidence_types:
+      - "integrity_monitoring_config"
+      - "configuration_snapshot"
+    assertion_name: "data_integrity_controls_enabled"
+
+  "164.312(c)(2)":
+    summary: "Implement electronic mechanisms to corroborate that ePHI has not been altered or destroyed in an unauthorized manner"
+    remediation_steps:
+      - "Deploy file integrity monitoring (FIM) on ePHI systems"
+      - "Implement hash-based verification for ePHI data transfers"
+      - "Configure AWS Config, Azure Policy, or GCP Security Command Center for configuration drift detection"
+      - "Validate data integrity during backup and restoration processes"
+      - "Alert on integrity check failures and investigate within 24 hours"
+    console_path: "Warlock > Data Integrity > Integrity Validation"
+    recommended_reading:
+      - "45 CFR 164.312(c)(2) -- Mechanism to Authenticate Electronic PHI"
+      - "NIST SP 800-66 Rev 2: Section 4.16 -- Mechanism to Authenticate Electronic PHI"
+    evidence_types:
+      - "integrity_check_result"
+      - "configuration_snapshot"
+    assertion_name: "ephi_integrity_verified"
+
+  "164.312(d)":
+    summary: "Implement procedures to verify that a person or entity seeking access to ePHI is the one claimed"
+    remediation_steps:
+      - "Implement multi-factor authentication (MFA) for all ePHI system access"
+      - "Enforce MFA for both privileged and non-privileged accounts"
+      - "Use phishing-resistant MFA methods (FIDO2, hardware tokens) where feasible"
+      - "Monitor MFA enrollment and enforce 100% coverage"
+      - "Implement risk-based authentication that escalates requirements for suspicious access"
+    console_path: "Warlock > Identity > Person or Entity Authentication"
+    recommended_reading:
+      - "45 CFR 164.312(d) -- Person or Entity Authentication"
+      - "NIST SP 800-66 Rev 2: Section 4.17 -- Person or Entity Authentication"
+      - "NIST SP 800-63B: Digital Identity Guidelines"
+    evidence_types:
+      - "mfa_configuration"
+      - "iam_configuration"
+    assertion_name: "mfa_enforced"
+
+  "164.312(e)(1)":
+    summary: "Implement technical security measures to guard against unauthorized access to ePHI being transmitted over electronic networks"
+    remediation_steps:
+      - "Enforce TLS 1.2 or higher for all network transmissions containing ePHI"
+      - "Configure network segmentation to isolate ePHI traffic"
+      - "Deploy network access controls (firewalls, security groups) to protect ePHI flows"
+      - "Implement VPN or zero-trust network access for remote ePHI access"
+      - "Monitor network traffic for unauthorized ePHI transmission patterns"
+    console_path: "Warlock > Network > Transmission Security"
+    recommended_reading:
+      - "45 CFR 164.312(e)(1) -- Transmission Security"
+      - "NIST SP 800-66 Rev 2: Section 4.18 -- Transmission Security"
+    evidence_types:
+      - "network_configuration"
+      - "tls_configuration"
+    assertion_name: "transmission_security_enforced"
+
+  "164.312(e)(2)(i)":
+    summary: "Implement security measures to ensure electronically transmitted ePHI is not improperly modified without detection"
+    remediation_steps:
+      - "Enable TLS with HMAC for integrity verification on all ePHI transmissions"
+      - "Implement message authentication codes for application-level ePHI transfers"
+      - "Configure API endpoints to validate request and response integrity"
+      - "Monitor for man-in-the-middle attacks and certificate anomalies"
+      - "Test transmission integrity controls through periodic security assessments"
+    console_path: "Warlock > Network > Integrity Controls"
+    recommended_reading:
+      - "45 CFR 164.312(e)(2)(i) -- Integrity Controls"
+      - "NIST SP 800-66 Rev 2: Section 4.18 -- Integrity Controls"
+    evidence_types:
+      - "network_configuration"
+      - "security_test_result"
+    assertion_name: "transmission_integrity_verified"
+
+  "164.312(e)(2)(ii)":
+    summary: "Implement a mechanism to encrypt ePHI in transit whenever deemed appropriate"
+    remediation_steps:
+      - "Enforce TLS 1.2+ for all ePHI transmissions (web, API, email, database connections)"
+      - "Disable legacy protocols (SSLv3, TLS 1.0, TLS 1.1) on all systems"
+      - "Implement certificate management with automated renewal"
+      - "Configure S3 bucket policies and storage accounts to require encryption in transit"
+      - "Scan for unencrypted ePHI transmission paths and remediate"
+    console_path: "Warlock > Encryption > Data in Transit"
+    recommended_reading:
+      - "45 CFR 164.312(e)(2)(ii) -- Encryption"
+      - "NIST SP 800-66 Rev 2: Section 4.18 -- Encryption"
+    evidence_types:
+      - "tls_configuration"
+      - "network_scan_result"
+    assertion_name: "encryption_in_transit_enforced"
+
+  "164.314(a)(1)":
+    summary: "Ensure business associate contracts meet HIPAA Security Rule requirements"
+    remediation_steps:
+      - "Review all business associate contracts for Security Rule compliance"
+      - "Ensure contracts require implementation of administrative, physical, and technical safeguards"
+      - "Include breach notification requirements in all BAAs"
+      - "Require business associates to make their practices available for audit"
+      - "Update contract templates to reflect current regulatory requirements"
+    console_path: "Warlock > Vendor Risk > BA Contracts"
+    recommended_reading:
+      - "45 CFR 164.314(a)(1) -- Business Associate Contracts or Other Arrangements"
+      - "NIST SP 800-66 Rev 2: Section 4.19 -- Business Associate Contracts"
+    evidence_types:
+      - "contract_document"
+      - "vendor_assessment"
+    assertion_name: "ba_contract_compliant"
+
+  "164.314(a)(2)(i)":
+    summary: "Business associate contracts must require implementation of safeguards protecting ePHI confidentiality, integrity, and availability"
+    remediation_steps:
+      - "Include specific security requirements in all BAA contract language"
+      - "Require business associates to implement safeguards equivalent to covered entity standards"
+      - "Include provisions for incident reporting within specified timeframes"
+      - "Require business associates to ensure subcontractor compliance"
+      - "Include right-to-audit clauses and security assessment requirements"
+    console_path: "Warlock > Vendor Risk > BA Contract Requirements"
+    recommended_reading:
+      - "45 CFR 164.314(a)(2)(i) -- Business Associate Contract Requirements"
+      - "NIST SP 800-66 Rev 2: Section 4.19 -- Contract Requirements"
+    evidence_types:
+      - "contract_document"
+      - "vendor_assessment"
+    assertion_name: "ba_safeguards_required"
+
+  "164.314(a)(2)(ii)":
+    summary: "Government entities may comply through alternative arrangements such as memoranda of understanding"
+    remediation_steps:
+      - "Identify all governmental business associate relationships"
+      - "Execute memoranda of understanding (MOUs) with governmental business associates"
+      - "Ensure MOUs contain equivalent security provisions to standard BAAs"
+      - "Review governmental arrangements for compliance with applicable laws"
+      - "Maintain documentation of all alternative arrangement justifications"
+    console_path: "Warlock > Vendor Risk > Government Arrangements"
+    recommended_reading:
+      - "45 CFR 164.314(a)(2)(ii) -- Other Arrangements (Government)"
+      - "NIST SP 800-66 Rev 2: Section 4.19 -- Other Arrangements"
+    evidence_types:
+      - "contract_document"
+      - "policy_document"
+    assertion_name: "government_arrangement_documented"
+
+  "164.314(b)(1)":
+    summary: "Group health plans must ensure plan sponsors will appropriately safeguard ePHI"
+    remediation_steps:
+      - "Identify all plan sponsor relationships and ePHI data flows"
+      - "Document the safeguards plan sponsors must implement"
+      - "Ensure plan documents require sponsor compliance with HIPAA Security Rule"
+      - "Conduct periodic assessments of plan sponsor security practices"
+      - "Address identified gaps through corrective action plans"
+    console_path: "Warlock > Vendor Risk > Group Health Plan Sponsors"
+    recommended_reading:
+      - "45 CFR 164.314(b)(1) -- Requirements for Group Health Plans"
+      - "NIST SP 800-66 Rev 2: Section 4.20 -- Group Health Plan Requirements"
+    evidence_types:
+      - "plan_document"
+      - "vendor_assessment"
+    assertion_name: "group_health_plan_compliant"
+
+  "164.314(b)(2)(i)":
+    summary: "Amend group health plan documents to require plan sponsor safeguards and security incident reporting"
+    remediation_steps:
+      - "Review current group health plan documents for Security Rule provisions"
+      - "Amend plan documents to include required security safeguard provisions"
+      - "Include security incident reporting requirements for plan sponsors"
+      - "Ensure amendments address separation of ePHI from plan administration data"
+      - "Distribute amended plan documents to all affected parties"
+    console_path: "Warlock > Vendor Risk > Plan Document Amendments"
+    recommended_reading:
+      - "45 CFR 164.314(b)(2)(i) -- Plan Document Amendment"
+      - "NIST SP 800-66 Rev 2: Section 4.20 -- Plan Document Amendment"
+    evidence_types:
+      - "plan_document"
+      - "policy_document"
+    assertion_name: "plan_document_amended"
+
+  "164.316(a)":
+    summary: "Implement reasonable and appropriate policies and procedures to comply with the HIPAA Security Rule"
+    remediation_steps:
+      - "Develop a comprehensive HIPAA security policy framework covering all Security Rule standards"
+      - "Tailor policies to the organization's size, complexity, and risk profile"
+      - "Obtain management approval for all security policies"
+      - "Distribute policies to all workforce members with acknowledgment tracking"
+      - "Review and update all policies at least annually"
+    console_path: "Warlock > Policies > HIPAA Security"
+    recommended_reading:
+      - "45 CFR 164.316(a) -- Policies and Procedures"
+      - "NIST SP 800-66 Rev 2: Section 4.21 -- Policies and Procedures"
+    evidence_types:
+      - "policy_document"
+      - "policy_acknowledgment"
+    assertion_name: "hipaa_policies_current"
+
+  "164.316(b)(1)(i)":
+    summary: "Retain required documentation for six years from the date of creation or the date when it last was in effect"
+    remediation_steps:
+      - "Establish a document retention policy specifying the six-year minimum"
+      - "Implement a document management system with retention enforcement"
+      - "Configure automated retention holds on HIPAA-related documents"
+      - "Prohibit premature deletion of documents subject to the retention requirement"
+      - "Audit document retention compliance annually"
+    console_path: "Warlock > Document Management > Retention"
+    recommended_reading:
+      - "45 CFR 164.316(b)(1)(i) -- Time Limit"
+      - "NIST SP 800-66 Rev 2: Section 4.22 -- Documentation Requirements"
+    evidence_types:
+      - "retention_policy"
+      - "document_inventory"
+    assertion_name: "document_retention_compliant"
+
+  "164.316(b)(1)(ii)":
+    summary: "Make documentation available to persons responsible for implementing procedures"
+    remediation_steps:
+      - "Publish all security policies and procedures on an accessible internal platform"
+      - "Implement access controls to ensure appropriate personnel can reach relevant documentation"
+      - "Maintain a document index with clear ownership and last-review dates"
+      - "Ensure documentation is available during emergencies (offline copies or redundant hosting)"
+      - "Track documentation access and verify it is being referenced by responsible parties"
+    console_path: "Warlock > Document Management > Availability"
+    recommended_reading:
+      - "45 CFR 164.316(b)(1)(ii) -- Availability"
+      - "NIST SP 800-66 Rev 2: Section 4.22 -- Availability"
+    evidence_types:
+      - "document_inventory"
+      - "access_log"
+    assertion_name: "documentation_accessible"
+
+  "164.316(b)(2)(i)":
+    summary: "Review documentation periodically and update as needed in response to environmental or operational changes"
+    remediation_steps:
+      - "Establish an annual policy review cycle with assigned owners for each document"
+      - "Trigger interim reviews when significant changes occur (new systems, regulations, incidents)"
+      - "Track review dates and document changes in a version control system"
+      - "Require formal approval for all policy updates"
+      - "Communicate updated policies to affected workforce members"
+    console_path: "Warlock > Document Management > Review Schedule"
+    recommended_reading:
+      - "45 CFR 164.316(b)(2)(i) -- Updates"
+      - "NIST SP 800-66 Rev 2: Section 4.22 -- Updates"
+    evidence_types:
+      - "policy_review_record"
+      - "policy_document"
+    assertion_name: "documentation_review_current"
+
+  "164.316(b)(2)(ii)":
+    summary: "Document actions, activities, or assessments required by the HIPAA Security Rule"
+    remediation_steps:
+      - "Maintain written or electronic records for all Security Rule compliance activities"
+      - "Document risk assessments, audit results, incident responses, and training activities"
+      - "Implement standardized templates for recurring compliance documentation"
+      - "Ensure documentation includes date, participants, findings, and actions taken"
+      - "Store compliance documentation in a centralized, searchable repository"
+    console_path: "Warlock > Compliance > Documentation"
+    recommended_reading:
+      - "45 CFR 164.316(b)(2)(ii) -- Documentation"
+      - "NIST SP 800-66 Rev 2: Section 4.22 -- Documentation"
+    evidence_types:
+      - "compliance_record"
+      - "assessment_report"
+    assertion_name: "compliance_activities_documented"
+
+  "164.316(b)(2)(iii)":
+    summary: "Retain all required documentation for the mandated retention period in an accessible and retrievable format"
+    remediation_steps:
+      - "Implement long-term storage with guaranteed six-year retention for all HIPAA documents"
+      - "Ensure storage format supports retrievability (searchable, indexed, backed up)"
+      - "Protect retained documents from unauthorized modification or deletion"
+      - "Implement integrity controls (checksums, write-once storage) for retained documents"
+      - "Test document retrieval procedures annually to verify accessibility"
+    console_path: "Warlock > Document Management > Long-Term Retention"
+    recommended_reading:
+      - "45 CFR 164.316(b)(2)(iii) -- Documentation Retention"
+      - "NIST SP 800-66 Rev 2: Section 4.22 -- Documentation Retention"
+    evidence_types:
+      - "retention_policy"
+      - "document_inventory"
+    assertion_name: "documentation_retention_verified"

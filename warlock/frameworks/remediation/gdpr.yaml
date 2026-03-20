@@ -1,0 +1,275 @@
+controls:
+  "Art5-1a":
+    summary: "Personal data shall be processed lawfully, fairly, and in a transparent manner"
+    remediation_steps:
+      - "Document the lawful basis for each processing activity under Article 6(1)"
+      - "Publish a clear and accessible privacy notice explaining all processing purposes"
+      - "Implement consent management mechanisms where consent is the lawful basis"
+      - "Conduct regular audits to verify processing activities align with documented lawful bases"
+      - "Maintain records demonstrating compliance with fairness and transparency requirements"
+    console_path: "Warlock > Privacy > GDPR > Lawfulness"
+    recommended_reading:
+      - "GDPR Article 5(1)(a) -- Lawfulness, Fairness, and Transparency"
+      - "EDPB Guidelines on Transparency (WP260 rev.01)"
+      - "ICO Guidance on Lawful Basis for Processing"
+    evidence_types:
+      - "privacy_policy"
+      - "consent_record"
+      - "processing_register"
+    assertion_name: "lawful_basis_documented"
+
+  "Art5-1b":
+    summary: "Personal data shall be collected for specified, explicit, and legitimate purposes and not further processed in an incompatible manner"
+    remediation_steps:
+      - "Define and document the specific purpose for each data collection activity"
+      - "Implement technical controls to prevent data from being used for undocumented purposes"
+      - "Conduct purpose limitation assessments before any new use of existing personal data"
+      - "Update privacy notices when processing purposes change"
+      - "Review data processing activities annually for purpose creep"
+    console_path: "Warlock > Privacy > GDPR > Purpose Limitation"
+    recommended_reading:
+      - "GDPR Article 5(1)(b) -- Purpose Limitation"
+      - "EDPB Guidelines on Purpose Limitation"
+      - "ICO Guidance on Purpose Limitation"
+    evidence_types:
+      - "privacy_assessment"
+      - "processing_register"
+    assertion_name: "purpose_limitation_documented"
+
+  "Art5-1c":
+    summary: "Personal data shall be adequate, relevant, and limited to what is necessary"
+    remediation_steps:
+      - "Conduct data mapping to identify all personal data fields collected per processing activity"
+      - "Review each data field against the documented purpose and remove unnecessary fields"
+      - "Implement data minimization checks in application design and development processes"
+      - "Configure data collection forms to collect only necessary fields"
+      - "Conduct periodic data minimization reviews and document findings"
+    console_path: "Warlock > Privacy > GDPR > Data Minimization"
+    recommended_reading:
+      - "GDPR Article 5(1)(c) -- Data Minimisation"
+      - "EDPB Guidelines on Data Minimisation"
+      - "ICO Guidance on Data Minimisation"
+    evidence_types:
+      - "data_inventory"
+      - "privacy_assessment"
+    assertion_name: "data_minimization_verified"
+
+  "Art5-1e":
+    summary: "Personal data shall be kept for no longer than is necessary for the purposes for which it is processed"
+    remediation_steps:
+      - "Define retention periods for each category of personal data based on processing purpose"
+      - "Implement automated data retention and deletion mechanisms"
+      - "Configure lifecycle policies on cloud storage (S3, Azure Blob, GCS) for personal data"
+      - "Conduct annual reviews of retained personal data against defined retention schedules"
+      - "Document justification for any data retained beyond standard retention periods"
+    console_path: "Warlock > Privacy > GDPR > Storage Limitation"
+    recommended_reading:
+      - "GDPR Article 5(1)(e) -- Storage Limitation"
+      - "EDPB Guidelines on Storage Limitation"
+      - "ICO Guidance on Storage Limitation"
+    evidence_types:
+      - "retention_policy"
+      - "data_inventory"
+    assertion_name: "retention_policy_enforced"
+
+  "Art5-1f":
+    summary: "Personal data shall be processed with appropriate security measures ensuring integrity and confidentiality"
+    remediation_steps:
+      - "Encrypt all personal data at rest using AES-256 or equivalent"
+      - "Enforce TLS 1.2+ for all personal data in transit"
+      - "Implement access controls limiting personal data access to authorized personnel"
+      - "Deploy DLP policies to prevent unauthorized personal data exfiltration"
+      - "Conduct regular security assessments of systems processing personal data"
+    console_path: "Warlock > Privacy > GDPR > Security"
+    recommended_reading:
+      - "GDPR Article 5(1)(f) -- Integrity and Confidentiality"
+      - "EDPB Guidelines on Security of Processing"
+      - "ENISA Guidelines on Data Protection Engineering"
+    evidence_types:
+      - "encryption_configuration"
+      - "access_control_report"
+      - "security_assessment"
+    assertion_name: "personal_data_security_verified"
+
+  "Art6-1":
+    summary: "Processing shall be lawful only if at least one legal basis applies (consent, contract, legal obligation, vital interests, public task, or legitimate interests)"
+    remediation_steps:
+      - "Map each processing activity to one of the six legal bases under Article 6(1)"
+      - "Implement consent collection mechanisms with clear opt-in for consent-based processing"
+      - "Document legitimate interest assessments (LIA) where legitimate interests is the basis"
+      - "Maintain a register linking each processing activity to its legal basis"
+      - "Review legal basis assignments when processing activities change"
+    console_path: "Warlock > Privacy > GDPR > Lawful Basis"
+    recommended_reading:
+      - "GDPR Article 6(1) -- Lawfulness of Processing"
+      - "EDPB Guidelines on Consent (05/2020)"
+      - "ICO Guidance on Legitimate Interests"
+    evidence_types:
+      - "consent_record"
+      - "legitimate_interest_assessment"
+      - "processing_register"
+    assertion_name: "legal_basis_mapped"
+
+  "Art13-1":
+    summary: "Provide data subjects with identity of controller, purposes, legal basis, recipients, and transfer information at point of collection"
+    remediation_steps:
+      - "Draft a comprehensive privacy notice including all Article 13 required elements"
+      - "Display the privacy notice at or before the point of data collection"
+      - "Include controller identity, DPO contact, purposes, legal basis, recipients, and transfer details"
+      - "Provide information about data subject rights and right to lodge a complaint"
+      - "Review and update privacy notices when processing activities change"
+    console_path: "Warlock > Privacy > GDPR > Privacy Notices"
+    recommended_reading:
+      - "GDPR Article 13 -- Information to be Provided at Collection"
+      - "EDPB Guidelines on Transparency (WP260 rev.01)"
+      - "ICO Guidance on Privacy Notices"
+    evidence_types:
+      - "privacy_notice"
+      - "policy_document"
+    assertion_name: "privacy_notice_compliant"
+
+  "Art15-1":
+    summary: "Data subjects have the right to obtain confirmation of processing and access to their personal data"
+    remediation_steps:
+      - "Implement a data subject access request (DSAR) intake process (web form, email, portal)"
+      - "Establish identity verification procedures for DSAR requestors"
+      - "Build data discovery capabilities to locate all personal data across systems"
+      - "Define and meet the one-month response timeline (with documented extension if needed)"
+      - "Track DSAR metrics (volume, response time, outcomes) and report to DPO"
+    console_path: "Warlock > Privacy > GDPR > Subject Access"
+    recommended_reading:
+      - "GDPR Article 15 -- Right of Access by the Data Subject"
+      - "EDPB Guidelines on Right of Access"
+      - "ICO Guidance on Right of Access"
+    evidence_types:
+      - "dsar_log"
+      - "process_documentation"
+    assertion_name: "dsar_process_operational"
+
+  "Art17-1":
+    summary: "Data subjects have the right to obtain erasure of personal data without undue delay"
+    remediation_steps:
+      - "Implement a deletion request intake process integrated with DSAR workflows"
+      - "Build automated data deletion capabilities across all systems storing personal data"
+      - "Define exceptions where erasure does not apply (legal obligation, public interest, legal claims)"
+      - "Verify deletion completion across primary systems and backups"
+      - "Document all erasure actions including scope, systems affected, and completion date"
+    console_path: "Warlock > Privacy > GDPR > Right to Erasure"
+    recommended_reading:
+      - "GDPR Article 17 -- Right to Erasure (Right to be Forgotten)"
+      - "EDPB Guidelines on Right to Erasure"
+      - "ICO Guidance on Right to Erasure"
+    evidence_types:
+      - "deletion_log"
+      - "process_documentation"
+    assertion_name: "erasure_process_operational"
+
+  "Art25-1":
+    summary: "Implement appropriate technical and organisational measures for data protection by design and by default"
+    remediation_steps:
+      - "Integrate privacy impact assessments into the software development lifecycle"
+      - "Implement privacy-by-default settings (minimum data collection, restricted access)"
+      - "Conduct DPIAs for all new systems or features that process personal data"
+      - "Apply pseudonymization and data masking in non-production environments"
+      - "Train development teams on privacy-by-design principles and GDPR requirements"
+    console_path: "Warlock > Privacy > GDPR > Privacy by Design"
+    recommended_reading:
+      - "GDPR Article 25 -- Data Protection by Design and by Default"
+      - "EDPB Guidelines on Data Protection by Design (4/2019)"
+      - "ENISA Guidelines on Data Protection Engineering"
+    evidence_types:
+      - "dpia_report"
+      - "design_review_record"
+    assertion_name: "privacy_by_design_implemented"
+
+  "Art28-1":
+    summary: "Processing by a processor shall be governed by a contract with binding provisions"
+    remediation_steps:
+      - "Identify all data processors and sub-processors handling personal data"
+      - "Execute Data Processing Agreements (DPAs) with all processors meeting Article 28(3) requirements"
+      - "Include provisions for data return or deletion upon contract termination"
+      - "Require processors to demonstrate GDPR compliance (certifications, audit reports)"
+      - "Review DPA compliance annually and upon contract renewal"
+    console_path: "Warlock > Privacy > GDPR > Processor Contracts"
+    recommended_reading:
+      - "GDPR Article 28 -- Processor"
+      - "EDPB Guidelines on Concepts of Controller and Processor"
+      - "ICO Guidance on Contracts and Liabilities Between Controllers and Processors"
+    evidence_types:
+      - "contract_document"
+      - "vendor_assessment"
+    assertion_name: "dpa_current"
+
+  "Art30-1":
+    summary: "Maintain a record of processing activities (ROPA) under controller responsibility"
+    remediation_steps:
+      - "Create a comprehensive ROPA covering all processing activities"
+      - "Include controller details, purposes, data categories, recipients, transfers, and retention"
+      - "Assign ownership for each processing activity to a business unit"
+      - "Review and update the ROPA quarterly or when processing activities change"
+      - "Make the ROPA available to supervisory authorities upon request"
+    console_path: "Warlock > Privacy > GDPR > Records of Processing"
+    recommended_reading:
+      - "GDPR Article 30 -- Records of Processing Activities"
+      - "EDPB Guidelines on Records of Processing"
+      - "ICO Guidance on Documentation and Records of Processing"
+    evidence_types:
+      - "ropa_document"
+      - "data_inventory"
+    assertion_name: "ropa_current"
+
+  "Art32-1":
+    summary: "Implement appropriate technical and organisational security measures including encryption, pseudonymisation, and resilience"
+    remediation_steps:
+      - "Encrypt personal data at rest and in transit using industry-standard algorithms"
+      - "Implement pseudonymization where possible to reduce processing risk"
+      - "Ensure systems processing personal data have high availability and resilience"
+      - "Conduct regular penetration testing and vulnerability scanning"
+      - "Establish processes for regularly testing, assessing, and evaluating security measures"
+    console_path: "Warlock > Privacy > GDPR > Security of Processing"
+    recommended_reading:
+      - "GDPR Article 32 -- Security of Processing"
+      - "EDPB Guidelines on Security of Processing"
+      - "ENISA Guidelines on Security Measures for Personal Data Processing"
+    evidence_types:
+      - "encryption_configuration"
+      - "vulnerability_scan"
+      - "penetration_test_report"
+    assertion_name: "security_measures_adequate"
+
+  "Art33-1":
+    summary: "Notify supervisory authority within 72 hours of becoming aware of a personal data breach"
+    remediation_steps:
+      - "Establish a breach detection and classification process"
+      - "Define breach notification procedures with clear escalation paths and timelines"
+      - "Create pre-drafted notification templates for supervisory authority reporting"
+      - "Implement a breach register documenting all personal data breaches and outcomes"
+      - "Conduct breach response drills at least annually to validate 72-hour timeline compliance"
+    console_path: "Warlock > Privacy > GDPR > Breach Notification"
+    recommended_reading:
+      - "GDPR Article 33 -- Notification of a Personal Data Breach to the Supervisory Authority"
+      - "EDPB Guidelines on Personal Data Breach Notification (9/2022)"
+      - "ICO Guidance on Personal Data Breaches"
+    evidence_types:
+      - "breach_notification_procedure"
+      - "incident_record"
+      - "breach_register"
+    assertion_name: "breach_notification_process_current"
+
+  "Art35-1":
+    summary: "Carry out a Data Protection Impact Assessment where processing is likely to result in high risk"
+    remediation_steps:
+      - "Define criteria for identifying high-risk processing requiring a DPIA"
+      - "Establish a DPIA process including systematic assessment of necessity and proportionality"
+      - "Conduct DPIAs before initiating high-risk processing activities"
+      - "Consult with the DPO during the DPIA process"
+      - "Document DPIA outcomes including identified risks and mitigation measures"
+    console_path: "Warlock > Privacy > GDPR > DPIA"
+    recommended_reading:
+      - "GDPR Article 35 -- Data Protection Impact Assessment"
+      - "EDPB Guidelines on DPIA (WP248 rev.01)"
+      - "ICO Guidance on Data Protection Impact Assessments"
+    evidence_types:
+      - "dpia_report"
+      - "risk_assessment_document"
+    assertion_name: "dpia_completed"

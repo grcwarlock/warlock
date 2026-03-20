@@ -7,6 +7,7 @@ that previously lived in ``warlock.cli``.
 
 from __future__ import annotations
 
+import functools
 import importlib
 import logging
 import os
@@ -156,12 +157,27 @@ def load_assertions() -> None:
     _import_modules(_ASSERTION_MODULES, "assertion")
 
 
+@functools.lru_cache(maxsize=None)
+def _load_yaml_file(path: str) -> dict[str, Any]:
+    """Parse a single YAML file and return the resulting dict.
+
+    Results are cached by absolute path so repeated calls to
+    ``load_framework_configs`` (e.g. once per API request) pay the
+    file-system and YAML-parse cost only once per process lifetime.
+    """
+    with open(path) as fh:
+        return yaml.safe_load(fh) or {}
+
+
 def load_framework_configs(config_dir: str, mapper: ControlMapper) -> None:
     """Read all YAML files from *config_dir* and feed them into *mapper*.
 
     Files whose name starts with ``crosswalk`` are loaded via
     ``mapper.load_crosswalk_yaml()``; all others are loaded as framework
     configs via ``mapper.load_framework_yaml()``.
+
+    Individual file parses are cached by ``_load_yaml_file`` so that
+    large framework YAMLs are not re-parsed on every pipeline bootstrap.
     """
     config_path = Path(config_dir)
     if not config_path.is_dir():
@@ -170,8 +186,7 @@ def load_framework_configs(config_dir: str, mapper: ControlMapper) -> None:
 
     for yaml_file in sorted(config_path.glob("*.yaml")):
         try:
-            with open(yaml_file) as fh:
-                data: dict[str, Any] = yaml.safe_load(fh) or {}
+            data: dict[str, Any] = _load_yaml_file(str(yaml_file))
         except Exception:
             log.exception("Failed to parse framework YAML: %s", yaml_file)
             continue
@@ -191,8 +206,7 @@ def load_framework_configs(config_dir: str, mapper: ControlMapper) -> None:
     # Also check for *.yml files (common alternative extension).
     for yml_file in sorted(config_path.glob("*.yml")):
         try:
-            with open(yml_file) as fh:
-                data = yaml.safe_load(fh) or {}
+            data = _load_yaml_file(str(yml_file))
         except Exception:
             log.exception("Failed to parse framework YAML: %s", yml_file)
             continue
@@ -284,10 +298,32 @@ def build_pipeline(
     """
     settings = get_settings()
 
+    framework_dir = os.environ.get(
+        "WLK_FRAMEWORK_CONFIG_DIR",
+        str(Path(__file__).resolve().parent.parent / "frameworks"),
+    )
+
     # 1. Load connector types, normalizers, assertions
     load_all_connectors()
     load_all_normalizers()
     load_assertions()
+
+    # Load assertion propagation (crosswalks + enhancement inheritance)
+    try:
+        from warlock.assessors.propagation import AssertionPropagator
+        propagator = AssertionPropagator(assertion_engine, framework_dir)
+        propagator.propagate_all()
+        log.info("Assertion propagation complete")
+    except Exception:
+        log.warning("Assertion propagation failed — running with direct bindings only")
+
+    # Register family-level default assertions
+    try:
+        from warlock.assessors.family_assertions import register_family_assertions
+        register_family_assertions(assertion_engine)
+        log.info("Family-level default assertions registered")
+    except Exception:
+        log.warning("Family assertion registration failed")
 
     # 2. Build connector registry with enabled sources
     connectors = ConnectorRegistry()
@@ -315,10 +351,6 @@ def build_pipeline(
 
     # 3. Build mapper and load framework YAML configs
     mapper = ControlMapper()
-    framework_dir = os.environ.get(
-        "WLK_FRAMEWORK_CONFIG_DIR",
-        str(Path(__file__).resolve().parent.parent / "frameworks"),
-    )
     load_framework_configs(framework_dir, mapper)
 
     # 4. Build assessor (with AI reasoning if configured)

@@ -80,12 +80,6 @@ Competitive parity. Every GRC tool has these.
 - [ ] 46. Security questionnaire auto-response (L)
 - [ ] 47. Real-time compliance dashboard (M)
 
-### Privacy (4 items)
-- [ ] 48. DSAR automation workflow — intake to response (L)
-- [ ] 49. Privacy Impact Assessment (DPIA) workflow (M)
-- [ ] 50. Breach notification workflow — 72hr Article 33 (M)
-- [ ] 51. Data mapping and lineage (ROPA) — Article 30 (L)
-
 ### Performance (3 items — were missing)
 - [ ] 52. Monte Carlo inner Poisson vectorization (M) *(was missing)*
 - [ ] 53. Monte Carlo pre-computation cache (S) *(was missing)*

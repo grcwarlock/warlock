@@ -107,7 +107,17 @@ class Pipeline:
         self._acquire_concurrency_lock(session)
 
         stats = PipelineRunStats()
+
+        # Enhancement #8: propagate run_id into every log record for this run
+        from warlock.logging_config import correlation_id as _correlation_id
+        if stats.run_id:
+            _correlation_id.set(stats.run_id)
+
         log.info("Pipeline run starting")
+
+        # Accumulate already-normalized findings so Stage 5 (OPA) can reuse them
+        # directly instead of re-normalizing the same raw events a second time.
+        all_normalized_findings: list[FindingData] = []
 
         # Stage 1: Collect raw events from all connectors
         connector_results = self.connectors.collect_all()
@@ -141,6 +151,8 @@ class Pipeline:
                     continue
                 if not findings:
                     stats.events_without_findings += 1
+                # Accumulate for OPA stage (avoids re-normalization later)
+                all_normalized_findings.extend(findings)
                 for finding in findings:
                     finding.raw_event_id = db_raw.id
                     db_finding = self._persist_finding(session, finding)
@@ -185,7 +197,9 @@ class Pipeline:
 
         # Stage 5 (optional): OPA compliance evaluation across all frameworks
         if self.opa_evaluator is not None:
-            opa_results = self._evaluate_opa_compliance(session, connector_results)
+            opa_results = self._evaluate_opa_compliance(
+                session, connector_results, all_normalized_findings
+            )
             stats.results_assessed += len(opa_results)
 
         session.flush()
@@ -257,21 +271,37 @@ class Pipeline:
 
     # -- Integrity verification --
 
-    def verify_integrity(self, session: Session) -> dict:
+    def verify_integrity(self, session: Session, run_id: str | None = None) -> dict:
         """Verify SHA-256 hashes of all stored RawEvent records.
 
-        Iterates over every RawEvent row, recomputes the SHA-256 of its
-        raw_data payload, and compares it to the stored sha256 column.
+        Re-computes the SHA-256 for each RawEvent and compares to the stored
+        hash to detect evidence tampering. Records a verified_at timestamp
+        and logs results with the run correlation ID.
+
+        Args:
+            session: Database session.
+            run_id: Optional correlation ID for logging context. If provided,
+                    sets the correlation ID so all log lines include it.
 
         Returns a dict with keys:
           - total: number of records checked
           - passed: records whose hash matched
           - failed: list of IDs whose hash did not match
+          - verified_at: ISO-8601 timestamp of when verification completed
+          - run_id: correlation ID used (if any)
         """
         import hashlib
         import json
 
-        failed = []
+        # Set correlation ID for log context if provided
+        correlation_token = None
+        if run_id:
+            from warlock.logging_config import correlation_id as _correlation_id
+            correlation_token = _correlation_id.set(run_id)
+
+        log.info("Evidence integrity verification starting")
+
+        failed: list[str] = []
         total = 0
         passed = 0
 
@@ -284,11 +314,56 @@ class Pipeline:
             else:
                 failed.append(raw_event.id)
                 log.warning(
-                    "Integrity check failed for RawEvent %s: stored=%s computed=%s",
+                    "Integrity check FAILED for RawEvent %s: stored=%s computed=%s",
                     raw_event.id, raw_event.sha256, computed,
                 )
 
-        return {"total": total, "passed": passed, "failed": failed}
+        verified_at = datetime.now(timezone.utc)
+
+        if failed:
+            log.error(
+                "Evidence integrity verification FAILED: %d/%d records tampered",
+                len(failed), total,
+            )
+        else:
+            log.info(
+                "Evidence integrity verification PASSED: %d/%d records verified",
+                passed, total,
+            )
+
+        # Reset correlation ID if we set it
+        if correlation_token is not None:
+            from warlock.logging_config import correlation_id as _correlation_id
+            _correlation_id.set("")
+
+        return {
+            "total": total,
+            "passed": passed,
+            "failed": failed,
+            "verified_at": verified_at.isoformat(),
+            "run_id": run_id,
+        }
+
+    def cli_verify_integrity(self, session: Session, run_id: str | None = None) -> dict:
+        """CLI-callable entry point for ``warlock verify-integrity``.
+
+        Wraps :meth:`verify_integrity` with structured output suitable for
+        console display. The CLI command itself will be wired separately.
+
+        Args:
+            session: Database session.
+            run_id: Optional correlation ID for logging and result tagging.
+
+        Returns:
+            The same dict as verify_integrity, plus an ``ok`` boolean.
+        """
+        if run_id is None:
+            from uuid import uuid4
+            run_id = str(uuid4())
+
+        result = self.verify_integrity(session, run_id=run_id)
+        result["ok"] = len(result["failed"]) == 0
+        return result
 
     # -- OPA compliance evaluation --
 
@@ -296,12 +371,14 @@ class Pipeline:
         self,
         session: Session,
         connector_results: list[ConnectorResult],
+        normalized_findings: list[FindingData] | None = None,
     ) -> list[ControlResultData]:
         """Run OPA compliance evaluation across all frameworks.
 
-        Assembles normalized_data from raw events and findings collected
-        during this pipeline run, then evaluates all registered Rego
-        policies against OPA.
+        Assembles normalized_data from raw events and the already-normalized
+        findings collected during Stage 2, then evaluates all registered Rego
+        policies against OPA.  Passing *normalized_findings* avoids running the
+        normalizer a second time over every raw event.
         """
         from warlock.assessors.data_assembler import NormalizedDataAssembler
         from warlock.assessors.policy_registry import get_policy_registry
@@ -311,15 +388,20 @@ class Pipeline:
         results: list[ControlResultData] = []
 
         try:
-            # Gather all raw events and findings from this run
+            # Gather all raw events from connector results
             all_raw_events: list[RawEventData] = []
-            all_findings: list[FindingData] = []
             for cr in connector_results:
                 all_raw_events.extend(cr.events)
-                for raw_event in cr.events:
+
+            # Use pre-collected findings from Stage 2; fall back to re-normalizing
+            # only when this method is called without them (e.g. in tests).
+            if normalized_findings is not None:
+                all_findings: list[FindingData] = normalized_findings
+            else:
+                all_findings = []
+                for raw_event in all_raw_events:
                     try:
-                        findings = self.normalizers.normalize(raw_event)
-                        all_findings.extend(findings)
+                        all_findings.extend(self.normalizers.normalize(raw_event))
                     except Exception:
                         pass  # Already logged during main loop
 

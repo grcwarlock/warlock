@@ -1,0 +1,853 @@
+controls:
+  # ---------------------------------------------------------------------------
+  # CC1 — Control Environment
+  # ---------------------------------------------------------------------------
+  CC1.1:
+    summary: "The entity demonstrates a commitment to integrity and ethical values"
+    remediation_steps:
+      - "Define and publish code of conduct and ethics policy"
+      - "Assign security roles and responsibilities in SailPoint"
+      - "Document organizational commitment in governance charter"
+      - "Conduct annual ethics training"
+      - "Track acknowledgment of code of conduct"
+    console_path: "SailPoint > Identities > Role Assignments"
+    recommended_reading:
+      - "AICPA TSC CC1.1"
+      - "COSO Principle 1 — Integrity and Ethical Values"
+    evidence_types:
+      - "sailpoint_identities"
+      - "sailpoint_roles"
+    assertion_name: null
+
+  CC1.2:
+    summary: "The board of directors demonstrates independence and exercises oversight"
+    remediation_steps:
+      - "Document board charter with security oversight responsibilities"
+      - "Schedule quarterly board security briefings"
+      - "Conduct SailPoint access certifications for board-level oversight"
+      - "Track board meeting minutes documenting security discussions"
+      - "Maintain board independence documentation"
+    console_path: "SailPoint > Certifications > Board Oversight Campaigns"
+    recommended_reading:
+      - "AICPA TSC CC1.2"
+      - "COSO Principle 2 — Board Independence and Oversight"
+    evidence_types:
+      - "sailpoint_certifications"
+    assertion_name: null
+
+  CC1.3:
+    summary: "Management establishes organizational structure, reporting lines, and authorities"
+    remediation_steps:
+      - "Document organizational structure and reporting lines"
+      - "Define security team roles and responsibilities in Workday"
+      - "Publish organizational chart with security accountability"
+      - "Review reporting structure for adequate segregation"
+      - "Update structure documentation on organizational changes"
+    console_path: "Workday > Organization > Structure"
+    recommended_reading:
+      - "AICPA TSC CC1.3"
+      - "COSO Principle 3 — Management Structure and Authorities"
+    evidence_types:
+      - "workday_employees"
+    assertion_name: "background_check_completed"
+
+  CC1.4:
+    summary: "The entity demonstrates commitment to competence"
+    remediation_steps:
+      - "Deploy security awareness training via KnowBe4"
+      - "Track training completion rates for all employees"
+      - "Provide role-specific security training for technical staff"
+      - "Maintain training records and completion certificates"
+      - "Set minimum 95% completion rate target"
+    console_path: "KnowBe4 > Training > Campaigns"
+    recommended_reading:
+      - "AICPA TSC CC1.4"
+      - "COSO Principle 4 — Competence Commitment"
+    evidence_types:
+      - "kb4_training_enrollments"
+    assertion_name: "training_completion_rate"
+
+  CC1.5:
+    summary: "The entity holds individuals accountable for internal control responsibilities"
+    remediation_steps:
+      - "Define accountability mechanisms for security violations"
+      - "Document disciplinary process in Workday"
+      - "Track policy violation investigations"
+      - "Communicate accountability expectations to all personnel"
+      - "Review enforcement actions quarterly"
+    console_path: "Workday > HR > Disciplinary Actions"
+    recommended_reading:
+      - "AICPA TSC CC1.5"
+      - "COSO Principle 5 — Accountability"
+    evidence_types:
+      - "workday_disciplinary"
+    assertion_name: "background_check_completed"
+
+  # ---------------------------------------------------------------------------
+  # CC2 — Communication and Information
+  # ---------------------------------------------------------------------------
+  CC2.1:
+    summary: "The entity uses relevant quality information to support internal control"
+    remediation_steps:
+      - "Configure SIEM to aggregate security event data"
+      - "Establish security metrics dashboards in Splunk/Sentinel"
+      - "Define information quality requirements for security reporting"
+      - "Review security information completeness quarterly"
+      - "Document data sources and quality validation"
+    console_path: "Sentinel > Incidents | Splunk > Dashboards"
+    recommended_reading:
+      - "AICPA TSC CC2.1"
+      - "COSO Principle 13 — Quality Information"
+    evidence_types:
+      - "splunk_notable_events"
+      - "sentinel_incidents"
+    assertion_name: null
+
+  CC2.2:
+    summary: "The entity internally communicates information to support internal control"
+    remediation_steps:
+      - "Publish security policies on Confluence"
+      - "Maintain knowledge articles in ServiceNow"
+      - "Monitor Okta system log for policy communication events"
+      - "Schedule regular security communications to staff"
+      - "Track policy acknowledgment rates"
+    console_path: "Confluence > SEC Space | ServiceNow > Knowledge Base"
+    recommended_reading:
+      - "AICPA TSC CC2.2"
+      - "COSO Principle 14 — Internal Communication"
+    evidence_types:
+      - "confluence_pages"
+      - "snow_knowledge_articles"
+    assertion_name: null
+
+  CC2.3:
+    summary: "The entity communicates with external parties about internal control matters"
+    remediation_steps:
+      - "Publish external-facing security policies (privacy, acceptable use)"
+      - "Maintain ServiceNow policies for external communication"
+      - "Document external communication procedures"
+      - "Track external security inquiries and responses"
+      - "Review external communications annually"
+    console_path: "Confluence > External Policies | ServiceNow > Policies"
+    recommended_reading:
+      - "AICPA TSC CC2.3"
+      - "COSO Principle 15 — External Communication"
+    evidence_types:
+      - "confluence_pages"
+      - "snow_policies"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CC3 — Risk Assessment
+  # ---------------------------------------------------------------------------
+  CC3.1:
+    summary: "The entity specifies objectives to identify and assess risks"
+    remediation_steps:
+      - "Conduct vulnerability scans across all platforms"
+      - "Aggregate vulnerability findings from Tenable, CrowdStrike, Defender, Wiz"
+      - "Maintain risk register with identified risks"
+      - "Map vulnerabilities to business impact"
+      - "Review risk identification completeness quarterly"
+    console_path: "Tenable > Vulnerabilities | Wiz > Issues"
+    recommended_reading:
+      - "AICPA TSC CC3.1"
+      - "COSO Principle 6 — Risk Objectives"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "falcon_vulnerabilities"
+    assertion_name: "vulnerability_scan_current"
+
+  CC3.2:
+    summary: "The entity identifies risks and analyzes their significance"
+    remediation_steps:
+      - "Analyze Defender recommendations for risk prioritization"
+      - "Review CSPM findings from Prisma, Wiz, and GCP SCC"
+      - "Score risks using CVSS and business context"
+      - "Document risk analysis methodology"
+      - "Present risk analysis to management quarterly"
+    console_path: "Defender > Recommendations | Wiz > Issues > Risk View"
+    recommended_reading:
+      - "AICPA TSC CC3.2"
+      - "COSO Principle 7 — Risk Identification and Analysis"
+    evidence_types:
+      - "defender_recommendations"
+      - "wiz_issues"
+      - "prisma_alerts"
+    assertion_name: null
+
+  CC3.3:
+    summary: "The entity considers the potential for fraud in assessing risks"
+    remediation_steps:
+      - "Monitor Entra risky users for compromised accounts"
+      - "Review Okta system log for suspicious authentication patterns"
+      - "Configure SIEM rules for insider threat detection"
+      - "Maintain fraud risk assessment in ServiceNow risk register"
+      - "Conduct fraud risk assessment annually"
+    console_path: "Entra > Risky Users | Okta > System Log"
+    recommended_reading:
+      - "AICPA TSC CC3.3"
+      - "COSO Principle 8 — Fraud Risk"
+    evidence_types:
+      - "entra_risky_users"
+      - "okta_system_log"
+      - "sentinel_incidents"
+    assertion_name: null
+
+  CC3.4:
+    summary: "The entity identifies and assesses changes that could impact internal controls"
+    remediation_steps:
+      - "Monitor risky sign-in events in Entra"
+      - "Track Okta system log for configuration changes"
+      - "Review SIEM incidents for control-impacting events"
+      - "Assess environmental changes through risk framework"
+      - "Document change impact assessments"
+    console_path: "Entra > Risky Users | Sentinel > Incidents"
+    recommended_reading:
+      - "AICPA TSC CC3.4"
+      - "COSO Principle 9 — Change Assessment"
+    evidence_types:
+      - "entra_risky_users"
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CC4 — Monitoring Activities
+  # ---------------------------------------------------------------------------
+  CC4.1:
+    summary: "The entity selects, develops, and performs monitoring activities"
+    remediation_steps:
+      - "Enable AWS Config recorders and Security Hub across all accounts"
+      - "Enable GuardDuty for continuous threat monitoring"
+      - "Configure Azure Policy compliance monitoring"
+      - "Deploy CSPM (Prisma/Wiz) for cross-cloud monitoring"
+      - "Review monitoring coverage monthly"
+    console_path: "AWS Console > Config | Security Hub | GuardDuty"
+    recommended_reading:
+      - "AICPA TSC CC4.1"
+      - "COSO Principle 16 — Monitoring Selection"
+    evidence_types:
+      - "config_recorders"
+      - "securityhub_hub"
+      - "guardduty_detectors"
+      - "prisma_compliance"
+    assertion_name: null
+
+  CC4.2:
+    summary: "The entity evaluates and communicates internal control deficiencies"
+    remediation_steps:
+      - "Review Defender recommendations for control deficiencies"
+      - "Track Wiz issues for configuration gaps"
+      - "Prioritize and assign remediation owners"
+      - "Report deficiencies to management within SLA"
+      - "Track remediation to closure"
+    console_path: "Defender > Recommendations | Wiz > Issues"
+    recommended_reading:
+      - "AICPA TSC CC4.2"
+      - "COSO Principle 17 — Deficiency Evaluation"
+    evidence_types:
+      - "defender_recommendations"
+      - "wiz_issues"
+      - "prisma_alerts"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CC5 — Control Activities
+  # ---------------------------------------------------------------------------
+  CC5.1:
+    summary: "The entity selects and develops control activities to mitigate risks"
+    remediation_steps:
+      - "Map controls to risk assessment findings"
+      - "Verify compliance standards in Prisma Cloud"
+      - "Conduct compliance audits against selected frameworks"
+      - "Document control selection rationale"
+      - "Review control effectiveness quarterly"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "AICPA TSC CC5.1"
+      - "COSO Principle 10 — Control Selection"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  CC5.2:
+    summary: "The entity selects and develops general IT controls"
+    remediation_steps:
+      - "Enable AWS Config rules for IT general controls"
+      - "Configure Azure Policy for infrastructure compliance"
+      - "Deploy Prisma Cloud policies for cloud configuration"
+      - "Document ITGC control matrix"
+      - "Test IT controls effectiveness quarterly"
+    console_path: "AWS Console > Config > Rules | Azure Policy > Definitions"
+    recommended_reading:
+      - "AICPA TSC CC5.2"
+      - "COSO Principle 11 — Technology Controls"
+    evidence_types:
+      - "config_recorders"
+      - "policy_compliance"
+      - "prisma_policies"
+    assertion_name: null
+
+  CC5.3:
+    summary: "The entity deploys control activities through policies that establish expectations"
+    remediation_steps:
+      - "Review IAM policies for segregation of duties enforcement"
+      - "Configure SailPoint SoD policies"
+      - "Restrict CyberArk safe access per role separation"
+      - "Document SoD matrix and exceptions"
+      - "Monitor SoD violations continuously"
+    console_path: "SailPoint > Access Policies > SoD | CyberArk > Safes"
+    recommended_reading:
+      - "AICPA TSC CC5.3"
+      - "COSO Principle 12 — Policy Deployment"
+    evidence_types:
+      - "sailpoint_roles"
+      - "cyberark_accounts"
+      - "iam_policies"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CC6 — Logical and Physical Access Controls
+  # ---------------------------------------------------------------------------
+  CC6.1:
+    summary: "The entity implements logical access security measures"
+    remediation_steps:
+      - "Enforce MFA on all user accounts across IAM, Okta, Entra"
+      - "Implement SailPoint for centralized identity governance"
+      - "Review IAM credential reports for dormant accounts"
+      - "Monitor Entra risky users for compromised identities"
+      - "Conduct quarterly access reviews"
+    console_path: "AWS Console > IAM > Credential Report | Okta Admin > People"
+    recommended_reading:
+      - "AICPA TSC CC6.1"
+      - "SOC 2 Logical Access — Identity Governance"
+    evidence_types:
+      - "iam_credential_report"
+      - "okta_users"
+      - "entra_users"
+      - "sailpoint_identities"
+    assertion_name: "mfa_enabled"
+
+  CC6.2:
+    summary: "The entity registers and authorizes new users before granting access"
+    remediation_steps:
+      - "Implement access request workflows in SailPoint"
+      - "Require manager approval for all access provisioning"
+      - "Sync identity lifecycle with Okta and Entra ID"
+      - "Monitor Entra directory audits for unauthorized provisioning"
+      - "Audit user registration processes quarterly"
+    console_path: "SailPoint > Access Requests | Entra > Audit Logs"
+    recommended_reading:
+      - "AICPA TSC CC6.2"
+      - "SOC 2 Logical Access — User Registration"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  CC6.3:
+    summary: "The entity authorizes, modifies, or removes access based on roles"
+    remediation_steps:
+      - "Implement RBAC through IAM policies, Okta groups, and SailPoint roles"
+      - "Configure conditional access policies in Entra"
+      - "Restrict CyberArk privileged accounts to authorized roles"
+      - "Review role assignments during access certification campaigns"
+      - "Remove access within 24 hours of role change"
+    console_path: "SailPoint > Roles | Okta Admin > Groups | Entra > Conditional Access"
+    recommended_reading:
+      - "AICPA TSC CC6.3"
+      - "SOC 2 Logical Access — Role-Based Access"
+    evidence_types:
+      - "sailpoint_roles"
+      - "okta_policies"
+      - "entra_conditional_access_policies"
+    assertion_name: "privileged_access_managed"
+
+  CC6.4:
+    summary: "The entity restricts and manages access credentials"
+    remediation_steps:
+      - "Review IAM credential report for key age and MFA status"
+      - "Enforce credential rotation in CyberArk safes"
+      - "Monitor Okta and Entra for credential policy violations"
+      - "Disable credentials for terminated users within 24 hours"
+      - "Implement password complexity and rotation requirements"
+    console_path: "AWS Console > IAM > Credential Report | CyberArk > Accounts"
+    recommended_reading:
+      - "AICPA TSC CC6.4"
+      - "SOC 2 Logical Access — Credential Management"
+    evidence_types:
+      - "iam_credential_report"
+      - "cyberark_accounts"
+      - "okta_users"
+    assertion_name: null
+
+  CC6.5:
+    summary: "The entity deploys authentication mechanisms for access"
+    remediation_steps:
+      - "Enforce MFA via Okta sign-on policies"
+      - "Configure Entra conditional access to require MFA"
+      - "Verify IAM credential report shows MFA enabled for all users"
+      - "Block legacy authentication methods"
+      - "Monitor authentication failures and anomalies"
+    console_path: "Okta Admin > Security > Policies | Entra > Conditional Access"
+    recommended_reading:
+      - "AICPA TSC CC6.5"
+      - "SOC 2 Logical Access — Authentication"
+    evidence_types:
+      - "okta_policies"
+      - "entra_conditional_access_policies"
+      - "iam_credential_report"
+    assertion_name: null
+
+  CC6.6:
+    summary: "The entity implements controls to restrict access at system boundaries"
+    remediation_steps:
+      - "Review AWS security groups for overly permissive rules"
+      - "Audit EC2 NACLs for subnet boundary protection"
+      - "Verify GCP firewall rules restrict boundary access"
+      - "Review Azure NSGs for network boundary enforcement"
+      - "Remove rules allowing 0.0.0.0/0 on management ports"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs"
+    recommended_reading:
+      - "AICPA TSC CC6.6"
+      - "SOC 2 Logical Access — Boundary Protection"
+    evidence_types:
+      - "ec2_security_groups"
+      - "ec2_network_acls"
+      - "network_security_groups"
+    assertion_name: "no_open_security_groups"
+
+  CC6.7:
+    summary: "The entity restricts the transmission, movement, and removal of information"
+    remediation_steps:
+      - "Verify S3 bucket public access blocks are enabled"
+      - "Review Azure storage account network rules"
+      - "Verify GCP storage bucket IAM bindings"
+      - "Deploy DLP policies for data in motion"
+      - "Monitor data transfer activities"
+    console_path: "AWS Console > S3 > Block Public Access | Azure Portal > Storage"
+    recommended_reading:
+      - "AICPA TSC CC6.7"
+      - "SOC 2 Logical Access — Data Restrictions"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "storage_accounts"
+    assertion_name: "no_public_storage"
+
+  CC6.8:
+    summary: "The entity implements controls to prevent and detect malicious software"
+    remediation_steps:
+      - "Deploy CrowdStrike Falcon on all endpoints"
+      - "Deploy SentinelOne agents on all servers"
+      - "Configure Defender for Endpoint on Windows fleet"
+      - "Monitor detection alerts and respond within SLA"
+      - "Verify 100% agent deployment coverage"
+    console_path: "CrowdStrike > Host Management | SentinelOne > Sentinels"
+    recommended_reading:
+      - "AICPA TSC CC6.8"
+      - "SOC 2 Logical Access — Malware Prevention"
+    evidence_types:
+      - "falcon_device_details"
+      - "s1_agents"
+      - "defender_machines"
+    assertion_name: "endpoint_protection_active"
+
+  # ---------------------------------------------------------------------------
+  # CC7 — System Operations
+  # ---------------------------------------------------------------------------
+  CC7.1:
+    summary: "The entity uses detection and monitoring to identify anomalies and security events"
+    remediation_steps:
+      - "Enable GuardDuty and Security Hub across all AWS accounts"
+      - "Configure SIEM detection rules in Sentinel/Splunk/Elastic"
+      - "Integrate GCP SCC findings into SIEM"
+      - "Deploy EDR detection across all endpoints"
+      - "Review detection coverage against MITRE ATT&CK"
+    console_path: "GuardDuty > Findings | Sentinel > Analytics Rules"
+    recommended_reading:
+      - "AICPA TSC CC7.1"
+      - "SOC 2 System Operations — Detection"
+    evidence_types:
+      - "guardduty_detectors"
+      - "sentinel_analytics_rules"
+      - "splunk_correlation_rules"
+      - "falcon_detection_details"
+    assertion_name: "guardduty_enabled"
+
+  CC7.2:
+    summary: "The entity monitors system components for anomalies"
+    remediation_steps:
+      - "Enable CloudTrail in all AWS accounts with multi-region"
+      - "Enable GCP audit logs for all activity types"
+      - "Configure Azure Activity Log and Monitor alerts"
+      - "Monitor AWS Config recorders for configuration changes"
+      - "Review Splunk index health for log ingestion gaps"
+    console_path: "AWS Console > CloudTrail | Azure Monitor > Alerts"
+    recommended_reading:
+      - "AICPA TSC CC7.2"
+      - "SOC 2 System Operations — Monitoring"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "config_recorders"
+      - "monitor_alerts"
+    assertion_name: "cloudtrail_enabled"
+
+  CC7.3:
+    summary: "The entity evaluates security events to determine if they indicate a failure"
+    remediation_steps:
+      - "Monitor AWS Config for configuration change detection"
+      - "Review CloudTrail events for unauthorized changes"
+      - "Monitor Entra directory audits for identity changes"
+      - "Track Okta system log for policy modifications"
+      - "Classify changes against security baselines"
+    console_path: "AWS Console > Config > Compliance | Entra > Audit Logs"
+    recommended_reading:
+      - "AICPA TSC CC7.3"
+      - "SOC 2 System Operations — Change Detection"
+    evidence_types:
+      - "config_recorders"
+      - "cloudtrail_trails"
+      - "entra_directory_audits"
+    assertion_name: "config_recorder_enabled"
+
+  CC7.4:
+    summary: "The entity responds to identified security incidents"
+    remediation_steps:
+      - "Execute incident response playbooks per incident type"
+      - "Coordinate response across SIEM and EDR platforms"
+      - "Contain and eradicate threats within defined SLA"
+      - "Document incident timeline and actions taken"
+      - "Notify stakeholders per communication plan"
+    console_path: "Sentinel > Incidents | CrowdStrike > Detections"
+    recommended_reading:
+      - "AICPA TSC CC7.4"
+      - "SOC 2 System Operations — Incident Response"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+      - "falcon_detection_details"
+    assertion_name: "siem_monitoring_active"
+
+  CC7.5:
+    summary: "The entity identifies and recovers from security incidents"
+    remediation_steps:
+      - "Execute recovery procedures per incident type"
+      - "Verify system integrity post-incident"
+      - "Conduct post-incident review within 5 business days"
+      - "Update detection rules based on incident findings"
+      - "Document lessons learned and update runbooks"
+    console_path: "Sentinel > Incidents > Closed | Splunk > Notable Events"
+    recommended_reading:
+      - "AICPA TSC CC7.5"
+      - "SOC 2 System Operations — Incident Recovery"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CC8 — Change Management
+  # ---------------------------------------------------------------------------
+  CC8.1:
+    summary: "The entity authorizes, designs, develops, configures, documents, tests, approves, and implements changes"
+    remediation_steps:
+      - "Submit all changes through ServiceNow change management"
+      - "Monitor infrastructure changes via CloudTrail and Config"
+      - "Track GCP and Azure changes via audit and activity logs"
+      - "Review Entra directory audits for identity system changes"
+      - "Require approval, testing, and rollback plan for all changes"
+    console_path: "ServiceNow > Change Management | AWS Console > Config"
+    recommended_reading:
+      - "AICPA TSC CC8.1"
+      - "SOC 2 Change Management"
+    evidence_types:
+      - "snow_change_requests"
+      - "cloudtrail_trails"
+      - "config_recorders"
+      - "entra_directory_audits"
+    assertion_name: "change_request_approved"
+
+  # ---------------------------------------------------------------------------
+  # CC9 — Risk Mitigation
+  # ---------------------------------------------------------------------------
+  CC9.1:
+    summary: "The entity identifies, selects, and develops risk mitigation activities"
+    remediation_steps:
+      - "Aggregate vulnerability data from all scanning platforms"
+      - "Prioritize remediation by CVSS score and business impact"
+      - "Track remediation within SLA (Critical: 7d, High: 30d)"
+      - "Review Defender recommendations for mitigation guidance"
+      - "Document risk treatment decisions"
+    console_path: "Tenable > Vulnerabilities | Defender > Recommendations"
+    recommended_reading:
+      - "AICPA TSC CC9.1"
+      - "SOC 2 Risk Mitigation"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "defender_recommendations"
+    assertion_name: "vulnerability_scan_current"
+
+  CC9.2:
+    summary: "The entity assesses and manages risks associated with vendors and business partners"
+    remediation_steps:
+      - "Maintain vendor risk register in ServiceNow"
+      - "Assess vendor security posture via SecurityScorecard"
+      - "Score vendor risk factors and track trends"
+      - "Include risk acceptance criteria in vendor assessments"
+      - "Conduct annual vendor risk re-assessments"
+    console_path: "ServiceNow > Vendor Risk | SecurityScorecard > Companies"
+    recommended_reading:
+      - "AICPA TSC CC9.2"
+      - "SOC 2 Risk Mitigation — Vendor Risk"
+    evidence_types:
+      - "snow_risks"
+      - "ssc_companies"
+      - "ssc_factors"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # A1 — Availability
+  # ---------------------------------------------------------------------------
+  A1.1:
+    summary: "The entity maintains, monitors, and evaluates system capacity"
+    remediation_steps:
+      - "Inventory all endpoints and infrastructure assets"
+      - "Monitor capacity via Prisma Cloud and asset management tools"
+      - "Track endpoint fleet size across CrowdStrike, Defender, SentinelOne"
+      - "Configure capacity alerts and auto-scaling"
+      - "Review capacity planning quarterly"
+    console_path: "Prisma Cloud > Inventory | CrowdStrike > Host Management"
+    recommended_reading:
+      - "AICPA TSC A1.1"
+      - "SOC 2 Availability — Capacity Planning"
+    evidence_types:
+      - "prisma_assets"
+      - "falcon_devices"
+      - "s1_agents"
+    assertion_name: "backup_job_successful"
+
+  A1.2:
+    summary: "The entity authorizes, designs, and implements recovery infrastructure"
+    remediation_steps:
+      - "Verify AWS Config compliance for backup configurations"
+      - "Review Azure Policy compliance for recovery settings"
+      - "Monitor Veeam backup session completion"
+      - "Document recovery infrastructure design"
+      - "Test recovery procedures quarterly"
+    console_path: "Veeam > Backup Sessions | AWS Console > Config"
+    recommended_reading:
+      - "AICPA TSC A1.2"
+      - "SOC 2 Availability — Recovery Infrastructure"
+    evidence_types:
+      - "config_recorders"
+      - "veeam_backup_sessions"
+    assertion_name: "backup_job_successful"
+
+  A1.3:
+    summary: "The entity tests recovery plan procedures"
+    remediation_steps:
+      - "Conduct recovery testing per DR plan schedule"
+      - "Verify Veeam restore points are valid"
+      - "Test cloud infrastructure recovery via Config/Policy compliance"
+      - "Document recovery test results and gaps"
+      - "Update recovery procedures based on test findings"
+    console_path: "Veeam > Restore Points | AWS Console > Config"
+    recommended_reading:
+      - "AICPA TSC A1.3"
+      - "SOC 2 Availability — Recovery Testing"
+    evidence_types:
+      - "veeam_restore_points"
+      - "config_recorders"
+      - "compliance_audits"
+    assertion_name: "backup_job_successful"
+
+  # ---------------------------------------------------------------------------
+  # C1 — Confidentiality
+  # ---------------------------------------------------------------------------
+  C1.1:
+    summary: "The entity identifies and maintains confidential information"
+    remediation_steps:
+      - "Classify S3 buckets, Azure storage, and GCP buckets by sensitivity"
+      - "Apply encryption to all confidential data at rest"
+      - "Inventory confidential data locations via Prisma Cloud"
+      - "Implement access controls per data classification"
+      - "Review classification accuracy quarterly"
+    console_path: "AWS Console > S3 > Buckets | Prisma Cloud > Inventory"
+    recommended_reading:
+      - "AICPA TSC C1.1"
+      - "SOC 2 Confidentiality — Data Classification"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "prisma_assets"
+    assertion_name: "encryption_at_rest"
+
+  C1.2:
+    summary: "The entity disposes of confidential information"
+    remediation_steps:
+      - "Configure lifecycle policies for confidential data in S3 and Azure storage"
+      - "Implement secure deletion via Key Vault key destruction"
+      - "Document disposal procedures per classification level"
+      - "Verify disposal completion and maintain records"
+      - "Audit disposal compliance quarterly"
+    console_path: "AWS Console > S3 > Lifecycle | Azure Portal > Key Vault"
+    recommended_reading:
+      - "AICPA TSC C1.2"
+      - "SOC 2 Confidentiality — Data Disposal"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "key_vault"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # PI1 — Processing Integrity
+  # ---------------------------------------------------------------------------
+  PI1.1:
+    summary: "The entity uses quality information to execute processing activities"
+    remediation_steps:
+      - "Enable CloudTrail for data processing audit trails"
+      - "Verify AWS Config recorders monitor processing infrastructure"
+      - "Enable GCP audit logs for data processing activities"
+      - "Document processing integrity requirements"
+      - "Validate data quality at processing boundaries"
+    console_path: "AWS Console > CloudTrail | GCP > Audit Logs"
+    recommended_reading:
+      - "AICPA TSC PI1.1"
+      - "SOC 2 Processing Integrity — Quality Information"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "config_recorders"
+      - "audit_logs"
+    assertion_name: null
+
+  PI1.2:
+    summary: "The entity implements policies for system inputs"
+    remediation_steps:
+      - "Validate inputs at application and infrastructure boundaries"
+      - "Monitor AWS Config for input validation compliance"
+      - "Review Azure Policy compliance for input controls"
+      - "Document input validation requirements"
+      - "Test input validation controls quarterly"
+    console_path: "AWS Console > Config > Rules | Azure Policy > Compliance"
+    recommended_reading:
+      - "AICPA TSC PI1.2"
+      - "SOC 2 Processing Integrity — System Inputs"
+    evidence_types:
+      - "config_recorders"
+      - "policy_compliance"
+    assertion_name: null
+
+  PI1.3:
+    summary: "The entity implements policies for system processing"
+    remediation_steps:
+      - "Monitor processing activities via CloudTrail and audit logs"
+      - "Verify processing integrity through Config compliance"
+      - "Enable Azure Activity Log for processing monitoring"
+      - "Document processing validation procedures"
+      - "Review processing accuracy metrics quarterly"
+    console_path: "AWS Console > CloudTrail | Azure Portal > Activity Log"
+    recommended_reading:
+      - "AICPA TSC PI1.3"
+      - "SOC 2 Processing Integrity — System Processing"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "config_recorders"
+    assertion_name: null
+
+  PI1.4:
+    summary: "The entity implements policies for system output"
+    remediation_steps:
+      - "Validate output integrity through CloudTrail audit trails"
+      - "Monitor GCP audit logs for output activities"
+      - "Verify output completeness and accuracy"
+      - "Document output validation procedures"
+      - "Review output quality metrics quarterly"
+    console_path: "AWS Console > CloudTrail | GCP > Audit Logs"
+    recommended_reading:
+      - "AICPA TSC PI1.4"
+      - "SOC 2 Processing Integrity — System Output"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+    assertion_name: null
+
+  PI1.5:
+    summary: "The entity implements policies for stored information"
+    remediation_steps:
+      - "Encrypt stored information in S3, Azure storage, and GCP buckets"
+      - "Manage encryption keys in Key Vault and KMS"
+      - "Configure access controls on stored information"
+      - "Verify integrity of stored data periodically"
+      - "Document storage policies per data classification"
+    console_path: "AWS Console > S3 > Encryption | Azure Portal > Key Vault"
+    recommended_reading:
+      - "AICPA TSC PI1.5"
+      - "SOC 2 Processing Integrity — Stored Information"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "key_vault"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # P1 — Privacy
+  # ---------------------------------------------------------------------------
+  P1.0:
+    summary: "The entity provides notice of its privacy practices"
+    remediation_steps:
+      - "Publish privacy notice on website and internal portals"
+      - "Manage consent records via OneTrust"
+      - "Maintain data maps documenting PII processing"
+      - "Document privacy notice on Confluence"
+      - "Review and update privacy notice annually"
+    console_path: "OneTrust > Consent | Confluence > Privacy Space"
+    recommended_reading:
+      - "AICPA TSC P1.0"
+      - "SOC 2 Privacy — Notice"
+    evidence_types:
+      - "onetrust_consent_records"
+      - "onetrust_data_maps"
+      - "confluence_pages"
+    assertion_name: null
+
+  P1.1:
+    summary: "The entity provides notice about its privacy practices to data subjects"
+    remediation_steps:
+      - "Verify privacy policies cover all required disclosures"
+      - "Monitor policy compliance through Prisma and Azure Policy"
+      - "Conduct compliance audits against privacy requirements"
+      - "Update notice when processing activities change"
+      - "Track notice delivery and acknowledgment"
+    console_path: "Prisma Cloud > Compliance > Privacy | Azure Policy"
+    recommended_reading:
+      - "AICPA TSC P1.1"
+      - "SOC 2 Privacy — Notice Practices"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null
+
+  P1.2:
+    summary: "The entity provides choice and consent mechanisms for personal information"
+    remediation_steps:
+      - "Implement consent management via OneTrust or equivalent"
+      - "Verify consent policies are enforced through Prisma/Azure"
+      - "Document consent collection points and mechanisms"
+      - "Provide opt-out mechanisms for non-essential processing"
+      - "Maintain consent records with timestamp and scope"
+    console_path: "OneTrust > Consent Management | Prisma Cloud > Policies"
+    recommended_reading:
+      - "AICPA TSC P1.2"
+      - "SOC 2 Privacy — Choice and Consent"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null

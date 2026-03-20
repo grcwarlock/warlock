@@ -1,0 +1,473 @@
+controls:
+  "AC-1":
+    summary: "Develop, document, and disseminate access control policy and procedures"
+    remediation_steps:
+      - "Draft an access control policy covering all FedRAMP AC requirements"
+      - "Define procedures for implementing each access control family control"
+      - "Obtain authorizing official approval and publish to all system personnel"
+      - "Review and update the policy at least annually per FedRAMP ConMon requirements"
+      - "Maintain version history and distribution records"
+    console_path: "AWS Console > IAM > Policies | Azure Portal > Entra ID > Policies"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AC-1 -- Policy and Procedures"
+      - "FedRAMP System Security Plan (SSP) Template"
+      - "NIST SP 800-53A Rev 5: AC-1 Assessment Procedures"
+    evidence_types:
+      - "policy_document"
+      - "policy_review_record"
+    assertion_name: "access_control_policy_current"
+
+  "AC-2":
+    summary: "Define and manage system account types, conditions, and processes"
+    remediation_steps:
+      - "Define authorized account types (individual, shared, system, service, emergency)"
+      - "Implement automated account provisioning and deprovisioning via IdP (Okta, Entra ID)"
+      - "Configure monthly account review processes with documented approval workflows"
+      - "Disable inactive accounts after 90 days of inactivity"
+      - "Monitor and alert on account creation, modification, and deletion events"
+    console_path: "AWS Console > IAM > Users | Azure Portal > Entra ID > Users"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AC-2 -- Account Management"
+      - "FedRAMP Moderate Baseline: AC-2 Requirements"
+      - "NIST SP 800-53A Rev 5: AC-2 Assessment Procedures"
+    evidence_types:
+      - "iam_configuration"
+      - "account_review_report"
+      - "provisioning_log"
+    assertion_name: "account_management_compliant"
+
+  "AC-2-1":
+    summary: "Employ automated mechanisms to support management of system accounts"
+    remediation_steps:
+      - "Implement automated provisioning via SCIM or HR-driven identity lifecycle management"
+      - "Configure automated deprovisioning triggered by HR termination events"
+      - "Set up automated notifications for account expiration and pending reviews"
+      - "Deploy automated account status monitoring with alerts for anomalies"
+      - "Test automated provisioning and deprovisioning workflows quarterly"
+    console_path: "AWS Console > IAM > Access Analyzer | Azure Portal > Entra ID > Provisioning"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AC-2(1) -- Automated System Account Management"
+      - "FedRAMP Moderate Baseline: AC-2(1) Enhancement"
+      - "NIST SP 800-53A Rev 5: AC-2(1) Assessment Procedures"
+    evidence_types:
+      - "iam_configuration"
+      - "automation_configuration"
+    assertion_name: "automated_account_management_enabled"
+
+  "AC-3":
+    summary: "Enforce approved authorizations for logical access to information and system resources"
+    remediation_steps:
+      - "Implement RBAC or ABAC across all system components"
+      - "Configure IAM policies, security groups, and network ACLs to enforce access decisions"
+      - "Ensure all access enforcement mechanisms default to deny"
+      - "Test access enforcement through periodic penetration testing"
+      - "Review and update access control rules when system architecture changes"
+    console_path: "AWS Console > IAM > Policies | Azure Portal > RBAC | GCP Console > IAM"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AC-3 -- Access Enforcement"
+      - "FedRAMP Moderate Baseline: AC-3 Requirements"
+      - "NIST SP 800-53A Rev 5: AC-3 Assessment Procedures"
+    evidence_types:
+      - "iam_configuration"
+      - "access_test_result"
+    assertion_name: "access_enforcement_verified"
+
+  "AC-6":
+    summary: "Employ the principle of least privilege for all access"
+    remediation_steps:
+      - "Audit all IAM policies for overly permissive permissions (wildcard actions or resources)"
+      - "Implement just-in-time privileged access using PAM solutions (CyberArk, AWS SSO)"
+      - "Remove standing admin access and require elevation for privileged operations"
+      - "Use AWS IAM Access Analyzer, Azure PIM, or GCP IAM Recommender to right-size permissions"
+      - "Review privileged access quarterly and document justification for each elevated role"
+    console_path: "AWS Console > IAM > Access Analyzer | Azure Portal > PIM | GCP Console > IAM Recommender"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AC-6 -- Least Privilege"
+      - "FedRAMP Moderate Baseline: AC-6 Requirements"
+      - "NIST SP 800-53A Rev 5: AC-6 Assessment Procedures"
+    evidence_types:
+      - "iam_configuration"
+      - "privilege_review_report"
+    assertion_name: "least_privilege_enforced"
+
+  "AC-17":
+    summary: "Establish and document usage restrictions and implementation guidance for remote access"
+    remediation_steps:
+      - "Define approved remote access methods (VPN, zero-trust, bastion hosts)"
+      - "Implement MFA for all remote access connections"
+      - "Monitor and log all remote access sessions"
+      - "Restrict remote access to organization-managed devices using conditional access policies"
+      - "Review remote access configurations and usage logs monthly"
+    console_path: "AWS Console > VPC > VPN | Azure Portal > Conditional Access | GCP Console > IAP"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AC-17 -- Remote Access"
+      - "FedRAMP Moderate Baseline: AC-17 Requirements"
+      - "NIST SP 800-46 Rev 2: Guide to Enterprise Telework and Remote Access Security"
+    evidence_types:
+      - "network_configuration"
+      - "remote_access_log"
+    assertion_name: "remote_access_controlled"
+
+  "AU-2":
+    summary: "Identify and log all FedRAMP-required security-relevant events"
+    remediation_steps:
+      - "Enable CloudTrail (AWS), Activity Log (Azure), or Audit Logs (GCP) across all accounts"
+      - "Configure logging for all FedRAMP-required event types (auth, access, config changes)"
+      - "Enable AWS Config, Azure Policy, or GCP Security Command Center for configuration logging"
+      - "Verify log coverage across all system components including databases and applications"
+      - "Review audit event selection annually and when system changes occur"
+    console_path: "AWS Console > CloudTrail | Azure Portal > Activity Log | GCP Console > Audit Logs"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AU-2 -- Event Logging"
+      - "FedRAMP Moderate Baseline: AU-2 Requirements"
+      - "FedRAMP Audit Log Requirements (AU category)"
+    evidence_types:
+      - "logging_configuration"
+      - "audit_log_sample"
+    assertion_name: "audit_logging_enabled"
+
+  "AU-3":
+    summary: "Ensure audit records contain required information fields: who, what, when, where, and outcome"
+    remediation_steps:
+      - "Verify CloudTrail/Activity Log/Audit Log records include user identity, event type, timestamp, source, and outcome"
+      - "Configure application-level logging to include all required fields"
+      - "Standardize log format across all system components for consistent analysis"
+      - "Test audit record content by generating sample events and verifying completeness"
+      - "Document audit record format requirements and validate during annual assessment"
+    console_path: "AWS Console > CloudTrail > Event History | Azure Portal > Activity Log"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AU-3 -- Content of Audit Records"
+      - "FedRAMP Moderate Baseline: AU-3 Requirements"
+      - "NIST SP 800-53A Rev 5: AU-3 Assessment Procedures"
+    evidence_types:
+      - "audit_log_sample"
+      - "logging_configuration"
+    assertion_name: "audit_record_content_compliant"
+
+  "AU-6":
+    summary: "Review and analyze audit records at least weekly for indicators of inappropriate or unusual activity"
+    remediation_steps:
+      - "Configure SIEM (Splunk, Sentinel, Elastic) with automated correlation rules"
+      - "Establish weekly audit log review procedures with assigned analysts"
+      - "Define alert thresholds for suspicious patterns (brute force, privilege escalation, data exfil)"
+      - "Document review findings and escalate anomalies per incident response procedures"
+      - "Report audit review activities and findings in monthly ConMon deliverables"
+    console_path: "AWS Console > Security Hub | Azure Portal > Sentinel | Splunk Search"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AU-6 -- Audit Record Review, Analysis, and Reporting"
+      - "FedRAMP Continuous Monitoring Strategy Guide"
+      - "NIST SP 800-53A Rev 5: AU-6 Assessment Procedures"
+    evidence_types:
+      - "log_review_record"
+      - "security_alert"
+    assertion_name: "audit_review_current"
+
+  "AU-12":
+    summary: "Provide audit record generation capability across all system components"
+    remediation_steps:
+      - "Enable centralized log aggregation for all cloud accounts and on-premises systems"
+      - "Configure CloudTrail organization trail, Azure Diagnostic Settings, or GCP org-level audit"
+      - "Verify audit log generation on all system components including databases and middleware"
+      - "Implement log integrity validation (CloudTrail log file validation, immutable storage)"
+      - "Monitor audit generation health and alert on logging failures"
+    console_path: "AWS Console > CloudTrail > Trails | Azure Portal > Diagnostic Settings | GCP Console > Logging"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: AU-12 -- Audit Record Generation"
+      - "FedRAMP Moderate Baseline: AU-12 Requirements"
+      - "NIST SP 800-53A Rev 5: AU-12 Assessment Procedures"
+    evidence_types:
+      - "logging_configuration"
+      - "log_integrity_report"
+    assertion_name: "audit_generation_enabled"
+
+  "CA-2":
+    summary: "Assess security and privacy controls annually through independent assessment"
+    remediation_steps:
+      - "Engage a FedRAMP-accredited Third Party Assessment Organization (3PAO)"
+      - "Conduct annual security control assessments covering all FedRAMP baseline controls"
+      - "Document assessment results in a Security Assessment Report (SAR)"
+      - "Track findings in POA&M with defined milestones and remediation deadlines"
+      - "Submit assessment artifacts to the FedRAMP PMO per authorization requirements"
+    console_path: "Warlock > Compliance > FedRAMP Assessment"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: CA-2 -- Control Assessments"
+      - "FedRAMP Security Assessment Framework (SAF)"
+      - "FedRAMP 3PAO Requirements"
+    evidence_types:
+      - "assessment_report"
+      - "poam_document"
+    assertion_name: "annual_assessment_current"
+
+  "CA-7":
+    summary: "Develop and implement a continuous monitoring strategy with monthly scanning and reporting"
+    remediation_steps:
+      - "Document a continuous monitoring plan aligned with FedRAMP ConMon requirements"
+      - "Conduct monthly OS and infrastructure vulnerability scans"
+      - "Perform monthly configuration compliance scans against CIS or STIG baselines"
+      - "Submit monthly ConMon deliverables (scan results, POA&M updates, significant changes)"
+      - "Remediate high findings within 30 days and critical findings within 15 days"
+    console_path: "AWS Console > Security Hub | Azure Portal > Defender for Cloud | GCP Console > SCC"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: CA-7 -- Continuous Monitoring"
+      - "FedRAMP Continuous Monitoring Strategy Guide"
+      - "FedRAMP ConMon Requirements"
+    evidence_types:
+      - "vulnerability_scan"
+      - "configuration_scan"
+      - "conmon_report"
+    assertion_name: "continuous_monitoring_operational"
+
+  "CM-2":
+    summary: "Develop and maintain baseline configurations for all system components"
+    remediation_steps:
+      - "Define baseline configurations for all system components (OS, middleware, applications)"
+      - "Implement AWS Config rules, Azure Policy, or GCP Organization Policies to enforce baselines"
+      - "Document baseline configurations in the system security plan"
+      - "Monitor for configuration drift using automated compliance scanning"
+      - "Update baselines when system components change and document the change rationale"
+    console_path: "AWS Console > Config | Azure Portal > Policy | GCP Console > Organization Policies"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: CM-2 -- Baseline Configuration"
+      - "FedRAMP Moderate Baseline: CM-2 Requirements"
+      - "CIS Benchmarks for AWS/Azure/GCP"
+    evidence_types:
+      - "configuration_baseline"
+      - "compliance_scan_report"
+    assertion_name: "baseline_configuration_documented"
+
+  "CM-6":
+    summary: "Establish and document mandatory configuration settings using CIS benchmarks or STIGs"
+    remediation_steps:
+      - "Apply CIS benchmarks or DISA STIGs as mandatory configuration settings"
+      - "Configure AWS Config conformance packs, Azure Policy initiatives, or GCP policy constraints"
+      - "Document all deviations from benchmark settings with risk acceptance"
+      - "Scan for configuration compliance monthly and remediate non-compliant settings"
+      - "Report configuration compliance metrics in monthly ConMon deliverables"
+    console_path: "AWS Console > Config > Conformance Packs | Azure Portal > Policy > Compliance"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: CM-6 -- Configuration Settings"
+      - "FedRAMP Moderate Baseline: CM-6 Requirements"
+      - "DISA STIGs and CIS Benchmarks"
+    evidence_types:
+      - "configuration_scan_report"
+      - "compliance_report"
+    assertion_name: "configuration_settings_compliant"
+
+  "CM-8":
+    summary: "Develop and maintain a complete inventory of all system components"
+    remediation_steps:
+      - "Deploy asset discovery tools across all cloud accounts and on-premises environments"
+      - "Implement automated inventory using cloud-native tools (AWS Config, Azure Resource Graph, GCP Asset Inventory)"
+      - "Maintain inventory attributes including owner, location, function, and software version"
+      - "Reconcile automated inventory with manual records quarterly"
+      - "Report inventory metrics and changes in monthly ConMon deliverables"
+    console_path: "AWS Console > Config > Resources | Azure Portal > Resource Graph | GCP Console > Asset Inventory"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: CM-8 -- System Component Inventory"
+      - "FedRAMP Moderate Baseline: CM-8 Requirements"
+      - "NIST SP 800-53A Rev 5: CM-8 Assessment Procedures"
+    evidence_types:
+      - "asset_inventory"
+      - "discovery_scan_report"
+    assertion_name: "system_inventory_current"
+
+  "IA-2":
+    summary: "Uniquely identify and authenticate all users with multi-factor authentication"
+    remediation_steps:
+      - "Enforce unique user identification across all system components"
+      - "Implement MFA for all user access (privileged and non-privileged)"
+      - "Configure IdP (Okta, Entra ID) as the centralized authentication provider"
+      - "Disable local authentication accounts except for break-glass emergency access"
+      - "Monitor MFA enrollment and enforce 100% coverage"
+    console_path: "AWS Console > IAM > MFA | Azure Portal > Entra ID > MFA | GCP Console > IAM"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: IA-2 -- Identification and Authentication (Organizational Users)"
+      - "FedRAMP Moderate Baseline: IA-2 Requirements"
+      - "NIST SP 800-63B: Digital Identity Guidelines"
+    evidence_types:
+      - "mfa_configuration"
+      - "iam_configuration"
+    assertion_name: "mfa_enforced_all_users"
+
+  "IA-2-1":
+    summary: "Implement multi-factor authentication for access to privileged accounts using PIV or hardware tokens"
+    remediation_steps:
+      - "Require PIV, FIDO2, or hardware token MFA for all privileged account access"
+      - "Configure conditional access policies requiring phishing-resistant MFA for admin roles"
+      - "Disable SMS and voice-based MFA for privileged accounts"
+      - "Implement privileged access management (PAM) with MFA at elevation"
+      - "Audit privileged account MFA compliance monthly"
+    console_path: "AWS Console > IAM > MFA | Azure Portal > PIM > MFA Settings"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: IA-2(1) -- Multi-Factor Authentication to Privileged Accounts"
+      - "FedRAMP Moderate Baseline: IA-2(1) Enhancement"
+      - "NIST SP 800-63B Section 5: Authenticator and Verifier Requirements"
+    evidence_types:
+      - "mfa_configuration"
+      - "privileged_access_report"
+    assertion_name: "privileged_mfa_hardware_enforced"
+
+  "IA-8":
+    summary: "Uniquely identify and authenticate non-organizational users accessing the system"
+    remediation_steps:
+      - "Implement SAML/OIDC federation for external user authentication"
+      - "Require MFA for all non-organizational user access"
+      - "Maintain an inventory of external user accounts with sponsoring organization"
+      - "Review external user access quarterly and remove accounts no longer needed"
+      - "Log all external user authentication events for monitoring and audit"
+    console_path: "Azure Portal > Entra ID > External Identities | AWS Console > IAM Identity Center"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: IA-8 -- Identification and Authentication (Non-Organizational Users)"
+      - "FedRAMP Moderate Baseline: IA-8 Requirements"
+      - "NIST SP 800-63 Rev 3: Digital Identity Guidelines"
+    evidence_types:
+      - "iam_configuration"
+      - "external_user_inventory"
+    assertion_name: "external_user_auth_compliant"
+
+  "IR-4":
+    summary: "Implement incident handling capability with US-CERT reporting procedures"
+    remediation_steps:
+      - "Develop an incident response plan covering FedRAMP-specific requirements"
+      - "Include US-CERT/CISA reporting procedures and timelines in the IR plan"
+      - "Implement automated incident detection through SIEM and cloud-native security tools"
+      - "Conduct incident response tabletop exercises at least annually"
+      - "Report incidents to FedRAMP PMO and US-CERT per required timelines"
+    console_path: "AWS Console > Security Hub > Findings | Azure Portal > Sentinel > Incidents"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: IR-4 -- Incident Handling"
+      - "FedRAMP Incident Communications Procedures"
+      - "CISA Federal Incident Notification Guidelines"
+    evidence_types:
+      - "incident_response_plan"
+      - "exercise_report"
+      - "incident_record"
+    assertion_name: "incident_handling_operational"
+
+  "IR-6":
+    summary: "Report incidents to US-CERT and appropriate authorities within required timeframes"
+    remediation_steps:
+      - "Define incident reporting criteria and timelines aligned with US-CERT requirements"
+      - "Create reporting templates and pre-populate known system information"
+      - "Establish 1-hour reporting timeline for major incidents per FedRAMP requirements"
+      - "Implement escalation procedures for after-hours incident reporting"
+      - "Track all incident reports and maintain evidence of timely submission"
+    console_path: "Warlock > Incident Response > FedRAMP Reporting"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: IR-6 -- Incident Reporting"
+      - "FedRAMP Incident Communications Procedures"
+      - "US-CERT Federal Incident Notification Guidelines"
+    evidence_types:
+      - "incident_report"
+      - "notification_record"
+    assertion_name: "incident_reporting_compliant"
+
+  "RA-5":
+    summary: "Monitor and scan for vulnerabilities monthly with remediation within defined timeframes"
+    remediation_steps:
+      - "Conduct monthly authenticated vulnerability scans across all system components"
+      - "Perform web application scans at least annually or after major changes"
+      - "Remediate critical findings within 15 days and high findings within 30 days"
+      - "Submit monthly vulnerability scan results in ConMon deliverables"
+      - "Track all vulnerability findings in POA&M with remediation milestones"
+    console_path: "AWS Console > Inspector | Azure Portal > Defender for Cloud > Recommendations"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: RA-5 -- Vulnerability Monitoring and Scanning"
+      - "FedRAMP Vulnerability Scanning Requirements"
+      - "FedRAMP ConMon Vulnerability Remediation Timelines"
+    evidence_types:
+      - "vulnerability_scan"
+      - "remediation_report"
+      - "poam_document"
+    assertion_name: "vulnerability_scanning_current"
+
+  "SC-7":
+    summary: "Monitor and control communications at external and key internal system boundaries"
+    remediation_steps:
+      - "Deploy firewalls and security groups at all system boundary points"
+      - "Implement default-deny network policies on all cloud security groups and NACLs"
+      - "Configure WAF for all public-facing web applications"
+      - "Enable VPC flow logs, NSG flow logs, or GCP VPC flow logs for network monitoring"
+      - "Review boundary protection rules quarterly and remove unnecessary rules"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs | GCP Console > Firewall Rules"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: SC-7 -- Boundary Protection"
+      - "FedRAMP Moderate Baseline: SC-7 Requirements"
+      - "NIST SP 800-53A Rev 5: SC-7 Assessment Procedures"
+    evidence_types:
+      - "network_configuration"
+      - "firewall_rule_report"
+    assertion_name: "boundary_protection_enforced"
+
+  "SC-13":
+    summary: "Implement FIPS 140-2/3 validated cryptography for protecting federal information"
+    remediation_steps:
+      - "Use FIPS 140-2 or FIPS 140-3 validated cryptographic modules exclusively"
+      - "Configure cloud services to use FIPS-validated endpoints (AWS GovCloud, Azure Government)"
+      - "Verify cryptographic module validation certificates are current"
+      - "Implement key management using cloud-native KMS with FIPS-validated HSMs"
+      - "Document all cryptographic implementations and their FIPS validation status"
+    console_path: "AWS Console > KMS | Azure Portal > Key Vault | GCP Console > Cloud KMS"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: SC-13 -- Cryptographic Protection"
+      - "FIPS 140-3: Security Requirements for Cryptographic Modules"
+      - "NIST CMVP: Validated Modules List"
+    evidence_types:
+      - "encryption_configuration"
+      - "fips_validation_certificate"
+    assertion_name: "fips_cryptography_enforced"
+
+  "SC-28":
+    summary: "Protect confidentiality and integrity of information at rest with FIPS-validated encryption"
+    remediation_steps:
+      - "Enable encryption at rest on all storage services (S3, EBS, RDS, Azure Storage, GCS)"
+      - "Use customer-managed keys (CMK) through cloud KMS for all encryption"
+      - "Configure default encryption policies to prevent unencrypted resource creation"
+      - "Implement key rotation on an annual schedule or more frequently"
+      - "Scan for unencrypted resources and remediate findings within 30 days"
+    console_path: "AWS Console > S3 > Encryption | Azure Portal > Storage > Encryption | GCP Console > Storage > Encryption"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: SC-28 -- Protection of Information at Rest"
+      - "FedRAMP Moderate Baseline: SC-28 Requirements"
+      - "NIST SP 800-111: Guide to Storage Encryption Technologies"
+    evidence_types:
+      - "encryption_configuration"
+      - "key_management_report"
+    assertion_name: "encryption_at_rest_enforced"
+
+  "SI-2":
+    summary: "Identify, report, and correct system flaws by applying patches within defined timeframes"
+    remediation_steps:
+      - "Establish a patch management process with defined timelines by severity"
+      - "Apply critical patches within 15 days and high patches within 30 days"
+      - "Implement automated patching where feasible (AWS SSM Patch Manager, Azure Update Management)"
+      - "Test patches in staging environments before production deployment"
+      - "Report patch compliance status in monthly ConMon deliverables"
+    console_path: "AWS Console > Systems Manager > Patch Manager | Azure Portal > Update Management"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: SI-2 -- Flaw Remediation"
+      - "FedRAMP Moderate Baseline: SI-2 Requirements"
+      - "FedRAMP Vulnerability Remediation Timelines"
+    evidence_types:
+      - "patch_report"
+      - "vulnerability_scan"
+    assertion_name: "patch_compliance_current"
+
+  "SI-4":
+    summary: "Monitor the system to detect attacks, unauthorized connections, and indicators of compromise"
+    remediation_steps:
+      - "Deploy IDS/IPS at system boundaries (GuardDuty, Azure Firewall, GCP IDS)"
+      - "Implement SIEM with correlation rules for FedRAMP-required detection scenarios"
+      - "Configure real-time alerting for high-severity security events"
+      - "Monitor inbound and outbound communications for anomalous patterns"
+      - "Review monitoring coverage and detection rules monthly"
+    console_path: "AWS Console > GuardDuty | Azure Portal > Sentinel | GCP Console > SCC"
+    recommended_reading:
+      - "NIST SP 800-53 Rev 5: SI-4 -- System Monitoring"
+      - "FedRAMP Moderate Baseline: SI-4 Requirements"
+      - "NIST SP 800-137: Information Security Continuous Monitoring"
+    evidence_types:
+      - "monitoring_configuration"
+      - "security_alert"
+      - "detection_rule_inventory"
+    assertion_name: "system_monitoring_operational"

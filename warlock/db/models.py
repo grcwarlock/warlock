@@ -25,7 +25,12 @@ from sqlalchemy import (
     ForeignKey,
 )
 from sqlalchemy import JSON as SQLiteJSON  # Generic JSON: maps to JSONB on PostgreSQL, JSON on SQLite
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
+
+# High-volume columns: JSONB on PostgreSQL (GIN-indexable, faster operators), JSON on SQLite (dev)
+JSONType = JSON().with_variant(JSONB(), "postgresql")
 
 
 def _utcnow() -> datetime:
@@ -76,7 +81,7 @@ class RawEvent(Base):
     source_type = Column(String(20), nullable=False)      # cloud, edr, scanner, siem, iam
     provider = Column(String(50), nullable=False)         # specific product
     event_type = Column(String(100), nullable=False)      # "iam_credential_report", "ec2_security_groups"
-    raw_data = Column(SQLiteJSON, nullable=False)
+    raw_data = Column(JSONType, nullable=False)
     sha256 = Column(String(64), nullable=False)
     ingested_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
@@ -103,7 +108,7 @@ class Finding(Base):
     # What was observed
     observation_type = Column(String(50), nullable=False)  # misconfiguration, vulnerability, alert, policy_violation, access_anomaly, inventory
     title = Column(Text, nullable=False)
-    detail = Column(SQLiteJSON, nullable=False)
+    detail = Column(JSONType, nullable=False)
 
     # What resource
     resource_id = Column(Text)                  # ARN, Azure resource ID, hostname
@@ -155,7 +160,7 @@ class ControlMapping(Base):
     control_family = Column(String(50))
     mapping_method = Column(String(30), nullable=False)   # explicit, resource_rule, keyword, crosswalk
     confidence = Column(Float, nullable=False)
-    crosswalk_path = Column(SQLiteJSON)                   # for transitive: ["nist:AC-2", "soc2:CC6.1"]
+    crosswalk_path = Column(JSONType)                     # for transitive: ["nist:AC-2", "soc2:CC6.1"]
     monitoring_frequency = Column(String(20))              # daily, weekly, monthly, quarterly, annual
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
@@ -190,7 +195,7 @@ class ControlResult(Base):
     # Tier 1: deterministic assertion
     assertion_name = Column(String(100))
     assertion_passed = Column(Boolean)
-    assertion_findings = Column(SQLiteJSON)              # specific failure reasons
+    assertion_findings = Column(JSONType)                # specific failure reasons
 
     # Tier 2: AI reasoning (nullable)
     ai_assessment = Column(Text)
@@ -199,11 +204,11 @@ class ControlResult(Base):
 
     # Remediation
     remediation_summary = Column(Text)
-    remediation_steps = Column(SQLiteJSON)
+    remediation_steps = Column(JSONType)
     console_path = Column(Text)
 
     # Lineage
-    evidence_ids = Column(SQLiteJSON)                    # [raw_event UUIDs] that informed this
+    evidence_ids = Column(JSONType)                      # [raw_event UUIDs] that informed this
     assessed_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     assessor = Column(String(100), nullable=False)       # "assertion:mfa_check" or "ai:claude"
 
@@ -291,7 +296,7 @@ class PostureSnapshot(Base):
     not_assessed_findings = Column(Integer, default=0)
 
     # Evidence sources
-    evidence_sources = Column(SQLiteJSON, default=list)  # ["aws", "okta", "crowdstrike"]
+    evidence_sources = Column(JSONType, default=list)    # ["aws", "okta", "crowdstrike"]
     evidence_freshness_hours = Column(Float)  # hours since newest evidence
 
     # Sufficiency
@@ -342,6 +347,12 @@ class User(Base):
     failed_login_count = Column(Integer, default=0)
     locked_until = Column(DateTime(timezone=True))  # null = not locked
     token_valid_after = Column(DateTime(timezone=True))  # tokens issued before this are rejected
+
+    # MFA/TOTP fields (#21)
+    mfa_enabled = Column(Boolean, default=False)
+    mfa_secret = Column(String(64), nullable=True)  # TOTP secret (encrypted)
+    mfa_backup_codes = Column(JSON, nullable=True)   # hashed backup codes
+    mfa_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("idx_user_email", "email"),
@@ -1099,7 +1110,7 @@ class ChangeEvent(Base):
     action = Column(String(255), nullable=False)
     resource_id = Column(Text)
     resource_type = Column(String(100))
-    detail = Column(SQLiteJSON)
+    detail = Column(JSONType)
     occurred_at = Column(DateTime(timezone=True), nullable=False)
     ingested_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     sha256 = Column(String(64), nullable=False)
@@ -1220,7 +1231,7 @@ class EvidenceRequest(Base):
     fulfilled_by = Column(String(255))
     fulfilled_at = Column(DateTime(timezone=True))
     fulfillment_notes = Column(Text)
-    evidence_ids = Column(SQLiteJSON, default=list)
+    evidence_ids = Column(JSONType, default=list)
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

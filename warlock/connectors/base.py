@@ -6,6 +6,7 @@ ConnectorRegistry manages registration and discovery.
 
 from __future__ import annotations
 
+import concurrent.futures
 import hashlib
 import json
 import logging
@@ -202,15 +203,25 @@ class ConnectorRegistry:
     def list_active(self) -> list[str]:
         return list(self._active.keys())
 
-    def collect_all(self) -> list[ConnectorResult]:
-        results = []
-        for name, connector in self._active.items():
-            if not connector.config.enabled:
-                continue
+    def collect_all(self, max_workers: int | None = None) -> list[ConnectorResult]:
+        active_connectors = [
+            (name, connector)
+            for name, connector in self._active.items()
+            if connector.config.enabled
+        ]
+        if not active_connectors:
+            return []
+
+        effective_workers = (
+            max_workers
+            if max_workers is not None
+            else min(32, len(active_connectors))
+        )
+
+        def _collect_one(name: str, connector: BaseConnector) -> ConnectorResult:
             log.info("Collecting from %s", name)
             try:
-                result = connector.collect()
-                results.append(result)
+                return connector.collect()
             except Exception as e:
                 log.exception("Connector %s failed", name)
                 result = ConnectorResult(
@@ -221,7 +232,16 @@ class ConnectorRegistry:
                 )
                 result.errors.append(str(e))
                 result.complete("error")
-                results.append(result)
+                return result
+
+        results: list[ConnectorResult] = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=effective_workers) as executor:
+            futures = {
+                executor.submit(_collect_one, name, connector): name
+                for name, connector in active_connectors
+            }
+            for future in concurrent.futures.as_completed(futures):
+                results.append(future.result())
         return results
 
 

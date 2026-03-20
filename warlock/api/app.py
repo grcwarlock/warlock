@@ -30,6 +30,7 @@ from __future__ import annotations
 import json
 import logging
 import re as _re
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -71,6 +72,13 @@ from warlock.db.models import (
 from warlock.db.repository import get_repos
 
 log = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# In-process TTL cache for the coverage endpoint (#5)
+# ---------------------------------------------------------------------------
+# Keyed by (framework_filter, user_id) -> {"data": ..., "ts": float, "latest_run": datetime|None}
+_COVERAGE_CACHE_TTL = 300  # seconds
+_coverage_cache: dict[tuple, dict] = {}
 
 # ---------------------------------------------------------------------------
 # Pydantic response models
@@ -365,6 +373,8 @@ app = FastAPI(
     title="Warlock GRC API",
     version=_VERSION,
     description="Compliance telemetry pipeline REST API",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # Configure structured logging on module load
@@ -497,6 +507,20 @@ def health_ready(db: Session = Depends(get_db)):
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )
+
+
+# =========================================================================
+# Prometheus /metrics endpoint (#7)
+# =========================================================================
+
+try:
+    from prometheus_client import make_asgi_app  # noqa: F401
+
+    _metrics_app = make_asgi_app()
+    app.mount("/metrics", _metrics_app)
+    log.info("Prometheus /metrics endpoint mounted")
+except ImportError:
+    pass  # prometheus_client not installed — /metrics endpoint unavailable
 
 
 # =========================================================================
@@ -941,7 +965,27 @@ def results_coverage(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    """Coverage summary: per-framework counts of each status."""
+    """Coverage summary: per-framework counts of each status.
+
+    Results are cached in-process for 300 seconds.  The cache is
+    invalidated when a new ConnectorRun is detected (by comparing the
+    latest ``ConnectorRun.started_at`` timestamp against the value stored
+    when the cache entry was written).
+    """
+    cache_key = (framework, str(current_user.id))
+    now = time.monotonic()
+
+    # Fetch the latest ConnectorRun timestamp cheaply (single scalar query)
+    latest_run: datetime | None = db.query(func.max(ConnectorRun.started_at)).scalar()
+
+    cached = _coverage_cache.get(cache_key)
+    if cached is not None:
+        age = now - cached["ts"]
+        if age < _COVERAGE_CACHE_TTL and cached["latest_run"] == latest_run:
+            log.debug("coverage cache hit (age=%.1fs, key=%s)", age, cache_key)
+            return cached["data"]
+
+    # --- Cache miss: compute fresh ---
     # S-1: Apply ABAC scope filter before aggregation
     base_q = apply_framework_scope(db.query(ControlResult), ControlResult, current_user)
     query = base_q.with_entities(
@@ -970,7 +1014,7 @@ def results_coverage(
         else:
             fw_stats[fw]["not_assessed"] += cnt
 
-    return [
+    response = [
         CoverageResponse(
             framework=fw,
             total=s["total"],
@@ -982,6 +1026,10 @@ def results_coverage(
         )
         for fw, s in sorted(fw_stats.items())
     ]
+
+    _coverage_cache[cache_key] = {"data": response, "ts": now, "latest_run": latest_run}
+    log.debug("coverage cache miss — refreshed (key=%s)", cache_key)
+    return response
 
 
 @app.get(PREFIX + "/results/posture", response_model=list[PostureResponse])

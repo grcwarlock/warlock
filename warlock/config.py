@@ -244,6 +244,11 @@ class Settings(BaseSettings):
     # Environment mode
     env: str = "development"  # "development", "staging", "production"
 
+    # Continuous Control Monitoring
+    ccm_enabled: bool = False
+    ccm_stale_threshold_hours: int = 24
+    ccm_reassess_on_finding: bool = True
+
     # Logging
     log_level: str = "INFO"
     log_format: str = "text"  # "text" or "json" for structured logging

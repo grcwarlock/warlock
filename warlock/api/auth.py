@@ -19,6 +19,8 @@ import hmac
 import json
 import logging
 import secrets
+import struct
+import time
 from datetime import datetime, timezone, timedelta
 
 from sqlalchemy.orm import Session
@@ -299,8 +301,14 @@ def create_user(session: Session, email: str, name: str, password: str, role: st
     return user
 
 
-def authenticate_user(session: Session, email: str, password: str) -> User | None:
-    """Authenticate a user by email and password with lockout protection."""
+def authenticate_user(session: Session, email: str, password: str) -> User | dict | None:
+    """Authenticate a user by email and password with lockout protection.
+
+    Returns:
+        User: if authentication succeeded and MFA is not enabled.
+        dict: if password is correct but MFA is required (``{"mfa_required": True, ...}``).
+        None: if authentication failed.
+    """
     user = session.query(User).filter(User.email == email, User.is_active == True).first()  # noqa: E712
 
     if not user:
@@ -330,6 +338,16 @@ def authenticate_user(session: Session, email: str, password: str) -> User | Non
         user.failed_login_count = 0
         user.locked_until = None
         user.last_login = datetime.now(timezone.utc)
+
+        # #21: If MFA is enabled, return partial auth — do not complete login
+        if user.mfa_enabled:
+            log.info("MFA required for user %s — returning partial auth", user.email)
+            return {
+                "mfa_required": True,
+                "user_id": user.id,
+                "email": user.email,
+            }
+
         return user
 
     # Failed — increment counter
@@ -390,3 +408,128 @@ def has_permission(role: str, permission: str) -> bool:
 # S-13: Pre-compute a realistic dummy hash at module load for timing oracle prevention.
 # This ensures authenticate_user takes the same time whether the user exists or not.
 _DUMMY_HASH: str = hash_password("dummy-timing-oracle-prevention")
+
+
+# ---------------------------------------------------------------------------
+# MFA / TOTP (#21)
+# ---------------------------------------------------------------------------
+
+
+def generate_totp_secret() -> str:
+    """Generate a base32-encoded TOTP secret."""
+    return base64.b32encode(secrets.token_bytes(20)).decode("utf-8")
+
+
+def verify_totp(secret: str, code: str, window: int = 1) -> bool:
+    """Verify a 6-digit TOTP code against a secret. Allow +/-window time steps."""
+    key = base64.b32decode(secret)
+    for offset in range(-window, window + 1):
+        counter = struct.pack(">Q", int(time.time()) // 30 + offset)
+        h = hmac.new(key, counter, hashlib.sha1).digest()
+        o = h[-1] & 0x0F
+        token = str(
+            (struct.unpack(">I", h[o : o + 4])[0] & 0x7FFFFFFF) % 1000000
+        ).zfill(6)
+        if hmac.compare_digest(token, code):
+            return True
+    return False
+
+
+def generate_backup_codes(count: int = 10) -> tuple[list[str], list[str]]:
+    """Generate backup codes. Returns (plaintext_codes, hashed_codes)."""
+    codes = [secrets.token_hex(4) for _ in range(count)]
+    hashed = [hashlib.sha256(c.encode()).hexdigest() for c in codes]
+    return codes, hashed
+
+
+def enroll_mfa(user_id: str, session: Session) -> dict:
+    """Start MFA enrollment -- generate secret and return provisioning URI.
+
+    The caller (API route) is responsible for returning the provisioning URI
+    and backup codes to the user. The MFA is not active until ``confirm_mfa``
+    is called with a valid TOTP code.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    if user.mfa_enabled:
+        raise ValueError("MFA is already enabled for this user")
+
+    totp_secret = generate_totp_secret()
+    plaintext_codes, hashed_codes = generate_backup_codes()
+
+    # Store secret and hashed backup codes (MFA not yet active)
+    user.mfa_secret = totp_secret
+    user.mfa_backup_codes = hashed_codes
+    session.flush()
+
+    # otpauth URI for QR code generation (RFC 6238 / Google Authenticator)
+    provisioning_uri = (
+        f"otpauth://totp/Warlock:{user.email}"
+        f"?secret={totp_secret}&issuer=Warlock&digits=6&period=30"
+    )
+
+    log.info("MFA enrollment started for user %s", user.email)
+    return {
+        "provisioning_uri": provisioning_uri,
+        "secret": totp_secret,
+        "backup_codes": plaintext_codes,
+    }
+
+
+def confirm_mfa(user_id: str, code: str, session: Session) -> bool:
+    """Confirm MFA enrollment by verifying the first TOTP code.
+
+    This activates MFA on the account. Must be called after ``enroll_mfa``.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    if not user.mfa_secret:
+        raise ValueError("MFA enrollment not started -- call enroll_mfa first")
+    if user.mfa_enabled:
+        raise ValueError("MFA is already confirmed and active")
+
+    if verify_totp(user.mfa_secret, code):
+        user.mfa_enabled = True
+        user.mfa_verified_at = datetime.now(timezone.utc)
+        session.flush()
+        log.info("MFA confirmed and activated for user %s", user.email)
+        return True
+
+    log.warning("MFA confirmation failed for user %s -- invalid TOTP code", user.email)
+    return False
+
+
+def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
+    """Verify MFA code during login.
+
+    Called after password authentication returns a partial auth (mfa_required).
+    Accepts either a valid TOTP code or a one-time backup code.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    if not user.mfa_enabled or not user.mfa_secret:
+        raise ValueError("MFA is not enabled for this user")
+
+    # Try TOTP first
+    if verify_totp(user.mfa_secret, code):
+        log.info("MFA login verified via TOTP for user %s", user.email)
+        return True
+
+    # Try backup code
+    code_hash = hashlib.sha256(code.encode()).hexdigest()
+    if user.mfa_backup_codes and code_hash in user.mfa_backup_codes:
+        # Consume the backup code (one-time use)
+        remaining = [c for c in user.mfa_backup_codes if c != code_hash]
+        user.mfa_backup_codes = remaining
+        session.flush()
+        log.info(
+            "MFA login verified via backup code for user %s (%d codes remaining)",
+            user.email, len(remaining),
+        )
+        return True
+
+    log.warning("MFA login verification failed for user %s", user.email)
+    return False
