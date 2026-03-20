@@ -279,21 +279,24 @@ def coverage(framework: str | None, use_ai: bool | None) -> None:
 
     # AI narrative summary
     if use_ai is not False:
-        from warlock.ai.service import get_ai_service
-        from warlock.ai.types import AITask
+        try:
+            from warlock.ai.service import get_ai_service
+            from warlock.ai.types import AITask
 
-        svc = get_ai_service()
-        if svc.is_task_enabled(AITask.EXECUTIVE_REPORT):
-            result = svc.reason(AITask.EXECUTIVE_REPORT, context={"frameworks": coverage_context})
-            if result.ai_used:
-                console.print("\n[bold]AI Analysis:[/bold]")
-                value = result.value
-                if isinstance(value, dict):
-                    narrative = value.get("report") or value.get("narrative") or str(value)
-                else:
-                    narrative = str(value) if value else ""
-                if narrative:
-                    console.print(narrative)
+            svc = get_ai_service()
+            if svc.is_task_enabled(AITask.EXECUTIVE_REPORT):
+                result = svc.reason(AITask.EXECUTIVE_REPORT, context={"frameworks": coverage_context})
+                if result.ai_used:
+                    console.print("\n[bold]AI Analysis:[/bold]")
+                    value = result.value
+                    if isinstance(value, dict):
+                        narrative = value.get("report") or value.get("narrative") or str(value)
+                    else:
+                        narrative = str(value) if value else ""
+                    if narrative:
+                        console.print(narrative)
+        except Exception as exc:
+            console.print(f"\n[dim]AI analysis unavailable: {exc.__class__.__name__}[/dim]")
 
 
 @cli.command()
@@ -658,22 +661,25 @@ def policy_coverage(framework: str, no_rag: bool, use_ai: bool | None) -> None:
                 "coverage_pct": coverage.coverage_pct,
                 "gaps": list(coverage.gaps)[:50],
             }
-            result = svc.reason(AITask.GOVERNANCE_ANALYSIS, context=ai_context)
-            if result.ai_used:
-                console.print("\n[bold]AI Governance Analysis:[/bold]")
-                value = result.value
-                if isinstance(value, dict):
-                    analysis = value.get("analysis") or value.get("narrative") or str(value)
-                    recs = value.get("recommendations", [])
-                else:
-                    analysis = str(value) if value else ""
-                    recs = []
-                if analysis:
-                    console.print(analysis)
-                if recs:
-                    console.print("\n[bold]Recommendations:[/bold]")
-                    for rec in recs:
-                        console.print(f"  [dim]• {rec}[/dim]")
+            try:
+                result = svc.reason(AITask.GOVERNANCE_ANALYSIS, context=ai_context)
+                if result.ai_used:
+                    console.print("\n[bold]AI Governance Analysis:[/bold]")
+                    value = result.value
+                    if isinstance(value, dict):
+                        analysis = value.get("analysis") or value.get("narrative") or str(value)
+                        recs = value.get("recommendations", [])
+                    else:
+                        analysis = str(value) if value else ""
+                        recs = []
+                    if analysis:
+                        console.print(analysis)
+                    if recs:
+                        console.print("\n[bold]Recommendations:[/bold]")
+                        for rec in recs:
+                            console.print(f"  [dim]• {rec}[/dim]")
+            except Exception as exc:
+                console.print(f"\n[dim]AI analysis unavailable: {exc.__class__.__name__}[/dim]")
 
 
 @cli.command("issues")
@@ -1145,16 +1151,19 @@ def risk_analyze(framework: str, iterations: int, use_ai: bool | None) -> None:
                 "scenarios": scenarios,
                 "portfolio": portfolio,
             }
-            ai_result = svc.reason(AITask.RISK_NARRATIVE, context=ai_context)
-            if ai_result.ai_used:
-                console.print("\n[bold]AI Risk Narrative:[/bold]")
-                value = ai_result.value
-                if isinstance(value, dict):
-                    narrative = value.get("narrative") or value.get("analysis") or str(value)
-                else:
-                    narrative = str(value) if value else ""
-                if narrative:
-                    console.print(narrative)
+            try:
+                ai_result = svc.reason(AITask.RISK_NARRATIVE, context=ai_context)
+                if ai_result.ai_used:
+                    console.print("\n[bold]AI Risk Narrative:[/bold]")
+                    value = ai_result.value
+                    if isinstance(value, dict):
+                        narrative = value.get("narrative") or value.get("analysis") or str(value)
+                    else:
+                        narrative = str(value) if value else ""
+                    if narrative:
+                        console.print(narrative)
+            except Exception as exc:
+                console.print(f"\n[dim]AI narrative unavailable: {exc.__class__.__name__}[/dim]")
 
 
 @risk.command("precompute")
@@ -1278,6 +1287,149 @@ def risk_invalidate(framework: str | None) -> None:
     console.print(
         f"[green]Invalidated {result['deleted']} cached entries for {scope}.[/green]"
     )
+
+
+# ---------------------------------------------------------------------------
+# AI commands
+# ---------------------------------------------------------------------------
+
+
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def ai(ctx: click.Context) -> None:
+    """AI reasoning management — status, models, configuration."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@ai.command("status")
+def ai_status() -> None:
+    """Show AI service status — provider, model, availability."""
+    from warlock.ai.service import get_ai_service
+
+    svc = get_ai_service()
+    available = svc.is_available()
+
+    if available:
+        console.print("[green]AI enabled[/green]")
+        console.print(f"  Provider:  {svc._provider_name}")
+        console.print(f"  Model:     {svc._model}")
+        console.print(f"  Base URL:  {svc._base_url or '(default)'}")
+        console.print(f"  Max tokens: {svc._max_tokens}")
+    else:
+        console.print("[yellow]AI not configured or disabled[/yellow]")
+        console.print("  Set WLK_AI_PROVIDER, WLK_AI_API_KEY, and WLK_AI_MODEL to enable.")
+        console.print("  Or use: warlock ai configure --provider ollama --model qwen3-coder:30b")
+
+
+@ai.command("models")
+def ai_models() -> None:
+    """List available models for the configured provider."""
+    from warlock.ai.service import get_ai_service
+
+    svc = get_ai_service()
+    if not svc.is_available():
+        _error("AI not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY first.")
+
+    console.print(f"[dim]Discovering models for {svc._provider_name}...[/dim]")
+    try:
+        models = svc.list_models()
+    except Exception as exc:
+        _error(f"Model discovery failed: {exc}")
+
+    if not models:
+        console.print("[yellow]No models found.[/yellow]")
+        return
+
+    table = Table(title=f"Available Models ({svc._provider_name})")
+    table.add_column("Model ID", style="cyan")
+    table.add_column("Display Name")
+    table.add_column("Verified", justify="center")
+
+    for m in models:
+        verified = "[green]yes[/green]" if m.verified else "[yellow]no[/yellow]"
+        table.add_row(m.id, m.display_name, verified)
+
+    console.print(table)
+    console.print(f"\n[dim]Current model: {svc._model}[/dim]")
+
+
+@ai.command("configure")
+@click.option("--provider", "-p", required=True, type=click.Choice(["anthropic", "openai", "gemini", "ollama"]), help="AI provider")
+@click.option("--api-key", "-k", default=None, help="API key (or set WLK_AI_API_KEY)")
+@click.option("--model", "-m", default=None, help="Model to use (omit to see available models)")
+@click.option("--base-url", "-u", default="", help="Base URL (for Ollama cloud/local)")
+def ai_configure(provider: str, api_key: str | None, model: str | None, base_url: str) -> None:
+    """Configure the AI provider — discover models and validate connectivity."""
+    from warlock.ai.discovery import ModelDiscovery
+
+    key = api_key or os.environ.get("WLK_AI_API_KEY", "")
+    if not key:
+        _error("API key required. Pass --api-key or set WLK_AI_API_KEY.")
+
+    console.print(f"[dim]Connecting to {provider}...[/dim]")
+    discovery = ModelDiscovery()
+    result = discovery.discover(provider, key, base_url)
+
+    if result.connected:
+        console.print(f"[green]Connected to {provider}[/green]")
+    else:
+        console.print(f"[yellow]Could not connect to {provider}: {result.error}[/yellow]")
+        if result.models:
+            console.print("[dim]Showing fallback model list:[/dim]")
+
+    if result.models:
+        table = Table(title="Available Models")
+        table.add_column("Model ID", style="cyan")
+        table.add_column("Verified", justify="center")
+        for m in result.models:
+            verified = "[green]yes[/green]" if m.verified else "[dim]fallback[/dim]"
+            table.add_row(m.id, verified)
+        console.print(table)
+
+    if model:
+        console.print(f"\n[dim]Validating model '{model}'...[/dim]")
+        valid = discovery.validate_model(provider, key, model, base_url)
+        if valid:
+            console.print(f"[green]Model '{model}' is accessible.[/green]")
+        else:
+            console.print(f"[red]Model '{model}' could not be validated.[/red]")
+
+    console.print("\n[bold]To activate, set these environment variables:[/bold]")
+    console.print(f"  export WLK_AI_PROVIDER={provider}")
+    console.print("  export WLK_AI_API_KEY=<your-key>")
+    if model:
+        console.print(f"  export WLK_AI_MODEL={model}")
+    if base_url:
+        console.print(f"  export WLK_AI_BASE_URL={base_url}")
+
+
+@ai.command("test")
+@click.option("--prompt", "-p", default="Respond with OK if you can read this.", help="Test prompt to send")
+def ai_test(prompt: str) -> None:
+    """Send a test prompt to verify the AI provider is working."""
+    from warlock.ai.service import get_ai_service
+    from warlock.ai.types import AITask
+
+    svc = get_ai_service()
+    if not svc.is_available():
+        _error("AI not configured. Run 'warlock ai configure' first.")
+
+    console.print(f"[dim]Sending test prompt to {svc._provider_name}/{svc._model}...[/dim]")
+    try:
+        result = svc.reason(
+            task=AITask.FOLLOW_UP,
+            context={"question": prompt, "entity_summary": "Test prompt", "compliance_context": "None"},
+        )
+        if result.ai_used:
+            console.print(f"[green]Response received ({result.latency_ms}ms):[/green]")
+            console.print(f"  {result.value}")
+            if result.token_usage:
+                console.print(f"  [dim]Tokens: {result.token_usage.input_tokens} in / {result.token_usage.output_tokens} out[/dim]")
+        else:
+            console.print(f"[yellow]AI not used: {result.fallback_reason}[/yellow]")
+    except Exception as exc:
+        _error(f"AI test failed: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -2063,25 +2215,28 @@ def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool |
                 "expiring_acceptances_count": len(result.expiring_acceptances),
                 "at_risk_controls_count": len(result.at_risk_controls),
             }
-            ai_result = svc.reason(AITask.AUDIT_READINESS, context=ai_context)
-            if ai_result.ai_used:
-                console.print("\n[bold]AI Audit Readiness Assessment:[/bold]")
-                value = ai_result.value
-                if isinstance(value, dict):
-                    assessment = value.get("assessment") or value.get("narrative") or ""
-                    readiness_score = value.get("readiness_score")
-                    actions = value.get("actions", [])
-                    if readiness_score is not None:
-                        score_style = "green" if readiness_score >= 0.8 else "yellow" if readiness_score >= 0.5 else "red"
-                        console.print(f"  Readiness score: [{score_style}]{readiness_score:.0%}[/]")
-                    if assessment:
-                        console.print(f"\n{assessment}")
-                    if actions:
-                        console.print("\n[bold]Recommended actions:[/bold]")
-                        for action in actions:
-                            console.print(f"  [dim]• {action}[/dim]")
-                else:
-                    console.print(str(value) if value else "")
+            try:
+                ai_result = svc.reason(AITask.AUDIT_READINESS, context=ai_context)
+                if ai_result.ai_used:
+                    console.print("\n[bold]AI Audit Readiness Assessment:[/bold]")
+                    value = ai_result.value
+                    if isinstance(value, dict):
+                        assessment = value.get("assessment") or value.get("narrative") or ""
+                        readiness_score = value.get("readiness_score")
+                        actions = value.get("actions", [])
+                        if readiness_score is not None:
+                            score_style = "green" if readiness_score >= 0.8 else "yellow" if readiness_score >= 0.5 else "red"
+                            console.print(f"  Readiness score: [{score_style}]{readiness_score:.0%}[/]")
+                        if assessment:
+                            console.print(f"\n{assessment}")
+                        if actions:
+                            console.print("\n[bold]Recommended actions:[/bold]")
+                            for action in actions:
+                                console.print(f"  [dim]• {action}[/dim]")
+                    else:
+                        console.print(str(value) if value else "")
+            except Exception as exc:
+                console.print(f"\n[dim]AI assessment unavailable: {exc.__class__.__name__}[/dim]")
 
 
 @cli.command("effectiveness")
@@ -2399,21 +2554,24 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                         "control_id": poam.control_id,
                         "severity": poam.severity,
                     }
-                ai_result = svc.reason(AITask.REMEDIATION_GUIDANCE, context=ai_context)
-                if ai_result.ai_used:
-                    console.print("\n[bold]AI Remediation Guidance:[/bold]")
-                    value = ai_result.value
-                    if isinstance(value, dict):
-                        guidance_text = value.get("guidance") or value.get("narrative") or ""
-                        steps = value.get("steps", [])
-                        if guidance_text:
-                            console.print(guidance_text)
-                        if steps:
-                            console.print("\n[bold]AI-suggested steps:[/bold]")
-                            for i, step in enumerate(steps, 1):
-                                console.print(f"  {i}. {step}")
-                    else:
-                        console.print(str(value) if value else "")
+                try:
+                    ai_result = svc.reason(AITask.REMEDIATION_GUIDANCE, context=ai_context)
+                    if ai_result.ai_used:
+                        console.print("\n[bold]AI Remediation Guidance:[/bold]")
+                        value = ai_result.value
+                        if isinstance(value, dict):
+                            guidance_text = value.get("guidance") or value.get("narrative") or ""
+                            steps = value.get("steps", [])
+                            if guidance_text:
+                                console.print(guidance_text)
+                            if steps:
+                                console.print("\n[bold]AI-suggested steps:[/bold]")
+                                for i, step in enumerate(steps, 1):
+                                    console.print(f"  {i}. {step}")
+                        else:
+                            console.print(str(value) if value else "")
+                except Exception as exc:
+                    console.print(f"\n[dim]AI guidance unavailable: {exc.__class__.__name__}[/dim]")
 
 
 def _show_remediation_for_issue(session, issue) -> None:

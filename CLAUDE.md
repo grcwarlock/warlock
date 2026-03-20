@@ -169,6 +169,28 @@ If CRITICAL or HIGH CVEs found in packages actually imported at runtime, pin to 
 
 Count must be >= the baseline from Step 1. If you added code and count didn't go up, you forgot to write tests.
 
+### Step 12b: CLI AI flag verification
+
+```bash
+.venv/bin/python -c "
+from warlock.cli import cli
+from click.testing import CliRunner
+runner = CliRunner()
+# ai group in top-level help
+r = runner.invoke(cli, ['--help']); assert 'ai ' in r.output, 'ai group missing'
+# ai subcommands
+r = runner.invoke(cli, ['ai', '--help']); assert all(c in r.output for c in ['status','models','configure','test'])
+# --ai flag on key commands
+for cmd in ['coverage','remediate','simulate-audit','policy-coverage','risk analyze']:
+    parts = cmd.split()
+    r = runner.invoke(cli, parts + ['--help']); assert '--ai' in r.output, f'{cmd} missing --ai'
+# --ask flag
+for cmd in ['remediate','findings','issues']:
+    r = runner.invoke(cli, [cmd, '--help']); assert '--ask' in r.output, f'{cmd} missing --ask'
+print('CLI AI flags: ALL PRESENT')
+"
+```
+
 ### Step 13: Change manifest
 
 Before asking to push, list EVERY file you changed and what you changed in it. Not "updated models.py" — what specifically. If you can't explain a change, you don't understand it and shouldn't push it.
