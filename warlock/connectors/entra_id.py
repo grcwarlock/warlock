@@ -22,9 +22,20 @@ log = logging.getLogger(__name__)
 
 # (endpoint, event_type, query_params)
 ENTRA_ENDPOINTS: list[tuple[str, str, dict]] = [
-    ("/v1.0/users", "entra_users", {"$top": "999", "$select": "id,displayName,userPrincipalName,accountEnabled,signInActivity,createdDateTime,assignedLicenses"}),
+    (
+        "/v1.0/users",
+        "entra_users",
+        {
+            "$top": "999",
+            "$select": "id,displayName,userPrincipalName,accountEnabled,signInActivity,createdDateTime,assignedLicenses",
+        },
+    ),
     ("/v1.0/identityProtection/riskyUsers", "entra_risky_users", {"$top": "999"}),
-    ("/v1.0/auditLogs/signIns", "entra_sign_ins", {"$top": "999", "$filter": "status/errorCode ne 0"}),
+    (
+        "/v1.0/auditLogs/signIns",
+        "entra_sign_ins",
+        {"$top": "999", "$filter": "status/errorCode ne 0"},
+    ),
     ("/v1.0/auditLogs/directoryAudits", "entra_directory_audits", {"$top": "999"}),
     ("/v1.0/identity/conditionalAccess/policies", "entra_conditional_access_policies", {}),
     ("/v1.0/servicePrincipals", "entra_service_principals", {"$top": "999"}),
@@ -53,6 +64,7 @@ class EntraIDConnector(BaseConnector):
         try:
             token = self._get_token()
             import httpx
+
             resp = httpx.get(
                 "https://graph.microsoft.com/v1.0/organization",
                 headers={"Authorization": f"Bearer {token}"},
@@ -95,18 +107,20 @@ class EntraIDConnector(BaseConnector):
             for endpoint, event_type, params in ENTRA_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, params)
-                    result.events.append(RawEventData(
-                        source="entra_id",
-                        source_type=SourceType.IAM,
-                        provider="entra_id",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "tenant_id": tenant_id,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="entra_id",
+                            source_type=SourceType.IAM,
+                            provider="entra_id",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "tenant_id": tenant_id,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Entra ID %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")

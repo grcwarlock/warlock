@@ -33,16 +33,22 @@ log = logging.getLogger(__name__)
 
 # Fields to anonymize on erasure
 _PERSONNEL_PII_FIELDS = [
-    "email", "full_name", "manager_email", "hr_employee_id",
+    "email",
+    "full_name",
+    "manager_email",
+    "hr_employee_id",
     "idp_user_id",
 ]
 
 _USER_PII_FIELDS = [
-    "email", "name",
+    "email",
+    "name",
 ]
 
 _TRUST_PII_FIELDS = [
-    "company_name", "contact_name", "contact_email",
+    "company_name",
+    "contact_name",
+    "contact_email",
 ]
 
 
@@ -71,7 +77,11 @@ class GDPRManager:
         Searches across Personnel, User, and TrustAccessRequest tables.
         Returns a portable JSON-serializable dict.
         """
-        result: dict[str, Any] = {"subject_email": email, "exported_at": datetime.now(timezone.utc).isoformat(), "data": {}}
+        result: dict[str, Any] = {
+            "subject_email": email,
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "data": {},
+        }
 
         # Personnel records
         personnel = session.query(Personnel).filter(Personnel.email == email).first()
@@ -90,7 +100,9 @@ class GDPRManager:
                 "idp_status": personnel.idp_status,
                 "mfa_enabled": personnel.mfa_enabled,
                 "training_status": personnel.training_status,
-                "last_training_date": personnel.last_training_date.isoformat() if personnel.last_training_date else None,
+                "last_training_date": personnel.last_training_date.isoformat()
+                if personnel.last_training_date
+                else None,
             }
 
         # User account
@@ -106,9 +118,11 @@ class GDPRManager:
             }
 
         # Trust access requests
-        trust_requests = session.query(TrustAccessRequest).filter(
-            TrustAccessRequest.contact_email == email
-        ).all()
+        trust_requests = (
+            session.query(TrustAccessRequest)
+            .filter(TrustAccessRequest.contact_email == email)
+            .all()
+        )
         if trust_requests:
             result["data"]["trust_requests"] = [
                 {
@@ -122,11 +136,15 @@ class GDPRManager:
             ]
 
         # Issues (assigned_to, assigned_by, created_by)
-        issues = session.query(Issue).filter(
-            (Issue.assigned_to == email)
-            | (Issue.assigned_by == email)
-            | (Issue.created_by == email)
-        ).all()
+        issues = (
+            session.query(Issue)
+            .filter(
+                (Issue.assigned_to == email)
+                | (Issue.assigned_by == email)
+                | (Issue.created_by == email)
+            )
+            .all()
+        )
         if issues:
             result["data"]["issues"] = [
                 {
@@ -136,30 +154,34 @@ class GDPRManager:
                     "assigned_by": iss.assigned_by,
                     "created_by": iss.created_by,
                     "status": getattr(iss, "status", ""),
-                    "created_at": iss.created_at.isoformat() if getattr(iss, "created_at", None) else None,
+                    "created_at": iss.created_at.isoformat()
+                    if getattr(iss, "created_at", None)
+                    else None,
                 }
                 for iss in issues
             ]
 
         # Issue comments
-        comments = session.query(IssueComment).filter(
-            IssueComment.author == email
-        ).all()
+        comments = session.query(IssueComment).filter(IssueComment.author == email).all()
         if comments:
             result["data"]["issue_comments"] = [
                 {
                     "id": c.id,
                     "issue_id": getattr(c, "issue_id", ""),
                     "author": c.author,
-                    "created_at": c.created_at.isoformat() if getattr(c, "created_at", None) else None,
+                    "created_at": c.created_at.isoformat()
+                    if getattr(c, "created_at", None)
+                    else None,
                 }
                 for c in comments
             ]
 
         # POA&Ms
-        poams = session.query(POAM).filter(
-            (POAM.created_by == email) | (POAM.updated_by == email)
-        ).all()
+        poams = (
+            session.query(POAM)
+            .filter((POAM.created_by == email) | (POAM.updated_by == email))
+            .all()
+        )
         if poams:
             result["data"]["poams"] = [
                 {
@@ -174,10 +196,11 @@ class GDPRManager:
             ]
 
         # Risk acceptances
-        ras = session.query(RiskAcceptance).filter(
-            (RiskAcceptance.requested_by == email)
-            | (RiskAcceptance.approved_by == email)
-        ).all()
+        ras = (
+            session.query(RiskAcceptance)
+            .filter((RiskAcceptance.requested_by == email) | (RiskAcceptance.approved_by == email))
+            .all()
+        )
         if ras:
             result["data"]["risk_acceptances"] = [
                 {
@@ -206,7 +229,12 @@ class GDPRManager:
         Returns immediately if no records match the email (already erased or
         never existed).
         """
-        result: dict[str, Any] = {"email": email, "erased_at": datetime.now(timezone.utc).isoformat(), "affected": {}, "idempotent": False}
+        result: dict[str, Any] = {
+            "email": email,
+            "erased_at": datetime.now(timezone.utc).isoformat(),
+            "affected": {},
+            "idempotent": False,
+        }
 
         # Personnel
         personnel = session.query(Personnel).filter(Personnel.email == email).first()
@@ -227,9 +255,11 @@ class GDPRManager:
             log.info("GDPR erasure: anonymized user account %s", user.id)
 
         # Trust access requests
-        trust_requests = session.query(TrustAccessRequest).filter(
-            TrustAccessRequest.contact_email == email
-        ).all()
+        trust_requests = (
+            session.query(TrustAccessRequest)
+            .filter(TrustAccessRequest.contact_email == email)
+            .all()
+        )
         if trust_requests:
             for tr in trust_requests:
                 for field in _TRUST_PII_FIELDS:
@@ -240,11 +270,15 @@ class GDPRManager:
         # W-3: Cascade anonymization to workflow tables
         # Issues
         issue_fields = ["assigned_to", "assigned_by", "created_by"]
-        issues = session.query(Issue).filter(
-            (Issue.assigned_to == email)
-            | (Issue.assigned_by == email)
-            | (Issue.created_by == email)
-        ).all()
+        issues = (
+            session.query(Issue)
+            .filter(
+                (Issue.assigned_to == email)
+                | (Issue.assigned_by == email)
+                | (Issue.created_by == email)
+            )
+            .all()
+        )
         for iss in issues:
             for fld in issue_fields:
                 if getattr(iss, fld, None) == email:
@@ -255,9 +289,11 @@ class GDPRManager:
 
         # POA&Ms
         poam_fields = ["created_by", "updated_by"]
-        poams = session.query(POAM).filter(
-            (POAM.created_by == email) | (POAM.updated_by == email)
-        ).all()
+        poams = (
+            session.query(POAM)
+            .filter((POAM.created_by == email) | (POAM.updated_by == email))
+            .all()
+        )
         for p in poams:
             for fld in poam_fields:
                 if getattr(p, fld, None) == email:
@@ -268,10 +304,11 @@ class GDPRManager:
 
         # Risk Acceptances
         ra_fields = ["requested_by", "approved_by"]
-        ras = session.query(RiskAcceptance).filter(
-            (RiskAcceptance.requested_by == email)
-            | (RiskAcceptance.approved_by == email)
-        ).all()
+        ras = (
+            session.query(RiskAcceptance)
+            .filter((RiskAcceptance.requested_by == email) | (RiskAcceptance.approved_by == email))
+            .all()
+        )
         for ra in ras:
             for fld in ra_fields:
                 if getattr(ra, fld, None) == email:
@@ -282,10 +319,14 @@ class GDPRManager:
 
         # Compensating Controls
         cc_fields = ["created_by", "approved_by"]
-        ccs = session.query(CompensatingControl).filter(
-            (CompensatingControl.created_by == email)
-            | (CompensatingControl.approved_by == email)
-        ).all()
+        ccs = (
+            session.query(CompensatingControl)
+            .filter(
+                (CompensatingControl.created_by == email)
+                | (CompensatingControl.approved_by == email)
+            )
+            .all()
+        )
         for cc in ccs:
             for fld in cc_fields:
                 if getattr(cc, fld, None) == email:
@@ -296,10 +337,13 @@ class GDPRManager:
 
         # Questionnaires
         q_fields = ["vendor_contact_email", "created_by"]
-        qs = session.query(Questionnaire).filter(
-            (Questionnaire.vendor_contact_email == email)
-            | (Questionnaire.created_by == email)
-        ).all()
+        qs = (
+            session.query(Questionnaire)
+            .filter(
+                (Questionnaire.vendor_contact_email == email) | (Questionnaire.created_by == email)
+            )
+            .all()
+        )
         for q in qs:
             for fld in q_fields:
                 if getattr(q, fld, None) == email:
@@ -309,9 +353,7 @@ class GDPRManager:
             log.info("GDPR erasure: anonymized %d questionnaire records", len(qs))
 
         # Issue Comments
-        comments = session.query(IssueComment).filter(
-            IssueComment.author == email
-        ).all()
+        comments = session.query(IssueComment).filter(IssueComment.author == email).all()
         for c in comments:
             c.author = _anonymize_value("author", c.id)
         if comments:

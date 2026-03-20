@@ -38,7 +38,9 @@ class SentinelOneConnector(BaseConnector):
         except ImportError:
             errors.append("httpx not installed. Install with: pip install httpx")
         if not self._get_api_token():
-            errors.append("SentinelOne API token not configured (set SENTINELONE_API_TOKEN or config.settings.api_token)")
+            errors.append(
+                "SentinelOne API token not configured (set SENTINELONE_API_TOKEN or config.settings.api_token)"
+            )
         if not self._get_base_url():
             errors.append("SentinelOne base_url not configured (set config.settings.base_url)")
         return errors
@@ -46,6 +48,7 @@ class SentinelOneConnector(BaseConnector):
     def health_check(self) -> bool:
         try:
             import httpx
+
             resp = httpx.get(
                 f"{self._get_base_url()}/web/api/v2.1/system/status",
                 headers=self._auth_headers(),
@@ -95,18 +98,20 @@ class SentinelOneConnector(BaseConnector):
                         log.warning("SentinelOne %s: capped at 10k records", event_type)
                         break
 
-                result.events.append(RawEventData(
-                    source="sentinelone",
-                    source_type=SourceType.EDR,
-                    provider="sentinelone",
-                    event_type=event_type,
-                    raw_data={
-                        "endpoint": endpoint,
-                        "records": all_records,
-                        "total": len(all_records),
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="sentinelone",
+                        source_type=SourceType.EDR,
+                        provider="sentinelone",
+                        event_type=event_type,
+                        raw_data={
+                            "endpoint": endpoint,
+                            "records": all_records,
+                            "total": len(all_records),
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("SentinelOne %s failed: %s", endpoint, e)
                 result.errors.append(f"{event_type}: {e}")

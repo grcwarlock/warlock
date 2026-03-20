@@ -156,9 +156,7 @@ def compute_mttr(
                 # Remediation cycle complete
                 improved_at = ensure_aware(drift.detected_at)
                 if improved_at is not None and pending_degraded is not None:
-                    delta_hours = (
-                        (improved_at - pending_degraded).total_seconds() / 3600.0
-                    )
+                    delta_hours = (improved_at - pending_degraded).total_seconds() / 3600.0
                     if delta_hours >= 0:
                         remediation_times.append(delta_hours)
                 pending_degraded = None

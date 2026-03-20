@@ -68,18 +68,15 @@ class AuditBinderGenerator:
         Raises:
             ValueError: If engagement not found.
         """
-        engagement = session.get(AuditEngagement,engagement_id)
+        engagement = session.get(AuditEngagement, engagement_id)
         if not engagement:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
         # Query all control results within the engagement period
-        query = (
-            session.query(ControlResult)
-            .filter(
-                ControlResult.framework == engagement.framework,
-                ControlResult.assessed_at >= engagement.period_start,
-                ControlResult.assessed_at <= engagement.period_end,
-            )
+        query = session.query(ControlResult).filter(
+            ControlResult.framework == engagement.framework,
+            ControlResult.assessed_at >= engagement.period_start,
+            ControlResult.assessed_at <= engagement.period_end,
         )
 
         in_scope = engagement.in_scope_controls or []
@@ -92,17 +89,13 @@ class AuditBinderGenerator:
         results = query.all()
 
         # Group by control family / control_id
-        controls: dict[str, dict[str, list[ControlResult]]] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        controls: dict[str, dict[str, list[ControlResult]]] = defaultdict(lambda: defaultdict(list))
         for r in results:
             family = self._extract_family(r.control_id)
             controls[family][r.control_id].append(r)
 
         # Build summary
-        total_controls = sum(
-            len(cids) for cids in controls.values()
-        )
+        total_controls = sum(len(cids) for cids in controls.values())
         compliant_count = sum(
             1
             for family_map in controls.values()
@@ -134,13 +127,9 @@ class AuditBinderGenerator:
             Path("/tmp").resolve(),
             Path(tempfile.gettempdir()).resolve(),
         )
-        if not any(
-            str(resolved).startswith(str(prefix))
-            for prefix in allowed_prefixes
-        ):
+        if not any(str(resolved).startswith(str(prefix)) for prefix in allowed_prefixes):
             raise ValueError(
-                f"Output path {resolved} is not under an allowed directory "
-                f"(exports/ or /tmp/)"
+                f"Output path {resolved} is not under an allowed directory (exports/ or /tmp/)"
             )
 
         # Write ZIP
@@ -157,8 +146,8 @@ class AuditBinderGenerator:
             for family, cid_map in sorted(controls.items()):
                 for cid, crs in sorted(cid_map.items()):
                     # W-1: Sanitize to prevent ZIP path traversal
-                    family = re.sub(r'[^a-zA-Z0-9._()-]', '_', family)
-                    cid = re.sub(r'[^a-zA-Z0-9._()-]', '_', cid)
+                    family = re.sub(r"[^a-zA-Z0-9._()-]", "_", family)
+                    cid = re.sub(r"[^a-zA-Z0-9._()-]", "_", cid)
                     prefix = f"binder/{family}/{cid}"
 
                     # Evidence: control results + linked findings
@@ -169,9 +158,7 @@ class AuditBinderGenerator:
                     )
 
                     # POA&Ms
-                    poams = self._get_poams(
-                        session, engagement.framework, cid
-                    )
+                    poams = self._get_poams(session, engagement.framework, cid)
                     if poams:
                         zf.writestr(
                             f"{prefix}/poams.json",
@@ -179,9 +166,7 @@ class AuditBinderGenerator:
                         )
 
                     # Compensating controls
-                    comps = self._get_compensating(
-                        session, engagement.framework, cid
-                    )
+                    comps = self._get_compensating(session, engagement.framework, cid)
                     if comps:
                         zf.writestr(
                             f"{prefix}/compensating.json",
@@ -189,15 +174,11 @@ class AuditBinderGenerator:
                         )
 
                     # Risk acceptances
-                    acceptances = self._get_acceptances(
-                        session, engagement.framework, cid
-                    )
+                    acceptances = self._get_acceptances(session, engagement.framework, cid)
                     if acceptances:
                         zf.writestr(
                             f"{prefix}/acceptances.json",
-                            json.dumps(
-                                acceptances, indent=2, default=_json_serial
-                            ),
+                            json.dumps(acceptances, indent=2, default=_json_serial),
                         )
 
         log.info(
@@ -246,7 +227,7 @@ class AuditBinderGenerator:
 
             # Attach finding detail
             if cr.finding_id:
-                finding = session.get(Finding,cr.finding_id)
+                finding = session.get(Finding, cr.finding_id)
                 if finding:
                     entry["finding"] = {
                         "id": finding.id,

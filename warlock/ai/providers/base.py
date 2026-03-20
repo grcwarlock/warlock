@@ -126,4 +126,4 @@ class BaseProvider(ABC):
 
     def _backoff_seconds(self, attempt: int) -> float:
         """Exponential back-off: 1s, 2s, 4s, …"""
-        return float(2 ** attempt)
+        return float(2**attempt)

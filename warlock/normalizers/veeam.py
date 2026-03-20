@@ -56,42 +56,46 @@ class VeeamNormalizer(BaseNormalizer):
             description = job.get("description", "")
 
             if is_disabled or not schedule_enabled:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Backup job disabled: {name}",
-                    detail={
-                        "job_id": job_id,
-                        "name": name,
-                        "type": job_type,
-                        "is_disabled": is_disabled,
-                        "schedule_enabled": schedule_enabled,
-                        "description": description,
-                        "issue": "backup_job_disabled",
-                    },
-                    resource_id=job_id,
-                    resource_type="backup_job",
-                    resource_name=name,
-                    severity="high",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Backup job disabled: {name}",
+                        detail={
+                            "job_id": job_id,
+                            "name": name,
+                            "type": job_type,
+                            "is_disabled": is_disabled,
+                            "schedule_enabled": schedule_enabled,
+                            "description": description,
+                            "issue": "backup_job_disabled",
+                        },
+                        resource_id=job_id,
+                        resource_type="backup_job",
+                        resource_name=name,
+                        severity="high",
+                    )
+                )
             else:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"Backup job: {name}",
-                    detail={
-                        "job_id": job_id,
-                        "name": name,
-                        "type": job_type,
-                        "is_disabled": is_disabled,
-                        "schedule_enabled": schedule_enabled,
-                        "description": description,
-                    },
-                    resource_id=job_id,
-                    resource_type="backup_job",
-                    resource_name=name,
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"Backup job: {name}",
+                        detail={
+                            "job_id": job_id,
+                            "name": name,
+                            "type": job_type,
+                            "is_disabled": is_disabled,
+                            "schedule_enabled": schedule_enabled,
+                            "description": description,
+                        },
+                        resource_id=job_id,
+                        resource_type="backup_job",
+                        resource_name=name,
+                        severity="info",
+                    )
+                )
 
         return findings
 
@@ -128,45 +132,49 @@ class VeeamNormalizer(BaseNormalizer):
 
             # Failed sessions -> alert
             if status in ("failed", "failure"):
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="alert",
-                    title=f"Backup session failed: {name}",
-                    detail={
-                        "session_id": session_id,
-                        "name": name,
-                        "job_id": job_id,
-                        "status": status,
-                        "end_time": end_time_str,
-                        "type": session_type,
-                        "issue": "backup_session_failed",
-                    },
-                    resource_id=session_id,
-                    resource_type="backup_session",
-                    resource_name=name,
-                    severity="high",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="alert",
+                        title=f"Backup session failed: {name}",
+                        detail={
+                            "session_id": session_id,
+                            "name": name,
+                            "job_id": job_id,
+                            "status": status,
+                            "end_time": end_time_str,
+                            "type": session_type,
+                            "issue": "backup_session_failed",
+                        },
+                        resource_id=session_id,
+                        resource_type="backup_session",
+                        resource_name=name,
+                        severity="high",
+                    )
+                )
 
         # RPO check: flag jobs whose last success is older than threshold
         for job_id, last_success in latest_success_by_job.items():
             if last_success < rpo_cutoff:
                 hours_since = (now - last_success).total_seconds() / 3600
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"RPO exceeded: last successful backup {hours_since:.0f}h ago (job {job_id})",
-                    detail={
-                        "job_id": job_id,
-                        "last_successful_backup": last_success.isoformat(),
-                        "hours_since_last_backup": round(hours_since, 1),
-                        "rpo_threshold_hours": RPO_THRESHOLD_HOURS,
-                        "issue": "rpo_exceeded",
-                    },
-                    resource_id=job_id,
-                    resource_type="backup_session",
-                    resource_name=f"job-{job_id}",
-                    severity="critical",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"RPO exceeded: last successful backup {hours_since:.0f}h ago (job {job_id})",
+                        detail={
+                            "job_id": job_id,
+                            "last_successful_backup": last_success.isoformat(),
+                            "hours_since_last_backup": round(hours_since, 1),
+                            "rpo_threshold_hours": RPO_THRESHOLD_HOURS,
+                            "issue": "rpo_exceeded",
+                        },
+                        resource_id=job_id,
+                        resource_type="backup_session",
+                        resource_name=f"job-{job_id}",
+                        severity="critical",
+                    )
+                )
 
         return findings
 
@@ -191,38 +199,42 @@ class VeeamNormalizer(BaseNormalizer):
             if creation_time and creation_time >= recent_cutoff:
                 has_recent = True
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Restore point: {name}",
-                detail={
-                    "restore_point_id": point_id,
-                    "name": name,
-                    "creation_time": creation_time_str,
-                    "backup_id": backup_id,
-                },
-                resource_id=point_id,
-                resource_type="backup_restore_point",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Restore point: {name}",
+                    detail={
+                        "restore_point_id": point_id,
+                        "name": name,
+                        "creation_time": creation_time_str,
+                        "backup_id": backup_id,
+                    },
+                    resource_id=point_id,
+                    resource_type="backup_restore_point",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         # Flag if no restore points exist in the last 24h
         if points and not has_recent:
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="No restore points created in the last 24 hours",
-                detail={
-                    "total_restore_points": len(points),
-                    "threshold_hours": RPO_THRESHOLD_HOURS,
-                    "issue": "no_recent_restore_points",
-                },
-                resource_id="veeam-restore-points",
-                resource_type="backup_restore_point",
-                resource_name="restore-point-recency",
-                severity="high",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="No restore points created in the last 24 hours",
+                    detail={
+                        "total_restore_points": len(points),
+                        "threshold_hours": RPO_THRESHOLD_HOURS,
+                        "issue": "no_recent_restore_points",
+                    },
+                    resource_id="veeam-restore-points",
+                    resource_type="backup_restore_point",
+                    resource_name="restore-point-recency",
+                    severity="high",
+                )
+            )
 
         return findings
 

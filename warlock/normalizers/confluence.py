@@ -60,61 +60,67 @@ class ConfluenceNormalizer(BaseNormalizer):
             last_modified = self._parse_dt(modified_str) if modified_str else None
 
             # Inventory finding for every page
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Confluence page: {title}",
-                detail={
-                    "page_id": page_id,
-                    "title": title,
-                    "space_key": space_key,
-                    "status": status,
-                    "author_id": author_id,
-                    "last_modified": modified_str,
-                },
-                resource_id=f"confluence:{space_key}:{page_id}",
-                resource_type="grc_document",
-                resource_name=title,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Confluence page: {title}",
+                    detail={
+                        "page_id": page_id,
+                        "title": title,
+                        "space_key": space_key,
+                        "status": status,
+                        "author_id": author_id,
+                        "last_modified": modified_str,
+                    },
+                    resource_id=f"confluence:{space_key}:{page_id}",
+                    resource_type="grc_document",
+                    resource_name=title,
+                    severity="info",
+                )
+            )
 
             # Stale page: not updated in 365 days
             if last_modified and last_modified < stale_threshold:
                 days_stale = (now - last_modified).days
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Stale Confluence page: {title} (not updated in {days_stale} days)",
-                    detail={
-                        "page_id": page_id,
-                        "title": title,
-                        "space_key": space_key,
-                        "last_modified": modified_str,
-                        "days_stale": days_stale,
-                    },
-                    resource_id=f"confluence:{space_key}:{page_id}",
-                    resource_type="grc_document",
-                    resource_name=title,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Stale Confluence page: {title} (not updated in {days_stale} days)",
+                        detail={
+                            "page_id": page_id,
+                            "title": title,
+                            "space_key": space_key,
+                            "last_modified": modified_str,
+                            "days_stale": days_stale,
+                        },
+                        resource_id=f"confluence:{space_key}:{page_id}",
+                        resource_type="grc_document",
+                        resource_name=title,
+                        severity="medium",
+                    )
+                )
 
             # Missing author
             if not author_id:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Confluence page without author: {title}",
-                    detail={
-                        "page_id": page_id,
-                        "title": title,
-                        "space_key": space_key,
-                        "issue": "no_author",
-                    },
-                    resource_id=f"confluence:{space_key}:{page_id}",
-                    resource_type="grc_document",
-                    resource_name=title,
-                    severity="low",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Confluence page without author: {title}",
+                        detail={
+                            "page_id": page_id,
+                            "title": title,
+                            "space_key": space_key,
+                            "issue": "no_author",
+                        },
+                        resource_id=f"confluence:{space_key}:{page_id}",
+                        resource_type="grc_document",
+                        resource_name=title,
+                        severity="low",
+                    )
+                )
 
         return findings
 
@@ -134,24 +140,26 @@ class ConfluenceNormalizer(BaseNormalizer):
             author_id = ver.get("authorId", "")
             message = ver.get("message", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Confluence page version: {page_title} v{version_number}",
-                detail={
-                    "page_id": page_id,
-                    "page_title": page_title,
-                    "space_key": space_key,
-                    "version_number": version_number,
-                    "created_at": created_at,
-                    "author_id": author_id,
-                    "message": message,
-                },
-                resource_id=f"confluence:{space_key}:{page_id}:v{version_number}",
-                resource_type="grc_document_version",
-                resource_name=f"{page_title} v{version_number}",
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Confluence page version: {page_title} v{version_number}",
+                    detail={
+                        "page_id": page_id,
+                        "page_title": page_title,
+                        "space_key": space_key,
+                        "version_number": version_number,
+                        "created_at": created_at,
+                        "author_id": author_id,
+                        "message": message,
+                    },
+                    resource_id=f"confluence:{space_key}:{page_id}:v{version_number}",
+                    resource_type="grc_document_version",
+                    resource_name=f"{page_title} v{version_number}",
+                    severity="info",
+                )
+            )
 
         return findings
 

@@ -67,28 +67,30 @@ class SentinelNormalizer(BaseNormalizer):
             related_alerts = props.get("relatedAnalyticRuleIds", [])
             alert_count = props.get("additionalData", {}).get("alertsCount", 0)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Sentinel incident: {title}",
-                detail={
-                    "incident_id": incident_id,
-                    "severity": severity_raw,
-                    "status": status,
-                    "assigned_to": assigned_to,
-                    "related_analytic_rule_ids": related_alerts,
-                    "alert_count": alert_count,
-                    "incident_url": incident.get("id", ""),
-                    "created_time": props.get("createdTimeUtc", ""),
-                    "last_modified_time": props.get("lastModifiedTimeUtc", ""),
-                    "classification": props.get("classification", ""),
-                    "labels": [lbl.get("labelName", "") for lbl in props.get("labels", [])],
-                },
-                resource_id=incident.get("id", ""),
-                resource_type="sentinel_incident",
-                resource_name=title,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Sentinel incident: {title}",
+                    detail={
+                        "incident_id": incident_id,
+                        "severity": severity_raw,
+                        "status": status,
+                        "assigned_to": assigned_to,
+                        "related_analytic_rule_ids": related_alerts,
+                        "alert_count": alert_count,
+                        "incident_url": incident.get("id", ""),
+                        "created_time": props.get("createdTimeUtc", ""),
+                        "last_modified_time": props.get("lastModifiedTimeUtc", ""),
+                        "classification": props.get("classification", ""),
+                        "labels": [lbl.get("labelName", "") for lbl in props.get("labels", [])],
+                    },
+                    resource_id=incident.get("id", ""),
+                    resource_type="sentinel_incident",
+                    resource_name=title,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -112,44 +114,48 @@ class SentinelNormalizer(BaseNormalizer):
             rule_name = props.get("displayName", rule.get("name", "unknown"))
             severity_raw = props.get("severity", "Informational").lower()
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration" if not enabled else "inventory",
-                title=f"Analytics rule: {rule_name}" + (" — disabled" if not enabled else ""),
-                detail={
-                    "rule_id": rule.get("name", ""),
-                    "display_name": rule_name,
-                    "enabled": enabled,
-                    "severity": severity_raw,
-                    "kind": rule.get("kind", ""),
-                    "tactics": props.get("tactics", []),
-                    "techniques": props.get("techniques", []),
-                },
-                resource_id=rule.get("id", ""),
-                resource_type="sentinel_analytics_rule",
-                resource_name=rule_name,
-                severity="medium" if not enabled else "info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration" if not enabled else "inventory",
+                    title=f"Analytics rule: {rule_name}" + (" — disabled" if not enabled else ""),
+                    detail={
+                        "rule_id": rule.get("name", ""),
+                        "display_name": rule_name,
+                        "enabled": enabled,
+                        "severity": severity_raw,
+                        "kind": rule.get("kind", ""),
+                        "tactics": props.get("tactics", []),
+                        "techniques": props.get("techniques", []),
+                    },
+                    resource_id=rule.get("id", ""),
+                    resource_type="sentinel_analytics_rule",
+                    resource_name=rule_name,
+                    severity="medium" if not enabled else "info",
+                )
+            )
 
         # Summary finding for coverage
         total = enabled_count + disabled_count
         if total > 0:
             coverage_pct = round((enabled_count / total) * 100, 1)
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Analytics rule coverage: {coverage_pct}% ({enabled_count}/{total} enabled)",
-                detail={
-                    "enabled_count": enabled_count,
-                    "disabled_count": disabled_count,
-                    "total": total,
-                    "coverage_percent": coverage_pct,
-                },
-                resource_id="sentinel:analytics_rules:summary",
-                resource_type="sentinel_analytics_rules",
-                resource_name="analytics_rule_coverage",
-                severity="info" if coverage_pct >= 80 else "medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Analytics rule coverage: {coverage_pct}% ({enabled_count}/{total} enabled)",
+                    detail={
+                        "enabled_count": enabled_count,
+                        "disabled_count": disabled_count,
+                        "total": total,
+                        "coverage_percent": coverage_pct,
+                    },
+                    resource_id="sentinel:analytics_rules:summary",
+                    resource_type="sentinel_analytics_rules",
+                    resource_name="analytics_rule_coverage",
+                    severity="info" if coverage_pct >= 80 else "medium",
+                )
+            )
 
         return findings
 
@@ -157,16 +163,18 @@ class SentinelNormalizer(BaseNormalizer):
 
     def _normalize_hunting_queries(self, raw: RawEventData) -> list[FindingData]:
         queries = raw.raw_data.get("response", [])
-        return [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"Sentinel hunting queries — {len(queries)} configured",
-            detail={"query_count": len(queries)},
-            resource_id="sentinel:hunting_queries:summary",
-            resource_type="sentinel_hunting_queries",
-            resource_name="hunting_queries",
-            severity="info",
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"Sentinel hunting queries — {len(queries)} configured",
+                detail={"query_count": len(queries)},
+                resource_id="sentinel:hunting_queries:summary",
+                resource_type="sentinel_hunting_queries",
+                resource_name="hunting_queries",
+                severity="info",
+            )
+        ]
 
     # -- Data connectors --
 
@@ -176,23 +184,27 @@ class SentinelNormalizer(BaseNormalizer):
 
         for connector in connectors:
             props = connector.get("properties", {})
-            connector_name = props.get("connectorUiConfig", {}).get("title", connector.get("name", "unknown"))
+            connector_name = props.get("connectorUiConfig", {}).get(
+                "title", connector.get("name", "unknown")
+            )
             kind = connector.get("kind", "unknown")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Data connector: {connector_name} ({kind})",
-                detail={
-                    "connector_id": connector.get("name", ""),
-                    "kind": kind,
-                    "connector_name": connector_name,
-                },
-                resource_id=connector.get("id", ""),
-                resource_type="sentinel_data_connector",
-                resource_name=connector_name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Data connector: {connector_name} ({kind})",
+                    detail={
+                        "connector_id": connector.get("name", ""),
+                        "kind": kind,
+                        "connector_name": connector_name,
+                    },
+                    resource_id=connector.get("id", ""),
+                    resource_type="sentinel_data_connector",
+                    resource_name=connector_name,
+                    severity="info",
+                )
+            )
 
         return findings
 

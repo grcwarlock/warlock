@@ -59,45 +59,55 @@ class OneTrustNormalizer(BaseNormalizer):
             org_group = assessment.get("orgGroup", {}).get("name", "")
 
             # Inventory finding
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Privacy assessment: {name}",
-                detail={
-                    "assessment_id": assessment_id,
-                    "name": name,
-                    "status": status,
-                    "type": assessment_type,
-                    "created_date": created_date,
-                    "org_group": org_group,
-                },
-                resource_id=f"onetrust:assessment:{assessment_id}",
-                resource_type="privacy_assessment",
-                resource_name=name,
-                severity="info",
-            ))
-
-            # Incomplete PIA detection
-            is_pia = assessment_type.lower() in ("pia", "privacy impact assessment", "dpia") if assessment_type else False
-            is_incomplete = status.lower() not in ("complete", "completed", "approved") if status else True
-
-            if is_pia and is_incomplete:
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"Incomplete PIA: {name} (status: {status})",
+                    observation_type="inventory",
+                    title=f"Privacy assessment: {name}",
                     detail={
                         "assessment_id": assessment_id,
                         "name": name,
                         "status": status,
                         "type": assessment_type,
-                        "issue": "incomplete_pia",
+                        "created_date": created_date,
+                        "org_group": org_group,
                     },
                     resource_id=f"onetrust:assessment:{assessment_id}",
                     resource_type="privacy_assessment",
                     resource_name=name,
-                    severity="medium",
-                ))
+                    severity="info",
+                )
+            )
+
+            # Incomplete PIA detection
+            is_pia = (
+                assessment_type.lower() in ("pia", "privacy impact assessment", "dpia")
+                if assessment_type
+                else False
+            )
+            is_incomplete = (
+                status.lower() not in ("complete", "completed", "approved") if status else True
+            )
+
+            if is_pia and is_incomplete:
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"Incomplete PIA: {name} (status: {status})",
+                        detail={
+                            "assessment_id": assessment_id,
+                            "name": name,
+                            "status": status,
+                            "type": assessment_type,
+                            "issue": "incomplete_pia",
+                        },
+                        resource_id=f"onetrust:assessment:{assessment_id}",
+                        resource_type="privacy_assessment",
+                        resource_name=name,
+                        severity="medium",
+                    )
+                )
 
         return findings
 
@@ -112,23 +122,29 @@ class OneTrustNormalizer(BaseNormalizer):
             dm_id = str(dm.get("id", dm.get("dataMapId", "")))
             name = dm.get("name", "Unnamed Data Map")
             description = dm.get("description", "")
-            org_group = dm.get("orgGroup", {}).get("name", "") if isinstance(dm.get("orgGroup"), dict) else ""
+            org_group = (
+                dm.get("orgGroup", {}).get("name", "")
+                if isinstance(dm.get("orgGroup"), dict)
+                else ""
+            )
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Data map: {name}",
-                detail={
-                    "data_map_id": dm_id,
-                    "name": name,
-                    "description": description,
-                    "org_group": org_group,
-                },
-                resource_id=f"onetrust:data_map:{dm_id}",
-                resource_type="privacy_data_map",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Data map: {name}",
+                    detail={
+                        "data_map_id": dm_id,
+                        "name": name,
+                        "description": description,
+                        "org_group": org_group,
+                    },
+                    resource_id=f"onetrust:data_map:{dm_id}",
+                    resource_type="privacy_data_map",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -152,30 +168,36 @@ class OneTrustNormalizer(BaseNormalizer):
             created_date = self._parse_dt(created_date_str)
 
             # Check if overdue: open request created more than 30 days ago
-            is_open = status.lower() not in ("completed", "closed", "fulfilled", "denied") if status else True
+            is_open = (
+                status.lower() not in ("completed", "closed", "fulfilled", "denied")
+                if status
+                else True
+            )
             is_overdue = created_date is not None and created_date < overdue_threshold and is_open
 
             if is_overdue:
                 days_overdue = (now - created_date).days - DSAR_OVERDUE_DAYS
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="policy_violation",
-                    title=f"Overdue DSAR: {subject_name} ({days_overdue} days past deadline)",
-                    detail={
-                        "request_id": req_id,
-                        "subject_name": subject_name,
-                        "status": status,
-                        "type": request_type,
-                        "created_date": created_date_str,
-                        "deadline": deadline_str,
-                        "days_overdue": days_overdue,
-                        "issue": "overdue_dsar",
-                    },
-                    resource_id=f"onetrust:dsar:{req_id}",
-                    resource_type="privacy_dsar",
-                    resource_name=f"DSAR-{req_id}",
-                    severity="high",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="policy_violation",
+                        title=f"Overdue DSAR: {subject_name} ({days_overdue} days past deadline)",
+                        detail={
+                            "request_id": req_id,
+                            "subject_name": subject_name,
+                            "status": status,
+                            "type": request_type,
+                            "created_date": created_date_str,
+                            "deadline": deadline_str,
+                            "days_overdue": days_overdue,
+                            "issue": "overdue_dsar",
+                        },
+                        resource_id=f"onetrust:dsar:{req_id}",
+                        resource_type="privacy_dsar",
+                        resource_name=f"DSAR-{req_id}",
+                        severity="high",
+                    )
+                )
 
         return findings
 
@@ -192,21 +214,25 @@ class OneTrustNormalizer(BaseNormalizer):
             status = record.get("status", record.get("consentStatus", ""))
             collection_point = record.get("collectionPoint", record.get("collectionPointName", ""))
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Consent record: {purpose}" if purpose else f"Consent record: {record_id}",
-                detail={
-                    "record_id": record_id,
-                    "purpose": purpose,
-                    "status": status,
-                    "collection_point": collection_point,
-                },
-                resource_id=f"onetrust:consent:{record_id}",
-                resource_type="privacy_consent",
-                resource_name=f"consent-{record_id}",
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Consent record: {purpose}"
+                    if purpose
+                    else f"Consent record: {record_id}",
+                    detail={
+                        "record_id": record_id,
+                        "purpose": purpose,
+                        "status": status,
+                        "collection_point": collection_point,
+                    },
+                    resource_id=f"onetrust:consent:{record_id}",
+                    resource_type="privacy_consent",
+                    resource_name=f"consent-{record_id}",
+                    severity="info",
+                )
+            )
 
         return findings
 

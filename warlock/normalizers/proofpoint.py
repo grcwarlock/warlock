@@ -45,21 +45,21 @@ class ProofpointNormalizer(BaseNormalizer):
         total = len(messages)
 
         # Summary finding
-        findings = [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"Proofpoint — {total} blocked message(s) in last 24h",
-            detail={
-                "total_blocked": total,
-                "sample_subjects": [
-                    msg.get("subject", "")[:80] for msg in messages[:10]
-                ],
-            },
-            resource_id="proofpoint:blocked_messages",
-            resource_type="email_blocked",
-            resource_name="blocked-messages-summary",
-            severity="info",
-        )]
+        findings = [
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"Proofpoint — {total} blocked message(s) in last 24h",
+                detail={
+                    "total_blocked": total,
+                    "sample_subjects": [msg.get("subject", "")[:80] for msg in messages[:10]],
+                },
+                resource_id="proofpoint:blocked_messages",
+                resource_type="email_blocked",
+                resource_name="blocked-messages-summary",
+                severity="info",
+            )
+        ]
 
         return findings
 
@@ -86,20 +86,24 @@ class ProofpointNormalizer(BaseNormalizer):
                 for threat_key, threat_info in threats.items():
                     score = threat_info.get("threatScore", threat_info.get("score", 0)) or 0
                     max_score = max(max_score, int(score))
-                    threat_details.append({
-                        "type": threat_key,
-                        "score": score,
-                        "classification": threat_info.get("classification", ""),
-                    })
+                    threat_details.append(
+                        {
+                            "type": threat_key,
+                            "score": score,
+                            "classification": threat_info.get("classification", ""),
+                        }
+                    )
             elif isinstance(threats, list):
                 for threat_info in threats:
                     score = threat_info.get("threatScore", threat_info.get("score", 0)) or 0
                     max_score = max(max_score, int(score))
-                    threat_details.append({
-                        "type": threat_info.get("threatType", ""),
-                        "score": score,
-                        "classification": threat_info.get("classification", ""),
-                    })
+                    threat_details.append(
+                        {
+                            "type": threat_info.get("threatType", ""),
+                            "score": score,
+                            "classification": threat_info.get("classification", ""),
+                        }
+                    )
 
             # Severity from threat score
             if max_score > 75:
@@ -109,23 +113,27 @@ class ProofpointNormalizer(BaseNormalizer):
             else:
                 severity = "low"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Delivered threat: {subject}" if subject else f"Delivered threat from {sender}",
-                detail={
-                    "message_id": msg_id,
-                    "subject": subject,
-                    "sender": sender,
-                    "recipient": recipient,
-                    "threat_score": max_score,
-                    "threats": threat_details,
-                },
-                resource_id=f"proofpoint:threat:{msg_id}",
-                resource_type="email_threat",
-                resource_name=f"threat-{msg_id[:16]}",
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Delivered threat: {subject}"
+                    if subject
+                    else f"Delivered threat from {sender}",
+                    detail={
+                        "message_id": msg_id,
+                        "subject": subject,
+                        "sender": sender,
+                        "recipient": recipient,
+                        "threat_score": max_score,
+                        "threats": threat_details,
+                    },
+                    resource_id=f"proofpoint:threat:{msg_id}",
+                    resource_type="email_threat",
+                    resource_name=f"threat-{msg_id[:16]}",
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -144,23 +152,25 @@ class ProofpointNormalizer(BaseNormalizer):
             click_time = click.get("clickTime", "")
             threat_status = click.get("threatStatus", click.get("classification", ""))
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Blocked click: {recipient} on {url[:60]}",
-                detail={
-                    "click_id": click_id,
-                    "url": url,
-                    "sender": sender,
-                    "recipient": recipient,
-                    "click_time": click_time,
-                    "threat_status": threat_status,
-                },
-                resource_id=f"proofpoint:click:{click_id}",
-                resource_type="email_click_blocked",
-                resource_name=f"click-{click_id[:16]}",
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Blocked click: {recipient} on {url[:60]}",
+                    detail={
+                        "click_id": click_id,
+                        "url": url,
+                        "sender": sender,
+                        "recipient": recipient,
+                        "click_time": click_time,
+                        "threat_status": threat_status,
+                    },
+                    resource_id=f"proofpoint:click:{click_id}",
+                    resource_type="email_click_blocked",
+                    resource_name=f"click-{click_id[:16]}",
+                    severity="info",
+                )
+            )
 
         return findings
 

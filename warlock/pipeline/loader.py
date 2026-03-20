@@ -133,6 +133,7 @@ _ASSERTION_MODULES: list[str] = [
 # Loaders
 # ---------------------------------------------------------------------------
 
+
 def _import_modules(modules: list[str], label: str) -> None:
     """Import each module, silently skipping ImportErrors."""
     for mod in modules:
@@ -281,6 +282,7 @@ def _is_source_enabled(settings: Any, prefix: str) -> bool:
 # Full assembly
 # ---------------------------------------------------------------------------
 
+
 def build_pipeline(
     bus: EventBus,
     sources: tuple[str, ...] | None = None,
@@ -311,6 +313,7 @@ def build_pipeline(
     # Load assertion propagation (crosswalks + enhancement inheritance)
     try:
         from warlock.assessors.propagation import AssertionPropagator
+
         propagator = AssertionPropagator(assertion_engine, framework_dir)
         propagator.propagate_all()
         log.info("Assertion propagation complete")
@@ -320,6 +323,7 @@ def build_pipeline(
     # Register family-level default assertions
     try:
         from warlock.assessors.family_assertions import register_family_assertions
+
         register_family_assertions(assertion_engine)
         log.info("Family-level default assertions registered")
     except Exception:
@@ -358,6 +362,7 @@ def build_pipeline(
     if settings.ai_provider and settings.ai_api_key:
         try:
             from warlock.assessors.ai_reasoning import create_reasoner
+
             ai_reasoner = create_reasoner(
                 provider=settings.ai_provider,
                 api_key=settings.ai_api_key,
@@ -366,7 +371,9 @@ def build_pipeline(
             )
             log.info("AI reasoning enabled: %s/%s", settings.ai_provider, settings.ai_model)
         except Exception:
-            log.warning("AI reasoning configured but failed to initialize — running deterministic only")
+            log.warning(
+                "AI reasoning configured but failed to initialize — running deterministic only"
+            )
 
     assessor = Assessor(engine=assertion_engine, ai_reasoner=ai_reasoner)
 
@@ -375,6 +382,7 @@ def build_pipeline(
     if settings.opa_compliance_enabled and settings.opa_compliance_url:
         try:
             from warlock.assessors.opa_evaluator import OPAComplianceEvaluator
+
             opa_evaluator = OPAComplianceEvaluator(
                 base_url=settings.opa_compliance_url,
                 timeout=settings.opa_compliance_timeout,

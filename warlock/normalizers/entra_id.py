@@ -79,22 +79,24 @@ class EntraIDNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "policy_violation"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Entra user: {upn}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "user_id": user.get("id", ""),
-                    "upn": upn,
-                    "account_enabled": enabled,
-                    "last_sign_in": last_sign_in,
-                    "issues": issues,
-                },
-                resource_id=user.get("id", ""),
-                resource_type="entra_user",
-                resource_name=upn,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Entra user: {upn}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user_id": user.get("id", ""),
+                        "upn": upn,
+                        "account_enabled": enabled,
+                        "last_sign_in": last_sign_in,
+                        "issues": issues,
+                    },
+                    resource_id=user.get("id", ""),
+                    resource_type="entra_user",
+                    resource_name=upn,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -112,23 +114,25 @@ class EntraIDNormalizer(BaseNormalizer):
             severity_map = {"high": "critical", "medium": "high", "low": "medium"}
             severity = severity_map.get(risk_level, "info")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert" if risk_level != "none" else "inventory",
-                title=f"Risky user: {upn} — risk level {risk_level}",
-                detail={
-                    "user_id": user.get("id", ""),
-                    "upn": upn,
-                    "risk_level": risk_level,
-                    "risk_state": risk_state,
-                    "risk_detail": user.get("riskDetail", ""),
-                    "risk_last_updated": user.get("riskLastUpdatedDateTime", ""),
-                },
-                resource_id=user.get("id", ""),
-                resource_type="entra_user",
-                resource_name=upn,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert" if risk_level != "none" else "inventory",
+                    title=f"Risky user: {upn} — risk level {risk_level}",
+                    detail={
+                        "user_id": user.get("id", ""),
+                        "upn": upn,
+                        "risk_level": risk_level,
+                        "risk_state": risk_state,
+                        "risk_detail": user.get("riskDetail", ""),
+                        "risk_last_updated": user.get("riskLastUpdatedDateTime", ""),
+                    },
+                    resource_id=user.get("id", ""),
+                    resource_type="entra_user",
+                    resource_name=upn,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -161,26 +165,30 @@ class EntraIDNormalizer(BaseNormalizer):
             elif error_code != 0:
                 severity = "low"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert" if issues else "inventory",
-                title=f"Sign-in event: {upn} — {failure_reason}" if failure_reason else f"Sign-in event: {upn}",
-                detail={
-                    "user_id": event.get("userId", ""),
-                    "upn": upn,
-                    "error_code": error_code,
-                    "failure_reason": failure_reason,
-                    "risk_level": risk_level,
-                    "conditional_access_status": conditional_access,
-                    "ip_address": event.get("ipAddress", ""),
-                    "location": event.get("location", {}),
-                    "issues": issues,
-                },
-                resource_id=event.get("userId", ""),
-                resource_type="entra_sign_in",
-                resource_name=upn,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert" if issues else "inventory",
+                    title=f"Sign-in event: {upn} — {failure_reason}"
+                    if failure_reason
+                    else f"Sign-in event: {upn}",
+                    detail={
+                        "user_id": event.get("userId", ""),
+                        "upn": upn,
+                        "error_code": error_code,
+                        "failure_reason": failure_reason,
+                        "risk_level": risk_level,
+                        "conditional_access_status": conditional_access,
+                        "ip_address": event.get("ipAddress", ""),
+                        "location": event.get("location", {}),
+                        "issues": issues,
+                    },
+                    resource_id=event.get("userId", ""),
+                    resource_type="entra_sign_in",
+                    resource_name=upn,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -191,8 +199,10 @@ class EntraIDNormalizer(BaseNormalizer):
         audits = raw.raw_data.get("response", [])
 
         privilege_activities = {
-            "Add member to role", "Add eligible member to role",
-            "Add owner to service principal", "Add app role assignment to service principal",
+            "Add member to role",
+            "Add eligible member to role",
+            "Add owner to service principal",
+            "Add app role assignment to service principal",
         }
 
         for audit in audits:
@@ -209,22 +219,24 @@ class EntraIDNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "access_anomaly"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Audit: {activity} by {actor_upn}",
-                detail={
-                    "activity": activity,
-                    "actor": actor_upn,
-                    "result": audit.get("result", ""),
-                    "target_resources": audit.get("targetResources", []),
-                    "issues": issues,
-                },
-                resource_id=audit.get("id", ""),
-                resource_type="entra_audit",
-                resource_name=activity,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Audit: {activity} by {actor_upn}",
+                    detail={
+                        "activity": activity,
+                        "actor": actor_upn,
+                        "result": audit.get("result", ""),
+                        "target_resources": audit.get("targetResources", []),
+                        "issues": issues,
+                    },
+                    resource_id=audit.get("id", ""),
+                    resource_type="entra_audit",
+                    resource_name=activity,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -250,23 +262,26 @@ class EntraIDNormalizer(BaseNormalizer):
                 severity = "low"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Conditional access: {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "policy_id": policy.get("id", ""),
-                    "name": name,
-                    "state": state,
-                    "conditions": policy.get("conditions", {}),
-                    "grant_controls": policy.get("grantControls", {}),
-                    "issues": issues,
-                },
-                resource_id=policy.get("id", ""),
-                resource_type="entra_conditional_access_policy",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Conditional access: {name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "policy_id": policy.get("id", ""),
+                        "name": name,
+                        "state": state,
+                        "conditions": policy.get("conditions", {}),
+                        "grant_controls": policy.get("grantControls", {}),
+                        "issues": issues,
+                    },
+                    resource_id=policy.get("id", ""),
+                    resource_type="entra_conditional_access_policy",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -277,8 +292,10 @@ class EntraIDNormalizer(BaseNormalizer):
         sps = raw.raw_data.get("response", [])
 
         high_privilege_permissions = {
-            "Directory.ReadWrite.All", "Application.ReadWrite.All",
-            "RoleManagement.ReadWrite.Directory", "User.ReadWrite.All",
+            "Directory.ReadWrite.All",
+            "Application.ReadWrite.All",
+            "RoleManagement.ReadWrite.Directory",
+            "User.ReadWrite.All",
         }
 
         for sp in sps:
@@ -307,23 +324,26 @@ class EntraIDNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "access_anomaly"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Service principal: {name}" + (" — overprivileged" if overprivileged else ""),
-                detail={
-                    "sp_id": sp.get("id", ""),
-                    "app_id": sp.get("appId", ""),
-                    "name": name,
-                    "enabled": sp.get("accountEnabled", True),
-                    "granted_permissions": list(granted_permissions),
-                    "issues": issues,
-                },
-                resource_id=sp.get("id", ""),
-                resource_type="entra_service_principal",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Service principal: {name}"
+                    + (" — overprivileged" if overprivileged else ""),
+                    detail={
+                        "sp_id": sp.get("id", ""),
+                        "app_id": sp.get("appId", ""),
+                        "name": name,
+                        "enabled": sp.get("accountEnabled", True),
+                        "granted_permissions": list(granted_permissions),
+                        "issues": issues,
+                    },
+                    resource_id=sp.get("id", ""),
+                    resource_type="entra_service_principal",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -335,16 +355,18 @@ class EntraIDNormalizer(BaseNormalizer):
 
         for app in apps:
             name = app.get("displayName", "unknown")
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"App registration: {name}",
-                detail=app,
-                resource_id=app.get("id", ""),
-                resource_type="entra_app_registration",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"App registration: {name}",
+                    detail=app,
+                    resource_id=app.get("id", ""),
+                    resource_type="entra_app_registration",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 

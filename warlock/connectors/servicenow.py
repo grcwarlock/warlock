@@ -72,16 +72,14 @@ class ServiceNowConnector(BaseConnector):
 
         instance = self.config.settings.get("instance")
         if not instance:
-            errors.append("'instance' must be set in connector settings (e.g. 'mycompany.service-now.com')")
+            errors.append(
+                "'instance' must be set in connector settings (e.g. 'mycompany.service-now.com')"
+            )
 
         # Require either basic auth or OAuth credentials
-        has_basic = (
-            self.get_secret("WLK_SNOW_USERNAME")
-            and self.get_secret("WLK_SNOW_PASSWORD")
-        )
-        has_oauth = (
-            self.get_secret("WLK_SNOW_CLIENT_ID")
-            and self.get_secret("WLK_SNOW_CLIENT_SECRET")
+        has_basic = self.get_secret("WLK_SNOW_USERNAME") and self.get_secret("WLK_SNOW_PASSWORD")
+        has_oauth = self.get_secret("WLK_SNOW_CLIENT_ID") and self.get_secret(
+            "WLK_SNOW_CLIENT_SECRET"
         )
         if not has_basic and not has_oauth:
             errors.append(
@@ -131,18 +129,20 @@ class ServiceNowConnector(BaseConnector):
             for endpoint, event_type, params in SNOW_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, params)
-                    result.events.append(RawEventData(
-                        source="servicenow",
-                        source_type=SourceType.ITSM,
-                        provider="servicenow",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "instance": instance,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="servicenow",
+                            source_type=SourceType.ITSM,
+                            provider="servicenow",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "instance": instance,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("ServiceNow %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")

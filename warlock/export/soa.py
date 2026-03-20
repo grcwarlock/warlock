@@ -43,14 +43,16 @@ def _load_iso27001_controls() -> list[dict[str, Any]]:
     for family_id, family in config.get("control_families", {}).items():
         family_name = family.get("name", family_id)
         for control_id, control in family.get("controls", {}).items():
-            controls.append({
-                "control_id": control_id,
-                "family": family_id,
-                "family_name": family_name,
-                "title": control.get("title", ""),
-                "monitoring_frequency": control.get("monitoring_frequency", ""),
-                "checks": control.get("checks", []),
-            })
+            controls.append(
+                {
+                    "control_id": control_id,
+                    "family": family_id,
+                    "family_name": family_name,
+                    "title": control.get("title", ""),
+                    "monitoring_frequency": control.get("monitoring_frequency", ""),
+                    "checks": control.get("checks", []),
+                }
+            )
     return controls
 
 
@@ -101,11 +103,7 @@ class StatementOfApplicability:
         - Control objective reference
         - Implementation evidence summary
         """
-        profile = (
-            session.query(SystemProfile)
-            .filter(SystemProfile.id == system_profile_id)
-            .first()
-        )
+        profile = session.query(SystemProfile).filter(SystemProfile.id == system_profile_id).first()
         if profile is None:
             raise ValueError(f"SystemProfile {system_profile_id} not found")
 
@@ -149,46 +147,56 @@ class StatementOfApplicability:
                     if cr.assertion_name:
                         evidence_refs.append(cr.assertion_name)
 
-                soa_entries.append({
-                    "control_id": cid,
-                    "family": ctrl["family"],
-                    "family_name": ctrl["family_name"],
-                    "title": ctrl["title"],
-                    "applicable": True,
-                    "implementation_status": _impl_status_label(agg),
-                    "justification": " | ".join(justifications[:3]) if justifications else "Control assessed via automated pipeline",
-                    "exclusion_justification": None,
-                    "control_objective": ctrl["title"],
-                    "evidence_summary": ", ".join(sorted(set(evidence_refs))) if evidence_refs else "Pipeline assessment data",
-                })
+                soa_entries.append(
+                    {
+                        "control_id": cid,
+                        "family": ctrl["family"],
+                        "family_name": ctrl["family_name"],
+                        "title": ctrl["title"],
+                        "applicable": True,
+                        "implementation_status": _impl_status_label(agg),
+                        "justification": " | ".join(justifications[:3])
+                        if justifications
+                        else "Control assessed via automated pipeline",
+                        "exclusion_justification": None,
+                        "control_objective": ctrl["title"],
+                        "evidence_summary": ", ".join(sorted(set(evidence_refs)))
+                        if evidence_refs
+                        else "Pipeline assessment data",
+                    }
+                )
             elif applicable:
                 # Framework is in scope but no results yet
-                soa_entries.append({
-                    "control_id": cid,
-                    "family": ctrl["family"],
-                    "family_name": ctrl["family_name"],
-                    "title": ctrl["title"],
-                    "applicable": True,
-                    "implementation_status": "Not Assessed",
-                    "justification": "No assessment data collected yet",
-                    "exclusion_justification": None,
-                    "control_objective": ctrl["title"],
-                    "evidence_summary": "",
-                })
+                soa_entries.append(
+                    {
+                        "control_id": cid,
+                        "family": ctrl["family"],
+                        "family_name": ctrl["family_name"],
+                        "title": ctrl["title"],
+                        "applicable": True,
+                        "implementation_status": "Not Assessed",
+                        "justification": "No assessment data collected yet",
+                        "exclusion_justification": None,
+                        "control_objective": ctrl["title"],
+                        "evidence_summary": "",
+                    }
+                )
             else:
                 # ISO 27001 not in scope for this system
-                soa_entries.append({
-                    "control_id": cid,
-                    "family": ctrl["family"],
-                    "family_name": ctrl["family_name"],
-                    "title": ctrl["title"],
-                    "applicable": False,
-                    "implementation_status": "Not Applicable",
-                    "justification": None,
-                    "exclusion_justification": "ISO 27001 is not within the scope of this system profile",
-                    "control_objective": ctrl["title"],
-                    "evidence_summary": "",
-                })
+                soa_entries.append(
+                    {
+                        "control_id": cid,
+                        "family": ctrl["family"],
+                        "family_name": ctrl["family_name"],
+                        "title": ctrl["title"],
+                        "applicable": False,
+                        "implementation_status": "Not Applicable",
+                        "justification": None,
+                        "exclusion_justification": "ISO 27001 is not within the scope of this system profile",
+                        "control_objective": ctrl["title"],
+                        "evidence_summary": "",
+                    }
+                )
 
         total = len(soa_entries)
         applicable_count = sum(1 for e in soa_entries if e["applicable"])
@@ -230,27 +238,31 @@ class StatementOfApplicability:
         data = self.generate(session, system_profile_id)
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            "Control ID",
-            "Family",
-            "Title",
-            "Applicable",
-            "Implementation Status",
-            "Justification",
-            "Exclusion Justification",
-            "Control Objective",
-            "Evidence Summary",
-        ])
+        writer.writerow(
+            [
+                "Control ID",
+                "Family",
+                "Title",
+                "Applicable",
+                "Implementation Status",
+                "Justification",
+                "Exclusion Justification",
+                "Control Objective",
+                "Evidence Summary",
+            ]
+        )
         for entry in data["entries"]:
-            writer.writerow([
-                entry["control_id"],
-                entry["family"],
-                entry["title"],
-                "Yes" if entry["applicable"] else "No",
-                entry["implementation_status"],
-                entry.get("justification") or "",
-                entry.get("exclusion_justification") or "",
-                entry["control_objective"],
-                entry.get("evidence_summary") or "",
-            ])
+            writer.writerow(
+                [
+                    entry["control_id"],
+                    entry["family"],
+                    entry["title"],
+                    "Yes" if entry["applicable"] else "No",
+                    entry["implementation_status"],
+                    entry.get("justification") or "",
+                    entry.get("exclusion_justification") or "",
+                    entry["control_objective"],
+                    entry.get("evidence_summary") or "",
+                ]
+            )
         return output.getvalue()

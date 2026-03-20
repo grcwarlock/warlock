@@ -90,26 +90,29 @@ class DefenderNormalizer(BaseNormalizer):
             if issues:
                 obs_type = "policy_violation"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Defender machine {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "machine_id": machine_id,
-                    "computer_dns_name": name,
-                    "os_platform": os_platform,
-                    "os_version": os_version,
-                    "risk_score": risk_score,
-                    "exposure_level": exposure_level,
-                    "health_status": health_status,
-                    "onboarding_status": onboarding_status,
-                    "issues": issues,
-                },
-                resource_id=machine_id,
-                resource_type="endpoint",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Defender machine {name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "machine_id": machine_id,
+                        "computer_dns_name": name,
+                        "os_platform": os_platform,
+                        "os_version": os_version,
+                        "risk_score": risk_score,
+                        "exposure_level": exposure_level,
+                        "health_status": health_status,
+                        "onboarding_status": onboarding_status,
+                        "issues": issues,
+                    },
+                    resource_id=machine_id,
+                    resource_type="endpoint",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -130,26 +133,28 @@ class DefenderNormalizer(BaseNormalizer):
             machine_id = alert.get("machineId", "")
             computer_name = alert.get("computerDnsName", "unknown")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Defender alert: {title}" + (f" ({category})" if category else ""),
-                detail={
-                    "alert_id": alert_id,
-                    "title": title,
-                    "severity": severity_str,
-                    "status": status,
-                    "category": category,
-                    "machine_id": machine_id,
-                    "computer_dns_name": computer_name,
-                    "description": alert.get("description", ""),
-                    "recommended_action": alert.get("recommendedAction", ""),
-                },
-                resource_id=machine_id,
-                resource_type="endpoint",
-                resource_name=computer_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Defender alert: {title}" + (f" ({category})" if category else ""),
+                    detail={
+                        "alert_id": alert_id,
+                        "title": title,
+                        "severity": severity_str,
+                        "status": status,
+                        "category": category,
+                        "machine_id": machine_id,
+                        "computer_dns_name": computer_name,
+                        "description": alert.get("description", ""),
+                        "recommended_action": alert.get("recommendedAction", ""),
+                    },
+                    resource_id=machine_id,
+                    resource_type="endpoint",
+                    resource_name=computer_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -169,25 +174,28 @@ class DefenderNormalizer(BaseNormalizer):
             exposed_machines = vuln.get("exposedMachines", 0)
             published_on = vuln.get("publishedOn", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="vulnerability",
-                title=f"Vulnerability {cve_id}" + (f" — {exposed_machines} machine(s) exposed" if exposed_machines else ""),
-                detail={
-                    "vulnerability_id": vuln_id,
-                    "cve_id": cve_id,
-                    "name": name,
-                    "severity": severity_str,
-                    "exposed_machines": exposed_machines,
-                    "published_on": published_on,
-                    "description": vuln.get("description", ""),
-                    "cvss_v3": vuln.get("cvssV3", 0.0),
-                },
-                resource_id=cve_id,
-                resource_type="vulnerability",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title=f"Vulnerability {cve_id}"
+                    + (f" — {exposed_machines} machine(s) exposed" if exposed_machines else ""),
+                    detail={
+                        "vulnerability_id": vuln_id,
+                        "cve_id": cve_id,
+                        "name": name,
+                        "severity": severity_str,
+                        "exposed_machines": exposed_machines,
+                        "published_on": published_on,
+                        "description": vuln.get("description", ""),
+                        "cvss_v3": vuln.get("cvssV3", 0.0),
+                    },
+                    resource_id=cve_id,
+                    resource_type="vulnerability",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -207,26 +215,29 @@ class DefenderNormalizer(BaseNormalizer):
             exposed = rec.get("exposedMachinesCount", 0)
             category = rec.get("recommendationCategory", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title=f"Recommendation: {title}" + (f" — {exposed} machine(s)" if exposed else ""),
-                detail={
-                    "recommendation_id": rec_id,
-                    "title": title,
-                    "severity": severity_str,
-                    "status": status,
-                    "category": category,
-                    "exposed_machines_count": exposed,
-                    "remediation_type": rec.get("remediationType", ""),
-                    "vendor": rec.get("vendor", ""),
-                    "product_name": rec.get("productName", ""),
-                },
-                resource_id=rec_id,
-                resource_type="recommendation",
-                resource_name=title,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title=f"Recommendation: {title}"
+                    + (f" — {exposed} machine(s)" if exposed else ""),
+                    detail={
+                        "recommendation_id": rec_id,
+                        "title": title,
+                        "severity": severity_str,
+                        "status": status,
+                        "category": category,
+                        "exposed_machines_count": exposed,
+                        "remediation_type": rec.get("remediationType", ""),
+                        "vendor": rec.get("vendor", ""),
+                        "product_name": rec.get("productName", ""),
+                    },
+                    resource_id=rec_id,
+                    resource_type="recommendation",
+                    resource_name=title,
+                    severity=severity,
+                )
+            )
 
         return findings
 

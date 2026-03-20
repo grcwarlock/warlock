@@ -74,7 +74,8 @@ class VerkadaConnector(BaseConnector):
         try:
             # Collect access events
             self._collect_endpoint(
-                client, result,
+                client,
+                result,
                 endpoint="/access/v1/access_events",
                 params={"org_id": org_id, "page_size": "100"},
                 event_type="verkada_access_events",
@@ -83,7 +84,8 @@ class VerkadaConnector(BaseConnector):
 
             # Collect doors
             self._collect_endpoint(
-                client, result,
+                client,
+                result,
                 endpoint="/access/v1/doors",
                 params={"org_id": org_id},
                 event_type="verkada_doors",
@@ -91,7 +93,8 @@ class VerkadaConnector(BaseConnector):
 
             # Collect card holders / users
             self._collect_endpoint(
-                client, result,
+                client,
+                result,
                 endpoint="/access/v1/card_holders",
                 params={"org_id": org_id, "page_size": "100"},
                 event_type="verkada_users",
@@ -120,14 +123,16 @@ class VerkadaConnector(BaseConnector):
                 resp.raise_for_status()
                 data = resp.json()
 
-            result.events.append(RawEventData(
-                source="verkada",
-                source_type=SourceType.PHYSICAL,
-                provider="verkada",
-                event_type=event_type,
-                raw_data={"response": data if isinstance(data, list) else data},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="verkada",
+                    source_type=SourceType.PHYSICAL,
+                    provider="verkada",
+                    event_type=event_type,
+                    raw_data={"response": data if isinstance(data, list) else data},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Verkada %s failed: %s", endpoint, e)
             result.errors.append(f"{event_type}: {e}")
@@ -142,7 +147,11 @@ class VerkadaConnector(BaseConnector):
             resp.raise_for_status()
             body = resp.json()
 
-            items = body if isinstance(body, list) else body.get("access_events", body.get("card_holders", body.get("results", [])))
+            items = (
+                body
+                if isinstance(body, list)
+                else body.get("access_events", body.get("card_holders", body.get("results", [])))
+            )
             if isinstance(items, list):
                 all_items.extend(items)
             else:

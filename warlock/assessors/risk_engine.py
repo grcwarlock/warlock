@@ -50,176 +50,288 @@ DEFAULT_SCENARIO_CATALOG: dict[str, dict[str, Any]] = {
     "AC": {
         "name": "unauthorized_access",
         "description": "Unauthorized access to information systems",
-        "frequency_min": 1, "frequency_mode": 5, "frequency_max": 20,
-        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 5,
+        "frequency_max": 20,
+        "impact_min": 50_000,
+        "impact_mode": 250_000,
+        "impact_max": 2_000_000,
     },
     "SI": {
         "name": "malware",
         "description": "Malware infection and propagation",
-        "frequency_min": 2, "frequency_mode": 8, "frequency_max": 30,
-        "impact_min": 25_000, "impact_mode": 150_000, "impact_max": 1_500_000,
+        "frequency_min": 2,
+        "frequency_mode": 8,
+        "frequency_max": 30,
+        "impact_min": 25_000,
+        "impact_mode": 150_000,
+        "impact_max": 1_500_000,
     },
     "CP": {
         "name": "service_disruption",
         "description": "Business continuity and disaster recovery failure",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 5_000_000,
     },
     "AU": {
         "name": "audit_failure",
         "description": "Insufficient audit logging leading to undetected breach",
-        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
-        "impact_min": 30_000, "impact_mode": 200_000, "impact_max": 1_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 4,
+        "frequency_max": 15,
+        "impact_min": 30_000,
+        "impact_mode": 200_000,
+        "impact_max": 1_000_000,
     },
     "IA": {
         "name": "identity_compromise",
         "description": "Identity and authentication system compromise",
-        "frequency_min": 2, "frequency_mode": 10, "frequency_max": 40,
-        "impact_min": 50_000, "impact_mode": 300_000, "impact_max": 3_000_000,
+        "frequency_min": 2,
+        "frequency_mode": 10,
+        "frequency_max": 40,
+        "impact_min": 50_000,
+        "impact_mode": 300_000,
+        "impact_max": 3_000_000,
     },
     "SC": {
         "name": "data_exfiltration",
         "description": "Data exfiltration through communication channels",
-        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 12,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 10_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 3,
+        "frequency_max": 12,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 10_000_000,
     },
     "CM": {
         "name": "configuration_drift",
         "description": "Configuration management failure leading to exposure",
-        "frequency_min": 3, "frequency_mode": 10, "frequency_max": 50,
-        "impact_min": 10_000, "impact_mode": 75_000, "impact_max": 500_000,
+        "frequency_min": 3,
+        "frequency_mode": 10,
+        "frequency_max": 50,
+        "impact_min": 10_000,
+        "impact_mode": 75_000,
+        "impact_max": 500_000,
     },
     "RA": {
         "name": "unassessed_risk",
         "description": "Unidentified or unassessed risks materializing",
-        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 10,
-        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 3,
+        "frequency_max": 10,
+        "impact_min": 50_000,
+        "impact_mode": 250_000,
+        "impact_max": 2_000_000,
     },
     "SA": {
         "name": "supply_chain_compromise",
         "description": "Third-party or supply chain security compromise",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 75_000, "impact_mode": 400_000, "impact_max": 5_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 75_000,
+        "impact_mode": 400_000,
+        "impact_max": 5_000_000,
     },
     "SR": {
         "name": "supply_chain_compromise",
         "description": "Supply chain risk management failure",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 75_000, "impact_mode": 400_000, "impact_max": 5_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 75_000,
+        "impact_mode": 400_000,
+        "impact_max": 5_000_000,
     },
     "IR": {
         "name": "incident_response_failure",
         "description": "Inadequate incident response extending breach impact",
-        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
-        "impact_min": 50_000, "impact_mode": 300_000, "impact_max": 3_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 4,
+        "frequency_max": 15,
+        "impact_min": 50_000,
+        "impact_mode": 300_000,
+        "impact_max": 3_000_000,
     },
     "PE": {
         "name": "physical_breach",
         "description": "Physical security breach or environmental failure",
-        "frequency_min": 0.2, "frequency_mode": 1, "frequency_max": 5,
-        "impact_min": 25_000, "impact_mode": 200_000, "impact_max": 2_000_000,
+        "frequency_min": 0.2,
+        "frequency_mode": 1,
+        "frequency_max": 5,
+        "impact_min": 25_000,
+        "impact_mode": 200_000,
+        "impact_max": 2_000_000,
     },
     "UCF-TPM": {
         "name": "vendor_breach",
         "description": "Third-party vendor security breach or data exposure",
-        "frequency_min": 0.5, "frequency_mode": 3, "frequency_max": 10,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 3,
+        "frequency_max": 10,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 5_000_000,
     },
     # SOC 2 TSC family mappings — alias to equivalent NIST families
     "CC": {  # Common Criteria -> Access Control
         "name": "unauthorized_access",
         "description": "Unauthorized access to information systems",
-        "frequency_min": 1, "frequency_mode": 5, "frequency_max": 20,
-        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 5,
+        "frequency_max": 20,
+        "impact_min": 50_000,
+        "impact_mode": 250_000,
+        "impact_max": 2_000_000,
     },
     "A": {  # Availability -> Continuity Planning
         "name": "service_disruption",
         "description": "Business continuity and disaster recovery failure",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 5_000_000,
     },
     "PI": {  # Processing Integrity -> System and Information Integrity
         "name": "malware",
         "description": "Malware infection and propagation",
-        "frequency_min": 2, "frequency_mode": 8, "frequency_max": 30,
-        "impact_min": 25_000, "impact_mode": 150_000, "impact_max": 1_500_000,
+        "frequency_min": 2,
+        "frequency_mode": 8,
+        "frequency_max": 30,
+        "impact_min": 25_000,
+        "impact_mode": 150_000,
+        "impact_max": 1_500_000,
     },
     "C": {  # Confidentiality -> System and Communications Protection
         "name": "data_exfiltration",
         "description": "Data exfiltration through communication channels",
-        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 12,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 10_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 3,
+        "frequency_max": 12,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 10_000_000,
     },
     "P": {  # Privacy -> Program Management
         "name": "unassessed_risk",
         "description": "Unidentified or unassessed privacy risks materializing",
-        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 10,
-        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 3,
+        "frequency_max": 10,
+        "impact_min": 50_000,
+        "impact_mode": 250_000,
+        "impact_max": 2_000_000,
     },
     # GDPR article families (ART prefix)
     "ART": {
         "name": "privacy_violation",
         "description": "GDPR data protection violation — fine up to 4% of global revenue",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 100_000, "impact_mode": 1_000_000, "impact_max": 20_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 100_000,
+        "impact_mode": 1_000_000,
+        "impact_max": 20_000_000,
     },
     # HIPAA section families (164 prefix)
     "164": {
         "name": "phi_breach",
         "description": "Protected health information breach — HIPAA violation",
-        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 4,
+        "frequency_max": 15,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 5_000_000,
     },
     # PCI DSS requirement families (R prefix)
     "R": {
         "name": "payment_data_breach",
         "description": "Payment card data compromise — PCI DSS non-compliance",
-        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
-        "impact_min": 50_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 4,
+        "frequency_max": 15,
+        "impact_min": 50_000,
+        "impact_mode": 500_000,
+        "impact_max": 5_000_000,
     },
     # NIST CSF function families
     "GV": {
         "name": "governance_failure",
         "description": "Cybersecurity governance and oversight failure",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 50_000,
+        "impact_mode": 250_000,
+        "impact_max": 2_000_000,
     },
     "ID": {
         "name": "asset_identification_gap",
         "description": "Failure to identify and manage assets and risks",
-        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 12,
-        "impact_min": 25_000, "impact_mode": 200_000, "impact_max": 1_500_000,
+        "frequency_min": 1,
+        "frequency_mode": 3,
+        "frequency_max": 12,
+        "impact_min": 25_000,
+        "impact_mode": 200_000,
+        "impact_max": 1_500_000,
     },
     "PR": {
         "name": "protection_failure",
         "description": "Safeguard implementation failure",
-        "frequency_min": 2, "frequency_mode": 6, "frequency_max": 25,
-        "impact_min": 50_000, "impact_mode": 300_000, "impact_max": 3_000_000,
+        "frequency_min": 2,
+        "frequency_mode": 6,
+        "frequency_max": 25,
+        "impact_min": 50_000,
+        "impact_mode": 300_000,
+        "impact_max": 3_000_000,
     },
     "DE": {
         "name": "detection_failure",
         "description": "Failure to detect cybersecurity events",
-        "frequency_min": 1, "frequency_mode": 5, "frequency_max": 20,
-        "impact_min": 50_000, "impact_mode": 400_000, "impact_max": 4_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 5,
+        "frequency_max": 20,
+        "impact_min": 50_000,
+        "impact_mode": 400_000,
+        "impact_max": 4_000_000,
     },
     "RS": {
         "name": "response_failure",
         "description": "Inadequate incident response capability",
-        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
-        "impact_min": 50_000, "impact_mode": 300_000, "impact_max": 3_000_000,
+        "frequency_min": 1,
+        "frequency_mode": 4,
+        "frequency_max": 15,
+        "impact_min": 50_000,
+        "impact_mode": 300_000,
+        "impact_max": 3_000_000,
     },
     "RC": {
         "name": "recovery_failure",
         "description": "Failure to recover from cybersecurity incidents",
-        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
-        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 2,
+        "frequency_max": 8,
+        "impact_min": 100_000,
+        "impact_mode": 500_000,
+        "impact_max": 5_000_000,
     },
     # SEC Cyber (ITEM prefix)
     "ITEM": {
         "name": "disclosure_failure",
         "description": "SEC cybersecurity disclosure non-compliance",
-        "frequency_min": 0.5, "frequency_mode": 1, "frequency_max": 5,
-        "impact_min": 100_000, "impact_mode": 1_000_000, "impact_max": 10_000_000,
+        "frequency_min": 0.5,
+        "frequency_mode": 1,
+        "frequency_max": 5,
+        "impact_min": 100_000,
+        "impact_mode": 1_000_000,
+        "impact_max": 10_000_000,
     },
     # EU AI Act (same ART prefix as GDPR, handled by ART above)
 }
@@ -228,6 +340,7 @@ DEFAULT_SCENARIO_CATALOG: dict[str, dict[str, Any]] = {
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ThreatScenario:
@@ -297,9 +410,9 @@ class SimulationResult:
     scenario_name: str
     iterations: int
     mean_ale: float  # Annualized Loss Expectancy
-    var_90: float    # Value at Risk, 90th percentile
-    var_95: float    # Value at Risk, 95th percentile
-    var_99: float    # Value at Risk, 99th percentile
+    var_90: float  # Value at Risk, 90th percentile
+    var_95: float  # Value at Risk, 95th percentile
+    var_99: float  # Value at Risk, 99th percentile
     median_ale: float = 0.0
     min_ale: float = 0.0
     max_ale: float = 0.0
@@ -313,6 +426,7 @@ class SimulationResult:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _posture_hash(postures: list[ControlPosture]) -> str:
     """Stable SHA-256 fingerprint of a posture list.
 
@@ -321,10 +435,7 @@ def _posture_hash(postures: list[ControlPosture]) -> str:
     framework) so that irrelevant DB columns don't bust the cache.
     """
     payload = sorted(
-        [
-            {"c": p.control_id, "f": p.framework, "s": round(p.posture_score, 4)}
-            for p in postures
-        ],
+        [{"c": p.control_id, "f": p.framework, "s": round(p.posture_score, 4)} for p in postures],
         key=lambda x: x["c"],
     )
     return hashlib.sha256(json.dumps(payload, separators=(",", ":")).encode()).hexdigest()
@@ -369,7 +480,10 @@ def _extract_family(control_id: str) -> str:
 
 
 def _pert_sample(
-    minimum: float, mode: float, maximum: float, lam: float = 4.0,
+    minimum: float,
+    mode: float,
+    maximum: float,
+    lam: float = 4.0,
     rng: Any = None,
 ) -> float:
     """Generate a single sample from a PERT distribution.
@@ -389,9 +503,7 @@ def _pert_sample(
         if abs(mode - mu) < 1e-10:
             return float(gen.triangular(minimum, mode, maximum))
         # Avoid division by zero in alpha/beta calculation
-        a1 = ((mu - minimum) * (2 * mode - minimum - maximum)) / (
-            (mode - mu) * (maximum - minimum)
-        )
+        a1 = ((mu - minimum) * (2 * mode - minimum - maximum)) / ((mode - mu) * (maximum - minimum))
         if a1 <= 0:
             a1 = 1.0
         a2 = a1 * (maximum - mu) / (mu - minimum) if (mu - minimum) > 0 else 1.0
@@ -405,7 +517,11 @@ def _pert_sample(
 
 
 def _pert_samples(
-    minimum: float, mode: float, maximum: float, n: int, lam: float = 4.0,
+    minimum: float,
+    mode: float,
+    maximum: float,
+    n: int,
+    lam: float = 4.0,
     rng: Any = None,
 ) -> list[float]:
     """Generate n samples from a PERT distribution."""
@@ -417,9 +533,7 @@ def _pert_samples(
         mu = (minimum + lam * mode + maximum) / (lam + 2)
         if abs(mode - mu) < 1e-10:
             return list(gen.triangular(minimum, mode, maximum, size=n))
-        a1 = ((mu - minimum) * (2 * mode - minimum - maximum)) / (
-            (mode - mu) * (maximum - minimum)
-        )
+        a1 = ((mu - minimum) * (2 * mode - minimum - maximum)) / ((mode - mu) * (maximum - minimum))
         if a1 <= 0:
             a1 = 1.0
         a2 = a1 * (maximum - mu) / (mu - minimum) if (mu - minimum) > 0 else 1.0
@@ -434,6 +548,7 @@ def _pert_samples(
 # ---------------------------------------------------------------------------
 # RiskEngine
 # ---------------------------------------------------------------------------
+
 
 class RiskEngine:
     """FAIR-based Monte Carlo risk simulation engine."""
@@ -471,7 +586,10 @@ class RiskEngine:
 
         # Sample frequencies for all iterations
         frequencies = _pert_samples(
-            scenario.frequency_min, scenario.frequency_mode, scenario.frequency_max, n,
+            scenario.frequency_min,
+            scenario.frequency_mode,
+            scenario.frequency_max,
+            n,
             rng=rng,
         )
 
@@ -491,8 +609,11 @@ class RiskEngine:
             if total_events > 0:
                 # Generate all PERT samples at once instead of per-iteration
                 all_losses = _pert_samples(
-                    scenario.impact_min, scenario.impact_mode, scenario.impact_max,
-                    total_events, rng=gen,
+                    scenario.impact_min,
+                    scenario.impact_mode,
+                    scenario.impact_max,
+                    total_events,
+                    rng=gen,
                 )
                 loss_arr = np.asarray(all_losses, dtype=np.float64)
                 # Fully vectorized: use cumsum + split-by-offset to sum
@@ -524,7 +645,10 @@ class RiskEngine:
                     annual_losses.append(0.0)
                     continue
                 losses = _pert_samples(
-                    scenario.impact_min, scenario.impact_mode, scenario.impact_max, event_count,
+                    scenario.impact_min,
+                    scenario.impact_mode,
+                    scenario.impact_max,
+                    event_count,
                     rng=rng,
                 )
                 reduction = scenario.control_effectiveness
@@ -656,8 +780,7 @@ class RiskEngine:
                 "scenario_count": len(results),
                 "iterations": n,
                 "portfolio_note": (
-                    "VaR summed assuming perfect correlation "
-                    "(conservative upper bound)"
+                    "VaR summed assuming perfect correlation (conservative upper bound)"
                 ),
             },
         }
@@ -710,19 +833,23 @@ class RiskEngine:
             roi = (
                 (risk_reduction - treatment_cost) / treatment_cost
                 if treatment_cost > 0
-                else float("inf") if risk_reduction > 0 else 0.0
+                else float("inf")
+                if risk_reduction > 0
+                else 0.0
             )
 
-            comparisons.append({
-                "treatment": treatment.get("name", "unnamed"),
-                "baseline_mean_ale": baseline.mean_ale,
-                "treated_mean_ale": treated_result.mean_ale,
-                "risk_reduction": round(risk_reduction, 2),
-                "treatment_cost": treatment_cost,
-                "roi": round(roi, 4),
-                "new_effectiveness": new_effectiveness,
-                "var_95_reduction": round(baseline.var_95 - treated_result.var_95, 2),
-            })
+            comparisons.append(
+                {
+                    "treatment": treatment.get("name", "unnamed"),
+                    "baseline_mean_ale": baseline.mean_ale,
+                    "treated_mean_ale": treated_result.mean_ale,
+                    "risk_reduction": round(risk_reduction, 2),
+                    "treatment_cost": treatment_cost,
+                    "roi": round(roi, 4),
+                    "new_effectiveness": new_effectiveness,
+                    "var_95_reduction": round(baseline.var_95 - treated_result.var_95, 2),
+                }
+            )
 
         return comparisons
 
@@ -902,9 +1029,7 @@ class RiskEngine:
         from warlock.db.models import ControlResult
 
         frameworks: list[str] = [
-            row[0]
-            for row in session.query(sa_distinct(ControlResult.framework)).all()
-            if row[0]
+            row[0] for row in session.query(sa_distinct(ControlResult.framework)).all() if row[0]
         ]
 
         if not frameworks:
@@ -936,9 +1061,7 @@ class RiskEngine:
             with self._stats_lock:
                 hit = self._cache_hits > hits_before
 
-            duration_ms = int(
-                (datetime.now(timezone.utc) - t0).total_seconds() * 1000
-            )
+            duration_ms = int((datetime.now(timezone.utc) - t0).total_seconds() * 1000)
             summary[framework] = {"cached": hit, "duration_ms": duration_ms}
             log.info(
                 "precompute_all_frameworks: %s — %s in %d ms",
@@ -1038,9 +1161,7 @@ class RiskEngine:
             # Ensure timezone-aware before subtraction
             if oldest.tzinfo is None:
                 oldest = oldest.replace(tzinfo=timezone.utc)
-            age_hours: float | None = (
-                datetime.now(timezone.utc) - oldest
-            ).total_seconds() / 3600.0
+            age_hours: float | None = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600.0
         else:
             age_hours = None
 
@@ -1202,6 +1323,7 @@ class RiskEngine:
 # ---------------------------------------------------------------------------
 # Pure-Python Poisson sampling (no numpy needed)
 # ---------------------------------------------------------------------------
+
 
 def _poisson_pure(lam: float) -> int:
     """Generate a Poisson-distributed random integer using Knuth's algorithm."""

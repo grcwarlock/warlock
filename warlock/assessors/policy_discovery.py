@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DiscoveredPolicy:
     """A policy document discovered from Confluence or other GRC sources."""
@@ -57,30 +58,99 @@ class PolicyCoverageScore:
 # ---------------------------------------------------------------------------
 
 _POLICY_KEYWORDS: dict[str, list[str]] = {
-    "AC": ["access control", "access management", "authentication", "authorization",
-           "least privilege", "account management", "session", "login"],
-    "AU": ["audit", "logging", "monitoring", "log review", "event logging",
-           "audit trail", "accountability"],
-    "CM": ["configuration", "change management", "baseline", "configuration management",
-           "hardening", "patching", "change control"],
-    "CP": ["contingency", "backup", "disaster recovery", "business continuity",
-           "incident recovery", "continuity of operations"],
-    "IA": ["identification", "authentication", "identity", "credential",
-           "multi-factor", "mfa", "password"],
-    "IR": ["incident response", "incident handling", "incident management",
-           "breach response", "security incident"],
-    "PE": ["physical", "physical security", "environmental", "facility",
-           "physical access"],
-    "RA": ["risk assessment", "risk management", "risk analysis",
-           "threat assessment", "vulnerability assessment"],
-    "SA": ["acquisition", "supply chain", "vendor", "third-party",
-           "procurement", "service provider"],
-    "SC": ["system communications", "encryption", "cryptography", "network",
-           "data protection", "boundary protection", "firewall"],
-    "SI": ["system integrity", "malware", "flaw remediation", "vulnerability",
-           "antivirus", "intrusion detection", "patching"],
-    "SR": ["supply chain risk", "vendor risk", "third-party risk",
-           "supplier", "supply chain management"],
+    "AC": [
+        "access control",
+        "access management",
+        "authentication",
+        "authorization",
+        "least privilege",
+        "account management",
+        "session",
+        "login",
+    ],
+    "AU": [
+        "audit",
+        "logging",
+        "monitoring",
+        "log review",
+        "event logging",
+        "audit trail",
+        "accountability",
+    ],
+    "CM": [
+        "configuration",
+        "change management",
+        "baseline",
+        "configuration management",
+        "hardening",
+        "patching",
+        "change control",
+    ],
+    "CP": [
+        "contingency",
+        "backup",
+        "disaster recovery",
+        "business continuity",
+        "incident recovery",
+        "continuity of operations",
+    ],
+    "IA": [
+        "identification",
+        "authentication",
+        "identity",
+        "credential",
+        "multi-factor",
+        "mfa",
+        "password",
+    ],
+    "IR": [
+        "incident response",
+        "incident handling",
+        "incident management",
+        "breach response",
+        "security incident",
+    ],
+    "PE": ["physical", "physical security", "environmental", "facility", "physical access"],
+    "RA": [
+        "risk assessment",
+        "risk management",
+        "risk analysis",
+        "threat assessment",
+        "vulnerability assessment",
+    ],
+    "SA": [
+        "acquisition",
+        "supply chain",
+        "vendor",
+        "third-party",
+        "procurement",
+        "service provider",
+    ],
+    "SC": [
+        "system communications",
+        "encryption",
+        "cryptography",
+        "network",
+        "data protection",
+        "boundary protection",
+        "firewall",
+    ],
+    "SI": [
+        "system integrity",
+        "malware",
+        "flaw remediation",
+        "vulnerability",
+        "antivirus",
+        "intrusion detection",
+        "patching",
+    ],
+    "SR": [
+        "supply chain risk",
+        "vendor risk",
+        "third-party risk",
+        "supplier",
+        "supply chain management",
+    ],
 }
 
 # Map SOC 2 Trust Service Criteria to keyword groups
@@ -100,6 +170,7 @@ _SOC2_KEYWORD_MAP: dict[str, list[str]] = {
 # ---------------------------------------------------------------------------
 # Core functions
 # ---------------------------------------------------------------------------
+
 
 def discover_policies(
     session: Session,
@@ -154,14 +225,16 @@ def discover_policies(
         if last_updated is None:
             last_updated = f.observed_at
 
-        policies.append(DiscoveredPolicy(
-            title=title,
-            last_updated=last_updated,
-            author=detail.get("author", ""),
-            url=detail.get("url", detail.get("link", "")),
-            source_finding_id=f.id,
-            content_summary=detail.get("summary", detail.get("excerpt", "")),
-        ))
+        policies.append(
+            DiscoveredPolicy(
+                title=title,
+                last_updated=last_updated,
+                author=detail.get("author", ""),
+                url=detail.get("url", detail.get("link", "")),
+                source_finding_id=f.id,
+                content_summary=detail.get("summary", detail.get("excerpt", "")),
+            )
+        )
 
     log.info("Discovered %d policy documents from %d findings", len(policies), len(findings))
     return policies
@@ -194,6 +267,7 @@ def match_policies_to_controls(
     if use_rag:
         try:
             from warlock.assessors.rag import create_rag_matcher
+
             rag_matcher = create_rag_matcher()
             log.info("Using RAG matcher for policy-to-control mapping")
         except Exception as e:
@@ -267,22 +341,25 @@ def score_policy_coverage(
     # Discover and match policies
     policies = discover_policies(session)
     policy_map = match_policies_to_controls(
-        policies, framework, session=session, use_rag=use_rag,
+        policies,
+        framework,
+        session=session,
+        use_rag=use_rag,
     )
 
     controls_covered = [
-        c for c in all_controls
+        c
+        for c in all_controls
         if c in policy_map or any(c.startswith(family) for family in policy_map)
     ]
     gaps = [
-        c for c in all_controls
+        c
+        for c in all_controls
         if c not in policy_map and not any(c.startswith(family) for family in policy_map)
     ]
 
     coverage_pct = (
-        round(len(controls_covered) / len(all_controls) * 100, 2)
-        if all_controls
-        else 0.0
+        round(len(controls_covered) / len(all_controls) * 100, 2) if all_controls else 0.0
     )
 
     return PolicyCoverageScore(
@@ -315,18 +392,38 @@ def identify_policy_gaps(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _is_likely_policy(title: str, detail: dict[str, Any]) -> bool:
     """Heuristic check: is this document likely a policy/procedure/standard?
 
     Looks for policy-related keywords in title, document type, or labels.
     """
     policy_indicators = {
-        "policy", "procedure", "standard", "guideline", "plan",
-        "framework", "handbook", "runbook", "playbook", "process",
-        "control", "security", "compliance", "governance", "risk",
-        "incident response", "disaster recovery", "business continuity",
-        "access control", "data protection", "privacy", "acceptable use",
-        "change management", "configuration management", "audit",
+        "policy",
+        "procedure",
+        "standard",
+        "guideline",
+        "plan",
+        "framework",
+        "handbook",
+        "runbook",
+        "playbook",
+        "process",
+        "control",
+        "security",
+        "compliance",
+        "governance",
+        "risk",
+        "incident response",
+        "disaster recovery",
+        "business continuity",
+        "access control",
+        "data protection",
+        "privacy",
+        "acceptable use",
+        "change management",
+        "configuration management",
+        "audit",
     }
 
     text = title.lower()

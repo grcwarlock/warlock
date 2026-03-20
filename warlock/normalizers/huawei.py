@@ -67,26 +67,28 @@ class HuaweiNormalizer(BaseNormalizer):
             host_name = event.get("host_name", "")
             host_id = event.get("host_id", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"HSS alert: {event_name}",
-                detail={
-                    "event_name": event_name,
-                    "event_type": event_type,
-                    "severity": severity_raw,
-                    "host_name": host_name,
-                    "host_id": host_id,
-                    "occur_time": event.get("occur_time", ""),
-                    "description": event.get("description", ""),
-                    "handle_status": event.get("handle_status", ""),
-                    "operate_detail": event.get("operate_detail", {}),
-                },
-                resource_id=host_id,
-                resource_type="ecs_instance",
-                resource_name=host_name,
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"HSS alert: {event_name}",
+                    detail={
+                        "event_name": event_name,
+                        "event_type": event_type,
+                        "severity": severity_raw,
+                        "host_name": host_name,
+                        "host_id": host_id,
+                        "occur_time": event.get("occur_time", ""),
+                        "description": event.get("description", ""),
+                        "handle_status": event.get("handle_status", ""),
+                        "operate_detail": event.get("operate_detail", {}),
+                    },
+                    resource_id=host_id,
+                    resource_type="ecs_instance",
+                    resource_name=host_name,
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -125,9 +127,7 @@ class HuaweiNormalizer(BaseNormalizer):
             last_login_time = user.get("last_login_time", "")
             if last_login_time:
                 try:
-                    last_dt = datetime.fromisoformat(
-                        last_login_time.replace("Z", "+00:00")
-                    )
+                    last_dt = datetime.fromisoformat(last_login_time.replace("Z", "+00:00"))
                     days_inactive = (now - last_dt).days
                     if days_inactive > 90:
                         issues.append(f"stale_user_{days_inactive}_days")
@@ -137,26 +137,26 @@ class HuaweiNormalizer(BaseNormalizer):
                 except (ValueError, TypeError):
                     pass
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"IAM user: {user_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "user_name": user_name,
-                    "user_id": user_id,
-                    "enabled": enabled,
-                    "mfa_enabled": mfa_enabled,
-                    "last_login_time": last_login_time,
-                    "pwd_status": pwd_status,
-                    "issues": issues,
-                },
-                resource_id=user_id,
-                resource_type="iam_user",
-                resource_name=user_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"IAM user: {user_name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user_name": user_name,
+                        "user_id": user_id,
+                        "enabled": enabled,
+                        "mfa_enabled": mfa_enabled,
+                        "last_login_time": last_login_time,
+                        "pwd_status": pwd_status,
+                        "issues": issues,
+                    },
+                    resource_id=user_id,
+                    resource_type="iam_user",
+                    resource_name=user_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -185,28 +185,30 @@ class HuaweiNormalizer(BaseNormalizer):
             if trace_status == "error":
                 severity = "high"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"CTS trace: {trace_name} — {trace_status}",
-                detail={
-                    "trace_name": trace_name,
-                    "trace_status": trace_status,
-                    "service_type": service_type,
-                    "resource_type": resource_type,
-                    "resource_name": resource_name,
-                    "resource_id": resource_id,
-                    "user": user_info,
-                    "trace_id": trace.get("trace_id", ""),
-                    "record_time": trace.get("record_time", ""),
-                    "request": trace.get("request", {}),
-                    "response_code": trace.get("code", ""),
-                },
-                resource_id=resource_id or trace.get("trace_id", ""),
-                resource_type=resource_type or service_type or "huawei_resource",
-                resource_name=resource_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"CTS trace: {trace_name} — {trace_status}",
+                    detail={
+                        "trace_name": trace_name,
+                        "trace_status": trace_status,
+                        "service_type": service_type,
+                        "resource_type": resource_type,
+                        "resource_name": resource_name,
+                        "resource_id": resource_id,
+                        "user": user_info,
+                        "trace_id": trace.get("trace_id", ""),
+                        "record_time": trace.get("record_time", ""),
+                        "request": trace.get("request", {}),
+                        "response_code": trace.get("code", ""),
+                    },
+                    resource_id=resource_id or trace.get("trace_id", ""),
+                    resource_type=resource_type or service_type or "huawei_resource",
+                    resource_name=resource_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -254,9 +256,7 @@ class HuaweiNormalizer(BaseNormalizer):
                         pmax = int(port_max)
                         for p in sensitive_ports:
                             if pmin <= p <= pmax:
-                                issues.append(
-                                    f"open_to_internet_{protocol}_port_{p}"
-                                )
+                                issues.append(f"open_to_internet_{protocol}_port_{p}")
                     except (ValueError, TypeError):
                         pass
 
@@ -268,21 +268,22 @@ class HuaweiNormalizer(BaseNormalizer):
                 if "all_traffic_open_to_internet" in issues:
                     severity = "critical"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Security group: {sg_name}" + (
-                    f" — {len(issues)} open rules" if issues else ""
-                ),
-                detail={
-                    "security_group": sg,
-                    "issues": issues,
-                },
-                resource_id=sg_id,
-                resource_type="vpc_security_group",
-                resource_name=sg_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Security group: {sg_name}"
+                    + (f" — {len(issues)} open rules" if issues else ""),
+                    detail={
+                        "security_group": sg,
+                        "issues": issues,
+                    },
+                    resource_id=sg_id,
+                    resource_type="vpc_security_group",
+                    resource_name=sg_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -332,27 +333,27 @@ class HuaweiNormalizer(BaseNormalizer):
                     severity = "medium"
                     obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"KMS key: {key_alias}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "key_id": key_id,
-                    "key_alias": key_alias,
-                    "key_state": state_str,
-                    "key_type": key.get("key_type", ""),
-                    "creation_date": key.get("creation_date", ""),
-                    "rotation_enabled": rotation_enabled,
-                    "rotation_interval": rotation_interval,
-                    "issues": issues,
-                },
-                resource_id=key_id,
-                resource_type="kms_key",
-                resource_name=key_alias,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"KMS key: {key_alias}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "key_id": key_id,
+                        "key_alias": key_alias,
+                        "key_state": state_str,
+                        "key_type": key.get("key_type", ""),
+                        "creation_date": key.get("creation_date", ""),
+                        "rotation_enabled": rotation_enabled,
+                        "rotation_interval": rotation_interval,
+                        "issues": issues,
+                    },
+                    resource_id=key_id,
+                    resource_type="kms_key",
+                    resource_name=key_alias,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -417,25 +418,26 @@ class HuaweiNormalizer(BaseNormalizer):
                     severity = "low"
                     obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OBS bucket: {bucket_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "bucket_name": bucket_name,
-                    "location": bucket.get("location", ""),
-                    "creation_date": bucket.get("creation_date", ""),
-                    "acl": acl,
-                    "versioning": versioning,
-                    "issues": issues,
-                },
-                resource_id=f"obs://{bucket_name}",
-                resource_type="obs_bucket",
-                resource_name=bucket_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OBS bucket: {bucket_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "bucket_name": bucket_name,
+                        "location": bucket.get("location", ""),
+                        "creation_date": bucket.get("creation_date", ""),
+                        "acl": acl,
+                        "versioning": versioning,
+                        "issues": issues,
+                    },
+                    resource_id=f"obs://{bucket_name}",
+                    resource_type="obs_bucket",
+                    resource_name=bucket_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 

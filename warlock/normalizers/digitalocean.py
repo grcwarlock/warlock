@@ -24,10 +24,7 @@ class DigitalOceanNormalizer(BaseNormalizer):
     }
 
     def can_handle(self, raw_event: RawEventData) -> bool:
-        return (
-            raw_event.source == "digitalocean"
-            and raw_event.event_type in self.HANDLERS
-        )
+        return raw_event.source == "digitalocean" and raw_event.event_type in self.HANDLERS
 
     def normalize(self, raw_event: RawEventData) -> list[FindingData]:
         handler_name = self.HANDLERS[raw_event.event_type]
@@ -84,15 +81,11 @@ class DigitalOceanNormalizer(BaseNormalizer):
                                 start, end = port_spec.split("-")
                                 for p in sensitive_ports:
                                     if int(start) <= p <= int(end):
-                                        issues.append(
-                                            f"open_to_internet_port_{p}"
-                                        )
+                                        issues.append(f"open_to_internet_port_{p}")
                             else:
                                 port = int(port_spec)
                                 if port in sensitive_ports:
-                                    issues.append(
-                                        f"open_to_internet_port_{port}"
-                                    )
+                                    issues.append(f"open_to_internet_port_{port}")
                         except (ValueError, TypeError):
                             pass
 
@@ -102,22 +95,23 @@ class DigitalOceanNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"DO firewall: {fw_name}" + (
-                    f" — {len(issues)} issues" if issues else ""
-                ),
-                detail={
-                    "firewall": fw,
-                    "issues": issues,
-                    "droplet_ids": fw.get("droplet_ids", []),
-                },
-                resource_id=fw_id,
-                resource_type="do_firewall",
-                resource_name=fw_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"DO firewall: {fw_name}"
+                    + (f" — {len(issues)} issues" if issues else ""),
+                    detail={
+                        "firewall": fw,
+                        "issues": issues,
+                        "droplet_ids": fw.get("droplet_ids", []),
+                    },
+                    resource_id=fw_id,
+                    resource_type="do_firewall",
+                    resource_name=fw_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -135,9 +129,7 @@ class DigitalOceanNormalizer(BaseNormalizer):
             # Check for public IP
             networks = droplet.get("networks", {})
             v4_networks = networks.get("v4", [])
-            has_public_ip = any(
-                n.get("type") == "public" for n in v4_networks
-            )
+            has_public_ip = any(n.get("type") == "public" for n in v4_networks)
             if has_public_ip:
                 issues.append("public_facing")
 
@@ -163,23 +155,24 @@ class DigitalOceanNormalizer(BaseNormalizer):
             region = droplet.get("region", {})
             region_slug = region.get("slug", "") if isinstance(region, dict) else str(region)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"DO droplet: {droplet_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "droplet": droplet,
-                    "issues": issues,
-                    "has_public_ip": has_public_ip,
-                },
-                resource_id=droplet_id,
-                resource_type="do_droplet",
-                resource_name=droplet_name,
-                severity=severity,
-                region=region_slug,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"DO droplet: {droplet_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "droplet": droplet,
+                        "issues": issues,
+                        "has_public_ip": has_public_ip,
+                    },
+                    resource_id=droplet_id,
+                    resource_type="do_droplet",
+                    resource_name=droplet_name,
+                    severity=severity,
+                    region=region_slug,
+                )
+            )
 
         return findings
 
@@ -193,22 +186,24 @@ class DigitalOceanNormalizer(BaseNormalizer):
             space_name = space.get("name", "unknown")
 
             # DO Spaces API provides limited ACL visibility; report as inventory
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"DO space: {space_name}",
-                detail={
-                    "space": space,
-                    "note": "Limited ACL visibility via DO API; review permissions in console",
-                },
-                resource_id=space_name,
-                resource_type="do_space",
-                resource_name=space_name,
-                severity="info",
-                region=space.get("region", {}).get("slug", "")
-                if isinstance(space.get("region"), dict)
-                else str(space.get("region", "")),
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"DO space: {space_name}",
+                    detail={
+                        "space": space,
+                        "note": "Limited ACL visibility via DO API; review permissions in console",
+                    },
+                    resource_id=space_name,
+                    resource_type="do_space",
+                    resource_name=space_name,
+                    severity="info",
+                    region=space.get("region", {}).get("slug", "")
+                    if isinstance(space.get("region"), dict)
+                    else str(space.get("region", "")),
+                )
+            )
 
         return findings
 
@@ -225,13 +220,9 @@ class DigitalOceanNormalizer(BaseNormalizer):
 
             # Check trusted sources — empty means publicly accessible
             rules = db.get("rules", [])
-            [
-                r for r in rules if r.get("type") != "ip_addr" or r.get("value") != "0.0.0.0/0"
-            ]
+            [r for r in rules if r.get("type") != "ip_addr" or r.get("value") != "0.0.0.0/0"]
             all_sources = rules
-            has_open_access = any(
-                r.get("value") == "0.0.0.0/0" for r in all_sources
-            )
+            has_open_access = any(r.get("value") == "0.0.0.0/0" for r in all_sources)
             if not rules or has_open_access:
                 issues.append("publicly_accessible")
 
@@ -252,25 +243,25 @@ class DigitalOceanNormalizer(BaseNormalizer):
 
             region = db.get("region", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"DO database: {db_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "database": db,
-                    "issues": issues,
-                    "engine": db.get("engine", ""),
-                    "version": db.get("version", ""),
-                    "num_nodes": db.get("num_nodes", 0),
-                },
-                resource_id=db_id,
-                resource_type="do_database",
-                resource_name=db_name,
-                severity=severity,
-                region=region,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"DO database: {db_name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "database": db,
+                        "issues": issues,
+                        "engine": db.get("engine", ""),
+                        "version": db.get("version", ""),
+                        "num_nodes": db.get("num_nodes", 0),
+                    },
+                    resource_id=db_id,
+                    resource_type="do_database",
+                    resource_name=db_name,
+                    severity=severity,
+                    region=region,
+                )
+            )
 
         return findings
 
@@ -312,25 +303,26 @@ class DigitalOceanNormalizer(BaseNormalizer):
 
             region = cluster.get("region", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"DO k8s cluster: {cluster_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "cluster": cluster,
-                    "issues": issues,
-                    "version": version,
-                    "node_pools": cluster.get("node_pools", []),
-                    "ha": cluster.get("ha", False),
-                },
-                resource_id=cluster_id,
-                resource_type="do_kubernetes_cluster",
-                resource_name=cluster_name,
-                severity=severity,
-                region=region,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"DO k8s cluster: {cluster_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "cluster": cluster,
+                        "issues": issues,
+                        "version": version,
+                        "node_pools": cluster.get("node_pools", []),
+                        "ha": cluster.get("ha", False),
+                    },
+                    resource_id=cluster_id,
+                    resource_type="do_kubernetes_cluster",
+                    resource_name=cluster_name,
+                    severity=severity,
+                    region=region,
+                )
+            )
 
         return findings
 
@@ -357,9 +349,8 @@ class DigitalOceanNormalizer(BaseNormalizer):
             # Check forwarding rules for plain HTTP without redirect
             forwarding_rules = lb.get("forwarding_rules", [])
             for rule in forwarding_rules:
-                if (
-                    rule.get("entry_protocol") == "http"
-                    and not lb.get("redirect_http_to_https", False)
+                if rule.get("entry_protocol") == "http" and not lb.get(
+                    "redirect_http_to_https", False
                 ):
                     issues.append("http_entry_without_redirect")
                     break
@@ -373,24 +364,25 @@ class DigitalOceanNormalizer(BaseNormalizer):
             region = lb.get("region", {})
             region_slug = region.get("slug", "") if isinstance(region, dict) else str(region)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"DO load balancer: {lb_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "load_balancer": lb,
-                    "issues": issues,
-                    "forwarding_rules": forwarding_rules,
-                    "droplet_ids": lb.get("droplet_ids", []),
-                },
-                resource_id=lb_id,
-                resource_type="do_load_balancer",
-                resource_name=lb_name,
-                severity=severity,
-                region=region_slug,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"DO load balancer: {lb_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "load_balancer": lb,
+                        "issues": issues,
+                        "forwarding_rules": forwarding_rules,
+                        "droplet_ids": lb.get("droplet_ids", []),
+                    },
+                    resource_id=lb_id,
+                    resource_type="do_load_balancer",
+                    resource_name=lb_name,
+                    severity=severity,
+                    region=region_slug,
+                )
+            )
 
         return findings
 
@@ -404,20 +396,22 @@ class DigitalOceanNormalizer(BaseNormalizer):
             domain_name = domain.get("name", "unknown")
             ttl = domain.get("ttl", 0)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"DO domain: {domain_name}",
-                detail={
-                    "domain": domain,
-                    "ttl": ttl,
-                    "zone_file": domain.get("zone_file", ""),
-                },
-                resource_id=domain_name,
-                resource_type="do_domain",
-                resource_name=domain_name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"DO domain: {domain_name}",
+                    detail={
+                        "domain": domain,
+                        "ttl": ttl,
+                        "zone_file": domain.get("zone_file", ""),
+                    },
+                    resource_id=domain_name,
+                    resource_type="do_domain",
+                    resource_name=domain_name,
+                    severity="info",
+                )
+            )
 
         return findings
 

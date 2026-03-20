@@ -18,6 +18,7 @@ from warlock.db import models
 
 # Optional OPA compliance evaluation imports (may not be initialized)
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from warlock.assessors.opa_evaluator import OPAComplianceEvaluator
 
@@ -31,6 +32,7 @@ class PipelineConcurrencyError(RuntimeError):
 # ---------------------------------------------------------------------------
 # Pipeline run stats
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PipelineRunStats:
@@ -48,8 +50,8 @@ class PipelineRunStats:
     errors: list[str] = field(default_factory=list)
 
     # Normalizer quality counters
-    normalizer_failures: int = 0       # raw events where normalization raised an exception
-    events_without_findings: int = 0   # raw events that produced zero findings
+    normalizer_failures: int = 0  # raw events where normalization raised an exception
+    events_without_findings: int = 0  # raw events that produced zero findings
 
     @property
     def duration_seconds(self) -> float | None:
@@ -61,6 +63,7 @@ class PipelineRunStats:
 # ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
+
 
 class Pipeline:
     """Orchestrates the full flow: Ingest → Normalize → Map → Assess.
@@ -118,6 +121,7 @@ class Pipeline:
 
         # Enhancement #8: propagate run_id into every log record for this run
         from warlock.logging_config import correlation_id as _correlation_id
+
         # #10: run_id is now auto-generated UUID, always truthy
         _correlation_id.set(stats.run_id)
 
@@ -146,11 +150,13 @@ class Pipeline:
                 db_raw = self._persist_raw_event(session, raw_event, connector_run_id)
                 raw_event_id = db_raw.id  # capture before potential expunge
                 stats.raw_events_collected += 1
-                self.bus.publish(PipelineEvent(
-                    event_type="raw_event.created",
-                    payload_id=raw_event_id,
-                    metadata={"source": raw_event.source, "event_type": raw_event.event_type},
-                ))
+                self.bus.publish(
+                    PipelineEvent(
+                        event_type="raw_event.created",
+                        payload_id=raw_event_id,
+                        metadata={"source": raw_event.source, "event_type": raw_event.event_type},
+                    )
+                )
 
                 # Stage 2: Normalize
                 try:
@@ -169,11 +175,16 @@ class Pipeline:
                     db_finding = self._persist_finding(session, finding)
                     finding_id = db_finding.id  # capture before potential expunge
                     stats.findings_normalized += 1
-                    self.bus.publish(PipelineEvent(
-                        event_type="finding.normalized",
-                        payload_id=finding_id,
-                        metadata={"severity": finding.severity, "type": finding.observation_type},
-                    ))
+                    self.bus.publish(
+                        PipelineEvent(
+                            event_type="finding.normalized",
+                            payload_id=finding_id,
+                            metadata={
+                                "severity": finding.severity,
+                                "type": finding.observation_type,
+                            },
+                        )
+                    )
 
                     # Stage 3: Map to controls
                     mapped = self.mapper.map(finding)
@@ -182,14 +193,16 @@ class Pipeline:
                         stats.controls_mapped += 1
 
                     if mapped.mappings:
-                        self.bus.publish(PipelineEvent(
-                            event_type="finding.mapped",
-                            payload_id=finding_id,
-                            metadata={
-                                "mapping_count": len(mapped.mappings),
-                                "frameworks": list({m.framework for m in mapped.mappings}),
-                            },
-                        ))
+                        self.bus.publish(
+                            PipelineEvent(
+                                event_type="finding.mapped",
+                                payload_id=finding_id,
+                                metadata={
+                                    "mapping_count": len(mapped.mappings),
+                                    "frameworks": list({m.framework for m in mapped.mappings}),
+                                },
+                            )
+                        )
 
                     # Stage 4: Assess
                     results = self.assessor.assess(mapped, raw_data=raw_event.raw_data)
@@ -197,16 +210,18 @@ class Pipeline:
                         db_result = self._persist_result(session, result)
                         result_id = db_result.id  # capture before potential expunge
                         stats.results_assessed += 1
-                        self.bus.publish(PipelineEvent(
-                            event_type="control.assessed",
-                            payload_id=result_id,
-                            metadata={
-                                "framework": result.framework,
-                                "control_id": result.control_id,
-                                "status": result.status,
-                                "severity": result.severity,
-                            },
-                        ))
+                        self.bus.publish(
+                            PipelineEvent(
+                                event_type="control.assessed",
+                                payload_id=result_id,
+                                metadata={
+                                    "framework": result.framework,
+                                    "control_id": result.control_id,
+                                    "status": result.status,
+                                    "severity": result.severity,
+                                },
+                            )
+                        )
 
             # #44: Flush once per connector batch instead of per record.
             # #54: Expunge all ORM objects to release identity-map memory.
@@ -256,6 +271,7 @@ class Pipeline:
             # statements. Use the transaction-scoped variant instead.
             from sqlalchemy import text
             from warlock.config import get_settings
+
             settings = get_settings()
             pgbouncer_mode = str(getattr(settings, "pgbouncer_mode", "false")).lower() == "true"
             if pgbouncer_mode:
@@ -275,9 +291,8 @@ class Pipeline:
             # SQLite: use a file-based lock via fcntl (POSIX only).
             try:
                 import fcntl
-                lock_path = os.path.join(
-                    os.environ.get("TMPDIR", "/tmp"), "warlock_pipeline.lock"
-                )
+
+                lock_path = os.path.join(os.environ.get("TMPDIR", "/tmp"), "warlock_pipeline.lock")
                 lock_file = open(lock_path, "w")
                 try:
                     fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -310,6 +325,7 @@ class Pipeline:
         if lock_file is not None:
             try:
                 import fcntl
+
                 fcntl.flock(lock_file, fcntl.LOCK_UN)
             except Exception:
                 pass
@@ -347,6 +363,7 @@ class Pipeline:
         correlation_token = None
         if run_id:
             from warlock.logging_config import correlation_id as _correlation_id
+
             correlation_token = _correlation_id.set(run_id)
 
         log.info("Evidence integrity verification starting")
@@ -365,7 +382,9 @@ class Pipeline:
                 failed.append(raw_event.id)
                 log.warning(
                     "Integrity check FAILED for RawEvent %s: stored=%s computed=%s",
-                    raw_event.id, raw_event.sha256, computed,
+                    raw_event.id,
+                    raw_event.sha256,
+                    computed,
                 )
 
         verified_at = datetime.now(timezone.utc)
@@ -373,17 +392,20 @@ class Pipeline:
         if failed:
             log.error(
                 "Evidence integrity verification FAILED: %d/%d records tampered",
-                len(failed), total,
+                len(failed),
+                total,
             )
         else:
             log.info(
                 "Evidence integrity verification PASSED: %d/%d records verified",
-                passed, total,
+                passed,
+                total,
             )
 
         # Reset correlation ID if we set it
         if correlation_token is not None:
             from warlock.logging_config import correlation_id as _correlation_id
+
             _correlation_id.set("")
 
         return {
@@ -409,6 +431,7 @@ class Pipeline:
         """
         if run_id is None:
             from uuid import uuid4
+
             run_id = str(uuid4())
 
         result = self.verify_integrity(session, run_id=run_id)
@@ -493,17 +516,19 @@ class Pipeline:
             for result in opa_results:
                 db_result = self._persist_result(session, result)
                 results.append(result)
-                self.bus.publish(PipelineEvent(
-                    event_type="control.assessed",
-                    payload_id=db_result.id,
-                    metadata={
-                        "framework": result.framework,
-                        "control_id": result.control_id,
-                        "status": result.status,
-                        "severity": result.severity,
-                        "assessor": result.assessor,
-                    },
-                ))
+                self.bus.publish(
+                    PipelineEvent(
+                        event_type="control.assessed",
+                        payload_id=db_result.id,
+                        metadata={
+                            "framework": result.framework,
+                            "control_id": result.control_id,
+                            "status": result.status,
+                            "severity": result.severity,
+                            "assessor": result.assessor,
+                        },
+                    )
+                )
 
             log.info("OPA compliance evaluation: %d results", len(results))
 
@@ -519,7 +544,9 @@ class Pipeline:
             id=cr.id,
             connector_name=cr.connector_name,
             source=cr.source,
-            source_type=cr.source_type.value if hasattr(cr.source_type, "value") else cr.source_type,
+            source_type=cr.source_type.value
+            if hasattr(cr.source_type, "value")
+            else cr.source_type,
             provider=cr.provider,
             status=cr.status,
             event_count=cr.event_count,
@@ -540,7 +567,9 @@ class Pipeline:
             id=raw.id,
             connector_run_id=connector_run_id,
             source=raw.source,
-            source_type=raw.source_type.value if hasattr(raw.source_type, "value") else raw.source_type,
+            source_type=raw.source_type.value
+            if hasattr(raw.source_type, "value")
+            else raw.source_type,
             provider=raw.provider,
             event_type=raw.event_type,
             raw_data=raw.raw_data,

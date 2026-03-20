@@ -88,9 +88,7 @@ class ContinuousControlMonitor:
                 affected.append((fw, ctrl_id))
 
         if not affected:
-            log.debug(
-                "CCM: no controls mapped to observation_type=%s", observation_type
-            )
+            log.debug("CCM: no controls mapped to observation_type=%s", observation_type)
             return
 
         log.info(
@@ -189,16 +187,18 @@ class ContinuousControlMonitor:
                 session.add(row)
                 persisted += 1
 
-                self.bus.publish(BusEvent(
-                    event_type="control.assessed",
-                    payload_id=result.id,
-                    metadata={
-                        "framework": result.framework,
-                        "control_id": result.control_id,
-                        "status": result.status,
-                        "trigger": "ccm",
-                    },
-                ))
+                self.bus.publish(
+                    BusEvent(
+                        event_type="control.assessed",
+                        payload_id=result.id,
+                        metadata={
+                            "framework": result.framework,
+                            "control_id": result.control_id,
+                            "status": result.status,
+                            "trigger": "ccm",
+                        },
+                    )
+                )
             except Exception:
                 log.exception(
                     "CCM: failed to persist result for %s/%s",
@@ -301,20 +301,20 @@ class ContinuousControlMonitor:
 
             age_hours = (now - last_assessed).total_seconds() / 3600.0
 
-            freq = self.mapper._monitoring_frequencies.get(
-                (framework, control_id), ""
-            )
+            freq = self.mapper._monitoring_frequencies.get((framework, control_id), "")
             threshold_hours = _FREQ_HOURS.get(freq, max_age_hours)
 
             if age_hours > threshold_hours:
-                stale.append({
-                    "framework": framework,
-                    "control_id": control_id,
-                    "last_assessed_at": last_assessed.isoformat(),
-                    "age_hours": round(age_hours, 2),
-                    "monitoring_frequency": freq or "unknown",
-                    "threshold_hours": threshold_hours,
-                })
+                stale.append(
+                    {
+                        "framework": framework,
+                        "control_id": control_id,
+                        "last_assessed_at": last_assessed.isoformat(),
+                        "age_hours": round(age_hours, 2),
+                        "monitoring_frequency": freq or "unknown",
+                        "threshold_hours": threshold_hours,
+                    }
+                )
 
         if stale:
             log.warning(

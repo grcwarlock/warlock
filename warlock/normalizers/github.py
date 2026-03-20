@@ -59,26 +59,30 @@ class GitHubNormalizer(BaseNormalizer):
                 obs_type = "misconfiguration"
                 severity = "medium"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"GitHub repo: {full_name} ({visibility})"
-                      + (" -- public repository" if not is_private else ""),
-                detail={
-                    "full_name": full_name,
-                    "visibility": visibility,
-                    "private": is_private,
-                    "default_branch": repo.get("default_branch", ""),
-                    "archived": repo.get("archived", False),
-                    "fork": repo.get("fork", False),
-                    "has_vulnerability_alerts": repo.get("has_vulnerability_alerts_enabled", False),
-                    "language": repo.get("language", ""),
-                },
-                resource_id=repo_id,
-                resource_type="code_repository",
-                resource_name=full_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"GitHub repo: {full_name} ({visibility})"
+                    + (" -- public repository" if not is_private else ""),
+                    detail={
+                        "full_name": full_name,
+                        "visibility": visibility,
+                        "private": is_private,
+                        "default_branch": repo.get("default_branch", ""),
+                        "archived": repo.get("archived", False),
+                        "fork": repo.get("fork", False),
+                        "has_vulnerability_alerts": repo.get(
+                            "has_vulnerability_alerts_enabled", False
+                        ),
+                        "language": repo.get("language", ""),
+                    },
+                    resource_id=repo_id,
+                    resource_type="code_repository",
+                    resource_name=full_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -118,27 +122,33 @@ class GitHubNormalizer(BaseNormalizer):
                         severity = "medium"
                     obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"GitHub branch protection: {repo}:{branch}"
-                      + (f" -- {', '.join(issues)}" if issues else ""),
-                detail={
-                    "repo": repo,
-                    "branch": branch,
-                    "unprotected": unprotected,
-                    "enforce_admins": protection.get("enforce_admins", {}).get("enabled", False)
-                    if not unprotected else False,
-                    "required_signatures": protection.get("required_signatures", {}).get("enabled", False)
-                    if not unprotected else False,
-                    "issues": issues,
-                    "protection": protection if not unprotected else {},
-                },
-                resource_id=f"{repo}:{branch}",
-                resource_type="branch_protection",
-                resource_name=f"{repo}:{branch}",
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"GitHub branch protection: {repo}:{branch}"
+                    + (f" -- {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "repo": repo,
+                        "branch": branch,
+                        "unprotected": unprotected,
+                        "enforce_admins": protection.get("enforce_admins", {}).get("enabled", False)
+                        if not unprotected
+                        else False,
+                        "required_signatures": protection.get("required_signatures", {}).get(
+                            "enabled", False
+                        )
+                        if not unprotected
+                        else False,
+                        "issues": issues,
+                        "protection": protection if not unprotected else {},
+                    },
+                    resource_id=f"{repo}:{branch}",
+                    resource_type="branch_protection",
+                    resource_name=f"{repo}:{branch}",
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -149,9 +159,12 @@ class GitHubNormalizer(BaseNormalizer):
         events = raw.raw_data.get("response", [])
 
         SENSITIVE_ACTIONS = {
-            "org.add_member", "org.remove_member",
-            "repo.access", "repo.change_visibility",
-            "repo.destroy", "repo.create",
+            "org.add_member",
+            "org.remove_member",
+            "repo.access",
+            "repo.change_visibility",
+            "repo.destroy",
+            "repo.create",
             "org.update_default_repository_permission",
             "org.invite_member",
             "environment.create_actions_secret",
@@ -167,24 +180,25 @@ class GitHubNormalizer(BaseNormalizer):
             obs_type = "alert" if is_sensitive else "inventory"
             severity = "medium" if is_sensitive else "info"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"GitHub audit: {action}"
-                      + (f" by {actor}" if actor else ""),
-                detail={
-                    "action": action,
-                    "actor": actor,
-                    "created_at": created_at,
-                    "repo": event.get("repo", ""),
-                    "org": event.get("org", ""),
-                    "event": event,
-                },
-                resource_id=str(event.get("_document_id", event.get("id", ""))),
-                resource_type="code_audit_event",
-                resource_name=action,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"GitHub audit: {action}" + (f" by {actor}" if actor else ""),
+                    detail={
+                        "action": action,
+                        "actor": actor,
+                        "created_at": created_at,
+                        "repo": event.get("repo", ""),
+                        "org": event.get("org", ""),
+                        "event": event,
+                    },
+                    resource_id=str(event.get("_document_id", event.get("id", ""))),
+                    resource_type="code_audit_event",
+                    resource_name=action,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -203,9 +217,7 @@ class GitHubNormalizer(BaseNormalizer):
             package = dependency.get("package", {})
 
             # Map severity
-            alert_severity = (
-                security_advisory.get("severity", "medium")
-            ).lower()
+            alert_severity = (security_advisory.get("severity", "medium")).lower()
             if alert_severity not in ("critical", "high", "medium", "low"):
                 alert_severity = "medium"
 
@@ -214,30 +226,32 @@ class GitHubNormalizer(BaseNormalizer):
             package_name = package.get("name", "")
             ecosystem = package.get("ecosystem", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="vulnerability",
-                title=f"Dependabot: {summary}"
-                      + (f" ({cve_id})" if cve_id else "")
-                      + f" in {repo_name}",
-                detail={
-                    "number": number,
-                    "repo": repo_name,
-                    "cve_id": cve_id,
-                    "summary": summary,
-                    "severity": alert_severity,
-                    "package_name": package_name,
-                    "ecosystem": ecosystem,
-                    "manifest_path": dependency.get("manifest_path", ""),
-                    "ghsa_id": security_advisory.get("ghsa_id", ""),
-                    "cvss_score": security_advisory.get("cvss", {}).get("score"),
-                    "alert": alert,
-                },
-                resource_id=f"{repo_name}/dependabot/{number}",
-                resource_type="code_vulnerability",
-                resource_name=f"{package_name} ({repo_name})",
-                severity=alert_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title=f"Dependabot: {summary}"
+                    + (f" ({cve_id})" if cve_id else "")
+                    + f" in {repo_name}",
+                    detail={
+                        "number": number,
+                        "repo": repo_name,
+                        "cve_id": cve_id,
+                        "summary": summary,
+                        "severity": alert_severity,
+                        "package_name": package_name,
+                        "ecosystem": ecosystem,
+                        "manifest_path": dependency.get("manifest_path", ""),
+                        "ghsa_id": security_advisory.get("ghsa_id", ""),
+                        "cvss_score": security_advisory.get("cvss", {}).get("score"),
+                        "alert": alert,
+                    },
+                    resource_id=f"{repo_name}/dependabot/{number}",
+                    resource_type="code_vulnerability",
+                    resource_name=f"{package_name} ({repo_name})",
+                    severity=alert_severity,
+                )
+            )
 
         return findings
 
@@ -254,25 +268,27 @@ class GitHubNormalizer(BaseNormalizer):
             secret_type = alert.get("secret_type_display_name", alert.get("secret_type", ""))
             created_at = alert.get("created_at", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Secret leak: {secret_type} in {repo_name}",
-                detail={
-                    "number": number,
-                    "repo": repo_name,
-                    "secret_type": secret_type,
-                    "secret_type_raw": alert.get("secret_type", ""),
-                    "state": alert.get("state", ""),
-                    "created_at": created_at,
-                    "html_url": alert.get("html_url", ""),
-                    "alert": alert,
-                },
-                resource_id=f"{repo_name}/secret-scanning/{number}",
-                resource_type="code_secret_leak",
-                resource_name=f"{secret_type} ({repo_name})",
-                severity="critical",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Secret leak: {secret_type} in {repo_name}",
+                    detail={
+                        "number": number,
+                        "repo": repo_name,
+                        "secret_type": secret_type,
+                        "secret_type_raw": alert.get("secret_type", ""),
+                        "state": alert.get("state", ""),
+                        "created_at": created_at,
+                        "html_url": alert.get("html_url", ""),
+                        "alert": alert,
+                    },
+                    resource_id=f"{repo_name}/secret-scanning/{number}",
+                    resource_type="code_secret_leak",
+                    resource_name=f"{secret_type} ({repo_name})",
+                    severity="critical",
+                )
+            )
 
         return findings
 

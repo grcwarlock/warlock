@@ -53,16 +53,18 @@ class OVHNormalizer(BaseNormalizer):
         # /cloud/project returns a list of project IDs (strings)
         if isinstance(response, list):
             for project_id in response:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"OVH cloud project: {project_id}",
-                    detail={"project_id": project_id},
-                    resource_id=str(project_id),
-                    resource_type="ovh_cloud_project",
-                    resource_name=str(project_id),
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"OVH cloud project: {project_id}",
+                        detail={"project_id": project_id},
+                        resource_id=str(project_id),
+                        resource_type="ovh_cloud_project",
+                        resource_name=str(project_id),
+                        severity="info",
+                    )
+                )
         return findings
 
     # -- Cloud Instances --
@@ -98,23 +100,24 @@ class OVHNormalizer(BaseNormalizer):
             elif status == "SHUTOFF":
                 issues.append("instance_shutoff")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OVH instance: {instance_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "instance": instance,
-                    "status": status,
-                    "issues": issues,
-                },
-                resource_id=instance_id,
-                resource_type="ovh_cloud_instance",
-                resource_name=instance_name,
-                severity=severity,
-                region=region,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OVH instance: {instance_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "instance": instance,
+                        "status": status,
+                        "issues": issues,
+                    },
+                    resource_id=instance_id,
+                    resource_type="ovh_cloud_instance",
+                    resource_name=instance_name,
+                    severity=severity,
+                    region=region,
+                )
+            )
 
         return findings
 
@@ -141,23 +144,24 @@ class OVHNormalizer(BaseNormalizer):
                 issues.append(f"admin_roles: {', '.join(admin_roles)}")
                 severity = "medium"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OVH cloud user: {username}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "user": user,
-                    "status": status,
-                    "roles": role_names,
-                    "issues": issues,
-                },
-                resource_id=user_id,
-                resource_type="ovh_cloud_user",
-                resource_name=username,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OVH cloud user: {username}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user": user,
+                        "status": status,
+                        "roles": role_names,
+                        "issues": issues,
+                    },
+                    resource_id=user_id,
+                    resource_type="ovh_cloud_user",
+                    resource_name=username,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -174,26 +178,25 @@ class OVHNormalizer(BaseNormalizer):
             vlan_id = network.get("vlanId", "")
             regions = network.get("regions", [])
 
-            region_names = [
-                r.get("region", "") if isinstance(r, dict) else str(r)
-                for r in regions
-            ]
+            region_names = [r.get("region", "") if isinstance(r, dict) else str(r) for r in regions]
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"OVH private network: {network_name}",
-                detail={
-                    "network": network,
-                    "status": status,
-                    "vlan_id": vlan_id,
-                    "regions": region_names,
-                },
-                resource_id=str(network_id),
-                resource_type="ovh_private_network",
-                resource_name=network_name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"OVH private network: {network_name}",
+                    detail={
+                        "network": network,
+                        "status": status,
+                        "vlan_id": vlan_id,
+                        "regions": region_names,
+                    },
+                    resource_id=str(network_id),
+                    resource_type="ovh_private_network",
+                    resource_name=network_name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -219,25 +222,26 @@ class OVHNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OVH storage container: {container_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "container": container,
-                    "stored_objects": stored_objects,
-                    "stored_bytes": stored_bytes,
-                    "public": is_public,
-                    "issues": issues,
-                },
-                resource_id=container_name,
-                resource_type="ovh_storage_container",
-                resource_name=container_name,
-                severity=severity,
-                region=region,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OVH storage container: {container_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "container": container,
+                        "stored_objects": stored_objects,
+                        "stored_bytes": stored_bytes,
+                        "public": is_public,
+                        "issues": issues,
+                    },
+                    resource_id=container_name,
+                    resource_type="ovh_storage_container",
+                    resource_name=container_name,
+                    severity=severity,
+                    region=region,
+                )
+            )
 
         return findings
 
@@ -287,25 +291,26 @@ class OVHNormalizer(BaseNormalizer):
                     severity = "low"
                     obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OVH Kubernetes: {cluster_name}" + (
-                    f" — {len(issues)} issues" if issues else ""
-                ),
-                detail={
-                    "cluster": cluster,
-                    "version": version,
-                    "status": status,
-                    "update_policy": policy_name,
-                    "issues": issues,
-                },
-                resource_id=cluster_id,
-                resource_type="ovh_kubernetes_cluster",
-                resource_name=cluster_name,
-                severity=severity,
-                region=region,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OVH Kubernetes: {cluster_name}"
+                    + (f" — {len(issues)} issues" if issues else ""),
+                    detail={
+                        "cluster": cluster,
+                        "version": version,
+                        "status": status,
+                        "update_policy": policy_name,
+                        "issues": issues,
+                    },
+                    resource_id=cluster_id,
+                    resource_type="ovh_kubernetes_cluster",
+                    resource_name=cluster_name,
+                    severity=severity,
+                    region=region,
+                )
+            )
 
         return findings
 
@@ -322,16 +327,18 @@ class OVHNormalizer(BaseNormalizer):
             # If response contains dicts with certificate details, use them.
             if isinstance(cert, str):
                 # Bare service name — inventory only
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"OVH SSL certificate: {cert}",
-                    detail={"service_name": cert},
-                    resource_id=cert,
-                    resource_type="ovh_ssl_certificate",
-                    resource_name=cert,
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"OVH SSL certificate: {cert}",
+                        detail={"service_name": cert},
+                        resource_id=cert,
+                        resource_type="ovh_ssl_certificate",
+                        resource_name=cert,
+                        severity="info",
+                    )
+                )
                 continue
 
             cert_id = cert.get("serviceName", cert.get("id", "unknown"))
@@ -369,23 +376,24 @@ class OVHNormalizer(BaseNormalizer):
                 except Exception:
                     pass
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OVH SSL certificate: {cn}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "certificate": cert,
-                    "common_name": cn,
-                    "expire_date": expires_str,
-                    "issues": issues,
-                },
-                resource_id=str(cert_id),
-                resource_type="ovh_ssl_certificate",
-                resource_name=cn,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OVH SSL certificate: {cn}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "certificate": cert,
+                        "common_name": cn,
+                        "expire_date": expires_str,
+                        "issues": issues,
+                    },
+                    resource_id=str(cert_id),
+                    resource_type="ovh_ssl_certificate",
+                    resource_name=cn,
+                    severity=severity,
+                )
+            )
 
         return findings
 

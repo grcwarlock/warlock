@@ -77,7 +77,7 @@ class POAMManager:
         # Build weakness description from finding + assertion failures
         weakness_parts: list[str] = []
         if control_result.finding_id:
-            finding = session.get(Finding,control_result.finding_id)
+            finding = session.get(Finding, control_result.finding_id)
             if finding:
                 weakness_parts.append(finding.title)
         if control_result.assertion_findings:
@@ -135,30 +135,29 @@ class POAMManager:
         Raises:
             ValueError: If POA&M not found or in a terminal status.
         """
-        poam = session.get(POAM,poam_id)
+        poam = session.get(POAM, poam_id)
         if not poam:
             raise ValueError(f"POA&M not found: {poam_id}")
         if poam.status in _CLOSED_STATUSES:
-            raise ValueError(
-                f"Cannot extend POA&M {poam_id} in status '{poam.status}'"
-            )
+            raise ValueError(f"Cannot extend POA&M {poam_id} in status '{poam.status}'")
 
         # Reject past dates — extensions must be into the future
         now = datetime.now(timezone.utc)
         if new_date <= now:
             raise ValueError(
-                f"Cannot extend POA&M {poam_id} to a past or current date: "
-                f"{new_date.isoformat()}"
+                f"Cannot extend POA&M {poam_id} to a past or current date: {new_date.isoformat()}"
             )
 
         poam.delay_count = (poam.delay_count or 0) + 1
 
         justifications = list(poam.delay_justifications or [])
-        justifications.append({
-            "date": datetime.now(timezone.utc).isoformat(),
-            "justification": justification,
-            "approved_by": approved_by,
-        })
+        justifications.append(
+            {
+                "date": datetime.now(timezone.utc).isoformat(),
+                "justification": justification,
+                "approved_by": approved_by,
+            }
+        )
         poam.delay_justifications = justifications
         poam.scheduled_completion = new_date
         poam.updated_by = approved_by
@@ -208,7 +207,10 @@ class POAMManager:
             session.flush()
             log.info(
                 "POA&M %s transitioned %s -> %s by %s",
-                poam_id, old_status, new_status, actor,
+                poam_id,
+                old_status,
+                new_status,
+                actor,
             )
             return poam
 
@@ -229,7 +231,10 @@ class POAMManager:
 
         log.info(
             "POA&M %s transitioned %s -> %s by %s",
-            poam_id, old_status, new_status, actor,
+            poam_id,
+            old_status,
+            new_status,
+            actor,
         )
         return poam
 
@@ -283,7 +288,4 @@ class POAMManager:
             .all()
         )
         # W-4: ensure_aware before comparing scheduled_completion
-        return [
-            p for p in poams
-            if ensure_aware(p.scheduled_completion) < now
-        ]
+        return [p for p in poams if ensure_aware(p.scheduled_completion) < now]

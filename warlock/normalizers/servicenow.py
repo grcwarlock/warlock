@@ -82,25 +82,27 @@ class ServiceNowNormalizer(BaseNormalizer):
             if issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "sys_id": sys_id,
-                    "number": number,
-                    "approval": approval,
-                    "type": change_type,
-                    "backout_plan_present": bool(backout_plan and backout_plan.strip()),
-                    "short_description": short_desc,
-                    "issues": issues,
-                    "record": change,
-                },
-                resource_id=sys_id,
-                resource_type="itsm_change_request",
-                resource_name=number,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "sys_id": sys_id,
+                        "number": number,
+                        "approval": approval,
+                        "type": change_type,
+                        "backout_plan_present": bool(backout_plan and backout_plan.strip()),
+                        "short_description": short_desc,
+                        "issues": issues,
+                        "record": change,
+                    },
+                    resource_id=sys_id,
+                    resource_type="itsm_change_request",
+                    resource_name=number,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -132,9 +134,7 @@ class ServiceNowNormalizer(BaseNormalizer):
                 is_past_sla = False
                 if sla_due:
                     try:
-                        due_dt = datetime.fromisoformat(
-                            sla_due.replace("Z", "+00:00")
-                        )
+                        due_dt = datetime.fromisoformat(sla_due.replace("Z", "+00:00"))
                         if datetime.now(timezone.utc) > due_dt:
                             is_past_sla = True
                     except (ValueError, TypeError):
@@ -149,25 +149,27 @@ class ServiceNowNormalizer(BaseNormalizer):
             if issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "sys_id": sys_id,
-                    "number": number,
-                    "state": state,
-                    "priority": priority,
-                    "sla_due": sla_due,
-                    "short_description": short_desc,
-                    "issues": issues,
-                    "record": incident,
-                },
-                resource_id=sys_id,
-                resource_type="itsm_incident",
-                resource_name=number,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "sys_id": sys_id,
+                        "number": number,
+                        "state": state,
+                        "priority": priority,
+                        "sla_due": sla_due,
+                        "short_description": short_desc,
+                        "issues": issues,
+                        "record": incident,
+                    },
+                    resource_id=sys_id,
+                    resource_type="itsm_incident",
+                    resource_name=number,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -201,24 +203,26 @@ class ServiceNowNormalizer(BaseNormalizer):
             if issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "sys_id": sys_id,
-                    "number": number,
-                    "state": state,
-                    "cause_notes_present": bool(cause_notes and cause_notes.strip()),
-                    "short_description": short_desc,
-                    "issues": issues,
-                    "record": problem,
-                },
-                resource_id=sys_id,
-                resource_type="itsm_problem",
-                resource_name=number,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "sys_id": sys_id,
+                        "number": number,
+                        "state": state,
+                        "cause_notes_present": bool(cause_notes and cause_notes.strip()),
+                        "short_description": short_desc,
+                        "issues": issues,
+                        "record": problem,
+                    },
+                    resource_id=sys_id,
+                    resource_type="itsm_problem",
+                    resource_name=number,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -241,9 +245,7 @@ class ServiceNowNormalizer(BaseNormalizer):
 
             if sys_updated_on:
                 try:
-                    updated_dt = datetime.fromisoformat(
-                        sys_updated_on.replace("Z", "+00:00")
-                    )
+                    updated_dt = datetime.fromisoformat(sys_updated_on.replace("Z", "+00:00"))
                     if updated_dt < stale_threshold:
                         obs_type = "misconfiguration"
                         severity = "low"
@@ -255,23 +257,25 @@ class ServiceNowNormalizer(BaseNormalizer):
             if issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "sys_id": sys_id,
-                    "number": number,
-                    "title": title_text,
-                    "sys_updated_on": sys_updated_on,
-                    "issues": issues,
-                    "record": article,
-                },
-                resource_id=sys_id,
-                resource_type="itsm_knowledge_article",
-                resource_name=number,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "sys_id": sys_id,
+                        "number": number,
+                        "title": title_text,
+                        "sys_updated_on": sys_updated_on,
+                        "issues": issues,
+                        "record": article,
+                    },
+                    resource_id=sys_id,
+                    resource_type="itsm_knowledge_article",
+                    resource_name=number,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -305,24 +309,26 @@ class ServiceNowNormalizer(BaseNormalizer):
             if issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "sys_id": sys_id,
-                    "number": number,
-                    "title": title_text,
-                    "acceptance_owner": acceptance_owner,
-                    "expiry": expiry,
-                    "issues": issues,
-                    "record": risk,
-                },
-                resource_id=sys_id,
-                resource_type="itsm_risk",
-                resource_name=number,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "sys_id": sys_id,
+                        "number": number,
+                        "title": title_text,
+                        "acceptance_owner": acceptance_owner,
+                        "expiry": expiry,
+                        "issues": issues,
+                        "record": risk,
+                    },
+                    resource_id=sys_id,
+                    resource_type="itsm_risk",
+                    resource_name=number,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -345,9 +351,7 @@ class ServiceNowNormalizer(BaseNormalizer):
 
             if review_date:
                 try:
-                    review_dt = datetime.fromisoformat(
-                        review_date.replace("Z", "+00:00")
-                    )
+                    review_dt = datetime.fromisoformat(review_date.replace("Z", "+00:00"))
                     if review_dt < now:
                         obs_type = "policy_violation"
                         severity = "medium"
@@ -359,23 +363,25 @@ class ServiceNowNormalizer(BaseNormalizer):
             if issues:
                 title += f" — {', '.join(issues)}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=title,
-                detail={
-                    "sys_id": sys_id,
-                    "number": number,
-                    "title": title_text,
-                    "review_date": review_date,
-                    "issues": issues,
-                    "record": policy,
-                },
-                resource_id=sys_id,
-                resource_type="itsm_policy",
-                resource_name=number,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=title,
+                    detail={
+                        "sys_id": sys_id,
+                        "number": number,
+                        "title": title_text,
+                        "review_date": review_date,
+                        "issues": issues,
+                        "record": policy,
+                    },
+                    resource_id=sys_id,
+                    resource_type="itsm_policy",
+                    resource_name=number,
+                    severity=severity,
+                )
+            )
 
         return findings
 

@@ -15,8 +15,10 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class PipelineEvent:
-    event_type: str          # "raw_event.created", "finding.normalized", "finding.mapped", "control.assessed"
-    payload_id: str          # UUID of the entity that was created/changed
+    event_type: (
+        str  # "raw_event.created", "finding.normalized", "finding.mapped", "control.assessed"
+    )
+    payload_id: str  # UUID of the entity that was created/changed
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = field(default_factory=dict)
     id: str = field(default_factory=lambda: str(uuid4()))
@@ -80,6 +82,7 @@ def _safe_call(handler: Handler, event: PipelineEvent) -> None:
 # Auto-registration of subscribers at import time (#34)
 # ---------------------------------------------------------------------------
 
+
 def _register_default_subscribers(bus: "EventBus") -> None:
     """Register built-in subscribers when their config is present.
 
@@ -90,6 +93,7 @@ def _register_default_subscribers(bus: "EventBus") -> None:
     webhook_urls = os.environ.get("WLK_WEBHOOK_URLS", "").strip()
     if webhook_urls:
         from warlock.export.alerts import WebhookSubscriber
+
         subscriber = WebhookSubscriber()
         for event_type in ("finding.normalized", "control.assessed"):
             bus.subscribe(event_type, subscriber)
@@ -110,6 +114,7 @@ def _register_default_subscribers(bus: "EventBus") -> None:
                 BatchShipper,
                 create_sink_from_env,
             )
+
             sink = create_sink_from_env()
             shipper = BatchShipper(sink)
             subscriber = AuditEventSubscriber(shipper)

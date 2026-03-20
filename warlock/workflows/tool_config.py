@@ -21,27 +21,59 @@ log = logging.getLogger(__name__)
 
 _CONNECTOR_ENV_VARS: dict[str, list[dict[str, Any]]] = {
     "aws": [
-        {"name": "AWS_ACCESS_KEY_ID", "required": False, "description": "AWS access key (or use IAM role)"},
+        {
+            "name": "AWS_ACCESS_KEY_ID",
+            "required": False,
+            "description": "AWS access key (or use IAM role)",
+        },
         {"name": "AWS_SECRET_ACCESS_KEY", "required": False, "description": "AWS secret key"},
         {"name": "AWS_DEFAULT_REGION", "required": False, "description": "Default AWS region"},
-        {"name": "WLK_AWS_ASSUME_ROLE_ARN", "required": False, "description": "IAM role ARN to assume"},
+        {
+            "name": "WLK_AWS_ASSUME_ROLE_ARN",
+            "required": False,
+            "description": "IAM role ARN to assume",
+        },
     ],
     "azure": [
         {"name": "AZURE_SUBSCRIPTION_ID", "required": True, "description": "Azure subscription ID"},
         {"name": "AZURE_TENANT_ID", "required": True, "description": "Azure AD tenant ID"},
-        {"name": "AZURE_CLIENT_ID", "required": False, "description": "Service principal client ID"},
-        {"name": "AZURE_CLIENT_SECRET", "required": False, "description": "Service principal secret"},
+        {
+            "name": "AZURE_CLIENT_ID",
+            "required": False,
+            "description": "Service principal client ID",
+        },
+        {
+            "name": "AZURE_CLIENT_SECRET",
+            "required": False,
+            "description": "Service principal secret",
+        },
     ],
     "gcp": [
-        {"name": "GOOGLE_APPLICATION_CREDENTIALS", "required": False, "description": "Path to service account JSON"},
+        {
+            "name": "GOOGLE_APPLICATION_CREDENTIALS",
+            "required": False,
+            "description": "Path to service account JSON",
+        },
         {"name": "WLK_GCP_PROJECT_ID", "required": True, "description": "GCP project ID"},
     ],
     "crowdstrike": [
-        {"name": "CROWDSTRIKE_CLIENT_ID", "required": True, "description": "CrowdStrike API client ID"},
-        {"name": "CROWDSTRIKE_CLIENT_SECRET", "required": True, "description": "CrowdStrike API client secret"},
+        {
+            "name": "CROWDSTRIKE_CLIENT_ID",
+            "required": True,
+            "description": "CrowdStrike API client ID",
+        },
+        {
+            "name": "CROWDSTRIKE_CLIENT_SECRET",
+            "required": True,
+            "description": "CrowdStrike API client secret",
+        },
     ],
     "okta": [
-        {"name": "WLK_OKTA_DOMAIN", "required": True, "description": "Okta domain (e.g. dev-12345.okta.com)"},
+        {
+            "name": "WLK_OKTA_DOMAIN",
+            "required": True,
+            "description": "Okta domain (e.g. dev-12345.okta.com)",
+        },
         {"name": "WLK_OKTA_API_TOKEN", "required": True, "description": "Okta API token"},
     ],
     "tenable": [
@@ -50,19 +82,39 @@ _CONNECTOR_ENV_VARS: dict[str, list[dict[str, Any]]] = {
     ],
     "defender": [
         {"name": "WLK_DEFENDER_TENANT_ID", "required": True, "description": "Azure AD tenant ID"},
-        {"name": "WLK_DEFENDER_CLIENT_ID", "required": True, "description": "App registration client ID"},
-        {"name": "WLK_DEFENDER_CLIENT_SECRET", "required": True, "description": "App registration secret"},
+        {
+            "name": "WLK_DEFENDER_CLIENT_ID",
+            "required": True,
+            "description": "App registration client ID",
+        },
+        {
+            "name": "WLK_DEFENDER_CLIENT_SECRET",
+            "required": True,
+            "description": "App registration secret",
+        },
     ],
     "sentinelone": [
-        {"name": "WLK_SENTINELONE_BASE_URL", "required": True, "description": "SentinelOne console URL"},
-        {"name": "WLK_SENTINELONE_API_TOKEN", "required": True, "description": "SentinelOne API token"},
+        {
+            "name": "WLK_SENTINELONE_BASE_URL",
+            "required": True,
+            "description": "SentinelOne console URL",
+        },
+        {
+            "name": "WLK_SENTINELONE_API_TOKEN",
+            "required": True,
+            "description": "SentinelOne API token",
+        },
     ],
     "snyk": [
         {"name": "SNYK_TOKEN", "required": True, "description": "Snyk API token"},
         {"name": "WLK_SNYK_ORG_ID", "required": True, "description": "Snyk organization ID"},
     ],
     "securityscorecard": [
-        {"name": "SECURITYSCORECARD_API_KEY", "required": True, "description": "SecurityScorecard API key"},
+        {
+            "name": "SECURITYSCORECARD_API_KEY",
+            "required": True,
+            "description": "SecurityScorecard API key",
+        },
     ],
 }
 
@@ -90,14 +142,16 @@ class ToolConfigManager:
             required_vars = [v for v in env_vars if v["required"]]
             all_required_set = all(v["is_set"] for v in required_vars) if required_vars else True
 
-            results.append({
-                "provider": provider,
-                "source_type": self._get_source_type(provider),
-                "enabled": self._is_enabled(provider),
-                "configured": all_required_set,
-                "required_env_vars": len(required_vars),
-                "env_vars_set": sum(1 for v in required_vars if v["is_set"]),
-            })
+            results.append(
+                {
+                    "provider": provider,
+                    "source_type": self._get_source_type(provider),
+                    "enabled": self._is_enabled(provider),
+                    "configured": all_required_set,
+                    "required_env_vars": len(required_vars),
+                    "env_vars_set": sum(1 for v in required_vars if v["is_set"]),
+                }
+            )
 
         return results
 
@@ -196,12 +250,14 @@ class ToolConfigManager:
         if not known:
             # Return generic WLK_<PROVIDER>_ENABLED check
             env_name = f"WLK_{provider.upper()}_ENABLED"
-            return [{
-                "name": env_name,
-                "required": False,
-                "is_set": bool(os.environ.get(env_name, "")),
-                "description": f"Enable {provider} connector",
-            }]
+            return [
+                {
+                    "name": env_name,
+                    "required": False,
+                    "is_set": bool(os.environ.get(env_name, "")),
+                    "description": f"Enable {provider} connector",
+                }
+            ]
 
         return [
             {
@@ -250,12 +306,24 @@ class ToolConfigManager:
     def _get_source_type(self, provider: str) -> str:
         """Best-effort source type lookup."""
         _map = {
-            "aws": "cloud", "azure": "cloud", "gcp": "cloud",
-            "crowdstrike": "edr", "defender": "edr", "sentinelone": "edr",
-            "okta": "iam", "entra_id": "iam", "cyberark": "iam", "sailpoint": "iam",
-            "tenable": "scanner", "qualys": "scanner", "wiz": "scanner",
-            "sentinel": "siem", "splunk": "siem", "elastic": "siem",
-            "snyk": "code", "github": "code",
+            "aws": "cloud",
+            "azure": "cloud",
+            "gcp": "cloud",
+            "crowdstrike": "edr",
+            "defender": "edr",
+            "sentinelone": "edr",
+            "okta": "iam",
+            "entra_id": "iam",
+            "cyberark": "iam",
+            "sailpoint": "iam",
+            "tenable": "scanner",
+            "qualys": "scanner",
+            "wiz": "scanner",
+            "sentinel": "siem",
+            "splunk": "siem",
+            "elastic": "siem",
+            "snyk": "code",
+            "github": "code",
             "securityscorecard": "grc",
             "servicenow": "itsm",
             "knowbe4": "training",

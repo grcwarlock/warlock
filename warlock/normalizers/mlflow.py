@@ -53,38 +53,42 @@ class MLflowNormalizer(BaseNormalizer):
             tags = model.get("tags", [])
 
             # Inventory finding
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Registered model: {model_name}",
-                detail={
-                    "model_name": model_name,
-                    "description": description,
-                    "creation_timestamp": creation_timestamp,
-                    "last_updated_timestamp": last_updated,
-                    "tags": tags,
-                },
-                resource_id=f"mlflow:model:{model_name}",
-                resource_type="ai_model",
-                resource_name=model_name,
-                severity="info",
-            ))
-
-            # Models without description
-            if not description or not description.strip():
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Model without description: {model_name}",
+                    observation_type="inventory",
+                    title=f"Registered model: {model_name}",
                     detail={
                         "model_name": model_name,
-                        "issue": "no_description",
+                        "description": description,
+                        "creation_timestamp": creation_timestamp,
+                        "last_updated_timestamp": last_updated,
+                        "tags": tags,
                     },
                     resource_id=f"mlflow:model:{model_name}",
                     resource_type="ai_model",
                     resource_name=model_name,
-                    severity="low",
-                ))
+                    severity="info",
+                )
+            )
+
+            # Models without description
+            if not description or not description.strip():
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Model without description: {model_name}",
+                        detail={
+                            "model_name": model_name,
+                            "issue": "no_description",
+                        },
+                        resource_id=f"mlflow:model:{model_name}",
+                        resource_type="ai_model",
+                        resource_name=model_name,
+                        severity="low",
+                    )
+                )
 
         return findings
 
@@ -102,22 +106,24 @@ class MLflowNormalizer(BaseNormalizer):
             artifact_location = exp.get("artifact_location", "")
             creation_time = exp.get("creation_time", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Experiment: {name}",
-                detail={
-                    "experiment_id": exp_id,
-                    "name": name,
-                    "lifecycle_stage": lifecycle_stage,
-                    "artifact_location": artifact_location,
-                    "creation_time": creation_time,
-                },
-                resource_id=f"mlflow:experiment:{exp_id}",
-                resource_type="ai_experiment",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Experiment: {name}",
+                    detail={
+                        "experiment_id": exp_id,
+                        "name": name,
+                        "lifecycle_stage": lifecycle_stage,
+                        "artifact_location": artifact_location,
+                        "creation_time": creation_time,
+                    },
+                    resource_id=f"mlflow:experiment:{exp_id}",
+                    resource_type="ai_experiment",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -138,42 +144,46 @@ class MLflowNormalizer(BaseNormalizer):
             run_id = ver.get("run_id", "")
 
             # Inventory finding
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Model version: {model_name} v{version_num} ({stage})",
-                detail={
-                    "model_name": model_name,
-                    "version": version_num,
-                    "stage": stage,
-                    "description": description,
-                    "status": status,
-                    "creation_timestamp": creation_timestamp,
-                    "run_id": run_id,
-                },
-                resource_id=f"mlflow:model_version:{model_name}:{version_num}",
-                resource_type="ai_model_version",
-                resource_name=f"{model_name} v{version_num}",
-                severity="info",
-            ))
-
-            # Production models without description
-            if stage.lower() == "production" and (not description or not description.strip()):
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Production model without description: {model_name} v{version_num}",
+                    observation_type="inventory",
+                    title=f"Model version: {model_name} v{version_num} ({stage})",
                     detail={
                         "model_name": model_name,
                         "version": version_num,
                         "stage": stage,
-                        "issue": "production_no_description",
+                        "description": description,
+                        "status": status,
+                        "creation_timestamp": creation_timestamp,
+                        "run_id": run_id,
                     },
                     resource_id=f"mlflow:model_version:{model_name}:{version_num}",
                     resource_type="ai_model_version",
                     resource_name=f"{model_name} v{version_num}",
-                    severity="medium",
-                ))
+                    severity="info",
+                )
+            )
+
+            # Production models without description
+            if stage.lower() == "production" and (not description or not description.strip()):
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Production model without description: {model_name} v{version_num}",
+                        detail={
+                            "model_name": model_name,
+                            "version": version_num,
+                            "stage": stage,
+                            "issue": "production_no_description",
+                        },
+                        resource_id=f"mlflow:model_version:{model_name}:{version_num}",
+                        resource_type="ai_model_version",
+                        resource_name=f"{model_name} v{version_num}",
+                        severity="medium",
+                    )
+                )
 
         return findings
 

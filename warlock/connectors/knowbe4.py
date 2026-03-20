@@ -114,17 +114,20 @@ class KnowBe4Connector(BaseConnector):
                             except Exception as e:
                                 log.debug(
                                     "KnowBe4 recipients for test %s failed: %s",
-                                    test_id, e,
+                                    test_id,
+                                    e,
                                 )
 
-                    result.events.append(RawEventData(
-                        source="knowbe4",
-                        source_type=SourceType.TRAINING,
-                        provider="knowbe4",
-                        event_type=event_type,
-                        raw_data=raw_data,
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="knowbe4",
+                            source_type=SourceType.TRAINING,
+                            provider="knowbe4",
+                            event_type=event_type,
+                            raw_data=raw_data,
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("KnowBe4 %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")

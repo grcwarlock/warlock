@@ -157,6 +157,7 @@ class NormalizedDataAssembler:
 # AWS assemblers
 # ---------------------------------------------------------------------------
 
+
 def _assemble_aws_credential_report(
     findings: list[FindingData],
     raw_events: list[RawEventData],
@@ -177,22 +178,28 @@ def _assemble_aws_credential_report(
                 "mfa_enabled": detail.get("mfa_active", False),
             }
         else:
-            users.append({
-                "username": username,
-                "mfa_enabled": detail.get("mfa_active", False),
-                "password_enabled": detail.get("password_enabled", False),
-                "access_keys": [
-                    k for k in [
-                        {"status": "Active", "last_used_days": 0}
-                        if detail.get("access_key_1_active") else None,
-                        {"status": "Active", "last_used_days": 0}
-                        if detail.get("access_key_2_active") else None,
-                    ] if k is not None
-                ],
-                "last_activity": "",
-                "groups": [],
-                "policies": [],
-            })
+            users.append(
+                {
+                    "username": username,
+                    "mfa_enabled": detail.get("mfa_active", False),
+                    "password_enabled": detail.get("password_enabled", False),
+                    "access_keys": [
+                        k
+                        for k in [
+                            {"status": "Active", "last_used_days": 0}
+                            if detail.get("access_key_1_active")
+                            else None,
+                            {"status": "Active", "last_used_days": 0}
+                            if detail.get("access_key_2_active")
+                            else None,
+                        ]
+                        if k is not None
+                    ],
+                    "last_activity": "",
+                    "groups": [],
+                    "policies": [],
+                }
+            )
 
     return {"users": users, "root_account": root_account, "total_users": len(users)}
 
@@ -203,16 +210,20 @@ def _assemble_aws_password_policy(
 ) -> dict[str, Any]:
     """Transform IAM password policy into password_policy."""
     for r in raw_events:
-        policy = r.raw_data.get("response", {}).get("PasswordPolicy", r.raw_data.get("response", {}))
-        return {"password_policy": {
-            "min_length": policy.get("MinimumPasswordLength", 0),
-            "require_uppercase": policy.get("RequireUppercaseCharacters", False),
-            "require_lowercase": policy.get("RequireLowercaseCharacters", False),
-            "require_numbers": policy.get("RequireNumbers", False),
-            "require_symbols": policy.get("RequireSymbols", False),
-            "max_age_days": policy.get("MaxPasswordAge", 0),
-            "password_reuse_prevention": policy.get("PasswordReusePrevention", 0),
-        }}
+        policy = r.raw_data.get("response", {}).get(
+            "PasswordPolicy", r.raw_data.get("response", {})
+        )
+        return {
+            "password_policy": {
+                "min_length": policy.get("MinimumPasswordLength", 0),
+                "require_uppercase": policy.get("RequireUppercaseCharacters", False),
+                "require_lowercase": policy.get("RequireLowercaseCharacters", False),
+                "require_numbers": policy.get("RequireNumbers", False),
+                "require_symbols": policy.get("RequireSymbols", False),
+                "max_age_days": policy.get("MaxPasswordAge", 0),
+                "password_reuse_prevention": policy.get("PasswordReusePrevention", 0),
+            }
+        }
     return {}
 
 
@@ -224,13 +235,15 @@ def _assemble_aws_security_groups(
     sgs = []
     for f in findings:
         sg = f.detail.get("security_group", f.detail)
-        sgs.append({
-            "group_id": sg.get("GroupId", f.resource_id),
-            "group_name": sg.get("GroupName", f.resource_name),
-            "ingress_rules": sg.get("IpPermissions", []),
-            "egress_rules": sg.get("IpPermissionsEgress", []),
-            "issues": f.detail.get("issues", []),
-        })
+        sgs.append(
+            {
+                "group_id": sg.get("GroupId", f.resource_id),
+                "group_name": sg.get("GroupName", f.resource_name),
+                "ingress_rules": sg.get("IpPermissions", []),
+                "egress_rules": sg.get("IpPermissionsEgress", []),
+                "issues": f.detail.get("issues", []),
+            }
+        )
     return {"security_groups": sgs}
 
 
@@ -242,19 +255,23 @@ def _assemble_aws_cloudtrail(
     trails = []
     for f in findings:
         trail = f.detail.get("trail", f.detail)
-        trails.append({
-            "name": trail.get("Name", f.resource_name),
-            "is_multi_region": trail.get("IsMultiRegionTrail", False),
-            "log_validation": trail.get("LogFileValidationEnabled", False),
-            "is_logging": True,
-        })
+        trails.append(
+            {
+                "name": trail.get("Name", f.resource_name),
+                "is_multi_region": trail.get("IsMultiRegionTrail", False),
+                "log_validation": trail.get("LogFileValidationEnabled", False),
+                "is_logging": True,
+            }
+        )
     enabled = len(trails) > 0
     multi_region = any(t.get("is_multi_region") for t in trails)
-    return {"cloudtrail": {
-        "enabled": enabled,
-        "trails": trails,
-        "multi_region": multi_region,
-    }}
+    return {
+        "cloudtrail": {
+            "enabled": enabled,
+            "trails": trails,
+            "multi_region": multi_region,
+        }
+    }
 
 
 def _assemble_aws_guardduty(
@@ -275,13 +292,15 @@ def _assemble_aws_s3(
     """Transform S3 bucket data."""
     buckets = []
     for f in findings:
-        buckets.append({
-            "name": f.resource_name,
-            "arn": f.resource_id,
-            "encryption": f.detail.get("ServerSideEncryptionConfiguration", {}),
-            "public_access_block": f.detail.get("PublicAccessBlockConfiguration", {}),
-            "versioning": f.detail.get("Versioning", {}),
-        })
+        buckets.append(
+            {
+                "name": f.resource_name,
+                "arn": f.resource_id,
+                "encryption": f.detail.get("ServerSideEncryptionConfiguration", {}),
+                "public_access_block": f.detail.get("PublicAccessBlockConfiguration", {}),
+                "versioning": f.detail.get("Versioning", {}),
+            }
+        )
     return {"storage_buckets": buckets}
 
 
@@ -293,20 +312,25 @@ def _assemble_aws_config(
     recorders = []
     for f in findings:
         rec = f.detail.get("recorder", f.detail)
-        recorders.append({
-            "name": rec.get("name", f.resource_name),
-            "all_supported": rec.get("recordingGroup", {}).get("allSupported", False),
-        })
+        recorders.append(
+            {
+                "name": rec.get("name", f.resource_name),
+                "all_supported": rec.get("recordingGroup", {}).get("allSupported", False),
+            }
+        )
     enabled = len(recorders) > 0
-    return {"config": {
-        "enabled": enabled,
-        "recorders": recorders,
-    }}
+    return {
+        "config": {
+            "enabled": enabled,
+            "recorders": recorders,
+        }
+    }
 
 
 # ---------------------------------------------------------------------------
 # Okta assemblers
 # ---------------------------------------------------------------------------
+
 
 def _assemble_okta_users(
     findings: list[FindingData],
@@ -316,16 +340,18 @@ def _assemble_okta_users(
     users = []
     for f in findings:
         detail = f.detail
-        users.append({
-            "username": detail.get("login", detail.get("email", f.resource_name)),
-            "mfa_enabled": detail.get("mfa_status", "INACTIVE") == "ACTIVE",
-            "last_login": detail.get("lastLogin", ""),
-            "status": detail.get("status", ""),
-            "access_keys": [],
-            "last_activity": detail.get("lastLogin", ""),
-            "groups": [],
-            "policies": [],
-        })
+        users.append(
+            {
+                "username": detail.get("login", detail.get("email", f.resource_name)),
+                "mfa_enabled": detail.get("mfa_status", "INACTIVE") == "ACTIVE",
+                "last_login": detail.get("lastLogin", ""),
+                "status": detail.get("status", ""),
+                "access_keys": [],
+                "last_activity": detail.get("lastLogin", ""),
+                "groups": [],
+                "policies": [],
+            }
+        )
     return {"users": users}
 
 
@@ -343,6 +369,7 @@ def _assemble_okta_policies(
 # ---------------------------------------------------------------------------
 # CrowdStrike assemblers
 # ---------------------------------------------------------------------------
+
 
 def _assemble_crowdstrike_devices(
     findings: list[FindingData],
@@ -374,19 +401,22 @@ def _assemble_crowdstrike_detections(
     """Transform Falcon detections."""
     detections = []
     for f in findings:
-        detections.append({
-            "detection_id": f.detail.get("detection_id", f.resource_id),
-            "severity": f.severity,
-            "status": f.detail.get("status", ""),
-            "type": f.detail.get("type", ""),
-            "hostname": f.detail.get("hostname", ""),
-        })
+        detections.append(
+            {
+                "detection_id": f.detail.get("detection_id", f.resource_id),
+                "severity": f.severity,
+                "status": f.detail.get("status", ""),
+                "type": f.detail.get("type", ""),
+                "hostname": f.detail.get("hostname", ""),
+            }
+        )
     return {"detections": detections}
 
 
 # ---------------------------------------------------------------------------
 # Workday assemblers
 # ---------------------------------------------------------------------------
+
 
 def _assemble_workday_employees(
     findings: list[FindingData],
@@ -397,25 +427,30 @@ def _assemble_workday_employees(
     background_checks = []
     for f in findings:
         detail = f.detail
-        hr_records.append({
-            "employee_id": detail.get("employee_id", f.resource_id),
-            "name": detail.get("name", f.resource_name),
-            "status": detail.get("status", ""),
-            "hire_date": detail.get("hire_date", ""),
-            "termination_date": detail.get("termination_date", ""),
-        })
-        if detail.get("background_check"):
-            background_checks.append({
+        hr_records.append(
+            {
                 "employee_id": detail.get("employee_id", f.resource_id),
-                "status": detail["background_check"].get("status", ""),
-                "completed_date": detail["background_check"].get("completed_date", ""),
-            })
+                "name": detail.get("name", f.resource_name),
+                "status": detail.get("status", ""),
+                "hire_date": detail.get("hire_date", ""),
+                "termination_date": detail.get("termination_date", ""),
+            }
+        )
+        if detail.get("background_check"):
+            background_checks.append(
+                {
+                    "employee_id": detail.get("employee_id", f.resource_id),
+                    "status": detail["background_check"].get("status", ""),
+                    "completed_date": detail["background_check"].get("completed_date", ""),
+                }
+            )
     return {"hr_records": hr_records, "background_checks": background_checks}
 
 
 # ---------------------------------------------------------------------------
 # KnowBe4 assemblers
 # ---------------------------------------------------------------------------
+
 
 def _assemble_kb4_training(
     findings: list[FindingData],
@@ -427,12 +462,14 @@ def _assemble_kb4_training(
         enrollments.append(f.detail)
     total = len(enrollments)
     completed = sum(1 for e in enrollments if e.get("status") == "Completed")
-    return {"training": {
-        "total_enrollments": total,
-        "completed": completed,
-        "completion_rate": completed / total if total > 0 else 0.0,
-        "enrollments": enrollments,
-    }}
+    return {
+        "training": {
+            "total_enrollments": total,
+            "completed": completed,
+            "completion_rate": completed / total if total > 0 else 0.0,
+            "enrollments": enrollments,
+        }
+    }
 
 
 def _assemble_kb4_phishing(
@@ -445,17 +482,20 @@ def _assemble_kb4_phishing(
         results.append(f.detail)
     total = len(results)
     clicked = sum(1 for r in results if r.get("clicked", False))
-    return {"phishing": {
-        "total_tests": total,
-        "clicked": clicked,
-        "click_rate": clicked / total if total > 0 else 0.0,
-        "results": results,
-    }}
+    return {
+        "phishing": {
+            "total_tests": total,
+            "clicked": clicked,
+            "click_rate": clicked / total if total > 0 else 0.0,
+            "results": results,
+        }
+    }
 
 
 # ---------------------------------------------------------------------------
 # Confluence assembler
 # ---------------------------------------------------------------------------
+
 
 def _assemble_confluence_pages(
     findings: list[FindingData],
@@ -496,6 +536,7 @@ def _assemble_confluence_pages(
 # ServiceNow assemblers
 # ---------------------------------------------------------------------------
 
+
 def _assemble_snow_changes(
     findings: list[FindingData],
     raw_events: list[RawEventData],
@@ -503,21 +544,25 @@ def _assemble_snow_changes(
     """Transform ServiceNow change request data."""
     changes = []
     for f in findings:
-        changes.append({
-            "number": f.detail.get("number", f.resource_id),
-            "state": f.detail.get("state", ""),
-            "type": f.detail.get("type", ""),
-            "approval": f.detail.get("approval", ""),
-            "risk": f.detail.get("risk", ""),
-        })
+        changes.append(
+            {
+                "number": f.detail.get("number", f.resource_id),
+                "state": f.detail.get("state", ""),
+                "type": f.detail.get("type", ""),
+                "approval": f.detail.get("approval", ""),
+                "risk": f.detail.get("risk", ""),
+            }
+        )
     total = len(changes)
     approved = sum(1 for c in changes if c.get("approval") == "approved")
-    return {"change_management": {
-        "total_changes": total,
-        "approved": approved,
-        "approval_rate": approved / total if total > 0 else 0.0,
-        "changes": changes,
-    }}
+    return {
+        "change_management": {
+            "total_changes": total,
+            "approved": approved,
+            "approval_rate": approved / total if total > 0 else 0.0,
+            "changes": changes,
+        }
+    }
 
 
 def _assemble_snow_incidents(
@@ -527,18 +572,21 @@ def _assemble_snow_incidents(
     """Transform ServiceNow incident data."""
     incidents = []
     for f in findings:
-        incidents.append({
-            "number": f.detail.get("number", f.resource_id),
-            "state": f.detail.get("state", ""),
-            "severity": f.detail.get("severity", f.severity),
-            "category": f.detail.get("category", ""),
-        })
+        incidents.append(
+            {
+                "number": f.detail.get("number", f.resource_id),
+                "state": f.detail.get("state", ""),
+                "severity": f.detail.get("severity", f.severity),
+                "category": f.detail.get("category", ""),
+            }
+        )
     return {"incidents": incidents}
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _deep_merge(base: dict, overlay: dict) -> None:
     """Merge overlay into base, concatenating lists and recursing dicts."""

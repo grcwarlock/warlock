@@ -48,9 +48,7 @@ class IBMCloudConnector(BaseConnector):
 
     def collect(self) -> ConnectorResult:
         if httpx is None:
-            raise RuntimeError(
-                "IBMCloudConnector requires httpx. Install with: pip install httpx"
-            )
+            raise RuntimeError("IBMCloudConnector requires httpx. Install with: pip install httpx")
         result = ConnectorResult(
             connector_name=self.name,
             source="ibm_cloud",
@@ -75,18 +73,20 @@ class IBMCloudConnector(BaseConnector):
         for event_type, collector_fn in collectors:
             try:
                 data = collector_fn(token, account_id, region)
-                result.events.append(RawEventData(
-                    source="ibm_cloud",
-                    source_type=SourceType.CLOUD,
-                    provider="ibm_cloud",
-                    event_type=event_type,
-                    raw_data={
-                        "account_id": account_id,
-                        "region": region,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="ibm_cloud",
+                        source_type=SourceType.CLOUD,
+                        provider="ibm_cloud",
+                        event_type=event_type,
+                        raw_data={
+                            "account_id": account_id,
+                            "region": region,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("IBM Cloud %s failed: %s", event_type, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -121,9 +121,7 @@ class IBMCloudConnector(BaseConnector):
 
     # -- Collectors --
 
-    def _collect_security_findings(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_security_findings(self, token: str, account_id: str, region: str) -> dict:
         """Security & Compliance Center findings via Security Advisor API."""
         base = f"https://{region}.secadvisor.cloud.ibm.com"
         resp = httpx.get(
@@ -134,9 +132,7 @@ class IBMCloudConnector(BaseConnector):
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_iam_users(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_iam_users(self, token: str, account_id: str, region: str) -> dict:
         """IAM Identity Services — list users."""
         resp = httpx.get(
             f"https://iam.cloud.ibm.com/v2/accounts/{account_id}/users",
@@ -146,9 +142,7 @@ class IBMCloudConnector(BaseConnector):
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_iam_groups(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_iam_groups(self, token: str, account_id: str, region: str) -> dict:
         """IAM access groups."""
         resp = httpx.get(
             "https://iam.cloud.ibm.com/v2/groups",
@@ -159,9 +153,7 @@ class IBMCloudConnector(BaseConnector):
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_activity_events(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_activity_events(self, token: str, account_id: str, region: str) -> dict:
         """Activity Tracker events (LogDNA-compatible)."""
         from datetime import timedelta
 
@@ -180,9 +172,7 @@ class IBMCloudConnector(BaseConnector):
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_key_protect(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_key_protect(self, token: str, account_id: str, region: str) -> dict:
         """Key Protect — list encryption keys."""
         base = f"https://{region}.kms.cloud.ibm.com"
         resp = httpx.get(
@@ -196,9 +186,7 @@ class IBMCloudConnector(BaseConnector):
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_security_groups(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_security_groups(self, token: str, account_id: str, region: str) -> dict:
         """VPC security groups."""
         base = f"https://{region}.iaas.cloud.ibm.com"
         resp = httpx.get(
@@ -213,9 +201,7 @@ class IBMCloudConnector(BaseConnector):
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_compliance_profiles(
-        self, token: str, account_id: str, region: str
-    ) -> dict:
+    def _collect_compliance_profiles(self, token: str, account_id: str, region: str) -> dict:
         """Security & Compliance Center posture profiles."""
         base = f"https://{region}.compliance.cloud.ibm.com"
         resp = httpx.get(

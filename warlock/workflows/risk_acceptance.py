@@ -205,12 +205,8 @@ class RiskAcceptanceManager:
                     .first()
                 )
                 if latest_result and latest_result.severity:
-                    accepted_level = _SEVERITY_ORDER.get(
-                        (ra.risk_level or "").lower(), 0
-                    )
-                    current_level = _SEVERITY_ORDER.get(
-                        latest_result.severity.lower(), 0
-                    )
+                    accepted_level = _SEVERITY_ORDER.get((ra.risk_level or "").lower(), 0)
+                    current_level = _SEVERITY_ORDER.get(latest_result.severity.lower(), 0)
                     if current_level > accepted_level:
                         triggered_by.append("severity_change")
                         details["severity_change"] = {
@@ -233,8 +229,7 @@ class RiskAcceptanceManager:
                     triggered_by.append("new_finding")
                     details["new_finding"] = {
                         "finding_assessed_at": (
-                            new_result.assessed_at.isoformat()
-                            if new_result.assessed_at else None
+                            new_result.assessed_at.isoformat() if new_result.assessed_at else None
                         ),
                     }
 
@@ -257,17 +252,21 @@ class RiskAcceptanceManager:
                     }
 
             if triggered_by:
-                results.append({
-                    "acceptance_id": ra.id,
-                    "framework": ra.framework,
-                    "control_id": ra.control_id,
-                    "risk_level": ra.risk_level,
-                    "triggered_by": triggered_by,
-                    "details": details,
-                })
+                results.append(
+                    {
+                        "acceptance_id": ra.id,
+                        "framework": ra.framework,
+                        "control_id": ra.control_id,
+                        "risk_level": ra.risk_level,
+                        "triggered_by": triggered_by,
+                        "details": details,
+                    }
+                )
                 log.warning(
                     "Risk acceptance %s (%s/%s) triggered for re-evaluation: %s",
-                    ra.id, ra.framework, ra.control_id,
+                    ra.id,
+                    ra.framework,
+                    ra.control_id,
                     ", ".join(triggered_by),
                 )
 

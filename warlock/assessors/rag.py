@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 # ControlDocument — the unit stored in the vector DB
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ControlDocument:
     control_id: str
@@ -51,20 +52,107 @@ class ControlDocument:
 # TF-IDF embedder (zero-dependency fallback)
 # ---------------------------------------------------------------------------
 
-_STOP_WORDS = frozenset({
-    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
-    "of", "with", "by", "from", "is", "it", "as", "be", "was", "are",
-    "been", "being", "have", "has", "had", "do", "does", "did", "will",
-    "shall", "should", "may", "might", "must", "can", "could", "would",
-    "that", "this", "these", "those", "not", "no", "nor", "so", "if",
-    "then", "than", "too", "very", "just", "about", "above", "after",
-    "again", "all", "also", "am", "any", "because", "before", "between",
-    "both", "each", "few", "further", "here", "how", "into", "its",
-    "more", "most", "other", "our", "out", "over", "own", "same", "some",
-    "such", "there", "through", "under", "until", "up", "we", "what",
-    "when", "where", "which", "while", "who", "whom", "why", "you",
-    "your",
-})
+_STOP_WORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "but",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+        "from",
+        "is",
+        "it",
+        "as",
+        "be",
+        "was",
+        "are",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "shall",
+        "should",
+        "may",
+        "might",
+        "must",
+        "can",
+        "could",
+        "would",
+        "that",
+        "this",
+        "these",
+        "those",
+        "not",
+        "no",
+        "nor",
+        "so",
+        "if",
+        "then",
+        "than",
+        "too",
+        "very",
+        "just",
+        "about",
+        "above",
+        "after",
+        "again",
+        "all",
+        "also",
+        "am",
+        "any",
+        "because",
+        "before",
+        "between",
+        "both",
+        "each",
+        "few",
+        "further",
+        "here",
+        "how",
+        "into",
+        "its",
+        "more",
+        "most",
+        "other",
+        "our",
+        "out",
+        "over",
+        "own",
+        "same",
+        "some",
+        "such",
+        "there",
+        "through",
+        "under",
+        "until",
+        "up",
+        "we",
+        "what",
+        "when",
+        "where",
+        "which",
+        "while",
+        "who",
+        "whom",
+        "why",
+        "you",
+        "your",
+    }
+)
 
 _TOKEN_RE = re.compile(r"[a-z0-9_]+")
 
@@ -102,10 +190,7 @@ class TFIDFEmbedder:
         self._vocab = {term: idx for idx, term in enumerate(sorted(all_terms))}
 
         # Compute IDF: log(N / (df + 1)) + 1  (smoothed, scikit-learn style)
-        self._idf = {
-            term: math.log(n_docs / (df + 1)) + 1.0
-            for term, df in doc_freq.items()
-        }
+        self._idf = {term: math.log(n_docs / (df + 1)) + 1.0 for term, df in doc_freq.items()}
 
         self._fitted = True
 
@@ -152,6 +237,7 @@ class TFIDFEmbedder:
 # ---------------------------------------------------------------------------
 # EmbeddingProvider — abstract base + implementations
 # ---------------------------------------------------------------------------
+
 
 class EmbeddingProvider(ABC):
     """Base class for embedding providers."""
@@ -220,6 +306,7 @@ class LocalEmbedder(EmbeddingProvider):
         # Try sentence-transformers first
         try:
             from sentence_transformers import SentenceTransformer
+
             self._st_model = SentenceTransformer(model_name)
             self._use_sentence_transformers = True
             log.info("LocalEmbedder: using sentence-transformers (%s)", model_name)
@@ -259,6 +346,7 @@ class LocalEmbedder(EmbeddingProvider):
 # VectorStore — abstract base + implementations
 # ---------------------------------------------------------------------------
 
+
 class VectorStore(ABC):
     """Base class for vector stores."""
 
@@ -269,7 +357,9 @@ class VectorStore(ABC):
 
     @abstractmethod
     def search(
-        self, query_embedding: list[float], top_k: int = 5,
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
     ) -> list[tuple[ControlDocument, float]]:
         """Return the top-k most similar documents with their scores."""
         ...
@@ -325,7 +415,9 @@ class InMemoryStore(VectorStore):
             self._embeddings.append(doc.embedding)
 
     def search(
-        self, query_embedding: list[float], top_k: int = 5,
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
     ) -> list[tuple[ControlDocument, float]]:
         if not self._docs:
             return []
@@ -378,19 +470,19 @@ class ChromaStore(VectorStore):
 
         for doc in docs:
             if doc.embedding is None:
-                raise ValueError(
-                    f"ControlDocument {doc.control_id} has no embedding."
-                )
+                raise ValueError(f"ControlDocument {doc.control_id} has no embedding.")
             doc_id = f"{doc.framework}:{doc.control_id}"
             ids.append(doc_id)
             embeddings.append(doc.embedding)
             documents.append(doc.text)
-            metadatas.append({
-                "framework": doc.framework,
-                "control_id": doc.control_id,
-                "family": doc.family,
-                "title": doc.title,
-            })
+            metadatas.append(
+                {
+                    "framework": doc.framework,
+                    "control_id": doc.control_id,
+                    "family": doc.family,
+                    "title": doc.title,
+                }
+            )
             self._doc_map[doc_id] = doc
 
         self._collection.upsert(
@@ -401,7 +493,9 @@ class ChromaStore(VectorStore):
         )
 
     def search(
-        self, query_embedding: list[float], top_k: int = 5,
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
     ) -> list[tuple[ControlDocument, float]]:
         results = self._collection.query(
             query_embeddings=[query_embedding],
@@ -444,8 +538,7 @@ class PgVectorStore(VectorStore):
     ) -> None:
         if not self._TABLE_NAME_RE.match(table_name):
             raise ValueError(
-                f"Invalid table_name {table_name!r}: must match "
-                "[a-zA-Z_][a-zA-Z0-9_]*"
+                f"Invalid table_name {table_name!r}: must match [a-zA-Z_][a-zA-Z0-9_]*"
             )
 
         from sqlalchemy import (
@@ -493,20 +586,20 @@ class PgVectorStore(VectorStore):
         rows = []
         for doc in docs:
             if doc.embedding is None:
-                raise ValueError(
-                    f"ControlDocument {doc.control_id} has no embedding."
-                )
+                raise ValueError(f"ControlDocument {doc.control_id} has no embedding.")
             doc_id = f"{doc.framework}:{doc.control_id}"
-            rows.append({
-                "id": doc_id,
-                "framework": doc.framework,
-                "control_id": doc.control_id,
-                "family": doc.family,
-                "title": doc.title,
-                "description": doc.description,
-                "text": doc.text,
-                "embedding": doc.embedding,
-            })
+            rows.append(
+                {
+                    "id": doc_id,
+                    "framework": doc.framework,
+                    "control_id": doc.control_id,
+                    "family": doc.family,
+                    "title": doc.title,
+                    "description": doc.description,
+                    "text": doc.text,
+                    "embedding": doc.embedding,
+                }
+            )
             self._doc_cache[doc_id] = doc
 
         # Upsert via INSERT ... ON CONFLICT
@@ -528,7 +621,9 @@ class PgVectorStore(VectorStore):
             conn.commit()
 
     def search(
-        self, query_embedding: list[float], top_k: int = 5,
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
     ) -> list[tuple[ControlDocument, float]]:
         from sqlalchemy import text
 
@@ -567,15 +662,14 @@ class PgVectorStore(VectorStore):
         from sqlalchemy import text
 
         with self._engine.connect() as conn:
-            result = conn.execute(
-                text(f"SELECT COUNT(*) FROM {self._table.name}")
-            )
+            result = conn.execute(text(f"SELECT COUNT(*) FROM {self._table.name}"))
             return result.scalar() or 0
 
 
 # ---------------------------------------------------------------------------
 # RAGControlMatcher — the main interface
 # ---------------------------------------------------------------------------
+
 
 def _build_control_text(
     framework_id: str,
@@ -671,7 +765,10 @@ class RAGControlMatcher:
                 controls = family.get("controls", {})
                 for control_id, control_config in controls.items():
                     text = _build_control_text(
-                        framework_id, family_id, control_id, control_config,
+                        framework_id,
+                        family_id,
+                        control_id,
+                        control_config,
                     )
                     title = control_config.get("title", control_id)
                     description = control_config.get("description", "")
@@ -782,13 +879,15 @@ class RAGControlMatcher:
 
         mappings: list[ControlMappingData] = []
         for framework, control_id, score in raw_matches:
-            mappings.append(ControlMappingData(
-                finding_id=finding.id,
-                framework=framework,
-                control_id=control_id,
-                mapping_method="semantic",
-                confidence=round(score, 4),
-            ))
+            mappings.append(
+                ControlMappingData(
+                    finding_id=finding.id,
+                    framework=framework,
+                    control_id=control_id,
+                    mapping_method="semantic",
+                    confidence=round(score, 4),
+                )
+            )
 
         return mappings
 
@@ -796,6 +895,7 @@ class RAGControlMatcher:
 # ---------------------------------------------------------------------------
 # Factory
 # ---------------------------------------------------------------------------
+
 
 def create_rag_matcher(
     store: VectorStore | None = None,

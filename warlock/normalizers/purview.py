@@ -64,25 +64,27 @@ class PurviewNormalizer(BaseNormalizer):
             created = alert.get("createdDateTime", "")
             service_source = alert.get("serviceSource", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Purview DLP alert: {title}",
-                detail={
-                    "alert_id": alert_id,
-                    "title": title,
-                    "severity": severity_str,
-                    "status": status,
-                    "category": category,
-                    "description": description,
-                    "created_date_time": created,
-                    "service_source": service_source,
-                },
-                resource_id=alert_id,
-                resource_type="dlp_alert",
-                resource_name=title,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Purview DLP alert: {title}",
+                    detail={
+                        "alert_id": alert_id,
+                        "title": title,
+                        "severity": severity_str,
+                        "status": status,
+                        "category": category,
+                        "description": description,
+                        "created_date_time": created,
+                        "service_source": service_source,
+                    },
+                    resource_id=alert_id,
+                    resource_type="dlp_alert",
+                    resource_name=title,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -100,22 +102,24 @@ class PurviewNormalizer(BaseNormalizer):
             is_active = label.get("isActive", True)
             tooltip = label.get("tooltip", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Sensitivity label: {name}",
-                detail={
-                    "label_id": label_id,
-                    "name": name,
-                    "description": description,
-                    "is_active": is_active,
-                    "tooltip": tooltip,
-                },
-                resource_id=label_id,
-                resource_type="dlp_label",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Sensitivity label: {name}",
+                    detail={
+                        "label_id": label_id,
+                        "name": name,
+                        "description": description,
+                        "is_active": is_active,
+                        "tooltip": tooltip,
+                    },
+                    resource_id=label_id,
+                    resource_type="dlp_label",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -133,38 +137,42 @@ class PurviewNormalizer(BaseNormalizer):
             is_enabled = policy.get("isEnabled", True)
 
             if not is_enabled:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"DLP policy disabled: {name}",
-                    detail={
-                        "policy_id": policy_id,
-                        "name": name,
-                        "description": description,
-                        "is_enabled": False,
-                        "issue": "dlp_policy_disabled",
-                    },
-                    resource_id=policy_id,
-                    resource_type="dlp_policy",
-                    resource_name=name,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"DLP policy disabled: {name}",
+                        detail={
+                            "policy_id": policy_id,
+                            "name": name,
+                            "description": description,
+                            "is_enabled": False,
+                            "issue": "dlp_policy_disabled",
+                        },
+                        resource_id=policy_id,
+                        resource_type="dlp_policy",
+                        resource_name=name,
+                        severity="medium",
+                    )
+                )
             else:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"DLP policy: {name}",
-                    detail={
-                        "policy_id": policy_id,
-                        "name": name,
-                        "description": description,
-                        "is_enabled": True,
-                    },
-                    resource_id=policy_id,
-                    resource_type="dlp_policy",
-                    resource_name=name,
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"DLP policy: {name}",
+                        detail={
+                            "policy_id": policy_id,
+                            "name": name,
+                            "description": description,
+                            "is_enabled": True,
+                        },
+                        resource_id=policy_id,
+                        resource_type="dlp_policy",
+                        resource_name=name,
+                        severity="info",
+                    )
+                )
 
         return findings
 

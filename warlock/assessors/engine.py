@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 # Assessment output
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ControlResultData:
     finding_id: str
@@ -37,7 +38,7 @@ class ControlResultData:
     control_id: str
 
     # Determination
-    status: str = "not_assessed"   # compliant, non_compliant, partial, not_assessed, not_applicable
+    status: str = "not_assessed"  # compliant, non_compliant, partial, not_assessed, not_applicable
     severity: str = "info"
 
     # Tier 1: assertion
@@ -75,6 +76,7 @@ AssertionFn = Callable[[dict[str, Any], dict[str, Any]], tuple[bool, list[str]]]
 # Assertion Engine (Tier 1)
 # ---------------------------------------------------------------------------
 
+
 class AssertionEngine:
     """Registry of deterministic assertion functions.
 
@@ -85,7 +87,9 @@ class AssertionEngine:
 
     def __init__(self) -> None:
         self._assertions: dict[str, AssertionFn] = {}
-        self._control_assertions: dict[tuple[str, str], list[str]] = {}  # (framework, control_id) → [assertion_names]
+        self._control_assertions: dict[
+            tuple[str, str], list[str]
+        ] = {}  # (framework, control_id) → [assertion_names]
         self._remediation: dict[str, dict[str, Any]] = {}  # assertion_name → remediation info
 
     def register(self, name: str, fn: AssertionFn) -> None:
@@ -94,9 +98,11 @@ class AssertionEngine:
 
     def assertion(self, name: str):
         """Decorator to register an assertion function."""
+
         def decorator(fn: AssertionFn) -> AssertionFn:
             self.register(name, fn)
             return fn
+
         return decorator
 
     def bind_control(self, framework: str, control_id: str, assertion_name: str) -> None:
@@ -142,6 +148,7 @@ class AssertionEngine:
 # ---------------------------------------------------------------------------
 # Assessor — orchestrates Tier 1 + Tier 2
 # ---------------------------------------------------------------------------
+
 
 class Assessor:
     """Evaluates mapped findings against controls.
@@ -197,9 +204,7 @@ class Assessor:
             ran_names: list[str] = []
 
             for aname in assertion_names:
-                passed, reasons = self.engine.evaluate(
-                    aname, finding.detail, raw_data
-                )
+                passed, reasons = self.engine.evaluate(aname, finding.detail, raw_data)
                 ran_names.append(aname)
                 if not passed:
                     all_passed = False
@@ -235,16 +240,22 @@ class Assessor:
                 result.assessor = f"ai:{ai_result.model}"
                 # Confidence floor — reject low-confidence AI assessments
                 from warlock.config import get_settings
+
                 floor = get_settings().ai_confidence_floor
                 if ai_result.confidence < floor:
                     log.info(
                         "AI confidence %.2f below floor %.2f for %s/%s — keeping not_assessed",
-                        ai_result.confidence, floor, mapping.framework, mapping.control_id,
+                        ai_result.confidence,
+                        floor,
+                        mapping.framework,
+                        mapping.control_id,
                     )
                     result.status = "not_assessed"
                     result.assessor = f"ai:low_confidence:{ai_result.model}"
             except Exception:
-                log.exception("Tier 2 AI reasoning failed for %s/%s", mapping.framework, mapping.control_id)
+                log.exception(
+                    "Tier 2 AI reasoning failed for %s/%s", mapping.framework, mapping.control_id
+                )
 
         return result
 
@@ -291,7 +302,9 @@ class Assessor:
                         result.status = parent.status
                         result.assessor = f"inherited:{parent_id}"
                         # Reduce confidence by 0.1 from parent
-                        parent_conf = parent.ai_confidence if parent.ai_confidence is not None else 1.0
+                        parent_conf = (
+                            parent.ai_confidence if parent.ai_confidence is not None else 1.0
+                        )
                         result.ai_confidence = max(0.0, round(parent_conf - 0.1, 2))
                         result.remediation_summary = parent.remediation_summary
                         result.remediation_steps = list(parent.remediation_steps)

@@ -88,17 +88,19 @@ class OneTrustConnector(BaseConnector):
             for endpoint, event_type, response_key in ONETRUST_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, response_key)
-                    result.events.append(RawEventData(
-                        source="onetrust",
-                        source_type=SourceType.GRC,
-                        provider="onetrust",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="onetrust",
+                            source_type=SourceType.GRC,
+                            provider="onetrust",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("OneTrust %s failed: %s", endpoint, e)
                     result.errors.append(f"{event_type}: {e}")

@@ -160,10 +160,12 @@ class CloudflareConnector(BaseConnector):
         try:
             url = f"{BASE_URL}/zones/{zone_id}/firewall/access_rules/rules"
             rules = self._paginate(client, url)
-            result.events.append(self._raw_event(
-                "cf_waf_rules",
-                {"zone_id": zone_id, "rules": rules},
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_waf_rules",
+                    {"zone_id": zone_id, "rules": rules},
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare WAF rules collection failed for zone %s: %s", zone_id, e)
             result.errors.append(f"cf_waf_rules[{zone_id}]: {e}")
@@ -175,10 +177,12 @@ class CloudflareConnector(BaseConnector):
         try:
             url = f"{BASE_URL}/zones/{zone_id}/dns_records"
             records = self._paginate(client, url)
-            result.events.append(self._raw_event(
-                "cf_dns_records",
-                {"zone_id": zone_id, "records": records},
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_dns_records",
+                    {"zone_id": zone_id, "records": records},
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare DNS records collection failed for zone %s: %s", zone_id, e)
             result.errors.append(f"cf_dns_records[{zone_id}]: {e}")
@@ -200,15 +204,17 @@ class CloudflareConnector(BaseConnector):
             https_resp.raise_for_status()
             https_data = https_resp.json().get("result", {})
 
-            result.events.append(self._raw_event(
-                "cf_ssl_settings",
-                {
-                    "zone_id": zone_id,
-                    "ssl": ssl_data,
-                    "min_tls_version": tls_data,
-                    "always_use_https": https_data,
-                },
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_ssl_settings",
+                    {
+                        "zone_id": zone_id,
+                        "ssl": ssl_data,
+                        "min_tls_version": tls_data,
+                        "always_use_https": https_data,
+                    },
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare SSL settings collection failed for zone %s: %s", zone_id, e)
             result.errors.append(f"cf_ssl_settings[{zone_id}]: {e}")
@@ -220,10 +226,12 @@ class CloudflareConnector(BaseConnector):
         try:
             url = f"{BASE_URL}/zones/{zone_id}/page_shield/scripts"
             scripts = self._paginate(client, url)
-            result.events.append(self._raw_event(
-                "cf_page_shield",
-                {"zone_id": zone_id, "scripts": scripts},
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_page_shield",
+                    {"zone_id": zone_id, "scripts": scripts},
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare Page Shield collection failed for zone %s: %s", zone_id, e)
             result.errors.append(f"cf_page_shield[{zone_id}]: {e}")
@@ -237,10 +245,12 @@ class CloudflareConnector(BaseConnector):
         try:
             url = f"{BASE_URL}/accounts/{account_id}/access/apps"
             apps = self._paginate(client, url)
-            result.events.append(self._raw_event(
-                "cf_access_apps",
-                {"account_id": account_id, "apps": apps},
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_access_apps",
+                    {"account_id": account_id, "apps": apps},
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare Access apps collection failed: %s", e)
             result.errors.append(f"cf_access_apps: {e}")
@@ -252,10 +262,12 @@ class CloudflareConnector(BaseConnector):
         try:
             url = f"{BASE_URL}/accounts/{account_id}/gateway/rules"
             rules = self._paginate(client, url)
-            result.events.append(self._raw_event(
-                "cf_gateway_rules",
-                {"account_id": account_id, "rules": rules},
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_gateway_rules",
+                    {"account_id": account_id, "rules": rules},
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare Gateway rules collection failed: %s", e)
             result.errors.append(f"cf_gateway_rules: {e}")
@@ -267,10 +279,12 @@ class CloudflareConnector(BaseConnector):
         try:
             url = f"{BASE_URL}/accounts/{account_id}/audit_logs"
             logs = self._paginate(client, url)
-            result.events.append(self._raw_event(
-                "cf_audit_logs",
-                {"account_id": account_id, "logs": logs},
-            ))
+            result.events.append(
+                self._raw_event(
+                    "cf_audit_logs",
+                    {"account_id": account_id, "logs": logs},
+                )
+            )
         except Exception as e:
             log.debug("Cloudflare audit logs collection failed: %s", e)
             result.errors.append(f"cf_audit_logs: {e}")

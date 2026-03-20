@@ -79,18 +79,20 @@ class SnykConnector(BaseConnector):
                     f"/rest/orgs/{org_id}/projects",
                     params={"version": "2024-06-21", "limit": "100"},
                 )
-                result.events.append(RawEventData(
-                    source="snyk",
-                    source_type=SourceType.CODE,
-                    provider="snyk",
-                    event_type="snyk_projects",
-                    raw_data={
-                        "endpoint": f"/rest/orgs/{org_id}/projects",
-                        "org_id": org_id,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="snyk",
+                        source_type=SourceType.CODE,
+                        provider="snyk",
+                        event_type="snyk_projects",
+                        raw_data={
+                            "endpoint": f"/rest/orgs/{org_id}/projects",
+                            "org_id": org_id,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Snyk projects failed: %s", e)
                 result.errors.append(f"projects: {e}")
@@ -106,18 +108,20 @@ class SnykConnector(BaseConnector):
                         "type": "vuln",
                     },
                 )
-                result.events.append(RawEventData(
-                    source="snyk",
-                    source_type=SourceType.CODE,
-                    provider="snyk",
-                    event_type="snyk_issues",
-                    raw_data={
-                        "endpoint": f"/rest/orgs/{org_id}/issues",
-                        "org_id": org_id,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="snyk",
+                        source_type=SourceType.CODE,
+                        provider="snyk",
+                        event_type="snyk_issues",
+                        raw_data={
+                            "endpoint": f"/rest/orgs/{org_id}/issues",
+                            "org_id": org_id,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Snyk issues failed: %s", e)
                 result.errors.append(f"issues: {e}")
@@ -125,18 +129,20 @@ class SnykConnector(BaseConnector):
             # 3. Audit Logs (v1 API)
             try:
                 data = self._paginate_v1_audit(client, org_id)
-                result.events.append(RawEventData(
-                    source="snyk",
-                    source_type=SourceType.CODE,
-                    provider="snyk",
-                    event_type="snyk_audit_logs",
-                    raw_data={
-                        "endpoint": f"/v1/org/{org_id}/audit-logs/search",
-                        "org_id": org_id,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="snyk",
+                        source_type=SourceType.CODE,
+                        provider="snyk",
+                        event_type="snyk_audit_logs",
+                        raw_data={
+                            "endpoint": f"/v1/org/{org_id}/audit-logs/search",
+                            "org_id": org_id,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Snyk audit logs failed: %s", e)
                 result.errors.append(f"audit_logs: {e}")

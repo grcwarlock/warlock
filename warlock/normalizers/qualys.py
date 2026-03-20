@@ -75,27 +75,29 @@ class QualysNormalizer(BaseNormalizer):
                 title_text = detection.get("TITLE", "") or f"QID {qid}"
                 cve_id = detection.get("CVE_ID", "")
 
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="vulnerability",
-                    title=f"{title_text}" + (f" ({cve_id})" if cve_id else ""),
-                    detail={
-                        "qid": qid,
-                        "type": detection.get("TYPE", ""),
-                        "severity": severity_num,
-                        "cve_id": cve_id,
-                        "status": detection.get("STATUS", ""),
-                        "results": detection.get("RESULTS", ""),
-                        "first_found": detection.get("FIRST_FOUND_DATETIME", ""),
-                        "last_found": detection.get("LAST_FOUND_DATETIME", ""),
-                        "host_ip": host_ip,
-                        "hostname": hostname,
-                    },
-                    resource_id=host_id,
-                    resource_type="host",
-                    resource_name=hostname or host_ip,
-                    severity=severity,
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="vulnerability",
+                        title=f"{title_text}" + (f" ({cve_id})" if cve_id else ""),
+                        detail={
+                            "qid": qid,
+                            "type": detection.get("TYPE", ""),
+                            "severity": severity_num,
+                            "cve_id": cve_id,
+                            "status": detection.get("STATUS", ""),
+                            "results": detection.get("RESULTS", ""),
+                            "first_found": detection.get("FIRST_FOUND_DATETIME", ""),
+                            "last_found": detection.get("LAST_FOUND_DATETIME", ""),
+                            "host_ip": host_ip,
+                            "hostname": hostname,
+                        },
+                        resource_id=host_id,
+                        resource_type="host",
+                        resource_name=hostname or host_ip,
+                        severity=severity,
+                    )
+                )
 
         return findings
 
@@ -127,24 +129,26 @@ class QualysNormalizer(BaseNormalizer):
             elif criticality == "SERIOUS":
                 severity = "high"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="policy_violation",
-                title=f"Compliance: {title}",
-                detail={
-                    "control_id": control_id,
-                    "status": status,
-                    "criticality": criticality,
-                    "policy": entry.get("POLICY", ""),
-                    "technology": entry.get("TECHNOLOGY", ""),
-                    "rationale": entry.get("RATIONALE", ""),
-                    "remediation": entry.get("REMEDIATION", ""),
-                },
-                resource_id=entry.get("HOST_ID", ""),
-                resource_type="host",
-                resource_name=entry.get("HOST_IP", ""),
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="policy_violation",
+                    title=f"Compliance: {title}",
+                    detail={
+                        "control_id": control_id,
+                        "status": status,
+                        "criticality": criticality,
+                        "policy": entry.get("POLICY", ""),
+                        "technology": entry.get("TECHNOLOGY", ""),
+                        "rationale": entry.get("RATIONALE", ""),
+                        "remediation": entry.get("REMEDIATION", ""),
+                    },
+                    resource_id=entry.get("HOST_ID", ""),
+                    resource_type="host",
+                    resource_name=entry.get("HOST_IP", ""),
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -166,24 +170,26 @@ class QualysNormalizer(BaseNormalizer):
             hostname = host.get("DNS", "") or host.get("NETBIOS", "")
             host_id = host.get("ID", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Asset: {hostname or host_ip or host_id}",
-                detail={
-                    "host_id": host_id,
-                    "ip": host_ip,
-                    "hostname": hostname,
-                    "os": host.get("OS", ""),
-                    "last_scan": host.get("LAST_SCAN_DATETIME", ""),
-                    "tracking_method": host.get("TRACKING_METHOD", ""),
-                    "tags": host.get("TAGS", ""),
-                },
-                resource_id=host_id,
-                resource_type="host",
-                resource_name=hostname or host_ip,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Asset: {hostname or host_ip or host_id}",
+                    detail={
+                        "host_id": host_id,
+                        "ip": host_ip,
+                        "hostname": hostname,
+                        "os": host.get("OS", ""),
+                        "last_scan": host.get("LAST_SCAN_DATETIME", ""),
+                        "tracking_method": host.get("TRACKING_METHOD", ""),
+                        "tags": host.get("TAGS", ""),
+                    },
+                    resource_id=host_id,
+                    resource_type="host",
+                    resource_name=hostname or host_ip,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -204,24 +210,26 @@ class QualysNormalizer(BaseNormalizer):
             qid = vuln.get("QID", "")
             title = vuln.get("TITLE", "") or f"QID {qid}"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"KB: {title}",
-                detail={
-                    "qid": qid,
-                    "vuln_type": vuln.get("VULN_TYPE", ""),
-                    "severity_level": vuln.get("SEVERITY_LEVEL", ""),
-                    "cve_list": vuln.get("CVE_LIST", ""),
-                    "diagnosis": vuln.get("DIAGNOSIS", ""),
-                    "solution": vuln.get("SOLUTION", ""),
-                    "consequence": vuln.get("CONSEQUENCE", ""),
-                },
-                resource_id=f"qid:{qid}",
-                resource_type="knowledge_base",
-                resource_name=title,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"KB: {title}",
+                    detail={
+                        "qid": qid,
+                        "vuln_type": vuln.get("VULN_TYPE", ""),
+                        "severity_level": vuln.get("SEVERITY_LEVEL", ""),
+                        "cve_list": vuln.get("CVE_LIST", ""),
+                        "diagnosis": vuln.get("DIAGNOSIS", ""),
+                        "solution": vuln.get("SOLUTION", ""),
+                        "consequence": vuln.get("CONSEQUENCE", ""),
+                    },
+                    resource_id=f"qid:{qid}",
+                    resource_type="knowledge_base",
+                    resource_name=title,
+                    severity="info",
+                )
+            )
 
         return findings
 

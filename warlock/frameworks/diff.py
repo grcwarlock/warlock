@@ -39,11 +39,7 @@ class FrameworkDiffResult:
 
     @property
     def has_changes(self) -> bool:
-        return bool(
-            self.added_controls
-            or self.removed_controls
-            or self.modified_controls
-        )
+        return bool(self.added_controls or self.removed_controls or self.modified_controls)
 
     @property
     def summary(self) -> str:
@@ -56,10 +52,17 @@ class FrameworkDiffResult:
 
 
 # Fields compared to detect modifications
-_COMPARISON_FIELDS = frozenset({
-    "checks", "event_types", "resource_types", "severity",
-    "monitoring_frequency", "description", "title",
-})
+_COMPARISON_FIELDS = frozenset(
+    {
+        "checks",
+        "event_types",
+        "resource_types",
+        "severity",
+        "monitoring_frequency",
+        "description",
+        "title",
+    }
+)
 
 
 class FrameworkDiff:

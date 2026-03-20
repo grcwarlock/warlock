@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # EDR — CrowdStrike Falcon
     crowdstrike_enabled: bool = False
-    crowdstrike_client_id: str = ""      # or set CROWDSTRIKE_CLIENT_ID
+    crowdstrike_client_id: str = ""  # or set CROWDSTRIKE_CLIENT_ID
     crowdstrike_client_secret: str = ""  # or set CROWDSTRIKE_CLIENT_SECRET
 
     # EDR — Microsoft Defender for Endpoint
@@ -280,23 +280,18 @@ def validate_production_config(settings: Settings) -> None:
     errors: list[str] = []
 
     if not settings.jwt_secret:
-        errors.append(
-            "WLK_JWT_SECRET must be set in production (min 32 chars)"
-        )
+        errors.append("WLK_JWT_SECRET must be set in production (min 32 chars)")
 
     # Encryption key is required when field-level crypto features are active.
     # An empty key with encryption_key="" means Fernet encrypt/decrypt will
     # crash at runtime — catch it at startup instead.
     crypto_features_enabled = settings.encryption_key != ""
     if not crypto_features_enabled:
-        errors.append(
-            "WLK_ENCRYPTION_KEY must be set in production for field-level encryption"
-        )
+        errors.append("WLK_ENCRYPTION_KEY must be set in production for field-level encryption")
 
     if errors:
         raise RuntimeError(
-            "Production configuration validation failed:\n  - "
-            + "\n  - ".join(errors)
+            "Production configuration validation failed:\n  - " + "\n  - ".join(errors)
         )
 
 

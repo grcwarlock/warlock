@@ -28,13 +28,10 @@ log = logging.getLogger(__name__)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_engagement(session: Session, engagement_id: str) -> AuditEngagement:
     """Load an AuditEngagement or raise."""
-    eng = (
-        session.query(AuditEngagement)
-        .filter(AuditEngagement.id == engagement_id)
-        .first()
-    )
+    eng = session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
     if not eng:
         raise ValueError(f"Engagement not found: {engagement_id}")
     return eng
@@ -57,13 +54,10 @@ def _query_results_for_engagement(
     excluded: list[str] | None = None,
 ) -> list[ControlResult]:
     """Query ControlResults within an engagement period."""
-    query = (
-        session.query(ControlResult)
-        .filter(
-            ControlResult.framework == framework,
-            ControlResult.assessed_at >= period_start,
-            ControlResult.assessed_at <= period_end,
-        )
+    query = session.query(ControlResult).filter(
+        ControlResult.framework == framework,
+        ControlResult.assessed_at >= period_start,
+        ControlResult.assessed_at <= period_end,
     )
     if in_scope:
         query = query.filter(ControlResult.control_id.in_(in_scope))
@@ -96,17 +90,21 @@ def _get_narrator():
     """Try to get an AINarrator, return None if not available."""
     try:
         from warlock.assessors.ai_narrator import create_narrator
+
         return create_narrator()
     except Exception:
         return None
 
 
-def _generate_narrative(narrator: Any, session: Session, framework: str, control_id: str) -> str | None:
+def _generate_narrative(
+    narrator: Any, session: Session, framework: str, control_id: str
+) -> str | None:
     """Generate an AI narrative for a control, or return None."""
     if narrator is None:
         return None
     try:
         from warlock.assessors.ai_narrator import aggregate_control_evidence
+
         evidence = aggregate_control_evidence(session, framework, control_id)
         if not evidence.findings:
             return None
@@ -120,6 +118,7 @@ def _generate_narrative(narrator: Any, session: Session, framework: str, control
 # ---------------------------------------------------------------------------
 # ReportGenerator
 # ---------------------------------------------------------------------------
+
 
 class ReportGenerator:
     """Generates framework-specific compliance reports."""
@@ -140,7 +139,10 @@ class ReportGenerator:
         """
         eng = _get_engagement(session, engagement_id)
         results = _query_results_for_engagement(
-            session, eng.framework, eng.period_start, eng.period_end,
+            session,
+            eng.framework,
+            eng.period_start,
+            eng.period_end,
             in_scope=eng.in_scope_controls or None,
             excluded=eng.excluded_controls or None,
         )
@@ -161,17 +163,19 @@ class ReportGenerator:
             exceptions: list[dict[str, Any]] = []
             for r in crs:
                 if r.status == "non_compliant":
-                    exceptions.append({
-                        "finding_id": r.finding_id,
-                        "severity": r.severity,
-                        "assertion": r.assertion_name or "",
-                        "detail": (
-                            r.assertion_findings[:3]
-                            if r.assertion_findings
-                            else [r.ai_assessment[:200] if r.ai_assessment else "Non-compliant"]
-                        ),
-                        "remediation": r.remediation_summary or "",
-                    })
+                    exceptions.append(
+                        {
+                            "finding_id": r.finding_id,
+                            "severity": r.severity,
+                            "assertion": r.assertion_name or "",
+                            "detail": (
+                                r.assertion_findings[:3]
+                                if r.assertion_findings
+                                else [r.ai_assessment[:200] if r.ai_assessment else "Non-compliant"]
+                            ),
+                            "remediation": r.remediation_summary or "",
+                        }
+                    )
 
             if exceptions:
                 with_exceptions += 1
@@ -187,14 +191,16 @@ class ReportGenerator:
             if not description:
                 description = self._soc2_control_description(crs, agg_status)
 
-            control_descriptions.append({
-                "criteria": control_id,
-                "description": description,
-                "test_procedure": test_procedure,
-                "test_result": test_result,
-                "status": agg_status,
-                "exceptions": exceptions,
-            })
+            control_descriptions.append(
+                {
+                    "criteria": control_id,
+                    "description": description,
+                    "test_procedure": test_procedure,
+                    "test_result": test_result,
+                    "status": agg_status,
+                    "exceptions": exceptions,
+                }
+            )
 
         # Management assertion
         total_criteria = len(by_control)
@@ -264,7 +270,10 @@ class ReportGenerator:
         """
         eng = _get_engagement(session, engagement_id)
         results = _query_results_for_engagement(
-            session, eng.framework, eng.period_start, eng.period_end,
+            session,
+            eng.framework,
+            eng.period_start,
+            eng.period_end,
             in_scope=eng.in_scope_controls or None,
             excluded=eng.excluded_controls or None,
         )
@@ -298,29 +307,33 @@ class ReportGenerator:
             if not evidence_summary:
                 evidence_summary = self._iso_evidence_summary(crs)
 
-            controls.append({
-                "control_id": control_id,
-                "applicable": True,
-                "justification": justification,
-                "implementation_status": impl_status,
-                "evidence_summary": evidence_summary,
-                "finding_count": len(crs),
-                "compliant_count": sum(1 for r in crs if r.status == "compliant"),
-                "non_compliant_count": sum(1 for r in crs if r.status == "non_compliant"),
-            })
+            controls.append(
+                {
+                    "control_id": control_id,
+                    "applicable": True,
+                    "justification": justification,
+                    "implementation_status": impl_status,
+                    "evidence_summary": evidence_summary,
+                    "finding_count": len(crs),
+                    "compliant_count": sum(1 for r in crs if r.status == "compliant"),
+                    "non_compliant_count": sum(1 for r in crs if r.status == "non_compliant"),
+                }
+            )
 
         # Excluded controls marked not applicable
         for control_id in sorted(excluded):
-            controls.append({
-                "control_id": control_id,
-                "applicable": False,
-                "justification": "Excluded from scope for this engagement.",
-                "implementation_status": "not_applicable",
-                "evidence_summary": "",
-                "finding_count": 0,
-                "compliant_count": 0,
-                "non_compliant_count": 0,
-            })
+            controls.append(
+                {
+                    "control_id": control_id,
+                    "applicable": False,
+                    "justification": "Excluded from scope for this engagement.",
+                    "implementation_status": "not_applicable",
+                    "evidence_summary": "",
+                    "finding_count": 0,
+                    "compliant_count": 0,
+                    "non_compliant_count": 0,
+                }
+            )
 
         return {
             "report_type": "ISO 27001:2022 Statement of Applicability",
@@ -340,21 +353,15 @@ class ReportGenerator:
                 "applicable": sum(1 for c in controls if c["applicable"]),
                 "not_applicable": sum(1 for c in controls if not c["applicable"]),
                 "implemented": sum(
-                    1 for c in controls
-                    if c["implementation_status"] == "implemented"
+                    1 for c in controls if c["implementation_status"] == "implemented"
                 ),
                 "partially_implemented": sum(
-                    1 for c in controls
-                    if c["implementation_status"] == "partially_implemented"
+                    1 for c in controls if c["implementation_status"] == "partially_implemented"
                 ),
                 "not_implemented": sum(
-                    1 for c in controls
-                    if c["implementation_status"] == "not_implemented"
+                    1 for c in controls if c["implementation_status"] == "not_implemented"
                 ),
-                "planned": sum(
-                    1 for c in controls
-                    if c["implementation_status"] == "planned"
-                ),
+                "planned": sum(1 for c in controls if c["implementation_status"] == "planned"),
             },
             "generated_at": _iso(datetime.now(timezone.utc)),
         }
@@ -381,20 +388,20 @@ class ReportGenerator:
         if engagement_id:
             eng = _get_engagement(session, engagement_id)
             results = _query_results_for_engagement(
-                session, eng.framework, eng.period_start, eng.period_end,
+                session,
+                eng.framework,
+                eng.period_start,
+                eng.period_end,
                 in_scope=eng.in_scope_controls or None,
                 excluded=eng.excluded_controls or None,
             )
             period_text = (
-                f"{eng.period_start.strftime('%Y-%m-%d')} to "
-                f"{eng.period_end.strftime('%Y-%m-%d')}"
+                f"{eng.period_start.strftime('%Y-%m-%d')} to {eng.period_end.strftime('%Y-%m-%d')}"
             )
             title = f"{eng.name} - Compliance Report"
         else:
             results = (
-                session.query(ControlResult)
-                .filter(ControlResult.framework == framework)
-                .all()
+                session.query(ControlResult).filter(ControlResult.framework == framework).all()
             )
             period_text = f"As of {now.strftime('%Y-%m-%d %H:%M UTC')}"
             title = f"{framework} Compliance Report"
@@ -472,9 +479,7 @@ class ReportGenerator:
                 for f in failures[:10]:
                     detail = ""
                     if f.assertion_findings:
-                        detail = "; ".join(
-                            str(x) for x in f.assertion_findings[:3]
-                        )
+                        detail = "; ".join(str(x) for x in f.assertion_findings[:3])
                     elif f.ai_assessment:
                         detail = f.ai_assessment[:150]
                     lines.append(f"- [{f.severity}] {detail or 'Non-compliant finding'}")
@@ -605,7 +610,7 @@ class ReportGenerator:
 <body>
 {html_body}
 <footer>
-  Generated by Warlock GRC Platform | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
+  Generated by Warlock GRC Platform | {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 </footer>
 </body>
 </html>"""
@@ -638,6 +643,7 @@ class ReportGenerator:
         # Try weasyprint first
         try:
             import weasyprint
+
             pdf_doc = weasyprint.HTML(string=html_content).write_pdf()
             log.info("PDF generated via weasyprint (%d bytes)", len(pdf_doc))
             return pdf_doc

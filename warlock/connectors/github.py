@@ -80,18 +80,20 @@ class GitHubConnector(BaseConnector):
                     f"/orgs/{org}/repos",
                     params={"per_page": "100"},
                 )
-                result.events.append(RawEventData(
-                    source="github",
-                    source_type=SourceType.CODE,
-                    provider="github",
-                    event_type="github_repos",
-                    raw_data={
-                        "endpoint": f"/orgs/{org}/repos",
-                        "org": org,
-                        "response": repos,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="github",
+                        source_type=SourceType.CODE,
+                        provider="github",
+                        event_type="github_repos",
+                        raw_data={
+                            "endpoint": f"/orgs/{org}/repos",
+                            "org": org,
+                            "response": repos,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("GitHub repos failed: %s", e)
                 result.errors.append(f"repos: {e}")
@@ -115,27 +117,31 @@ class GitHubConnector(BaseConnector):
                             protections.append(protection)
                         elif resp.status_code == 404:
                             # No branch protection
-                            protections.append({
-                                "_repo": repo_name,
-                                "_branch": default_branch,
-                                "_unprotected": True,
-                            })
+                            protections.append(
+                                {
+                                    "_repo": repo_name,
+                                    "_branch": default_branch,
+                                    "_unprotected": True,
+                                }
+                            )
                     except Exception:
                         pass
 
                 if protections:
-                    result.events.append(RawEventData(
-                        source="github",
-                        source_type=SourceType.CODE,
-                        provider="github",
-                        event_type="github_branch_protections",
-                        raw_data={
-                            "endpoint": "/repos/{owner}/{repo}/branches/{branch}/protection",
-                            "org": org,
-                            "response": protections,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="github",
+                            source_type=SourceType.CODE,
+                            provider="github",
+                            event_type="github_branch_protections",
+                            raw_data={
+                                "endpoint": "/repos/{owner}/{repo}/branches/{branch}/protection",
+                                "org": org,
+                                "response": protections,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
             except Exception as e:
                 log.debug("GitHub branch protections failed: %s", e)
                 result.errors.append(f"branch_protections: {e}")
@@ -147,18 +153,20 @@ class GitHubConnector(BaseConnector):
                     f"/orgs/{org}/audit-log",
                     params={"per_page": "100", "include": "all"},
                 )
-                result.events.append(RawEventData(
-                    source="github",
-                    source_type=SourceType.CODE,
-                    provider="github",
-                    event_type="github_audit_log",
-                    raw_data={
-                        "endpoint": f"/orgs/{org}/audit-log",
-                        "org": org,
-                        "response": audit_events,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="github",
+                        source_type=SourceType.CODE,
+                        provider="github",
+                        event_type="github_audit_log",
+                        raw_data={
+                            "endpoint": f"/orgs/{org}/audit-log",
+                            "org": org,
+                            "response": audit_events,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("GitHub audit log failed: %s", e)
                 result.errors.append(f"audit_log: {e}")
@@ -170,18 +178,20 @@ class GitHubConnector(BaseConnector):
                     f"/orgs/{org}/dependabot/alerts",
                     params={"per_page": "100", "state": "open"},
                 )
-                result.events.append(RawEventData(
-                    source="github",
-                    source_type=SourceType.CODE,
-                    provider="github",
-                    event_type="github_dependabot_alerts",
-                    raw_data={
-                        "endpoint": f"/orgs/{org}/dependabot/alerts",
-                        "org": org,
-                        "response": dependabot,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="github",
+                        source_type=SourceType.CODE,
+                        provider="github",
+                        event_type="github_dependabot_alerts",
+                        raw_data={
+                            "endpoint": f"/orgs/{org}/dependabot/alerts",
+                            "org": org,
+                            "response": dependabot,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("GitHub dependabot alerts failed: %s", e)
                 result.errors.append(f"dependabot_alerts: {e}")
@@ -193,18 +203,20 @@ class GitHubConnector(BaseConnector):
                     f"/orgs/{org}/secret-scanning/alerts",
                     params={"per_page": "100", "state": "open"},
                 )
-                result.events.append(RawEventData(
-                    source="github",
-                    source_type=SourceType.CODE,
-                    provider="github",
-                    event_type="github_secret_scanning_alerts",
-                    raw_data={
-                        "endpoint": f"/orgs/{org}/secret-scanning/alerts",
-                        "org": org,
-                        "response": secrets,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="github",
+                        source_type=SourceType.CODE,
+                        provider="github",
+                        event_type="github_secret_scanning_alerts",
+                        raw_data={
+                            "endpoint": f"/orgs/{org}/secret-scanning/alerts",
+                            "org": org,
+                            "response": secrets,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("GitHub secret scanning alerts failed: %s", e)
                 result.errors.append(f"secret_scanning_alerts: {e}")

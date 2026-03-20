@@ -64,28 +64,30 @@ class AlibabaNormalizer(BaseNormalizer):
             instance_name = alert.get("InstanceName", "")
             alarm_type = alert.get("AlarmEventType", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Alibaba Security Center: {alarm_name}",
-                detail={
-                    "alarm_event_name": alarm_name,
-                    "alarm_event_type": alarm_type,
-                    "level": alert.get("Level", ""),
-                    "instance_name": instance_name,
-                    "instance_id": alert.get("InstanceId", ""),
-                    "internet_ip": alert.get("InternetIp", ""),
-                    "intranet_ip": alert.get("IntranetIp", ""),
-                    "description": alert.get("Description", ""),
-                    "solution": alert.get("Solution", ""),
-                    "can_cancel_fault": alert.get("CanCancelFault", False),
-                    "uuid": alert.get("Uuid", ""),
-                },
-                resource_id=alert.get("InstanceId", ""),
-                resource_type="ecs_instance",
-                resource_name=instance_name,
-                severity=mapped_severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Alibaba Security Center: {alarm_name}",
+                    detail={
+                        "alarm_event_name": alarm_name,
+                        "alarm_event_type": alarm_type,
+                        "level": alert.get("Level", ""),
+                        "instance_name": instance_name,
+                        "instance_id": alert.get("InstanceId", ""),
+                        "internet_ip": alert.get("InternetIp", ""),
+                        "intranet_ip": alert.get("IntranetIp", ""),
+                        "description": alert.get("Description", ""),
+                        "solution": alert.get("Solution", ""),
+                        "can_cancel_fault": alert.get("CanCancelFault", False),
+                        "uuid": alert.get("Uuid", ""),
+                    },
+                    resource_id=alert.get("InstanceId", ""),
+                    resource_type="ecs_instance",
+                    resource_name=instance_name,
+                    severity=mapped_severity,
+                )
+            )
 
         return findings
 
@@ -116,9 +118,7 @@ class AlibabaNormalizer(BaseNormalizer):
             last_login = user.get("LastLoginDate", "")
             if last_login:
                 try:
-                    login_dt = datetime.fromisoformat(
-                        last_login.replace("Z", "+00:00")
-                    )
+                    login_dt = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
                     if login_dt < stale_threshold:
                         issues.append(f"stale_user_last_login_{last_login}")
                         if severity != "high":
@@ -130,9 +130,7 @@ class AlibabaNormalizer(BaseNormalizer):
                 create_date = user.get("CreateDate", "")
                 if create_date:
                     try:
-                        create_dt = datetime.fromisoformat(
-                            create_date.replace("Z", "+00:00")
-                        )
+                        create_dt = datetime.fromisoformat(create_date.replace("Z", "+00:00"))
                         if create_dt < stale_threshold:
                             issues.append("never_logged_in_stale")
                             if severity != "high":
@@ -144,27 +142,27 @@ class AlibabaNormalizer(BaseNormalizer):
             if issues:
                 obs_type = "misconfiguration" if "mfa_not_enabled" in issues else "inventory"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"RAM user: {user_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "user_name": user_name,
-                    "user_id": user_id,
-                    "display_name": user.get("DisplayName", ""),
-                    "create_date": user.get("CreateDate", ""),
-                    "last_login_date": last_login,
-                    "has_mfa": has_mfa,
-                    "mfa_serial": mfa_device.get("SerialNumber", ""),
-                    "issues": issues,
-                },
-                resource_id=user_id,
-                resource_type="ram_user",
-                resource_name=user_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"RAM user: {user_name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "user_name": user_name,
+                        "user_id": user_id,
+                        "display_name": user.get("DisplayName", ""),
+                        "create_date": user.get("CreateDate", ""),
+                        "last_login_date": last_login,
+                        "has_mfa": has_mfa,
+                        "mfa_serial": mfa_device.get("SerialNumber", ""),
+                        "issues": issues,
+                    },
+                    resource_id=user_id,
+                    resource_type="ram_user",
+                    resource_name=user_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -177,10 +175,17 @@ class AlibabaNormalizer(BaseNormalizer):
 
         # Actions that indicate privilege escalation
         escalation_actions = {
-            "AttachPolicyToUser", "AttachPolicyToGroup", "AttachPolicyToRole",
-            "CreatePolicy", "CreatePolicyVersion", "SetDefaultPolicyVersion",
-            "CreateRole", "AssumeRole", "CreateAccessKey",
-            "UpdateRole", "CreateUser",
+            "AttachPolicyToUser",
+            "AttachPolicyToGroup",
+            "AttachPolicyToRole",
+            "CreatePolicy",
+            "CreatePolicyVersion",
+            "SetDefaultPolicyVersion",
+            "CreateRole",
+            "AssumeRole",
+            "CreateAccessKey",
+            "UpdateRole",
+            "CreateUser",
         }
 
         for event in events:
@@ -206,40 +211,39 @@ class AlibabaNormalizer(BaseNormalizer):
             if severity == "info":
                 continue
 
-            principal = (
-                user_identity.get("principalId", "")
-                or user_identity.get("PrincipalId", "")
-            )
-            user_name = (
-                user_identity.get("userName", "")
-                or user_identity.get("UserName", "")
-            )
+            principal = user_identity.get("principalId", "") or user_identity.get("PrincipalId", "")
+            user_name = user_identity.get("userName", "") or user_identity.get("UserName", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"ActionTrail: {event_name}" + (
-                    f" — error: {error_code}" if error_code else ""
-                ),
-                detail={
-                    "event_name": event_name,
-                    "event_source": event_source,
-                    "event_time": event.get("eventTime", event.get("EventTime", "")),
-                    "error_code": error_code,
-                    "error_message": error_message,
-                    "source_ip": event.get("sourceIpAddress", event.get("SourceIpAddress", "")),
-                    "user_agent": event.get("userAgent", event.get("UserAgent", "")),
-                    "principal_id": principal,
-                    "user_name": user_name,
-                    "request_params": event.get("requestParameters", event.get("RequestParameters", {})),
-                    "is_privilege_escalation": event_name in escalation_actions,
-                },
-                resource_id=event.get("resourceId", event.get("ResourceId", "")),
-                resource_type=event.get("resourceType", event.get("ResourceType", "alibaba_resource")),
-                resource_name=event_name,
-                severity=severity,
-                account_id=event.get("accountId", event.get("AccountId", "")),
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"ActionTrail: {event_name}"
+                    + (f" — error: {error_code}" if error_code else ""),
+                    detail={
+                        "event_name": event_name,
+                        "event_source": event_source,
+                        "event_time": event.get("eventTime", event.get("EventTime", "")),
+                        "error_code": error_code,
+                        "error_message": error_message,
+                        "source_ip": event.get("sourceIpAddress", event.get("SourceIpAddress", "")),
+                        "user_agent": event.get("userAgent", event.get("UserAgent", "")),
+                        "principal_id": principal,
+                        "user_name": user_name,
+                        "request_params": event.get(
+                            "requestParameters", event.get("RequestParameters", {})
+                        ),
+                        "is_privilege_escalation": event_name in escalation_actions,
+                    },
+                    resource_id=event.get("resourceId", event.get("ResourceId", "")),
+                    resource_type=event.get(
+                        "resourceType", event.get("ResourceType", "alibaba_resource")
+                    ),
+                    resource_name=event_name,
+                    severity=severity,
+                    account_id=event.get("accountId", event.get("AccountId", "")),
+                )
+            )
 
         return findings
 
@@ -292,25 +296,26 @@ class AlibabaNormalizer(BaseNormalizer):
                 if "all_ports_open_to_internet" in issues:
                     severity = "critical"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Security group: {sg_name}" + (
-                    f" — {len(issues)} open ingress issues" if issues else ""
-                ),
-                detail={
-                    "security_group_id": sg_id,
-                    "security_group_name": sg_name,
-                    "vpc_id": sg.get("VpcId", ""),
-                    "rule_count": len(rules),
-                    "issues": issues,
-                    "rules": rules,
-                },
-                resource_id=sg_id,
-                resource_type="ecs_security_group",
-                resource_name=sg_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Security group: {sg_name}"
+                    + (f" — {len(issues)} open ingress issues" if issues else ""),
+                    detail={
+                        "security_group_id": sg_id,
+                        "security_group_name": sg_name,
+                        "vpc_id": sg.get("VpcId", ""),
+                        "rule_count": len(rules),
+                        "issues": issues,
+                        "rules": rules,
+                    },
+                    resource_id=sg_id,
+                    resource_type="ecs_security_group",
+                    resource_name=sg_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -355,30 +360,30 @@ class AlibabaNormalizer(BaseNormalizer):
 
             obs_type = "inventory"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"KMS key: {key_id}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "key_id": key_id,
-                    "key_state": key_state,
-                    "creator": creator,
-                    "description": description,
-                    "key_usage": key_usage,
-                    "creation_date": metadata.get("CreationDate", ""),
-                    "delete_date": metadata.get("DeleteDate", ""),
-                    "automatic_rotation": rotation_interval,
-                    "origin": metadata.get("Origin", ""),
-                    "key_spec": metadata.get("KeySpec", ""),
-                    "issues": issues,
-                },
-                resource_id=key_id,
-                resource_type="kms_key",
-                resource_name=description or key_id,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"KMS key: {key_id}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "key_id": key_id,
+                        "key_state": key_state,
+                        "creator": creator,
+                        "description": description,
+                        "key_usage": key_usage,
+                        "creation_date": metadata.get("CreationDate", ""),
+                        "delete_date": metadata.get("DeleteDate", ""),
+                        "automatic_rotation": rotation_interval,
+                        "origin": metadata.get("Origin", ""),
+                        "key_spec": metadata.get("KeySpec", ""),
+                        "issues": issues,
+                    },
+                    resource_id=key_id,
+                    resource_type="kms_key",
+                    resource_name=description or key_id,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -409,26 +414,28 @@ class AlibabaNormalizer(BaseNormalizer):
             }
             severity = risk_severity_map.get(risk_level, "medium")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="policy_violation",
-                title=f"Config non-compliant: {config_rule_name}",
-                detail={
-                    "config_rule_name": config_rule_name,
-                    "config_rule_id": result.get("ConfigRuleId", ""),
-                    "compliance_pack_id": result.get("CompliancePackId", ""),
-                    "compliance_type": compliance_type,
-                    "risk_level": risk_level,
-                    "annotation": annotation,
-                    "resource_id": resource_id,
-                    "resource_type": resource_type,
-                    "invocation_time": result.get("InvocationTime", ""),
-                },
-                resource_id=resource_id,
-                resource_type=resource_type or "alibaba_resource",
-                resource_name=resource_id,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="policy_violation",
+                    title=f"Config non-compliant: {config_rule_name}",
+                    detail={
+                        "config_rule_name": config_rule_name,
+                        "config_rule_id": result.get("ConfigRuleId", ""),
+                        "compliance_pack_id": result.get("CompliancePackId", ""),
+                        "compliance_type": compliance_type,
+                        "risk_level": risk_level,
+                        "annotation": annotation,
+                        "resource_id": resource_id,
+                        "resource_type": resource_type,
+                        "invocation_time": result.get("InvocationTime", ""),
+                    },
+                    resource_id=resource_id,
+                    resource_type=resource_type or "alibaba_resource",
+                    resource_name=resource_id,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -461,8 +468,8 @@ class AlibabaNormalizer(BaseNormalizer):
             has_encryption = bool(
                 encryption_info.get("SSEAlgorithm", "")
                 or encryption_info.get("ServerSideEncryptionRule", {})
-                   .get("ApplyServerSideEncryptionByDefault", {})
-                   .get("SSEAlgorithm", "")
+                .get("ApplyServerSideEncryptionByDefault", {})
+                .get("SSEAlgorithm", "")
             )
             if not has_encryption:
                 issues.append("server_side_encryption_missing")
@@ -473,26 +480,27 @@ class AlibabaNormalizer(BaseNormalizer):
             if issues:
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"OSS bucket: {bucket_name}" + (
-                    f" — {', '.join(issues)}" if issues else ""
-                ),
-                detail={
-                    "bucket_name": bucket_name,
-                    "location": bucket.get("Location", ""),
-                    "creation_date": bucket.get("CreationDate", ""),
-                    "acl": effective_grant,
-                    "has_encryption": has_encryption,
-                    "encryption_info": encryption_info,
-                    "issues": issues,
-                },
-                resource_id=f"oss://{bucket_name}",
-                resource_type="oss_bucket",
-                resource_name=bucket_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"OSS bucket: {bucket_name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "bucket_name": bucket_name,
+                        "location": bucket.get("Location", ""),
+                        "creation_date": bucket.get("CreationDate", ""),
+                        "acl": effective_grant,
+                        "has_encryption": has_encryption,
+                        "encryption_info": encryption_info,
+                        "issues": issues,
+                    },
+                    resource_id=f"oss://{bucket_name}",
+                    resource_type="oss_bucket",
+                    resource_name=bucket_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 

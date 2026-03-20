@@ -80,66 +80,72 @@ class CloudflareNormalizer(BaseNormalizer):
             notes = rule.get("notes", "")
 
             # Inventory for every rule
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"WAF rule: {mode} {target} {value}",
-                detail={
-                    "rule_id": rule_id,
-                    "mode": mode,
-                    "target": target,
-                    "value": value,
-                    "notes": notes,
-                    "zone_id": zone_id,
-                },
-                resource_id=rule_id,
-                resource_type="cloudflare_waf_rule",
-                resource_name=f"{target}:{value}",
-                account_id=zone_id,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"WAF rule: {mode} {target} {value}",
+                    detail={
+                        "rule_id": rule_id,
+                        "mode": mode,
+                        "target": target,
+                        "value": value,
+                        "notes": notes,
+                        "zone_id": zone_id,
+                    },
+                    resource_id=rule_id,
+                    resource_type="cloudflare_waf_rule",
+                    resource_name=f"{target}:{value}",
+                    account_id=zone_id,
+                    severity="info",
+                )
+            )
 
             # Flag disabled rules
             if mode in ("disabled", ""):
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"WAF rule disabled: {target} {value}",
-                    detail={
-                        "rule_id": rule_id,
-                        "mode": mode,
-                        "target": target,
-                        "value": value,
-                        "issue": "WAF rule is disabled and not enforcing protection",
-                        "zone_id": zone_id,
-                    },
-                    resource_id=rule_id,
-                    resource_type="cloudflare_waf_rule",
-                    resource_name=f"{target}:{value}",
-                    account_id=zone_id,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"WAF rule disabled: {target} {value}",
+                        detail={
+                            "rule_id": rule_id,
+                            "mode": mode,
+                            "target": target,
+                            "value": value,
+                            "issue": "WAF rule is disabled and not enforcing protection",
+                            "zone_id": zone_id,
+                        },
+                        resource_id=rule_id,
+                        resource_type="cloudflare_waf_rule",
+                        resource_name=f"{target}:{value}",
+                        account_id=zone_id,
+                        severity="medium",
+                    )
+                )
 
             # Flag permissive modes (whitelist/js_challenge when block expected)
             if mode in ("whitelist",):
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"WAF rule is permissive (whitelist): {target} {value}",
-                    detail={
-                        "rule_id": rule_id,
-                        "mode": mode,
-                        "target": target,
-                        "value": value,
-                        "issue": "WAF rule uses whitelist mode, bypassing protection",
-                        "zone_id": zone_id,
-                    },
-                    resource_id=rule_id,
-                    resource_type="cloudflare_waf_rule",
-                    resource_name=f"{target}:{value}",
-                    account_id=zone_id,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"WAF rule is permissive (whitelist): {target} {value}",
+                        detail={
+                            "rule_id": rule_id,
+                            "mode": mode,
+                            "target": target,
+                            "value": value,
+                            "issue": "WAF rule uses whitelist mode, bypassing protection",
+                            "zone_id": zone_id,
+                        },
+                        resource_id=rule_id,
+                        resource_type="cloudflare_waf_rule",
+                        resource_name=f"{target}:{value}",
+                        account_id=zone_id,
+                        severity="medium",
+                    )
+                )
 
         return findings
 
@@ -160,69 +166,75 @@ class CloudflareNormalizer(BaseNormalizer):
             ttl = rec.get("ttl", 0)
 
             # Inventory
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"DNS {rec_type}: {name} -> {content}",
-                detail={
-                    "record_id": rec_id,
-                    "type": rec_type,
-                    "name": name,
-                    "content": content,
-                    "proxied": proxied,
-                    "ttl": ttl,
-                    "zone_id": zone_id,
-                },
-                resource_id=rec_id,
-                resource_type="cloudflare_dns_record",
-                resource_name=name,
-                account_id=zone_id,
-                severity="info",
-            ))
-
-            # Flag CNAME pointing to external / uncontrolled origins
-            if rec_type == "CNAME" and not content.endswith(".cdn.cloudflare.net"):
-                # External CNAME that could be a dangling pointer or subdomain takeover risk
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"CNAME to external origin: {name} -> {content}",
-                    detail={
-                        "record_id": rec_id,
-                        "name": name,
-                        "content": content,
-                        "proxied": proxied,
-                        "issue": "CNAME points to an external origin — verify ownership to prevent subdomain takeover",
-                        "zone_id": zone_id,
-                    },
-                    resource_id=rec_id,
-                    resource_type="cloudflare_dns_record",
-                    resource_name=name,
-                    account_id=zone_id,
-                    severity="low",
-                ))
-
-            # Flag A/AAAA/CNAME records not proxied through Cloudflare
-            if rec_type in ("A", "AAAA", "CNAME") and not proxied:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"DNS record not proxied: {name} ({rec_type})",
+                    observation_type="inventory",
+                    title=f"DNS {rec_type}: {name} -> {content}",
                     detail={
                         "record_id": rec_id,
                         "type": rec_type,
                         "name": name,
                         "content": content,
                         "proxied": proxied,
-                        "issue": "Record bypasses Cloudflare proxy — origin IP exposed, no WAF/DDoS protection",
+                        "ttl": ttl,
                         "zone_id": zone_id,
                     },
                     resource_id=rec_id,
                     resource_type="cloudflare_dns_record",
                     resource_name=name,
                     account_id=zone_id,
-                    severity="low",
-                ))
+                    severity="info",
+                )
+            )
+
+            # Flag CNAME pointing to external / uncontrolled origins
+            if rec_type == "CNAME" and not content.endswith(".cdn.cloudflare.net"):
+                # External CNAME that could be a dangling pointer or subdomain takeover risk
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"CNAME to external origin: {name} -> {content}",
+                        detail={
+                            "record_id": rec_id,
+                            "name": name,
+                            "content": content,
+                            "proxied": proxied,
+                            "issue": "CNAME points to an external origin — verify ownership to prevent subdomain takeover",
+                            "zone_id": zone_id,
+                        },
+                        resource_id=rec_id,
+                        resource_type="cloudflare_dns_record",
+                        resource_name=name,
+                        account_id=zone_id,
+                        severity="low",
+                    )
+                )
+
+            # Flag A/AAAA/CNAME records not proxied through Cloudflare
+            if rec_type in ("A", "AAAA", "CNAME") and not proxied:
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"DNS record not proxied: {name} ({rec_type})",
+                        detail={
+                            "record_id": rec_id,
+                            "type": rec_type,
+                            "name": name,
+                            "content": content,
+                            "proxied": proxied,
+                            "issue": "Record bypasses Cloudflare proxy — origin IP exposed, no WAF/DDoS protection",
+                            "zone_id": zone_id,
+                        },
+                        resource_id=rec_id,
+                        resource_type="cloudflare_dns_record",
+                        resource_name=name,
+                        account_id=zone_id,
+                        severity="low",
+                    )
+                )
 
         return findings
 
@@ -244,66 +256,72 @@ class CloudflareNormalizer(BaseNormalizer):
             allowed_idps = app.get("allowed_idps", [])
 
             # Inventory
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Access app: {app_name} ({app_type})",
-                detail={
-                    "app_id": app_id,
-                    "name": app_name,
-                    "type": app_type,
-                    "domain": domain,
-                    "session_duration": session_duration,
-                    "purpose_justification_required": purpose_justification,
-                    "allowed_idps": allowed_idps,
-                    "account_id": account_id,
-                },
-                resource_id=app_id,
-                resource_type="cloudflare_access_app",
-                resource_name=app_name,
-                account_id=account_id,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Access app: {app_name} ({app_type})",
+                    detail={
+                        "app_id": app_id,
+                        "name": app_name,
+                        "type": app_type,
+                        "domain": domain,
+                        "session_duration": session_duration,
+                        "purpose_justification_required": purpose_justification,
+                        "allowed_idps": allowed_idps,
+                        "account_id": account_id,
+                    },
+                    resource_id=app_id,
+                    resource_type="cloudflare_access_app",
+                    resource_name=app_name,
+                    account_id=account_id,
+                    severity="info",
+                )
+            )
 
             # Flag long session durations (> 24h)
             if session_duration and self._session_hours(session_duration) > 24:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Access app excessive session duration: {app_name} ({session_duration})",
-                    detail={
-                        "app_id": app_id,
-                        "name": app_name,
-                        "session_duration": session_duration,
-                        "issue": "Session duration exceeds 24 hours — increases risk if credentials are compromised",
-                        "account_id": account_id,
-                    },
-                    resource_id=app_id,
-                    resource_type="cloudflare_access_app",
-                    resource_name=app_name,
-                    account_id=account_id,
-                    severity="medium",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Access app excessive session duration: {app_name} ({session_duration})",
+                        detail={
+                            "app_id": app_id,
+                            "name": app_name,
+                            "session_duration": session_duration,
+                            "issue": "Session duration exceeds 24 hours — increases risk if credentials are compromised",
+                            "account_id": account_id,
+                        },
+                        resource_id=app_id,
+                        resource_type="cloudflare_access_app",
+                        resource_name=app_name,
+                        account_id=account_id,
+                        severity="medium",
+                    )
+                )
 
             # Flag missing purpose justification
             if not purpose_justification:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="misconfiguration",
-                    title=f"Access app missing purpose justification: {app_name}",
-                    detail={
-                        "app_id": app_id,
-                        "name": app_name,
-                        "purpose_justification_required": False,
-                        "issue": "Purpose justification not required — reduces audit trail for access decisions",
-                        "account_id": account_id,
-                    },
-                    resource_id=app_id,
-                    resource_type="cloudflare_access_app",
-                    resource_name=app_name,
-                    account_id=account_id,
-                    severity="low",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="misconfiguration",
+                        title=f"Access app missing purpose justification: {app_name}",
+                        detail={
+                            "app_id": app_id,
+                            "name": app_name,
+                            "purpose_justification_required": False,
+                            "issue": "Purpose justification not required — reduces audit trail for access decisions",
+                            "account_id": account_id,
+                        },
+                        resource_id=app_id,
+                        resource_type="cloudflare_access_app",
+                        resource_name=app_name,
+                        account_id=account_id,
+                        severity="low",
+                    )
+                )
 
         return findings
 
@@ -341,48 +359,52 @@ class CloudflareNormalizer(BaseNormalizer):
             traffic = rule.get("traffic", "")
             filters = rule.get("filters", [])
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Gateway rule: {rule_name} ({action})",
-                detail={
-                    "rule_id": rule_id,
-                    "name": rule_name,
-                    "enabled": enabled,
-                    "action": action,
-                    "traffic": traffic,
-                    "filters": filters,
-                    "account_id": account_id,
-                },
-                resource_id=rule_id,
-                resource_type="cloudflare_gateway_rule",
-                resource_name=rule_name,
-                account_id=account_id,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Gateway rule: {rule_name} ({action})",
+                    detail={
+                        "rule_id": rule_id,
+                        "name": rule_name,
+                        "enabled": enabled,
+                        "action": action,
+                        "traffic": traffic,
+                        "filters": filters,
+                        "account_id": account_id,
+                    },
+                    resource_id=rule_id,
+                    resource_type="cloudflare_gateway_rule",
+                    resource_name=rule_name,
+                    account_id=account_id,
+                    severity="info",
+                )
+            )
 
         # Flag low rule coverage
         if total > 0 and enabled_count < total:
             disabled_count = total - enabled_count
             coverage_pct = round(enabled_count / total * 100, 1)
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title=f"Gateway rules: {disabled_count}/{total} disabled ({coverage_pct}% coverage)",
-                detail={
-                    "total_rules": total,
-                    "enabled_rules": enabled_count,
-                    "disabled_rules": disabled_count,
-                    "coverage_percent": coverage_pct,
-                    "issue": "Not all Gateway rules are enabled — disabled rules reduce threat coverage",
-                    "account_id": account_id,
-                },
-                resource_id=account_id,
-                resource_type="cloudflare_gateway",
-                resource_name="gateway_rules",
-                account_id=account_id,
-                severity="medium" if coverage_pct < 50 else "low",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title=f"Gateway rules: {disabled_count}/{total} disabled ({coverage_pct}% coverage)",
+                    detail={
+                        "total_rules": total,
+                        "enabled_rules": enabled_count,
+                        "disabled_rules": disabled_count,
+                        "coverage_percent": coverage_pct,
+                        "issue": "Not all Gateway rules are enabled — disabled rules reduce threat coverage",
+                        "account_id": account_id,
+                    },
+                    resource_id=account_id,
+                    resource_type="cloudflare_gateway",
+                    resource_name="gateway_rules",
+                    account_id=account_id,
+                    severity="medium" if coverage_pct < 50 else "low",
+                )
+            )
 
         return findings
 
@@ -398,82 +420,94 @@ class CloudflareNormalizer(BaseNormalizer):
 
         ssl_mode = ssl.get("value", "") if isinstance(ssl, dict) else str(ssl)
         tls_version = min_tls.get("value", "") if isinstance(min_tls, dict) else str(min_tls)
-        https_enforced = always_https.get("value", "off") if isinstance(always_https, dict) else str(always_https)
+        https_enforced = (
+            always_https.get("value", "off")
+            if isinstance(always_https, dict)
+            else str(always_https)
+        )
 
         # Inventory
-        findings.append(FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"SSL/TLS settings: mode={ssl_mode}, min_tls={tls_version}, https={https_enforced}",
-            detail={
-                "ssl_mode": ssl_mode,
-                "min_tls_version": tls_version,
-                "always_use_https": https_enforced,
-                "zone_id": zone_id,
-            },
-            resource_id=zone_id,
-            resource_type="cloudflare_zone_ssl",
-            resource_name=f"zone:{zone_id}",
-            account_id=zone_id,
-            severity="info",
-        ))
+        findings.append(
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"SSL/TLS settings: mode={ssl_mode}, min_tls={tls_version}, https={https_enforced}",
+                detail={
+                    "ssl_mode": ssl_mode,
+                    "min_tls_version": tls_version,
+                    "always_use_https": https_enforced,
+                    "zone_id": zone_id,
+                },
+                resource_id=zone_id,
+                resource_type="cloudflare_zone_ssl",
+                resource_name=f"zone:{zone_id}",
+                account_id=zone_id,
+                severity="info",
+            )
+        )
 
         # Flag SSL mode not full_strict
         if ssl_mode and ssl_mode not in ("full", "strict", "full_strict"):
             severity = "high" if ssl_mode in ("off", "flexible") else "medium"
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title=f"SSL mode not strict: {ssl_mode}",
-                detail={
-                    "ssl_mode": ssl_mode,
-                    "expected": "full_strict",
-                    "issue": f"SSL mode '{ssl_mode}' does not validate origin certificates — vulnerable to MITM",
-                    "zone_id": zone_id,
-                },
-                resource_id=zone_id,
-                resource_type="cloudflare_zone_ssl",
-                resource_name=f"zone:{zone_id}",
-                account_id=zone_id,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title=f"SSL mode not strict: {ssl_mode}",
+                    detail={
+                        "ssl_mode": ssl_mode,
+                        "expected": "full_strict",
+                        "issue": f"SSL mode '{ssl_mode}' does not validate origin certificates — vulnerable to MITM",
+                        "zone_id": zone_id,
+                    },
+                    resource_id=zone_id,
+                    resource_type="cloudflare_zone_ssl",
+                    resource_name=f"zone:{zone_id}",
+                    account_id=zone_id,
+                    severity=severity,
+                )
+            )
 
         # Flag TLS version < 1.2
         if tls_version and tls_version in ("1.0", "1.1"):
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title=f"Minimum TLS version too low: {tls_version}",
-                detail={
-                    "min_tls_version": tls_version,
-                    "expected": "1.2 or higher",
-                    "issue": f"TLS {tls_version} has known vulnerabilities and is deprecated",
-                    "zone_id": zone_id,
-                },
-                resource_id=zone_id,
-                resource_type="cloudflare_zone_ssl",
-                resource_name=f"zone:{zone_id}",
-                account_id=zone_id,
-                severity="high",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title=f"Minimum TLS version too low: {tls_version}",
+                    detail={
+                        "min_tls_version": tls_version,
+                        "expected": "1.2 or higher",
+                        "issue": f"TLS {tls_version} has known vulnerabilities and is deprecated",
+                        "zone_id": zone_id,
+                    },
+                    resource_id=zone_id,
+                    resource_type="cloudflare_zone_ssl",
+                    resource_name=f"zone:{zone_id}",
+                    account_id=zone_id,
+                    severity="high",
+                )
+            )
 
         # Flag HTTPS not enforced
         if https_enforced != "on":
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title="Always Use HTTPS not enabled",
-                detail={
-                    "always_use_https": https_enforced,
-                    "issue": "HTTP traffic is not automatically redirected to HTTPS",
-                    "zone_id": zone_id,
-                },
-                resource_id=zone_id,
-                resource_type="cloudflare_zone_ssl",
-                resource_name=f"zone:{zone_id}",
-                account_id=zone_id,
-                severity="medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title="Always Use HTTPS not enabled",
+                    detail={
+                        "always_use_https": https_enforced,
+                        "issue": "HTTP traffic is not automatically redirected to HTTPS",
+                        "zone_id": zone_id,
+                    },
+                    resource_id=zone_id,
+                    resource_type="cloudflare_zone_ssl",
+                    resource_name=f"zone:{zone_id}",
+                    account_id=zone_id,
+                    severity="medium",
+                )
+            )
 
         return findings
 
@@ -496,51 +530,55 @@ class CloudflareNormalizer(BaseNormalizer):
             last_seen = script.get("last_seen_at", "")
 
             # Inventory
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Page Shield script: {script_url}",
-                detail={
-                    "script_id": script_id,
-                    "url": script_url,
-                    "host": host,
-                    "malicious": malicious,
-                    "js_integrity_score": js_integrity_score,
-                    "first_seen_at": first_seen,
-                    "last_seen_at": last_seen,
-                    "fetched_at": fetched_at,
-                    "zone_id": zone_id,
-                },
-                resource_id=script_id,
-                resource_type="cloudflare_page_shield_script",
-                resource_name=script_url,
-                account_id=zone_id,
-                severity="info",
-            ))
-
-            # Alert on malicious scripts
-            if malicious:
-                findings.append(FindingData(
+            findings.append(
+                FindingData(
                     **self._base(raw),
-                    observation_type="alert",
-                    title=f"Malicious script detected: {script_url}",
+                    observation_type="inventory",
+                    title=f"Page Shield script: {script_url}",
                     detail={
                         "script_id": script_id,
                         "url": script_url,
                         "host": host,
-                        "malicious": True,
+                        "malicious": malicious,
                         "js_integrity_score": js_integrity_score,
                         "first_seen_at": first_seen,
                         "last_seen_at": last_seen,
-                        "issue": "Page Shield flagged this script as malicious — possible supply chain attack",
+                        "fetched_at": fetched_at,
                         "zone_id": zone_id,
                     },
                     resource_id=script_id,
                     resource_type="cloudflare_page_shield_script",
                     resource_name=script_url,
                     account_id=zone_id,
-                    severity="critical",
-                ))
+                    severity="info",
+                )
+            )
+
+            # Alert on malicious scripts
+            if malicious:
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="alert",
+                        title=f"Malicious script detected: {script_url}",
+                        detail={
+                            "script_id": script_id,
+                            "url": script_url,
+                            "host": host,
+                            "malicious": True,
+                            "js_integrity_score": js_integrity_score,
+                            "first_seen_at": first_seen,
+                            "last_seen_at": last_seen,
+                            "issue": "Page Shield flagged this script as malicious — possible supply chain attack",
+                            "zone_id": zone_id,
+                        },
+                        resource_id=script_id,
+                        resource_type="cloudflare_page_shield_script",
+                        resource_name=script_url,
+                        account_id=zone_id,
+                        severity="critical",
+                    )
+                )
 
         return findings
 
@@ -567,34 +605,45 @@ class CloudflareNormalizer(BaseNormalizer):
 
             # Only alert on sensitive actions
             if action_type in SENSITIVE_AUDIT_ACTIONS:
-                severity = "high" if action_type in (
-                    "api_key_created", "api_key_deleted",
-                    "member_added", "member_removed", "member_role_changed",
-                    "token_created", "token_deleted",
-                    "account_settings_changed",
-                ) else "medium"
+                severity = (
+                    "high"
+                    if action_type
+                    in (
+                        "api_key_created",
+                        "api_key_deleted",
+                        "member_added",
+                        "member_removed",
+                        "member_role_changed",
+                        "token_created",
+                        "token_deleted",
+                        "account_settings_changed",
+                    )
+                    else "medium"
+                )
 
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="alert",
-                    title=f"Audit: {action_type} by {actor_email or actor_type}",
-                    detail={
-                        "log_id": entry_id,
-                        "action_type": action_type,
-                        "actor_email": actor_email,
-                        "actor_type": actor_type,
-                        "when": when,
-                        "resource_type": resource_type,
-                        "resource_id": resource_id_val,
-                        "metadata": metadata,
-                        "account_id": account_id,
-                    },
-                    resource_id=resource_id_val or entry_id,
-                    resource_type=resource_type or "cloudflare_audit_log",
-                    resource_name=f"{action_type}",
-                    account_id=account_id,
-                    severity=severity,
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="alert",
+                        title=f"Audit: {action_type} by {actor_email or actor_type}",
+                        detail={
+                            "log_id": entry_id,
+                            "action_type": action_type,
+                            "actor_email": actor_email,
+                            "actor_type": actor_type,
+                            "when": when,
+                            "resource_type": resource_type,
+                            "resource_id": resource_id_val,
+                            "metadata": metadata,
+                            "account_id": account_id,
+                        },
+                        resource_id=resource_id_val or entry_id,
+                        resource_type=resource_type or "cloudflare_audit_log",
+                        resource_name=f"{action_type}",
+                        account_id=account_id,
+                        severity=severity,
+                    )
+                )
 
         return findings
 

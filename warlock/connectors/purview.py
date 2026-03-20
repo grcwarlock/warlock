@@ -118,18 +118,20 @@ class PurviewConnector(BaseConnector):
                         log.warning("Purview %s: capped at 10k records", event_type)
                         break
 
-                result.events.append(RawEventData(
-                    source="purview",
-                    source_type=SourceType.DLP,
-                    provider="purview",
-                    event_type=event_type,
-                    raw_data={
-                        "endpoint": endpoint,
-                        "records": all_records,
-                        "total": len(all_records),
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="purview",
+                        source_type=SourceType.DLP,
+                        provider="purview",
+                        event_type=event_type,
+                        raw_data={
+                            "endpoint": endpoint,
+                            "records": all_records,
+                            "total": len(all_records),
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("Purview %s failed: %s", endpoint, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -145,9 +147,7 @@ class PurviewConnector(BaseConnector):
             import httpx
 
             tenant_id = self._get_tenant_id()
-            token_url = (
-                f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
-            )
+            token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
             resp = httpx.post(
                 token_url,
                 data={
@@ -165,14 +165,10 @@ class PurviewConnector(BaseConnector):
             return ""
 
     def _get_tenant_id(self) -> str:
-        return self.config.settings.get("tenant_id", "") or self.get_secret(
-            "WLK_PURVIEW_TENANT_ID"
-        )
+        return self.config.settings.get("tenant_id", "") or self.get_secret("WLK_PURVIEW_TENANT_ID")
 
     def _get_client_id(self) -> str:
-        return self.config.settings.get("client_id", "") or self.get_secret(
-            "WLK_PURVIEW_CLIENT_ID"
-        )
+        return self.config.settings.get("client_id", "") or self.get_secret("WLK_PURVIEW_CLIENT_ID")
 
     def _get_client_secret(self) -> str:
         return self.config.settings.get("client_secret", "") or self.get_secret(

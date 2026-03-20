@@ -29,11 +29,14 @@ from warlock.db.models import User, APIKey
 
 log = logging.getLogger(__name__)
 
+
 # Configuration — loaded from Settings, not raw os.environ
 def _load_auth_config():
     from warlock.config import get_settings
+
     s = get_settings()
     return s.jwt_secret, s.jwt_expire_minutes
+
 
 ALGORITHM = "HS256"
 
@@ -41,11 +44,13 @@ ALGORITHM = "HS256"
 _SECRET_KEY: str | None = None
 _EXPIRE_MINUTES: int | None = None
 
+
 def _get_auth_config() -> tuple[str, int]:
     global _SECRET_KEY, _EXPIRE_MINUTES
     if _SECRET_KEY is None:
         _SECRET_KEY, _EXPIRE_MINUTES = _load_auth_config()
     return _SECRET_KEY, _EXPIRE_MINUTES
+
 
 # Minimum password length
 MIN_PASSWORD_LENGTH = 12
@@ -126,7 +131,9 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def _hmac_encode(payload: dict, secret: str) -> str:
     """Simple HMAC-based token when PyJWT is not installed."""
-    header = base64.urlsafe_b64encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode()).rstrip(b"=")
+    header = base64.urlsafe_b64encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode()).rstrip(
+        b"="
+    )
     body = base64.urlsafe_b64encode(json.dumps(payload, default=str).encode()).rstrip(b"=")
     signing_input = header + b"." + body
     sig = hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()
@@ -156,6 +163,7 @@ def _hmac_decode(token: str, secret: str) -> dict:
 def _is_dev_env() -> bool:
     """Return True if running in development mode (S-3 helper)."""
     import os
+
     env = os.environ.get("WLK_ENV", "").strip().lower()
     return env in ("", "development")
 
@@ -168,6 +176,7 @@ def _get_jwt_secret() -> str:
     secret, _ = _get_auth_config()
     if not secret:
         from warlock.config import get_settings
+
         settings = get_settings()
         if settings.env == "production":
             raise RuntimeError(
@@ -191,8 +200,11 @@ def _get_jwt_secret() -> str:
                 "A minimum of 32 characters is required in non-development environments. "
                 "Set WLK_JWT_SECRET to a random string of at least 32 characters."
             )
-        log.warning("WLK_JWT_SECRET is shorter than 32 characters — this is insecure for production")
+        log.warning(
+            "WLK_JWT_SECRET is shorter than 32 characters — this is insecure for production"
+        )
     return secret
+
 
 _EPHEMERAL_SECRET: str = ""
 
@@ -283,7 +295,9 @@ def validate_role(role: str) -> bool:
     return role in PERMISSIONS
 
 
-def create_user(session: Session, email: str, name: str, password: str, role: str = "viewer") -> User:
+def create_user(
+    session: Session, email: str, name: str, password: str, role: str = "viewer"
+) -> User:
     """Create a new user with password validation and role validation."""
     if not validate_role(role):
         raise ValueError(f"Invalid role: {role!r}. Must be one of: {', '.join(PERMISSIONS.keys())}")
@@ -323,7 +337,9 @@ def authenticate_user(session: Session, email: str, password: str) -> User | dic
         if user.locked_until.tzinfo is None:
             user.locked_until = user.locked_until.replace(tzinfo=timezone.utc)
         if now < user.locked_until:
-            log.warning("Login attempt on locked account: %s (locked until %s)", email, user.locked_until)
+            log.warning(
+                "Login attempt on locked account: %s (locked until %s)", email, user.locked_until
+            )
             return None
         # Lockout expired — reset
         user.failed_login_count = 0
@@ -356,7 +372,9 @@ def authenticate_user(session: Session, email: str, password: str) -> User | dic
         user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)
         log.warning(
             "Account locked: %s after %d failed attempts (locked for %d minutes)",
-            email, user.failed_login_count, LOCKOUT_MINUTES,
+            email,
+            user.failed_login_count,
+            LOCKOUT_MINUTES,
         )
     return None
 
@@ -371,10 +389,15 @@ def authenticate_api_key(session: Session, raw_key: str) -> tuple[User | None, A
     # Also compute legacy hash for backward compatibility during migration
     legacy_hash = hashlib.sha256(raw_key.encode()).hexdigest()
     from sqlalchemy import or_
-    api_key = session.query(APIKey).filter(
-        or_(APIKey.key_hash == key_hash, APIKey.key_hash == legacy_hash),
-        APIKey.is_active == True,  # noqa: E712
-    ).first()
+
+    api_key = (
+        session.query(APIKey)
+        .filter(
+            or_(APIKey.key_hash == key_hash, APIKey.key_hash == legacy_hash),
+            APIKey.is_active == True,  # noqa: E712
+        )
+        .first()
+    )
     if not api_key:
         return None, None
     # S-5: Migrate legacy plain SHA-256 hashes to HMAC on successful auth
@@ -427,9 +450,7 @@ def verify_totp(secret: str, code: str, window: int = 1) -> bool:
         counter = struct.pack(">Q", int(time.time()) // 30 + offset)
         h = hmac.new(key, counter, hashlib.sha1).digest()
         o = h[-1] & 0x0F
-        token = str(
-            (struct.unpack(">I", h[o : o + 4])[0] & 0x7FFFFFFF) % 1000000
-        ).zfill(6)
+        token = str((struct.unpack(">I", h[o : o + 4])[0] & 0x7FFFFFFF) % 1000000).zfill(6)
         if hmac.compare_digest(token, code):
             return True
     return False
@@ -447,9 +468,7 @@ def _hash_backup_code(code: str) -> str:
     # Each code gets a unique salt derived from a random per-batch salt stored
     # alongside the hash.
     salt = secrets.token_hex(16)
-    dk = hashlib.pbkdf2_hmac(
-        "sha256", code.encode(), salt.encode(), _PBKDF2_ITERATIONS
-    )
+    dk = hashlib.pbkdf2_hmac("sha256", code.encode(), salt.encode(), _PBKDF2_ITERATIONS)
     return f"pbkdf2:{salt}:{dk.hex()}"
 
 
@@ -460,9 +479,7 @@ def _verify_backup_code(code: str, stored_hash: str) -> bool:
     """
     if stored_hash.startswith("pbkdf2:"):
         _, salt, expected_hex = stored_hash.split(":", 2)
-        dk = hashlib.pbkdf2_hmac(
-            "sha256", code.encode(), salt.encode(), _PBKDF2_ITERATIONS
-        )
+        dk = hashlib.pbkdf2_hmac("sha256", code.encode(), salt.encode(), _PBKDF2_ITERATIONS)
         return hmac.compare_digest(dk.hex(), expected_hex)
     # Legacy: plain SHA-256 (pre C-3 fix)
     legacy = hashlib.sha256(code.encode()).hexdigest()
@@ -568,12 +585,13 @@ def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
         for i, stored_hash in enumerate(user.mfa_backup_codes):
             if _verify_backup_code(code, stored_hash):
                 # Consume the backup code (one-time use)
-                remaining = user.mfa_backup_codes[:i] + user.mfa_backup_codes[i + 1:]
+                remaining = user.mfa_backup_codes[:i] + user.mfa_backup_codes[i + 1 :]
                 user.mfa_backup_codes = remaining
                 session.flush()
                 log.info(
                     "MFA login verified via backup code for user %s (%d codes remaining)",
-                    user.email, len(remaining),
+                    user.email,
+                    len(remaining),
                 )
                 return True
 
@@ -581,9 +599,7 @@ def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
     return False
 
 
-def verify_mfa_and_login(
-    session: Session, user_id: str, totp_code: str
-) -> dict | None:
+def verify_mfa_and_login(session: Session, user_id: str, totp_code: str) -> dict | None:
     """Complete MFA verification and return full token response.
 
     C-1 fix: This is the function that the /auth/mfa/verify endpoint
@@ -664,10 +680,14 @@ def verify_refresh_token(token: str, session: Session) -> str:
     Raises ``ValueError`` if the token is invalid or the user is inactive.
     """
     token_hash = _hash_refresh_token(token)
-    user = session.query(User).filter(
-        User.refresh_token_hash == token_hash,
-        User.is_active == True,  # noqa: E712
-    ).first()
+    user = (
+        session.query(User)
+        .filter(
+            User.refresh_token_hash == token_hash,
+            User.is_active == True,  # noqa: E712
+        )
+        .first()
+    )
 
     if not user:
         raise ValueError("Invalid or expired refresh token")

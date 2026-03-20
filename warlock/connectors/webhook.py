@@ -71,7 +71,8 @@ class WebhookReceiver:
             Optional timestamp override.  Defaults to *now* (UTC).
         """
         resolved_source_type = source_type or _PROVIDER_SOURCE_TYPE.get(
-            provider, SourceType.CUSTOM,
+            provider,
+            SourceType.CUSTOM,
         )
         ts = observed_at or datetime.now(timezone.utc)
 
@@ -85,7 +86,9 @@ class WebhookReceiver:
         )
         log.info(
             "Ingested webhook event id=%s provider=%s event_type=%s",
-            raw.id[:8], provider, event_type,
+            raw.id[:8],
+            provider,
+            event_type,
         )
         return raw
 
@@ -116,6 +119,8 @@ class WebhookReceiver:
             )
         log.info(
             "Ingested batch of %d events provider=%s event_type=%s",
-            len(results), provider, event_type,
+            len(results),
+            provider,
+            event_type,
         )
         return results

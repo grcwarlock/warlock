@@ -29,9 +29,7 @@ class HuaweiCloudConnector(BaseConnector):
         try:
             import httpx  # noqa: F401
         except ImportError:
-            errors.append(
-                "httpx not installed. Install with: pip install warlock[huawei]"
-            )
+            errors.append("httpx not installed. Install with: pip install warlock[huawei]")
         if not self.get_secret("WLK_HUAWEI_ACCESS_KEY"):
             errors.append("WLK_HUAWEI_ACCESS_KEY env var is not set")
         if not self.get_secret("WLK_HUAWEI_SECRET_KEY"):
@@ -87,18 +85,20 @@ class HuaweiCloudConnector(BaseConnector):
             for event_type, collector_fn in collectors:
                 try:
                     data = collector_fn(client, project_id, region)
-                    result.events.append(RawEventData(
-                        source="huawei",
-                        source_type=SourceType.CLOUD,
-                        provider="huawei",
-                        event_type=event_type,
-                        raw_data={
-                            "project_id": project_id,
-                            "region": region,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="huawei",
+                            source_type=SourceType.CLOUD,
+                            provider="huawei",
+                            event_type=event_type,
+                            raw_data={
+                                "project_id": project_id,
+                                "region": region,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("Huawei %s failed: %s", event_type, e)
                     result.errors.append(f"{event_type}: {e}")
@@ -110,54 +110,42 @@ class HuaweiCloudConnector(BaseConnector):
 
     # -- Collectors --
 
-    def _collect_hss_events(
-        self, client, project_id: str, region: str
-    ) -> dict:
+    def _collect_hss_events(self, client, project_id: str, region: str) -> dict:
         """Host Security Service — security alerts."""
         url = f"https://hss.{region}.myhuaweicloud.com/v5/{project_id}/event/events"
         resp = client.get(url, params={"limit": 200, "offset": 0})
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_iam_users(
-        self, client, project_id: str, region: str
-    ) -> dict:
+    def _collect_iam_users(self, client, project_id: str, region: str) -> dict:
         """IAM users list."""
         url = "https://iam.myhuaweicloud.com/v3/users"
         resp = client.get(url)
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_cts_events(
-        self, client, project_id: str, region: str
-    ) -> dict:
+    def _collect_cts_events(self, client, project_id: str, region: str) -> dict:
         """Cloud Trace Service — audit trail events."""
         url = f"https://cts.{region}.myhuaweicloud.com/v3/{project_id}/traces"
         resp = client.get(url, params={"limit": 200})
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_security_groups(
-        self, client, project_id: str, region: str
-    ) -> dict:
+    def _collect_security_groups(self, client, project_id: str, region: str) -> dict:
         """VPC Security Groups."""
         url = f"https://vpc.{region}.myhuaweicloud.com/v1/{project_id}/security-groups"
         resp = client.get(url)
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_kms_keys(
-        self, client, project_id: str, region: str
-    ) -> dict:
+    def _collect_kms_keys(self, client, project_id: str, region: str) -> dict:
         """Key Management Service — list encryption keys."""
         url = f"https://kms.{region}.myhuaweicloud.com/v1.0/{project_id}/kms/list-keys"
         resp = client.post(url, json={"limit": "100"})
         resp.raise_for_status()
         return resp.json()
 
-    def _collect_obs_buckets(
-        self, client, project_id: str, region: str
-    ) -> dict:
+    def _collect_obs_buckets(self, client, project_id: str, region: str) -> dict:
         """Object Storage Service — bucket listing."""
         url = f"https://obs.{region}.myhuaweicloud.com/"
         resp = client.get(url)
@@ -227,11 +215,13 @@ class HuaweiCloudConnector(BaseConnector):
                 name = bucket.findtext(f"{ns}Name", "")
                 creation_date = bucket.findtext(f"{ns}CreationDate", "")
                 location = bucket.findtext(f"{ns}Location", "")
-                buckets.append({
-                    "name": name,
-                    "creation_date": creation_date,
-                    "location": location,
-                })
+                buckets.append(
+                    {
+                        "name": name,
+                        "creation_date": creation_date,
+                        "location": location,
+                    }
+                )
 
         return {"buckets": buckets}
 

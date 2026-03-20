@@ -33,29 +33,19 @@ log = logging.getLogger(__name__)
 # Matches NIST-style IDs: AC-2, SC-7, AU-6(1), SI-4(2)(3)
 # No trailing \b — word boundary fires before '(' which prevents matching
 # enhancement suffixes.  The leading \b is sufficient to avoid mid-word matches.
-_NIST_RE = re.compile(
-    r"\b([A-Z]{2}-\d{1,3}(?:\(\d{1,2}\))*)"
-)
+_NIST_RE = re.compile(r"\b([A-Z]{2}-\d{1,3}(?:\(\d{1,2}\))*)")
 
 # Matches HIPAA refs: 164.308(a)(1), 164.312(e)(2)(ii)
-_HIPAA_RE = re.compile(
-    r"\b(164\.\d{3}\([a-z]\)\(\d+\)(?:\([ivx]+\))?)"
-)
+_HIPAA_RE = re.compile(r"\b(164\.\d{3}\([a-z]\)\(\d+\)(?:\([ivx]+\))?)")
 
 # Matches ISO Annex A style: A.5.1, A.8.2.3
-_ISO_ANNEX_RE = re.compile(
-    r"\b(A\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\b"
-)
+_ISO_ANNEX_RE = re.compile(r"\b(A\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\b")
 
 # Matches SOC 2 TSC: CC6.1, A1.2, C1.1, PI1.1, P1.1
-_SOC2_RE = re.compile(
-    r"\b((?:CC|A1|C1|PI1|P1)\d?\.\d{1,2})\b"
-)
+_SOC2_RE = re.compile(r"\b((?:CC|A1|C1|PI1|P1)\d?\.\d{1,2})\b")
 
 # Matches PCI DSS: 1.2.3, 12.10.1
-_PCI_RE = re.compile(
-    r"\b(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\b"
-)
+_PCI_RE = re.compile(r"\b(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\b")
 
 _CONTROL_PATTERNS: list[re.Pattern[str]] = [
     _NIST_RE,
@@ -68,15 +58,9 @@ _CONTROL_PATTERNS: list[re.Pattern[str]] = [
 # Obligation language patterns
 # ---------------------------------------------------------------------------
 
-_MANDATORY_RE = re.compile(
-    r"\b(?:shall|must|required|require|mandatory)\b", re.IGNORECASE
-)
-_RECOMMENDED_RE = re.compile(
-    r"\b(?:should|ought|recommended|recommend)\b", re.IGNORECASE
-)
-_OPTIONAL_RE = re.compile(
-    r"\b(?:may|can|optional|optionally)\b", re.IGNORECASE
-)
+_MANDATORY_RE = re.compile(r"\b(?:shall|must|required|require|mandatory)\b", re.IGNORECASE)
+_RECOMMENDED_RE = re.compile(r"\b(?:should|ought|recommended|recommend)\b", re.IGNORECASE)
+_OPTIONAL_RE = re.compile(r"\b(?:may|can|optional|optionally)\b", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------------
@@ -119,13 +103,21 @@ _POLICY_KEYWORDS: dict[str, list[str]] = {
     "incident response": ["incident response", "incident management", "security incident"],
     "maintenance": ["maintenance", "system maintenance"],
     "media protection": ["media protection", "media handling", "data disposal"],
-    "physical and environmental protection": ["physical security", "physical access", "environmental"],
+    "physical and environmental protection": [
+        "physical security",
+        "physical access",
+        "environmental",
+    ],
     "planning": ["security planning", "security plan", "system security plan"],
     "program management": ["information security program", "security program", "issp"],
     "personnel security": ["personnel security", "employee security", "onboarding", "offboarding"],
     "risk assessment": ["risk assessment", "risk management", "risk analysis"],
     "system and services acquisition": ["acquisition", "vendor management", "procurement"],
-    "system and communications protection": ["communications protection", "encryption", "network security"],
+    "system and communications protection": [
+        "communications protection",
+        "encryption",
+        "network security",
+    ],
     "system and information integrity": ["system integrity", "information integrity", "malware"],
     "supply chain risk management": ["supply chain", "vendor risk", "third party"],
 }
@@ -365,7 +357,8 @@ class GovernanceAnalyzer:
             matched_controls = self._extract_control_references(content)
             obligation = self._analyze_policy_language(content)
             comprehensiveness = self._score_comprehensiveness(
-                content, combined_description,
+                content,
+                combined_description,
             )
 
             # Title keyword match score: fraction of policy areas matched
@@ -379,13 +372,15 @@ class GovernanceAnalyzer:
             else:
                 overall = title_score
 
-            results.append({
-                "title": title,
-                "matched_controls": matched_controls,
-                "obligation_strength": obligation,
-                "comprehensiveness": round(comprehensiveness, 4),
-                "overall_score": round(overall, 4),
-            })
+            results.append(
+                {
+                    "title": title,
+                    "matched_controls": matched_controls,
+                    "obligation_strength": obligation,
+                    "comprehensiveness": round(comprehensiveness, 4),
+                    "overall_score": round(overall, 4),
+                }
+            )
 
         log.info(
             "Content analysis for %s: %d documents, %d with content",
@@ -424,15 +419,17 @@ class GovernanceAnalyzer:
             if last_modified:
                 days_since = (now - last_modified).days
 
-            results.append(PolicyStatus(
-                page_title=title,
-                page_id=page_id,
-                last_modified=last_modified,
-                is_stale=is_stale,
-                is_reviewed=is_reviewed,
-                matched_policy_areas=matched_areas,
-                days_since_modified=days_since,
-            ))
+            results.append(
+                PolicyStatus(
+                    page_title=title,
+                    page_id=page_id,
+                    last_modified=last_modified,
+                    is_stale=is_stale,
+                    is_reviewed=is_reviewed,
+                    matched_policy_areas=matched_areas,
+                    days_since_modified=days_since,
+                )
+            )
 
         log.info(
             "Governance analysis complete: %d documents analyzed, %d stale, %d reviewed",
@@ -497,12 +494,9 @@ class GovernanceAnalyzer:
 
                 # Title-based matching (existing behavior)
                 matching = [
-                    s for s in statuses
-                    if any(
-                        kw in required_lower
-                        for area in s.matched_policy_areas
-                        for kw in [area]
-                    )
+                    s
+                    for s in statuses
+                    if any(kw in required_lower for area in s.matched_policy_areas for kw in [area])
                     or required_lower in s.page_title.lower()
                 ]
 
@@ -513,15 +507,12 @@ class GovernanceAnalyzer:
                         content = content_by_title.get(s.page_title, "")
                         if content:
                             semantic_score = self._score_comprehensiveness(
-                                content, required_doc,
+                                content,
+                                required_doc,
                             )
                             title_areas = s.matched_policy_areas
                             total_areas = len(_POLICY_KEYWORDS)
-                            title_score = (
-                                len(title_areas) / total_areas
-                                if total_areas > 0
-                                else 0.0
-                            )
+                            title_score = len(title_areas) / total_areas if total_areas > 0 else 0.0
                             combined = 0.6 * semantic_score + 0.4 * title_score
                             # Threshold: combined score > 0.3 indicates a match
                             if combined > 0.3:
@@ -569,22 +560,21 @@ class GovernanceAnalyzer:
 
                 # Find matching documents
                 matching = [
-                    s for s in statuses
-                    if any(
-                        kw in required_lower
-                        for area in s.matched_policy_areas
-                        for kw in [area]
-                    )
+                    s
+                    for s in statuses
+                    if any(kw in required_lower for area in s.matched_policy_areas for kw in [area])
                     or required_lower in s.page_title.lower()
                 ]
 
                 if not matching:
-                    gaps.append(PolicyGap(
-                        control_id=control_id,
-                        required_document=required_doc,
-                        status="missing",
-                        details=f"No Confluence page found matching '{required_doc}'",
-                    ))
+                    gaps.append(
+                        PolicyGap(
+                            control_id=control_id,
+                            required_document=required_doc,
+                            status="missing",
+                            details=f"No Confluence page found matching '{required_doc}'",
+                        )
+                    )
                     continue
 
                 best = max(
@@ -593,23 +583,27 @@ class GovernanceAnalyzer:
                 )
 
                 if best.is_stale:
-                    gaps.append(PolicyGap(
-                        control_id=control_id,
-                        required_document=required_doc,
-                        status="stale",
-                        details=(
-                            f"Document '{best.page_title}' last modified "
-                            f"{best.days_since_modified} days ago"
-                        ),
-                    ))
+                    gaps.append(
+                        PolicyGap(
+                            control_id=control_id,
+                            required_document=required_doc,
+                            status="stale",
+                            details=(
+                                f"Document '{best.page_title}' last modified "
+                                f"{best.days_since_modified} days ago"
+                            ),
+                        )
+                    )
 
                 if not best.is_reviewed:
-                    gaps.append(PolicyGap(
-                        control_id=control_id,
-                        required_document=required_doc,
-                        status="unreviewed",
-                        details=f"Document '{best.page_title}' has no approval/review metadata",
-                    ))
+                    gaps.append(
+                        PolicyGap(
+                            control_id=control_id,
+                            required_document=required_doc,
+                            status="unreviewed",
+                            details=f"Document '{best.page_title}' has no approval/review metadata",
+                        )
+                    )
 
         log.info(
             "Policy gap analysis for %s: %d gaps found (%d missing, %d stale, %d unreviewed)",

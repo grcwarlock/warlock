@@ -93,25 +93,28 @@ class CyberArkNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "misconfiguration"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Privileged account: {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "account_id": account.get("id", ""),
-                    "name": name,
-                    "platform_id": platform_id,
-                    "safe_name": safe_name,
-                    "auto_management": auto_mgmt,
-                    "last_modified": last_modified,
-                    "last_used": last_used,
-                    "issues": issues,
-                },
-                resource_id=account.get("id", ""),
-                resource_type="cyberark_account",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Privileged account: {name}"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "account_id": account.get("id", ""),
+                        "name": name,
+                        "platform_id": platform_id,
+                        "safe_name": safe_name,
+                        "auto_management": auto_mgmt,
+                        "last_modified": last_modified,
+                        "last_used": last_used,
+                        "issues": issues,
+                    },
+                    resource_id=account.get("id", ""),
+                    resource_type="cyberark_account",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -129,21 +132,23 @@ class CyberArkNormalizer(BaseNormalizer):
             if member_count == 0:
                 issues.append("no_members")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Safe: {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "safe_name": name,
-                    "member_count": member_count,
-                    "issues": issues,
-                    "safe": safe,
-                },
-                resource_id=safe.get("safeUrlId", safe.get("SafeUrlId", name)),
-                resource_type="cyberark_safe",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Safe: {name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "safe_name": name,
+                        "member_count": member_count,
+                        "issues": issues,
+                        "safe": safe,
+                    },
+                    resource_id=safe.get("safeUrlId", safe.get("SafeUrlId", name)),
+                    resource_type="cyberark_safe",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -157,16 +162,18 @@ class CyberArkNormalizer(BaseNormalizer):
             name = platform.get("Name", platform.get("PlatformID", "unknown"))
             active = platform.get("Active", True)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Platform: {name}" + (" — inactive" if not active else ""),
-                detail=platform,
-                resource_id=platform.get("PlatformID", name),
-                resource_type="cyberark_platform",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Platform: {name}" + (" — inactive" if not active else ""),
+                    detail=platform,
+                    resource_id=platform.get("PlatformID", name),
+                    resource_type="cyberark_platform",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -181,22 +188,24 @@ class CyberArkNormalizer(BaseNormalizer):
             target = recording.get("AccountUserName", "unknown")
             duration = recording.get("Duration", 0)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Session recording: {user} → {target}",
-                detail={
-                    "user": user,
-                    "target": target,
-                    "duration_seconds": duration,
-                    "start_time": recording.get("Start", ""),
-                    "recording": recording,
-                },
-                resource_id=recording.get("SessionID", ""),
-                resource_type="cyberark_session",
-                resource_name=f"{user} → {target}",
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Session recording: {user} → {target}",
+                    detail={
+                        "user": user,
+                        "target": target,
+                        "duration_seconds": duration,
+                        "start_time": recording.get("Start", ""),
+                        "recording": recording,
+                    },
+                    resource_id=recording.get("SessionID", ""),
+                    resource_type="cyberark_session",
+                    resource_name=f"{user} → {target}",
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -230,20 +239,22 @@ class CyberArkNormalizer(BaseNormalizer):
             severity = "high" if overdue_count > 10 else "medium"
             obs_type = "policy_violation"
 
-        findings.append(FindingData(
-            **self._base(raw),
-            observation_type=obs_type,
-            title=f"Password compliance summary — {overdue_count}/{len(accounts)} overdue",
-            detail={
-                "total_accounts": len(accounts),
-                "overdue_count": overdue_count,
-                "issues": issues,
-            },
-            resource_id="cyberark_password_compliance",
-            resource_type="cyberark_compliance",
-            resource_name="password_compliance",
-            severity=severity,
-        ))
+        findings.append(
+            FindingData(
+                **self._base(raw),
+                observation_type=obs_type,
+                title=f"Password compliance summary — {overdue_count}/{len(accounts)} overdue",
+                detail={
+                    "total_accounts": len(accounts),
+                    "overdue_count": overdue_count,
+                    "issues": issues,
+                },
+                resource_id="cyberark_password_compliance",
+                resource_type="cyberark_compliance",
+                resource_name="password_compliance",
+                severity=severity,
+            )
+        )
 
         return findings
 

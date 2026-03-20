@@ -66,28 +66,32 @@ class SplunkNormalizer(BaseNormalizer):
             event_id = result.get("event_id", result.get("_cd", ""))
             status_label = result.get("status_label", result.get("status", ""))
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Notable event: {rule_name}",
-                detail={
-                    "event_id": event_id,
-                    "rule_name": rule_name,
-                    "urgency": urgency,
-                    "status": status_label,
-                    "owner": result.get("owner", ""),
-                    "security_domain": result.get("security_domain", ""),
-                    "src": result.get("src", ""),
-                    "dest": result.get("dest", ""),
-                    "user": result.get("user", ""),
-                    "description": result.get("rule_description", result.get("description", "")),
-                    "time": result.get("_time", ""),
-                },
-                resource_id=event_id,
-                resource_type="splunk_notable_event",
-                resource_name=rule_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Notable event: {rule_name}",
+                    detail={
+                        "event_id": event_id,
+                        "rule_name": rule_name,
+                        "urgency": urgency,
+                        "status": status_label,
+                        "owner": result.get("owner", ""),
+                        "security_domain": result.get("security_domain", ""),
+                        "src": result.get("src", ""),
+                        "dest": result.get("dest", ""),
+                        "user": result.get("user", ""),
+                        "description": result.get(
+                            "rule_description", result.get("description", "")
+                        ),
+                        "time": result.get("_time", ""),
+                    },
+                    resource_id=event_id,
+                    resource_type="splunk_notable_event",
+                    resource_name=rule_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -95,16 +99,18 @@ class SplunkNormalizer(BaseNormalizer):
 
     def _normalize_saved_searches(self, raw: RawEventData) -> list[FindingData]:
         entries = raw.raw_data.get("response", [])
-        return [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"Splunk saved searches — {len(entries)} configured",
-            detail={"saved_search_count": len(entries)},
-            resource_id="splunk:saved_searches:summary",
-            resource_type="splunk_saved_searches",
-            resource_name="saved_searches",
-            severity="info",
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"Splunk saved searches — {len(entries)} configured",
+                detail={"saved_search_count": len(entries)},
+                resource_id="splunk:saved_searches:summary",
+                resource_type="splunk_saved_searches",
+                resource_name="saved_searches",
+                severity="info",
+            )
+        ]
 
     # -- Correlation rules --
 
@@ -125,41 +131,45 @@ class SplunkNormalizer(BaseNormalizer):
             else:
                 enabled_count += 1
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration" if is_disabled else "inventory",
-                title=f"Correlation rule: {name}" + (" — disabled" if is_disabled else ""),
-                detail={
-                    "rule_name": name,
-                    "enabled": not is_disabled,
-                    "severity": content.get("action.correlationsearch.label", ""),
-                    "description": content.get("description", ""),
-                },
-                resource_id=entry.get("id", "") if isinstance(entry, dict) else "",
-                resource_type="splunk_correlation_rule",
-                resource_name=name,
-                severity="medium" if is_disabled else "info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration" if is_disabled else "inventory",
+                    title=f"Correlation rule: {name}" + (" — disabled" if is_disabled else ""),
+                    detail={
+                        "rule_name": name,
+                        "enabled": not is_disabled,
+                        "severity": content.get("action.correlationsearch.label", ""),
+                        "description": content.get("description", ""),
+                    },
+                    resource_id=entry.get("id", "") if isinstance(entry, dict) else "",
+                    resource_type="splunk_correlation_rule",
+                    resource_name=name,
+                    severity="medium" if is_disabled else "info",
+                )
+            )
 
         # Summary finding
         total = enabled_count + disabled_count
         if total > 0:
             coverage_pct = round((enabled_count / total) * 100, 1)
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Correlation rule coverage: {coverage_pct}% ({enabled_count}/{total} enabled)",
-                detail={
-                    "enabled_count": enabled_count,
-                    "disabled_count": disabled_count,
-                    "total": total,
-                    "coverage_percent": coverage_pct,
-                },
-                resource_id="splunk:correlation_rules:summary",
-                resource_type="splunk_correlation_rules",
-                resource_name="correlation_rule_coverage",
-                severity="info" if coverage_pct >= 80 else "medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Correlation rule coverage: {coverage_pct}% ({enabled_count}/{total} enabled)",
+                    detail={
+                        "enabled_count": enabled_count,
+                        "disabled_count": disabled_count,
+                        "total": total,
+                        "coverage_percent": coverage_pct,
+                    },
+                    resource_id="splunk:correlation_rules:summary",
+                    resource_type="splunk_correlation_rules",
+                    resource_name="correlation_rule_coverage",
+                    severity="info" if coverage_pct >= 80 else "medium",
+                )
+            )
 
         return findings
 
@@ -177,22 +187,24 @@ class SplunkNormalizer(BaseNormalizer):
             disabled = str(content.get("disabled", "0")) == "1"
             total_event_count = content.get("totalEventCount", "0")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Index: {name}" + (" — disabled" if disabled else ""),
-                detail={
-                    "index_name": name,
-                    "disabled": disabled,
-                    "total_event_count": total_event_count,
-                    "current_db_size_mb": content.get("currentDBSizeMB", "0"),
-                    "max_total_data_size_mb": content.get("maxTotalDataSizeMB", "0"),
-                },
-                resource_id=entry.get("id", ""),
-                resource_type="splunk_index",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Index: {name}" + (" — disabled" if disabled else ""),
+                    detail={
+                        "index_name": name,
+                        "disabled": disabled,
+                        "total_event_count": total_event_count,
+                        "current_db_size_mb": content.get("currentDBSizeMB", "0"),
+                        "max_total_data_size_mb": content.get("maxTotalDataSizeMB", "0"),
+                    },
+                    resource_id=entry.get("id", ""),
+                    resource_type="splunk_index",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 

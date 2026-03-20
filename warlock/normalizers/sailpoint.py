@@ -71,25 +71,27 @@ class SailPointNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "access_anomaly"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Identity: {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "identity_id": identity.get("id", ""),
-                    "name": name,
-                    "alias": alias,
-                    "status": status,
-                    "is_active": is_active,
-                    "account_count": account_count,
-                    "entitlement_count": entitlement_count,
-                    "issues": issues,
-                },
-                resource_id=identity.get("id", ""),
-                resource_type="sailpoint_identity",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Identity: {name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "identity_id": identity.get("id", ""),
+                        "name": name,
+                        "alias": alias,
+                        "status": status,
+                        "is_active": is_active,
+                        "account_count": account_count,
+                        "entitlement_count": entitlement_count,
+                        "issues": issues,
+                    },
+                    resource_id=identity.get("id", ""),
+                    resource_type="sailpoint_identity",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -138,25 +140,27 @@ class SailPointNormalizer(BaseNormalizer):
                 severity = "low"
                 obs_type = "policy_violation"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Certification: {name}" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "campaign_id": campaign.get("id", ""),
-                    "name": name,
-                    "status": status,
-                    "type": campaign_type,
-                    "deadline": deadline,
-                    "completed": completed,
-                    "total": total,
-                    "issues": issues,
-                },
-                resource_id=campaign.get("id", ""),
-                resource_type="sailpoint_certification",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Certification: {name}" + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "campaign_id": campaign.get("id", ""),
+                        "name": name,
+                        "status": status,
+                        "type": campaign_type,
+                        "deadline": deadline,
+                        "completed": completed,
+                        "total": total,
+                        "issues": issues,
+                    },
+                    resource_id=campaign.get("id", ""),
+                    resource_type="sailpoint_certification",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -172,23 +176,25 @@ class SailPointNormalizer(BaseNormalizer):
             enabled = role.get("enabled", True)
             membership_count = role.get("membershipCount", 0)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Role: {name}",
-                detail={
-                    "role_id": role.get("id", ""),
-                    "name": name,
-                    "requestable": requestable,
-                    "enabled": enabled,
-                    "membership_count": membership_count,
-                    "role": role,
-                },
-                resource_id=role.get("id", ""),
-                resource_type="sailpoint_role",
-                resource_name=name,
-                severity="info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Role: {name}",
+                    detail={
+                        "role_id": role.get("id", ""),
+                        "name": name,
+                        "requestable": requestable,
+                        "enabled": enabled,
+                        "membership_count": membership_count,
+                        "role": role,
+                    },
+                    resource_id=role.get("id", ""),
+                    resource_type="sailpoint_role",
+                    resource_name=name,
+                    severity="info",
+                )
+            )
 
         return findings
 
@@ -218,23 +224,26 @@ class SailPointNormalizer(BaseNormalizer):
             elif privileged:
                 severity = "low"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Entitlement: {name} ({source_name})" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "entitlement_id": entitlement.get("id", ""),
-                    "name": name,
-                    "source_name": source_name,
-                    "privileged": privileged,
-                    "owner": owner,
-                    "issues": issues,
-                },
-                resource_id=entitlement.get("id", ""),
-                resource_type="sailpoint_entitlement",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Entitlement: {name} ({source_name})"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "entitlement_id": entitlement.get("id", ""),
+                        "name": name,
+                        "source_name": source_name,
+                        "privileged": privileged,
+                        "owner": owner,
+                        "issues": issues,
+                    },
+                    resource_id=entitlement.get("id", ""),
+                    resource_type="sailpoint_entitlement",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -263,24 +272,27 @@ class SailPointNormalizer(BaseNormalizer):
                 severity = "high"
                 obs_type = "access_anomaly"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Account: {name} ({source_name})" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "account_id": account.get("id", ""),
-                    "name": name,
-                    "source_name": source_name,
-                    "identity_id": identity_id,
-                    "disabled": disabled,
-                    "uncorrelated": uncorrelated,
-                    "issues": issues,
-                },
-                resource_id=account.get("id", ""),
-                resource_type="sailpoint_account",
-                resource_name=name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Account: {name} ({source_name})"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "account_id": account.get("id", ""),
+                        "name": name,
+                        "source_name": source_name,
+                        "identity_id": identity_id,
+                        "disabled": disabled,
+                        "uncorrelated": uncorrelated,
+                        "issues": issues,
+                    },
+                    resource_id=account.get("id", ""),
+                    resource_type="sailpoint_account",
+                    resource_name=name,
+                    severity=severity,
+                )
+            )
 
         return findings
 

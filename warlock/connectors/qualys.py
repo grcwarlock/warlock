@@ -73,9 +73,7 @@ class QualysConnector(BaseConnector):
 
     def collect(self) -> ConnectorResult:
         if httpx is None:
-            raise RuntimeError(
-                "QualysConnector requires httpx. Install with: pip install httpx"
-            )
+            raise RuntimeError("QualysConnector requires httpx. Install with: pip install httpx")
         result = ConnectorResult(
             connector_name=self.name,
             source="qualys",
@@ -130,14 +128,16 @@ class QualysConnector(BaseConnector):
             resp.raise_for_status()
             data = self._parse_xml(resp.text)
 
-            result.events.append(RawEventData(
-                source="qualys",
-                source_type=SourceType.SCANNER,
-                provider="qualys",
-                event_type="host_detections",
-                raw_data={"detections": data},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="qualys",
+                    source_type=SourceType.SCANNER,
+                    provider="qualys",
+                    event_type="host_detections",
+                    raw_data={"detections": data},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Qualys host detections failed: %s", e)
             result.errors.append(f"host_detections: {e}")
@@ -156,14 +156,16 @@ class QualysConnector(BaseConnector):
             resp.raise_for_status()
             data = self._parse_xml(resp.text)
 
-            result.events.append(RawEventData(
-                source="qualys",
-                source_type=SourceType.SCANNER,
-                provider="qualys",
-                event_type="knowledge_base",
-                raw_data={"knowledge_base": data},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="qualys",
+                    source_type=SourceType.SCANNER,
+                    provider="qualys",
+                    event_type="knowledge_base",
+                    raw_data={"knowledge_base": data},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Qualys knowledge base failed: %s", e)
             result.errors.append(f"knowledge_base: {e}")
@@ -182,14 +184,16 @@ class QualysConnector(BaseConnector):
             resp.raise_for_status()
             data = self._parse_xml(resp.text)
 
-            result.events.append(RawEventData(
-                source="qualys",
-                source_type=SourceType.SCANNER,
-                provider="qualys",
-                event_type="compliance_posture",
-                raw_data={"posture": data},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="qualys",
+                    source_type=SourceType.SCANNER,
+                    provider="qualys",
+                    event_type="compliance_posture",
+                    raw_data={"posture": data},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Qualys compliance posture failed: %s", e)
             result.errors.append(f"compliance_posture: {e}")
@@ -208,14 +212,16 @@ class QualysConnector(BaseConnector):
             resp.raise_for_status()
             data = self._parse_xml(resp.text)
 
-            result.events.append(RawEventData(
-                source="qualys",
-                source_type=SourceType.SCANNER,
-                provider="qualys",
-                event_type="asset_inventory",
-                raw_data={"hosts": data},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="qualys",
+                    source_type=SourceType.SCANNER,
+                    provider="qualys",
+                    event_type="asset_inventory",
+                    raw_data={"hosts": data},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Qualys asset inventory failed: %s", e)
             result.errors.append(f"asset_inventory: {e}")

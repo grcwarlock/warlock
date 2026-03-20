@@ -25,6 +25,7 @@ _PACKAGE_RE = re.compile(r"^package\s+([\w.]+)", re.MULTILINE)
 # Maps the top-level package prefix to (framework_id, control_id_extractor)
 # The extractor converts the package path into a human-readable control ID.
 
+
 def _nist_control_id(parts: list[str]) -> str:
     """nist.ac.ac_2 -> AC-2, nist.ac.ac_2_1 -> AC-2(1)"""
     if len(parts) < 3:
@@ -121,13 +122,17 @@ _FRAMEWORK_MAP: dict[str, tuple[str, Any]] = {
     "hipaa": ("hipaa", _hipaa_control_id),
     "ucf": ("ucf", _ucf_control_id),
     "gdpr": ("gdpr", lambda parts: parts[2].upper().replace("_", "-") if len(parts) >= 3 else ""),
-    "pci_dss": ("pci_dss", lambda parts: parts[2].upper().replace("_", ".") if len(parts) >= 3 else ""),
+    "pci_dss": (
+        "pci_dss",
+        lambda parts: parts[2].upper().replace("_", ".") if len(parts) >= 3 else "",
+    ),
 }
 
 
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
+
 
 class PolicyRegistry:
     """Scans Rego policies and maps package paths to framework controls.
@@ -163,11 +168,7 @@ class PolicyRegistry:
 
     def get_framework_policies(self, framework: str) -> dict[str, str]:
         """Return {package_path: control_id} for a specific framework."""
-        return {
-            pkg: ctrl
-            for pkg, (fw, ctrl) in self.policy_map.items()
-            if fw == framework
-        }
+        return {pkg: ctrl for pkg, (fw, ctrl) in self.policy_map.items() if fw == framework}
 
     def list_frameworks(self) -> list[str]:
         """Return sorted list of discovered framework IDs."""

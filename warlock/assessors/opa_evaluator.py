@@ -24,9 +24,11 @@ log = logging.getLogger(__name__)
 # OPA policy result (raw response from OPA)
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class OPAPolicyResult:
     """Parsed result from a single OPA policy evaluation."""
+
     package_path: str
     control_id: str = ""
     compliant: bool = False
@@ -38,6 +40,7 @@ class OPAPolicyResult:
 # ---------------------------------------------------------------------------
 # OPA Compliance Evaluator
 # ---------------------------------------------------------------------------
+
 
 class OPAComplianceEvaluator:
     """HTTP client for evaluating Rego compliance policies against OPA.
@@ -69,6 +72,7 @@ class OPAComplianceEvaluator:
             return self._client
         try:
             import httpx
+
             self._client = httpx.Client(timeout=self.timeout)
         except ImportError:
             log.warning("httpx not installed -- OPA compliance evaluation unavailable")
@@ -127,7 +131,9 @@ class OPAComplianceEvaluator:
         except Exception as exc:
             log.warning(
                 "OPA evaluation failed for %s: %s (fail_mode=%s)",
-                package_path, exc, self.fail_mode,
+                package_path,
+                exc,
+                self.fail_mode,
             )
             if self.fail_mode == "open":
                 return None
@@ -186,11 +192,7 @@ class OPAComplianceEvaluator:
             return []
 
         # Collect only the packages that belong to this framework
-        fw_packages = {
-            pkg: ctrl_id
-            for pkg, (fw, ctrl_id) in policy_map.items()
-            if fw == framework
-        }
+        fw_packages = {pkg: ctrl_id for pkg, (fw, ctrl_id) in policy_map.items() if fw == framework}
         if not fw_packages:
             return []
 
@@ -249,9 +251,7 @@ class OPAComplianceEvaluator:
                     )
                     # Prefer the policy_map control_id; fall back to the
                     # value embedded in the result itself.
-                    control_id = fw_packages.get(
-                        pkg_path, result_data.get("control_id", rule_name)
-                    )
+                    control_id = fw_packages.get(pkg_path, result_data.get("control_id", rule_name))
 
                     compliant = bool(result_data.get("compliant", False))
                     status = "compliant" if compliant else "non_compliant"
@@ -274,13 +274,16 @@ class OPAComplianceEvaluator:
                     batch_succeeded = True
                     log.debug(
                         "OPA batch evaluation for %s: %d results from %s",
-                        framework, len(results), batch_url,
+                        framework,
+                        len(results),
+                        batch_url,
                     )
 
         except Exception as exc:
             log.warning(
                 "OPA batch evaluation failed for framework %s: %s — falling back to per-policy calls",
-                framework, exc,
+                framework,
+                exc,
             )
 
         if batch_succeeded:
@@ -289,7 +292,8 @@ class OPAComplianceEvaluator:
         # --- Fallback: per-policy calls (original behaviour) ---
         log.debug(
             "OPA batch returned no results for %s; falling back to %d per-policy calls",
-            framework, len(fw_packages),
+            framework,
+            len(fw_packages),
         )
         for package_path, control_id in fw_packages.items():
             opa_result = self.evaluate_policy(package_path, normalized_data)

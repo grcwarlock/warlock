@@ -193,9 +193,7 @@ class AnthropicProvider(BaseProvider):
 
                 t0 = self._now_ms()
                 try:
-                    resp = await client.post(
-                        _MESSAGES_URL, headers=headers, json=payload
-                    )
+                    resp = await client.post(_MESSAGES_URL, headers=headers, json=payload)
                     resp.raise_for_status()
                     latency = self._now_ms() - t0
                     return self._parse_body(resp.json(), self.model, latency)

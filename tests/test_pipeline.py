@@ -10,13 +10,22 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from warlock.db.models import (
-    Base, ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult,
+    Base,
+    ConnectorRun,
+    RawEvent,
+    Finding,
+    ControlMapping,
+    ControlResult,
 )
 from warlock.pipeline.bus import EventBus
 from warlock.pipeline.orchestrator import Pipeline
 from warlock.connectors.base import (
-    BaseConnector, ConnectorConfig, ConnectorRegistry, ConnectorResult,
-    RawEventData, SourceType,
+    BaseConnector,
+    ConnectorConfig,
+    ConnectorRegistry,
+    ConnectorResult,
+    RawEventData,
+    SourceType,
 )
 from warlock.normalizers.base import BaseNormalizer, FindingData, NormalizerRegistry
 from warlock.mappers.control_mapper import ControlMapper, ExplicitRule, CrosswalkEdge
@@ -26,6 +35,7 @@ from warlock.assessors.engine import AssertionEngine, Assessor
 # ---------------------------------------------------------------------------
 # Mock connector — simulates AWS IAM credential report
 # ---------------------------------------------------------------------------
+
 
 class MockAWSConnector(BaseConnector):
     def validate(self):
@@ -42,47 +52,51 @@ class MockAWSConnector(BaseConnector):
             provider="aws",
         )
         # Simulate IAM credential report with one user missing MFA
-        result.events.append(RawEventData(
-            source="aws",
-            source_type=SourceType.CLOUD,
-            provider="aws",
-            event_type="iam_credential_report",
-            raw_data={
-                "service": "iam",
-                "method": "get_credential_report",
-                "region": "us-east-1",
-                "account_id": "123456789012",
-                "response": {
-                    "Content": (
-                        "user,arn,user_creation_time,password_enabled,password_last_used,"
-                        "password_last_changed,password_next_rotation,mfa_active,"
-                        "access_key_1_active,access_key_1_last_rotated,"
-                        "access_key_2_active,access_key_2_last_rotated\n"
-                        "admin-user,arn:aws:iam::123456789012:user/admin-user,"
-                        "2024-01-01T00:00:00+00:00,true,2024-06-01T00:00:00+00:00,"
-                        "2024-01-01T00:00:00+00:00,N/A,false,true,2024-01-01T00:00:00+00:00,"
-                        "false,N/A\n"
-                        "service-account,arn:aws:iam::123456789012:user/service-account,"
-                        "2024-01-01T00:00:00+00:00,false,N/A,N/A,N/A,false,true,"
-                        "2024-01-01T00:00:00+00:00,false,N/A\n"
-                    )
+        result.events.append(
+            RawEventData(
+                source="aws",
+                source_type=SourceType.CLOUD,
+                provider="aws",
+                event_type="iam_credential_report",
+                raw_data={
+                    "service": "iam",
+                    "method": "get_credential_report",
+                    "region": "us-east-1",
+                    "account_id": "123456789012",
+                    "response": {
+                        "Content": (
+                            "user,arn,user_creation_time,password_enabled,password_last_used,"
+                            "password_last_changed,password_next_rotation,mfa_active,"
+                            "access_key_1_active,access_key_1_last_rotated,"
+                            "access_key_2_active,access_key_2_last_rotated\n"
+                            "admin-user,arn:aws:iam::123456789012:user/admin-user,"
+                            "2024-01-01T00:00:00+00:00,true,2024-06-01T00:00:00+00:00,"
+                            "2024-01-01T00:00:00+00:00,N/A,false,true,2024-01-01T00:00:00+00:00,"
+                            "false,N/A\n"
+                            "service-account,arn:aws:iam::123456789012:user/service-account,"
+                            "2024-01-01T00:00:00+00:00,false,N/A,N/A,N/A,false,true,"
+                            "2024-01-01T00:00:00+00:00,false,N/A\n"
+                        )
+                    },
                 },
-            },
-        ))
+            )
+        )
         # Simulate GuardDuty not enabled
-        result.events.append(RawEventData(
-            source="aws",
-            source_type=SourceType.CLOUD,
-            provider="aws",
-            event_type="guardduty_detectors",
-            raw_data={
-                "service": "guardduty",
-                "method": "list_detectors",
-                "region": "us-east-1",
-                "account_id": "123456789012",
-                "response": {"DetectorIds": []},
-            },
-        ))
+        result.events.append(
+            RawEventData(
+                source="aws",
+                source_type=SourceType.CLOUD,
+                provider="aws",
+                event_type="guardduty_detectors",
+                raw_data={
+                    "service": "guardduty",
+                    "method": "list_detectors",
+                    "region": "us-east-1",
+                    "account_id": "123456789012",
+                    "response": {"DetectorIds": []},
+                },
+            )
+        )
         result.complete()
         return result
 
@@ -90,6 +104,7 @@ class MockAWSConnector(BaseConnector):
 # ---------------------------------------------------------------------------
 # Test
 # ---------------------------------------------------------------------------
+
 
 def test_full_pipeline():
     # -- Setup in-memory database --
@@ -106,43 +121,63 @@ def test_full_pipeline():
     # -- Connector registry --
     connectors = ConnectorRegistry()
     connectors.register("aws", MockAWSConnector)
-    connectors.create(ConnectorConfig(
-        name="mock-aws", source_type=SourceType.CLOUD, provider="aws",
-    ))
+    connectors.create(
+        ConnectorConfig(
+            name="mock-aws",
+            source_type=SourceType.CLOUD,
+            provider="aws",
+        )
+    )
 
     # -- Normalizer registry (use real AWS normalizer) --
     from warlock.normalizers.aws import AWSNormalizer
+
     normalizers = NormalizerRegistry()
     normalizers.register(AWSNormalizer())
 
     # -- Control mapper with rules --
     mapper = ControlMapper()
     # IAM users without MFA → NIST AC-2
-    mapper.add_explicit_rule(ExplicitRule(
-        source="aws", event_type="misconfiguration",
-        framework="nist_800_53", control_id="IA-2",
-        control_family="IA",
-    ))
+    mapper.add_explicit_rule(
+        ExplicitRule(
+            source="aws",
+            event_type="misconfiguration",
+            framework="nist_800_53",
+            control_id="IA-2",
+            control_family="IA",
+        )
+    )
     # Resource-type rule: iam_user → AC-2
     from warlock.mappers.control_mapper import ResourceRule
-    mapper.add_resource_rule(ResourceRule(
-        resource_type="iam_user",
-        framework="nist_800_53",
-        control_ids=["AC-2"],
-        control_family="AC",
-    ))
+
+    mapper.add_resource_rule(
+        ResourceRule(
+            resource_type="iam_user",
+            framework="nist_800_53",
+            control_ids=["AC-2"],
+            control_family="AC",
+        )
+    )
     # GuardDuty → SI-4
-    mapper.add_explicit_rule(ExplicitRule(
-        source="aws", event_type="misconfiguration",
-        framework="nist_800_53", control_id="SI-4",
-        control_family="SI",
-    ))
+    mapper.add_explicit_rule(
+        ExplicitRule(
+            source="aws",
+            event_type="misconfiguration",
+            framework="nist_800_53",
+            control_id="SI-4",
+            control_family="SI",
+        )
+    )
     # Crosswalk: NIST IA-2 → SOC2 CC6.1
-    mapper.add_crosswalk(CrosswalkEdge(
-        source_framework="nist_800_53", source_control="IA-2",
-        target_framework="soc2", target_control="CC6.1",
-        confidence=0.9,
-    ))
+    mapper.add_crosswalk(
+        CrosswalkEdge(
+            source_framework="nist_800_53",
+            source_control="IA-2",
+            target_framework="soc2",
+            target_control="CC6.1",
+            confidence=0.9,
+        )
+    )
 
     # -- Assertion engine --
     assertion_engine = AssertionEngine()
@@ -155,11 +190,14 @@ def test_full_pipeline():
         return True, []
 
     assertion_engine.bind_control("nist_800_53", "IA-2", "mfa_enabled")
-    assertion_engine.set_remediation("mfa_enabled", {
-        "summary": "Enable MFA for all IAM users with console access",
-        "steps": ["Go to IAM console", "Select user", "Enable MFA device"],
-        "console_path": "https://console.aws.amazon.com/iam/home#/users",
-    })
+    assertion_engine.set_remediation(
+        "mfa_enabled",
+        {
+            "summary": "Enable MFA for all IAM users with console access",
+            "steps": ["Go to IAM console", "Select user", "Enable MFA device"],
+            "console_path": "https://console.aws.amazon.com/iam/home#/users",
+        },
+    )
 
     assessor = Assessor(engine=assertion_engine)
 
@@ -177,7 +215,9 @@ def test_full_pipeline():
     # -- Assertions --
 
     # Stats
-    assert stats.raw_events_collected == 2, f"Expected 2 raw events, got {stats.raw_events_collected}"
+    assert stats.raw_events_collected == 2, (
+        f"Expected 2 raw events, got {stats.raw_events_collected}"
+    )
     assert stats.findings_normalized > 0, "Expected at least one finding"
     assert stats.connectors_succeeded == 1
     assert stats.connectors_failed == 0
@@ -219,7 +259,9 @@ def test_full_pipeline():
     assert len(results) > 0
 
     # Check that MFA assertion ran and failed
-    mfa_results = [r for r in results if r.assertion_name == "mfa_enabled" and not r.assertion_passed]
+    mfa_results = [
+        r for r in results if r.assertion_name == "mfa_enabled" and not r.assertion_passed
+    ]
     assert len(mfa_results) > 0, "Expected MFA assertion to fail for admin-user"
     assert mfa_results[0].status == "non_compliant"
     assert mfa_results[0].remediation_summary  # has remediation
@@ -232,9 +274,9 @@ def test_full_pipeline():
     assert "control.assessed" in event_types
 
     # Print summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"PIPELINE TEST PASSED")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Raw events:      {len(raw_events)}")
     print(f"Findings:        {len(findings)}")
     print(f"Control mappings:{len(mappings)}")

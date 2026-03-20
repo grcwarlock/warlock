@@ -142,9 +142,7 @@ class WizConnector(BaseConnector):
 
     def collect(self) -> ConnectorResult:
         if httpx is None:
-            raise RuntimeError(
-                "WizConnector requires httpx. Install with: pip install httpx"
-            )
+            raise RuntimeError("WizConnector requires httpx. Install with: pip install httpx")
         result = ConnectorResult(
             connector_name=self.name,
             source="wiz",
@@ -165,9 +163,7 @@ class WizConnector(BaseConnector):
 
     def _authenticate(self) -> str:
         """OAuth2 client_credentials flow to get JWT token."""
-        auth_url = self.config.settings.get(
-            "auth_url", "https://auth.app.wiz.io/oauth/token"
-        )
+        auth_url = self.config.settings.get("auth_url", "https://auth.app.wiz.io/oauth/token")
         resp = httpx.post(
             auth_url,
             data={
@@ -235,14 +231,16 @@ class WizConnector(BaseConnector):
         """Collect Wiz issues (critical/high)."""
         try:
             issues = self._paginate(client, ISSUES_QUERY, "issues")
-            result.events.append(RawEventData(
-                source="wiz",
-                source_type=SourceType.SCANNER,
-                provider="wiz",
-                event_type="wiz_issues",
-                raw_data={"issues": issues},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="wiz",
+                    source_type=SourceType.SCANNER,
+                    provider="wiz",
+                    event_type="wiz_issues",
+                    raw_data={"issues": issues},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Wiz issues collection failed: %s", e)
             result.errors.append(f"wiz_issues: {e}")
@@ -251,14 +249,16 @@ class WizConnector(BaseConnector):
         """Collect cloud configuration findings."""
         try:
             findings = self._paginate(client, CONFIG_FINDINGS_QUERY, "configurationFindings")
-            result.events.append(RawEventData(
-                source="wiz",
-                source_type=SourceType.SCANNER,
-                provider="wiz",
-                event_type="wiz_config_findings",
-                raw_data={"findings": findings},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="wiz",
+                    source_type=SourceType.SCANNER,
+                    provider="wiz",
+                    event_type="wiz_config_findings",
+                    raw_data={"findings": findings},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Wiz config findings collection failed: %s", e)
             result.errors.append(f"wiz_config_findings: {e}")
@@ -267,14 +267,16 @@ class WizConnector(BaseConnector):
         """Collect vulnerability findings."""
         try:
             findings = self._paginate(client, VULN_FINDINGS_QUERY, "vulnerabilityFindings")
-            result.events.append(RawEventData(
-                source="wiz",
-                source_type=SourceType.SCANNER,
-                provider="wiz",
-                event_type="wiz_vuln_findings",
-                raw_data={"findings": findings},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="wiz",
+                    source_type=SourceType.SCANNER,
+                    provider="wiz",
+                    event_type="wiz_vuln_findings",
+                    raw_data={"findings": findings},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Wiz vuln findings collection failed: %s", e)
             result.errors.append(f"wiz_vuln_findings: {e}")
@@ -283,14 +285,16 @@ class WizConnector(BaseConnector):
         """Collect security graph data."""
         try:
             graph_data = self._paginate(client, GRAPH_QUERY, "graphSearch")
-            result.events.append(RawEventData(
-                source="wiz",
-                source_type=SourceType.SCANNER,
-                provider="wiz",
-                event_type="wiz_graph",
-                raw_data={"graph": graph_data},
-                observed_at=datetime.now(timezone.utc),
-            ))
+            result.events.append(
+                RawEventData(
+                    source="wiz",
+                    source_type=SourceType.SCANNER,
+                    provider="wiz",
+                    event_type="wiz_graph",
+                    raw_data={"graph": graph_data},
+                    observed_at=datetime.now(timezone.utc),
+                )
+            )
         except Exception as e:
             log.debug("Wiz graph collection failed: %s", e)
             result.errors.append(f"wiz_graph: {e}")

@@ -82,9 +82,8 @@ class AuditSimulator:
         )
 
         # Get all controls for this framework
-        query = (
-            session.query(distinct(ControlResult.control_id))
-            .filter(ControlResult.framework == framework)
+        query = session.query(distinct(ControlResult.control_id)).filter(
+            ControlResult.framework == framework
         )
         if system_id:
             query = query.filter(ControlResult.system_profile_id == system_id)
@@ -114,20 +113,24 @@ class AuditSimulator:
                     else hours_until_target
                 )
                 if hours_at_target > cadence.required_hours:
-                    result.stale_controls.append({
-                        "control_id": cid,
-                        "frequency": cadence.required_frequency,
-                        "hours_stale_at_target": round(hours_at_target, 1),
-                        "threshold_hours": cadence.required_hours,
-                    })
+                    result.stale_controls.append(
+                        {
+                            "control_id": cid,
+                            "frequency": cadence.required_frequency,
+                            "hours_stale_at_target": round(hours_at_target, 1),
+                            "threshold_hours": cadence.required_hours,
+                        }
+                    )
                     is_at_risk = True
             else:
-                result.stale_controls.append({
-                    "control_id": cid,
-                    "frequency": cadence.required_frequency,
-                    "hours_stale_at_target": None,
-                    "threshold_hours": cadence.required_hours,
-                })
+                result.stale_controls.append(
+                    {
+                        "control_id": cid,
+                        "frequency": cadence.required_frequency,
+                        "hours_stale_at_target": None,
+                        "threshold_hours": cadence.required_hours,
+                    }
+                )
                 is_at_risk = True
 
             # --- 2. Posture trend projection ---
@@ -136,9 +139,8 @@ class AuditSimulator:
                 # Project score at target_date
                 days_ahead = hours_until_target / 24
                 projected_score = (
-                    (ts.points[-1].posture_score if ts.points else 0)
-                    + ts.trend_slope * days_ahead
-                )
+                    ts.points[-1].posture_score if ts.points else 0
+                ) + ts.trend_slope * days_ahead
                 if projected_score < 50:
                     is_at_risk = True
 
@@ -179,17 +181,26 @@ class AuditSimulator:
                 .order_by(PostureSnapshot.snapshot_date.desc())
                 .first()
             )
-            if latest_snap and latest_snap.status in (
-                "compliant", "inherited_compliant", "risk_accepted",
-            ) and not is_at_risk:
+            if (
+                latest_snap
+                and latest_snap.status
+                in (
+                    "compliant",
+                    "inherited_compliant",
+                    "risk_accepted",
+                )
+                and not is_at_risk
+            ):
                 compliant_count += 1
 
             if is_at_risk:
-                result.at_risk_controls.append({
-                    "control_id": cid,
-                    "current_status": latest_snap.status if latest_snap else "unknown",
-                    "trend": ts.trend if ts.points else "unknown",
-                })
+                result.at_risk_controls.append(
+                    {
+                        "control_id": cid,
+                        "current_status": latest_snap.status if latest_snap else "unknown",
+                        "trend": ts.trend if ts.points else "unknown",
+                    }
+                )
 
         # --- 4. Overdue POA&Ms by target_date ---
         open_poams = (
@@ -203,14 +214,17 @@ class AuditSimulator:
             .all()
         )
         for p in open_poams:
-            result.overdue_poams.append({
-                "poam_id": p.id,
-                "control_id": p.control_id,
-                "severity": p.severity,
-                "scheduled_completion": p.scheduled_completion.isoformat()
-                if p.scheduled_completion else None,
-                "delay_count": p.delay_count or 0,
-            })
+            result.overdue_poams.append(
+                {
+                    "poam_id": p.id,
+                    "control_id": p.control_id,
+                    "severity": p.severity,
+                    "scheduled_completion": p.scheduled_completion.isoformat()
+                    if p.scheduled_completion
+                    else None,
+                    "delay_count": p.delay_count or 0,
+                }
+            )
 
         # --- 5. Expiring risk acceptances ---
         expiring = (
@@ -223,18 +237,19 @@ class AuditSimulator:
             .all()
         )
         for ra in expiring:
-            result.expiring_acceptances.append({
-                "acceptance_id": ra.id,
-                "control_id": ra.control_id,
-                "risk_level": ra.risk_level,
-                "expiry_date": ra.expiry_date.isoformat()
-                if ra.expiry_date else None,
-            })
+            result.expiring_acceptances.append(
+                {
+                    "acceptance_id": ra.id,
+                    "control_id": ra.control_id,
+                    "risk_level": ra.risk_level,
+                    "expiry_date": ra.expiry_date.isoformat() if ra.expiry_date else None,
+                }
+            )
 
         # Projected coverage
-        result.projected_coverage = round(
-            compliant_count / result.total_controls, 4
-        ) if result.total_controls > 0 else 0.0
+        result.projected_coverage = (
+            round(compliant_count / result.total_controls, 4) if result.total_controls > 0 else 0.0
+        )
 
         log.info(
             "Audit simulation for %s at %s: coverage=%.1f%%, "

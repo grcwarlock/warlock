@@ -119,7 +119,13 @@ def _finding_to_artifact(
     artifact_type = type_map.get(finding.observation_type, "log_entry")
 
     # Determine status from severity
-    status_map = {"critical": "fail", "high": "fail", "medium": "fail", "low": "informational", "info": "informational"}
+    status_map = {
+        "critical": "fail",
+        "high": "fail",
+        "medium": "fail",
+        "low": "informational",
+        "info": "informational",
+    }
     status = status_map.get(finding.severity, "informational")
 
     data_payload = {
@@ -250,9 +256,7 @@ class AuditorWorkflow:
             control_family = mappings[0].control_family or ""
 
         # Build artifacts from findings
-        artifacts = [
-            _finding_to_artifact(f, control_id, framework) for f in findings
-        ]
+        artifacts = [_finding_to_artifact(f, control_id, framework) for f in findings]
 
         # Build assertion records from results
         assertions_run = [_result_to_assertion_record(r) for r in results]
@@ -276,9 +280,7 @@ class AuditorWorkflow:
                 f"Remediate non-compliant findings for {control_id} before audit"
             )
         if not findings:
-            recommendations.append(
-                f"Configure a connector to collect evidence for {control_id}"
-            )
+            recommendations.append(f"Configure a connector to collect evidence for {control_id}")
 
         return ControlEvidencePackage(
             framework=framework,
@@ -301,11 +303,7 @@ class AuditorWorkflow:
         Loads the AuditEngagement record to determine framework, date range,
         and scope, then builds a ControlEvidencePackage for each in-scope control.
         """
-        eng = (
-            session.query(AuditEngagement)
-            .filter(AuditEngagement.id == engagement_id)
-            .first()
-        )
+        eng = session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
         if not eng:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
@@ -353,9 +351,7 @@ class AuditorWorkflow:
             results_by_control.setdefault(r.control_id, []).append(r)
 
         all_mappings: list[ControlMapping] = (
-            session.query(ControlMapping)
-            .filter(ControlMapping.framework == framework)
-            .all()
+            session.query(ControlMapping).filter(ControlMapping.framework == framework).all()
         )
         mappings_by_control: dict[str, list[ControlMapping]] = {}
         for m in all_mappings:
@@ -395,15 +391,11 @@ class AuditorWorkflow:
 
         # Compute summary
         total = len(control_packages)
-        compliant = sum(
-            1 for p in control_packages.values() if p.overall_status == "compliant"
-        )
+        compliant = sum(1 for p in control_packages.values() if p.overall_status == "compliant")
         non_compliant = sum(
             1 for p in control_packages.values() if p.overall_status == "non_compliant"
         )
-        partial = sum(
-            1 for p in control_packages.values() if p.overall_status == "partial"
-        )
+        partial = sum(1 for p in control_packages.values() if p.overall_status == "partial")
         all_gaps = []
         for p in control_packages.values():
             all_gaps.extend(p.gaps)
@@ -467,9 +459,7 @@ class AuditorWorkflow:
                 f"Remediate non-compliant findings for {control_id} before audit"
             )
         if not findings:
-            recommendations.append(
-                f"Configure a connector to collect evidence for {control_id}"
-            )
+            recommendations.append(f"Configure a connector to collect evidence for {control_id}")
 
         return ControlEvidencePackage(
             framework=framework,
@@ -523,8 +513,7 @@ class AuditorWorkflow:
             "generated_at": _iso(package.generated_at),
             "summary": package.summary,
             "control_packages": {
-                cid: _serialize(cp)
-                for cid, cp in package.control_packages.items()
+                cid: _serialize(cp) for cid, cp in package.control_packages.items()
             },
         }
         return json.dumps(data, indent=2, default=_serialize)
@@ -569,9 +558,7 @@ class AuditorWorkflow:
             results_by_control.setdefault(r.control_id, []).append(r)
 
         all_mappings: list[ControlMapping] = (
-            session.query(ControlMapping)
-            .filter(ControlMapping.framework == framework)
-            .all()
+            session.query(ControlMapping).filter(ControlMapping.framework == framework).all()
         )
         mappings_by_control: dict[str, list[ControlMapping]] = {}
         for m in all_mappings:
@@ -608,15 +595,11 @@ class AuditorWorkflow:
             )
 
         total = len(control_packages)
-        compliant = sum(
-            1 for p in control_packages.values() if p.overall_status == "compliant"
-        )
+        compliant = sum(1 for p in control_packages.values() if p.overall_status == "compliant")
         non_compliant = sum(
             1 for p in control_packages.values() if p.overall_status == "non_compliant"
         )
-        partial = sum(
-            1 for p in control_packages.values() if p.overall_status == "partial"
-        )
+        partial = sum(1 for p in control_packages.values() if p.overall_status == "partial")
 
         summary = {
             "total_controls": total,

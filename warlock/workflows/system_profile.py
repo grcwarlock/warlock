@@ -20,7 +20,11 @@ class SystemProfileManager:
 
     VALID_IMPACT_LEVELS = {"low", "moderate", "high"}
     VALID_AUTH_STATUSES = {
-        "not_authorized", "in_process", "authorized", "denied", "revoked",
+        "not_authorized",
+        "in_process",
+        "authorized",
+        "denied",
+        "revoked",
     }
 
     def create(
@@ -32,12 +36,15 @@ class SystemProfileManager:
     ) -> SystemProfile:
         """Create a new system profile."""
         # Validate impact levels if provided
-        for field in ("confidentiality_impact", "integrity_impact",
-                      "availability_impact", "overall_impact"):
+        for field in (
+            "confidentiality_impact",
+            "integrity_impact",
+            "availability_impact",
+            "overall_impact",
+        ):
             if field in kwargs and kwargs[field] not in self.VALID_IMPACT_LEVELS:
                 raise ValueError(
-                    f"Invalid {field}: {kwargs[field]}. "
-                    f"Must be one of {self.VALID_IMPACT_LEVELS}"
+                    f"Invalid {field}: {kwargs[field]}. Must be one of {self.VALID_IMPACT_LEVELS}"
                 )
 
         if "authorization_status" in kwargs:
@@ -63,19 +70,20 @@ class SystemProfileManager:
         **kwargs: Any,
     ) -> SystemProfile:
         """Update a system profile."""
-        profile = session.query(SystemProfile).filter(
-            SystemProfile.id == profile_id
-        ).first()
+        profile = session.query(SystemProfile).filter(SystemProfile.id == profile_id).first()
         if not profile:
             raise ValueError(f"System profile not found: {profile_id}")
 
         # Validate impact levels if being updated
-        for field in ("confidentiality_impact", "integrity_impact",
-                      "availability_impact", "overall_impact"):
+        for field in (
+            "confidentiality_impact",
+            "integrity_impact",
+            "availability_impact",
+            "overall_impact",
+        ):
             if field in kwargs and kwargs[field] not in self.VALID_IMPACT_LEVELS:
                 raise ValueError(
-                    f"Invalid {field}: {kwargs[field]}. "
-                    f"Must be one of {self.VALID_IMPACT_LEVELS}"
+                    f"Invalid {field}: {kwargs[field]}. Must be one of {self.VALID_IMPACT_LEVELS}"
                 )
 
         if "authorization_status" in kwargs:
@@ -99,9 +107,7 @@ class SystemProfileManager:
         profile_id: str,
     ) -> SystemProfile | None:
         """Get a system profile by ID."""
-        return session.query(SystemProfile).filter(
-            SystemProfile.id == profile_id
-        ).first()
+        return session.query(SystemProfile).filter(SystemProfile.id == profile_id).first()
 
     def list_active(
         self,
@@ -138,11 +144,7 @@ class SystemProfileManager:
 
         # Filter by cloud accounts
         cloud_accounts = profile.cloud_accounts or []
-        account_ids = [
-            acc.get("account_id")
-            for acc in cloud_accounts
-            if acc.get("account_id")
-        ]
+        account_ids = [acc.get("account_id") for acc in cloud_accounts if acc.get("account_id")]
         if account_ids:
             query = query.filter(Finding.account_id.in_(account_ids))
 
@@ -166,9 +168,7 @@ class SystemProfileManager:
         if not finding_ids:
             return []
 
-        query = session.query(ControlResult).filter(
-            ControlResult.finding_id.in_(finding_ids)
-        )
+        query = session.query(ControlResult).filter(ControlResult.finding_id.in_(finding_ids))
 
         if framework:
             query = query.filter(ControlResult.framework == framework)
@@ -257,47 +257,59 @@ class SystemProfileManager:
             "description": "Network architecture",
             "diagrams": [],
         }
-        for boundary in (profile.network_boundaries or []):
-            network_arch["diagrams"].append({
-                "description": boundary.get("description", ""),
-                "cidr": boundary.get("cidr", ""),
-            })
+        for boundary in profile.network_boundaries or []:
+            network_arch["diagrams"].append(
+                {
+                    "description": boundary.get("description", ""),
+                    "cidr": boundary.get("cidr", ""),
+                }
+            )
 
         # Build responsible parties
         responsible_parties = []
         if profile.system_owner:
-            responsible_parties.append({
-                "role-id": "system-owner",
-                "party-uuid": profile.system_owner,
-                "email": profile.system_owner_email or "",
-            })
+            responsible_parties.append(
+                {
+                    "role-id": "system-owner",
+                    "party-uuid": profile.system_owner,
+                    "email": profile.system_owner_email or "",
+                }
+            )
         if profile.isso:
-            responsible_parties.append({
-                "role-id": "isso",
-                "party-uuid": profile.isso,
-                "email": profile.isso_email or "",
-            })
+            responsible_parties.append(
+                {
+                    "role-id": "isso",
+                    "party-uuid": profile.isso,
+                    "email": profile.isso_email or "",
+                }
+            )
         if profile.issm:
-            responsible_parties.append({
-                "role-id": "issm",
-                "party-uuid": profile.issm,
-                "email": profile.issm_email or "",
-            })
+            responsible_parties.append(
+                {
+                    "role-id": "issm",
+                    "party-uuid": profile.issm,
+                    "email": profile.issm_email or "",
+                }
+            )
         if profile.authorizing_official:
-            responsible_parties.append({
-                "role-id": "authorizing-official",
-                "party-uuid": profile.authorizing_official,
-                "email": profile.ao_email or "",
-            })
+            responsible_parties.append(
+                {
+                    "role-id": "authorizing-official",
+                    "party-uuid": profile.authorizing_official,
+                    "email": profile.ao_email or "",
+                }
+            )
 
         # Build interconnections (leveraged authorizations)
         leveraged_authorizations = []
-        for conn in (profile.interconnections or []):
-            leveraged_authorizations.append({
-                "title": conn.get("system_name", ""),
-                "description": f"Direction: {conn.get('direction', 'N/A')}. "
-                               f"Data types: {', '.join(conn.get('data_types', []))}",
-            })
+        for conn in profile.interconnections or []:
+            leveraged_authorizations.append(
+                {
+                    "title": conn.get("system_name", ""),
+                    "description": f"Direction: {conn.get('direction', 'N/A')}. "
+                    f"Data types: {', '.join(conn.get('data_types', []))}",
+                }
+            )
 
         return {
             "system-characteristics": {
@@ -310,7 +322,8 @@ class SystemProfileManager:
                     "state": profile.authorization_status or "not_authorized",
                     "authorization-date": (
                         profile.authorization_date.isoformat()
-                        if profile.authorization_date else None
+                        if profile.authorization_date
+                        else None
                     ),
                 },
                 "deployment-model": profile.deployment_model or "cloud",
@@ -337,7 +350,4 @@ class SystemProfileManager:
             .all()
         )
         # W-4: ensure_aware before comparing authorization_expiry
-        return [
-            sp for sp in rows
-            if ensure_aware(sp.authorization_expiry) <= cutoff
-        ]
+        return [sp for sp in rows if ensure_aware(sp.authorization_expiry) <= cutoff]

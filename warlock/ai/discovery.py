@@ -31,7 +31,9 @@ _FALLBACK_MODELS: dict[str, list[ModelInfo]] = {
         ModelInfo(id="claude-sonnet-4-5", display_name="Claude Sonnet 4.5", verified=False),
         ModelInfo(id="claude-haiku-3-5", display_name="Claude Haiku 3.5", verified=False),
         ModelInfo(id="claude-3-opus-20240229", display_name="Claude 3 Opus", verified=False),
-        ModelInfo(id="claude-3-5-sonnet-20241022", display_name="Claude 3.5 Sonnet", verified=False),
+        ModelInfo(
+            id="claude-3-5-sonnet-20241022", display_name="Claude 3.5 Sonnet", verified=False
+        ),
         ModelInfo(id="claude-3-haiku-20240307", display_name="Claude 3 Haiku", verified=False),
     ],
     "openai": [
@@ -126,9 +128,7 @@ class ModelDiscovery:
                     models=self._fallback(provider),
                     error="Provider returned empty model list",
                 )
-            log.debug(
-                "ModelDiscovery.discover: %r returned %d models", provider, len(models)
-            )
+            log.debug("ModelDiscovery.discover: %r returned %d models", provider, len(models))
             return DiscoveryResult(
                 connected=True,
                 models=models,
@@ -181,9 +181,7 @@ class ModelDiscovery:
             # Disable retries so validation completes quickly on failure.
             p.max_retries = 0
         except ValueError as exc:
-            log.warning(
-                "ModelDiscovery.validate_model: invalid provider %r — %s", provider, exc
-            )
+            log.warning("ModelDiscovery.validate_model: invalid provider %r — %s", provider, exc)
             return False
 
         try:

@@ -40,9 +40,9 @@ log = logging.getLogger(__name__)
 # Async AI assessment constants
 # ---------------------------------------------------------------------------
 
-_AI_TIMEOUT = 30.0       # seconds per attempt
-_AI_RETRIES = 2          # total attempts (1 initial + 1 retry)
-_AI_CONCURRENCY = 10     # semaphore width
+_AI_TIMEOUT = 30.0  # seconds per attempt
+_AI_RETRIES = 2  # total attempts (1 initial + 1 retry)
+_AI_CONCURRENCY = 10  # semaphore width
 
 _AI_SYSTEM_PROMPT = """\
 You are a FedRAMP compliance assessor. Given a control ID, control title, and \
@@ -151,7 +151,7 @@ def _build_ai_payload(
     if provider == "anthropic":
         url = "https://api.anthropic.com/v1/messages"
         headers: dict[str, str] = {
-            "x-api-key": "",       # caller injects key
+            "x-api-key": "",  # caller injects key
             "anthropic-version": "2023-06-01",
             "content-type": "application/json",
         }
@@ -180,7 +180,7 @@ def _build_ai_payload(
         }
     elif provider == "gemini":
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        headers = {"x-goog-api-key": ""}   # caller injects key
+        headers = {"x-goog-api-key": ""}  # caller injects key
         payload = {
             "system_instruction": {"parts": [{"text": _AI_SYSTEM_PROMPT}]},
             "contents": [{"parts": [{"text": user_msg}]}],
@@ -298,17 +298,23 @@ async def _assess_control_async(
                 if attempt < _AI_RETRIES:
                     log.debug(
                         "_assess_control_async: attempt %d/%d failed for %s: %s",
-                        attempt, _AI_RETRIES, control_id, exc,
+                        attempt,
+                        _AI_RETRIES,
+                        control_id,
+                        exc,
                     )
                 else:
                     log.warning(
                         "_assess_control_async: all %d attempts failed for %s: %s",
-                        _AI_RETRIES, control_id, exc,
+                        _AI_RETRIES,
+                        control_id,
+                        exc,
                     )
             except Exception as exc:  # unexpected — don't retry
                 log.warning(
                     "_assess_control_async: unexpected error for %s: %s",
-                    control_id, exc,
+                    control_id,
+                    exc,
                 )
                 return control_id, ""
 
@@ -336,11 +342,7 @@ class FedRAMPPackageGenerator:
 
         Populated from SystemProfile metadata and ControlResult data.
         """
-        profile = (
-            session.query(SystemProfile)
-            .filter(SystemProfile.id == system_profile_id)
-            .first()
-        )
+        profile = session.query(SystemProfile).filter(SystemProfile.id == system_profile_id).first()
         if profile is None:
             raise ValueError(f"SystemProfile {system_profile_id} not found")
 
@@ -369,14 +371,16 @@ class FedRAMPPackageGenerator:
         for family_id, control_id, control in _iter_controls(fedramp_config):
             statuses = ctrl_statuses.get(control_id, [])
             agg = _aggregate_status(statuses)
-            control_entries.append({
-                "control_id": control_id,
-                "family": family_id,
-                "title": control.get("title", ""),
-                "description": control.get("description", ""),
-                "implementation_status": _impl_label(agg),
-                "implementation_details": ctrl_details.get(control_id, []),
-            })
+            control_entries.append(
+                {
+                    "control_id": control_id,
+                    "family": family_id,
+                    "title": control.get("title", ""),
+                    "description": control.get("description", ""),
+                    "implementation_status": _impl_label(agg),
+                    "implementation_details": ctrl_details.get(control_id, []),
+                }
+            )
 
         # Counts
         total = len(control_entries)
@@ -393,9 +397,7 @@ class FedRAMPPackageGenerator:
                 "service_model": profile.service_model or "SaaS",
                 "authorization_status": profile.authorization_status,
                 "authorization_date": (
-                    profile.authorization_date.isoformat()
-                    if profile.authorization_date
-                    else None
+                    profile.authorization_date.isoformat() if profile.authorization_date else None
                 ),
             },
             "security_objectives": {
@@ -470,11 +472,7 @@ class FedRAMPPackageGenerator:
         # ------------------------------------------------------------------
         # 1. Load profile and existing DB results (same as sync path)
         # ------------------------------------------------------------------
-        profile = (
-            session.query(SystemProfile)
-            .filter(SystemProfile.id == system_profile_id)
-            .first()
-        )
+        profile = session.query(SystemProfile).filter(SystemProfile.id == system_profile_id).first()
         if profile is None:
             raise ValueError(f"SystemProfile {system_profile_id} not found")
 
@@ -502,8 +500,8 @@ class FedRAMPPackageGenerator:
         # 2. Build initial control entries from framework YAML
         # ------------------------------------------------------------------
         fedramp_config = _load_framework_yaml("fedramp")
-        control_meta: dict[str, dict[str, Any]] = {}   # control_id → YAML dict
-        family_map: dict[str, str] = {}                  # control_id → family_id
+        control_meta: dict[str, dict[str, Any]] = {}  # control_id → YAML dict
+        family_map: dict[str, str] = {}  # control_id → family_id
         for family_id, control_id, control in _iter_controls(fedramp_config):
             control_meta[control_id] = control
             family_map[control_id] = family_id
@@ -542,9 +540,7 @@ class FedRAMPPackageGenerator:
                     )
                     for cid, title, evidence in needs_assessment
                 ]
-                concurrency = getattr(
-                    _ai_svc._settings, "ai_batch_concurrency", _AI_CONCURRENCY
-                )
+                concurrency = getattr(_ai_svc._settings, "ai_batch_concurrency", _AI_CONCURRENCY)
                 batch_results = await _ai_svc.reason_batch(batch_tasks, concurrency=concurrency)
                 for (cid, _title, _ev), result in zip(needs_assessment, batch_results):
                     if result.ai_used and result.value:
@@ -608,19 +604,19 @@ class FedRAMPPackageGenerator:
         for control_id, meta in control_meta.items():
             statuses = ctrl_statuses.get(control_id, [])
             agg = _aggregate_status(statuses)
-            control_entries.append({
-                "control_id": control_id,
-                "family": family_map[control_id],
-                "title": meta.get("title", ""),
-                "description": meta.get("description", ""),
-                "implementation_status": _impl_label(agg),
-                "implementation_details": ctrl_details.get(control_id, []),
-            })
+            control_entries.append(
+                {
+                    "control_id": control_id,
+                    "family": family_map[control_id],
+                    "title": meta.get("title", ""),
+                    "description": meta.get("description", ""),
+                    "implementation_status": _impl_label(agg),
+                    "implementation_details": ctrl_details.get(control_id, []),
+                }
+            )
 
         total = len(control_entries)
-        implemented = sum(
-            1 for c in control_entries if c["implementation_status"] == "Implemented"
-        )
+        implemented = sum(1 for c in control_entries if c["implementation_status"] == "Implemented")
 
         return {
             "document_type": "FedRAMP SSP",
@@ -633,9 +629,7 @@ class FedRAMPPackageGenerator:
                 "service_model": profile.service_model or "SaaS",
                 "authorization_status": profile.authorization_status,
                 "authorization_date": (
-                    profile.authorization_date.isoformat()
-                    if profile.authorization_date
-                    else None
+                    profile.authorization_date.isoformat() if profile.authorization_date else None
                 ),
             },
             "security_objectives": {
@@ -730,15 +724,17 @@ class FedRAMPPackageGenerator:
 
         entries: list[dict[str, Any]] = []
         for ci in rows:
-            entries.append({
-                "framework": ci.framework,
-                "control_id": ci.control_id,
-                "inheritance_type": ci.inheritance_type,
-                "provider_description": ci.provider_description or "",
-                "responsibility_description": ci.responsibility_description or "",
-                "evidence_requirement": ci.evidence_requirement or "both",
-                "status": ci.status,
-            })
+            entries.append(
+                {
+                    "framework": ci.framework,
+                    "control_id": ci.control_id,
+                    "inheritance_type": ci.inheritance_type,
+                    "provider_description": ci.provider_description or "",
+                    "responsibility_description": ci.responsibility_description or "",
+                    "evidence_requirement": ci.evidence_requirement or "both",
+                    "status": ci.status,
+                }
+            )
 
         # Summarise by type
         type_counts: dict[str, int] = {}
@@ -825,15 +821,19 @@ class FedRAMPPackageGenerator:
                 elif ci.inheritance_type == "common":
                     responsible_role = "Common"
 
-            entries.append({
-                "control_id": control_id,
-                "family": family_id,
-                "title": control.get("title", ""),
-                "implementation_status": _impl_label(agg),
-                "implementation_description": " | ".join(descriptions[:5]) if descriptions else "",
-                "responsible_role": responsible_role,
-                "inheritance_type": ci.inheritance_type if ci else "system_specific",
-            })
+            entries.append(
+                {
+                    "control_id": control_id,
+                    "family": family_id,
+                    "title": control.get("title", ""),
+                    "implementation_status": _impl_label(agg),
+                    "implementation_description": " | ".join(descriptions[:5])
+                    if descriptions
+                    else "",
+                    "responsible_role": responsible_role,
+                    "inheritance_type": ci.inheritance_type if ci else "system_specific",
+                }
+            )
 
         return {
             "document_type": "FedRAMP CIS",
@@ -937,16 +937,18 @@ class FedRAMPPackageGenerator:
             if not descriptions and ai_provider and ai_api_key and ai_model:
                 needs_assessment.append((control_id, control.get("title", ""), []))
 
-            entries.append({
-                "control_id": control_id,
-                "family": family_id,
-                "title": control.get("title", ""),
-                "implementation_status": _impl_label(agg),
-                "implementation_description": " | ".join(descriptions[:5]),
-                "responsible_role": responsible_role,
-                "inheritance_type": ci.inheritance_type if ci else "system_specific",
-                "_needs_ai": not descriptions,  # internal flag, stripped below
-            })
+            entries.append(
+                {
+                    "control_id": control_id,
+                    "family": family_id,
+                    "title": control.get("title", ""),
+                    "implementation_status": _impl_label(agg),
+                    "implementation_description": " | ".join(descriptions[:5]),
+                    "responsible_role": responsible_role,
+                    "inheritance_type": ci.inheritance_type if ci else "system_specific",
+                    "_needs_ai": not descriptions,  # internal flag, stripped below
+                }
+            )
 
         # Parallel AI calls for empty entries
         ai_results: dict[str, str] = {}
@@ -970,9 +972,7 @@ class FedRAMPPackageGenerator:
                     )
                     for cid, title, evidence in needs_assessment
                 ]
-                concurrency = getattr(
-                    _ai_svc._settings, "ai_batch_concurrency", _AI_CONCURRENCY
-                )
+                concurrency = getattr(_ai_svc._settings, "ai_batch_concurrency", _AI_CONCURRENCY)
                 batch_results = await _ai_svc.reason_batch(batch_tasks, concurrency=concurrency)
                 for (cid, _title, _ev), result in zip(needs_assessment, batch_results):
                     if result.ai_used and result.value:
@@ -1110,15 +1110,16 @@ class FedRAMPPackageGenerator:
                         if freq:
                             break
                 if freq:
-                    frequency_map.setdefault(freq, []).append({
-                        "framework": fw_id,
-                        "control_id": control_id,
-                    })
+                    frequency_map.setdefault(freq, []).append(
+                        {
+                            "framework": fw_id,
+                            "control_id": control_id,
+                        }
+                    )
 
         # Distinct active frameworks from ControlMapping
         active_frameworks = [
-            row[0]
-            for row in session.query(ControlMapping.framework).distinct().all()
+            row[0] for row in session.query(ControlMapping.framework).distinct().all()
         ]
 
         return {

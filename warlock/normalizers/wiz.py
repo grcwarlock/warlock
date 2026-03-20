@@ -73,28 +73,30 @@ class WizNormalizer(BaseNormalizer):
             elif issue_type == "VULNERABILITY":
                 obs_type = "vulnerability"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=issue.get("title", "Wiz Issue"),
-                detail={
-                    "issue_id": issue.get("id", ""),
-                    "type": issue.get("type", ""),
-                    "status": issue.get("status", ""),
-                    "entity_id": entity.get("id", ""),
-                    "entity_type": entity.get("type", ""),
-                    "entity_name": entity.get("name", ""),
-                    "rule_id": source_rule.get("id", ""),
-                    "rule_name": source_rule.get("name", ""),
-                    "projects": project_names,
-                    "created_at": issue.get("createdAt", ""),
-                    "due_at": issue.get("dueAt", ""),
-                },
-                resource_id=entity.get("id", ""),
-                resource_type=entity.get("type", ""),
-                resource_name=entity.get("name", ""),
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=issue.get("title", "Wiz Issue"),
+                    detail={
+                        "issue_id": issue.get("id", ""),
+                        "type": issue.get("type", ""),
+                        "status": issue.get("status", ""),
+                        "entity_id": entity.get("id", ""),
+                        "entity_type": entity.get("type", ""),
+                        "entity_name": entity.get("name", ""),
+                        "rule_id": source_rule.get("id", ""),
+                        "rule_name": source_rule.get("name", ""),
+                        "projects": project_names,
+                        "created_at": issue.get("createdAt", ""),
+                        "due_at": issue.get("dueAt", ""),
+                    },
+                    resource_id=entity.get("id", ""),
+                    resource_type=entity.get("type", ""),
+                    resource_name=entity.get("name", ""),
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -111,30 +113,32 @@ class WizNormalizer(BaseNormalizer):
             rule = cf.get("rule", {}) or {}
             subscription = resource.get("subscription", {}) or {}
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration",
-                title=cf.get("title", "") or rule.get("name", "Configuration finding"),
-                detail={
-                    "finding_id": cf.get("id", ""),
-                    "result": cf.get("result", ""),
-                    "status": cf.get("status", ""),
-                    "rule_id": rule.get("id", ""),
-                    "rule_name": rule.get("name", ""),
-                    "rule_description": rule.get("description", ""),
-                    "remediation": rule.get("remediationInstructions", ""),
-                    "resource_native_type": resource.get("nativeType", ""),
-                    "subscription_id": subscription.get("id", ""),
-                    "subscription_name": subscription.get("name", ""),
-                    "analyzed_at": cf.get("analyzedAt", ""),
-                },
-                resource_id=resource.get("id", ""),
-                resource_type=resource.get("type", ""),
-                resource_name=resource.get("name", ""),
-                region=resource.get("region", ""),
-                account_id=subscription.get("id", ""),
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration",
+                    title=cf.get("title", "") or rule.get("name", "Configuration finding"),
+                    detail={
+                        "finding_id": cf.get("id", ""),
+                        "result": cf.get("result", ""),
+                        "status": cf.get("status", ""),
+                        "rule_id": rule.get("id", ""),
+                        "rule_name": rule.get("name", ""),
+                        "rule_description": rule.get("description", ""),
+                        "remediation": rule.get("remediationInstructions", ""),
+                        "resource_native_type": resource.get("nativeType", ""),
+                        "subscription_id": subscription.get("id", ""),
+                        "subscription_name": subscription.get("name", ""),
+                        "analyzed_at": cf.get("analyzedAt", ""),
+                    },
+                    resource_id=resource.get("id", ""),
+                    resource_type=resource.get("type", ""),
+                    resource_name=resource.get("name", ""),
+                    region=resource.get("region", ""),
+                    account_id=subscription.get("id", ""),
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -154,34 +158,36 @@ class WizNormalizer(BaseNormalizer):
             cvss = vf.get("CVSSScore", 0)
             name = vf.get("name", "") or vf.get("detailedName", "Vulnerability")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="vulnerability",
-                title=f"{name}" + (f" (CVSS {cvss})" if cvss else ""),
-                detail={
-                    "finding_id": vf.get("id", ""),
-                    "name": name,
-                    "detailed_name": vf.get("detailedName", ""),
-                    "cve_description": cve_desc,
-                    "cvss_score": cvss,
-                    "has_exploit": vf.get("hasExploit", False),
-                    "has_cisa_kev": vf.get("hasCISAKEVExploit", False),
-                    "version": vf.get("version", ""),
-                    "fixed_version": vf.get("fixedVersion", ""),
-                    "vendor_severity": vf.get("vendorSeverity", ""),
-                    "status": vf.get("status", ""),
-                    "first_detected": vf.get("firstDetectedAt", ""),
-                    "last_detected": vf.get("lastDetectedAt", ""),
-                    "subscription_id": subscription.get("id", ""),
-                    "subscription_name": subscription.get("name", ""),
-                },
-                resource_id=asset.get("id", ""),
-                resource_type=asset.get("type", ""),
-                resource_name=asset.get("name", ""),
-                region=asset.get("region", ""),
-                account_id=subscription.get("id", ""),
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title=f"{name}" + (f" (CVSS {cvss})" if cvss else ""),
+                    detail={
+                        "finding_id": vf.get("id", ""),
+                        "name": name,
+                        "detailed_name": vf.get("detailedName", ""),
+                        "cve_description": cve_desc,
+                        "cvss_score": cvss,
+                        "has_exploit": vf.get("hasExploit", False),
+                        "has_cisa_kev": vf.get("hasCISAKEVExploit", False),
+                        "version": vf.get("version", ""),
+                        "fixed_version": vf.get("fixedVersion", ""),
+                        "vendor_severity": vf.get("vendorSeverity", ""),
+                        "status": vf.get("status", ""),
+                        "first_detected": vf.get("firstDetectedAt", ""),
+                        "last_detected": vf.get("lastDetectedAt", ""),
+                        "subscription_id": subscription.get("id", ""),
+                        "subscription_name": subscription.get("name", ""),
+                    },
+                    resource_id=asset.get("id", ""),
+                    resource_type=asset.get("type", ""),
+                    resource_name=asset.get("name", ""),
+                    region=asset.get("region", ""),
+                    account_id=subscription.get("id", ""),
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -195,21 +201,23 @@ class WizNormalizer(BaseNormalizer):
         for node in graph_nodes:
             entities = node.get("entities", [])
             for entity in entities:
-                findings.append(FindingData(
-                    **self._base(raw),
-                    observation_type="inventory",
-                    title=f"Graph entity: {entity.get('name', entity.get('id', '?'))}",
-                    detail={
-                        "entity_id": entity.get("id", ""),
-                        "entity_type": entity.get("type", ""),
-                        "entity_name": entity.get("name", ""),
-                        "properties": entity.get("properties", {}),
-                    },
-                    resource_id=entity.get("id", ""),
-                    resource_type=entity.get("type", ""),
-                    resource_name=entity.get("name", ""),
-                    severity="info",
-                ))
+                findings.append(
+                    FindingData(
+                        **self._base(raw),
+                        observation_type="inventory",
+                        title=f"Graph entity: {entity.get('name', entity.get('id', '?'))}",
+                        detail={
+                            "entity_id": entity.get("id", ""),
+                            "entity_type": entity.get("type", ""),
+                            "entity_name": entity.get("name", ""),
+                            "properties": entity.get("properties", {}),
+                        },
+                        resource_id=entity.get("id", ""),
+                        resource_type=entity.get("type", ""),
+                        resource_name=entity.get("name", ""),
+                        severity="info",
+                    )
+                )
 
         return findings
 

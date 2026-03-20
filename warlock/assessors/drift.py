@@ -24,9 +24,13 @@ from warlock.db.models import (
 log = logging.getLogger(__name__)
 
 # Status ordering for drift direction classification
-_COMPLIANT_STATUSES = frozenset({
-    "compliant", "inherited_compliant", "risk_accepted",
-})
+_COMPLIANT_STATUSES = frozenset(
+    {
+        "compliant",
+        "inherited_compliant",
+        "risk_accepted",
+    }
+)
 
 
 class DriftDetector:
@@ -98,9 +102,11 @@ class DriftDetector:
                 direction = "degraded"
 
             drift = ComplianceDrift(
-                framework=fw, control_id=cid,
+                framework=fw,
+                control_id=cid,
                 system_profile_id=current.system_profile_id,
-                previous_status=previous.status, new_status=current.status,
+                previous_status=previous.status,
+                new_status=current.status,
                 drift_direction=direction,
                 previous_posture_score=previous.posture_score,
                 new_posture_score=current.posture_score,
@@ -108,7 +114,9 @@ class DriftDetector:
             )
             session.add(drift)
             drifts.append(drift)
-            log.info("Drift: %s/%s %s -> %s (%s)", fw, cid, previous.status, current.status, direction)
+            log.info(
+                "Drift: %s/%s %s -> %s (%s)", fw, cid, previous.status, current.status, direction
+            )
 
         if drifts:
             session.flush()
@@ -158,29 +166,30 @@ class DriftDetector:
         rt_set = {row[0] for row in resource_types if row[0]}
 
         # Query change events in the time window
-        query = (
-            session.query(ChangeEvent)
-            .filter(
-                ChangeEvent.occurred_at >= start,
-                ChangeEvent.occurred_at <= end,
-            )
+        query = session.query(ChangeEvent).filter(
+            ChangeEvent.occurred_at >= start,
+            ChangeEvent.occurred_at <= end,
         )
         if rt_set:
             query = query.filter(ChangeEvent.resource_type.in_(rt_set))
 
         events = query.all()
         # Sort by temporal proximity in Python (avoids SQLite-specific func.julianday)
-        events.sort(key=lambda e: abs(
-            (e.occurred_at.replace(tzinfo=timezone.utc) if e.occurred_at.tzinfo is None else e.occurred_at)
-            - detected_at
-        ).total_seconds())
+        events.sort(
+            key=lambda e: abs(
+                (
+                    e.occurred_at.replace(tzinfo=timezone.utc)
+                    if e.occurred_at.tzinfo is None
+                    else e.occurred_at
+                )
+                - detected_at
+            ).total_seconds()
+        )
 
         # Update drift record with correlated event IDs
         if events:
             drift.correlated_change_event_ids = [e.id for e in events]
-            drift.correlation_confidence = min(
-                1.0, len(events) * 0.3
-            )
+            drift.correlation_confidence = min(1.0, len(events) * 0.3)
             session.flush()
             log.info(
                 "Correlated %d change events with drift %s",

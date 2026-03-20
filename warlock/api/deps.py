@@ -32,6 +32,7 @@ class AuthContext:
     of the user's role permissions and the API key's scopes — so a read-only
     API key on an admin user only gets read access. (C-3 fix)
     """
+
     user: User
     effective_permissions: set[str] = field(default_factory=set)
     via_api_key: bool = False
@@ -154,9 +155,9 @@ def apply_framework_scope(query, model_class, user: User):
 def apply_source_scope(query, model_class, user: User):
     """Apply user's allowed_sources filter to a query."""
     if user.allowed_sources:
-        if hasattr(model_class, 'source'):
+        if hasattr(model_class, "source"):
             query = query.filter(model_class.source.in_(user.allowed_sources))
-        elif hasattr(model_class, 'provider'):
+        elif hasattr(model_class, "provider"):
             query = query.filter(model_class.provider.in_(user.allowed_sources))
     return query
 
@@ -164,6 +165,7 @@ def apply_source_scope(query, model_class, user: User):
 # ---------------------------------------------------------------------------
 # Pagination dependency (#55)
 # ---------------------------------------------------------------------------
+
 
 def get_pagination(
     limit: int = Query(default=50, ge=1, le=1000),

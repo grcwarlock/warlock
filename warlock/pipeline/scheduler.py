@@ -22,10 +22,10 @@ log = logging.getLogger(__name__)
 
 DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
     "pipeline_collect": {"interval_minutes": 60, "enabled": True},
-    "posture_snapshot": {"interval_minutes": 1440, "enabled": True},   # daily
-    "cadence_check": {"interval_minutes": 60, "enabled": True},        # after each collect
+    "posture_snapshot": {"interval_minutes": 1440, "enabled": True},  # daily
+    "cadence_check": {"interval_minutes": 60, "enabled": True},  # after each collect
     "retention_purge": {"interval_minutes": 10080, "enabled": True},  # weekly
-    "ccm_stale_check": {"interval_minutes": 60, "enabled": True},     # CCM stale control scan
+    "ccm_stale_check": {"interval_minutes": 60, "enabled": True},  # CCM stale control scan
     "risk_reeval_check": {"interval_minutes": 360, "enabled": True},  # risk acceptance re-eval (6h)
     # Monte Carlo pre-computation cache warm (opt-in, weekly by default)
     "risk_cache_precompute": {"interval_minutes": 10080, "enabled": False},
@@ -35,6 +35,7 @@ DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
 @dataclass
 class ScheduleState:
     """Tracks per-schedule execution state."""
+
     name: str
     interval_seconds: float
     enabled: bool
@@ -89,6 +90,7 @@ class PipelineScheduler:
         # Honour opt-in config flag for risk cache pre-computation
         try:
             from warlock.config import get_settings
+
             settings = get_settings()
             precompute_enabled = getattr(settings, "risk_cache_precompute_enabled", False)
             self._schedules["risk_cache_precompute"].enabled = precompute_enabled
@@ -187,9 +189,7 @@ class PipelineScheduler:
         # #38: prevent overlapping executions of the same schedule
         with self._lock:
             if sched._future is not None and not sched._future.done():
-                log.warning(
-                    "Schedule '%s' still running — skipping overlap", schedule_name
-                )
+                log.warning("Schedule '%s' still running — skipping overlap", schedule_name)
                 return
             pool = self._pool
 
@@ -296,7 +296,8 @@ class PipelineScheduler:
         if purged or held:
             log.info(
                 "Retention purge: %d records purged, %d held by legal hold",
-                purged, held,
+                purged,
+                held,
             )
         else:
             log.info("Retention purge: nothing to purge")
@@ -394,6 +395,7 @@ class PipelineScheduler:
                 next_run = None
                 if self._running and sched.enabled and sched.last_run:
                     from datetime import timedelta
+
                     next_run = (
                         sched.last_run + timedelta(seconds=sched.interval_seconds)
                     ).isoformat()
@@ -413,9 +415,7 @@ class PipelineScheduler:
                 "running": self._running,
                 "schedules": schedules,
                 # Backward compatibility
-                "interval_minutes": int(
-                    self._schedules["pipeline_collect"].interval_seconds / 60
-                ),
+                "interval_minutes": int(self._schedules["pipeline_collect"].interval_seconds / 60),
                 "last_run": schedules["pipeline_collect"]["last_run"],
                 "next_run": schedules["pipeline_collect"]["next_run"],
                 "run_count": self._schedules["pipeline_collect"].run_count,

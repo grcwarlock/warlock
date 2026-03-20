@@ -272,9 +272,7 @@ class ControlTester:
         thirty_days_ago = now - timedelta(days=30)
 
         recent_changes = (
-            session.query(ChangeEvent)
-            .filter(ChangeEvent.occurred_at >= thirty_days_ago)
-            .all()
+            session.query(ChangeEvent).filter(ChangeEvent.occurred_at >= thirty_days_ago).all()
         )
 
         details: list[str] = []
@@ -321,7 +319,9 @@ class ControlTester:
         failed = len(results) - passed
         log.info(
             "Control test suite complete: %d passed, %d failed out of %d tests",
-            passed, failed, len(results),
+            passed,
+            failed,
+            len(results),
         )
 
         return results

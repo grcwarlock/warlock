@@ -72,6 +72,7 @@ def _run_posture_snapshot() -> dict[str, Any]:
     # Import the snapshot logic
     try:
         from warlock.workflows.system_profile import SystemProfileManager
+
         mgr = SystemProfileManager()
     except ImportError:
         return {"error": "system_profile module not available"}
@@ -80,7 +81,7 @@ def _run_posture_snapshot() -> dict[str, Any]:
         profiles = mgr.list_active(session)
         snapshot_count = 0
         for profile in profiles:
-            for fw in (profile.frameworks or []):
+            for fw in profile.frameworks or []:
                 try:
                     mgr.posture_for_system(session, profile.id, fw)
                     snapshot_count += 1

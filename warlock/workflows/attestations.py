@@ -42,9 +42,7 @@ class AttestationManager:
     ) -> Attestation:
         """Create a new attestation in draft status."""
         if engagement_id:
-            eng = session.query(AuditEngagement).filter(
-                AuditEngagement.id == engagement_id
-            ).first()
+            eng = session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
             if not eng:
                 raise ValueError(f"Engagement not found: {engagement_id}")
 
@@ -162,8 +160,7 @@ class AttestationManager:
         allowed = self.VALID_TRANSITIONS.get(att.status, set())
         if "rejected" not in allowed and "draft" not in allowed:
             raise ValueError(
-                f"Cannot reject from status '{att.status}'. "
-                f"Allowed transitions: {allowed}"
+                f"Cannot reject from status '{att.status}'. Allowed transitions: {allowed}"
             )
 
         now = datetime.now(timezone.utc)
@@ -195,9 +192,7 @@ class AttestationManager:
         framework: str,
     ) -> Attestation:
         """Auto-generate a management assertion from posture data."""
-        eng = session.query(AuditEngagement).filter(
-            AuditEngagement.id == engagement_id
-        ).first()
+        eng = session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
         if not eng:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
@@ -256,8 +251,7 @@ class AttestationManager:
         allowed = self.VALID_TRANSITIONS.get(current, set())
         if target not in allowed:
             raise ValueError(
-                f"Cannot transition from '{current}' to '{target}'. "
-                f"Allowed transitions: {allowed}"
+                f"Cannot transition from '{current}' to '{target}'. Allowed transitions: {allowed}"
             )
 
 
@@ -281,27 +275,21 @@ class AuditCollaboration:
         """Add a comment to a target within an engagement."""
         if target_type not in self.VALID_TARGET_TYPES:
             raise ValueError(
-                f"Invalid target_type: {target_type}. "
-                f"Must be one of {self.VALID_TARGET_TYPES}"
+                f"Invalid target_type: {target_type}. Must be one of {self.VALID_TARGET_TYPES}"
             )
         if author_role and author_role not in self.VALID_ROLES:
             raise ValueError(
-                f"Invalid author_role: {author_role}. "
-                f"Must be one of {self.VALID_ROLES}"
+                f"Invalid author_role: {author_role}. Must be one of {self.VALID_ROLES}"
             )
 
         # Validate engagement exists
-        eng = session.query(AuditEngagement).filter(
-            AuditEngagement.id == engagement_id
-        ).first()
+        eng = session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
         if not eng:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
         # Validate parent exists if threading
         if parent_id:
-            parent = session.query(AuditComment).filter(
-                AuditComment.id == parent_id
-            ).first()
+            parent = session.query(AuditComment).filter(AuditComment.id == parent_id).first()
             if not parent:
                 raise ValueError(f"Parent comment not found: {parent_id}")
             if parent.engagement_id != engagement_id:
@@ -327,9 +315,7 @@ class AuditCollaboration:
         resolved_by: str,
     ) -> AuditComment:
         """Resolve a comment thread."""
-        comment = session.query(AuditComment).filter(
-            AuditComment.id == comment_id
-        ).first()
+        comment = session.query(AuditComment).filter(AuditComment.id == comment_id).first()
         if not comment:
             raise ValueError(f"Comment not found: {comment_id}")
 
@@ -346,9 +332,7 @@ class AuditCollaboration:
         comment_id: str,
     ) -> list[AuditComment]:
         """Get a comment and all its replies."""
-        root = session.query(AuditComment).filter(
-            AuditComment.id == comment_id
-        ).first()
+        root = session.query(AuditComment).filter(AuditComment.id == comment_id).first()
         if not root:
             raise ValueError(f"Comment not found: {comment_id}")
 
@@ -405,5 +389,6 @@ class AuditCollaboration:
                 AuditComment.resolved == False,  # noqa: E712
                 AuditComment.parent_id == None,  # noqa: E711 — top-level only
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )

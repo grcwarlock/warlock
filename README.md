@@ -6,7 +6,7 @@ Evidence flows through 4 immutable stages with SHA-256 integrity hashing at ever
 
 ```
 Stage 1: Connectors (41 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (41 parsers) → FindingData       → transform to universal findings
+Stage 2: Normalizers (42 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
@@ -59,9 +59,21 @@ pip install -e ".[dev,ai]"
 alembic upgrade head
 python scripts/demo_seed.py            # 40 connectors, 547 findings, 29K results (~7s)
 warlock coverage                       # verify it worked
+warlock dashboard                      # interactive TUI dashboard
 warlock-api                            # start REST API on :8000
 ./scripts/demo_api.sh                  # query API with auto-auth
 ```
+
+## Interactive TUI
+
+Warlock includes a full terminal UI dashboard built with [Textual](https://textual.textualize.io/):
+
+```bash
+warlock dashboard     # 7-tab dashboard: Overview, Coverage, Findings, Risk, Issues, Pipeline, AI
+warlock tui           # form-based command browser (via Trogon)
+```
+
+The dashboard features plotext charts, color-coded compliance tables, interactive findings browser, FAIR risk viewer with loss exceedance curves, and an AI reasoning chat panel.
 
 ## CLI Commands
 
@@ -240,7 +252,7 @@ WLK_OKTA_API_TOKEN=...
 ```
 warlock/
 ├── connectors/           # 41 source connectors (Stage 1)
-├── normalizers/          # 41 normalizers (Stage 2)
+├── normalizers/          # 42 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
@@ -261,7 +273,7 @@ warlock/
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
 ├── db/
-│   ├── models.py         # 34 SQLAlchemy models
+│   ├── models.py         # 35 SQLAlchemy models
 │   ├── migrations/       # Alembic migrations (11 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
@@ -301,7 +313,7 @@ warlock/
 
 ## Database
 
-34 tables across 11 Alembic migrations:
+35 tables across 11 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency

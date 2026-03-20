@@ -20,8 +20,13 @@ class IssueManager:
     """Manages the lifecycle of compliance issues."""
 
     VALID_STATUSES = {
-        "open", "assigned", "in_progress", "remediated",
-        "verified", "closed", "risk_accepted",
+        "open",
+        "assigned",
+        "in_progress",
+        "remediated",
+        "verified",
+        "closed",
+        "risk_accepted",
     }
     VALID_TRANSITIONS = {
         "open": {"assigned", "risk_accepted", "closed"},
@@ -73,13 +78,17 @@ class IssueManager:
             priority=self._severity_to_priority(result.severity),
             source="pipeline",
             created_by=created_by,
-            remediation_plan="\n".join(result.remediation_steps) if result.remediation_steps else None,
+            remediation_plan="\n".join(result.remediation_steps)
+            if result.remediation_steps
+            else None,
         )
         session.add(issue)
         session.flush()
 
         self.add_comment(
-            session, issue.id, created_by,
+            session,
+            issue.id,
+            created_by,
             f"Issue auto-created from finding {finding_id[:8]}... (control result {control_result_id[:8]}...)",
             comment_type="status_change",
         )
@@ -98,7 +107,9 @@ class IssueManager:
     ) -> Issue:
         """Create an issue manually (e.g. from a POA&M import)."""
         if priority not in self.PRIORITY_ORDER:
-            raise ValueError(f"Invalid priority: {priority}. Must be one of {set(self.PRIORITY_ORDER)}")
+            raise ValueError(
+                f"Invalid priority: {priority}. Must be one of {set(self.PRIORITY_ORDER)}"
+            )
 
         issue = Issue(
             title=title,
@@ -154,7 +165,9 @@ class IssueManager:
             issue.closed_at = None
 
         self.add_comment(
-            session, issue_id, actor,
+            session,
+            issue_id,
+            actor,
             f"Status changed from '{old_status}' to '{new_status}'"
             + (f": {notes}" if notes else ""),
             comment_type="status_change",
@@ -185,7 +198,9 @@ class IssueManager:
             issue.status = "assigned"
 
         self.add_comment(
-            session, issue_id, assigned_by,
+            session,
+            issue_id,
+            assigned_by,
             f"Assigned to {assigned_to}",
             comment_type="assignment",
         )
@@ -212,8 +227,7 @@ class IssueManager:
         allowed = self.VALID_TRANSITIONS.get(issue.status, set())
         if "risk_accepted" not in allowed:
             raise ValueError(
-                f"Cannot accept risk from status '{issue.status}'. "
-                f"Allowed transitions: {allowed}"
+                f"Cannot accept risk from status '{issue.status}'. Allowed transitions: {allowed}"
             )
 
         now = datetime.now(timezone.utc)
@@ -225,7 +239,9 @@ class IssueManager:
         issue.updated_at = now
 
         self.add_comment(
-            session, issue_id, actor or owner,
+            session,
+            issue_id,
+            actor or owner,
             f"Risk accepted by {owner}. Justification: {justification}. "
             f"Expires in {expiry_days} days.",
             comment_type="status_change",
@@ -248,16 +264,20 @@ class IssueManager:
 
         now = datetime.now(timezone.utc)
         evidence_list = list(issue.remediation_evidence or [])
-        evidence_list.append({
-            "description": description,
-            "url": url,
-            "uploaded_at": now.isoformat(),
-        })
+        evidence_list.append(
+            {
+                "description": description,
+                "url": url,
+                "uploaded_at": now.isoformat(),
+            }
+        )
         issue.remediation_evidence = evidence_list
         issue.updated_at = now
 
         self.add_comment(
-            session, issue_id, actor,
+            session,
+            issue_id,
+            actor,
             f"Evidence added: {description} ({url})",
             comment_type="evidence",
         )
@@ -290,9 +310,7 @@ class IssueManager:
     ) -> list[Issue]:
         """Scan ControlResults for non-compliant items and auto-create issues
         for any that don't already have one."""
-        query = session.query(ControlResult).filter(
-            ControlResult.status == "non_compliant"
-        )
+        query = session.query(ControlResult).filter(ControlResult.status == "non_compliant")
         if framework:
             query = query.filter(ControlResult.framework == framework)
 
@@ -301,11 +319,15 @@ class IssueManager:
 
         for result in results:
             # W-7: Check for any open issue on the same (framework, control_id)
-            existing = session.query(Issue).filter(
-                Issue.framework == result.framework,
-                Issue.control_id == result.control_id,
-                Issue.status.notin_(["closed", "verified", "risk_accepted"]),
-            ).first()
+            existing = (
+                session.query(Issue)
+                .filter(
+                    Issue.framework == result.framework,
+                    Issue.control_id == result.control_id,
+                    Issue.status.notin_(["closed", "verified", "risk_accepted"]),
+                )
+                .first()
+            )
             if existing:
                 continue
 

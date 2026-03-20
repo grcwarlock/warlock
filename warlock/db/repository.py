@@ -234,14 +234,11 @@ class ControlResultRepository(BaseRepository):
                 ...
             }
         """
-        query = (
-            self.session.query(
-                ControlResult.framework,
-                ControlResult.status,
-                func.count(ControlResult.id),
-            )
-            .group_by(ControlResult.framework, ControlResult.status)
-        )
+        query = self.session.query(
+            ControlResult.framework,
+            ControlResult.status,
+            func.count(ControlResult.id),
+        ).group_by(ControlResult.framework, ControlResult.status)
         if framework is not None:
             query = query.filter(ControlResult.framework == framework)
 
@@ -306,9 +303,7 @@ class PostureSnapshotRepository(BaseRepository):
         control_id: str | None = None,
     ) -> PostureSnapshot | None:
         """Get the latest snapshot for a framework (and optionally a specific control)."""
-        query = self.session.query(PostureSnapshot).filter(
-            PostureSnapshot.framework == framework
-        )
+        query = self.session.query(PostureSnapshot).filter(PostureSnapshot.framework == framework)
         if control_id is not None:
             query = query.filter(PostureSnapshot.control_id == control_id)
         return query.order_by(PostureSnapshot.snapshot_date.desc()).first()

@@ -236,17 +236,13 @@ class OscalExporter:
         # Build per-framework result blocks
         oscal_results: list[dict[str, Any]] = []
         for fw, cr_list in sorted(by_framework.items()):
-            oscal_results.append(
-                self._build_result_block(fw, cr_list, findings_map, system_name)
-            )
+            oscal_results.append(self._build_result_block(fw, cr_list, findings_map, system_name))
 
         doc_uuid = str(uuid4())
         return {
             "assessment-results": {
                 "uuid": doc_uuid,
-                "metadata": _build_metadata(
-                    f"Warlock GRC Assessment Results — {system_name}"
-                ),
+                "metadata": _build_metadata(f"Warlock GRC Assessment Results — {system_name}"),
                 "import-ap": {"href": "#"},
                 "results": oscal_results,
             }
@@ -287,27 +283,36 @@ class OscalExporter:
                 seen_resources.add(finding.resource_id)
                 res_uuid = _deterministic_uuid("resource", finding.resource_id)
                 resource_uuid_map[finding.resource_id] = res_uuid
-                inventory_items.append({
-                    "uuid": res_uuid,
-                    "description": finding.resource_name or finding.resource_id,
-                    "props": [
-                        p for p in [
-                            {"name": "resource-type", "value": finding.resource_type}
-                            if finding.resource_type else None,
-                            {"name": "account-id", "value": finding.account_id}
-                            if finding.account_id else None,
-                            {"name": "region", "value": finding.region}
-                            if finding.region else None,
-                        ] if p is not None
-                    ],
-                })
-                components.append({
-                    "uuid": _deterministic_uuid("component", finding.resource_id),
-                    "type": "this-system",
-                    "title": finding.resource_name or finding.resource_type or "Unknown",
-                    "description": f"Resource {finding.resource_id}",
-                    "status": {"state": "operational"},
-                })
+                inventory_items.append(
+                    {
+                        "uuid": res_uuid,
+                        "description": finding.resource_name or finding.resource_id,
+                        "props": [
+                            p
+                            for p in [
+                                {"name": "resource-type", "value": finding.resource_type}
+                                if finding.resource_type
+                                else None,
+                                {"name": "account-id", "value": finding.account_id}
+                                if finding.account_id
+                                else None,
+                                {"name": "region", "value": finding.region}
+                                if finding.region
+                                else None,
+                            ]
+                            if p is not None
+                        ],
+                    }
+                )
+                components.append(
+                    {
+                        "uuid": _deterministic_uuid("component", finding.resource_id),
+                        "type": "this-system",
+                        "title": finding.resource_name or finding.resource_type or "Unknown",
+                        "description": f"Resource {finding.resource_id}",
+                        "status": {"state": "operational"},
+                    }
+                )
 
             # Build observation
             obs_uuid = _deterministic_uuid("observation", cr.id)
@@ -315,8 +320,10 @@ class OscalExporter:
                 "uuid": obs_uuid,
                 "title": finding.title if finding else f"Observation for {cr.control_id}",
                 "description": (
-                    json.dumps(finding.detail) if finding and isinstance(finding.detail, (dict, list))
-                    else str(finding.detail) if finding and finding.detail
+                    json.dumps(finding.detail)
+                    if finding and isinstance(finding.detail, (dict, list))
+                    else str(finding.detail)
+                    if finding and finding.detail
                     else f"Assessment observation for control {cr.control_id}"
                 ),
                 "methods": ["TEST"],
@@ -328,9 +335,7 @@ class OscalExporter:
             }
             if finding:
                 obs["props"].append({"name": "source", "value": finding.provider})
-                obs["props"].append(
-                    {"name": "observation-type", "value": finding.observation_type}
-                )
+                obs["props"].append({"name": "observation-type", "value": finding.observation_type})
                 if finding.resource_id and finding.resource_id in resource_uuid_map:
                     obs["subjects"] = [
                         {
@@ -382,11 +387,7 @@ class OscalExporter:
             "end": _iso(end_dt),
             "reviewed-controls": {
                 "control-selections": [
-                    {
-                        "include-controls": [
-                            {"control-id": cid} for cid in sorted(control_ids_seen)
-                        ]
-                    }
+                    {"include-controls": [{"control-id": cid} for cid in sorted(control_ids_seen)]}
                 ]
             },
             "observations": observations,
@@ -433,9 +434,7 @@ class OscalExporter:
         """
         # Query all control results for this framework
         cr_rows: list[ControlResult] = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework == framework).all()
         )
 
         # Gather related findings for inventory
@@ -455,35 +454,42 @@ class OscalExporter:
             if finding and finding.resource_id and finding.resource_id not in seen_resources:
                 seen_resources.add(finding.resource_id)
                 res_uuid = _deterministic_uuid("resource", finding.resource_id)
-                components.append({
-                    "uuid": _deterministic_uuid("component", finding.resource_id),
-                    "type": "this-system",
-                    "title": finding.resource_name or finding.resource_type or "Unknown",
-                    "description": f"Resource {finding.resource_id}",
-                    "status": {"state": "operational"},
-                })
+                components.append(
+                    {
+                        "uuid": _deterministic_uuid("component", finding.resource_id),
+                        "type": "this-system",
+                        "title": finding.resource_name or finding.resource_type or "Unknown",
+                        "description": f"Resource {finding.resource_id}",
+                        "status": {"state": "operational"},
+                    }
+                )
                 inv_props = [
-                    p for p in [
+                    p
+                    for p in [
                         {"name": "resource-type", "value": finding.resource_type}
-                        if finding.resource_type else None,
+                        if finding.resource_type
+                        else None,
                         {"name": "account-id", "value": finding.account_id}
-                        if finding.account_id else None,
-                        {"name": "region", "value": finding.region}
-                        if finding.region else None,
-                    ] if p is not None
+                        if finding.account_id
+                        else None,
+                        {"name": "region", "value": finding.region} if finding.region else None,
+                    ]
+                    if p is not None
                 ]
-                inventory_items.append({
-                    "uuid": res_uuid,
-                    "description": finding.resource_name or finding.resource_id,
-                    "props": inv_props,
-                    "implemented-components": [
-                        {
-                            "component-uuid": _deterministic_uuid(
-                                "component", finding.resource_id
-                            )
-                        }
-                    ],
-                })
+                inventory_items.append(
+                    {
+                        "uuid": res_uuid,
+                        "description": finding.resource_name or finding.resource_id,
+                        "props": inv_props,
+                        "implemented-components": [
+                            {
+                                "component-uuid": _deterministic_uuid(
+                                    "component", finding.resource_id
+                                )
+                            }
+                        ],
+                    }
+                )
 
         # Aggregate control results to per-control implementation status.
         ctrl_statuses: dict[str, list[str]] = {}
@@ -518,7 +524,9 @@ class OscalExporter:
                         narrative = narrator.generate_implementation(evidence)
                         log.info(
                             "AI narrative generated for %s/%s (confidence=%.2f)",
-                            framework, original_ctrl, narrative.confidence,
+                            framework,
+                            original_ctrl,
+                            narrative.confidence,
                         )
                         return ctrl_id, narrative
                     except Exception:
@@ -554,26 +562,34 @@ class OscalExporter:
             statements: list[dict[str, Any]] = []
             if ai_narrative and ai_narrative.narrative:
                 # Single cohesive statement from AI
-                statements.append({
-                    "statement-id": f"{ctrl_id}_stmt.narrative",
-                    "uuid": _deterministic_uuid("ssp-stmt-ai", f"{framework}|{ctrl_id}"),
-                    "description": impl_description,
-                })
+                statements.append(
+                    {
+                        "statement-id": f"{ctrl_id}_stmt.narrative",
+                        "uuid": _deterministic_uuid("ssp-stmt-ai", f"{framework}|{ctrl_id}"),
+                        "description": impl_description,
+                    }
+                )
                 # Add evidence summary as a separate statement
                 if ai_narrative.evidence_summary:
-                    statements.append({
-                        "statement-id": f"{ctrl_id}_stmt.evidence",
-                        "uuid": _deterministic_uuid("ssp-stmt-ev", f"{framework}|{ctrl_id}"),
-                        "description": f"Evidence: {ai_narrative.evidence_summary}",
-                    })
+                    statements.append(
+                        {
+                            "statement-id": f"{ctrl_id}_stmt.evidence",
+                            "uuid": _deterministic_uuid("ssp-stmt-ev", f"{framework}|{ctrl_id}"),
+                            "description": f"Evidence: {ai_narrative.evidence_summary}",
+                        }
+                    )
             else:
                 for cr in crs:
-                    stmt_text = cr.ai_assessment or cr.remediation_summary or f"Assessment by {cr.assessor}"
-                    statements.append({
-                        "statement-id": f"{ctrl_id}_stmt.{_deterministic_uuid('stmt', cr.id)[:8]}",
-                        "uuid": _deterministic_uuid("ssp-stmt", cr.id),
-                        "description": stmt_text,
-                    })
+                    stmt_text = (
+                        cr.ai_assessment or cr.remediation_summary or f"Assessment by {cr.assessor}"
+                    )
+                    statements.append(
+                        {
+                            "statement-id": f"{ctrl_id}_stmt.{_deterministic_uuid('stmt', cr.id)[:8]}",
+                            "uuid": _deterministic_uuid("ssp-stmt", cr.id),
+                            "description": stmt_text,
+                        }
+                    )
 
             req: dict[str, Any] = {
                 "uuid": _deterministic_uuid("ssp-req", f"{framework}|{ctrl_id}"),
@@ -586,7 +602,9 @@ class OscalExporter:
                 req["props"].append({"name": "status-summary", "value": status_text})
             if ai_narrative:
                 req["props"].append({"name": "narrative-model", "value": ai_narrative.model})
-                req["props"].append({"name": "narrative-confidence", "value": str(ai_narrative.confidence)})
+                req["props"].append(
+                    {"name": "narrative-confidence", "value": str(ai_narrative.confidence)}
+                )
                 if ai_narrative.gaps:
                     for gap in ai_narrative.gaps:
                         req["props"].append({"name": "gap", "value": gap})
@@ -594,17 +612,14 @@ class OscalExporter:
                 req["statements"] = statements
             implemented_requirements.append(req)
 
-        profile_href = (
-            _load_local_catalog(framework)
-            or _FRAMEWORK_PROFILE_URIS.get(framework, f"#{framework}-profile")
+        profile_href = _load_local_catalog(framework) or _FRAMEWORK_PROFILE_URIS.get(
+            framework, f"#{framework}-profile"
         )
 
         return {
             "system-security-plan": {
                 "uuid": str(uuid4()),
-                "metadata": _build_metadata(
-                    f"Warlock GRC SSP — {system_name}"
-                ),
+                "metadata": _build_metadata(f"Warlock GRC SSP — {system_name}"),
                 "import-profile": {"href": profile_href},
                 "system-characteristics": {
                     "system-name": system_name,
@@ -646,7 +661,9 @@ class OscalExporter:
                             "role-ids": ["assessor"],
                         }
                     ],
-                    "components": components if components else [
+                    "components": components
+                    if components
+                    else [
                         {
                             "uuid": _deterministic_uuid("component", system_name),
                             "type": "this-system",
@@ -700,7 +717,9 @@ class OscalExporter:
             if cr.assertion_name:
                 sources.add(cr.assertion_name)
             if cr.assertion_findings:
-                for finding in (cr.assertion_findings if isinstance(cr.assertion_findings, list) else []):
+                for finding in (
+                    cr.assertion_findings if isinstance(cr.assertion_findings, list) else []
+                ):
                     parts.append(str(finding))
 
         status_label = {
@@ -771,6 +790,7 @@ class OscalExporter:
         ai_plans: dict[tuple[str, str], Any] = {}
         if narrator is not None:
             from warlock.assessors.ai_narrator import aggregate_control_evidence
+
             for (fw, ctrl_id), _ in ctrl_groups.items():
                 try:
                     evidence = aggregate_control_evidence(session, fw, ctrl_id)
@@ -779,7 +799,10 @@ class OscalExporter:
                         ai_plans[(fw, ctrl_id)] = plan
                         log.info(
                             "AI remediation plan for %s/%s (priority=%s, confidence=%.2f)",
-                            fw, ctrl_id, plan.priority, plan.confidence,
+                            fw,
+                            ctrl_id,
+                            plan.priority,
+                            plan.confidence,
                         )
                 except Exception:
                     log.exception("AI remediation failed for %s/%s", fw, ctrl_id)
@@ -803,20 +826,28 @@ class OscalExporter:
                 # Build milestones
                 milestones = []
                 for ms in ai_plan.milestones:
-                    milestones.append({
-                        "uuid": _deterministic_uuid("milestone", f"{cr.framework}|{cr.control_id}|{ms.get('title', '')}"),
-                        "title": ms.get("title", "Milestone"),
-                        "description": ms.get("target_date", ""),
-                    })
+                    milestones.append(
+                        {
+                            "uuid": _deterministic_uuid(
+                                "milestone", f"{cr.framework}|{cr.control_id}|{ms.get('title', '')}"
+                            ),
+                            "title": ms.get("title", "Milestone"),
+                            "description": ms.get("target_date", ""),
+                        }
+                    )
 
                 # Build remarks from remediation steps
                 remarks = ""
                 if ai_plan.remediation_steps:
                     remarks = "\n".join(
-                        f"{i+1}. {step}" for i, step in enumerate(ai_plan.remediation_steps)
+                        f"{i + 1}. {step}" for i, step in enumerate(ai_plan.remediation_steps)
                     )
                 if ai_plan.risk_statement:
-                    remarks = f"Risk: {ai_plan.risk_statement}\n\n{remarks}" if remarks else f"Risk: {ai_plan.risk_statement}"
+                    remarks = (
+                        f"Risk: {ai_plan.risk_statement}\n\n{remarks}"
+                        if remarks
+                        else f"Risk: {ai_plan.risk_statement}"
+                    )
 
                 item: dict[str, Any] = {
                     "uuid": _deterministic_uuid("poam-ai", f"{cr.framework}|{cr.control_id}"),
@@ -826,7 +857,10 @@ class OscalExporter:
                         {"name": "status", "value": "open"},
                         {"name": "severity", "value": _severity_to_oscal(cr.severity)},
                         {"name": "framework", "value": cr.framework},
-                        {"name": "control-id", "value": _oscal_control_id(cr.framework, cr.control_id)},
+                        {
+                            "name": "control-id",
+                            "value": _oscal_control_id(cr.framework, cr.control_id),
+                        },
                         {"name": "priority", "value": ai_plan.priority},
                         {"name": "estimated-effort", "value": ai_plan.estimated_effort},
                         {"name": "narrative-model", "value": ai_plan.model},
@@ -840,7 +874,9 @@ class OscalExporter:
                 if milestones:
                     item["milestones"] = milestones
                 if finding:
-                    item["props"].append({"name": "resource-id", "value": finding.resource_id or "unknown"})
+                    item["props"].append(
+                        {"name": "resource-id", "value": finding.resource_id or "unknown"}
+                    )
 
                 poam_items.append(item)
             elif ctrl_key in seen_controls:
@@ -853,7 +889,9 @@ class OscalExporter:
                 if cr.remediation_steps:
                     if isinstance(cr.remediation_steps, list):
                         remarks = "\n".join(
-                            f"{i+1}. {step}" if isinstance(step, str) else f"{i+1}. {json.dumps(step)}"
+                            f"{i + 1}. {step}"
+                            if isinstance(step, str)
+                            else f"{i + 1}. {json.dumps(step)}"
                             for i, step in enumerate(cr.remediation_steps)
                         )
                     else:
@@ -874,7 +912,10 @@ class OscalExporter:
                         {"name": "status", "value": "open"},
                         {"name": "severity", "value": _severity_to_oscal(cr.severity)},
                         {"name": "framework", "value": cr.framework},
-                        {"name": "control-id", "value": _oscal_control_id(cr.framework, cr.control_id)},
+                        {
+                            "name": "control-id",
+                            "value": _oscal_control_id(cr.framework, cr.control_id),
+                        },
                     ],
                     "related-observations": [{"observation-uuid": obs_uuid}],
                     "related-findings": [{"finding-uuid": finding_uuid}],
@@ -885,16 +926,16 @@ class OscalExporter:
                 if cr.console_path:
                     item["props"].append({"name": "console-path", "value": cr.console_path})
                 if finding:
-                    item["props"].append({"name": "resource-id", "value": finding.resource_id or "unknown"})
+                    item["props"].append(
+                        {"name": "resource-id", "value": finding.resource_id or "unknown"}
+                    )
 
                 poam_items.append(item)
 
         return {
             "plan-of-action-and-milestones": {
                 "uuid": str(uuid4()),
-                "metadata": _build_metadata(
-                    f"Warlock GRC POA&M — {system_name}"
-                ),
+                "metadata": _build_metadata(f"Warlock GRC POA&M — {system_name}"),
                 "import-ssp": {"href": "#"},
                 "poam-items": poam_items,
             }

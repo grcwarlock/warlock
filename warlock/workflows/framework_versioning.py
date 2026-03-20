@@ -83,6 +83,7 @@ _VERSIONS_FILENAME = "framework_versions.json"
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FrameworkVersionEntry:
     """Metadata for a single recorded framework version."""
@@ -90,9 +91,9 @@ class FrameworkVersionEntry:
     id: str
     framework: str
     version: str
-    release_date: str       # ISO date string, e.g. "2020-09-23"
+    release_date: str  # ISO date string, e.g. "2020-09-23"
     changes_url: str
-    recorded_at: str        # ISO datetime string
+    recorded_at: str  # ISO datetime string
     controls: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
 
@@ -101,7 +102,7 @@ class FrameworkVersionEntry:
 class ControlChange:
     """Describes a single control-level change between two framework versions."""
 
-    change_type: str   # "added", "removed", "modified"
+    change_type: str  # "added", "removed", "modified"
     control_id: str
     old_value: dict[str, Any] | None = None
     new_value: dict[str, Any] | None = None
@@ -155,6 +156,7 @@ class ImpactReport:
 # Storage helpers
 # ---------------------------------------------------------------------------
 
+
 def _utcnow_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -194,7 +196,8 @@ class _VersionStore:
         entries = self.load()
         # Replace if same framework+version already recorded
         entries = [
-            e for e in entries
+            e
+            for e in entries
             if not (e.framework == entry.framework and e.version == entry.version)
         ]
         entries.append(entry)
@@ -204,6 +207,7 @@ class _VersionStore:
 # ---------------------------------------------------------------------------
 # Framework YAML loader (best-effort)
 # ---------------------------------------------------------------------------
+
 
 def _load_framework_controls(framework: str) -> dict[str, Any]:
     """Attempt to load control metadata from the framework YAML.
@@ -237,6 +241,7 @@ def _load_framework_controls(framework: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # FrameworkVersionManager
 # ---------------------------------------------------------------------------
+
 
 class FrameworkVersionManager:
     """Track, diff, and assess the impact of regulatory framework changes.
@@ -362,11 +367,7 @@ class FrameworkVersionManager:
         result_counts: dict[str, int] = {}
         for fw in active_frameworks:
             try:
-                count = (
-                    session.query(ControlResult)
-                    .filter(ControlResult.framework == fw)
-                    .count()
-                )
+                count = session.query(ControlResult).filter(ControlResult.framework == fw).count()
                 result_counts[fw] = count
             except Exception:
                 result_counts[fw] = 0
@@ -380,9 +381,7 @@ class FrameworkVersionManager:
         all_frameworks = active_frameworks | set(by_framework.keys())
 
         for fw in sorted(all_frameworks):
-            fw_versions = sorted(
-                by_framework.get(fw, []), key=lambda e: e.release_date
-            )
+            fw_versions = sorted(by_framework.get(fw, []), key=lambda e: e.release_date)
             latest = fw_versions[-1] if fw_versions else None
             report.append(
                 {
@@ -546,16 +545,18 @@ class FrameworkVersionManager:
                 affected_system_profiles=[],
                 affected_control_results=[],
                 affected_posture_snapshots=[],
-                summary={"control_ids": 0, "system_profiles": 0,
-                         "control_results": 0, "posture_snapshots": 0},
+                summary={
+                    "control_ids": 0,
+                    "system_profiles": 0,
+                    "control_results": 0,
+                    "posture_snapshots": 0,
+                },
             )
 
         # System profiles that are linked to this framework
         try:
             profiles = (
-                session.query(SystemProfile)
-                .filter(SystemProfile.framework == framework)
-                .all()
+                session.query(SystemProfile).filter(SystemProfile.framework == framework).all()
             )
         except Exception:
             log.debug("SystemProfile query failed — trying without framework filter")
@@ -615,9 +616,7 @@ class FrameworkVersionManager:
             return {
                 "id": s.id,
                 "control_id": s.control_id,
-                "snapshot_date": (
-                    s.snapshot_date.isoformat() if s.snapshot_date else None
-                ),
+                "snapshot_date": (s.snapshot_date.isoformat() if s.snapshot_date else None),
                 "status": s.status,
                 "posture_score": s.posture_score,
             }

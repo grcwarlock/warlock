@@ -50,6 +50,7 @@ class SailPointConnector(BaseConnector):
         try:
             token = self._get_token()
             import httpx
+
             tenant = self.config.settings["tenant"]
             resp = httpx.get(
                 f"https://{tenant}.api.identitynow.com/v3/org",
@@ -94,18 +95,20 @@ class SailPointConnector(BaseConnector):
             for endpoint, event_type, params in SAILPOINT_ENDPOINTS:
                 try:
                     data = self._paginate(client, endpoint, params)
-                    result.events.append(RawEventData(
-                        source="sailpoint",
-                        source_type=SourceType.IAM,
-                        provider="sailpoint",
-                        event_type=event_type,
-                        raw_data={
-                            "endpoint": endpoint,
-                            "tenant": tenant,
-                            "response": data,
-                        },
-                        observed_at=datetime.now(timezone.utc),
-                    ))
+                    result.events.append(
+                        RawEventData(
+                            source="sailpoint",
+                            source_type=SourceType.IAM,
+                            provider="sailpoint",
+                            event_type=event_type,
+                            raw_data={
+                                "endpoint": endpoint,
+                                "tenant": tenant,
+                                "response": data,
+                            },
+                            observed_at=datetime.now(timezone.utc),
+                        )
+                    )
                 except Exception as e:
                     log.debug("SailPoint %s failed: %s", endpoint, e)
                     result.errors.append(f"{endpoint}: {e}")

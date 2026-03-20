@@ -77,29 +77,35 @@ class CrowdStrikeNormalizer(BaseNormalizer):
             hostname = device.get("hostname", "unknown")
             device_id = device.get("device_id", "")
             tactic = det.get("behaviors", [{}])[0].get("tactic", "") if det.get("behaviors") else ""
-            technique = det.get("behaviors", [{}])[0].get("technique", "") if det.get("behaviors") else ""
+            technique = (
+                det.get("behaviors", [{}])[0].get("technique", "") if det.get("behaviors") else ""
+            )
 
             status = det.get("status", "new")
             detection_id = det.get("detection_id", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"CrowdStrike detection on {hostname}: {tactic}/{technique}" if tactic else f"CrowdStrike detection on {hostname}",
-                detail={
-                    "detection_id": detection_id,
-                    "status": status,
-                    "max_severity": severity_num,
-                    "tactic": tactic,
-                    "technique": technique,
-                    "behaviors": det.get("behaviors", []),
-                    "device": device,
-                },
-                resource_id=device_id,
-                resource_type="endpoint",
-                resource_name=hostname,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"CrowdStrike detection on {hostname}: {tactic}/{technique}"
+                    if tactic
+                    else f"CrowdStrike detection on {hostname}",
+                    detail={
+                        "detection_id": detection_id,
+                        "status": status,
+                        "max_severity": severity_num,
+                        "tactic": tactic,
+                        "technique": technique,
+                        "behaviors": det.get("behaviors", []),
+                        "device": device,
+                    },
+                    resource_id=device_id,
+                    resource_type="endpoint",
+                    resource_name=hostname,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -123,23 +129,26 @@ class CrowdStrikeNormalizer(BaseNormalizer):
             app = vuln.get("app", {})
             product = app.get("product_name_version", "")
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="vulnerability",
-                title=f"Vulnerability {cve_id} on {hostname}" + (f" ({product})" if product else ""),
-                detail={
-                    "cve_id": cve_id,
-                    "cve": cve,
-                    "status": vuln.get("status", ""),
-                    "app": app,
-                    "host_info": host_info,
-                    "remediation": vuln.get("remediation", {}),
-                },
-                resource_id=device_id,
-                resource_type="endpoint",
-                resource_name=hostname,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title=f"Vulnerability {cve_id} on {hostname}"
+                    + (f" ({product})" if product else ""),
+                    detail={
+                        "cve_id": cve_id,
+                        "cve": cve,
+                        "status": vuln.get("status", ""),
+                        "app": app,
+                        "host_info": host_info,
+                        "remediation": vuln.get("remediation", {}),
+                    },
+                    resource_id=device_id,
+                    resource_type="endpoint",
+                    resource_name=hostname,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -173,26 +182,29 @@ class CrowdStrikeNormalizer(BaseNormalizer):
                 severity = "medium"
                 obs_type = "policy_violation"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type=obs_type,
-                title=f"Endpoint {hostname} ({platform})" + (f" — {', '.join(issues)}" if issues else ""),
-                detail={
-                    "device_id": device_id,
-                    "hostname": hostname,
-                    "platform": platform,
-                    "os_version": os_version,
-                    "agent_version": agent_version,
-                    "status": status,
-                    "reduced_functionality": reduced_functionality,
-                    "policies": device.get("device_policies", {}),
-                    "issues": issues,
-                },
-                resource_id=device_id,
-                resource_type="endpoint",
-                resource_name=hostname,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type=obs_type,
+                    title=f"Endpoint {hostname} ({platform})"
+                    + (f" — {', '.join(issues)}" if issues else ""),
+                    detail={
+                        "device_id": device_id,
+                        "hostname": hostname,
+                        "platform": platform,
+                        "os_version": os_version,
+                        "agent_version": agent_version,
+                        "status": status,
+                        "reduced_functionality": reduced_functionality,
+                        "policies": device.get("device_policies", {}),
+                        "issues": issues,
+                    },
+                    resource_id=device_id,
+                    resource_type="endpoint",
+                    resource_name=hostname,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -200,16 +212,18 @@ class CrowdStrikeNormalizer(BaseNormalizer):
 
     def _normalize_device_inventory(self, raw: RawEventData) -> list[FindingData]:
         total = raw.raw_data.get("total", 0)
-        return [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"CrowdStrike Falcon — {total} managed endpoint(s)",
-            detail={"total_devices": total},
-            resource_id="crowdstrike:fleet",
-            resource_type="endpoint_fleet",
-            resource_name="crowdstrike-fleet",
-            severity="info",
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"CrowdStrike Falcon — {total} managed endpoint(s)",
+                detail={"total_devices": total},
+                resource_id="crowdstrike:fleet",
+                resource_type="endpoint_fleet",
+                resource_name="crowdstrike-fleet",
+                severity="info",
+            )
+        ]
 
     # -- Zero Trust Assessment --
 
@@ -230,16 +244,18 @@ class CrowdStrikeNormalizer(BaseNormalizer):
                 elif score < 90:
                     severity = "low"
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory" if severity == "info" else "policy_violation",
-                title=f"Zero Trust Assessment — score {score}",
-                detail={"assessment": assessment, "score": score},
-                resource_id=aid,
-                resource_type="endpoint",
-                resource_name=aid,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory" if severity == "info" else "policy_violation",
+                    title=f"Zero Trust Assessment — score {score}",
+                    detail={"assessment": assessment, "score": score},
+                    resource_id=aid,
+                    resource_type="endpoint",
+                    resource_name=aid,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -247,16 +263,18 @@ class CrowdStrikeNormalizer(BaseNormalizer):
 
     def _normalize_sensor_policies(self, raw: RawEventData) -> list[FindingData]:
         total = raw.raw_data.get("total", 0)
-        return [FindingData(
-            **self._base(raw),
-            observation_type="inventory",
-            title=f"CrowdStrike — {total} sensor update policy/policies",
-            detail={"policy_ids": raw.raw_data.get("policy_ids", []), "total": total},
-            resource_id="crowdstrike:sensor_policies",
-            resource_type="sensor_policy",
-            resource_name="sensor-policies",
-            severity="info",
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="inventory",
+                title=f"CrowdStrike — {total} sensor update policy/policies",
+                detail={"policy_ids": raw.raw_data.get("policy_ids", []), "total": total},
+                resource_id="crowdstrike:sensor_policies",
+                resource_type="sensor_policy",
+                resource_name="sensor-policies",
+                severity="info",
+            )
+        ]
 
 
 # Register

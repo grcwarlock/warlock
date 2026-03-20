@@ -32,8 +32,14 @@ _SEVERITY_ALIASES: dict[str, str] = {
 
 # Keys we scan for a list of "items" to fan-out into individual findings.
 _LIST_KEYS = (
-    "findings", "alerts", "vulnerabilities", "results",
-    "detections", "events", "issues", "items",
+    "findings",
+    "alerts",
+    "vulnerabilities",
+    "results",
+    "detections",
+    "events",
+    "issues",
+    "items",
 )
 
 # Keys we probe for a human-readable title.
@@ -43,7 +49,16 @@ _TITLE_KEYS = ("title", "name", "summary", "message", "subject", "description")
 _SEVERITY_KEYS = ("severity", "priority", "risk", "risk_level", "criticality", "level")
 
 # Keys we probe for a resource identifier.
-_RESOURCE_ID_KEYS = ("resource_id", "resourceId", "resource", "asset_id", "assetId", "host", "hostname", "target")
+_RESOURCE_ID_KEYS = (
+    "resource_id",
+    "resourceId",
+    "resource",
+    "asset_id",
+    "assetId",
+    "host",
+    "hostname",
+    "target",
+)
 _RESOURCE_TYPE_KEYS = ("resource_type", "resourceType", "asset_type", "assetType", "type")
 _RESOURCE_NAME_KEYS = ("resource_name", "resourceName", "name", "hostname", "host")
 
@@ -136,7 +151,8 @@ class GenericNormalizer(BaseNormalizer):
                 if findings:
                     log.debug(
                         "GenericNormalizer: fan-out on key=%s produced %d finding(s)",
-                        key, len(findings),
+                        key,
+                        len(findings),
                     )
                     return findings
 

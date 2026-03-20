@@ -30,6 +30,7 @@ class PolicyGate:
         fail_mode: str | None = None,
     ):
         from warlock.config import get_settings
+
         settings = get_settings()
         self.opa_url = opa_url or settings.opa_url
         # S-2: Default to fail-closed. Explicit parameter overrides settings.
@@ -50,6 +51,7 @@ class PolicyGate:
             return self._session
         try:
             import httpx
+
             self._session = httpx.Client(timeout=5.0)
         except ImportError:
             self._session = None

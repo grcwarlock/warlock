@@ -55,6 +55,7 @@ class OCIConnector(BaseConnector):
         has_sdk = False
         try:
             import oci  # noqa: F401
+
             has_sdk = True
         except ImportError:
             pass
@@ -115,19 +116,21 @@ class OCIConnector(BaseConnector):
         for event_type, collector_fn in collectors:
             try:
                 data = collector_fn(compartment_id, tenancy_id, region)
-                result.events.append(RawEventData(
-                    source="oci",
-                    source_type=SourceType.CLOUD,
-                    provider="oci",
-                    event_type=event_type,
-                    raw_data={
-                        "compartment_id": compartment_id,
-                        "tenancy_id": tenancy_id,
-                        "region": region,
-                        "response": data,
-                    },
-                    observed_at=datetime.now(timezone.utc),
-                ))
+                result.events.append(
+                    RawEventData(
+                        source="oci",
+                        source_type=SourceType.CLOUD,
+                        provider="oci",
+                        event_type=event_type,
+                        raw_data={
+                            "compartment_id": compartment_id,
+                            "tenancy_id": tenancy_id,
+                            "region": region,
+                            "response": data,
+                        },
+                        observed_at=datetime.now(timezone.utc),
+                    )
+                )
             except Exception as e:
                 log.debug("OCI %s failed: %s", event_type, e)
                 result.errors.append(f"{event_type}: {e}")
@@ -145,7 +148,9 @@ class OCIConnector(BaseConnector):
             user_ocid = self.get_secret("WLK_OCI_USER_OCID")
             key_file = self.get_secret("WLK_OCI_KEY_FILE")
             fingerprint = self.get_secret("WLK_OCI_FINGERPRINT")
-            tenancy = self.get_secret("WLK_OCI_TENANCY") or self.config.settings.get("tenancy_id", "")
+            tenancy = self.get_secret("WLK_OCI_TENANCY") or self.config.settings.get(
+                "tenancy_id", ""
+            )
 
             config = {
                 "user": user_ocid,
@@ -182,7 +187,6 @@ class OCIConnector(BaseConnector):
         client = self._get_client()
 
         if client is not None:
-
             response = client.call_api(
                 resource_path=url.split(".com")[-1],
                 method="GET",
@@ -218,9 +222,7 @@ class OCIConnector(BaseConnector):
             "problems": data.get("items", []),
         }
 
-    def _collect_iam_users(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_iam_users(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("identity", region)
         url = f"{base}/20160918/users"
         params = {"compartmentId": tenancy_id, "limit": "200"}
@@ -229,9 +231,7 @@ class OCIConnector(BaseConnector):
             "users": data.get("items", data.get("users", [])),
         }
 
-    def _collect_iam_groups(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_iam_groups(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("identity", region)
         url = f"{base}/20160918/groups"
         params = {"compartmentId": tenancy_id, "limit": "200"}
@@ -240,9 +240,7 @@ class OCIConnector(BaseConnector):
             "groups": data.get("items", data.get("groups", [])),
         }
 
-    def _collect_audit_events(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_audit_events(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("audit", region)
         url = f"{base}/20190901/auditEvents"
         now = datetime.now(timezone.utc)
@@ -258,9 +256,7 @@ class OCIConnector(BaseConnector):
             "audit_events": data.get("items", data.get("auditEvents", [])),
         }
 
-    def _collect_vulnerabilities(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_vulnerabilities(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("vulnerability", region)
         url = f"{base}/20210630/hostVulnerabilities"
         params = {
@@ -272,9 +268,7 @@ class OCIConnector(BaseConnector):
             "vulnerabilities": data.get("items", data.get("hostVulnerabilities", [])),
         }
 
-    def _collect_security_lists(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_security_lists(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("core", region)
         url = f"{base}/20160918/securityLists"
         params = {"compartmentId": compartment_id, "limit": "200"}
@@ -283,9 +277,7 @@ class OCIConnector(BaseConnector):
             "security_lists": data.get("items", data.get("securityLists", [])),
         }
 
-    def _collect_vaults(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_vaults(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("kms", region)
         url = f"{base}/20180608/vaults"
         params = {"compartmentId": compartment_id, "limit": "200"}
@@ -294,9 +286,7 @@ class OCIConnector(BaseConnector):
             "vaults": data.get("items", data.get("vaults", [])),
         }
 
-    def _collect_bastions(
-        self, compartment_id: str, tenancy_id: str, region: str
-    ) -> dict:
+    def _collect_bastions(self, compartment_id: str, tenancy_id: str, region: str) -> dict:
         base = _base_url("bastion", region)
         url = f"{base}/20210331/bastions"
         params = {"compartmentId": compartment_id, "limit": "200"}

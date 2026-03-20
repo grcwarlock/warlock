@@ -66,148 +66,47 @@ If an API key, password, or credential appears in the conversation, immediately 
 
 ## Pre-Push QA Gate
 
-**Complete ALL steps in order. Do not skip. Do not reorder. If any step fails, fix it before proceeding.**
-
-### Step 1: Get actual test count
+Run the automated QA gate. It covers everything. No manual steps.
 
 ```bash
-.venv/bin/pytest --collect-only -q 2>&1 | tail -1
+./scripts/qa.sh
 ```
 
-Do NOT trust the hardcoded number in this document. The actual count from this command is the truth. As of last update: **190 tests, 9 files**.
+The script verifies: lint, format, imports, pytest (190+ baseline), demo seed (40 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
 
-### Step 2: Run the full test suite
+ALL checks must pass. If any fail, fix before committing.
+
+For a quick check during development (lint + tests only):
 
 ```bash
-.venv/bin/pytest tests/ --tb=short -q
+./scripts/qa.sh --quick
 ```
 
-ALL must pass. Zero failures. Paste the actual output — do not say "all tests pass" without evidence.
-
-### Step 3: Run the demo seed on a clean database
+Or via Make:
 
 ```bash
-rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/demo_seed.py
+make qa          # full gate
+make qa-quick    # lint + test only
+make verify-docs # documentation accuracy check only
 ```
 
-Must complete with 40 connectors succeeded, 0 failed.
+### After the QA gate passes
 
-### Step 4: OPA policy tests
+1. List EVERY file you changed and what specifically changed in each one
+2. Paste the actual QA gate output (not a summary)
+3. Ask: "Ready to push?"
+4. WAIT for explicit "yes" before running `git push`
+
+### Pre-commit hook (optional)
+
+To run quick QA automatically before every commit, create `.git/hooks/pre-commit`:
 
 ```bash
-opa check policies/ && opa test policies/
+#!/bin/bash
+./scripts/qa.sh --quick
 ```
 
-All OPA tests must pass.
-
-### Step 5: Terraform validation
-
-```bash
-cd /Users/jsn/Coding/GitHub/warlock
-for dir in terraform/modules/*/*; do
-  cd "/Users/jsn/Coding/GitHub/warlock/$dir"
-  terraform init -backend=false -input=false > /dev/null 2>&1
-  terraform validate 2>&1 | grep -q "Success" && echo "PASS $(echo $dir | sed 's|terraform/modules/||')" || echo "FAIL $dir"
-done
-cd /Users/jsn/Coding/GitHub/warlock
-```
-
-All 12 modules must pass.
-
-### Step 6: Import smoke test
-
-```bash
-.venv/bin/python -c "import warlock; print('OK')"
-```
-
-### Step 7: Package install
-
-```bash
-.venv/bin/pip install -e ".[dev,ai]" --quiet && echo "INSTALL OK"
-```
-
-### Step 8: OSCAL JSON validation
-
-```bash
-.venv/bin/python -c "
-import json, pathlib
-errors = []
-for f in pathlib.Path('frameworks-oscal').rglob('*.json'):
-    try: json.loads(f.read_text())
-    except Exception as e: errors.append(f'{f}: {e}')
-print(f'All {len(list(pathlib.Path(\"frameworks-oscal\").rglob(\"*.json\")))} OSCAL JSON valid') if not errors else [print(f'BROKEN: {e}') for e in errors]
-"
-```
-
-### Step 9: Secrets scan
-
-```bash
-git diff --cached --name-only | xargs grep -l -i -E "(sk-ant-|sk-proj-|AKIA|password\s*=\s*['\"][^'\"]{8,}['\"])" 2>/dev/null
-```
-
-Any real credential = do not commit. Variable names and placeholders are fine.
-
-### Step 10: Migration reversibility (if migrations changed)
-
-```bash
-rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/alembic downgrade -1 && echo "DOWNGRADE OK"
-```
-
-### Step 11: Dependency vulnerability scan
-
-```bash
-.venv/bin/pip-audit 2>&1 | tail -10
-```
-
-If CRITICAL or HIGH CVEs found in packages actually imported at runtime, pin to patched version or remove dependency before pushing. Flag to user either way.
-
-### Step 12: Test count direction
-
-```bash
-.venv/bin/pytest --collect-only -q 2>&1 | tail -1
-```
-
-Count must be >= the baseline from Step 1. If you added code and count didn't go up, you forgot to write tests.
-
-### Step 12b: CLI AI flag verification
-
-```bash
-.venv/bin/python -c "
-from warlock.cli import cli
-from click.testing import CliRunner
-runner = CliRunner()
-# ai group in top-level help
-r = runner.invoke(cli, ['--help']); assert 'ai ' in r.output, 'ai group missing'
-# ai subcommands
-r = runner.invoke(cli, ['ai', '--help']); assert all(c in r.output for c in ['status','models','configure','test'])
-# --ai flag on key commands
-for cmd in ['coverage','remediate','simulate-audit','policy-coverage','risk analyze']:
-    parts = cmd.split()
-    r = runner.invoke(cli, parts + ['--help']); assert '--ai' in r.output, f'{cmd} missing --ai'
-# --ask flag
-for cmd in ['remediate','findings','issues']:
-    r = runner.invoke(cli, [cmd, '--help']); assert '--ask' in r.output, f'{cmd} missing --ask'
-print('CLI AI flags: ALL PRESENT')
-"
-```
-
-### Step 13: Change manifest
-
-Before asking to push, list EVERY file you changed and what you changed in it. Not "updated models.py" — what specifically. If you can't explain a change, you don't understand it and shouldn't push it.
-
-### Step 14: Documentation check
-
-Re-read README.md and DEMO.md top to bottom as if you are a new user following the instructions. If any command, count, or instruction is wrong, fix it. This caught stale test counts (172 vs 190), wrong CLI commands (`warlock retention` vs `warlock retention report`), and missing `make demo` in this session.
-
-### Step 15: Ask to push
-
-Present:
-- Change summary (from Step 13)
-- Pytest output (from Step 2)
-- Demo seed output (from Step 3)
-- Ask: "Ready to push?"
-
-WAIT for explicit "yes" before running `git push`.
+Then `chmod +x .git/hooks/pre-commit`.
 
 ---
 
@@ -270,11 +169,12 @@ When you change the left column, you MUST update every file in the right column.
 ```
 warlock/
   connectors/    — 41 source connectors
-  normalizers/   — 41 parsers (raw → FindingData)
+  normalizers/   — 42 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (139 routes, ABAC-scoped)
-  cli.py         — Click CLI (38 commands)
+  cli.py         — Click CLI (41 commands including dashboard + tui)
+  tui/           — Textual TUI dashboard (7 screens) + plotext charts + Trogon command browser
   db/            — SQLAlchemy models (34) + Alembic migrations (11)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention

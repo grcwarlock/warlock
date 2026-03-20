@@ -38,83 +38,95 @@ def seeded_session(session):
 
     # Create raw events
     for i in range(3):
-        session.add(RawEvent(
-            id=f"raw-{i}",
-            connector_run_id="run-1",
-            source="aws",
-            source_type="cloud",
-            provider="aws",
-            event_type="iam_credential_report",
-            raw_data={"test": True},
-            sha256=f"abc{i}",
-        ))
+        session.add(
+            RawEvent(
+                id=f"raw-{i}",
+                connector_run_id="run-1",
+                source="aws",
+                source_type="cloud",
+                provider="aws",
+                event_type="iam_credential_report",
+                raw_data={"test": True},
+                sha256=f"abc{i}",
+            )
+        )
 
     # Create findings
     for i in range(3):
-        session.add(Finding(
-            id=f"finding-{i}",
-            raw_event_id=f"raw-{i}",
-            observation_type="misconfiguration",
-            title=f"Test finding {i}",
-            detail={"test": True},
-            resource_type="iam_user",
-            source="aws",
-            source_type="cloud",
-            provider="aws",
-            severity="high",
-            observed_at=now - timedelta(hours=i * 12),
-            sha256=f"def{i}",
-        ))
+        session.add(
+            Finding(
+                id=f"finding-{i}",
+                raw_event_id=f"raw-{i}",
+                observation_type="misconfiguration",
+                title=f"Test finding {i}",
+                detail={"test": True},
+                resource_type="iam_user",
+                source="aws",
+                source_type="cloud",
+                provider="aws",
+                severity="high",
+                observed_at=now - timedelta(hours=i * 12),
+                sha256=f"def{i}",
+            )
+        )
 
     # Create control mappings with monitoring_frequency
     for i in range(3):
-        session.add(ControlMapping(
-            id=f"mapping-{i}",
-            finding_id=f"finding-{i}",
-            framework="nist_800_53",
-            control_id="AC-2",
-            control_family="AC",
-            mapping_method="explicit",
-            confidence=1.0,
-            monitoring_frequency="daily",
-        ))
+        session.add(
+            ControlMapping(
+                id=f"mapping-{i}",
+                finding_id=f"finding-{i}",
+                framework="nist_800_53",
+                control_id="AC-2",
+                control_family="AC",
+                mapping_method="explicit",
+                confidence=1.0,
+                monitoring_frequency="daily",
+            )
+        )
 
     # Create control results
     for i in range(3):
-        session.add(ControlResult(
-            id=f"result-{i}",
-            finding_id=f"finding-{i}",
-            control_mapping_id=f"mapping-{i}",
-            framework="nist_800_53",
-            control_id="AC-2",
-            status="compliant" if i < 2 else "non_compliant",
-            severity="high",
-            assessor="assertion:mfa_check",
-            assessed_at=now - timedelta(hours=i * 12),
-        ))
+        session.add(
+            ControlResult(
+                id=f"result-{i}",
+                finding_id=f"finding-{i}",
+                control_mapping_id=f"mapping-{i}",
+                framework="nist_800_53",
+                control_id="AC-2",
+                status="compliant" if i < 2 else "non_compliant",
+                severity="high",
+                assessor="assertion:mfa_check",
+                assessed_at=now - timedelta(hours=i * 12),
+            )
+        )
 
     # Also create a monthly control that's old
-    session.add(ControlMapping(
-        id="mapping-pe",
-        finding_id="finding-0",
-        framework="nist_800_53",
-        control_id="PE-1",
-        control_family="PE",
-        mapping_method="explicit",
-        confidence=1.0,
-        monitoring_frequency="annual",
-    ))
-    session.add(ControlResult(
-        id="result-pe",
-        finding_id="finding-0",
-        control_mapping_id="mapping-pe",
-        framework="nist_800_53",
-        control_id="PE-1",
-        status="compliant",
-        severity="low",
-        assessor="manual",
-        assessed_at=now - timedelta(days=30),
-    ))
+    session.add(
+        ControlMapping(
+            id="mapping-pe",
+            finding_id="finding-0",
+            framework="nist_800_53",
+            control_id="PE-1",
+            control_family="PE",
+            mapping_method="explicit",
+            confidence=1.0,
+            monitoring_frequency="annual",
+        )
+    )
+    session.add(
+        ControlResult(
+            id="result-pe",
+            finding_id="finding-0",
+            control_mapping_id="mapping-pe",
+            framework="nist_800_53",
+            control_id="PE-1",
+            status="compliant",
+            severity="low",
+            assessor="manual",
+            assessed_at=now - timedelta(days=30),
+        )
+    )
 
     session.flush()
     return session
@@ -124,8 +136,8 @@ def seeded_session(session):
 # Phase 1a: Cadence Tests
 # ---------------------------------------------------------------------------
 
-class TestCadenceChecker:
 
+class TestCadenceChecker:
     def test_fresh_daily_control(self, seeded_session):
         from warlock.assessors.cadence import CadenceChecker
 
@@ -193,8 +205,8 @@ class TestCadenceChecker:
 # Phase 1b: Sufficiency Tests
 # ---------------------------------------------------------------------------
 
-class TestEvidenceSufficiency:
 
+class TestEvidenceSufficiency:
     def test_score_control_with_evidence(self, seeded_session):
         from warlock.assessors.posture import EvidenceSufficiencyScorer
 
@@ -243,8 +255,8 @@ class TestEvidenceSufficiency:
 # Phase 1c: Time-Series Tests
 # ---------------------------------------------------------------------------
 
-class TestPostureTimeSeries:
 
+class TestPostureTimeSeries:
     def test_query_control_with_snapshots(self, seeded_session):
         from warlock.assessors.posture import PostureAggregator, PostureTimeSeriesQuery
 
@@ -347,11 +359,12 @@ class TestPostureTimeSeries:
 # Schema / Migration Tests
 # ---------------------------------------------------------------------------
 
-class TestSchema:
 
+class TestSchema:
     def test_control_mapping_has_monitoring_frequency(self, session):
         """Verify the monitoring_frequency column exists on ControlMapping."""
         from sqlalchemy import inspect
+
         inspector = inspect(session.bind)
         columns = {c["name"] for c in inspector.get_columns("control_mappings")}
         assert "monitoring_frequency" in columns
@@ -366,29 +379,33 @@ class TestSchema:
             provider="test",
         )
         session.add(run)
-        session.add(RawEvent(
-            id="test-raw",
-            connector_run_id="test-run",
-            source="test",
-            source_type="test",
-            provider="test",
-            event_type="test",
-            raw_data={},
-            sha256="test",
-        ))
-        session.add(Finding(
-            id="test-finding",
-            raw_event_id="test-raw",
-            observation_type="test",
-            title="test",
-            detail={},
-            source="test",
-            source_type="test",
-            provider="test",
-            severity="low",
-            observed_at=datetime.now(timezone.utc),
-            sha256="test",
-        ))
+        session.add(
+            RawEvent(
+                id="test-raw",
+                connector_run_id="test-run",
+                source="test",
+                source_type="test",
+                provider="test",
+                event_type="test",
+                raw_data={},
+                sha256="test",
+            )
+        )
+        session.add(
+            Finding(
+                id="test-finding",
+                raw_event_id="test-raw",
+                observation_type="test",
+                title="test",
+                detail={},
+                source="test",
+                source_type="test",
+                provider="test",
+                severity="low",
+                observed_at=datetime.now(timezone.utc),
+                sha256="test",
+            )
+        )
         mapping = ControlMapping(
             id="test-mapping",
             finding_id="test-finding",
@@ -409,8 +426,8 @@ class TestSchema:
 # Mapper Tests
 # ---------------------------------------------------------------------------
 
-class TestControlMapperFrequency:
 
+class TestControlMapperFrequency:
     def test_mapper_propagates_frequency(self):
         """Verify ControlMapper sets monitoring_frequency from YAML config."""
         from warlock.mappers.control_mapper import ControlMapper
@@ -423,11 +440,13 @@ class TestControlMapperFrequency:
                     "controls": {
                         "AC-2": {
                             "monitoring_frequency": "daily",
-                            "checks": [{
-                                "id": "test",
-                                "event_types": ["iam_users"],
-                                "resource_types": ["iam_user"],
-                            }],
+                            "checks": [
+                                {
+                                    "id": "test",
+                                    "event_types": ["iam_users"],
+                                    "resource_types": ["iam_user"],
+                                }
+                            ],
                         },
                     },
                 },
@@ -463,8 +482,8 @@ class TestControlMapperFrequency:
 # Scheduler Tests
 # ---------------------------------------------------------------------------
 
-class TestScheduler:
 
+class TestScheduler:
     def test_scheduler_creates_with_schedules(self):
         from warlock.pipeline.scheduler import PipelineScheduler
 

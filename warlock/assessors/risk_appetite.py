@@ -81,7 +81,7 @@ class AppetiteBreach:
     """Describes a single appetite threshold breach."""
 
     framework: str
-    metric: str       # "ale", "var95", "high_findings"
+    metric: str  # "ale", "var95", "high_findings"
     threshold: float
     actual: float
     exceeded_by_pct: float  # how much over threshold as percentage
@@ -109,9 +109,7 @@ class RiskAppetiteFramework:
         self,
         defaults: dict[str, dict[str, float]] | None = None,
     ) -> None:
-        self._appetites: dict[str, dict[str, float]] = dict(
-            defaults or risk_appetite_defaults
-        )
+        self._appetites: dict[str, dict[str, float]] = dict(defaults or risk_appetite_defaults)
 
     def define_appetite(
         self,
@@ -135,7 +133,10 @@ class RiskAppetiteFramework:
         }
         log.info(
             "Risk appetite defined for %s: ALE<=%.0f, VaR95<=%.0f, high<=%.0f",
-            framework, max_ale, max_var95, max_high_findings,
+            framework,
+            max_ale,
+            max_var95,
+            max_high_findings,
         )
 
     def get_appetite(self, framework: str) -> dict[str, float] | None:
@@ -179,10 +180,7 @@ class RiskAppetiteFramework:
         actual_var95 = portfolio.get("total_var_95", 0.0)
 
         # Count high-risk scenarios: control effectiveness < 0.5
-        actual_high = sum(
-            1 for s in scenarios
-            if s.get("control_effectiveness", 1.0) < 0.5
-        )
+        actual_high = sum(1 for s in scenarios if s.get("control_effectiveness", 1.0) < 0.5)
 
         actuals = {
             "ale": actual_ale,
@@ -194,37 +192,41 @@ class RiskAppetiteFramework:
 
         max_ale = thresholds["max_ale"]
         if actual_ale > max_ale:
-            breaches.append(AppetiteBreach(
-                framework=framework,
-                metric="ale",
-                threshold=max_ale,
-                actual=actual_ale,
-                exceeded_by_pct=round((actual_ale - max_ale) / max_ale * 100, 2),
-            ))
+            breaches.append(
+                AppetiteBreach(
+                    framework=framework,
+                    metric="ale",
+                    threshold=max_ale,
+                    actual=actual_ale,
+                    exceeded_by_pct=round((actual_ale - max_ale) / max_ale * 100, 2),
+                )
+            )
 
         max_var95 = thresholds["max_var95"]
         if actual_var95 > max_var95:
-            breaches.append(AppetiteBreach(
-                framework=framework,
-                metric="var95",
-                threshold=max_var95,
-                actual=actual_var95,
-                exceeded_by_pct=round(
-                    (actual_var95 - max_var95) / max_var95 * 100, 2
-                ),
-            ))
+            breaches.append(
+                AppetiteBreach(
+                    framework=framework,
+                    metric="var95",
+                    threshold=max_var95,
+                    actual=actual_var95,
+                    exceeded_by_pct=round((actual_var95 - max_var95) / max_var95 * 100, 2),
+                )
+            )
 
         max_high = thresholds["max_high_findings"]
         if actual_high > max_high:
-            breaches.append(AppetiteBreach(
-                framework=framework,
-                metric="high_findings",
-                threshold=max_high,
-                actual=float(actual_high),
-                exceeded_by_pct=round(
-                    (actual_high - max_high) / max_high * 100, 2
-                ) if max_high > 0 else 100.0,
-            ))
+            breaches.append(
+                AppetiteBreach(
+                    framework=framework,
+                    metric="high_findings",
+                    threshold=max_high,
+                    actual=float(actual_high),
+                    exceeded_by_pct=round((actual_high - max_high) / max_high * 100, 2)
+                    if max_high > 0
+                    else 100.0,
+                )
+            )
 
         return AppetiteCheckResult(
             framework=framework,

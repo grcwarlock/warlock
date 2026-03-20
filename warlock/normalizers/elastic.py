@@ -52,8 +52,7 @@ class ElasticNormalizer(BaseNormalizer):
 
             # Handle both nested and flat key formats
             severity_raw = (
-                alert.get("severity", "")
-                or source.get("kibana.alert.severity", "unknown")
+                alert.get("severity", "") or source.get("kibana.alert.severity", "unknown")
             ).lower()
             severity_map = {
                 "critical": "critical",
@@ -63,47 +62,48 @@ class ElasticNormalizer(BaseNormalizer):
             }
             severity = severity_map.get(severity_raw, "info")
 
-            rule_name = (
-                alert.get("rule", {}).get("name", "")
-                or source.get("kibana.alert.rule.name", "Unknown alert")
+            rule_name = alert.get("rule", {}).get("name", "") or source.get(
+                "kibana.alert.rule.name", "Unknown alert"
             )
             alert_id = hit.get("_id", "")
-            status = (
-                alert.get("workflow_status", "")
-                or source.get("kibana.alert.workflow_status", "open")
+            status = alert.get("workflow_status", "") or source.get(
+                "kibana.alert.workflow_status", "open"
             )
 
             host_name = source.get("host", {}).get("name", "")
             user_name = source.get("user", {}).get("name", "")
-            risk_score = (
-                alert.get("risk_score", 0)
-                or source.get("kibana.alert.risk_score", 0)
-            )
+            risk_score = alert.get("risk_score", 0) or source.get("kibana.alert.risk_score", 0)
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="alert",
-                title=f"Elastic alert: {rule_name}",
-                detail={
-                    "alert_id": alert_id,
-                    "rule_name": rule_name,
-                    "severity": severity_raw,
-                    "status": status,
-                    "risk_score": risk_score,
-                    "host": host_name,
-                    "user": user_name,
-                    "timestamp": source.get("@timestamp", ""),
-                    "rule_id": (
-                        alert.get("rule", {}).get("id", "")
-                        or source.get("kibana.alert.rule.id", "")
-                    ),
-                    "mitre_tactics": source.get("threat", [{}])[0].get("tactic", {}).get("name", "") if source.get("threat") else "",
-                },
-                resource_id=alert_id,
-                resource_type="elastic_security_alert",
-                resource_name=rule_name,
-                severity=severity,
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="alert",
+                    title=f"Elastic alert: {rule_name}",
+                    detail={
+                        "alert_id": alert_id,
+                        "rule_name": rule_name,
+                        "severity": severity_raw,
+                        "status": status,
+                        "risk_score": risk_score,
+                        "host": host_name,
+                        "user": user_name,
+                        "timestamp": source.get("@timestamp", ""),
+                        "rule_id": (
+                            alert.get("rule", {}).get("id", "")
+                            or source.get("kibana.alert.rule.id", "")
+                        ),
+                        "mitre_tactics": source.get("threat", [{}])[0]
+                        .get("tactic", {})
+                        .get("name", "")
+                        if source.get("threat")
+                        else "",
+                    },
+                    resource_id=alert_id,
+                    resource_type="elastic_security_alert",
+                    resource_name=rule_name,
+                    severity=severity,
+                )
+            )
 
         return findings
 
@@ -127,47 +127,51 @@ class ElasticNormalizer(BaseNormalizer):
             name = rule.get("name", "unknown")
             severity_raw = rule.get("severity", "low").lower()
 
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="misconfiguration" if not enabled else "inventory",
-                title=f"Detection rule: {name}" + (" — disabled" if not enabled else ""),
-                detail={
-                    "rule_id": rule.get("id", ""),
-                    "name": name,
-                    "enabled": enabled,
-                    "severity": severity_raw,
-                    "type": rule.get("type", ""),
-                    "risk_score": rule.get("risk_score", 0),
-                    "tags": rule.get("tags", []),
-                    "threat": rule.get("threat", []),
-                    "interval": rule.get("interval", ""),
-                    "updated_at": rule.get("updated_at", ""),
-                },
-                resource_id=rule.get("id", ""),
-                resource_type="elastic_detection_rule",
-                resource_name=name,
-                severity="medium" if not enabled else "info",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="misconfiguration" if not enabled else "inventory",
+                    title=f"Detection rule: {name}" + (" — disabled" if not enabled else ""),
+                    detail={
+                        "rule_id": rule.get("id", ""),
+                        "name": name,
+                        "enabled": enabled,
+                        "severity": severity_raw,
+                        "type": rule.get("type", ""),
+                        "risk_score": rule.get("risk_score", 0),
+                        "tags": rule.get("tags", []),
+                        "threat": rule.get("threat", []),
+                        "interval": rule.get("interval", ""),
+                        "updated_at": rule.get("updated_at", ""),
+                    },
+                    resource_id=rule.get("id", ""),
+                    resource_type="elastic_detection_rule",
+                    resource_name=name,
+                    severity="medium" if not enabled else "info",
+                )
+            )
 
         # Coverage summary
         total = enabled_count + disabled_count
         if total > 0:
             coverage_pct = round((enabled_count / total) * 100, 1)
-            findings.append(FindingData(
-                **self._base(raw),
-                observation_type="inventory",
-                title=f"Detection rule coverage: {coverage_pct}% ({enabled_count}/{total} enabled)",
-                detail={
-                    "enabled_count": enabled_count,
-                    "disabled_count": disabled_count,
-                    "total": total,
-                    "coverage_percent": coverage_pct,
-                },
-                resource_id="elastic:detection_rules:summary",
-                resource_type="elastic_detection_rules",
-                resource_name="detection_rule_coverage",
-                severity="info" if coverage_pct >= 80 else "medium",
-            ))
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title=f"Detection rule coverage: {coverage_pct}% ({enabled_count}/{total} enabled)",
+                    detail={
+                        "enabled_count": enabled_count,
+                        "disabled_count": disabled_count,
+                        "total": total,
+                        "coverage_percent": coverage_pct,
+                    },
+                    resource_id="elastic:detection_rules:summary",
+                    resource_type="elastic_detection_rules",
+                    resource_name="detection_rule_coverage",
+                    severity="info" if coverage_pct >= 80 else "medium",
+                )
+            )
 
         return findings
 
@@ -196,24 +200,27 @@ class ElasticNormalizer(BaseNormalizer):
         elif offline > 0:
             severity = "medium"
 
-        return [FindingData(
-            **self._base(raw),
-            observation_type="misconfiguration" if issues else "inventory",
-            title=f"Elastic agents: {online}/{total} online" + (f" — {', '.join(issues)}" if issues else ""),
-            detail={
-                "online": online,
-                "offline": offline,
-                "error": error,
-                "updating": updating,
-                "inactive": inactive,
-                "total": total,
-                "issues": issues,
-            },
-            resource_id="elastic:agents:summary",
-            resource_type="elastic_agents",
-            resource_name="agent_status",
-            severity=severity,
-        )]
+        return [
+            FindingData(
+                **self._base(raw),
+                observation_type="misconfiguration" if issues else "inventory",
+                title=f"Elastic agents: {online}/{total} online"
+                + (f" — {', '.join(issues)}" if issues else ""),
+                detail={
+                    "online": online,
+                    "offline": offline,
+                    "error": error,
+                    "updating": updating,
+                    "inactive": inactive,
+                    "total": total,
+                    "issues": issues,
+                },
+                resource_id="elastic:agents:summary",
+                resource_type="elastic_agents",
+                resource_name="agent_status",
+                severity=severity,
+            )
+        ]
 
 
 # Register

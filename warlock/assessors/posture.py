@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ControlPosture:
     framework: str
@@ -119,6 +120,7 @@ def _severity_weight(severity: str) -> float:
 # PostureAggregator
 # ---------------------------------------------------------------------------
 
+
 class PostureAggregator:
     """Aggregates ControlResult rows into per-control posture scores."""
 
@@ -188,9 +190,7 @@ class PostureAggregator:
 
         # Posture score: weighted % compliant (0-100)
         posture_score = (
-            round((weighted_compliant / weighted_total) * 100, 2)
-            if weighted_total > 0
-            else 0.0
+            round((weighted_compliant / weighted_total) * 100, 2) if weighted_total > 0 else 0.0
         )
 
         # Worst-case rollup for status
@@ -208,9 +208,7 @@ class PostureAggregator:
         sources: list[str] = []
         if finding_ids:
             provider_rows = (
-                session.query(distinct(Finding.provider))
-                .filter(Finding.id.in_(finding_ids))
-                .all()
+                session.query(distinct(Finding.provider)).filter(Finding.id.in_(finding_ids)).all()
             )
             sources = sorted([row[0] for row in provider_rows if row[0]])
 
@@ -253,9 +251,7 @@ class PostureAggregator:
         """Aggregate all controls in a framework using batch queries."""
         # Single query: all results for this framework
         results: list[ControlResult] = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework == framework).all()
         )
 
         if not results:
@@ -273,11 +269,9 @@ class PostureAggregator:
             # Query in chunks to avoid SQLite variable limit
             chunk_size = 500
             for i in range(0, len(all_finding_ids), chunk_size):
-                chunk = all_finding_ids[i:i + chunk_size]
+                chunk = all_finding_ids[i : i + chunk_size]
                 rows = (
-                    session.query(Finding.id, Finding.provider)
-                    .filter(Finding.id.in_(chunk))
-                    .all()
+                    session.query(Finding.id, Finding.provider).filter(Finding.id.in_(chunk)).all()
                 )
                 for fid, provider in rows:
                     if provider:
@@ -307,8 +301,7 @@ class PostureAggregator:
                     not_assessed += 1
 
             posture_score = (
-                round((weighted_compliant / weighted_total) * 100, 2)
-                if weighted_total > 0 else 0.0
+                round((weighted_compliant / weighted_total) * 100, 2) if weighted_total > 0 else 0.0
             )
 
             if non_compliant > 0:
@@ -340,20 +333,22 @@ class PostureAggregator:
                 freshness_hours = round((now - newest).total_seconds() / 3600, 2)
                 oldest_hours = round((now - oldest).total_seconds() / 3600, 2)
 
-            postures.append(ControlPosture(
-                framework=framework,
-                control_id=control_id,
-                status=status,
-                posture_score=posture_score,
-                total_findings=len(ctrl_results),
-                compliant_count=compliant,
-                non_compliant_count=non_compliant,
-                partial_count=partial,
-                not_assessed_count=not_assessed,
-                evidence_sources=sorted(sources),
-                evidence_freshness_hours=freshness_hours,
-                oldest_evidence_hours=oldest_hours,
-            ))
+            postures.append(
+                ControlPosture(
+                    framework=framework,
+                    control_id=control_id,
+                    status=status,
+                    posture_score=posture_score,
+                    total_findings=len(ctrl_results),
+                    compliant_count=compliant,
+                    non_compliant_count=non_compliant,
+                    partial_count=partial,
+                    not_assessed_count=not_assessed,
+                    evidence_sources=sorted(sources),
+                    evidence_freshness_hours=freshness_hours,
+                    oldest_evidence_hours=oldest_hours,
+                )
+            )
 
         return postures
 
@@ -366,9 +361,7 @@ class PostureAggregator:
         Returns:
             Dict mapping framework name to list of ControlPosture.
         """
-        framework_rows = (
-            session.query(distinct(ControlResult.framework)).all()
-        )
+        framework_rows = session.query(distinct(ControlResult.framework)).all()
         frameworks = sorted([row[0] for row in framework_rows])
 
         result: dict[str, list[ControlPosture]] = {}
@@ -441,6 +434,7 @@ class PostureAggregator:
 # ---------------------------------------------------------------------------
 # EvidenceSufficiencyScorer
 # ---------------------------------------------------------------------------
+
 
 class EvidenceSufficiencyScorer:
     """Scores whether collected evidence is sufficient for an audit."""
@@ -522,8 +516,7 @@ class EvidenceSufficiencyScorer:
             else:
                 freshness_score = 0.0
                 gaps.append(
-                    f"Last evidence is {int(hours_since / 24)} days old "
-                    f"({int(hours_since)} hours)"
+                    f"Last evidence is {int(hours_since / 24)} days old ({int(hours_since)} hours)"
                 )
         else:
             gaps.append("No timestamped evidence available")
@@ -533,9 +526,7 @@ class EvidenceSufficiencyScorer:
         unique_providers: list[str] = []
         if finding_ids:
             provider_rows = (
-                session.query(distinct(Finding.provider))
-                .filter(Finding.id.in_(finding_ids))
-                .all()
+                session.query(distinct(Finding.provider)).filter(Finding.id.in_(finding_ids)).all()
             )
             unique_providers = [row[0] for row in provider_rows if row[0]]
 
@@ -572,10 +563,7 @@ class EvidenceSufficiencyScorer:
             gaps.append("No evidence from IAM sources")
 
         # --- Assertion coverage (0-15 points) ---
-        has_assertion = any(
-            r.assertion_name and r.assertion_name.strip()
-            for r in results
-        )
+        has_assertion = any(r.assertion_name and r.assertion_name.strip() for r in results)
         assertion_score = 15.0 if has_assertion else 0.0
         if not has_assertion:
             gaps.append("No deterministic assertion covers this control")
@@ -663,9 +651,7 @@ class EvidenceSufficiencyScorer:
             ValueError: If engagement not found.
         """
         engagement: AuditEngagement | None = (
-            session.query(AuditEngagement)
-            .filter(AuditEngagement.id == engagement_id)
-            .first()
+            session.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
         )
         if not engagement:
             raise ValueError(f"Engagement not found: {engagement_id}")
@@ -679,13 +665,10 @@ class EvidenceSufficiencyScorer:
         excluded = engagement.excluded_controls or []
 
         # Query control results within the engagement period
-        query = (
-            session.query(distinct(ControlResult.control_id))
-            .filter(
-                ControlResult.framework == framework,
-                ControlResult.assessed_at >= period_start,
-                ControlResult.assessed_at <= period_end,
-            )
+        query = session.query(distinct(ControlResult.control_id)).filter(
+            ControlResult.framework == framework,
+            ControlResult.assessed_at >= period_start,
+            ControlResult.assessed_at <= period_end,
         )
         if in_scope:
             query = query.filter(ControlResult.control_id.in_(in_scope))
@@ -732,6 +715,7 @@ class EvidenceSufficiencyScorer:
 # ---------------------------------------------------------------------------
 # Posture Time-Series
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PostureTimeSeriesPoint:
@@ -820,10 +804,7 @@ class PostureTimeSeriesQuery:
             .all()
         )
         control_ids = sorted([row[0] for row in control_rows])
-        return [
-            self.query_control(session, framework, cid, days)
-            for cid in control_ids
-        ]
+        return [self.query_control(session, framework, cid, days) for cid in control_ids]
 
     @staticmethod
     def _compute_slope(points: list[PostureTimeSeriesPoint]) -> float:

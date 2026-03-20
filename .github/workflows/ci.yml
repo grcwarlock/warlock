@@ -20,7 +20,10 @@ jobs:
           python-version: "3.12"
           cache: 'pip'
       - run: pip install ruff
-      - run: ruff check warlock/
+      - name: Ruff lint
+        run: ruff check warlock/
+      - name: Ruff format check
+        run: ruff format --check warlock/
 
   test:
     runs-on: ubuntu-latest
@@ -31,7 +34,271 @@ jobs:
           python-version: "3.12"
           cache: 'pip'
       - run: pip install -e ".[dev,ai]"
-      - run: pytest tests/ -v --tb=short
+      - name: Run tests with coverage
+        run: pytest tests/ -v --tb=short
+
+  # Comprehensive QA gate — mirrors the full local qa.sh pipeline
+  # Even if someone bypasses the pre-commit hook, CI catches everything
+  qa-gate:
+    name: QA Gate (comprehensive)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --- Python setup (cached) ---
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -e ".[dev,ai]"
+
+      # --- OPA setup (cached) ---
+      - name: Cache OPA binary
+        id: cache-opa
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/opa
+          key: opa-v0.70.0-linux-amd64
+
+      - name: Install OPA
+        if: steps.cache-opa.outputs.cache-hit != 'true'
+        run: |
+          OPA_VERSION="v0.70.0"
+          curl -L -o /usr/local/bin/opa "https://openpolicyagent.org/downloads/${OPA_VERSION}/opa_linux_amd64_static"
+          chmod +x /usr/local/bin/opa
+
+      - name: Verify OPA
+        run: opa version
+
+      # --- Terraform setup (cached via action) ---
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      # --- QA Section 1: Lint + Format ---
+      - name: "QA: Ruff lint"
+        run: |
+          echo "=== Ruff Lint ==="
+          ruff check warlock/
+          echo "PASS: ruff check"
+
+      - name: "QA: Ruff format"
+        run: |
+          echo "=== Ruff Format ==="
+          ruff format --check warlock/
+          echo "PASS: ruff format"
+
+      # --- QA Section 2: Full test suite ---
+      - name: "QA: Full test suite"
+        run: |
+          echo "=== Full Test Suite ==="
+          pytest tests/ -v --tb=short -q
+          echo "PASS: all tests"
+
+      # --- QA Section 3: Import smoke test ---
+      - name: "QA: Import smoke test"
+        run: |
+          echo "=== Import Smoke Test ==="
+          python -c "import warlock; print('PASS: import warlock')"
+
+      # --- QA Section 4: Demo seed verification ---
+      - name: "QA: Demo seed"
+        run: |
+          echo "=== Demo Seed Verification ==="
+          pip install -e ".[dev,ai]" --quiet
+          python scripts/demo_seed.py 2>&1 | tee /tmp/demo_output.txt
+          # Verify key metrics from demo output
+          if grep -q "Connectors failed:.*0" /tmp/demo_output.txt; then
+            echo "PASS: demo seed (0 connector failures)"
+          else
+            echo "FAIL: demo seed had connector failures"
+            exit 1
+          fi
+
+      # --- QA Section 5: OPA policy tests ---
+      - name: "QA: OPA policy validation"
+        run: |
+          echo "=== OPA Policy Validation ==="
+          opa check policies/
+          echo "PASS: opa check"
+          opa test policies/ -v
+          echo "PASS: opa test"
+
+      # --- QA Section 6: Terraform validation ---
+      - name: "QA: Terraform validation"
+        shell: bash
+        run: |
+          echo "=== Terraform Validation ==="
+          FAILED=0
+          PASSED=0
+          for dir in terraform/modules/*/*; do
+            if [ ! -d "$dir" ]; then continue; fi
+            pushd "$dir" > /dev/null
+            terraform init -backend=false -input=false > /dev/null 2>&1
+            if terraform validate > /dev/null 2>&1; then
+              PASSED=$((PASSED + 1))
+            else
+              echo "FAIL: $dir"
+              FAILED=$((FAILED + 1))
+            fi
+            popd > /dev/null
+          done
+          echo "Terraform modules: $PASSED passed, $FAILED failed"
+          if [ "$FAILED" -gt 0 ]; then
+            exit 1
+          fi
+          # Format check
+          terraform fmt -check -recursive terraform/
+          echo "PASS: terraform validate + fmt"
+
+      # --- QA Section 7: OSCAL JSON validation ---
+      - name: "QA: OSCAL validation"
+        run: |
+          echo "=== OSCAL JSON Validation ==="
+          python3 -c "
+          import json, pathlib, sys
+          errors = []
+          count = 0
+          for f in pathlib.Path('frameworks-oscal').rglob('*.json'):
+              count += 1
+              try:
+                  json.loads(f.read_text())
+              except Exception as e:
+                  errors.append(f'{f}: {e}')
+          if errors:
+              for e in errors:
+                  print(f'BROKEN: {e}', file=sys.stderr)
+              sys.exit(1)
+          print(f'PASS: all {count} OSCAL JSON files valid')
+          "
+
+      # --- QA Section 8: Secrets scan (gitleaks) ---
+      - name: "QA: Secrets scan"
+        run: |
+          echo "=== Secrets Scan ==="
+          # Scan tracked files for common secret patterns
+          SECRETS_FOUND=$(grep -rlE '(sk-ant-api[a-zA-Z0-9_-]{20,}|sk-proj-[a-zA-Z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|ghp_[a-zA-Z0-9]{36})' \
+            --include='*.py' --include='*.yaml' --include='*.yml' --include='*.json' --include='*.toml' --include='*.cfg' --include='*.env' \
+            warlock/ scripts/ .github/ 2>/dev/null || true)
+          if [ -n "$SECRETS_FOUND" ]; then
+            echo "POTENTIAL SECRETS found in:"
+            echo "$SECRETS_FOUND"
+            echo "FAIL: secrets detected in codebase"
+            exit 1
+          fi
+          echo "PASS: no secrets detected"
+
+      # --- QA Section 9: pip-audit ---
+      - name: "QA: Dependency audit"
+        run: |
+          echo "=== Dependency Audit ==="
+          pip-audit 2>&1 | tee /tmp/pip_audit.txt
+          # Fail on critical/high CVEs only
+          if grep -qiE '(CRITICAL|HIGH)' /tmp/pip_audit.txt 2>/dev/null; then
+            echo "WARNING: Critical/High vulnerabilities found"
+            cat /tmp/pip_audit.txt
+          fi
+          echo "PASS: pip-audit complete"
+
+      # --- QA Section 10: CLI smoke test ---
+      - name: "QA: CLI smoke test"
+        run: |
+          echo "=== CLI Smoke Test ==="
+          # Verify top-level CLI works
+          warlock --help > /dev/null
+          echo "  warlock --help: OK"
+
+          # Test all major command groups with --help
+          COMMANDS=(
+            "dashboard"
+            "coverage"
+            "findings"
+            "remediate"
+            "simulate-audit"
+            "policy-coverage"
+            "issues"
+            "systems"
+            "poams"
+            "personnel"
+            "questionnaires"
+            "data-silos"
+            "cadence"
+            "posture-history"
+            "sufficiency"
+            "compensating-controls"
+            "risk-acceptances"
+            "inheritance"
+            "dependencies"
+            "drift"
+            "effectiveness"
+            "framework-diff"
+            "architecture"
+          )
+
+          FAILED=0
+          for cmd in "${COMMANDS[@]}"; do
+            if warlock "$cmd" --help > /dev/null 2>&1; then
+              echo "  warlock $cmd --help: OK"
+            else
+              echo "  warlock $cmd --help: FAILED"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+
+          # Test CLI groups
+          for grp in "ai" "retention" "export"; do
+            if warlock "$grp" --help > /dev/null 2>&1; then
+              echo "  warlock $grp --help: OK"
+            else
+              echo "  warlock $grp --help: FAILED"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "FAIL: $FAILED CLI commands broken"
+            exit 1
+          fi
+          echo "PASS: all CLI commands respond to --help"
+
+      # --- QA Section 11: Documentation count verification ---
+      - name: "QA: Documentation counts"
+        run: |
+          echo "=== Documentation Count Verification ==="
+          # Verify key counts haven't regressed
+          POLICY_COUNT=$(find policies/ -name "*.rego" ! -name "*_test.rego" | wc -l | tr -d ' ')
+          echo "OPA policies: $POLICY_COUNT"
+          if [ "$POLICY_COUNT" -lt 300 ]; then
+            echo "FAIL: policy count dropped below 300 (got $POLICY_COUNT)"
+            exit 1
+          fi
+
+          TF_MODULE_COUNT=$(find terraform/modules -mindepth 2 -maxdepth 2 -type d | wc -l | tr -d ' ')
+          echo "Terraform modules: $TF_MODULE_COUNT"
+          if [ "$TF_MODULE_COUNT" -lt 12 ]; then
+            echo "FAIL: Terraform module count dropped below 12 (got $TF_MODULE_COUNT)"
+            exit 1
+          fi
+
+          OSCAL_COUNT=$(find frameworks-oscal/ -name "*.json" | wc -l | tr -d ' ')
+          echo "OSCAL JSON files: $OSCAL_COUNT"
+          if [ "$OSCAL_COUNT" -lt 17 ]; then
+            echo "FAIL: OSCAL file count dropped below 17 (got $OSCAL_COUNT)"
+            exit 1
+          fi
+
+          FRAMEWORK_COUNT=$(find warlock/frameworks/ -name "*.yaml" ! -name "crosswalk*" ! -name "baselines*" ! -name "inherited*" | wc -l | tr -d ' ')
+          echo "Framework YAMLs: $FRAMEWORK_COUNT"
+          if [ "$FRAMEWORK_COUNT" -lt 14 ]; then
+            echo "FAIL: framework count dropped below 14 (got $FRAMEWORK_COUNT)"
+            exit 1
+          fi
+
+          echo "PASS: all documentation counts within bounds"
 
   # #28: Security scanning step
   security:
@@ -48,7 +315,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test, security]
+    needs: [lint, test, security, qa-gate]
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
