@@ -97,3 +97,30 @@ def _register_default_subscribers(bus: "EventBus") -> None:
             "WebhookSubscriber registered for %d URL(s)",
             len([u for u in webhook_urls.split(",") if u.strip()]),
         )
+
+    # Audit event subscriber — wire when an external sink backend is configured.
+    # Guards against default test runs by checking for WLK_AUDIT_SINK_BACKEND.
+    # The "stdout" default is intentionally excluded because stdout is not a
+    # useful bus-driven sink (AuditTrail.record() already handles that path).
+    audit_backend = os.environ.get("WLK_AUDIT_SINK_BACKEND", "").strip().lower()
+    if audit_backend and audit_backend != "stdout":
+        try:
+            from warlock.export.audit_sink import (
+                AuditEventSubscriber,
+                BatchShipper,
+                create_sink_from_env,
+            )
+            sink = create_sink_from_env()
+            shipper = BatchShipper(sink)
+            subscriber = AuditEventSubscriber(shipper)
+            bus.subscribe_all(subscriber)
+            log.info(
+                "AuditEventSubscriber registered with %s sink backend",
+                audit_backend,
+            )
+        except Exception:
+            log.exception(
+                "Failed to register AuditEventSubscriber for backend %r — "
+                "external audit shipping disabled",
+                audit_backend,
+            )
