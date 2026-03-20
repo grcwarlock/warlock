@@ -48,10 +48,12 @@ from sqlalchemy.orm import Session
 
 from warlock import __version__ as _VERSION
 from warlock.api.auth import (
-    authenticate_user,
     create_access_token,
     create_user,
     generate_api_key,
+    login_with_tokens,
+    rotate_refresh_token,
+    verify_mfa_login,
     PERMISSIONS,
 )
 from warlock.api.deps import get_db, require_permission, apply_framework_scope, apply_source_scope
@@ -626,21 +628,64 @@ except ImportError:
 # =========================================================================
 
 
-@app.post(PREFIX + "/auth/login", response_model=TokenResponse)
-def login(body: LoginRequest, db: Session = Depends(get_db)):
-    user = authenticate_user(db, body.email, body.password)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    from warlock.api.auth import _get_auth_config
+class MFAVerifyRequest(BaseModel):
+    user_id: str
+    code: str
 
-    _, expire_minutes = _get_auth_config()
-    token = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
-    return TokenResponse(
-        access_token=token,
-        expires_in=expire_minutes * 60,
-        user_id=user.id,
-        role=user.role,
-    )
+
+@app.post(PREFIX + "/auth/login")
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    result = login_with_tokens(db, body.email, body.password)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    # MFA required — return partial auth, do NOT issue tokens (#1 MFA bypass fix)
+    if isinstance(result, dict) and result.get("mfa_required"):
+        return {
+            "mfa_required": True,
+            "user_id": result["user_id"],
+            "message": "MFA verification required. POST to /auth/mfa/verify with user_id and code.",
+        }
+    # Full auth — return access + refresh tokens (#3 refresh tokens wired in)
+    return result
+
+
+@app.post(PREFIX + "/auth/mfa/verify")
+def mfa_verify(body: MFAVerifyRequest, db: Session = Depends(get_db)):
+    """Complete MFA login by verifying TOTP code. Issues tokens on success."""
+    if not verify_mfa_login(body.user_id, body.code, db):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+    # MFA verified — issue tokens
+    from warlock.api.auth import generate_refresh_token
+    user = db.query(User).filter(User.id == body.user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    access_token = create_access_token({"sub": user.id})
+    refresh_token = generate_refresh_token(user.id, db)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": 3600,
+    }
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@app.post(PREFIX + "/auth/refresh")
+def refresh_token_endpoint(body: RefreshRequest, db: Session = Depends(get_db)):
+    """Exchange a refresh token for a new access + refresh token pair."""
+    try:
+        new_access, new_refresh = rotate_refresh_token(body.refresh_token, db)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+    return {
+        "access_token": new_access,
+        "refresh_token": new_refresh,
+        "token_type": "bearer",
+        "expires_in": 3600,
+    }
 
 
 @app.post(PREFIX + "/auth/register", response_model=UserResponse, status_code=201)
@@ -779,7 +824,7 @@ def _run_pipeline_background(run_id: str, source: list[str] | None = None):
             bus=bus,
         )
         with get_session() as session:
-            pipeline.run(session, source_filter=source)
+            pipeline.run(session)
     except Exception:
         log.exception("Background pipeline run failed (run_id=%s)", run_id)
 
@@ -1961,7 +2006,7 @@ class RiskAnalysisResponse(BaseModel):
 
 
 @app.post(PREFIX + "/risk/analyze")
-async def analyze_risk(
+def analyze_risk(
     req: RiskAnalyzeRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
@@ -3010,9 +3055,11 @@ def list_systems(
     current_user: User = Depends(require_permission("read")),
 ):
     # S-12: Added pagination defaults
+    # C-7: Apply ABAC framework scope filter
     from warlock.workflows.system_profile import SystemProfileManager
     mgr = SystemProfileManager()
     profiles = mgr.list_active(db)
+    profiles = apply_framework_scope(profiles, current_user)
     return [_system_profile_to_response(sp) for sp in profiles[offset:offset + limit]]
 
 
@@ -4299,24 +4346,41 @@ def get_effectiveness(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    """Control effectiveness scores over time."""
+    """Control effectiveness scores over time.
+
+    #22 fix: Use a subquery to get the latest snapshot per (framework, control_id)
+    instead of loading all rows and deduplicating in Python.
+    """
     from datetime import timedelta
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    q = db.query(PostureSnapshot).filter(
-        PostureSnapshot.snapshot_date >= cutoff,
-        PostureSnapshot.uptime_pct.isnot(None),
+
+    # Subquery: max snapshot_date per (framework, control_id)
+    latest_sub = (
+        db.query(
+            PostureSnapshot.framework,
+            PostureSnapshot.control_id,
+            func.max(PostureSnapshot.snapshot_date).label("max_date"),
+        )
+        .filter(
+            PostureSnapshot.snapshot_date >= cutoff,
+            PostureSnapshot.uptime_pct.isnot(None),
+        )
+        .group_by(PostureSnapshot.framework, PostureSnapshot.control_id)
     )
     if framework:
-        q = q.filter(PostureSnapshot.framework == framework)
+        latest_sub = latest_sub.filter(PostureSnapshot.framework == framework)
+    latest_sub = latest_sub.subquery()
 
-    latest = q.order_by(PostureSnapshot.snapshot_date.desc()).all()
-    seen = set()
-    rows = []
-    for s in latest:
-        key = (s.framework, s.control_id)
-        if key not in seen:
-            seen.add(key)
-            rows.append(s)
+    rows = (
+        db.query(PostureSnapshot)
+        .join(
+            latest_sub,
+            (PostureSnapshot.framework == latest_sub.c.framework)
+            & (PostureSnapshot.control_id == latest_sub.c.control_id)
+            & (PostureSnapshot.snapshot_date == latest_sub.c.max_date),
+        )
+        .all()
+    )
 
     return [
         {
@@ -5002,19 +5066,16 @@ def ai_delete_conversation(
     session_id: str,
     current_user: User = Depends(require_permission("write")),
 ):
-    """Clear a conversation session and its history."""
-    session_obj = _conversation_manager.get_session(session_id)
-    if session_obj is None:
-        raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
+    """Delete a conversation session and its history."""
+    # C-6: Actually delete the session from the manager's store.
+    with _conversation_manager._lock:
+        session_obj = _conversation_manager._sessions.get(session_id)
+        if session_obj is None:
+            raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
+        del _conversation_manager._sessions[session_id]
 
-    # Force cleanup by expiring TTL — simplest approach without adding a
-    # dedicated delete method to ConversationManager.
-    _conversation_manager.cleanup_expired()
-    # If it survived cleanup (not expired), we explicitly remove it by
-    # setting its last_activity to the epoch via touch then relying on
-    # a zero-TTL manager call — instead just return success after verifying.
-    # The session will expire naturally within the configured TTL.
-    return MessageResponse(message=f"Conversation {session_id} cleared.")
+    log.info("Conversation session %s deleted by user", session_id)
+    return MessageResponse(message=f"Conversation {session_id} deleted.")
 
 
 @app.get(PREFIX + "/ai/audit", response_model=PaginatedResponse)

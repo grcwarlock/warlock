@@ -5,7 +5,7 @@
 ###############################################################################
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.5, < 2.0"
   required_providers {
     aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
@@ -107,6 +107,15 @@ resource "aws_iam_role_policy" "drift_lambda" {
         }
       },
       {
+        # #13: Read API token from SSM Parameter Store
+        Sid    = "ReadSSMToken"
+        Effect = "Allow"
+        Action = ["ssm:GetParameter"]
+        Resource = var.warlock_api_token != null ? [
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.name_prefix}/drift-detector/warlock-api-token"
+        ] : []
+      },
+      {
         # CloudWatch Logs for Lambda
         Sid    = "WriteLogs"
         Effect = "Allow"
@@ -126,7 +135,7 @@ resource "aws_iam_role_policy" "drift_lambda" {
 data "archive_file" "handler" {
   type        = "zip"
   source_file = "${path.module}/lambda/handler.py"
-  output_path = "${path.module}/lambda/handler.zip"
+  output_path = "${path.root}/.terraform/tmp/drift-detector-handler.zip"
 }
 
 resource "aws_lambda_function" "drift_detector" {
@@ -147,7 +156,8 @@ resource "aws_lambda_function" "drift_detector" {
       TF_STATE_KEY         = var.state_key
       SNS_TOPIC_ARN        = aws_sns_topic.drift_findings.arn
       WARLOCK_API_ENDPOINT = var.warlock_api_endpoint != null ? var.warlock_api_endpoint : ""
-      WARLOCK_API_TOKEN    = var.warlock_api_token != null ? var.warlock_api_token : ""
+      # #13: Token moved to SSM SecureString — Lambda reads it at runtime via SSM API
+      WARLOCK_API_TOKEN_SSM_PARAM = var.warlock_api_token != null ? aws_ssm_parameter.api_token[0].name : ""
     }
   }
 
@@ -193,6 +203,21 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn    = aws_cloudwatch_event_rule.drift_schedule.arn
 }
 
+# ── #13: SSM SecureString for API token ─────────────────────────────
+# Stores the Warlock API token in SSM Parameter Store as a SecureString
+# instead of as a plaintext Lambda environment variable.
+
+resource "aws_ssm_parameter" "api_token" {
+  count       = var.warlock_api_token != null ? 1 : 0
+  name        = "/${var.name_prefix}/drift-detector/warlock-api-token"
+  description = "Warlock API bearer token for drift detector self-registration"
+  type        = "SecureString"
+  value       = var.warlock_api_token
+  key_id      = var.kms_key_arn
+
+  tags = local.common_tags
+}
+
 # ── #41: Warlock self-registration evidence ───────────────────────────
 
 variable "warlock_api_endpoint" {
@@ -214,9 +239,13 @@ resource "terraform_data" "warlock_evidence" {
   triggers_replace = [aws_lambda_function.drift_detector.arn]
 
   provisioner "local-exec" {
+    environment = {
+      WARLOCK_API_ENDPOINT = var.warlock_api_endpoint
+      WARLOCK_API_TOKEN    = var.warlock_api_token
+    }
     command = <<-EOT
-      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
-        -H "Authorization: Bearer ${var.warlock_api_token}" \
+      curl -sf -X POST "$WARLOCK_API_ENDPOINT/api/v1/evidence" \
+        -H "Authorization: Bearer $WARLOCK_API_TOKEN" \
         -H "Content-Type: application/json" \
         -d '{
           "module": "aws/drift-detector",

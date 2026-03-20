@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from warlock.config import get_settings
@@ -33,6 +33,12 @@ def get_engine():
             if _is_pgbouncer_mode(settings):
                 # PgBouncer transaction-mode: single connection per checkout,
                 # no prepared statements (server-side cursors are disallowed).
+                # NOTE: pool_size=1 + max_overflow=0 means this worker holds
+                # exactly one DB connection at a time.  All requests within a
+                # single uvicorn worker are serialized behind that connection.
+                # To achieve concurrency, run multiple uvicorn workers
+                # (e.g. ``uvicorn --workers 4``).  Each worker gets its own
+                # pool_size=1 connection, and PgBouncer multiplexes them.
                 pool_kwargs = {
                     "pool_size": 1,
                     "max_overflow": 0,
@@ -118,7 +124,9 @@ def get_read_session_factory():
     global _read_session_factory
     if _read_session_factory is None:
         _read_session_factory = sessionmaker(
-            bind=get_read_engine(), expire_on_commit=False
+            bind=get_read_engine(),
+            expire_on_commit=False,
+            autoflush=False,
         )
     return _read_session_factory
 
@@ -145,6 +153,11 @@ def get_read_session() -> Generator[Session, None, None]:
     """
     session = get_read_session_factory()()
     try:
+        # Enforce read-only at the database level for PostgreSQL connections.
+        # SQLite does not support SET TRANSACTION READ ONLY, so skip it.
+        bind_url = str(session.get_bind().url)
+        if bind_url.startswith("postgresql"):
+            session.execute(text("SET TRANSACTION READ ONLY"))
         yield session
     finally:
         session.close()

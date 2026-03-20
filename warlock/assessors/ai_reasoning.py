@@ -9,13 +9,14 @@ All calls go through httpx — no vendor SDKs required.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
+
+from warlock.ai.sanitize import hash_prompt as _hash_prompt
 
 from warlock.mappers.control_mapper import ControlMappingData
 from warlock.normalizers.base import FindingData
@@ -159,12 +160,6 @@ def _sanitize_field(value: Any) -> Any:
     if isinstance(value, list):
         return [_sanitize_field(v) for v in value]
     return value
-
-
-def _hash_prompt(system_prompt: str, user_prompt: str) -> str:
-    """SHA-256 hash of the full prompt for reproducibility tracking."""
-    combined = f"{system_prompt}\n---\n{user_prompt}"
-    return hashlib.sha256(combined.encode()).hexdigest()
 
 
 # ---------------------------------------------------------------------------

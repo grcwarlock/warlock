@@ -5,7 +5,7 @@
 ###############################################################################
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.5, < 2.0"
   required_providers {
     aws = { source = "hashicorp/aws", version = "~> 5.0" }
   }
@@ -109,9 +109,13 @@ resource "terraform_data" "warlock_evidence" {
   triggers_replace = [aws_guardduty_detector.main.id]
 
   provisioner "local-exec" {
+    environment = {
+      WARLOCK_API_ENDPOINT = var.warlock_api_endpoint
+      WARLOCK_API_TOKEN    = var.warlock_api_token
+    }
     command = <<-EOT
-      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
-        -H "Authorization: Bearer ${var.warlock_api_token}" \
+      curl -sf -X POST "$WARLOCK_API_ENDPOINT/api/v1/evidence" \
+        -H "Authorization: Bearer $WARLOCK_API_TOKEN" \
         -H "Content-Type: application/json" \
         -d '{
           "module": "aws/guardduty-org",

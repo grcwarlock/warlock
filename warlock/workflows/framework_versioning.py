@@ -61,6 +61,7 @@ Usage
 
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 import os
@@ -180,10 +181,14 @@ class _VersionStore:
     def save(self, entries: list[FrameworkVersionEntry]) -> None:
         self._ensure_dir()
         payload = {"versions": [asdict(e) for e in entries]}
-        self._path.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        content = json.dumps(payload, indent=2, ensure_ascii=False)
+        with open(self._path, "w", encoding="utf-8") as fh:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+            try:
+                fh.write(content)
+                fh.flush()
+            finally:
+                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
     def append(self, entry: FrameworkVersionEntry) -> None:
         entries = self.load()
@@ -435,6 +440,14 @@ class FrameworkVersionManager:
         # Resolve control maps — use stored data; fall back to YAML
         old_controls = old_entry.controls or _load_framework_controls(framework)
         new_controls = new_entry.controls or _load_framework_controls(framework)
+
+        if not old_controls and not new_controls:
+            raise ValueError(
+                f"Cannot diff versions {old_version!r} and {new_version!r} for "
+                f"framework {framework!r}: both versions have empty control sets. "
+                "Provide control metadata when tracking versions or ensure the "
+                "framework YAML is available."
+            )
 
         changes: list[ControlChange] = []
 

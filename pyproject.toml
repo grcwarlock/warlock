@@ -17,6 +17,9 @@ dependencies = [
     "python-multipart>=0.0.9",
     "python-dateutil>=2.9",
     "uvicorn>=0.30",
+    "bcrypt>=4.1",          # #14: Password hashing (was optional, now required)
+    "PyJWT>=2.8",           # #14: JWT tokens (was optional, now required)
+    "cryptography>=42.0",   # #14: Fernet field encryption (was optional, now required)
 ]
 
 [project.optional-dependencies]
@@ -38,9 +41,9 @@ gcp = [
     "google-cloud-resource-manager>=1.12",
     "google-cloud-compute>=1.18",
 ]
-ai = ["anthropic>=0.25", "openai>=1.30"]
+ai = []  # codebase uses raw httpx; no SDK deps needed
 monitoring = ["prometheus-client>=0.20"]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4", "pip-audit>=2.7"]
 
 [project.scripts]
 warlock = "warlock.cli:cli"

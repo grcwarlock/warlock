@@ -20,12 +20,12 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission
+from warlock.api.deps import get_current_user, get_db, require_permission
 from warlock.db.models import (
     AuditEngagement,
     ControlResult,
@@ -570,14 +570,18 @@ async def list_trust_documents(
 @router.get("/documents/{document_id}/download", response_model=TrustDocumentDownloadResponse)
 async def get_document_download_url(
     document_id: str,
+    request: Request,
     db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+    x_api_key: str | None = Header(None),
 ):
     """Generate a time-limited (1 hour) signed download URL for a document.
 
     The generated URL is signed with HMAC-SHA256 and encodes an expiry
     timestamp. The actual file serving is handled by the /download endpoint
     using the token. Public-tier documents are freely downloadable;
-    NDA/contract tier requires prior NDA approval (enforced at request time).
+    NDA/contract tier requires a valid auth token before the signed URL
+    is issued.
     """
     doc = (
         db.query(TrustDocument)
@@ -586,6 +590,21 @@ async def get_document_download_url(
     )
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found.")
+
+    # NDA/contract tier documents require authentication before issuing URL
+    if doc.classification_tier in ("nda", "contract"):
+        if not authorization and not x_api_key:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required for NDA/contract-tier documents.",
+            )
+        # Validate the credentials — raises 401 on failure
+        get_current_user(request, authorization, x_api_key, db)
+        log.info(
+            "Authenticated download URL request for %s-tier document %s",
+            doc.classification_tier,
+            document_id,
+        )
 
     expires_at = int(time.time()) + _DOWNLOAD_URL_TTL
     token = _sign_download_token(document_id, expires_at)
@@ -610,9 +629,16 @@ async def serve_trust_document(
     document_id: str,
     expires: int,
     token: str,
+    request: Request,
     db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+    x_api_key: str | None = Header(None),
 ):
-    """Serve the raw document file, validating the signed token and TTL."""
+    """Serve the raw document file, validating the signed token and TTL.
+
+    For NDA/contract-tier documents, a valid auth token is required in
+    addition to the HMAC download signature.
+    """
     import os
     from fastapi.responses import FileResponse
 
@@ -626,6 +652,15 @@ async def serve_trust_document(
     )
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found.")
+
+    # NDA/contract tier: require valid auth even with a valid HMAC token
+    if doc.classification_tier in ("nda", "contract"):
+        if not authorization and not x_api_key:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required to download NDA/contract-tier documents.",
+            )
+        get_current_user(request, authorization, x_api_key, db)
 
     if not os.path.isfile(doc.file_path):
         log.error("Trust document file missing on disk: %s", doc.file_path)

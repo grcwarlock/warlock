@@ -101,4 +101,4 @@ It wipes and re-creates everything from scratch each time.
 brew install opa
 ```
 
-With OPA installed, the demo evaluates 670 Rego policies across 8 frameworks (NIST 800-53, ISO 27001, SOC 2, CMMC, HIPAA, UCF, Terraform). Without OPA, the demo still works — it just skips policy evaluation.
+With OPA installed, the demo evaluates 654 Rego policies across 8 frameworks (NIST 800-53, ISO 27001, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform). Without OPA, the demo still works — it just skips policy evaluation.

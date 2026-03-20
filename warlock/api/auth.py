@@ -435,23 +435,68 @@ def verify_totp(secret: str, code: str, window: int = 1) -> bool:
     return False
 
 
+def _hash_backup_code(code: str) -> str:
+    """Hash a backup code with PBKDF2-SHA256 (600k iterations).
+
+    C-3 fix: backup codes were previously hashed with plain SHA-256,
+    which is vulnerable to offline brute-force given the small keyspace
+    (8 hex chars = 32 bits). PBKDF2 with high iteration count makes
+    each guess computationally expensive.
+    """
+    # Use the code itself as salt input combined with a fixed domain separator.
+    # Each code gets a unique salt derived from a random per-batch salt stored
+    # alongside the hash.
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac(
+        "sha256", code.encode(), salt.encode(), _PBKDF2_ITERATIONS
+    )
+    return f"pbkdf2:{salt}:{dk.hex()}"
+
+
+def _verify_backup_code(code: str, stored_hash: str) -> bool:
+    """Verify a backup code against its stored PBKDF2 hash.
+
+    Also supports legacy plain SHA-256 hashes for migration.
+    """
+    if stored_hash.startswith("pbkdf2:"):
+        _, salt, expected_hex = stored_hash.split(":", 2)
+        dk = hashlib.pbkdf2_hmac(
+            "sha256", code.encode(), salt.encode(), _PBKDF2_ITERATIONS
+        )
+        return hmac.compare_digest(dk.hex(), expected_hex)
+    # Legacy: plain SHA-256 (pre C-3 fix)
+    legacy = hashlib.sha256(code.encode()).hexdigest()
+    return hmac.compare_digest(legacy, stored_hash)
+
+
 def generate_backup_codes(count: int = 10) -> tuple[list[str], list[str]]:
-    """Generate backup codes. Returns (plaintext_codes, hashed_codes)."""
+    """Generate backup codes. Returns (plaintext_codes, hashed_codes).
+
+    C-3 fix: codes are hashed with PBKDF2-SHA256 (600k iterations)
+    instead of plain SHA-256.
+    """
     codes = [secrets.token_hex(4) for _ in range(count)]
-    hashed = [hashlib.sha256(c.encode()).hexdigest() for c in codes]
+    hashed = [_hash_backup_code(c) for c in codes]
     return codes, hashed
 
 
-def enroll_mfa(user_id: str, session: Session) -> dict:
+def enroll_mfa(session: Session, user: User | str) -> dict:
     """Start MFA enrollment -- generate secret and return provisioning URI.
 
     The caller (API route) is responsible for returning the provisioning URI
     and backup codes to the user. The MFA is not active until ``confirm_mfa``
     is called with a valid TOTP code.
+
+    Args:
+        session: Database session.
+        user: A User object or a user_id string. When a string is passed,
+              the user is looked up from the database.
     """
-    user = session.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise ValueError(f"User {user_id} not found")
+    if isinstance(user, str):
+        user_id = user
+        user = session.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ValueError(f"User {user_id} not found")
     if user.mfa_enabled:
         raise ValueError("MFA is already enabled for this user")
 
@@ -518,21 +563,65 @@ def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
         log.info("MFA login verified via TOTP for user %s", user.email)
         return True
 
-    # Try backup code
-    code_hash = hashlib.sha256(code.encode()).hexdigest()
-    if user.mfa_backup_codes and code_hash in user.mfa_backup_codes:
-        # Consume the backup code (one-time use)
-        remaining = [c for c in user.mfa_backup_codes if c != code_hash]
-        user.mfa_backup_codes = remaining
-        session.flush()
-        log.info(
-            "MFA login verified via backup code for user %s (%d codes remaining)",
-            user.email, len(remaining),
-        )
-        return True
+    # Try backup code (supports both PBKDF2 and legacy SHA-256 hashes)
+    if user.mfa_backup_codes:
+        for i, stored_hash in enumerate(user.mfa_backup_codes):
+            if _verify_backup_code(code, stored_hash):
+                # Consume the backup code (one-time use)
+                remaining = user.mfa_backup_codes[:i] + user.mfa_backup_codes[i + 1:]
+                user.mfa_backup_codes = remaining
+                session.flush()
+                log.info(
+                    "MFA login verified via backup code for user %s (%d codes remaining)",
+                    user.email, len(remaining),
+                )
+                return True
 
     log.warning("MFA login verification failed for user %s", user.email)
     return False
+
+
+def verify_mfa_and_login(
+    session: Session, user_id: str, totp_code: str
+) -> dict | None:
+    """Complete MFA verification and return full token response.
+
+    C-1 fix: This is the function that the /auth/mfa/verify endpoint
+    in app.py should call. Without it, the login flow is broken: when
+    authenticate_user returns {"mfa_required": True}, there was no way
+    to complete the login.
+
+    Args:
+        session: Database session.
+        user_id: The user ID from the partial auth response.
+        totp_code: The 6-digit TOTP code or backup code from the user.
+
+    Returns:
+        Token dict (access_token, refresh_token, token_type, expires_in)
+        on success, or None if the TOTP/backup code is invalid.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        log.warning("MFA verify attempted for non-existent user_id: %s", user_id)
+        return None
+    if not user.mfa_enabled or not user.mfa_secret:
+        log.warning("MFA verify attempted but MFA not enabled for user %s", user.email)
+        return None
+
+    if not verify_mfa_login(user_id, totp_code, session):
+        return None
+
+    # MFA passed -- issue full token pair
+    access_token = create_access_token({"sub": user.id})
+    refresh_token = generate_refresh_token(user.id, session)
+
+    log.info("MFA login completed for user %s", user.email)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": 3600,
+    }
 
 
 # ---------------------------------------------------------------------------

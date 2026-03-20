@@ -4,7 +4,7 @@
 ###############################################################################
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.5, < 2.0"
   required_providers {
     google = { source = "hashicorp/google", version = "~> 5.0" }
   }
@@ -42,7 +42,7 @@ resource "google_kms_crypto_key" "main" {
   purpose         = var.key_purpose
 
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
 
   labels = local.common_labels
@@ -78,18 +78,18 @@ resource "google_kms_crypto_key_iam_member" "gcs_cmek" {
 
 # ── SC-12: IAM bindings on the key ───────────────────────────────────
 
-resource "google_kms_key_ring_iam_binding" "admins" {
-  count       = length(var.key_admin_members) > 0 ? 1 : 0
+resource "google_kms_key_ring_iam_member" "admins" {
+  for_each    = toset(var.key_admin_members)
   key_ring_id = google_kms_key_ring.main.id
   role        = "roles/cloudkms.admin"
-  members     = var.key_admin_members
+  member      = each.value
 }
 
-resource "google_kms_crypto_key_iam_binding" "encrypter_decrypters" {
-  count         = length(var.encrypter_decrypter_members) > 0 ? 1 : 0
+resource "google_kms_crypto_key_iam_member" "encrypter_decrypters" {
+  for_each      = toset(var.encrypter_decrypter_members)
   crypto_key_id = google_kms_crypto_key.main.id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  members       = var.encrypter_decrypter_members
+  member        = each.value
 }
 
 # ── #41: Warlock self-registration evidence ───────────────────────────
@@ -113,9 +113,13 @@ resource "terraform_data" "warlock_evidence" {
   triggers_replace = [google_kms_crypto_key.main.id]
 
   provisioner "local-exec" {
+    environment = {
+      WARLOCK_API_ENDPOINT = var.warlock_api_endpoint
+      WARLOCK_API_TOKEN    = var.warlock_api_token
+    }
     command = <<-EOT
-      curl -sf -X POST "${var.warlock_api_endpoint}/api/v1/evidence" \
-        -H "Authorization: Bearer ${var.warlock_api_token}" \
+      curl -sf -X POST "$WARLOCK_API_ENDPOINT/api/v1/evidence" \
+        -H "Authorization: Bearer $WARLOCK_API_TOKEN" \
         -H "Content-Type: application/json" \
         -d '{
           "module": "gcp/kms-baseline",

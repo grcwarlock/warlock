@@ -7,6 +7,7 @@ ConnectorRegistry manages registration and discovery.
 from __future__ import annotations
 
 import concurrent.futures
+import functools
 import hashlib
 import json
 import logging
@@ -75,7 +76,7 @@ class RawEventData:
     observed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     id: str = field(default_factory=lambda: str(uuid4()))
 
-    @property
+    @functools.cached_property
     def sha256(self) -> str:
         content = json.dumps(self.raw_data, sort_keys=True, default=str)
         return hashlib.sha256(content.encode()).hexdigest()

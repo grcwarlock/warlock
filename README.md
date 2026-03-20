@@ -5,7 +5,7 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (40 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 1: Connectors (41 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (41 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
@@ -27,9 +27,13 @@ Every finding traces back to its raw API response. Every control result traces b
 | HIPAA Security Rule | 64 | | Administrative, Physical, Technical safeguards |
 | CMMC Level 2 | 110 | | 14 families aligned with NIST 800-171 |
 | GDPR | 15 | | EU data protection regulation |
-| **Total** | **1,779** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
+| PCI DSS v4.0 | 63 | | 12 requirements for cardholder data |
+| NIST CSF 2.0 | 101 | | Govern, Identify, Protect, Detect, Respond, Recover |
+| EU AI Act | 33 | | High-risk AI system requirements |
+| SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
+| **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (40)
+## Connectors (41)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne
@@ -42,6 +46,7 @@ Every finding traces back to its raw API response. Every control result traces b
 **DLP:** Microsoft Purview | **Backup:** Veeam | **MDM:** Microsoft Intune
 **GRC:** Confluence, OneTrust | **Physical:** Verkada | **Email:** Proofpoint
 **Third-Party Risk:** SecurityScorecard | **Container:** Kubernetes | **AI Tracking:** MLflow
+**Ingest:** Webhook (generic)
 
 ## Quick Start
 
@@ -52,7 +57,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,ai]"
 alembic upgrade head
-python scripts/demo_seed.py            # 40 connectors, 547 findings, 26K results (~7s)
+python scripts/demo_seed.py            # 40 connectors, 547 findings, 29K results (~7s)
 warlock coverage                       # verify it worked
 warlock-api                            # start REST API on :8000
 ./scripts/demo_api.sh                  # query API with auto-auth
@@ -234,7 +239,7 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 40 source connectors (Stage 1)
+├── connectors/           # 41 source connectors (Stage 1)
 ├── normalizers/          # 41 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
@@ -256,8 +261,8 @@ warlock/
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
 ├── db/
-│   ├── models.py         # 33 SQLAlchemy models
-│   ├── migrations/       # Alembic migrations (7 revisions)
+│   ├── models.py         # 34 SQLAlchemy models
+│   ├── migrations/       # Alembic migrations (11 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
 │   └── engine.py         # Session management
@@ -281,10 +286,13 @@ warlock/
 │   ├── oscal.py          # OSCAL 1.1.2 (AR, SSP, POA&M)
 │   ├── binder.py         # Audit evidence binder (ZIP)
 │   └── alerts.py         # Slack/PagerDuty/webhook routing
-├── frameworks/
+├── frameworks/           # 14 framework YAMLs (1,996 controls total)
 │   ├── nist_800_53.yaml  # 1,176 controls with monitoring frequencies
 │   ├── iso_27001.yaml    # 93 controls
 │   ├── soc2.yaml         # 46 controls
+│   ├── pci_dss.yaml      # 63 controls
+│   ├── nist_csf.yaml     # 101 controls
+│   ├── ...               # + 8 more (ISO 27701, ISO 42001, UCF, FedRAMP, HIPAA, CMMC, GDPR, EU AI Act, SEC Cyber)
 │   ├── crosswalks.yaml   # 1,843 crosswalk edges
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
@@ -293,14 +301,14 @@ warlock/
 
 ## Database
 
-33 tables across 7 Alembic migrations:
+34 tables across 11 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency
 **Intelligence:** ChangeEvent, ComplianceDrift, PostureSnapshot
 **Operations:** Issue, IssueComment, AuditEntry, AuditEngagement, Attestation, AuditComment
 **Identity:** User, APIKey, ExternalAuditor, AuditorEngagementAssignment, EvidenceRequest
-**Assets:** SystemProfile, Personnel, DataSilo, LegalHold, TrustAccessRequest
+**Assets:** SystemProfile, Personnel, DataSilo, LegalHold, TrustAccessRequest, TrustDocument
 **Configuration:** QuestionnaireTemplate, Questionnaire, RiskAnalysis, PolicyOverride
 
 ## Tech Stack

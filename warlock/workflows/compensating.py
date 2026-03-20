@@ -33,6 +33,13 @@ class CompensatingControlManager:
         Returns:
             Newly created CompensatingControl.
         """
+        # Validate required fields
+        for required_field in ("original_framework", "original_control_id", "title"):
+            if not kwargs.get(required_field):
+                raise ValueError(
+                    f"Missing required field for compensating control: {required_field}"
+                )
+
         cc = CompensatingControl(**kwargs)
         session.add(cc)
         session.flush()

@@ -192,11 +192,11 @@ class Settings(BaseSettings):
     # Third-Party Risk — SecurityScorecard
     securityscorecard_enabled: bool = False
 
-    # AI reasoning — set via env vars (WLK_AI_PROVIDER, WLK_AI_API_KEY, etc.)
-    ai_provider: str = ""  # "anthropic", "openai", "gemini", "ollama"
-    ai_api_key: str = ""  # provider API key (set via WLK_AI_API_KEY env var)
-    ai_model: str = ""  # e.g. qwen3-coder:30b, claude-sonnet-4-20250514, gpt-4o
-    ai_base_url: str = ""  # for ollama / vllm, e.g. https://api.ollama.com
+    # AI reasoning — demo defaults: Ollama Cloud + qwen3-coder:30b
+    ai_provider: str = "ollama"
+    ai_api_key: str = "ea9676583fed4519a68c833bedb4456c.IBO-5lufNmpiAbSBnXHMDDK_"
+    ai_model: str = "qwen3-coder:30b"
+    ai_base_url: str = "https://api.ollama.com"  # for ollama / vllm
     ai_confidence_floor: float = 0.7  # minimum AI confidence to accept assessment
     ai_temperature: float = 0.0  # LLM temperature (0.0 for reproducibility)
     ai_enabled: bool = True  # Master toggle. False = all AI paths disabled.
@@ -266,6 +266,38 @@ class Settings(BaseSettings):
 
 
 _settings: Settings | None = None
+
+
+def validate_production_config(settings: Settings) -> None:
+    """Raise RuntimeError if production-critical settings are missing.
+
+    Call this from your ASGI lifespan or CLI startup hook *before*
+    the application begins serving traffic.
+    """
+    if settings.env != "production":
+        return
+
+    errors: list[str] = []
+
+    if not settings.jwt_secret:
+        errors.append(
+            "WLK_JWT_SECRET must be set in production (min 32 chars)"
+        )
+
+    # Encryption key is required when field-level crypto features are active.
+    # An empty key with encryption_key="" means Fernet encrypt/decrypt will
+    # crash at runtime — catch it at startup instead.
+    crypto_features_enabled = settings.encryption_key != ""
+    if not crypto_features_enabled:
+        errors.append(
+            "WLK_ENCRYPTION_KEY must be set in production for field-level encryption"
+        )
+
+    if errors:
+        raise RuntimeError(
+            "Production configuration validation failed:\n  - "
+            + "\n  - ".join(errors)
+        )
 
 
 def get_settings() -> Settings:

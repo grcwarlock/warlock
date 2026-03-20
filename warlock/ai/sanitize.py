@@ -43,6 +43,9 @@ def sanitize_field(value: Any, max_len: int = 2000) -> Any:
     """
     if isinstance(value, str):
         cleaned = _CONTROL_CHAR_RE.sub("", value)
+        # Prevent evidence-tag escape: strip literal tags so user data
+        # cannot close (or open) an <evidence> block inside a prompt.
+        cleaned = cleaned.replace("</evidence>", "").replace("<evidence>", "")
         return cleaned[:max_len]
     if isinstance(value, dict):
         return {k: sanitize_field(v, max_len) for k, v in value.items()}
@@ -107,6 +110,11 @@ def strip_secrets(data: dict) -> dict:
             out[key] = "[REDACTED]"
         elif isinstance(val, dict):
             out[key] = strip_secrets(val)
+        elif isinstance(val, list):
+            out[key] = [
+                strip_secrets(item) if isinstance(item, dict) else item
+                for item in val
+            ]
         else:
             out[key] = val
     return out

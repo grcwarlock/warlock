@@ -89,16 +89,27 @@ class ControlMapper:
         self._crosswalk_graph: dict[tuple[str, str], list[CrosswalkEdge]] = defaultdict(list)
         self._active_frameworks: set[str] = set()
         self._monitoring_frequencies: dict[tuple[str, str], str] = {}  # (framework, control_id) -> frequency
+        # #23: Dict indexes for O(1) lookup instead of O(n) linear scan
+        self._explicit_by_event_type: dict[str, list[ExplicitRule]] = defaultdict(list)
+        self._explicit_wildcard_rules: list[ExplicitRule] = []
+        self._resource_by_type: dict[str, list[ResourceRule]] = defaultdict(list)
 
     # -- Configuration --
 
     def add_explicit_rule(self, rule: ExplicitRule) -> None:
         self._explicit_rules.append(rule)
         self._active_frameworks.add(rule.framework)
+        # #23: Index by event_type for fast lookup
+        if rule.event_type == "*":
+            self._explicit_wildcard_rules.append(rule)
+        else:
+            self._explicit_by_event_type[rule.event_type].append(rule)
 
     def add_resource_rule(self, rule: ResourceRule) -> None:
         self._resource_rules.append(rule)
         self._active_frameworks.add(rule.framework)
+        # #23: Index by resource_type for fast lookup
+        self._resource_by_type[rule.resource_type].append(rule)
 
     def add_crosswalk(self, edge: CrosswalkEdge) -> None:
         key = (edge.source_framework, edge.source_control)
@@ -162,40 +173,44 @@ class ControlMapper:
         seen: set[tuple[str, str]] = set()
 
         # Priority 1: Explicit rules (source + event_type → control)
-        for rule in self._explicit_rules:
+        # #23: Use dict index for O(1) lookup instead of linear scan
+        candidate_rules = (
+            self._explicit_by_event_type.get(finding.observation_type, [])
+            + self._explicit_wildcard_rules
+        )
+        for rule in candidate_rules:
             if rule.source not in ("*", finding.source):
                 continue
-            if rule.event_type == finding.observation_type or rule.event_type == "*":
-                key = (rule.framework, rule.control_id)
-                if key not in seen:
-                    seen.add(key)
-                    mappings.append(ControlMappingData(
-                        finding_id=finding.id,
-                        framework=rule.framework,
-                        control_id=rule.control_id,
-                        control_family=rule.control_family,
-                        mapping_method="explicit",
-                        confidence=1.0,
-                        monitoring_frequency=rule.monitoring_frequency,
-                    ))
+            key = (rule.framework, rule.control_id)
+            if key not in seen:
+                seen.add(key)
+                mappings.append(ControlMappingData(
+                    finding_id=finding.id,
+                    framework=rule.framework,
+                    control_id=rule.control_id,
+                    control_family=rule.control_family,
+                    mapping_method="explicit",
+                    confidence=1.0,
+                    monitoring_frequency=rule.monitoring_frequency,
+                ))
 
         # Priority 2: Resource-type rules
+        # #23: Use dict index for O(1) lookup instead of linear scan
         if finding.resource_type:
-            for rule in self._resource_rules:
-                if rule.resource_type == finding.resource_type:
-                    for ctrl_id in rule.control_ids:
-                        key = (rule.framework, ctrl_id)
-                        if key not in seen:
-                            seen.add(key)
-                            mappings.append(ControlMappingData(
-                                finding_id=finding.id,
-                                framework=rule.framework,
-                                control_id=ctrl_id,
-                                control_family=rule.control_family,
-                                mapping_method="resource_rule",
-                                confidence=0.85,
-                                monitoring_frequency=rule.monitoring_frequency,
-                            ))
+            for rule in self._resource_by_type.get(finding.resource_type, []):
+                for ctrl_id in rule.control_ids:
+                    key = (rule.framework, ctrl_id)
+                    if key not in seen:
+                        seen.add(key)
+                        mappings.append(ControlMappingData(
+                            finding_id=finding.id,
+                            framework=rule.framework,
+                            control_id=ctrl_id,
+                            control_family=rule.control_family,
+                            mapping_method="resource_rule",
+                            confidence=0.85,
+                            monitoring_frequency=rule.monitoring_frequency,
+                        ))
 
         # Priority 3: Crosswalk — expand existing mappings to other frameworks
         crosswalked: list[ControlMappingData] = []

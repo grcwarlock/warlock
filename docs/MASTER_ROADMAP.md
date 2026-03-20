@@ -160,6 +160,12 @@ Differentiation. Makes Warlock unique.
 - [ ] 98. Cold start optimization — remove `init_db()` from scheduler tick (S) *(was missing)*
 - [ ] 99. Iterator-based OPA data assembly — eliminate second findings copy (M) *(was missing)*
 
+### Privacy Engineering (4 items — new)
+- [ ] 119. Presidio PII detector assessor — scan evidence for PII, map to ISO 27701/SOC 2 P1/NIST SI (M) *(blocked: Presidio incompatible with Python 3.14 — spacy/pydantic v1 issue)*
+- [ ] 120. detect-secrets pipeline assessor — scan ingested configs/IaC for leaked secrets, map to AC/IA controls (S)
+- [ ] 121. scrubadub export sanitizer — redact PII from OSCAL/SSP/POA&M before sharing with third parties (S)
+- [ ] 122. pii-codex regulatory classification — enrich PII findings with GDPR/HIPAA category mapping (S) *(blocked: depends on Presidio)*
+
 ---
 
 ## P3 — Roadmap (18 items)
