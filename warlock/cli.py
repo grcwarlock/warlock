@@ -1800,18 +1800,11 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
 
     Use 'warlock issues' or 'warlock poams' to find IDs.
     """
-    from rich.markdown import Markdown
-    from rich.panel import Panel
-    from sqlalchemy import func
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
-        CompensatingControl,
-        ControlResult,
-        Finding,
         Issue,
         POAM,
-        RiskAcceptance,
     )
 
     init_db()
@@ -1906,7 +1899,7 @@ def _show_remediation_for_issue(session, issue) -> None:
     """Show full remediation guidance for an issue."""
     from rich.panel import Panel
 
-    from warlock.db.models import CompensatingControl, ControlResult, Finding, POAM, RiskAcceptance
+    from warlock.db.models import CompensatingControl, ControlResult, POAM, RiskAcceptance
 
     # Header
     console.print()
@@ -1930,30 +1923,30 @@ def _show_remediation_for_issue(session, issue) -> None:
 
     # Remediation steps from assertion engine
     if result and result.remediation_summary:
-        console.print(f"\n[bold green]How to fix:[/bold green]")
+        console.print("\n[bold green]How to fix:[/bold green]")
         console.print(f"  {result.remediation_summary}")
         if result.remediation_steps:
-            console.print(f"\n[bold]Manual steps:[/bold]")
+            console.print("\n[bold]Manual steps:[/bold]")
             for i, step in enumerate(result.remediation_steps, 1):
                 console.print(f"  {i}. {step}")
         if result.console_path:
             console.print(f"\n[bold]Console path:[/bold] {result.console_path}")
 
     # CLI remediation actions
-    console.print(f"\n[bold cyan]CLI actions:[/bold cyan]")
+    console.print("\n[bold cyan]CLI actions:[/bold cyan]")
     console.print(f"  warlock remediate {issue.id[:8]} -a assign --to <email>")
     console.print(f"  warlock remediate {issue.id[:8]} -a transition --to in_progress")
     console.print(f"  warlock remediate {issue.id[:8]} -a comment --reason \"<update>\"")
     console.print(f"  warlock remediate {issue.id[:8]} -a accept-risk --reason \"<justification>\"")
 
     # Evidence needed
-    console.print(f"\n[bold]Evidence to collect:[/bold]")
+    console.print("\n[bold]Evidence to collect:[/bold]")
     if result and result.assessor and result.assessor.startswith("assertion:"):
         assertion_name = result.assessor.split(":", 1)[1]
-        console.print(f"  Re-run pipeline after fix: warlock collect")
+        console.print("  Re-run pipeline after fix: warlock collect")
         console.print(f"  Assertion '{assertion_name}' must pass on next assessment")
     else:
-        console.print(f"  Re-run pipeline after fix: warlock collect")
+        console.print("  Re-run pipeline after fix: warlock collect")
         console.print(f"  Control {issue.control_id} must show as compliant")
 
     # Related items
@@ -1962,7 +1955,7 @@ def _show_remediation_for_issue(session, issue) -> None:
     related_ra = session.query(RiskAcceptance).filter(RiskAcceptance.control_id == issue.control_id).first()
 
     if related_poam or related_cc or related_ra:
-        console.print(f"\n[bold]Related items:[/bold]")
+        console.print("\n[bold]Related items:[/bold]")
         if related_poam:
             console.print(f"  POA&M: {related_poam.id[:8]} ({related_poam.status})")
         if related_cc:
@@ -1993,10 +1986,10 @@ def _show_remediation_for_poam(session, poam) -> None:
     if poam.control_result_id:
         result = session.query(ControlResult).filter(ControlResult.id == poam.control_result_id).first()
         if result and result.remediation_summary:
-            console.print(f"\n[bold green]How to fix:[/bold green]")
+            console.print("\n[bold green]How to fix:[/bold green]")
             console.print(f"  {result.remediation_summary}")
             if result.remediation_steps:
-                console.print(f"\n[bold]Manual steps:[/bold]")
+                console.print("\n[bold]Manual steps:[/bold]")
                 for i, step in enumerate(result.remediation_steps, 1):
                     console.print(f"  {i}. {step}")
             if result.console_path:
@@ -2004,14 +1997,14 @@ def _show_remediation_for_poam(session, poam) -> None:
 
     # Milestones
     if poam.milestones:
-        console.print(f"\n[bold]Milestones:[/bold]")
+        console.print("\n[bold]Milestones:[/bold]")
         for m in poam.milestones:
             status = m.get("status", "pending")
             icon = "[green]done[/green]" if status == "completed" else "[yellow]pending[/yellow]"
             console.print(f"  {icon}  {m.get('description', '?')}")
 
     # CLI actions
-    console.print(f"\n[bold cyan]CLI actions:[/bold cyan]")
+    console.print("\n[bold cyan]CLI actions:[/bold cyan]")
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to open")
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to in_progress")
     console.print(f"  warlock remediate {poam.id[:8]} -a transition --to remediated")
@@ -2021,13 +2014,13 @@ def _show_remediation_for_poam(session, poam) -> None:
     # Compensating controls
     cc = session.query(CompensatingControl).filter(CompensatingControl.poam_id == poam.id).first()
     if cc:
-        console.print(f"\n[bold]Compensating control:[/bold]")
+        console.print("\n[bold]Compensating control:[/bold]")
         console.print(f"  {cc.title} ({cc.status}, effectiveness: {cc.effectiveness_score}%)")
 
     # Risk acceptance
     ra = session.query(RiskAcceptance).filter(RiskAcceptance.poam_id == poam.id).first()
     if ra:
-        console.print(f"\n[bold]Risk acceptance:[/bold]")
+        console.print("\n[bold]Risk acceptance:[/bold]")
         console.print(f"  {ra.status} — expires {ra.expiry_date} — approved by {ra.approved_by or 'pending'}")
 
     console.print()
@@ -2157,7 +2150,7 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
         return
 
     # Build d2 source from live data
-    top_sources = sorted(source_counts.items(), key=lambda x: -x[1])[:15]
+    sorted(source_counts.items(), key=lambda x: -x[1])[:15]
     source_groups = {
         "Cloud": ["aws", "azure", "gcp", "oci", "ibm_cloud", "alibaba", "digitalocean", "huawei", "ovh", "cloudflare"],
         "Identity": ["okta", "entra_id", "cyberark", "sailpoint", "vault"],
@@ -2179,7 +2172,7 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
         active = [m for m in members if m in source_counts]
         if active:
             d2.append(f"  {group_name.lower()}: {group_name} ({len(active)}) {{")
-            d2.append(f"    style.fill: \"#16213e\"")
+            d2.append("    style.fill: \"#16213e\"")
             for src in active:
                 cnt = source_counts[src]
                 d2.append(f"    {src}: {src} ({cnt})")
@@ -2193,12 +2186,12 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
     d2.append("  style.font-color: \"#e0e0e0\"")
     d2.append(f"  normalize: Normalize\\n{finding_count} findings")
     d2.append(f"  map: Map Controls\\n{result_count:,} results")
-    d2.append(f"  assess: Assess {{")
-    d2.append(f"    tier1: Tier 1 Assertions (25)")
-    d2.append(f"    tier2: Tier 2 AI Reasoning")
-    d2.append(f"    tier3: Tier 3 OPA (616 policies)")
-    d2.append(f"    tier1 -> tier2: fallback")
-    d2.append(f"    tier2 -> tier3: fallback")
+    d2.append("  assess: Assess {")
+    d2.append("    tier1: Tier 1 Assertions (25)")
+    d2.append("    tier2: Tier 2 AI Reasoning")
+    d2.append("    tier3: Tier 3 OPA (616 policies)")
+    d2.append("    tier1 -> tier2: fallback")
+    d2.append("    tier2 -> tier3: fallback")
     d2.append("  }")
     d2.append("  normalize -> map -> assess")
     d2.append("}")
@@ -2218,7 +2211,6 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
     d2.append("  style.fill: \"#1a1a2e\"")
     d2.append("  style.font-color: \"#e0e0e0\"")
     for sp in systems:
-        label = f"{sp.acronym}: {sp.name}"
         fws = ", ".join(sp.frameworks or [])
         conns = ", ".join(sp.connector_scope or [])
         d2.append(f"  {sp.acronym}: {sp.acronym} — {sp.name}\\n{sp.authorization_status} | {sp.overall_impact} impact\\nFrameworks: {fws}\\nConnectors: {conns}")
@@ -2226,9 +2218,9 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
     d2.append("")
 
     # Governance
-    d2.append(f"governance: Governance {{")
-    d2.append(f"  style.fill: \"#e94560\"")
-    d2.append(f"  style.font-color: \"#ffffff\"")
+    d2.append("governance: Governance {")
+    d2.append("  style.fill: \"#e94560\"")
+    d2.append("  style.font-color: \"#ffffff\"")
     d2.append(f"  issues: Issues ({issue_count})")
     d2.append(f"  poams: POA&Ms ({poam_count})")
     d2.append(f"  compensating: Compensating ({cc_count})")
@@ -2237,18 +2229,18 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
     d2.append("")
 
     # Intelligence
-    d2.append(f"intelligence: Intelligence {{")
-    d2.append(f"  style.fill: \"#0f3460\"")
-    d2.append(f"  style.font-color: \"#e0e0e0\"")
+    d2.append("intelligence: Intelligence {")
+    d2.append("  style.fill: \"#0f3460\"")
+    d2.append("  style.font-color: \"#e0e0e0\"")
     d2.append(f"  drift: Compliance Drift ({drift_count})")
     d2.append(f"  posture: Posture Trends ({snapshot_count} snapshots)")
     d2.append("}")
     d2.append("")
 
     # Assets
-    d2.append(f"assets: Assets & People {{")
-    d2.append(f"  style.fill: \"#16213e\"")
-    d2.append(f"  style.font-color: \"#e0e0e0\"")
+    d2.append("assets: Assets & People {")
+    d2.append("  style.fill: \"#16213e\"")
+    d2.append("  style.font-color: \"#e0e0e0\"")
     d2.append(f"  personnel: Personnel ({personnel_count})")
     d2.append(f"  silos: Data Silos ({silo_count})")
     d2.append(f"  engagements: Audit Engagements ({engagement_count})")
