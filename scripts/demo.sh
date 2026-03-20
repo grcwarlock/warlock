@@ -52,8 +52,8 @@ fi
 echo "[5/7] Seeding demo environment..."
 rm -f warlock.db
 export WLK_AI_ENABLED=false
-alembic upgrade head 2>&1 | grep -v "^INFO"
-python scripts/demo_seed.py 2>&1 | grep -E "^\[|^  Raw|^  Find|^  Cont|^  Conn|^  Dur|Seed complete"
+alembic upgrade head 2>&1 | grep -v "^INFO" || true
+python scripts/demo_seed.py 2>&1 | grep -E "^\[|^  Raw|^  Find|^  Cont|^  Conn|^  Dur|Seed complete" || true
 echo ""
 
 # 6. AI configuration prompt
