@@ -253,7 +253,7 @@ jobs:
           done
 
           # Test CLI groups
-          for grp in "ai" "retention" "export"; do
+          for grp in "ai" "retention" "risk" "scheduler"; do
             if warlock "$grp" --help > /dev/null 2>&1; then
               echo "  warlock $grp --help: OK"
             else
