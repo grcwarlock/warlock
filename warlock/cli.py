@@ -23,6 +23,19 @@ def _get_actor() -> str:
     return os.environ.get("WLK_CLI_ACTOR", "cli@warlock")
 
 
+def _check_ai_available(use_ai: bool | None) -> bool:
+    """Check if AI is available when --ai was requested. Returns True if AI should be attempted."""
+    if use_ai is False:
+        return False
+    if use_ai is True:
+        from warlock.ai.service import get_ai_service
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print("[dim](AI requested but not configured — run 'warlock ai configure' to enable)[/dim]")
+            return False
+    return True
+
+
 def _parse_ai_response(value) -> str:
     """Extract text from an AI response value, handling JSON wrapping."""
     import json as _json
@@ -278,7 +291,7 @@ def coverage(framework: str | None, use_ai: bool | None) -> None:
     console.print(table)
 
     # AI narrative summary
-    if use_ai is not False:
+    if _check_ai_available(use_ai):
         try:
             from warlock.ai.service import get_ai_service
             from warlock.ai.types import AITask
@@ -648,7 +661,7 @@ def policy_coverage(framework: str, no_rag: bool, use_ai: bool | None) -> None:
             console.print(f"  [dim]... and {len(coverage.gaps) - 20} more[/dim]")
 
     # AI governance analysis
-    if use_ai is not False:
+    if _check_ai_available(use_ai):
         from warlock.ai.service import get_ai_service
         from warlock.ai.types import AITask
 
@@ -1140,7 +1153,7 @@ def risk_analyze(framework: str, iterations: int, use_ai: bool | None) -> None:
     console.print(f"[bold]Iterations:[/bold]              {portfolio['iterations']:,}")
 
     # AI risk narrative
-    if use_ai is not False:
+    if _check_ai_available(use_ai):
         from warlock.ai.service import get_ai_service
         from warlock.ai.types import AITask
 
@@ -2171,14 +2184,18 @@ def drift_list(framework: str | None, days: int, direction: str | None) -> None:
 
 @cli.command("simulate-audit")
 @click.option("--framework", "-f", required=True, help="Framework to simulate")
-@click.option("--date", required=True, help="Target audit date (YYYY-MM-DD)")
+@click.option("--date", default=None, help="Target audit date (YYYY-MM-DD, default: +90 days)")
 @click.option("--system", default=None, help="System profile ID")
 @click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for auditor simulation")
 def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool | None) -> None:
     """Simulate what an auditor would see at a future date."""
-    from datetime import datetime as dt
+    from datetime import datetime as dt, timedelta
     from warlock.db.engine import get_session, init_db
     from warlock.assessors.simulation import AuditSimulator
+
+    if date is None:
+        date = (dt.now().date() + timedelta(days=90)).isoformat()
+        console.print(f"[dim]No --date specified, using +90 days: {date}[/dim]")
 
     init_db()
     try:
@@ -2199,7 +2216,7 @@ def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool |
     console.print(f"  At-risk controls:   [red]{len(result.at_risk_controls)}[/red]")
 
     # AI auditor readiness assessment
-    if use_ai is not False:
+    if _check_ai_available(use_ai):
         from warlock.ai.service import get_ai_service
         from warlock.ai.types import AITask
 

@@ -156,6 +156,72 @@ DEFAULT_SCENARIO_CATALOG: dict[str, dict[str, Any]] = {
         "frequency_min": 1, "frequency_mode": 3, "frequency_max": 10,
         "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
     },
+    # GDPR article families (ART prefix)
+    "ART": {
+        "name": "privacy_violation",
+        "description": "GDPR data protection violation — fine up to 4% of global revenue",
+        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
+        "impact_min": 100_000, "impact_mode": 1_000_000, "impact_max": 20_000_000,
+    },
+    # HIPAA section families (164 prefix)
+    "164": {
+        "name": "phi_breach",
+        "description": "Protected health information breach — HIPAA violation",
+        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
+        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+    },
+    # PCI DSS requirement families (R prefix)
+    "R": {
+        "name": "payment_data_breach",
+        "description": "Payment card data compromise — PCI DSS non-compliance",
+        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
+        "impact_min": 50_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+    },
+    # NIST CSF function families
+    "GV": {
+        "name": "governance_failure",
+        "description": "Cybersecurity governance and oversight failure",
+        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
+        "impact_min": 50_000, "impact_mode": 250_000, "impact_max": 2_000_000,
+    },
+    "ID": {
+        "name": "asset_identification_gap",
+        "description": "Failure to identify and manage assets and risks",
+        "frequency_min": 1, "frequency_mode": 3, "frequency_max": 12,
+        "impact_min": 25_000, "impact_mode": 200_000, "impact_max": 1_500_000,
+    },
+    "PR": {
+        "name": "protection_failure",
+        "description": "Safeguard implementation failure",
+        "frequency_min": 2, "frequency_mode": 6, "frequency_max": 25,
+        "impact_min": 50_000, "impact_mode": 300_000, "impact_max": 3_000_000,
+    },
+    "DE": {
+        "name": "detection_failure",
+        "description": "Failure to detect cybersecurity events",
+        "frequency_min": 1, "frequency_mode": 5, "frequency_max": 20,
+        "impact_min": 50_000, "impact_mode": 400_000, "impact_max": 4_000_000,
+    },
+    "RS": {
+        "name": "response_failure",
+        "description": "Inadequate incident response capability",
+        "frequency_min": 1, "frequency_mode": 4, "frequency_max": 15,
+        "impact_min": 50_000, "impact_mode": 300_000, "impact_max": 3_000_000,
+    },
+    "RC": {
+        "name": "recovery_failure",
+        "description": "Failure to recover from cybersecurity incidents",
+        "frequency_min": 0.5, "frequency_mode": 2, "frequency_max": 8,
+        "impact_min": 100_000, "impact_mode": 500_000, "impact_max": 5_000_000,
+    },
+    # SEC Cyber (ITEM prefix)
+    "ITEM": {
+        "name": "disclosure_failure",
+        "description": "SEC cybersecurity disclosure non-compliance",
+        "frequency_min": 0.5, "frequency_mode": 1, "frequency_max": 5,
+        "impact_min": 100_000, "impact_mode": 1_000_000, "impact_max": 10_000_000,
+    },
+    # EU AI Act (same ART prefix as GDPR, handled by ART above)
 }
 
 
@@ -281,6 +347,16 @@ def _extract_family(control_id: str) -> str:
         if len(parts) >= 3:
             return f"{parts[0]}-{parts[1]}"
         return control_id
+
+    # Handle HIPAA-style numeric IDs: 164.308(a)(1) -> 164
+    if control_id and control_id[0].isdigit():
+        family = ""
+        for ch in control_id:
+            if ch.isdigit():
+                family += ch
+            else:
+                break
+        return family or control_id
 
     # Handle standard NIST-style: letters followed by dash/dot/digit
     family = ""
