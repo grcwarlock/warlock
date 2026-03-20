@@ -167,7 +167,7 @@ Differentiation. Makes Warlock unique.
 - [ ] 122. pii-codex regulatory classification — enrich PII findings with GDPR/HIPAA category mapping (S) *(blocked: depends on Presidio)*
 
 ### Developer Experience (1 item — new)
-- [ ] 123. Change `ai_enabled` default to `False` — AI should be opt-in, not on by default. Currently causes demo seed to make hundreds of Ollama Cloud calls on startup. (S)
+- [x] 123. Change `ai_enabled` default to `False` — AI should be opt-in, not on by default. Currently causes demo seed to make hundreds of Ollama Cloud calls on startup. (S)
 
 ### Export & Reporting (2 items — new)
 - [ ] 124. Human-readable SSP export — Markdown/PDF with narrative implementation statements, not just OSCAL JSON. AI generates prose per control; deterministic fallback uses assertion + evidence summaries. (L)

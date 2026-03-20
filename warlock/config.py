@@ -192,14 +192,15 @@ class Settings(BaseSettings):
     # Third-Party Risk — SecurityScorecard
     securityscorecard_enabled: bool = False
 
-    # AI reasoning — demo defaults: Ollama Cloud + qwen3-coder:30b
-    ai_provider: str = "ollama"
-    ai_api_key: str = "ea9676583fed4519a68c833bedb4456c.IBO-5lufNmpiAbSBnXHMDDK_"
-    ai_model: str = "qwen3-coder:30b"
-    ai_base_url: str = "https://api.ollama.com"  # for ollama / vllm
+    # AI reasoning — configured via .env file or environment variables
+    # The demo script (scripts/demo.sh) writes .env with user's chosen provider/key/model
+    ai_provider: str = ""  # "anthropic", "openai", "gemini", "ollama"
+    ai_api_key: str = ""  # set via WLK_AI_API_KEY or .env
+    ai_model: str = ""  # e.g. claude-sonnet-4-20250514, gpt-4o, qwen3-coder:30b
+    ai_base_url: str = ""  # for ollama / vllm
     ai_confidence_floor: float = 0.7  # minimum AI confidence to accept assessment
     ai_temperature: float = 0.0  # LLM temperature (0.0 for reproducibility)
-    ai_enabled: bool = True  # Master toggle. False = all AI paths disabled.
+    ai_enabled: bool = False  # AI is opt-in. Set to true via .env or WLK_AI_ENABLED=true
     ai_enhanced_features: list[str] = Field(default_factory=list)  # Empty = all features enabled
     ai_max_tokens: int = 1024
     ai_timeout: float = 60.0
