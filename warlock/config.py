@@ -192,13 +192,19 @@ class Settings(BaseSettings):
     # Third-Party Risk — SecurityScorecard
     securityscorecard_enabled: bool = False
 
-    # AI reasoning — optional
-    ai_provider: str = ""  # "anthropic", "openai", "gemini", "ollama"
-    ai_api_key: str = ""
-    ai_model: str = ""
-    ai_base_url: str = ""  # for ollama / vllm
+    # AI reasoning — demo defaults: Ollama Cloud + qwen3-coder:30b
+    ai_provider: str = "ollama"
+    ai_api_key: str = "ea9676583fed4519a68c833bedb4456c.IBO-5lufNmpiAbSBnXHMDDK_"
+    ai_model: str = "qwen3-coder:30b"
+    ai_base_url: str = "https://api.ollama.com"  # for ollama / vllm
     ai_confidence_floor: float = 0.7  # minimum AI confidence to accept assessment
     ai_temperature: float = 0.0  # LLM temperature (0.0 for reproducibility)
+    ai_enabled: bool = True  # Master toggle. False = all AI paths disabled.
+    ai_enhanced_features: list[str] = Field(default_factory=list)  # Empty = all features enabled
+    ai_max_tokens: int = 1024
+    ai_timeout: float = 60.0
+    ai_batch_concurrency: int = 10
+    ai_audit_enabled: bool = True
 
     # Field encryption
     encryption_key: str = ""  # key for field-level encryption (crypto.py)

@@ -5,10 +5,15 @@
   control results + finding evidence via keyword matching.
 - suggest_response(session, question_text) — on-demand suggestion for a free-text
   question using the same evidence corpus.
+
+Phase 2 additions:
+- ai_respond(session, questionnaire_id) — AI-powered auto-response that calls
+  AIService.reason() per question, falling back to keyword matching when AI is off.
 """
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -23,6 +28,8 @@ from warlock.db.models import (
     QuestionnaireTemplate,
 )
 from warlock.utils import ensure_aware
+
+log = logging.getLogger(__name__)
 
 
 class QuestionnaireManager:
@@ -933,3 +940,210 @@ class QuestionnaireManager:
             "sources": sources,
             "evidence_snippets": evidence["evidence_snippets"],
         }
+
+    # ------------------------------------------------------------------
+    # Phase 2: AI-powered auto-response
+    # ------------------------------------------------------------------
+
+    def _keyword_respond(
+        self,
+        question: dict[str, Any],
+        corpus: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Generate a keyword-matched response for a single question.
+
+        This is the deterministic fallback used by ``ai_respond()`` when
+        AI is unavailable.  Reuses the same evidence-matching logic as
+        ``auto_respond()`` but operates on a single question and returns
+        a response dict rather than persisting to the DB.
+
+        Args:
+            question: A question dict from the template (must have ``id``,
+                ``text``, ``mapped_controls``, ``response_type``).
+            corpus: Evidence corpus from ``_build_evidence_corpus()``.
+
+        Returns:
+            Dict with ``answer``, ``confidence``, ``source``, and
+            ``ai_generated`` (always ``False``).
+        """
+        question_text = question.get("text", "")
+        mapped_controls = question.get("mapped_controls", [])
+        response_type = question.get("response_type", "text")
+
+        evidence = self._score_question_against_corpus(
+            question_text, mapped_controls, corpus,
+        )
+
+        n_compliant = len(evidence["matched_compliant"])
+        n_non_compliant = len(evidence["matched_non_compliant"])
+
+        if n_compliant == 0 and n_non_compliant == 0:
+            return {
+                "answer": "No automated evidence available.",
+                "confidence": 0.0,
+                "source": "none",
+                "ai_generated": False,
+            }
+
+        if response_type == "yes_no":
+            if n_compliant >= n_non_compliant:
+                snippets = "; ".join(evidence["evidence_snippets"][:3]) or "pipeline evidence"
+                answer = f"Yes, {snippets}."
+                confidence = round(
+                    n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1,
+                )
+            else:
+                remediations = (
+                    "; ".join(evidence["remediation_snippets"][:2]) or "see remediation plan"
+                )
+                answer = f"No, {remediations}."
+                confidence = round(
+                    n_non_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1,
+                )
+        else:
+            parts: list[str] = []
+            if evidence["evidence_snippets"]:
+                parts.append("Evidence: " + "; ".join(evidence["evidence_snippets"][:3]) + ".")
+            if evidence["matched_compliant"]:
+                parts.append(
+                    f"Compliant controls: {', '.join(evidence['matched_compliant'][:3])}.",
+                )
+            if evidence["matched_non_compliant"]:
+                parts.append(
+                    f"Non-compliant controls: {', '.join(evidence['matched_non_compliant'][:3])}.",
+                )
+            answer = " ".join(parts) if parts else "No automated evidence available."
+            confidence = round(
+                n_compliant / max(n_compliant + n_non_compliant, 1) * 100, 1,
+            )
+
+        source_controls = (
+            evidence["matched_compliant"] + evidence["matched_non_compliant"]
+        )[:5]
+
+        return {
+            "answer": answer,
+            "confidence": min(confidence, 100.0),
+            "source": (
+                f"Control results: {', '.join(source_controls)}"
+                if source_controls
+                else "Keyword match"
+            ),
+            "ai_generated": False,
+        }
+
+    def ai_respond(
+        self,
+        session: Session,
+        questionnaire_id: str,
+    ) -> Questionnaire:
+        """AI-powered auto-response for questionnaire questions.
+
+        For each question in the questionnaire template, calls
+        ``AIService.reason(AITask.QUESTIONNAIRE_RESPONSE, ...)`` with the
+        question text, mapped controls, and evidence corpus.  The AI
+        composes professional responses with confidence scores.
+
+        When AI is off or fails for a given question, falls back to
+        ``_keyword_respond()`` which uses the same deterministic
+        keyword-matching logic as ``auto_respond()``.
+
+        This method does NOT modify ``auto_respond()`` -- it is a
+        separate AI-enhanced path that consumers opt into explicitly.
+
+        Args:
+            session: SQLAlchemy database session.
+            questionnaire_id: ID of the questionnaire to populate.
+
+        Returns:
+            The updated Questionnaire with ``ai_suggested_answers``
+            populated.  Each answer dict includes an ``ai_generated``
+            boolean so the caller knows the provenance.
+
+        Raises:
+            ValueError: If questionnaire or template not found.
+        """
+        from warlock.ai import get_ai_service, AITask
+
+        q = (
+            session.query(Questionnaire)
+            .filter(Questionnaire.id == questionnaire_id)
+            .first()
+        )
+        if not q:
+            raise ValueError(f"Questionnaire not found: {questionnaire_id}")
+
+        template = (
+            session.query(QuestionnaireTemplate)
+            .filter(QuestionnaireTemplate.id == q.template_id)
+            .first()
+        )
+        if not template:
+            raise ValueError(f"Template not found: {q.template_id}")
+
+        corpus = self._build_evidence_corpus(session)
+        ai = get_ai_service()
+        suggestions: dict[str, dict[str, Any]] = {}
+
+        for question in template.questions:
+            qid = question["id"]
+            question_text = question.get("text", "")
+            mapped_controls = question.get("mapped_controls", [])
+
+            # Build evidence context for this question
+            evidence = self._score_question_against_corpus(
+                question_text, mapped_controls, corpus,
+            )
+
+            context = {
+                "question": question_text,
+                "question_id": qid,
+                "response_type": question.get("response_type", "text"),
+                "mapped_controls": mapped_controls,
+                "evidence": {
+                    "compliant_controls": evidence["matched_compliant"][:10],
+                    "non_compliant_controls": evidence["matched_non_compliant"][:10],
+                    "evidence_snippets": evidence["evidence_snippets"][:5],
+                    "remediation_snippets": evidence["remediation_snippets"][:3],
+                },
+            }
+
+            result = ai.reason(
+                task=AITask.QUESTIONNAIRE_RESPONSE,
+                context=context,
+                fallback=lambda q=question, c=corpus: self._keyword_respond(q, c),
+            )
+
+            value = result.value
+            if result.ai_used and isinstance(value, dict):
+                suggestions[qid] = {
+                    "answer": value.get("response", str(value)),
+                    "confidence": result.confidence * 100.0,
+                    "source": f"AI ({result.provider}/{result.model})",
+                    "ai_generated": True,
+                }
+            elif isinstance(value, dict) and "answer" in value:
+                # Fallback dict from _keyword_respond
+                suggestions[qid] = value
+            else:
+                suggestions[qid] = {
+                    "answer": str(value) if value else "No response generated.",
+                    "confidence": 0.0,
+                    "source": "fallback",
+                    "ai_generated": False,
+                }
+
+        q.ai_suggested_answers = suggestions
+        q.updated_at = datetime.now(timezone.utc)
+        session.flush()
+
+        log.info(
+            "ai_respond for questionnaire %s: %d/%d questions answered, "
+            "%d AI-generated",
+            questionnaire_id,
+            len(suggestions),
+            len(template.questions),
+            sum(1 for s in suggestions.values() if s.get("ai_generated")),
+        )
+
+        return q

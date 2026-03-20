@@ -2,6 +2,11 @@
 
 Provides evidence snapshot creation, period verification, and gap detection
 using existing ControlResult.assessed_at timestamps.
+
+Phase 2 additions:
+- ``evaluate_evidence_quality()`` — AI-enhanced evidence sufficiency scoring.
+  Returns relevance, completeness, timeliness, and authenticity scores per
+  artifact.  Falls back to a presence/absence heuristic when AI is off.
 """
 
 from __future__ import annotations
@@ -286,3 +291,166 @@ class EvidenceRetentionManager:
                 })
 
         return gaps
+
+
+# ---------------------------------------------------------------------------
+# AI-enhanced evidence quality evaluation
+# ---------------------------------------------------------------------------
+
+log = logging.getLogger(__name__)
+
+
+def _fallback_evidence_quality(
+    control_id: str,
+    evidence_artifacts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Deterministic presence/absence evidence quality check.
+
+    Used as the fallback when AI is off.  Scores are binary:
+    1.0 if the artifact exists and has content, 0.0 otherwise.
+
+    Args:
+        control_id: The control being evaluated.
+        evidence_artifacts: List of artifact dicts, each expected to
+            have at least ``type`` and optionally ``content``,
+            ``collected_at``, ``hash``.
+
+    Returns:
+        Dict with per-artifact scores and an overall summary.
+    """
+    artifact_scores: list[dict[str, Any]] = []
+
+    for artifact in evidence_artifacts:
+        has_content = bool(artifact.get("content") or artifact.get("data"))
+        has_timestamp = bool(artifact.get("collected_at") or artifact.get("timestamp"))
+        has_hash = bool(artifact.get("hash") or artifact.get("sha256"))
+
+        score = {
+            "artifact_type": artifact.get("type", "unknown"),
+            "relevance": 1.0 if has_content else 0.0,
+            "completeness": 1.0 if has_content else 0.0,
+            "timeliness": 1.0 if has_timestamp else 0.0,
+            "authenticity": 1.0 if has_hash else 0.0,
+        }
+        artifact_scores.append(score)
+
+    # Overall scores: average across artifacts
+    n = len(artifact_scores)
+    if n == 0:
+        return {
+            "control_id": control_id,
+            "artifacts": [],
+            "overall": {
+                "relevance": 0.0,
+                "completeness": 0.0,
+                "timeliness": 0.0,
+                "authenticity": 0.0,
+            },
+            "ai_used": False,
+        }
+
+    return {
+        "control_id": control_id,
+        "artifacts": artifact_scores,
+        "overall": {
+            "relevance": round(sum(a["relevance"] for a in artifact_scores) / n, 4),
+            "completeness": round(sum(a["completeness"] for a in artifact_scores) / n, 4),
+            "timeliness": round(sum(a["timeliness"] for a in artifact_scores) / n, 4),
+            "authenticity": round(sum(a["authenticity"] for a in artifact_scores) / n, 4),
+        },
+        "ai_used": False,
+    }
+
+
+def evaluate_evidence_quality(
+    session: Session,
+    control_id: str,
+    evidence_artifacts: list[dict[str, Any]],
+    control_description: str = "",
+) -> dict[str, Any]:
+    """Evaluate the quality and sufficiency of evidence artifacts for a control.
+
+    When AI is enabled, calls ``AIService.reason(AITask.EVIDENCE_EVALUATION,
+    ...)`` with the artifact metadata and control description.  The model
+    assesses each artifact on four dimensions:
+
+    - **relevance** -- does the evidence address the control requirement?
+    - **completeness** -- does it cover the full scope of the control?
+    - **timeliness** -- is the evidence current enough for audit purposes?
+    - **authenticity** -- can the evidence be verified (hashes, signatures)?
+
+    When AI is off, falls back to a deterministic presence/absence check
+    that scores each dimension as 1.0 or 0.0 based on whether the artifact
+    dict contains the expected fields.
+
+    Args:
+        session: SQLAlchemy database session (available for future
+            enrichment queries).
+        control_id: The control identifier being evaluated.
+        evidence_artifacts: List of artifact dicts.  Each should contain
+            at minimum ``type`` and ideally ``content``, ``collected_at``,
+            and ``hash`` or ``sha256``.
+        control_description: Optional human-readable description of the
+            control requirement for AI context.
+
+    Returns:
+        A dict with per-artifact scores, overall aggregated scores, and
+        an ``ai_used`` boolean indicating provenance.
+    """
+    from warlock.ai import get_ai_service, AITask
+
+    ai = get_ai_service()
+
+    # Sanitize artifacts for the prompt: strip large content payloads
+    artifact_summaries = []
+    for artifact in evidence_artifacts:
+        summary = {
+            "type": artifact.get("type", "unknown"),
+            "collected_at": artifact.get("collected_at") or artifact.get("timestamp"),
+            "has_content": bool(artifact.get("content") or artifact.get("data")),
+            "has_hash": bool(artifact.get("hash") or artifact.get("sha256")),
+            "metadata": {
+                k: v
+                for k, v in artifact.items()
+                if k not in ("content", "data", "body", "raw")
+            },
+        }
+        artifact_summaries.append(summary)
+
+    context = {
+        "control_id": control_id,
+        "control_description": control_description,
+        "artifacts": artifact_summaries,
+        "artifact_count": len(evidence_artifacts),
+    }
+
+    result = ai.reason(
+        task=AITask.EVIDENCE_EVALUATION,
+        context=context,
+        fallback=lambda: _fallback_evidence_quality(control_id, evidence_artifacts),
+    )
+
+    if result.ai_used and isinstance(result.value, dict):
+        # Normalize AI response into our expected schema
+        ai_value = result.value
+        return {
+            "control_id": control_id,
+            "evaluation": ai_value.get("evaluation", ""),
+            "sufficient": ai_value.get("sufficient", False),
+            "overall": {
+                "relevance": ai_value.get("relevance", 0.0),
+                "completeness": ai_value.get("completeness", 0.0),
+                "timeliness": ai_value.get("timeliness", 0.0),
+                "authenticity": ai_value.get("authenticity", 0.0),
+            },
+            "ai_used": True,
+            "ai_model": result.model,
+            "ai_confidence": result.confidence,
+        }
+
+    # Fallback response
+    value = result.value
+    if isinstance(value, dict):
+        return value
+
+    return _fallback_evidence_quality(control_id, evidence_artifacts)

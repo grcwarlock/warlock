@@ -157,7 +157,8 @@ def results(framework: str | None, status: str | None, limit: int) -> None:
 
 @cli.command()
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def coverage(framework: str | None) -> None:
+@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for executive summary")
+def coverage(framework: str | None, use_ai: bool | None) -> None:
     """Show compliance coverage summary."""
     from sqlalchemy import func
     from warlock.db.engine import get_session
@@ -194,6 +195,7 @@ def coverage(framework: str | None) -> None:
     table.add_column("Total")
     table.add_column("Rate")
 
+    coverage_context: dict = {}
     for fw, counts in sorted(data.items()):
         total = sum(counts.values())
         compliant = counts.get("compliant", 0)
@@ -208,12 +210,39 @@ def coverage(framework: str | None) -> None:
             str(total),
             f"[{rate_style}]{rate:.0f}%[/]",
         )
+        coverage_context[fw] = {
+            "compliant": compliant,
+            "non_compliant": counts.get("non_compliant", 0),
+            "partial": counts.get("partial", 0),
+            "not_assessed": counts.get("not_assessed", 0),
+            "total": total,
+            "rate": round(rate, 1),
+        }
 
     console.print(table)
 
+    # AI narrative summary
+    if use_ai is not False:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        svc = get_ai_service()
+        if svc.is_task_enabled(AITask.EXECUTIVE_REPORT):
+            result = svc.reason(AITask.EXECUTIVE_REPORT, context={"frameworks": coverage_context})
+            if result.ai_used:
+                console.print("\n[bold]AI Analysis:[/bold]")
+                value = result.value
+                if isinstance(value, dict):
+                    narrative = value.get("report") or value.get("narrative") or str(value)
+                else:
+                    narrative = str(value) if value else ""
+                if narrative:
+                    console.print(narrative)
+
 
 @cli.command()
-def findings() -> None:
+@click.option("--ask", default=None, help="Ask AI a question about the listed findings")
+def findings(ask: str | None) -> None:
     """Show recent findings."""
     from warlock.db.engine import get_session
     from warlock.db.models import Finding
@@ -243,6 +272,49 @@ def findings() -> None:
         )
 
     console.print(table)
+
+    # --ask: AI question about the listed findings
+    if ask and ask.strip():
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import ConversationContext
+
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print("[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]")
+            return
+
+        import uuid
+        session_id = uuid.uuid4().hex
+        findings_summary = [
+            {
+                "title": f.title[:80],
+                "observation_type": f.observation_type,
+                "severity": f.severity,
+                "provider": f.provider,
+                "resource_type": f.resource_type or "",
+            }
+            for f in rows
+        ]
+        ctx = ConversationContext(
+            entity_type="findings_list",
+            entity_id="batch",
+            entity_data={"findings": findings_summary, "count": len(rows)},
+            session_id=session_id,
+        )
+        result = svc.converse(session_id=session_id, message=ask.strip(), context=ctx)
+        if result.ai_used:
+            console.print("\n[bold]AI:[/bold]")
+            value = result.value
+            response_text = value if isinstance(value, str) else str(value)
+            try:
+                import json as _json
+                parsed = _json.loads(response_text)
+                response_text = parsed.get("response") or str(parsed)
+            except Exception:
+                pass
+            console.print(response_text)
+        else:
+            console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
 
 
 @cli.command()
@@ -481,7 +553,8 @@ def vendors(provider: str, threshold: float) -> None:
 @cli.command("policy-coverage")
 @click.option("-f", "--framework", required=True, help="Framework to check coverage for")
 @click.option("--no-rag", is_flag=True, help="Skip RAG matching, use keyword heuristics only")
-def policy_coverage(framework: str, no_rag: bool) -> None:
+@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for governance analysis")
+def policy_coverage(framework: str, no_rag: bool, use_ai: bool | None) -> None:
     """Check policy documentation coverage for a framework."""
     from warlock.assessors.policy_discovery import score_policy_coverage
     from warlock.db.engine import get_session, init_db
@@ -520,6 +593,37 @@ def policy_coverage(framework: str, no_rag: bool) -> None:
         if len(coverage.gaps) > 20:
             console.print(f"  [dim]... and {len(coverage.gaps) - 20} more[/dim]")
 
+    # AI governance analysis
+    if use_ai is not False:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        svc = get_ai_service()
+        if svc.is_task_enabled(AITask.GOVERNANCE_ANALYSIS):
+            ai_context = {
+                "framework": framework,
+                "total_controls": coverage.total_controls,
+                "controls_with_policy": coverage.controls_with_policy,
+                "coverage_pct": coverage.coverage_pct,
+                "gaps": list(coverage.gaps)[:50],
+            }
+            result = svc.reason(AITask.GOVERNANCE_ANALYSIS, context=ai_context)
+            if result.ai_used:
+                console.print("\n[bold]AI Governance Analysis:[/bold]")
+                value = result.value
+                if isinstance(value, dict):
+                    analysis = value.get("analysis") or value.get("narrative") or str(value)
+                    recs = value.get("recommendations", [])
+                else:
+                    analysis = str(value) if value else ""
+                    recs = []
+                if analysis:
+                    console.print(analysis)
+                if recs:
+                    console.print("\n[bold]Recommendations:[/bold]")
+                    for rec in recs:
+                        console.print(f"  [dim]• {rec}[/dim]")
+
 
 @cli.command("issues")
 @click.option("--status", "-s", default=None, help="Filter by status (open, assigned, in_progress, etc.)")
@@ -527,7 +631,8 @@ def policy_coverage(framework: str, no_rag: bool) -> None:
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--assigned-to", default=None, help="Filter by assignee")
 @click.option("--limit", "-n", default=50, help="Max results")
-def issues(status: str | None, priority: str | None, framework: str | None, assigned_to: str | None, limit: int) -> None:
+@click.option("--ask", default=None, help="Ask AI a question about the listed issues (e.g. 'What should I fix first?')")
+def issues(status: str | None, priority: str | None, framework: str | None, assigned_to: str | None, limit: int, ask: str | None) -> None:
     """List and manage compliance issues."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Issue
@@ -590,6 +695,50 @@ def issues(status: str | None, priority: str | None, framework: str | None, assi
         )
 
     console.print(table)
+
+    # --ask: AI question about the listed issues
+    if ask and ask.strip():
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import ConversationContext
+
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print("[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]")
+            return
+
+        import uuid
+        session_id = uuid.uuid4().hex
+        issues_summary = [
+            {
+                "id": i.id[:8],
+                "title": i.title,
+                "framework": i.framework,
+                "control_id": i.control_id,
+                "priority": i.priority,
+                "status": i.status,
+            }
+            for i in rows
+        ]
+        ctx = ConversationContext(
+            entity_type="issues_list",
+            entity_id="batch",
+            entity_data={"issues": issues_summary, "count": len(rows)},
+            session_id=session_id,
+        )
+        result = svc.converse(session_id=session_id, message=ask.strip(), context=ctx)
+        if result.ai_used:
+            console.print("\n[bold]AI:[/bold]")
+            value = result.value
+            response_text = value if isinstance(value, str) else str(value)
+            try:
+                import json as _json
+                parsed = _json.loads(response_text)
+                response_text = parsed.get("response") or str(parsed)
+            except Exception:
+                pass
+            console.print(response_text)
+        else:
+            console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
 
 
 @cli.command("issues-auto-create")
@@ -889,7 +1038,8 @@ def risk(ctx: click.Context) -> None:
 @risk.command("analyze")
 @click.option("-f", "--framework", required=True, help="Framework to analyze (e.g. nist_800_53)")
 @click.option("-n", "--iterations", default=10000, help="Monte Carlo iterations")
-def risk_analyze(framework: str, iterations: int) -> None:
+@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for risk narrative")
+def risk_analyze(framework: str, iterations: int, use_ai: bool | None) -> None:
     """Run FAIR risk quantification for a framework."""
     from warlock.assessors.risk_engine import RiskEngine
     from warlock.db.engine import get_session, init_db
@@ -931,6 +1081,29 @@ def risk_analyze(framework: str, iterations: int) -> None:
     console.print(f"[bold]Portfolio Total VaR 95:[/bold]  ${portfolio['total_var_95']:,.0f}")
     console.print(f"[bold]Scenarios:[/bold]               {portfolio['scenario_count']}")
     console.print(f"[bold]Iterations:[/bold]              {portfolio['iterations']:,}")
+
+    # AI risk narrative
+    if use_ai is not False:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        svc = get_ai_service()
+        if svc.is_task_enabled(AITask.RISK_NARRATIVE):
+            ai_context = {
+                "framework": framework,
+                "scenarios": scenarios,
+                "portfolio": portfolio,
+            }
+            ai_result = svc.reason(AITask.RISK_NARRATIVE, context=ai_context)
+            if ai_result.ai_used:
+                console.print("\n[bold]AI Risk Narrative:[/bold]")
+                value = ai_result.value
+                if isinstance(value, dict):
+                    narrative = value.get("narrative") or value.get("analysis") or str(value)
+                else:
+                    narrative = str(value) if value else ""
+                if narrative:
+                    console.print(narrative)
 
 
 @risk.command("precompute")
@@ -1797,7 +1970,8 @@ def drift_list(framework: str | None, days: int, direction: str | None) -> None:
 @click.option("--framework", "-f", required=True, help="Framework to simulate")
 @click.option("--date", required=True, help="Target audit date (YYYY-MM-DD)")
 @click.option("--system", default=None, help="System profile ID")
-def simulate_audit(framework: str, date: str, system: str | None) -> None:
+@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for auditor simulation")
+def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool | None) -> None:
     """Simulate what an auditor would see at a future date."""
     from datetime import datetime as dt
     from warlock.db.engine import get_session, init_db
@@ -1820,6 +1994,43 @@ def simulate_audit(framework: str, date: str, system: str | None) -> None:
     console.print(f"  Overdue POA&Ms:     [yellow]{len(result.overdue_poams)}[/yellow]")
     console.print(f"  Expiring acceptances: [yellow]{len(result.expiring_acceptances)}[/yellow]")
     console.print(f"  At-risk controls:   [red]{len(result.at_risk_controls)}[/red]")
+
+    # AI auditor readiness assessment
+    if use_ai is not False:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import AITask
+
+        svc = get_ai_service()
+        if svc.is_task_enabled(AITask.AUDIT_READINESS):
+            ai_context = {
+                "framework": framework,
+                "target_date": date,
+                "projected_coverage": result.projected_coverage,
+                "total_controls": result.total_controls,
+                "stale_controls_count": len(result.stale_controls),
+                "overdue_poams_count": len(result.overdue_poams),
+                "expiring_acceptances_count": len(result.expiring_acceptances),
+                "at_risk_controls_count": len(result.at_risk_controls),
+            }
+            ai_result = svc.reason(AITask.AUDIT_READINESS, context=ai_context)
+            if ai_result.ai_used:
+                console.print("\n[bold]AI Audit Readiness Assessment:[/bold]")
+                value = ai_result.value
+                if isinstance(value, dict):
+                    assessment = value.get("assessment") or value.get("narrative") or ""
+                    readiness_score = value.get("readiness_score")
+                    actions = value.get("actions", [])
+                    if readiness_score is not None:
+                        score_style = "green" if readiness_score >= 0.8 else "yellow" if readiness_score >= 0.5 else "red"
+                        console.print(f"  Readiness score: [{score_style}]{readiness_score:.0%}[/]")
+                    if assessment:
+                        console.print(f"\n{assessment}")
+                    if actions:
+                        console.print("\n[bold]Recommended actions:[/bold]")
+                        for action in actions:
+                            console.print(f"  [dim]• {action}[/dim]")
+                else:
+                    console.print(str(value) if value else "")
 
 
 @cli.command("effectiveness")
@@ -1922,7 +2133,9 @@ def framework_diff_cmd(old_path: str, new_path: str) -> None:
 @click.option("--action", "-a", type=click.Choice(["show", "assign", "transition", "accept-risk", "extend", "comment"]), default="show", help="Action to take")
 @click.option("--to", "to_value", required=False, help="Target value (email for assign, status for transition, days for extend)")
 @click.option("--reason", required=False, help="Reason or comment text")
-def remediate(item_id: str, action: str, to_value: str | None, reason: str | None) -> None:
+@click.option("--ai/--no-ai", "use_ai", default=None, help="Override AI toggle for remediation guidance")
+@click.option("--ask", default=None, help="Ask AI a question about this item (interactive reasoning)")
+def remediate(item_id: str, action: str, to_value: str | None, reason: str | None, use_ai: bool | None, ask: str | None) -> None:
     """Show remediation guidance and take action on issues/POA&Ms.
 
     Default (no --action) shows the full remediation plan: what's wrong,
@@ -1937,6 +2150,8 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
         warlock remediate <id> -a accept-risk --reason "Low risk" # accept the risk
         warlock remediate <id> -a extend --to 30 --reason "Delay" # extend deadline by 30 days
         warlock remediate <id> -a comment --reason "Patch staged" # add a comment
+        warlock remediate <id> --ask "What is the fastest way to fix this?"
+        warlock remediate <id> --ai                              # AI-enhanced remediation plan
 
     Use 'warlock issues' or 'warlock poams' to find IDs.
     """
@@ -2033,6 +2248,134 @@ def remediate(item_id: str, action: str, to_value: str | None, reason: str | Non
                     console.print(f"[red]{e}[/red]")
             elif action == "comment":
                 console.print("[yellow]POA&M comments not yet implemented — comment on the linked issue[/yellow]")
+
+        # --ask: interactive AI reasoning about this item
+        if ask is not None:
+            from warlock.ai.service import get_ai_service
+            from warlock.ai.types import AITask, ConversationContext
+
+            svc = get_ai_service()
+            if not svc.is_available():
+                console.print("[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]")
+                return
+
+            entity_type = "issue" if issue else "poam"
+            entity_id = issue.id if issue else poam.id
+            entity_data: dict = {}
+            if issue:
+                entity_data = {
+                    "title": issue.title,
+                    "status": issue.status,
+                    "priority": issue.priority,
+                    "framework": issue.framework,
+                    "control_id": issue.control_id,
+                    "description": issue.description,
+                }
+            elif poam:
+                entity_data = {
+                    "weakness": poam.weakness_description,
+                    "status": poam.status,
+                    "severity": poam.severity,
+                    "framework": poam.framework,
+                    "control_id": poam.control_id,
+                }
+
+            import uuid
+            session_id = uuid.uuid4().hex
+
+            ctx = ConversationContext(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                entity_data=entity_data,
+                session_id=session_id,
+            )
+
+            # If --ask was passed with a value, use that as the question.
+            # If it was passed as a bare flag (empty string), enter REPL mode.
+            question = ask.strip() if ask.strip() else None
+
+            if question:
+                result = svc.converse(session_id=session_id, message=question, context=ctx)
+                if result.ai_used:
+                    console.print("\n[bold]AI:[/bold]")
+                    value = result.value
+                    response_text = value if isinstance(value, str) else str(value)
+                    try:
+                        import json as _json
+                        parsed = _json.loads(response_text)
+                        response_text = parsed.get("response") or str(parsed)
+                    except Exception:
+                        pass
+                    console.print(response_text)
+                else:
+                    console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
+            else:
+                # REPL mode: interactive conversation until 'exit' or Ctrl-C
+                console.print(f"[cyan]Entering interactive AI session for {entity_type} {entity_id[:8]}.[/cyan]")
+                console.print("[dim]Type your question and press Enter. Type 'exit' or press Ctrl-C to quit.[/dim]\n")
+                while True:
+                    try:
+                        user_input = input("You: ").strip()
+                    except (KeyboardInterrupt, EOFError):
+                        console.print("\n[dim]Session ended.[/dim]")
+                        break
+                    if not user_input or user_input.lower() in ("exit", "quit", "q"):
+                        console.print("[dim]Session ended.[/dim]")
+                        break
+                    result = svc.converse(session_id=session_id, message=user_input, context=ctx)
+                    if result.ai_used:
+                        value = result.value
+                        response_text = value if isinstance(value, str) else str(value)
+                        try:
+                            import json as _json
+                            parsed = _json.loads(response_text)
+                            response_text = parsed.get("response") or str(parsed)
+                        except Exception:
+                            pass
+                        console.print(f"AI: {response_text}\n")
+                    else:
+                        console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
+                        break
+            return
+
+        # --ai: AI-enhanced remediation guidance appended to show mode
+        if action == "show" and use_ai is not False:
+            from warlock.ai.service import get_ai_service
+            from warlock.ai.types import AITask
+
+            svc = get_ai_service()
+            if svc.is_task_enabled(AITask.REMEDIATION_GUIDANCE):
+                ai_context: dict = {}
+                if issue:
+                    ai_context = {
+                        "title": issue.title,
+                        "framework": issue.framework,
+                        "control_id": issue.control_id,
+                        "priority": issue.priority,
+                        "description": issue.description,
+                    }
+                elif poam:
+                    ai_context = {
+                        "weakness": poam.weakness_description,
+                        "framework": poam.framework,
+                        "control_id": poam.control_id,
+                        "severity": poam.severity,
+                    }
+                ai_result = svc.reason(AITask.REMEDIATION_GUIDANCE, context=ai_context)
+                if ai_result.ai_used:
+                    console.print("\n[bold]AI Remediation Guidance:[/bold]")
+                    value = ai_result.value
+                    if isinstance(value, dict):
+                        guidance_text = value.get("guidance") or value.get("narrative") or ""
+                        steps = value.get("steps", [])
+                        if guidance_text:
+                            console.print(guidance_text)
+                        if steps:
+                            console.print("\n[bold]AI-suggested steps:[/bold]")
+                            for i, step in enumerate(steps, 1):
+                                console.print(f"  {i}. {step}")
+                    else:
+                        console.print(str(value) if value else "")
 
 
 def _show_remediation_for_issue(session, issue) -> None:

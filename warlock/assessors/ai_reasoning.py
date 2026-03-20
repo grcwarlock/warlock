@@ -348,7 +348,7 @@ class OllamaReasoner(AIReasoner):
             ],
         }
         try:
-            resp = httpx.post(url, headers=headers, json=payload, timeout=TIMEOUT)
+            resp = httpx.post(url, headers=headers, json=payload, timeout=TIMEOUT, follow_redirects=True)
             resp.raise_for_status()
             body = resp.json()
             text = body["choices"][0]["message"]["content"]
@@ -378,6 +378,86 @@ def create_reasoner(provider: str, api_key: str, model: str, base_url: str = "")
     if cls is None:
         raise ValueError(f"Unknown AI provider: {provider!r}. Supported: {', '.join(_PROVIDERS)}")
     return cls(api_key=api_key, model=model, base_url=base_url)
+
+
+# ---------------------------------------------------------------------------
+# AIService bridge
+# ---------------------------------------------------------------------------
+
+
+def _convert_ai_result(result: Any) -> "AIReasoningResult":
+    """Convert an ``AIResult`` (from AIService) back to ``AIReasoningResult``.
+
+    The inner ``AIResult.value`` is an ``AIReasoningResult`` when the task is
+    ``COMPLIANCE_ASSESSMENT`` — AIService._reason_compliance() stores the
+    original reasoner output there.  For any other case we synthesise a
+    minimal ``AIReasoningResult`` from the envelope fields.
+    """
+    # When AIService delegates to create_reasoner(), value IS an AIReasoningResult
+    if isinstance(result.value, AIReasoningResult):
+        return result.value
+
+    # Fallback: construct from the AIResult envelope
+    return AIReasoningResult(
+        status="not_assessed",
+        assessment=str(result.value) if result.value is not None else "AI result unavailable",
+        confidence=result.confidence,
+        model=result.model,
+        prompt_hash=result.prompt_hash,
+    )
+
+
+def evaluate_with_service(
+    finding: "FindingData",
+    mapping: "ControlMappingData",
+    raw_data: dict,
+    context: "ComplianceContext | None" = None,
+) -> "AIReasoningResult | None":
+    """Evaluate using the unified AIService.  Falls back to existing reasoner.
+
+    This is a bridge function.  Callers can optionally use it alongside the
+    existing ``create_reasoner()`` path — neither path is removed.
+
+    Returns ``None`` when the AIService is unavailable or the task is
+    disabled, signalling the caller to use its own fallback.
+
+    Args:
+        finding: Normalised finding from the pipeline.
+        mapping: Control mapping metadata.
+        raw_data: Raw evidence dict for prompt enrichment.
+        context: Optional ``ComplianceContext`` with Phase 2-5 data.
+
+    Returns:
+        ``AIReasoningResult`` on success, ``None`` if AI is not used.
+    """
+    from warlock.ai import get_ai_service, AITask
+
+    ai = get_ai_service()
+    if not ai.is_task_enabled(AITask.COMPLIANCE_ASSESSMENT):
+        return None
+
+    ctx: dict = {
+        "finding": finding,
+        "mapping": mapping,
+        "raw_data": raw_data,
+    }
+    if context is not None:
+        ctx["compliance_context"] = context
+
+    try:
+        result = ai.reason(
+            task=AITask.COMPLIANCE_ASSESSMENT,
+            context=ctx,
+            fallback=None,
+        )
+    except Exception:
+        log.exception("evaluate_with_service: AIService call failed")
+        return None
+
+    if not result.ai_used:
+        return None
+
+    return _convert_ai_result(result)
 
 
 # ---------------------------------------------------------------------------
