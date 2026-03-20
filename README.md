@@ -211,9 +211,9 @@ WLK_DATABASE_URL=postgresql://user:pass@localhost/warlock
 WLK_JWT_SECRET=your-secret-here-min-32-chars    # REQUIRED in production
 WLK_ENV=production                               # enforces security defaults
 
-# AI (default: Ollama Cloud — enables Tier 2 reasoning + narrative generation)
+# AI (optional — enables Tier 2 reasoning + narrative generation)
 WLK_AI_PROVIDER=ollama             # or anthropic, openai, gemini
-WLK_AI_API_KEY=your-ollama-cloud-key
+WLK_AI_API_KEY=your-api-key        # set via env var, never hardcode
 WLK_AI_MODEL=qwen3-coder:30b      # or claude-sonnet-4-20250514, gpt-4o
 WLK_AI_BASE_URL=https://api.ollama.com  # or http://localhost:11434 for local
 WLK_AI_CONFIDENCE_FLOOR=0.7        # reject low-confidence AI assessments
