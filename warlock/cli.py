@@ -1932,6 +1932,24 @@ def _show_remediation_for_issue(session, issue) -> None:
         if result.console_path:
             console.print(f"\n[bold]Console path:[/bold] {result.console_path}")
 
+    if not (result and result.remediation_summary):
+        from warlock.assessors.remediation_loader import get_remediation
+        guidance = get_remediation(issue.framework, issue.control_id)
+        if guidance:
+            # Display from KB instead
+            console.print("\n[bold green]How to fix:[/bold green]")
+            console.print(f"  {guidance.get('summary', '')}")
+            if guidance.get("remediation_steps"):
+                console.print("\n[bold]Manual steps:[/bold]")
+                for i, step in enumerate(guidance["remediation_steps"], 1):
+                    console.print(f"  {i}. {step}")
+            if guidance.get("console_path"):
+                console.print(f"\n[bold]Console path:[/bold] {guidance['console_path']}")
+            if guidance.get("recommended_reading"):
+                console.print("\n[bold]Recommended reading:[/bold]")
+                for ref in guidance["recommended_reading"]:
+                    console.print(f"  - {ref}")
+
     # CLI remediation actions
     console.print("\n[bold cyan]CLI actions:[/bold cyan]")
     console.print(f"  warlock remediate {issue.id[:8]} -a assign --to <email>")
@@ -1983,6 +2001,7 @@ def _show_remediation_for_poam(session, poam) -> None:
     ))
 
     # Get remediation from linked control result
+    result = None
     if poam.control_result_id:
         result = session.query(ControlResult).filter(ControlResult.id == poam.control_result_id).first()
         if result and result.remediation_summary:
@@ -1994,6 +2013,24 @@ def _show_remediation_for_poam(session, poam) -> None:
                     console.print(f"  {i}. {step}")
             if result.console_path:
                 console.print(f"\n[bold]Console path:[/bold] {result.console_path}")
+
+    if not (result and result.remediation_summary):
+        from warlock.assessors.remediation_loader import get_remediation
+        guidance = get_remediation(poam.framework, poam.control_id)
+        if guidance:
+            # Display from KB instead
+            console.print("\n[bold green]How to fix:[/bold green]")
+            console.print(f"  {guidance.get('summary', '')}")
+            if guidance.get("remediation_steps"):
+                console.print("\n[bold]Manual steps:[/bold]")
+                for i, step in enumerate(guidance["remediation_steps"], 1):
+                    console.print(f"  {i}. {step}")
+            if guidance.get("console_path"):
+                console.print(f"\n[bold]Console path:[/bold] {guidance['console_path']}")
+            if guidance.get("recommended_reading"):
+                console.print("\n[bold]Recommended reading:[/bold]")
+                for ref in guidance["recommended_reading"]:
+                    console.print(f"  - {ref}")
 
     # Milestones
     if poam.milestones:

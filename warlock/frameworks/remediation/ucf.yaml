@@ -1,0 +1,1988 @@
+controls:
+  # ---------------------------------------------------------------------------
+  # GOV — Governance (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-GOV-1:
+    summary: "Security policies must be defined, published, and enforced across the organization"
+    remediation_steps:
+      - "Draft security policies aligned with organizational risk appetite"
+      - "Configure Okta and Entra conditional access policies for enforcement"
+      - "Deploy Prisma Cloud and EDR sensor policies"
+      - "Publish policies on internal portal and communicate to staff"
+      - "Schedule annual review and approval cycle"
+    console_path: "Okta Admin > Security > Policies | Entra > Conditional Access"
+    recommended_reading:
+      - "UCF GOV-1 — Information Security Policies"
+      - "ISO 27002:2022 Section 5.1"
+    evidence_types:
+      - "okta_policies"
+      - "entra_conditional_access_policies"
+      - "prisma_policies"
+    assertion_name: null
+
+  UCF-GOV-2:
+    summary: "Security roles and responsibilities must be defined and assigned"
+    remediation_steps:
+      - "Define RACI matrix for security governance"
+      - "Assign security roles in SailPoint identity platform"
+      - "Map roles to Okta groups for access enforcement"
+      - "Document role descriptions and accountability"
+      - "Review role assignments quarterly"
+    console_path: "SailPoint > Identities > Roles | Okta Admin > Groups"
+    recommended_reading:
+      - "UCF GOV-2 — Security Roles"
+    evidence_types:
+      - "sailpoint_identities"
+      - "sailpoint_roles"
+    assertion_name: null
+
+  UCF-GOV-3:
+    summary: "Management oversight of security controls must be established"
+    remediation_steps:
+      - "Schedule SailPoint access certification campaigns"
+      - "Conduct quarterly management security reviews"
+      - "Track certification completion and decisions"
+      - "Report oversight metrics to leadership"
+      - "Document management attestation records"
+    console_path: "SailPoint > Certifications > Campaigns"
+    recommended_reading:
+      - "UCF GOV-3 — Management Oversight"
+    evidence_types:
+      - "sailpoint_certifications"
+    assertion_name: null
+
+  UCF-GOV-4:
+    summary: "Compliance with applicable regulations and standards must be monitored"
+    remediation_steps:
+      - "Deploy Prisma Cloud compliance monitoring"
+      - "Schedule compliance audits against relevant frameworks"
+      - "Monitor Azure Policy compliance state continuously"
+      - "Track compliance metrics and trends"
+      - "Remediate compliance gaps within defined SLAs"
+    console_path: "Prisma Cloud > Compliance | Azure Policy > Compliance"
+    recommended_reading:
+      - "UCF GOV-4 — Compliance Monitoring"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+      - "policy_compliance"
+    assertion_name: null
+
+  UCF-GOV-5:
+    summary: "Security planning must be integrated into organizational planning"
+    remediation_steps:
+      - "Integrate security requirements into project planning"
+      - "Publish security plans on Confluence"
+      - "Maintain ServiceNow policies for security procedures"
+      - "Track plan versions and review dates"
+      - "Align security plans with business objectives"
+    console_path: "Confluence > SEC Space > Security Plans"
+    recommended_reading:
+      - "UCF GOV-5 — Security Planning"
+    evidence_types:
+      - "confluence_pages"
+      - "snow_policies"
+    assertion_name: null
+
+  UCF-GOV-6:
+    summary: "Security documentation must be maintained and kept current"
+    remediation_steps:
+      - "Maintain all security documentation on Confluence"
+      - "Assign document owners and review schedules"
+      - "Ensure documents are reviewed within 365 days"
+      - "Track document version history"
+      - "Archive superseded documents"
+    console_path: "Confluence > SEC Space > All Documents"
+    recommended_reading:
+      - "UCF GOV-6 — Documentation Management"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: "policy_reviewed_within_year"
+
+  # ---------------------------------------------------------------------------
+  # RSK — Risk Management (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-RSK-1:
+    summary: "Risk identification must cover vulnerabilities and security posture"
+    remediation_steps:
+      - "Run vulnerability scans via Tenable, CrowdStrike, Defender, Wiz"
+      - "Aggregate CSPM findings from Prisma, GCP SCC, Defender"
+      - "Maintain comprehensive risk register"
+      - "Map vulnerabilities to business impact"
+      - "Review risk identification completeness quarterly"
+    console_path: "Tenable > Vulnerabilities | Wiz > Issues"
+    recommended_reading:
+      - "UCF RSK-1 — Risk Identification"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "prisma_alerts"
+    assertion_name: null
+
+  UCF-RSK-2:
+    summary: "Risk treatment plans must be defined and implemented"
+    remediation_steps:
+      - "Prioritize risks using Defender recommendations"
+      - "Assign risk treatment owners for Wiz and Prisma issues"
+      - "Document risk treatment decisions (mitigate, accept, transfer, avoid)"
+      - "Track treatment implementation progress"
+      - "Review treatment effectiveness quarterly"
+    console_path: "Defender > Recommendations | Wiz > Issues"
+    recommended_reading:
+      - "UCF RSK-2 — Risk Treatment"
+    evidence_types:
+      - "defender_recommendations"
+      - "wiz_issues"
+    assertion_name: null
+
+  UCF-RSK-3:
+    summary: "Risk acceptance must be formally documented with appropriate authority"
+    remediation_steps:
+      - "Document risk acceptance decisions in ServiceNow risk register"
+      - "Require management sign-off for accepted risks"
+      - "Define risk acceptance criteria and thresholds"
+      - "Review accepted risks quarterly for continued validity"
+      - "Track compensating controls for accepted risks"
+    console_path: "ServiceNow > Risk Management > Risk Register"
+    recommended_reading:
+      - "UCF RSK-3 — Risk Acceptance"
+    evidence_types:
+      - "snow_risks"
+    assertion_name: null
+
+  UCF-RSK-4:
+    summary: "Risk monitoring must be continuous across the environment"
+    remediation_steps:
+      - "Enable AWS Config, Security Hub, and GuardDuty across accounts"
+      - "Configure Azure Policy compliance and GCP SCC monitoring"
+      - "Deploy Prisma Cloud and Wiz for cross-cloud risk monitoring"
+      - "Establish risk monitoring dashboards"
+      - "Alert on new critical risks within 24 hours"
+    console_path: "AWS Console > Config | Security Hub | GuardDuty"
+    recommended_reading:
+      - "UCF RSK-4 — Risk Monitoring"
+    evidence_types:
+      - "config_recorders"
+      - "securityhub_hub"
+      - "guardduty_detectors"
+      - "prisma_compliance"
+    assertion_name: null
+
+  UCF-RSK-5:
+    summary: "Supply chain risks must be assessed and managed"
+    remediation_steps:
+      - "Review third-party integrations in Entra and Okta"
+      - "Monitor supply chain security via Wiz configuration findings"
+      - "Assess vendor security posture and data access"
+      - "Require SBOM from software vendors"
+      - "Conduct annual supply chain risk assessment"
+    console_path: "Entra Admin > Enterprise Applications | Okta > Applications"
+    recommended_reading:
+      - "UCF RSK-5 — Supply Chain Risk"
+    evidence_types:
+      - "entra_service_principals"
+      - "okta_applications"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  UCF-RSK-6:
+    summary: "AI-specific risks must be identified and managed"
+    remediation_steps:
+      - "Identify AI systems and their risk profiles"
+      - "Monitor AI infrastructure via GCP SCC and Azure Defender"
+      - "Assess AI model risks through Wiz and Prisma alerts"
+      - "Document AI risk assessment methodology"
+      - "Review AI risks quarterly with cross-functional team"
+    console_path: "GCP SCC > Findings | Azure Defender > Alerts"
+    recommended_reading:
+      - "UCF RSK-6 — AI Risk Management"
+      - "ISO 42001:2023 Guidance"
+    evidence_types:
+      - "scc_findings"
+      - "wiz_issues"
+      - "defender_alerts"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # IAM — Identity and Access Management (8 controls)
+  # ---------------------------------------------------------------------------
+  UCF-IAM-1:
+    summary: "User accounts must be managed across cloud, IdP, and IGA platforms"
+    remediation_steps:
+      - "Review AWS IAM credential reports for account hygiene"
+      - "Sync Okta and Entra user inventories"
+      - "Manage identity lifecycle through SailPoint"
+      - "Disable dormant accounts (90+ days inactive)"
+      - "Reconcile account inventories across platforms monthly"
+    console_path: "AWS Console > IAM > Users | Okta Admin > People | SailPoint > Identities"
+    recommended_reading:
+      - "UCF IAM-1 — Account Management"
+    evidence_types:
+      - "iam_credential_report"
+      - "okta_users"
+      - "entra_users"
+      - "sailpoint_identities"
+    assertion_name: null
+
+  UCF-IAM-2:
+    summary: "Strong authentication including MFA and password policies must be enforced"
+    remediation_steps:
+      - "Enforce MFA via Okta factors and Entra conditional access"
+      - "Configure strong password policy in AWS IAM"
+      - "Set Okta password policies with complexity requirements"
+      - "Monitor Entra risky sign-ins for compromised credentials"
+      - "Block legacy authentication protocols"
+    console_path: "Okta Admin > Security > Multifactor | Entra > Conditional Access"
+    recommended_reading:
+      - "UCF IAM-2 — Authentication"
+    evidence_types:
+      - "okta_factors"
+      - "entra_conditional_access_policies"
+      - "iam_password_policy"
+      - "entra_risky_users"
+    assertion_name: null
+
+  UCF-IAM-3:
+    summary: "Access enforcement must follow least-privilege principles"
+    remediation_steps:
+      - "Review IAM user permissions for least privilege"
+      - "Configure GCP IAM policies with minimal bindings"
+      - "Enforce Okta and Entra access policies"
+      - "Audit over-privileged accounts quarterly"
+      - "Implement just-in-time access for elevated privileges"
+    console_path: "AWS Console > IAM > Access Analyzer | GCP > IAM"
+    recommended_reading:
+      - "UCF IAM-3 — Access Enforcement"
+    evidence_types:
+      - "iam_users"
+      - "gcp_iam_policies"
+      - "okta_policies"
+    assertion_name: null
+
+  UCF-IAM-4:
+    summary: "Least privilege and segregation of duties must be maintained"
+    remediation_steps:
+      - "Review IAM and GCP policies for excessive permissions"
+      - "Configure SailPoint SoD policies for conflicting entitlements"
+      - "Restrict CyberArk privileged accounts per role separation"
+      - "Audit Okta group memberships for role conflicts"
+      - "Generate SoD violation reports quarterly"
+    console_path: "SailPoint > Access Policies > SoD | CyberArk > Accounts"
+    recommended_reading:
+      - "UCF IAM-4 — Least Privilege and SoD"
+    evidence_types:
+      - "sailpoint_roles"
+      - "sailpoint_entitlements"
+      - "cyberark_accounts"
+    assertion_name: null
+
+  UCF-IAM-5:
+    summary: "Privileged access must be managed through PAM controls"
+    remediation_steps:
+      - "Onboard all privileged accounts to CyberArk safes"
+      - "Enforce password rotation via CyberArk platform policies"
+      - "Monitor privileged access in cloud IAM"
+      - "Review privileged roles in SailPoint entitlements"
+      - "Implement session recording for privileged access"
+    console_path: "CyberArk > Accounts | CyberArk > Safes"
+    recommended_reading:
+      - "UCF IAM-5 — Privileged Access Management"
+    evidence_types:
+      - "cyberark_accounts"
+      - "cyberark_safes"
+      - "cyberark_password_compliance"
+    assertion_name: null
+
+  UCF-IAM-6:
+    summary: "Remote access must be secured with appropriate controls"
+    remediation_steps:
+      - "Configure Entra conditional access for remote scenarios"
+      - "Enforce CrowdStrike Zero Trust Assessment for remote endpoints"
+      - "Monitor Okta and Entra sign-in events for remote access"
+      - "Require VPN or ZTNA for sensitive resource access"
+      - "Review remote access policies quarterly"
+    console_path: "Entra > Conditional Access | CrowdStrike > Zero Trust"
+    recommended_reading:
+      - "UCF IAM-6 — Remote Access Security"
+    evidence_types:
+      - "entra_conditional_access_policies"
+      - "falcon_zero_trust"
+      - "okta_system_log"
+    assertion_name: null
+
+  UCF-IAM-7:
+    summary: "Access reviews must be conducted regularly"
+    remediation_steps:
+      - "Schedule SailPoint access certification campaigns"
+      - "Review privileged role assignments in SailPoint"
+      - "Certify entitlement appropriateness with managers"
+      - "Revoke access for failed certifications"
+      - "Track certification completion rates"
+    console_path: "SailPoint > Certifications > Campaigns"
+    recommended_reading:
+      - "UCF IAM-7 — Access Reviews"
+    evidence_types:
+      - "sailpoint_certifications"
+      - "sailpoint_roles"
+      - "sailpoint_entitlements"
+    assertion_name: null
+
+  UCF-IAM-8:
+    summary: "Credentials must be managed securely throughout their lifecycle"
+    remediation_steps:
+      - "Review IAM credential reports for key rotation compliance"
+      - "Monitor Okta and Entra user credential status"
+      - "Enforce CyberArk password rotation for privileged accounts"
+      - "Disable credentials for terminated users within 24 hours"
+      - "Audit credential hygiene monthly"
+    console_path: "AWS Console > IAM > Credential Report | CyberArk > Accounts"
+    recommended_reading:
+      - "UCF IAM-8 — Credential Management"
+    evidence_types:
+      - "iam_credential_report"
+      - "okta_users"
+      - "cyberark_accounts"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # HRS — Human Resources Security (5 controls)
+  # ---------------------------------------------------------------------------
+  UCF-HRS-1:
+    summary: "Personnel screening must be conducted before employment"
+    remediation_steps:
+      - "Conduct background checks via Workday integration"
+      - "Define screening requirements per role sensitivity"
+      - "Verify screening completion before granting access"
+      - "Document screening results and retain per policy"
+      - "Re-screen personnel in sensitive roles periodically"
+    console_path: "Workday > Recruiting > Background Checks"
+    recommended_reading:
+      - "UCF HRS-1 — Personnel Screening"
+    evidence_types:
+      - "workday_background_checks"
+      - "workday_employees"
+    assertion_name: "background_check_completed"
+
+  UCF-HRS-2:
+    summary: "Employment terms must include security responsibilities"
+    remediation_steps:
+      - "Include security clauses in employment agreements"
+      - "Require NDA/confidentiality agreement signature"
+      - "Track agreement completion in Workday"
+      - "Extend security obligations to contractors"
+      - "Review agreement templates annually"
+    console_path: "Workday > Documents > Employment Agreements"
+    recommended_reading:
+      - "UCF HRS-2 — Employment Terms"
+    evidence_types:
+      - "workday_agreements"
+    assertion_name: "employment_agreement_signed"
+
+  UCF-HRS-3:
+    summary: "Security awareness training and phishing simulations must be conducted"
+    remediation_steps:
+      - "Deploy KnowBe4 training campaigns for all employees"
+      - "Track completion in SailPoint certifications"
+      - "Run monthly phishing simulations via KnowBe4"
+      - "Maintain completion rate above 95%"
+      - "Provide remedial training for phishing failures"
+    console_path: "KnowBe4 > Training > Campaigns | KnowBe4 > Phishing"
+    recommended_reading:
+      - "UCF HRS-3 — Security Training"
+    evidence_types:
+      - "kb4_training_enrollments"
+      - "kb4_phishing_results"
+      - "sailpoint_certifications"
+    assertion_name: "training_completion_rate"
+
+  UCF-HRS-4:
+    summary: "Access must be revoked promptly upon termination"
+    remediation_steps:
+      - "Automate deprovisioning via SailPoint lifecycle events"
+      - "Disable Okta, Entra, and IAM accounts on termination"
+      - "Verify Workday termination triggers access removal"
+      - "Audit deprovisioned accounts within 24 hours"
+      - "Document offboarding completion"
+    console_path: "SailPoint > Identities > Lifecycle | Okta Admin > People"
+    recommended_reading:
+      - "UCF HRS-4 — Termination Access"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_users"
+    assertion_name: null
+
+  UCF-HRS-5:
+    summary: "Access must be adjusted upon personnel transfer or role change"
+    remediation_steps:
+      - "Trigger SailPoint role reassignment on job change"
+      - "Review and adjust Okta and Entra group memberships"
+      - "Remove access no longer needed for new role"
+      - "Provision access required for new responsibilities"
+      - "Audit transfer access changes within 48 hours"
+    console_path: "SailPoint > Identities > Access | Okta Admin > People"
+    recommended_reading:
+      - "UCF HRS-5 — Personnel Transfer"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_users"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # ASM — Asset Management (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-ASM-1:
+    summary: "Asset inventory must be comprehensive across cloud, endpoints, and identities"
+    remediation_steps:
+      - "Deploy cloud asset discovery via Prisma and Wiz"
+      - "Maintain endpoint inventory via CrowdStrike, Defender, SentinelOne"
+      - "Track vulnerability scanner assets via Tenable"
+      - "Sync identity inventory from SailPoint, Okta, Entra"
+      - "Reconcile inventories quarterly for completeness"
+    console_path: "Wiz > Inventory | CrowdStrike > Host Management"
+    recommended_reading:
+      - "UCF ASM-1 — Asset Inventory"
+    evidence_types:
+      - "prisma_assets"
+      - "falcon_device_details"
+      - "sailpoint_identities"
+      - "asset_export"
+    assertion_name: null
+
+  UCF-ASM-2:
+    summary: "Assets must be classified by sensitivity and criticality"
+    remediation_steps:
+      - "Define classification scheme (Public, Internal, Confidential, Restricted)"
+      - "Apply classification tags to S3 buckets and storage accounts"
+      - "Label GCP storage buckets by classification"
+      - "Document classification criteria"
+      - "Train asset owners on classification"
+    console_path: "AWS Console > S3 > Tags | Azure Portal > Storage > Tags"
+    recommended_reading:
+      - "UCF ASM-2 — Asset Classification"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  UCF-ASM-3:
+    summary: "Acceptable use of assets must be defined and enforced"
+    remediation_steps:
+      - "Publish acceptable use policy"
+      - "Enforce via Okta and Entra conditional access policies"
+      - "Monitor policy compliance through IdP logs"
+      - "Require employee acknowledgment"
+      - "Review policy annually"
+    console_path: "Okta Admin > Policies | Entra > Conditional Access"
+    recommended_reading:
+      - "UCF ASM-3 — Acceptable Use"
+    evidence_types:
+      - "okta_policies"
+      - "entra_conditional_access_policies"
+    assertion_name: null
+
+  UCF-ASM-4:
+    summary: "Storage media must be managed throughout its lifecycle"
+    remediation_steps:
+      - "Encrypt all storage media at rest"
+      - "Configure lifecycle policies for S3 and storage accounts"
+      - "Track media from provisioning to disposal"
+      - "Verify encryption configuration regularly"
+      - "Document media handling procedures"
+    console_path: "AWS Console > S3 > Encryption | Azure Portal > Storage"
+    recommended_reading:
+      - "UCF ASM-4 — Media Management"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  UCF-ASM-5:
+    summary: "Capacity planning must ensure adequate resources"
+    remediation_steps:
+      - "Monitor SIEM capacity via Splunk index health"
+      - "Track Sentinel data connector throughput"
+      - "Review infrastructure capacity via Prisma and Tenable"
+      - "Set capacity alerts and auto-scaling"
+      - "Review capacity trends quarterly"
+    console_path: "Splunk > Monitoring Console | Prisma Cloud > Inventory"
+    recommended_reading:
+      - "UCF ASM-5 — Capacity Management"
+    evidence_types:
+      - "splunk_index_health"
+      - "prisma_assets"
+      - "asset_export"
+    assertion_name: null
+
+  UCF-ASM-6:
+    summary: "Cloud security posture must be continuously monitored"
+    remediation_steps:
+      - "Deploy Wiz and Prisma Cloud for CSPM"
+      - "Enable AWS Security Hub and Config"
+      - "Enable Azure Policy compliance and Defender"
+      - "Enable GCP Security Command Center"
+      - "Review CSPM findings weekly and remediate critical issues"
+    console_path: "Wiz > Issues | Security Hub | Azure Policy > Compliance"
+    recommended_reading:
+      - "UCF ASM-6 — Cloud Security Posture"
+    evidence_types:
+      - "wiz_config_findings"
+      - "securityhub_hub"
+      - "policy_compliance"
+      - "scc_findings"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # PHY — Physical Security (4 controls)
+  # ---------------------------------------------------------------------------
+  UCF-PHY-1:
+    summary: "Physical security perimeters must be established and monitored"
+    remediation_steps:
+      - "Deploy Verkada door access controls at facility perimeters"
+      - "Configure access control lists per security zone"
+      - "Monitor access events continuously"
+      - "Review physical access logs monthly"
+      - "Test perimeter controls annually"
+    console_path: "Verkada > Access Control > Doors"
+    recommended_reading:
+      - "UCF PHY-1 — Physical Perimeters"
+    evidence_types:
+      - "verkada_doors"
+    assertion_name: null
+
+  UCF-PHY-2:
+    summary: "Physical access monitoring must be in place"
+    remediation_steps:
+      - "Deploy video surveillance via Verkada cameras"
+      - "Monitor access events for anomalies"
+      - "Record privileged physical access sessions"
+      - "Retain monitoring records per policy"
+      - "Review monitoring coverage regularly"
+    console_path: "Verkada > Access Events | CyberArk > Recordings"
+    recommended_reading:
+      - "UCF PHY-2 — Physical Monitoring"
+    evidence_types:
+      - "verkada_access_events"
+      - "cyberark_recordings"
+    assertion_name: null
+
+  UCF-PHY-3:
+    summary: "Off-premises assets must be secured"
+    remediation_steps:
+      - "Deploy EDR agents on all off-premises endpoints"
+      - "Monitor remote endpoint health via CrowdStrike"
+      - "Verify SentinelOne agent connectivity"
+      - "Enforce full-disk encryption on portable devices"
+      - "Document off-premises protection requirements"
+    console_path: "CrowdStrike > Host Management | SentinelOne > Sentinels"
+    recommended_reading:
+      - "UCF PHY-3 — Off-Premises Security"
+    evidence_types:
+      - "falcon_device_details"
+      - "s1_agents"
+    assertion_name: null
+
+  UCF-PHY-4:
+    summary: "Environmental protection controls must be in place"
+    remediation_steps:
+      - "Assess environmental threats for on-premises infrastructure"
+      - "Verify cloud provider environmental controls"
+      - "Monitor environmental compliance via Azure Policy and AWS Config"
+      - "Document environmental protection measures"
+      - "Test environmental controls annually"
+    console_path: "Azure Policy > Compliance | AWS Console > Config"
+    recommended_reading:
+      - "UCF PHY-4 — Environmental Protection"
+    evidence_types:
+      - "policy_compliance"
+      - "config_recorders"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # NET — Network Security (7 controls)
+  # ---------------------------------------------------------------------------
+  UCF-NET-1:
+    summary: "Network boundary protection must be implemented across all cloud providers"
+    remediation_steps:
+      - "Review AWS security groups and NACLs for boundary rules"
+      - "Audit Azure NSGs for inbound/outbound restrictions"
+      - "Verify GCP firewall rules for boundary protection"
+      - "Remove 0.0.0.0/0 on management ports"
+      - "Document network boundary architecture"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs"
+    recommended_reading:
+      - "UCF NET-1 — Boundary Protection"
+    evidence_types:
+      - "ec2_security_groups"
+      - "ec2_network_acls"
+      - "network_security_groups"
+      - "compute_firewall_rules"
+    assertion_name: null
+
+  UCF-NET-2:
+    summary: "Network segmentation must isolate security zones"
+    remediation_steps:
+      - "Implement VPC/VNet segmentation per environment"
+      - "Configure NACLs for subnet-level isolation"
+      - "Review NSG and firewall rules for cross-zone access"
+      - "Enforce network segmentation between prod and non-prod"
+      - "Document segmentation architecture"
+    console_path: "AWS Console > VPC > NACLs | Azure Portal > NSGs"
+    recommended_reading:
+      - "UCF NET-2 — Network Segmentation"
+    evidence_types:
+      - "ec2_network_acls"
+      - "ec2_security_groups"
+      - "network_security_groups"
+    assertion_name: null
+
+  UCF-NET-3:
+    summary: "Firewall rules must restrict traffic to authorized flows"
+    remediation_steps:
+      - "Review and minimize security group rules"
+      - "Audit NSGs for overly permissive rules"
+      - "Verify GCP firewall rules follow least-privilege"
+      - "Document approved network flows"
+      - "Review firewall rules quarterly"
+    console_path: "AWS Console > VPC > Security Groups | GCP > VPC > Firewall"
+    recommended_reading:
+      - "UCF NET-3 — Firewall Management"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "compute_firewall_rules"
+    assertion_name: null
+
+  UCF-NET-4:
+    summary: "Wireless security controls must be implemented"
+    remediation_steps:
+      - "Configure wireless security per organizational standards"
+      - "Monitor wireless compliance via Azure Policy and AWS Config"
+      - "Review Wiz configuration findings for wireless-related issues"
+      - "Enforce WPA3 or equivalent encryption"
+      - "Audit wireless configurations quarterly"
+    console_path: "Azure Policy > Compliance | AWS Console > Config"
+    recommended_reading:
+      - "UCF NET-4 — Wireless Security"
+    evidence_types:
+      - "policy_compliance"
+      - "config_recorders"
+    assertion_name: null
+
+  UCF-NET-5:
+    summary: "Remote network access must be secured"
+    remediation_steps:
+      - "Configure Entra conditional access for remote VPN/ZTNA"
+      - "Enforce Okta sign-on policies for remote access"
+      - "Enable CrowdStrike Zero Trust Assessment"
+      - "Require compliant device posture for remote connections"
+      - "Monitor remote access events"
+    console_path: "Entra > Conditional Access | CrowdStrike > Zero Trust"
+    recommended_reading:
+      - "UCF NET-5 — Remote Access"
+    evidence_types:
+      - "entra_conditional_access_policies"
+      - "okta_policies"
+      - "falcon_zero_trust"
+    assertion_name: null
+
+  UCF-NET-6:
+    summary: "Network monitoring must detect threats and anomalies"
+    remediation_steps:
+      - "Enable GuardDuty for AWS network threat detection"
+      - "Monitor GCP SCC findings for network anomalies"
+      - "Review Wiz network-related configuration findings"
+      - "Configure Azure Monitor alerts for network events"
+      - "Review network monitoring coverage monthly"
+    console_path: "GuardDuty > Findings | Azure Monitor > Alerts"
+    recommended_reading:
+      - "UCF NET-6 — Network Monitoring"
+    evidence_types:
+      - "guardduty_detectors"
+      - "scc_findings"
+      - "monitor_alerts"
+    assertion_name: null
+
+  UCF-NET-7:
+    summary: "Web content filtering must be implemented"
+    remediation_steps:
+      - "Deploy web filtering via CrowdStrike Zero Trust or proxy"
+      - "Configure security group rules for outbound filtering"
+      - "Review NSG rules for web traffic control"
+      - "Block known malicious domains"
+      - "Monitor web access policy violations"
+    console_path: "CrowdStrike > Zero Trust | AWS Console > Security Groups"
+    recommended_reading:
+      - "UCF NET-7 — Web Filtering"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "falcon_zero_trust"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # EPP — Endpoint Protection (5 controls)
+  # ---------------------------------------------------------------------------
+  UCF-EPP-1:
+    summary: "EDR must be deployed and enforced on all endpoints"
+    remediation_steps:
+      - "Deploy CrowdStrike, SentinelOne, or Defender on all endpoints"
+      - "Enforce sensor policies via CrowdStrike ZTA and SentinelOne"
+      - "Monitor Intune compliance for managed devices"
+      - "Verify 100% agent deployment coverage"
+      - "Block non-compliant devices from corporate resources"
+    console_path: "CrowdStrike > Host Management | SentinelOne > Sentinels"
+    recommended_reading:
+      - "UCF EPP-1 — Endpoint Detection and Response"
+    evidence_types:
+      - "falcon_device_details"
+      - "s1_agents"
+      - "falcon_sensor_policies"
+    assertion_name: null
+
+  UCF-EPP-2:
+    summary: "Malware detection and prevention must be active on all endpoints"
+    remediation_steps:
+      - "Monitor EDR detection alerts from CrowdStrike and SentinelOne"
+      - "Review Defender malware alerts"
+      - "Verify anti-malware agent deployment coverage"
+      - "Configure automatic quarantine and remediation"
+      - "Track malware detection trends"
+    console_path: "CrowdStrike > Detections | SentinelOne > Threats"
+    recommended_reading:
+      - "UCF EPP-2 — Malware Prevention"
+    evidence_types:
+      - "falcon_detection_details"
+      - "s1_threats"
+      - "defender_alerts"
+    assertion_name: null
+
+  UCF-EPP-3:
+    summary: "Agent health must be monitored across the endpoint fleet"
+    remediation_steps:
+      - "Monitor CrowdStrike device details for agent health"
+      - "Review SentinelOne agent connectivity status"
+      - "Verify Elastic agent status for log collection"
+      - "Alert on offline or unhealthy agents"
+      - "Remediate agent health issues within 24 hours"
+    console_path: "CrowdStrike > Host Management | SentinelOne > Agent Health"
+    recommended_reading:
+      - "UCF EPP-3 — Agent Health"
+    evidence_types:
+      - "falcon_device_details"
+      - "s1_agents"
+      - "elastic_agent_status"
+    assertion_name: null
+
+  UCF-EPP-4:
+    summary: "Mobile device management must enforce compliance policies"
+    remediation_steps:
+      - "Enroll mobile devices in Intune MDM"
+      - "Configure compliance policies for encryption and passcode"
+      - "Enforce Entra conditional access requiring compliant devices"
+      - "Enable CrowdStrike ZTA for mobile device assessment"
+      - "Monitor device compliance status"
+    console_path: "Intune > Device Compliance | Entra > Conditional Access"
+    recommended_reading:
+      - "UCF EPP-4 — Mobile Device Management"
+    evidence_types:
+      - "intune_devices"
+      - "intune_compliance_states"
+      - "falcon_zero_trust"
+    assertion_name: "device_compliant"
+
+  UCF-EPP-5:
+    summary: "Application control must restrict unauthorized software"
+    remediation_steps:
+      - "Monitor installed applications via SentinelOne inventory"
+      - "Review CrowdStrike device details for unauthorized software"
+      - "Enforce application allow-listing policies"
+      - "Block unauthorized software installation"
+      - "Audit software inventory monthly"
+    console_path: "SentinelOne > Applications | CrowdStrike > Host Details"
+    recommended_reading:
+      - "UCF EPP-5 — Application Control"
+    evidence_types:
+      - "s1_applications"
+      - "falcon_device_details"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # DAT — Data Protection (7 controls)
+  # ---------------------------------------------------------------------------
+  UCF-DAT-1:
+    summary: "Encryption at rest must be enabled for all data stores"
+    remediation_steps:
+      - "Enable SSE on all S3 buckets (AES-256 or aws:kms)"
+      - "Enable encryption on Azure storage accounts"
+      - "Enable encryption on GCP storage buckets"
+      - "Verify encryption configuration via CSPM"
+      - "Audit unencrypted resources monthly"
+    console_path: "AWS Console > S3 > Encryption | Azure Portal > Storage > Encryption"
+    recommended_reading:
+      - "UCF DAT-1 — Encryption at Rest"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  UCF-DAT-2:
+    summary: "Encryption in transit must be enforced for all data transfers"
+    remediation_steps:
+      - "Enforce TLS 1.2+ on all security groups and NSGs"
+      - "Enable S3 bucket policies requiring HTTPS"
+      - "Configure Azure storage to require secure transfer"
+      - "Verify TLS configuration across services"
+      - "Audit insecure transfer configurations"
+    console_path: "AWS Console > S3 > Bucket Policy | Azure Portal > Storage"
+    recommended_reading:
+      - "UCF DAT-2 — Encryption in Transit"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "s3_buckets"
+    assertion_name: null
+
+  UCF-DAT-3:
+    summary: "Encryption keys must be managed securely"
+    remediation_steps:
+      - "Store and manage keys in Azure Key Vault or AWS KMS"
+      - "Enable key rotation per policy requirements"
+      - "Restrict key access to authorized services and personnel"
+      - "Monitor key usage and access patterns"
+      - "Document key management procedures"
+    console_path: "Azure Portal > Key Vault | AWS Console > KMS"
+    recommended_reading:
+      - "UCF DAT-3 — Key Management"
+    evidence_types:
+      - "key_vault"
+    assertion_name: null
+
+  UCF-DAT-4:
+    summary: "Data classification must guide protection measures"
+    remediation_steps:
+      - "Apply classification tags to cloud storage resources"
+      - "Inventory data stores via Prisma Cloud"
+      - "Map classification to protection requirements"
+      - "Document classification scheme"
+      - "Train data owners on classification"
+    console_path: "AWS Console > S3 > Tags | Prisma Cloud > Inventory"
+    recommended_reading:
+      - "UCF DAT-4 — Data Classification"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "prisma_assets"
+    assertion_name: null
+
+  UCF-DAT-5:
+    summary: "Data retention policies must be implemented"
+    remediation_steps:
+      - "Configure S3 lifecycle policies for retention"
+      - "Set Azure storage lifecycle management rules"
+      - "Configure GCP bucket lifecycle policies"
+      - "Document retention periods per data type"
+      - "Audit retention compliance quarterly"
+    console_path: "AWS Console > S3 > Lifecycle | Azure Portal > Storage > Lifecycle"
+    recommended_reading:
+      - "UCF DAT-5 — Data Retention"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  UCF-DAT-6:
+    summary: "Data disposal must be secure and documented"
+    remediation_steps:
+      - "Configure secure deletion policies for storage"
+      - "Implement crypto-shredding via Key Vault key destruction"
+      - "Document disposal procedures per classification"
+      - "Maintain disposal records"
+      - "Audit disposal compliance quarterly"
+    console_path: "AWS Console > S3 > Lifecycle | Azure Portal > Key Vault"
+    recommended_reading:
+      - "UCF DAT-6 — Data Disposal"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "key_vault"
+    assertion_name: null
+
+  UCF-DAT-7:
+    summary: "Data loss prevention controls must be deployed"
+    remediation_steps:
+      - "Deploy Microsoft Purview DLP policies"
+      - "Configure DLP rules for sensitive data types"
+      - "Monitor Wiz data security findings"
+      - "Review security group rules for data exfiltration"
+      - "Track DLP policy violations and remediation"
+    console_path: "Microsoft Purview > DLP | Wiz > Data Security"
+    recommended_reading:
+      - "UCF DAT-7 — Data Loss Prevention"
+    evidence_types:
+      - "purview_dlp_alerts"
+      - "wiz_config_findings"
+      - "ec2_security_groups"
+    assertion_name: "dlp_policies_active"
+
+  # ---------------------------------------------------------------------------
+  # LOG — Logging and Monitoring (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-LOG-1:
+    summary: "Audit logging must be enabled across cloud and identity platforms"
+    remediation_steps:
+      - "Enable CloudTrail in all AWS accounts with multi-region"
+      - "Enable GCP audit logs for all activity types"
+      - "Configure Azure Activity Log export"
+      - "Centralize Okta and Entra logs"
+      - "Define log retention periods per requirement"
+    console_path: "AWS Console > CloudTrail | Okta > System Log"
+    recommended_reading:
+      - "UCF LOG-1 — Audit Logging"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "okta_system_log"
+      - "entra_sign_ins"
+    assertion_name: null
+
+  UCF-LOG-2:
+    summary: "SIEM must analyze security events for threats"
+    remediation_steps:
+      - "Configure detection rules in Sentinel, Splunk, or Elastic"
+      - "Map detection rules to MITRE ATT&CK techniques"
+      - "Tune rules to minimize false positives"
+      - "Establish detection coverage metrics"
+      - "Review detection effectiveness monthly"
+    console_path: "Sentinel > Analytics Rules | Splunk > Correlation Searches"
+    recommended_reading:
+      - "UCF LOG-2 — SIEM Analysis"
+    evidence_types:
+      - "sentinel_analytics_rules"
+      - "splunk_correlation_rules"
+      - "elastic_detection_rules"
+    assertion_name: null
+
+  UCF-LOG-3:
+    summary: "Audit logs must be protected from unauthorized access and modification"
+    remediation_steps:
+      - "Enable CloudTrail log file validation"
+      - "Store logs in S3 with object lock or immutability"
+      - "Restrict access to log storage"
+      - "Monitor AWS Config for log protection compliance"
+      - "Verify log integrity periodically"
+    console_path: "AWS Console > CloudTrail > Settings | S3 > Object Lock"
+    recommended_reading:
+      - "UCF LOG-3 — Log Protection"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "s3_buckets"
+      - "config_recorders"
+    assertion_name: null
+
+  UCF-LOG-4:
+    summary: "System clocks must be synchronized to authoritative sources"
+    remediation_steps:
+      - "Verify CloudTrail events have consistent timestamps"
+      - "Confirm GCP audit log time synchronization"
+      - "Use NTP or cloud-native time sync"
+      - "Document authoritative time source"
+      - "Monitor clock drift"
+    console_path: "AWS Console > CloudTrail (verify timestamps)"
+    recommended_reading:
+      - "UCF LOG-4 — Clock Synchronization"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+    assertion_name: null
+
+  UCF-LOG-5:
+    summary: "Continuous monitoring must cover configuration compliance"
+    remediation_steps:
+      - "Enable AWS Config, Security Hub, and GuardDuty"
+      - "Configure Azure Policy and GCP SCC monitoring"
+      - "Deploy Prisma Cloud and Wiz for cross-cloud monitoring"
+      - "Establish compliance monitoring dashboards"
+      - "Alert on compliance drift"
+    console_path: "AWS Console > Config | Security Hub | GuardDuty"
+    recommended_reading:
+      - "UCF LOG-5 — Continuous Monitoring"
+    evidence_types:
+      - "config_recorders"
+      - "securityhub_hub"
+      - "guardduty_detectors"
+      - "prisma_compliance"
+    assertion_name: null
+
+  UCF-LOG-6:
+    summary: "SIEM health and security monitoring coverage must be maintained"
+    remediation_steps:
+      - "Monitor Sentinel data connector health"
+      - "Review Splunk index health and ingestion rates"
+      - "Track Elastic agent status across the fleet"
+      - "Monitor CSPM alert volumes for coverage gaps"
+      - "Alert on SIEM ingestion drops"
+    console_path: "Sentinel > Data Connectors | Splunk > Monitoring Console"
+    recommended_reading:
+      - "UCF LOG-6 — SIEM Health"
+    evidence_types:
+      - "sentinel_data_connectors"
+      - "splunk_index_health"
+      - "wiz_issues"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # VLN — Vulnerability Management (5 controls)
+  # ---------------------------------------------------------------------------
+  UCF-VLN-1:
+    summary: "Vulnerability scanning must cover infrastructure and cloud workloads"
+    remediation_steps:
+      - "Run scheduled scans via Tenable, CrowdStrike Spotlight, Defender"
+      - "Deploy Wiz and Prisma for cloud vulnerability scanning"
+      - "Integrate GCP SCC vulnerability findings"
+      - "Ensure 100% asset scan coverage"
+      - "Review scan coverage monthly"
+    console_path: "Tenable > Vulnerabilities | Wiz > Vulnerabilities"
+    recommended_reading:
+      - "UCF VLN-1 — Vulnerability Scanning"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "falcon_vulnerabilities"
+    assertion_name: null
+
+  UCF-VLN-2:
+    summary: "Vulnerability remediation must be tracked to closure"
+    remediation_steps:
+      - "Review Defender recommendations for remediation guidance"
+      - "Track Wiz issues through remediation workflow"
+      - "Cross-reference with knowledge base articles"
+      - "Assign remediation owners and SLAs"
+      - "Report remediation metrics to management"
+    console_path: "Defender > Recommendations | Wiz > Issues"
+    recommended_reading:
+      - "UCF VLN-2 — Vulnerability Remediation"
+    evidence_types:
+      - "defender_recommendations"
+      - "wiz_issues"
+    assertion_name: null
+
+  UCF-VLN-3:
+    summary: "Patch management must address known vulnerabilities within SLA"
+    remediation_steps:
+      - "Track patch compliance via vulnerability scanners"
+      - "Prioritize patching by CVSS and exploitability"
+      - "Follow Defender recommendations for patch guidance"
+      - "Enforce SLAs (Critical: 7d, High: 30d, Medium: 90d)"
+      - "Report patching metrics monthly"
+    console_path: "Tenable > Vulnerabilities | Defender > Recommendations"
+    recommended_reading:
+      - "UCF VLN-3 — Patch Management"
+    evidence_types:
+      - "vuln_export"
+      - "falcon_vulnerabilities"
+      - "defender_recommendations"
+    assertion_name: null
+
+  UCF-VLN-4:
+    summary: "Penetration testing must be conducted periodically"
+    remediation_steps:
+      - "Conduct annual penetration testing of critical systems"
+      - "Scope testing based on vulnerability scan results"
+      - "Review Wiz vulnerability findings for pen test targets"
+      - "Track and remediate pen test findings"
+      - "Re-test critical findings within 90 days"
+    console_path: "Tenable > Vulnerabilities | Wiz > Vulnerabilities"
+    recommended_reading:
+      - "UCF VLN-4 — Penetration Testing"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+    assertion_name: null
+
+  UCF-VLN-5:
+    summary: "Threat intelligence must inform vulnerability prioritization"
+    remediation_steps:
+      - "Integrate GuardDuty and Security Hub threat intelligence"
+      - "Correlate CSPM findings with threat intelligence"
+      - "Monitor EDR threat feeds from CrowdStrike and SentinelOne"
+      - "Prioritize vulnerabilities with active exploitation"
+      - "Update threat intelligence feeds continuously"
+    console_path: "GuardDuty > Findings | CrowdStrike > Threat Intel"
+    recommended_reading:
+      - "UCF VLN-5 — Threat Intelligence"
+    evidence_types:
+      - "guardduty_detectors"
+      - "securityhub_hub"
+      - "falcon_detection_details"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # THR — Threat Management (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-THR-1:
+    summary: "Threat detection must span SIEM and EDR platforms"
+    remediation_steps:
+      - "Configure SIEM detection rules across Sentinel, Splunk, Elastic"
+      - "Enable GuardDuty and Security Hub across AWS"
+      - "Deploy EDR detection across all endpoints"
+      - "Map detection coverage to MITRE ATT&CK"
+      - "Review detection gaps monthly"
+    console_path: "GuardDuty > Findings | Sentinel > Analytics Rules"
+    recommended_reading:
+      - "UCF THR-1 — Threat Detection"
+    evidence_types:
+      - "guardduty_detectors"
+      - "sentinel_analytics_rules"
+      - "falcon_detection_details"
+    assertion_name: null
+
+  UCF-THR-2:
+    summary: "Incident response procedures must be executed for detected threats"
+    remediation_steps:
+      - "Execute response playbooks per incident type"
+      - "Coordinate across SIEM and EDR platforms"
+      - "Contain and eradicate threats within SLA"
+      - "Document incident timeline"
+      - "Notify stakeholders per communication plan"
+    console_path: "Sentinel > Incidents | CrowdStrike > Detections"
+    recommended_reading:
+      - "UCF THR-2 — Incident Response"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+      - "falcon_detection_details"
+    assertion_name: null
+
+  UCF-THR-3:
+    summary: "Security incidents must be reported to relevant stakeholders"
+    remediation_steps:
+      - "Define incident reporting criteria and stakeholders"
+      - "Generate incident reports from SIEM"
+      - "Report incidents to management within defined SLA"
+      - "Track external notification requirements (regulators, customers)"
+      - "Maintain incident report repository"
+    console_path: "Sentinel > Incidents | Splunk > Notable Events"
+    recommended_reading:
+      - "UCF THR-3 — Incident Reporting"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+    assertion_name: null
+
+  UCF-THR-4:
+    summary: "Recovery from security incidents must be executed and verified"
+    remediation_steps:
+      - "Execute recovery procedures per incident type"
+      - "Verify system integrity post-recovery"
+      - "Validate monitoring is restored"
+      - "Document recovery actions"
+      - "Update recovery procedures based on lessons learned"
+    console_path: "Sentinel > Incidents > Closed | Splunk > Notable Events"
+    recommended_reading:
+      - "UCF THR-4 — Incident Recovery"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+    assertion_name: null
+
+  UCF-THR-5:
+    summary: "Forensic evidence must be collected and preserved"
+    remediation_steps:
+      - "Collect audit logs from CloudTrail, GCP, and Azure"
+      - "Preserve Okta system logs and Entra audit logs"
+      - "Maintain chain of custody documentation"
+      - "Use write-once storage for forensic evidence"
+      - "Document forensic collection procedures"
+    console_path: "AWS Console > CloudTrail | Entra > Audit Logs"
+    recommended_reading:
+      - "UCF THR-5 — Forensics"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "okta_system_log"
+    assertion_name: null
+
+  UCF-THR-6:
+    summary: "Lessons learned must be documented and applied to improve controls"
+    remediation_steps:
+      - "Conduct post-incident review within 5 business days"
+      - "Document lessons learned and update runbooks"
+      - "Create new Sentinel hunting queries for new TTPs"
+      - "Update detection rules based on findings"
+      - "Track improvement items to closure"
+    console_path: "Sentinel > Hunting Queries | Splunk > Saved Searches"
+    recommended_reading:
+      - "UCF THR-6 — Lessons Learned"
+    evidence_types:
+      - "sentinel_incidents"
+      - "sentinel_hunting_queries"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CFG — Configuration Management (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-CFG-1:
+    summary: "Configuration baselines must be established and monitored"
+    remediation_steps:
+      - "Enable AWS Config recorders and Security Hub"
+      - "Configure Azure Policy compliance baselines"
+      - "Deploy CSPM (Wiz/Prisma) for baseline monitoring"
+      - "Document configuration baselines per resource type"
+      - "Alert on baseline deviations"
+    console_path: "AWS Console > Config | Azure Policy > Compliance"
+    recommended_reading:
+      - "UCF CFG-1 — Configuration Baselines"
+    evidence_types:
+      - "config_recorders"
+      - "securityhub_hub"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  UCF-CFG-2:
+    summary: "Changes must be managed through formal change management processes"
+    remediation_steps:
+      - "Submit changes through ServiceNow change management"
+      - "Monitor cloud changes via CloudTrail and audit logs"
+      - "Track configuration changes via AWS Config"
+      - "Review IdP changes in Okta and Entra audit logs"
+      - "Require approval and rollback plan"
+    console_path: "ServiceNow > Change Management | AWS Console > CloudTrail"
+    recommended_reading:
+      - "UCF CFG-2 — Change Management"
+    evidence_types:
+      - "snow_change_requests"
+      - "cloudtrail_trails"
+      - "config_recorders"
+    assertion_name: "change_request_approved"
+
+  UCF-CFG-3:
+    summary: "System hardening must be applied per security baselines"
+    remediation_steps:
+      - "Apply CIS benchmarks via AWS Config rules"
+      - "Enforce Azure Policy for hardening compliance"
+      - "Deploy Prisma and Wiz for hardening assessment"
+      - "Remediate hardening findings within SLA"
+      - "Review hardening compliance monthly"
+    console_path: "AWS Console > Config | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "UCF CFG-3 — System Hardening"
+      - "CIS Benchmarks"
+    evidence_types:
+      - "config_recorders"
+      - "policy_compliance"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  UCF-CFG-4:
+    summary: "Software installation must be controlled"
+    remediation_steps:
+      - "Monitor installed applications via SentinelOne"
+      - "Review CrowdStrike device details for unauthorized software"
+      - "Enforce application allow-listing"
+      - "Block unauthorized installations via endpoint policies"
+      - "Audit software inventory monthly"
+    console_path: "SentinelOne > Applications | CrowdStrike > Host Details"
+    recommended_reading:
+      - "UCF CFG-4 — Software Management"
+    evidence_types:
+      - "s1_applications"
+      - "falcon_device_details"
+    assertion_name: null
+
+  UCF-CFG-5:
+    summary: "Configuration drift must be detected and remediated"
+    remediation_steps:
+      - "Monitor AWS Config for configuration drift"
+      - "Track CloudTrail events for unauthorized changes"
+      - "Review Entra and Okta audit logs for IdP drift"
+      - "Alert on configuration deviations from baseline"
+      - "Remediate drift within defined SLA"
+    console_path: "AWS Console > Config > Compliance | Entra > Audit Logs"
+    recommended_reading:
+      - "UCF CFG-5 — Configuration Drift"
+    evidence_types:
+      - "config_recorders"
+      - "cloudtrail_trails"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  UCF-CFG-6:
+    summary: "Configuration management database must be maintained"
+    remediation_steps:
+      - "Consolidate asset data from Prisma, Tenable, and Wiz"
+      - "Sync CMDB with cloud asset inventories"
+      - "Track asset configurations and relationships"
+      - "Reconcile CMDB with actual infrastructure quarterly"
+      - "Document CMDB processes"
+    console_path: "Prisma Cloud > Inventory | Wiz > Graph"
+    recommended_reading:
+      - "UCF CFG-6 — CMDB"
+    evidence_types:
+      - "prisma_assets"
+      - "asset_export"
+      - "wiz_graph"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # BCP — Business Continuity (5 controls)
+  # ---------------------------------------------------------------------------
+  UCF-BCP-1:
+    summary: "Business continuity plans must be documented and maintained"
+    remediation_steps:
+      - "Document BCP on Confluence with recovery procedures"
+      - "Maintain ServiceNow policies for continuity"
+      - "Define Veeam backup job schedules per RPO"
+      - "Assign BCP owners and review schedules"
+      - "Conduct annual BCP review"
+    console_path: "Confluence > BCP Space | Veeam > Backup Jobs"
+    recommended_reading:
+      - "UCF BCP-1 — Continuity Planning"
+    evidence_types:
+      - "confluence_pages"
+      - "veeam_backup_jobs"
+    assertion_name: null
+
+  UCF-BCP-2:
+    summary: "Backup procedures must be implemented and verified"
+    remediation_steps:
+      - "Configure Veeam backup jobs for critical systems"
+      - "Enable S3 versioning for critical data"
+      - "Configure Azure storage replication"
+      - "Verify backup completion daily"
+      - "Test restore procedures quarterly"
+    console_path: "Veeam > Backup Jobs | AWS Console > S3 > Versioning"
+    recommended_reading:
+      - "UCF BCP-2 — Backup Management"
+    evidence_types:
+      - "veeam_backup_sessions"
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: "backup_job_successful"
+
+  UCF-BCP-3:
+    summary: "Recovery procedures must be defined and capable of meeting RTO"
+    remediation_steps:
+      - "Define recovery procedures per system criticality"
+      - "Verify AWS Config compliance for recovery settings"
+      - "Review Azure Policy compliance for DR configuration"
+      - "Document recovery time objectives per system"
+      - "Test recovery procedures annually"
+    console_path: "AWS Console > Config | Azure Policy > Compliance"
+    recommended_reading:
+      - "UCF BCP-3 — Recovery Procedures"
+    evidence_types:
+      - "config_recorders"
+      - "policy_compliance"
+    assertion_name: null
+
+  UCF-BCP-4:
+    summary: "Recovery testing must be conducted regularly"
+    remediation_steps:
+      - "Schedule recovery testing per DR plan"
+      - "Test cloud infrastructure recovery via Config compliance"
+      - "Conduct compliance audits of recovery capabilities"
+      - "Document test results and gaps"
+      - "Update procedures based on test findings"
+    console_path: "AWS Console > Config | Azure Policy > Compliance"
+    recommended_reading:
+      - "UCF BCP-4 — Recovery Testing"
+    evidence_types:
+      - "config_recorders"
+      - "compliance_audits"
+    assertion_name: null
+
+  UCF-BCP-5:
+    summary: "System redundancy must be implemented for critical services"
+    remediation_steps:
+      - "Deploy SIEM and monitoring with redundant paths"
+      - "Verify EDR agent multi-AZ deployment"
+      - "Configure Splunk indexer clustering"
+      - "Document redundancy architecture"
+      - "Test failover annually"
+    console_path: "Sentinel > Data Connectors | Splunk > Clustering"
+    recommended_reading:
+      - "UCF BCP-5 — Redundancy"
+    evidence_types:
+      - "sentinel_data_connectors"
+      - "splunk_index_health"
+      - "falcon_device_details"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # DEV — Secure Development (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-DEV-1:
+    summary: "Secure development lifecycle must be established"
+    remediation_steps:
+      - "Define SDLC standards with security gates"
+      - "Integrate security scanning via Wiz and Prisma"
+      - "Require security review before production deployment"
+      - "Train developers on secure coding"
+      - "Track SDLC compliance metrics"
+    console_path: "Wiz > CICD Scans | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "UCF DEV-1 — Secure SDLC"
+    evidence_types:
+      - "wiz_config_findings"
+      - "prisma_compliance"
+    assertion_name: null
+
+  UCF-DEV-2:
+    summary: "Secure coding practices must be enforced"
+    remediation_steps:
+      - "Integrate Snyk for dependency vulnerability scanning"
+      - "Run SAST via Wiz and Prisma on repositories"
+      - "Enforce code review for all changes"
+      - "Track code vulnerabilities to resolution"
+      - "Maintain secure coding guidelines"
+    console_path: "Snyk > Issues | Wiz > Vulnerabilities > Code"
+    recommended_reading:
+      - "UCF DEV-2 — Secure Coding"
+    evidence_types:
+      - "snyk_issues"
+      - "wiz_vuln_findings"
+    assertion_name: "no_critical_code_vulns"
+
+  UCF-DEV-3:
+    summary: "Application security testing must be performed"
+    remediation_steps:
+      - "Run application security scans via Wiz, Prisma, and Snyk"
+      - "Manage Snyk projects for all applications"
+      - "Track application vulnerabilities by severity"
+      - "Remediate critical findings before release"
+      - "Conduct annual application penetration testing"
+    console_path: "Snyk > Projects | Wiz > Vulnerabilities"
+    recommended_reading:
+      - "UCF DEV-3 — Application Security"
+    evidence_types:
+      - "snyk_projects"
+      - "wiz_vuln_findings"
+      - "prisma_alerts"
+    assertion_name: "no_critical_code_vulns"
+
+  UCF-DEV-4:
+    summary: "Security testing must be integrated into the development lifecycle"
+    remediation_steps:
+      - "Run vulnerability assessments via Tenable and Wiz"
+      - "Integrate security testing into CI/CD pipelines"
+      - "Track test coverage and findings"
+      - "Require security test sign-off before release"
+      - "Conduct penetration testing annually"
+    console_path: "Tenable > Vulnerabilities | Wiz > Vulnerabilities"
+    recommended_reading:
+      - "UCF DEV-4 — Security Testing"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+    assertion_name: null
+
+  UCF-DEV-5:
+    summary: "Development, test, and production environments must be separated"
+    remediation_steps:
+      - "Use separate AWS accounts or Azure subscriptions per environment"
+      - "Verify separation via AWS Config rules"
+      - "Review Wiz findings for cross-environment access"
+      - "Restrict production access"
+      - "Document environment boundaries"
+    console_path: "AWS Console > Config | Wiz > Configuration Findings"
+    recommended_reading:
+      - "UCF DEV-5 — Environment Separation"
+    evidence_types:
+      - "config_recorders"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  UCF-DEV-6:
+    summary: "Outsourced development must be managed and secured"
+    remediation_steps:
+      - "Review Entra service principals for vendor developer access"
+      - "Audit app registrations used by external developers"
+      - "Include security requirements in development contracts"
+      - "Conduct security reviews of outsourced deliverables"
+      - "Monitor vendor access patterns"
+    console_path: "Entra Admin > App Registrations"
+    recommended_reading:
+      - "UCF DEV-6 — Outsourced Development"
+    evidence_types:
+      - "entra_service_principals"
+      - "entra_app_registrations"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # TPM — Third Party Management (5 controls)
+  # ---------------------------------------------------------------------------
+  UCF-TPM-1:
+    summary: "Supplier security must be assessed before engagement"
+    remediation_steps:
+      - "Conduct vendor security assessments before onboarding"
+      - "Review Entra service principal permissions"
+      - "Audit Okta application integrations"
+      - "Require vendor security attestation (SOC 2, ISO 27001)"
+      - "Document vendor risk assessment results"
+    console_path: "Entra Admin > Enterprise Applications | Okta > Applications"
+    recommended_reading:
+      - "UCF TPM-1 — Supplier Assessment"
+    evidence_types:
+      - "entra_service_principals"
+      - "okta_applications"
+    assertion_name: null
+
+  UCF-TPM-2:
+    summary: "Security requirements must be included in supplier agreements"
+    remediation_steps:
+      - "Include security clauses in vendor contracts"
+      - "Review Entra service principal consent scopes"
+      - "Require data protection and breach notification clauses"
+      - "Define audit rights in agreements"
+      - "Review agreements annually"
+    console_path: "Entra Admin > Enterprise Applications > Permissions"
+    recommended_reading:
+      - "UCF TPM-2 — Supplier Agreements"
+    evidence_types:
+      - "entra_service_principals"
+      - "entra_app_registrations"
+    assertion_name: null
+
+  UCF-TPM-3:
+    summary: "Supplier security must be monitored continuously"
+    remediation_steps:
+      - "Monitor Entra directory audits for vendor activity"
+      - "Review Okta system logs for third-party events"
+      - "Conduct quarterly vendor security reviews"
+      - "Track vendor SLA compliance"
+      - "Document vendor monitoring results"
+    console_path: "Entra > Audit Logs | Okta > System Log"
+    recommended_reading:
+      - "UCF TPM-3 — Supplier Monitoring"
+    evidence_types:
+      - "entra_directory_audits"
+      - "okta_system_log"
+    assertion_name: null
+
+  UCF-TPM-4:
+    summary: "Cloud service provider security must be assessed and monitored"
+    remediation_steps:
+      - "Deploy CSPM tools across all cloud providers"
+      - "Enable native security services (Security Hub, Defender, SCC)"
+      - "Monitor cloud provider compliance posture"
+      - "Review cloud provider SOC 2 reports annually"
+      - "Track cloud security metrics"
+    console_path: "Wiz > Issues | Security Hub | Azure Defender | GCP SCC"
+    recommended_reading:
+      - "UCF TPM-4 — Cloud Provider Security"
+    evidence_types:
+      - "wiz_config_findings"
+      - "securityhub_hub"
+      - "policy_compliance"
+      - "scc_findings"
+    assertion_name: null
+
+  UCF-TPM-5:
+    summary: "Supply chain security must be managed end-to-end"
+    remediation_steps:
+      - "Identify critical supply chain dependencies"
+      - "Monitor third-party integrations in Entra and Okta"
+      - "Review Wiz findings for supply chain risks"
+      - "Track SailPoint accounts for vendor personnel"
+      - "Require SBOM from software vendors"
+    console_path: "Entra Admin > Enterprise Apps | Okta > Applications"
+    recommended_reading:
+      - "UCF TPM-5 — Supply Chain Security"
+    evidence_types:
+      - "entra_service_principals"
+      - "okta_applications"
+      - "sailpoint_accounts"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # PRV — Privacy (8 controls)
+  # ---------------------------------------------------------------------------
+  UCF-PRV-1:
+    summary: "Purpose limitation for PII processing must be established"
+    remediation_steps:
+      - "Define and document purposes for PII processing"
+      - "Configure Prisma policies for purpose enforcement"
+      - "Conduct compliance audits for purpose limitation"
+      - "Communicate processing purposes to data subjects"
+      - "Review purposes when processing activities change"
+    console_path: "Prisma Cloud > Policies | Compliance Audits"
+    recommended_reading:
+      - "UCF PRV-1 — Purpose Limitation"
+      - "GDPR Article 5(1)(b)"
+    evidence_types:
+      - "prisma_policies"
+      - "compliance_audits"
+    assertion_name: null
+
+  UCF-PRV-2:
+    summary: "Consent must be obtained and managed for PII processing"
+    remediation_steps:
+      - "Implement consent management mechanisms"
+      - "Configure policy enforcement for consent requirements"
+      - "Track consent records with timestamps"
+      - "Provide mechanisms to withdraw consent"
+      - "Audit consent compliance quarterly"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "UCF PRV-2 — Consent Management"
+      - "GDPR Article 7"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null
+
+  UCF-PRV-3:
+    summary: "Data subject rights must be supported and fulfilled"
+    remediation_steps:
+      - "Implement DSAR processing via OneTrust"
+      - "Monitor Okta and Entra logs for access/deletion requests"
+      - "Define SLA for data subject request fulfillment"
+      - "Track DSAR completion rates and timeliness"
+      - "Document data subject rights procedures"
+    console_path: "OneTrust > DSAR | Okta > System Log"
+    recommended_reading:
+      - "UCF PRV-3 — Data Subject Rights"
+      - "GDPR Articles 15-22"
+    evidence_types:
+      - "onetrust_dsar_requests"
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  UCF-PRV-4:
+    summary: "Privacy impact assessments must be conducted for high-risk processing"
+    remediation_steps:
+      - "Conduct PIAs via OneTrust for new processing activities"
+      - "Review Wiz and Prisma for PII exposure risks"
+      - "Document PIA findings and remediation plans"
+      - "Require PIA before launching new PII processing"
+      - "Review PIAs annually or on significant changes"
+    console_path: "OneTrust > Assessments | Wiz > Issues"
+    recommended_reading:
+      - "UCF PRV-4 — Privacy Impact Assessment"
+      - "GDPR Article 35"
+    evidence_types:
+      - "onetrust_assessments"
+      - "wiz_issues"
+      - "prisma_compliance"
+    assertion_name: null
+
+  UCF-PRV-5:
+    summary: "Data minimization must be applied to PII collection and processing"
+    remediation_steps:
+      - "Review PII collection points for necessity"
+      - "Configure Prisma policies for data minimization"
+      - "Monitor Wiz findings for excessive data collection"
+      - "Document data minimization decisions"
+      - "Audit data stores for unnecessary PII"
+    console_path: "Prisma Cloud > Policies | Wiz > Configuration Findings"
+    recommended_reading:
+      - "UCF PRV-5 — Data Minimization"
+      - "GDPR Article 5(1)(c)"
+    evidence_types:
+      - "prisma_policies"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  UCF-PRV-6:
+    summary: "De-identification and pseudonymization must be applied where appropriate"
+    remediation_steps:
+      - "Identify data requiring de-identification"
+      - "Conduct OneTrust assessments for anonymization needs"
+      - "Apply Purview sensitivity labels for PII handling"
+      - "Document de-identification methods and effectiveness"
+      - "Validate de-identification cannot be reversed"
+    console_path: "OneTrust > Assessments | Purview > Sensitivity Labels"
+    recommended_reading:
+      - "UCF PRV-6 — De-identification"
+      - "GDPR Article 4(5) — Pseudonymization"
+    evidence_types:
+      - "onetrust_assessments"
+      - "purview_sensitivity_labels"
+    assertion_name: null
+
+  UCF-PRV-7:
+    summary: "Cross-border PII transfers must be governed with appropriate safeguards"
+    remediation_steps:
+      - "Identify PII transfer destinations and legal bases"
+      - "Configure policy compliance for transfer requirements"
+      - "Implement encryption for PII in transit"
+      - "Review firewall rules governing PII transfer paths"
+      - "Document transfer impact assessments"
+    console_path: "Prisma Cloud > Policies | Azure Key Vault"
+    recommended_reading:
+      - "UCF PRV-7 — PII Transfers"
+      - "GDPR Chapter V — Cross-Border Transfers"
+    evidence_types:
+      - "policy_compliance"
+      - "key_vault"
+      - "ec2_security_groups"
+    assertion_name: null
+
+  UCF-PRV-8:
+    summary: "PII processing obligations must be tracked and fulfilled"
+    remediation_steps:
+      - "Track processing obligations in compliance audits"
+      - "Monitor processing activities via cloud audit trails"
+      - "Verify Prisma compliance for privacy requirements"
+      - "Document obligation fulfillment"
+      - "Report compliance status to DPO"
+    console_path: "Prisma Cloud > Compliance | CloudTrail > Events"
+    recommended_reading:
+      - "UCF PRV-8 — Processing Obligations"
+      - "GDPR Article 30"
+    evidence_types:
+      - "compliance_audits"
+      - "cloudtrail_trails"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # AIM — AI Management (6 controls)
+  # ---------------------------------------------------------------------------
+  UCF-AIM-1:
+    summary: "AI governance policies must be defined and maintained"
+    remediation_steps:
+      - "Define AI governance policy covering development and use"
+      - "Configure Prisma policies for AI workload compliance"
+      - "Document responsible AI principles"
+      - "Communicate AI policies to relevant teams"
+      - "Review AI policies annually"
+    console_path: "Prisma Cloud > Policies > AI Workloads"
+    recommended_reading:
+      - "UCF AIM-1 — AI Policy"
+      - "ISO 42001:2023 Guidance"
+    evidence_types:
+      - "prisma_policies"
+    assertion_name: null
+
+  UCF-AIM-2:
+    summary: "AI impact assessments must be conducted"
+    remediation_steps:
+      - "Identify AI systems and their risk profiles"
+      - "Monitor AI workloads via GCP SCC and Azure Defender"
+      - "Assess AI risks through Wiz and Prisma"
+      - "Document impact assessment findings"
+      - "Review assessments when AI systems change"
+    console_path: "GCP SCC > Findings | Azure Defender > Alerts"
+    recommended_reading:
+      - "UCF AIM-2 — AI Impact Assessment"
+      - "ISO 42001:2023 Annex A"
+    evidence_types:
+      - "scc_findings"
+      - "wiz_issues"
+      - "defender_alerts"
+    assertion_name: null
+
+  UCF-AIM-3:
+    summary: "AI system lifecycle must be managed with deployment and monitoring controls"
+    remediation_steps:
+      - "Track AI deployments via AWS Config and Azure Policy"
+      - "Monitor AI system changes through CloudTrail and audit logs"
+      - "Configure monitoring alerts for AI system anomalies"
+      - "Integrate CSPM monitoring for AI infrastructure"
+      - "Document AI lifecycle management procedures"
+    console_path: "AWS Console > Config | Azure Monitor > Alerts"
+    recommended_reading:
+      - "UCF AIM-3 — AI Lifecycle Management"
+    evidence_types:
+      - "config_recorders"
+      - "cloudtrail_trails"
+      - "monitor_alerts"
+    assertion_name: null
+
+  UCF-AIM-4:
+    summary: "AI training data must be managed with integrity and security controls"
+    remediation_steps:
+      - "Encrypt AI training data at rest in cloud storage"
+      - "Manage encryption keys via Key Vault"
+      - "Track data provenance through audit logs"
+      - "Implement access controls on training data"
+      - "Document data management procedures"
+    console_path: "AWS Console > S3 | Azure Key Vault | CloudTrail"
+    recommended_reading:
+      - "UCF AIM-4 — AI Data Management"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "key_vault"
+      - "cloudtrail_trails"
+    assertion_name: null
+
+  UCF-AIM-5:
+    summary: "Human oversight of AI systems must be maintained"
+    remediation_steps:
+      - "Implement human-in-the-loop for high-risk AI decisions"
+      - "Monitor AI system access via Okta and Entra logs"
+      - "Record privileged AI operations via CyberArk"
+      - "Define human override procedures"
+      - "Audit AI decision logs for oversight compliance"
+    console_path: "Okta > System Log | CyberArk > Sessions"
+    recommended_reading:
+      - "UCF AIM-5 — Human Oversight"
+      - "ISO 42001:2023 Annex A"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+      - "cyberark_recordings"
+    assertion_name: null
+
+  UCF-AIM-6:
+    summary: "AI system transparency and documentation must be maintained"
+    remediation_steps:
+      - "Register AI models in MLflow or equivalent registry"
+      - "Track model versions and lineage"
+      - "Document model capabilities and limitations"
+      - "Publish AI transparency reports"
+      - "Review model documentation on updates"
+    console_path: "MLflow > Model Registry"
+    recommended_reading:
+      - "UCF AIM-6 — AI Transparency"
+      - "ISO 42001:2023 Annex A"
+    evidence_types:
+      - "mlflow_registered_models"
+      - "mlflow_model_versions"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CMP — Compliance Management (5 controls)
+  # ---------------------------------------------------------------------------
+  UCF-CMP-1:
+    summary: "Compliance assessments must be conducted regularly"
+    remediation_steps:
+      - "Schedule compliance assessments against relevant frameworks"
+      - "Use Prisma Cloud compliance dashboards for continuous assessment"
+      - "Track compliance posture trends"
+      - "Assign assessment owners and schedules"
+      - "Document assessment results and gaps"
+    console_path: "Prisma Cloud > Compliance > Assessment"
+    recommended_reading:
+      - "UCF CMP-1 — Compliance Assessment"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  UCF-CMP-2:
+    summary: "Compliance reviews must be conducted by qualified assessors"
+    remediation_steps:
+      - "Engage qualified assessors for compliance reviews"
+      - "Review Prisma compliance reports for accuracy"
+      - "Track compliance audit findings"
+      - "Schedule management review of compliance status"
+      - "Document review conclusions and actions"
+    console_path: "Prisma Cloud > Compliance > Reports"
+    recommended_reading:
+      - "UCF CMP-2 — Compliance Review"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  UCF-CMP-3:
+    summary: "Continuous compliance monitoring must be implemented"
+    remediation_steps:
+      - "Enable AWS Config, Security Hub, and GuardDuty"
+      - "Configure Azure Policy and GCP SCC monitoring"
+      - "Deploy Prisma and Wiz for continuous compliance"
+      - "Track compliance posture in real time"
+      - "Alert on compliance drift"
+    console_path: "AWS Console > Config | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "UCF CMP-3 — Continuous Compliance"
+    evidence_types:
+      - "config_recorders"
+      - "securityhub_hub"
+      - "prisma_compliance"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  UCF-CMP-4:
+    summary: "Plans of action and milestones must track remediation"
+    remediation_steps:
+      - "Create POA&M entries for compliance gaps"
+      - "Track Defender recommendations as remediation items"
+      - "Assign owners, milestones, and deadlines"
+      - "Monitor remediation progress weekly"
+      - "Report POA&M status to management"
+    console_path: "Defender > Recommendations | Wiz > Issues"
+    recommended_reading:
+      - "UCF CMP-4 — POA&M Management"
+    evidence_types:
+      - "defender_recommendations"
+      - "wiz_issues"
+    assertion_name: null
+
+  UCF-CMP-5:
+    summary: "Compliance reporting must be generated and distributed"
+    remediation_steps:
+      - "Generate compliance reports from Prisma and Azure Policy"
+      - "Monitor Wiz compliance findings for report accuracy"
+      - "Track compliance posture and audit results"
+      - "Distribute reports to stakeholders on schedule"
+      - "Archive compliance reports per retention policy"
+    console_path: "Prisma Cloud > Compliance > Reports | Azure Policy"
+    recommended_reading:
+      - "UCF CMP-5 — Compliance Reporting"
+    evidence_types:
+      - "prisma_compliance"
+      - "policy_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # COM — Communication Security (3 controls)
+  # ---------------------------------------------------------------------------
+  UCF-COM-1:
+    summary: "Internal security communications must be effective"
+    remediation_steps:
+      - "Establish security notification channels"
+      - "Integrate SIEM alerts with communication platforms"
+      - "Monitor email security via Proofpoint"
+      - "Track security communication delivery and response"
+      - "Review communication effectiveness quarterly"
+    console_path: "Sentinel > Incidents | Proofpoint > Dashboard"
+    recommended_reading:
+      - "UCF COM-1 — Internal Communication"
+    evidence_types:
+      - "sentinel_incidents"
+      - "proofpoint_blocked_messages"
+    assertion_name: null
+
+  UCF-COM-2:
+    summary: "External security communications must be managed"
+    remediation_steps:
+      - "Publish external security communications on Confluence"
+      - "Monitor email threats via Proofpoint"
+      - "Define external communication procedures"
+      - "Track external inquiries and responses"
+      - "Review external communication templates annually"
+    console_path: "Confluence > External Comms | Proofpoint > Dashboard"
+    recommended_reading:
+      - "UCF COM-2 — External Communication"
+    evidence_types:
+      - "confluence_pages"
+      - "proofpoint_blocked_messages"
+    assertion_name: null
+
+  UCF-COM-3:
+    summary: "Threat intelligence must be shared with relevant parties"
+    remediation_steps:
+      - "Share GuardDuty and Security Hub findings with stakeholders"
+      - "Coordinate threat sharing with EDR vendors"
+      - "Participate in ISACs and threat sharing communities"
+      - "Document sharing agreements and procedures"
+      - "Track intelligence sharing metrics"
+    console_path: "GuardDuty > Findings | CrowdStrike > Threat Intel"
+    recommended_reading:
+      - "UCF COM-3 — Threat Intelligence Sharing"
+    evidence_types:
+      - "guardduty_detectors"
+      - "securityhub_hub"
+      - "falcon_detection_details"
+    assertion_name: null

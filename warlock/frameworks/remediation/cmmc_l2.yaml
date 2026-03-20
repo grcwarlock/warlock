@@ -1,0 +1,1885 @@
+controls:
+  "AC.L2-3.1.1":
+    summary: "Limit system access to authorized users, processes acting on behalf of authorized users, and devices"
+    remediation_steps:
+      - "Implement identity verification for all users, processes, and devices before granting access"
+      - "Deploy IAM solutions (Okta, Entra ID) to manage user authentication centrally"
+      - "Configure network access controls (security groups, firewalls) to restrict device connectivity"
+      - "Disable or remove unauthorized accounts and revoke access for non-compliant devices"
+      - "Review access authorizations quarterly and remove accounts that are no longer needed"
+    console_path: "Warlock > Access Control > Authorized Access"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.1 -- Authorized Access"
+      - "CMMC Assessment Guide: AC.L2-3.1.1"
+      - "NIST SP 800-171A: 3.1.1 Assessment Procedures"
+    evidence_types:
+      - "iam_configuration"
+      - "access_review_report"
+    assertion_name: "authorized_access_enforced"
+
+  "AC.L2-3.1.2":
+    summary: "Limit system access to the types of transactions and functions that authorized users are permitted to execute"
+    remediation_steps:
+      - "Implement role-based access control (RBAC) mapping job functions to permitted transactions"
+      - "Configure IAM policies to restrict actions based on user role assignments"
+      - "Enforce conditional access policies limiting function access by context (location, device, time)"
+      - "Audit user permissions quarterly to ensure alignment with authorized functions"
+      - "Document authorized transactions for each role and maintain an access control matrix"
+    console_path: "Warlock > Access Control > Transaction Limits"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.2 -- Transaction and Function Control"
+      - "CMMC Assessment Guide: AC.L2-3.1.2"
+    evidence_types:
+      - "iam_configuration"
+      - "access_control_matrix"
+    assertion_name: "transaction_control_enforced"
+
+  "AC.L2-3.1.3":
+    summary: "Control the flow of CUI in accordance with approved authorizations"
+    remediation_steps:
+      - "Map all CUI data flows between systems and document approved paths"
+      - "Implement network segmentation to isolate CUI processing environments"
+      - "Configure firewall rules and security groups to enforce approved data flow paths"
+      - "Deploy DLP solutions to detect and prevent unauthorized CUI transfers"
+      - "Review and update CUI flow authorizations when system architecture changes"
+    console_path: "Warlock > Access Control > Information Flow"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.3 -- CUI Flow Enforcement"
+      - "CMMC Assessment Guide: AC.L2-3.1.3"
+    evidence_types:
+      - "network_diagram"
+      - "firewall_configuration"
+    assertion_name: "cui_flow_controlled"
+
+  "AC.L2-3.1.4":
+    summary: "Separate the duties of individuals to reduce the risk of malicious activity without collusion"
+    remediation_steps:
+      - "Identify critical functions requiring separation of duties (authorize, execute, review)"
+      - "Implement role-based access ensuring no single user can complete a sensitive transaction alone"
+      - "Configure IAM to enforce incompatible role restrictions"
+      - "Document separation of duties requirements in the access control policy"
+      - "Audit for SoD violations quarterly and remediate conflicts"
+    console_path: "Warlock > Access Control > Separation of Duties"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.4 -- Separation of Duties"
+      - "CMMC Assessment Guide: AC.L2-3.1.4"
+    evidence_types:
+      - "role_matrix"
+      - "sod_analysis"
+    assertion_name: "separation_of_duties_enforced"
+
+  "AC.L2-3.1.5":
+    summary: "Employ the principle of least privilege, including for specific security functions and privileged accounts"
+    remediation_steps:
+      - "Audit all user permissions and remove access not required for current job functions"
+      - "Implement just-in-time (JIT) privileged access using PAM solutions"
+      - "Configure privileged access to expire after a defined time period"
+      - "Use IAM Access Analyzer or equivalent tools to identify overly permissive policies"
+      - "Review privileged access quarterly with documented justification for each elevation"
+    console_path: "Warlock > Access Control > Least Privilege"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.5 -- Least Privilege"
+      - "CMMC Assessment Guide: AC.L2-3.1.5"
+    evidence_types:
+      - "iam_configuration"
+      - "privilege_review_report"
+    assertion_name: "least_privilege_enforced"
+
+  "AC.L2-3.1.6":
+    summary: "Use non-privileged accounts or roles when accessing non-security functions"
+    remediation_steps:
+      - "Require administrators to use separate non-privileged accounts for daily tasks"
+      - "Implement separate admin and standard accounts in the identity provider"
+      - "Configure conditional access to restrict privileged accounts to admin consoles only"
+      - "Monitor for privileged account use in non-administrative activities"
+      - "Audit compliance with non-privileged account usage requirements quarterly"
+    console_path: "Warlock > Access Control > Non-Privileged Access"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.6 -- Non-Privileged Account Use"
+      - "CMMC Assessment Guide: AC.L2-3.1.6"
+    evidence_types:
+      - "iam_configuration"
+      - "account_usage_report"
+    assertion_name: "non_privileged_accounts_enforced"
+
+  "AC.L2-3.1.7":
+    summary: "Prevent non-privileged users from executing privileged functions and capture execution in audit logs"
+    remediation_steps:
+      - "Configure IAM policies to restrict privileged function execution to authorized roles"
+      - "Enable audit logging for all privileged function executions"
+      - "Implement alerts for unauthorized attempts to execute privileged functions"
+      - "Review privileged function execution logs weekly for anomalies"
+      - "Test access controls to verify non-privileged users cannot escalate privileges"
+    console_path: "Warlock > Access Control > Privileged Function Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.7 -- Privileged Functions"
+      - "CMMC Assessment Guide: AC.L2-3.1.7"
+    evidence_types:
+      - "iam_configuration"
+      - "audit_log"
+    assertion_name: "privileged_functions_restricted"
+
+  "AC.L2-3.1.8":
+    summary: "Limit unsuccessful logon attempts by enforcing account lockout policies"
+    remediation_steps:
+      - "Configure account lockout after 5 consecutive failed login attempts"
+      - "Set lockout duration to a minimum of 15 minutes or require administrator unlock"
+      - "Implement progressive delay between failed attempts to slow brute-force attacks"
+      - "Configure alerts for accounts experiencing repeated lockouts"
+      - "Review lockout events weekly and investigate patterns suggesting attacks"
+    console_path: "Warlock > Identity > Lockout Policy"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.8 -- Unsuccessful Logon Attempts"
+      - "CMMC Assessment Guide: AC.L2-3.1.8"
+    evidence_types:
+      - "authentication_policy"
+      - "lockout_event_log"
+    assertion_name: "account_lockout_configured"
+
+  "AC.L2-3.1.9":
+    summary: "Provide privacy and security notices consistent with applicable CUI rules before granting access"
+    remediation_steps:
+      - "Configure system use notification banners on all login screens"
+      - "Include warnings about monitoring, acceptable use, and legal consequences"
+      - "Require users to acknowledge the banner before proceeding to login"
+      - "Ensure banners comply with DoD and CUI marking requirements"
+      - "Review banner text annually and update for regulatory changes"
+    console_path: "Warlock > Access Control > System Use Notification"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.9 -- Privacy and Security Notices"
+      - "CMMC Assessment Guide: AC.L2-3.1.9"
+    evidence_types:
+      - "banner_configuration"
+      - "policy_document"
+    assertion_name: "system_use_notification_displayed"
+
+  "AC.L2-3.1.10":
+    summary: "Use session lock with pattern-hiding displays to prevent access and viewing of data after inactivity"
+    remediation_steps:
+      - "Configure automatic screen lock after 15 minutes of inactivity on all endpoints"
+      - "Implement pattern-hiding displays (blank screen or screensaver, not data preview)"
+      - "Require re-authentication to unlock the session"
+      - "Apply session lock settings via group policy, MDM, or configuration management"
+      - "Verify session lock configuration through endpoint compliance scanning"
+    console_path: "Warlock > Endpoint > Session Lock"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.10 -- Session Lock"
+      - "CMMC Assessment Guide: AC.L2-3.1.10"
+    evidence_types:
+      - "endpoint_configuration"
+      - "policy_compliance_report"
+    assertion_name: "session_lock_configured"
+
+  "AC.L2-3.1.11":
+    summary: "Terminate user sessions automatically after a defined condition such as inactivity or maximum duration"
+    remediation_steps:
+      - "Configure session timeout policies in IdP (Okta, Entra ID) for CUI systems"
+      - "Set maximum session duration limits for web applications and remote access"
+      - "Invalidate session tokens upon logout or timeout"
+      - "Implement idle timeout on VPN connections and remote desktop sessions"
+      - "Test session termination behavior to verify tokens are properly invalidated"
+    console_path: "Warlock > Identity > Session Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.11 -- Session Termination"
+      - "CMMC Assessment Guide: AC.L2-3.1.11"
+    evidence_types:
+      - "session_configuration"
+      - "technical_test_result"
+    assertion_name: "session_termination_configured"
+
+  "AC.L2-3.1.12":
+    summary: "Monitor and control remote access sessions using automated mechanisms"
+    remediation_steps:
+      - "Implement VPN or zero-trust network access for all remote connections to CUI systems"
+      - "Log all remote access sessions including user, source IP, duration, and actions"
+      - "Configure alerts for anomalous remote access patterns"
+      - "Monitor remote sessions for policy compliance (MFA, managed device, approved location)"
+      - "Review remote access logs weekly and investigate suspicious activity"
+    console_path: "Warlock > Network > Remote Access Monitoring"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.12 -- Remote Access Control"
+      - "CMMC Assessment Guide: AC.L2-3.1.12"
+    evidence_types:
+      - "remote_access_log"
+      - "network_configuration"
+    assertion_name: "remote_access_monitored"
+
+  "AC.L2-3.1.13":
+    summary: "Employ cryptographic mechanisms to protect the confidentiality of remote access sessions"
+    remediation_steps:
+      - "Configure VPN connections using IPsec or TLS 1.2+ with FIPS-validated modules"
+      - "Disable legacy VPN protocols and weak cipher suites"
+      - "Implement TLS 1.2+ for all web-based remote access"
+      - "Verify encryption configuration through technical testing"
+      - "Monitor for remote connections not using approved encrypted channels"
+    console_path: "Warlock > Network > Remote Access Encryption"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.13 -- Remote Access Confidentiality"
+      - "CMMC Assessment Guide: AC.L2-3.1.13"
+    evidence_types:
+      - "vpn_configuration"
+      - "encryption_test_result"
+    assertion_name: "remote_access_encrypted"
+
+  "AC.L2-3.1.14":
+    summary: "Route remote access via managed access control points"
+    remediation_steps:
+      - "Direct all remote connections through approved VPN concentrators or ZTNA gateways"
+      - "Block direct remote connections that bypass managed access points"
+      - "Implement firewall rules allowing remote access only through designated entry points"
+      - "Monitor for unauthorized remote access paths and alert on violations"
+      - "Document all approved remote access control points and their configurations"
+    console_path: "Warlock > Network > Access Control Points"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.14 -- Remote Access Routing"
+      - "CMMC Assessment Guide: AC.L2-3.1.14"
+    evidence_types:
+      - "network_diagram"
+      - "firewall_configuration"
+    assertion_name: "remote_access_routed"
+
+  "AC.L2-3.1.15":
+    summary: "Authorize remote execution of privileged commands and remote access to security-relevant information"
+    remediation_steps:
+      - "Document operational justification for each remote privileged access requirement"
+      - "Implement PAM solutions for remote privileged access with session recording"
+      - "Require approval workflow before granting remote privileged access"
+      - "Log all remote privileged commands with full session recording"
+      - "Review remote privileged access authorizations quarterly"
+    console_path: "Warlock > Access Control > Remote Privileged Access"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.15 -- Privileged Remote Access"
+      - "CMMC Assessment Guide: AC.L2-3.1.15"
+    evidence_types:
+      - "pam_configuration"
+      - "approval_record"
+    assertion_name: "remote_privileged_access_authorized"
+
+  "AC.L2-3.1.16":
+    summary: "Authorize wireless access prior to allowing such connections"
+    remediation_steps:
+      - "Establish a wireless access authorization process with documented approvals"
+      - "Maintain an inventory of authorized wireless access points and connected devices"
+      - "Implement 802.1X authentication for wireless network access"
+      - "Scan for unauthorized (rogue) wireless access points regularly"
+      - "Review wireless access authorizations quarterly and revoke unnecessary access"
+    console_path: "Warlock > Network > Wireless Authorization"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.16 -- Wireless Access Authorization"
+      - "CMMC Assessment Guide: AC.L2-3.1.16"
+    evidence_types:
+      - "wireless_configuration"
+      - "authorization_record"
+    assertion_name: "wireless_access_authorized"
+
+  "AC.L2-3.1.17":
+    summary: "Protect wireless access using authentication and encryption"
+    remediation_steps:
+      - "Implement WPA3 Enterprise or WPA2 Enterprise with AES encryption"
+      - "Disable WEP and WPA (TKIP) on all wireless networks"
+      - "Configure wireless networks with RADIUS authentication"
+      - "Segment wireless CUI traffic from guest and general networks"
+      - "Conduct periodic wireless security assessments and penetration tests"
+    console_path: "Warlock > Network > Wireless Security"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.17 -- Wireless Access Protection"
+      - "CMMC Assessment Guide: AC.L2-3.1.17"
+    evidence_types:
+      - "wireless_configuration"
+      - "security_test_result"
+    assertion_name: "wireless_access_protected"
+
+  "AC.L2-3.1.18":
+    summary: "Control connection of mobile devices using MDM and establish usage restrictions"
+    remediation_steps:
+      - "Deploy MDM/EMM solution for all mobile devices accessing CUI"
+      - "Enforce device compliance policies (encryption, PIN, OS version, jailbreak detection)"
+      - "Implement conditional access restricting CUI access to managed devices"
+      - "Enable remote wipe capability for lost or stolen devices"
+      - "Review mobile device inventory and compliance status monthly"
+    console_path: "Warlock > Endpoint > Mobile Device Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.18 -- Mobile Device Connection"
+      - "CMMC Assessment Guide: AC.L2-3.1.18"
+    evidence_types:
+      - "mdm_configuration"
+      - "device_compliance_report"
+    assertion_name: "mobile_devices_managed"
+
+  "AC.L2-3.1.19":
+    summary: "Encrypt CUI on mobile devices and mobile computing platforms"
+    remediation_steps:
+      - "Enable full-disk encryption on all mobile devices (FileVault, BitLocker, Android encryption)"
+      - "Require FIPS-validated encryption modules for CUI data at rest on mobile devices"
+      - "Configure container-based encryption for CUI applications on BYOD devices"
+      - "Verify encryption status through MDM compliance checks"
+      - "Block CUI access from devices that do not meet encryption requirements"
+    console_path: "Warlock > Endpoint > Mobile Encryption"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.19 -- Mobile Device Encryption"
+      - "CMMC Assessment Guide: AC.L2-3.1.19"
+    evidence_types:
+      - "encryption_configuration"
+      - "device_compliance_report"
+    assertion_name: "mobile_encryption_enforced"
+
+  "AC.L2-3.1.20":
+    summary: "Verify and control or limit connections to and use of external systems"
+    remediation_steps:
+      - "Inventory all connections to external systems and document data exchange agreements"
+      - "Implement firewall rules restricting outbound connections to approved external systems"
+      - "Monitor external connections for anomalous data transfer patterns"
+      - "Require authorization before establishing new external system connections"
+      - "Review external system connections quarterly and remove unnecessary connections"
+    console_path: "Warlock > Network > External Connections"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.20 -- External System Connections"
+      - "CMMC Assessment Guide: AC.L2-3.1.20"
+    evidence_types:
+      - "network_configuration"
+      - "interconnection_agreement"
+    assertion_name: "external_connections_controlled"
+
+  "AC.L2-3.1.21":
+    summary: "Limit use of portable storage devices on external systems"
+    remediation_steps:
+      - "Establish a policy restricting or prohibiting USB storage device use on external systems"
+      - "Implement DLP policies blocking CUI transfer to unauthorized removable media"
+      - "Deploy endpoint controls to disable USB mass storage on managed devices"
+      - "Monitor for USB storage device connections and alert on violations"
+      - "Provide approved encrypted storage alternatives for authorized data transfer needs"
+    console_path: "Warlock > Endpoint > Removable Media Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.21 -- Portable Storage Use"
+      - "CMMC Assessment Guide: AC.L2-3.1.21"
+    evidence_types:
+      - "dlp_policy"
+      - "endpoint_configuration"
+    assertion_name: "portable_storage_restricted"
+
+  "AC.L2-3.1.22":
+    summary: "Control information posted or processed on publicly accessible systems to prevent CUI exposure"
+    remediation_steps:
+      - "Identify all publicly accessible systems and verify no CUI is stored or processed"
+      - "Implement content review procedures before publishing to public-facing systems"
+      - "Configure S3 bucket policies and storage account settings to block public access"
+      - "Deploy automated scanning to detect CUI markers on publicly accessible resources"
+      - "Designate authorized individuals for public information posting with approval workflows"
+    console_path: "Warlock > Data Protection > Public Access Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.1.22 -- Publicly Accessible Content"
+      - "CMMC Assessment Guide: AC.L2-3.1.22"
+    evidence_types:
+      - "public_access_configuration"
+      - "content_review_record"
+    assertion_name: "public_content_controlled"
+
+  "AT.L2-3.2.1":
+    summary: "Ensure managers, administrators, and users are aware of security risks and applicable policies"
+    remediation_steps:
+      - "Develop role-based security awareness training content for all workforce levels"
+      - "Require all personnel to complete initial awareness training within 30 days of onboarding"
+      - "Conduct annual refresher training covering current threats and policy updates"
+      - "Include CUI handling procedures and marking requirements in training content"
+      - "Track completion rates and follow up with non-compliant personnel"
+    console_path: "Warlock > Training > Security Awareness"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.2.1 -- Security Awareness"
+      - "CMMC Assessment Guide: AT.L2-3.2.1"
+    evidence_types:
+      - "training_completion_record"
+      - "training_material"
+    assertion_name: "security_awareness_current"
+
+  "AT.L2-3.2.2":
+    summary: "Ensure personnel are trained to carry out their assigned information security duties"
+    remediation_steps:
+      - "Identify role-specific security training requirements for each job function"
+      - "Provide specialized training for IT administrators, developers, and security personnel"
+      - "Include hands-on exercises and scenario-based training for technical roles"
+      - "Conduct phishing simulations and measure improvement over time"
+      - "Maintain training records and require annual recertification"
+    console_path: "Warlock > Training > Role-Based Training"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.2.2 -- Role-Based Training"
+      - "CMMC Assessment Guide: AT.L2-3.2.2"
+    evidence_types:
+      - "training_completion_record"
+      - "phishing_simulation_report"
+    assertion_name: "role_based_training_current"
+
+  "AT.L2-3.2.3":
+    summary: "Provide security awareness training on recognizing and reporting potential indicators of insider threat"
+    remediation_steps:
+      - "Include insider threat awareness in the security training curriculum"
+      - "Train personnel to recognize behavioral indicators of insider threats"
+      - "Establish anonymous reporting mechanisms for suspected insider threats"
+      - "Provide clear procedures for reporting concerns to security personnel"
+      - "Conduct insider threat scenario exercises for management and security teams"
+    console_path: "Warlock > Training > Insider Threat Awareness"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.2.3 -- Insider Threat Awareness"
+      - "CMMC Assessment Guide: AT.L2-3.2.3"
+      - "CISA Insider Threat Mitigation Guide"
+    evidence_types:
+      - "training_completion_record"
+      - "reporting_procedure"
+    assertion_name: "insider_threat_training_current"
+
+  "AU.L2-3.3.1":
+    summary: "Create and retain system audit logs and records to enable monitoring, analysis, and investigation"
+    remediation_steps:
+      - "Enable audit logging on all systems processing, storing, or transmitting CUI"
+      - "Configure logs to capture logon attempts, privilege changes, data access, and config changes"
+      - "Centralize log collection in a SIEM with defined retention periods"
+      - "Retain audit logs for a minimum of one year with 90 days immediately accessible"
+      - "Protect audit logs from unauthorized modification or deletion"
+    console_path: "Warlock > Audit > Audit Logging"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.1 -- System Audit Logs"
+      - "CMMC Assessment Guide: AU.L2-3.3.1"
+    evidence_types:
+      - "logging_configuration"
+      - "retention_policy"
+    assertion_name: "audit_logging_enabled"
+
+  "AU.L2-3.3.2":
+    summary: "Ensure actions of individual system users can be uniquely traced for accountability"
+    remediation_steps:
+      - "Assign unique user identifiers and prohibit shared accounts"
+      - "Configure audit logs to associate all actions with individual user identifiers"
+      - "Implement centralized authentication to ensure consistent user attribution"
+      - "Verify that application-level actions are traceable to authenticated users"
+      - "Test traceability by sampling audit records and verifying user attribution"
+    console_path: "Warlock > Audit > User Traceability"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.2 -- User Accountability"
+      - "CMMC Assessment Guide: AU.L2-3.3.2"
+    evidence_types:
+      - "audit_log_sample"
+      - "iam_configuration"
+    assertion_name: "user_accountability_verified"
+
+  "AU.L2-3.3.3":
+    summary: "Review and update logged events regularly based on ongoing risk assessment"
+    remediation_steps:
+      - "Define which events require auditing based on current threat landscape and risk assessment"
+      - "Review audit event selection at least annually and after security incidents"
+      - "Add new event types when emerging threats or vulnerabilities are identified"
+      - "Update SIEM correlation rules to reflect current audit event requirements"
+      - "Document event selection rationale and approval"
+    console_path: "Warlock > Audit > Event Selection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.3 -- Audit Event Review"
+      - "CMMC Assessment Guide: AU.L2-3.3.3"
+    evidence_types:
+      - "audit_event_configuration"
+      - "risk_assessment_document"
+    assertion_name: "audit_events_reviewed"
+
+  "AU.L2-3.3.4":
+    summary: "Alert in the event of an audit logging process failure"
+    remediation_steps:
+      - "Configure monitoring for audit log agent health and collection pipeline status"
+      - "Set up automated alerts when audit logging stops or degrades"
+      - "Monitor log storage capacity and alert when thresholds are approached"
+      - "Implement redundant logging paths to prevent single points of failure"
+      - "Establish incident response procedures for audit logging failures"
+    console_path: "Warlock > Audit > Logging Health"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.4 -- Audit Logging Failure Alerts"
+      - "CMMC Assessment Guide: AU.L2-3.3.4"
+    evidence_types:
+      - "monitoring_configuration"
+      - "alert_configuration"
+    assertion_name: "audit_failure_alerts_configured"
+
+  "AU.L2-3.3.5":
+    summary: "Correlate audit record review, analysis, and reporting to support investigation and response"
+    remediation_steps:
+      - "Deploy a SIEM solution for centralized log correlation and analysis"
+      - "Create correlation rules mapping multiple data sources to identify attack patterns"
+      - "Implement automated alerting for correlated events indicating potential incidents"
+      - "Establish procedures for investigating correlated findings"
+      - "Generate regular reports on correlated security events for management review"
+    console_path: "Warlock > Audit > Log Correlation"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.5 -- Audit Correlation"
+      - "CMMC Assessment Guide: AU.L2-3.3.5"
+    evidence_types:
+      - "siem_configuration"
+      - "correlation_rule_inventory"
+    assertion_name: "audit_correlation_enabled"
+
+  "AU.L2-3.3.6":
+    summary: "Provide audit record reduction and report generation to support on-demand analysis"
+    remediation_steps:
+      - "Configure SIEM dashboards for compliance monitoring and security analysis"
+      - "Implement automated report generation for audit review activities"
+      - "Build filtering and search capabilities for ad-hoc audit record analysis"
+      - "Create standard report templates for common compliance and investigation needs"
+      - "Ensure authorized personnel can generate reports on demand"
+    console_path: "Warlock > Audit > Reporting"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.6 -- Audit Reduction and Reporting"
+      - "CMMC Assessment Guide: AU.L2-3.3.6"
+    evidence_types:
+      - "siem_configuration"
+      - "sample_report"
+    assertion_name: "audit_reporting_available"
+
+  "AU.L2-3.3.7":
+    summary: "Provide system capability to compare and synchronize clocks with an authoritative time source"
+    remediation_steps:
+      - "Configure all systems to synchronize time using NTP with authoritative sources"
+      - "Use at least two independent time sources for redundancy"
+      - "Set maximum allowable time skew to 1 second or less"
+      - "Monitor time synchronization status and alert on drift"
+      - "Document NTP configuration and verify compliance through configuration scanning"
+    console_path: "Warlock > Infrastructure > Time Synchronization"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.7 -- Time Stamps"
+      - "CMMC Assessment Guide: AU.L2-3.3.7"
+    evidence_types:
+      - "ntp_configuration"
+      - "configuration_scan_report"
+    assertion_name: "time_synchronization_configured"
+
+  "AU.L2-3.3.8":
+    summary: "Protect audit information and audit logging tools from unauthorized access, modification, and deletion"
+    remediation_steps:
+      - "Restrict access to audit logs and logging infrastructure to authorized security personnel"
+      - "Enable log integrity validation (CloudTrail log file validation, immutable storage)"
+      - "Store audit logs in write-once storage (S3 Object Lock, Azure immutable blob)"
+      - "Encrypt audit logs at rest and in transit"
+      - "Monitor for unauthorized access attempts to audit logging systems"
+    console_path: "Warlock > Audit > Log Protection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.8 -- Audit Protection"
+      - "CMMC Assessment Guide: AU.L2-3.3.8"
+    evidence_types:
+      - "storage_configuration"
+      - "access_control_report"
+    assertion_name: "audit_logs_protected"
+
+  "AU.L2-3.3.9":
+    summary: "Limit management of audit logging functionality to a subset of privileged users"
+    remediation_steps:
+      - "Restrict audit log configuration access to designated security administrators only"
+      - "Implement separate administrative roles for audit management vs. general system admin"
+      - "Log all changes to audit logging configuration"
+      - "Require approval workflow for changes to audit logging settings"
+      - "Review audit management access quarterly and remove unnecessary privileges"
+    console_path: "Warlock > Audit > Log Management Access"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.3.9 -- Audit Management"
+      - "CMMC Assessment Guide: AU.L2-3.3.9"
+    evidence_types:
+      - "iam_configuration"
+      - "audit_log"
+    assertion_name: "audit_management_restricted"
+
+  "CM.L2-3.4.1":
+    summary: "Establish and maintain baseline configurations and inventories of organizational systems"
+    remediation_steps:
+      - "Define baseline configurations for all system components (OS, applications, network devices)"
+      - "Implement configuration management tools (AWS Config, Ansible, Puppet) for baseline enforcement"
+      - "Maintain a current system inventory including hardware, software, and firmware versions"
+      - "Monitor for configuration drift from approved baselines"
+      - "Update baselines through a formal change management process"
+    console_path: "Warlock > Configuration > Baselines"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.1 -- Baseline Configurations"
+      - "CMMC Assessment Guide: CM.L2-3.4.1"
+    evidence_types:
+      - "configuration_baseline"
+      - "asset_inventory"
+    assertion_name: "baseline_configuration_established"
+
+  "CM.L2-3.4.2":
+    summary: "Establish and enforce security configuration settings for IT products using hardening benchmarks"
+    remediation_steps:
+      - "Apply CIS benchmarks or DISA STIGs to all system components"
+      - "Configure automated compliance scanning to verify settings continuously"
+      - "Document and obtain risk acceptance for any deviations from benchmark settings"
+      - "Remediate non-compliant configurations within defined timeframes"
+      - "Report configuration compliance status to management monthly"
+    console_path: "Warlock > Configuration > Security Settings"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.2 -- Configuration Settings"
+      - "CMMC Assessment Guide: CM.L2-3.4.2"
+      - "CIS Benchmarks"
+    evidence_types:
+      - "configuration_scan_report"
+      - "compliance_report"
+    assertion_name: "security_configuration_enforced"
+
+  "CM.L2-3.4.3":
+    summary: "Track, review, approve, and log changes to organizational systems"
+    remediation_steps:
+      - "Implement a formal change management process with request, review, approval, and implementation stages"
+      - "Require change requests for all modifications to CUI system components"
+      - "Document impact assessment, test plan, and rollback procedure for each change"
+      - "Log all changes with who, what, when, and approval reference"
+      - "Review change management effectiveness quarterly"
+    console_path: "Warlock > Configuration > Change Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.3 -- Change Tracking"
+      - "CMMC Assessment Guide: CM.L2-3.4.3"
+    evidence_types:
+      - "change_request_log"
+      - "approval_record"
+    assertion_name: "change_management_enforced"
+
+  "CM.L2-3.4.4":
+    summary: "Analyze the security impact of changes prior to implementation"
+    remediation_steps:
+      - "Include security impact analysis as a mandatory step in the change management process"
+      - "Assess proposed changes for potential new vulnerabilities or degraded controls"
+      - "Require security review approval before implementing changes to CUI systems"
+      - "Test changes in a staging environment before production deployment"
+      - "Document security impact analysis findings and mitigation measures"
+    console_path: "Warlock > Configuration > Security Impact Analysis"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.4 -- Security Impact Analysis"
+      - "CMMC Assessment Guide: CM.L2-3.4.4"
+    evidence_types:
+      - "impact_analysis_record"
+      - "change_request_log"
+    assertion_name: "security_impact_analyzed"
+
+  "CM.L2-3.4.5":
+    summary: "Define, document, approve, and enforce physical and logical access restrictions for changes"
+    remediation_steps:
+      - "Restrict change implementation access to authorized change implementers"
+      - "Implement approval workflows requiring management authorization before changes"
+      - "Log all change implementation actions with user attribution"
+      - "Ensure changes are reversible with documented rollback procedures"
+      - "Review change access privileges quarterly"
+    console_path: "Warlock > Configuration > Change Access Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.5 -- Access Restrictions for Change"
+      - "CMMC Assessment Guide: CM.L2-3.4.5"
+    evidence_types:
+      - "access_control_report"
+      - "change_request_log"
+    assertion_name: "change_access_restricted"
+
+  "CM.L2-3.4.6":
+    summary: "Employ least functionality by configuring systems to provide only essential capabilities"
+    remediation_steps:
+      - "Disable unnecessary ports, protocols, and services on all CUI system components"
+      - "Remove or disable unnecessary software and features"
+      - "Configure firewalls to allow only required network traffic"
+      - "Scan for unnecessary open ports and services monthly"
+      - "Document essential services and block everything else by default"
+    console_path: "Warlock > Configuration > Least Functionality"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.6 -- Least Functionality"
+      - "CMMC Assessment Guide: CM.L2-3.4.6"
+    evidence_types:
+      - "port_scan_report"
+      - "firewall_configuration"
+    assertion_name: "least_functionality_configured"
+
+  "CM.L2-3.4.7":
+    summary: "Restrict, disable, or prevent use of nonessential programs, functions, ports, protocols, and services"
+    remediation_steps:
+      - "Maintain an approved software and service whitelist for CUI systems"
+      - "Block execution of unauthorized applications using application control"
+      - "Disable unnecessary network protocols on all system components"
+      - "Scan for non-essential services monthly and remediate findings"
+      - "Review and update the approved software list quarterly"
+    console_path: "Warlock > Configuration > Application Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.7 -- Nonessential Programs"
+      - "CMMC Assessment Guide: CM.L2-3.4.7"
+    evidence_types:
+      - "application_control_config"
+      - "service_inventory"
+    assertion_name: "nonessential_services_disabled"
+
+  "CM.L2-3.4.8":
+    summary: "Apply deny-by-exception (blocklist) or allow-by-exception (allowlist) policies for unauthorized software"
+    remediation_steps:
+      - "Implement application whitelisting on all CUI system endpoints"
+      - "Configure endpoint protection to block execution of unauthorized applications"
+      - "Maintain and regularly update the approved application list"
+      - "Monitor for application control bypass attempts and investigate"
+      - "Test application control effectiveness through periodic compliance scanning"
+    console_path: "Warlock > Endpoint > Application Whitelisting"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.8 -- Application Execution Policy"
+      - "CMMC Assessment Guide: CM.L2-3.4.8"
+    evidence_types:
+      - "application_control_config"
+      - "endpoint_compliance_report"
+    assertion_name: "application_control_enforced"
+
+  "CM.L2-3.4.9":
+    summary: "Control and monitor user-installed software"
+    remediation_steps:
+      - "Establish a policy governing user software installation on managed endpoints"
+      - "Restrict local administrator privileges to prevent unauthorized software installation"
+      - "Deploy endpoint management tools to inventory installed software"
+      - "Scan endpoints monthly for unauthorized software and remediate"
+      - "Provide a self-service software catalog for approved applications"
+    console_path: "Warlock > Endpoint > Software Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.4.9 -- User-Installed Software"
+      - "CMMC Assessment Guide: CM.L2-3.4.9"
+    evidence_types:
+      - "software_inventory"
+      - "endpoint_configuration"
+    assertion_name: "user_software_controlled"
+
+  "IA.L2-3.5.1":
+    summary: "Identify system users, processes acting on behalf of users, and devices"
+    remediation_steps:
+      - "Assign unique identifiers to all users, system processes, and devices"
+      - "Implement centralized identity management through an IdP"
+      - "Register and uniquely identify all devices connecting to CUI systems"
+      - "Prohibit anonymous or shared accounts for CUI system access"
+      - "Audit for duplicate or shared identifiers quarterly"
+    console_path: "Warlock > Identity > Identification"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.1 -- Identification"
+      - "CMMC Assessment Guide: IA.L2-3.5.1"
+    evidence_types:
+      - "iam_configuration"
+      - "device_inventory"
+    assertion_name: "unique_identification_enforced"
+
+  "IA.L2-3.5.2":
+    summary: "Authenticate the identities of users, processes, or devices as a prerequisite to access"
+    remediation_steps:
+      - "Implement authentication mechanisms for all system access points"
+      - "Configure centralized authentication through IdP (Okta, Entra ID)"
+      - "Require credentials before granting access to any CUI system"
+      - "Implement service account authentication using certificates or managed identities"
+      - "Monitor for authentication bypass attempts and alert"
+    console_path: "Warlock > Identity > Authentication"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.2 -- Authentication"
+      - "CMMC Assessment Guide: IA.L2-3.5.2"
+    evidence_types:
+      - "authentication_configuration"
+      - "iam_configuration"
+    assertion_name: "authentication_enforced"
+
+  "IA.L2-3.5.3":
+    summary: "Use multifactor authentication for local and network access to privileged and non-privileged accounts"
+    remediation_steps:
+      - "Enforce MFA for all privileged account access (local and network)"
+      - "Enforce MFA for all non-privileged network access to CUI systems"
+      - "Use phishing-resistant MFA methods (FIDO2, hardware tokens) for privileged access"
+      - "Monitor MFA enrollment and enforce 100% coverage"
+      - "Block access from accounts without MFA configured"
+    console_path: "Warlock > Identity > Multi-Factor Authentication"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.3 -- Multifactor Authentication"
+      - "CMMC Assessment Guide: IA.L2-3.5.3"
+      - "NIST SP 800-63B: Digital Identity Guidelines"
+    evidence_types:
+      - "mfa_configuration"
+      - "mfa_enrollment_report"
+    assertion_name: "mfa_enforced"
+
+  "IA.L2-3.5.4":
+    summary: "Employ replay-resistant authentication mechanisms for network access"
+    remediation_steps:
+      - "Implement authentication protocols with replay resistance (Kerberos, TLS, OIDC)"
+      - "Disable legacy authentication protocols that lack replay resistance"
+      - "Configure time-based tokens with short validity periods"
+      - "Use nonce values in authentication challenges to prevent replay"
+      - "Test authentication mechanisms for replay vulnerability"
+    console_path: "Warlock > Identity > Replay-Resistant Auth"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.4 -- Replay-Resistant Authentication"
+      - "CMMC Assessment Guide: IA.L2-3.5.4"
+    evidence_types:
+      - "authentication_configuration"
+      - "security_test_result"
+    assertion_name: "replay_resistant_auth_enabled"
+
+  "IA.L2-3.5.5":
+    summary: "Prevent reuse of identifiers for a defined period"
+    remediation_steps:
+      - "Configure identity systems to prevent reassignment of user IDs for at least two years"
+      - "Maintain a registry of previously assigned identifiers"
+      - "Implement naming conventions that reduce identifier collision risk"
+      - "Archive disabled accounts rather than deleting to preserve identifier history"
+      - "Audit for identifier reuse violations annually"
+    console_path: "Warlock > Identity > Identifier Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.5 -- Identifier Reuse"
+      - "CMMC Assessment Guide: IA.L2-3.5.5"
+    evidence_types:
+      - "identity_management_configuration"
+      - "identifier_registry"
+    assertion_name: "identifier_reuse_prevented"
+
+  "IA.L2-3.5.6":
+    summary: "Disable identifiers after a defined period of inactivity"
+    remediation_steps:
+      - "Configure automatic account disabling after 90 days of inactivity"
+      - "Implement automated scanning to identify inactive accounts"
+      - "Send warning notifications to account owners before disabling"
+      - "Require re-authorization to reactivate disabled accounts"
+      - "Report inactive account metrics to management monthly"
+    console_path: "Warlock > Identity > Inactive Accounts"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.6 -- Identifier Disabling"
+      - "CMMC Assessment Guide: IA.L2-3.5.6"
+    evidence_types:
+      - "account_activity_report"
+      - "iam_configuration"
+    assertion_name: "inactive_accounts_disabled"
+
+  "IA.L2-3.5.7":
+    summary: "Enforce minimum password complexity and change of characters when new passwords are created"
+    remediation_steps:
+      - "Configure minimum password length of 12 characters"
+      - "Require complexity including upper, lower, numeric, and special characters"
+      - "Require at least one changed character when passwords are updated"
+      - "Implement password strength meters at authentication interfaces"
+      - "Block commonly used passwords using a banned password list"
+    console_path: "Warlock > Identity > Password Policy"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.7 -- Password Complexity"
+      - "CMMC Assessment Guide: IA.L2-3.5.7"
+      - "NIST SP 800-63B: Memorized Secret Guidelines"
+    evidence_types:
+      - "password_policy_configuration"
+      - "iam_configuration"
+    assertion_name: "password_complexity_enforced"
+
+  "IA.L2-3.5.8":
+    summary: "Prohibit password reuse for a specified number of generations"
+    remediation_steps:
+      - "Configure password history to prevent reuse of the last 12 passwords"
+      - "Implement password history enforcement in IdP and all authentication systems"
+      - "Store password hashes securely for history comparison"
+      - "Test password history enforcement to verify proper operation"
+      - "Document password reuse policy and communicate to all users"
+    console_path: "Warlock > Identity > Password History"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.8 -- Password Reuse"
+      - "CMMC Assessment Guide: IA.L2-3.5.8"
+    evidence_types:
+      - "password_policy_configuration"
+      - "iam_configuration"
+    assertion_name: "password_reuse_prevented"
+
+  "IA.L2-3.5.9":
+    summary: "Allow temporary password use for system logons with immediate change to a permanent password"
+    remediation_steps:
+      - "Configure temporary passwords with one-time use and immediate change requirement"
+      - "Set temporary password expiration to 24 hours maximum"
+      - "Communicate temporary passwords through a secure channel separate from the username"
+      - "Log all temporary password issuances and track successful password changes"
+      - "Monitor for accounts using temporary passwords beyond the allowed period"
+    console_path: "Warlock > Identity > Temporary Passwords"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.9 -- Temporary Passwords"
+      - "CMMC Assessment Guide: IA.L2-3.5.9"
+    evidence_types:
+      - "password_policy_configuration"
+      - "account_activity_log"
+    assertion_name: "temporary_passwords_enforced"
+
+  "IA.L2-3.5.10":
+    summary: "Store and transmit only cryptographically protected passwords"
+    remediation_steps:
+      - "Hash all stored passwords using bcrypt, scrypt, or PBKDF2 with unique salts"
+      - "Transmit credentials only over TLS 1.2+ encrypted channels"
+      - "Prohibit cleartext password storage in configuration files, scripts, or databases"
+      - "Scan code repositories and configurations for exposed credentials"
+      - "Verify password protection mechanisms through security testing"
+    console_path: "Warlock > Identity > Credential Protection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.10 -- Cryptographic Password Protection"
+      - "CMMC Assessment Guide: IA.L2-3.5.10"
+    evidence_types:
+      - "authentication_configuration"
+      - "security_scan_report"
+    assertion_name: "passwords_cryptographically_protected"
+
+  "IA.L2-3.5.11":
+    summary: "Obscure feedback of authentication information during the authentication process"
+    remediation_steps:
+      - "Mask password fields in all login interfaces"
+      - "Ensure error messages do not reveal whether username or password was incorrect"
+      - "Prevent authentication credentials from appearing in logs or error output"
+      - "Configure applications to obscure password entry including copy/paste prevention"
+      - "Test authentication interfaces for credential disclosure vulnerabilities"
+    console_path: "Warlock > Identity > Authentication Feedback"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.5.11 -- Authenticator Feedback"
+      - "CMMC Assessment Guide: IA.L2-3.5.11"
+    evidence_types:
+      - "application_configuration"
+      - "security_test_result"
+    assertion_name: "auth_feedback_obscured"
+
+  "IR.L2-3.6.1":
+    summary: "Establish an operational incident-handling capability including preparation, detection, analysis, containment, and recovery"
+    remediation_steps:
+      - "Develop a comprehensive incident response plan covering all phases of incident handling"
+      - "Establish an incident response team with defined roles, responsibilities, and contact info"
+      - "Deploy detection capabilities (SIEM, EDR, IDS) to identify security incidents"
+      - "Define incident classification criteria with severity levels and response procedures"
+      - "Test the incident response plan at least annually through tabletop exercises"
+    console_path: "Warlock > Incident Response > IR Plan"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.6.1 -- Incident Handling"
+      - "CMMC Assessment Guide: IR.L2-3.6.1"
+      - "NIST SP 800-61 Rev 2: Computer Security Incident Handling Guide"
+    evidence_types:
+      - "incident_response_plan"
+      - "exercise_report"
+    assertion_name: "incident_handling_operational"
+
+  "IR.L2-3.6.2":
+    summary: "Track, document, and report incidents to designated officials and authorities"
+    remediation_steps:
+      - "Implement an incident tracking system with unique identifiers and status tracking"
+      - "Define reporting timelines and escalation paths by incident severity"
+      - "Create reporting templates for internal and external incident notifications"
+      - "Report CUI-related incidents to DIBNet per DFARS 252.204-7012 requirements"
+      - "Maintain incident documentation for post-incident review and lessons learned"
+    console_path: "Warlock > Incident Response > Reporting"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.6.2 -- Incident Reporting"
+      - "CMMC Assessment Guide: IR.L2-3.6.2"
+      - "DFARS 252.204-7012: Safeguarding Covered Defense Information"
+    evidence_types:
+      - "incident_record"
+      - "notification_log"
+    assertion_name: "incident_reporting_compliant"
+
+  "IR.L2-3.6.3":
+    summary: "Test the organizational incident response capability through exercises and simulations"
+    remediation_steps:
+      - "Conduct annual tabletop exercises simulating CUI-related security incidents"
+      - "Include all incident response team members and relevant stakeholders"
+      - "Test communication procedures, escalation paths, and reporting mechanisms"
+      - "Document exercise results, identified gaps, and improvement actions"
+      - "Update the incident response plan based on exercise findings"
+    console_path: "Warlock > Incident Response > Testing"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.6.3 -- Incident Response Testing"
+      - "CMMC Assessment Guide: IR.L2-3.6.3"
+    evidence_types:
+      - "exercise_report"
+      - "improvement_plan"
+    assertion_name: "incident_response_tested"
+
+  "MA.L2-3.7.1":
+    summary: "Perform maintenance on organizational systems according to schedules and policies"
+    remediation_steps:
+      - "Establish a maintenance schedule for all CUI system components"
+      - "Use a formal change management process for maintenance activities"
+      - "Document all maintenance actions including date, scope, and responsible party"
+      - "Verify system functionality after maintenance completion"
+      - "Review maintenance effectiveness and update schedules based on findings"
+    console_path: "Warlock > Maintenance > Schedule"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.7.1 -- System Maintenance"
+      - "CMMC Assessment Guide: MA.L2-3.7.1"
+    evidence_types:
+      - "maintenance_record"
+      - "change_request_log"
+    assertion_name: "maintenance_performed"
+
+  "MA.L2-3.7.2":
+    summary: "Provide controls on tools, techniques, mechanisms, and personnel used for system maintenance"
+    remediation_steps:
+      - "Maintain an approved list of maintenance tools and verify their integrity"
+      - "Inspect maintenance tools before use on CUI systems"
+      - "Log all maintenance activities with tool identification and operator identity"
+      - "Require authorization before using any maintenance tool on production systems"
+      - "Remove or disable diagnostic tools after maintenance completion"
+    console_path: "Warlock > Maintenance > Tool Controls"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.7.2 -- Maintenance Tools"
+      - "CMMC Assessment Guide: MA.L2-3.7.2"
+    evidence_types:
+      - "tool_inventory"
+      - "maintenance_record"
+    assertion_name: "maintenance_tools_controlled"
+
+  "MA.L2-3.7.3":
+    summary: "Ensure equipment removed for off-site maintenance is sanitized of any CUI"
+    remediation_steps:
+      - "Implement pre-removal data sanitization procedures per NIST SP 800-88"
+      - "Verify CUI removal before releasing equipment for off-site maintenance"
+      - "Use approved sanitization methods based on media type and sensitivity"
+      - "Document sanitization actions with verification evidence"
+      - "Maintain chain of custody for equipment during off-site maintenance"
+    console_path: "Warlock > Maintenance > Off-Site Sanitization"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.7.3 -- Equipment Sanitization"
+      - "CMMC Assessment Guide: MA.L2-3.7.3"
+      - "NIST SP 800-88 Rev 1: Guidelines for Media Sanitization"
+    evidence_types:
+      - "sanitization_record"
+      - "chain_of_custody"
+    assertion_name: "offsite_equipment_sanitized"
+
+  "MA.L2-3.7.4":
+    summary: "Check media containing diagnostic and test programs for malicious code before use"
+    remediation_steps:
+      - "Scan all maintenance media with current anti-malware tools before connecting to CUI systems"
+      - "Use isolated environments for initial media scanning"
+      - "Maintain a log of all maintenance media scans with results"
+      - "Block automatic execution from removable media on all systems"
+      - "Quarantine and investigate any media with detected malicious code"
+    console_path: "Warlock > Maintenance > Media Scanning"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.7.4 -- Maintenance Media"
+      - "CMMC Assessment Guide: MA.L2-3.7.4"
+    evidence_types:
+      - "scan_result"
+      - "maintenance_record"
+    assertion_name: "maintenance_media_scanned"
+
+  "MA.L2-3.7.5":
+    summary: "Require multifactor authentication for nonlocal maintenance sessions and terminate when complete"
+    remediation_steps:
+      - "Enforce MFA for all remote maintenance connections"
+      - "Implement PAM solutions for remote maintenance session management"
+      - "Configure automatic session termination upon maintenance completion"
+      - "Record all remote maintenance sessions for audit purposes"
+      - "Review remote maintenance access authorizations quarterly"
+    console_path: "Warlock > Maintenance > Remote Maintenance"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.7.5 -- Nonlocal Maintenance"
+      - "CMMC Assessment Guide: MA.L2-3.7.5"
+    evidence_types:
+      - "pam_configuration"
+      - "session_log"
+    assertion_name: "remote_maintenance_secured"
+
+  "MA.L2-3.7.6":
+    summary: "Supervise maintenance activities of personnel without required access authorization"
+    remediation_steps:
+      - "Require escort and direct supervision for non-cleared maintenance personnel"
+      - "Assign authorized personnel to observe all maintenance activities by non-cleared workers"
+      - "Log supervised maintenance activities with escort identity and duration"
+      - "Verify that supervised workers do not have unescorted access to CUI"
+      - "Review supervised maintenance logs for compliance"
+    console_path: "Warlock > Maintenance > Supervised Maintenance"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.7.6 -- Maintenance Personnel"
+      - "CMMC Assessment Guide: MA.L2-3.7.6"
+    evidence_types:
+      - "maintenance_record"
+      - "escort_log"
+    assertion_name: "maintenance_personnel_supervised"
+
+  "MP.L2-3.8.1":
+    summary: "Protect system media containing CUI through physical control and secure storage"
+    remediation_steps:
+      - "Store CUI media in locked containers, safes, or controlled access areas"
+      - "Encrypt all digital media containing CUI using FIPS-validated cryptographic modules"
+      - "Restrict physical access to CUI media storage locations to authorized personnel"
+      - "Implement access logging for CUI media storage areas"
+      - "Conduct periodic inventory audits of CUI media"
+    console_path: "Warlock > Media Protection > Storage"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.1 -- Media Protection"
+      - "CMMC Assessment Guide: MP.L2-3.8.1"
+    evidence_types:
+      - "media_inventory"
+      - "storage_configuration"
+    assertion_name: "media_protected"
+
+  "MP.L2-3.8.2":
+    summary: "Limit access to CUI on system media to authorized users"
+    remediation_steps:
+      - "Implement access controls on all digital media containing CUI"
+      - "Restrict physical access to CUI paper media through controlled distribution"
+      - "Configure DLP policies to prevent unauthorized access to CUI on removable media"
+      - "Audit CUI media access quarterly and remove unnecessary access"
+      - "Document authorized media access lists and maintain current"
+    console_path: "Warlock > Media Protection > Access Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.2 -- Media Access"
+      - "CMMC Assessment Guide: MP.L2-3.8.2"
+    evidence_types:
+      - "access_control_report"
+      - "dlp_policy"
+    assertion_name: "media_access_limited"
+
+  "MP.L2-3.8.3":
+    summary: "Sanitize or destroy system media containing CUI before disposal or reuse"
+    remediation_steps:
+      - "Apply NIST SP 800-88 sanitization methods based on media type and sensitivity"
+      - "Use approved destruction methods (degaussing, shredding, incineration) for non-reusable media"
+      - "Obtain certificates of destruction from destruction service providers"
+      - "Maintain sanitization and destruction logs with method, date, and responsible party"
+      - "Verify sanitization effectiveness through spot-check validation"
+    console_path: "Warlock > Media Protection > Sanitization"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.3 -- Media Sanitization"
+      - "CMMC Assessment Guide: MP.L2-3.8.3"
+      - "NIST SP 800-88 Rev 1: Guidelines for Media Sanitization"
+    evidence_types:
+      - "sanitization_record"
+      - "destruction_certificate"
+    assertion_name: "media_sanitized"
+
+  "MP.L2-3.8.4":
+    summary: "Mark media with necessary CUI markings and distribution limitations"
+    remediation_steps:
+      - "Apply CUI designation indicators on all media containing CUI"
+      - "Include distribution limitation statements per CUI marking requirements"
+      - "Implement digital watermarking or metadata tagging for electronic CUI"
+      - "Train personnel on proper CUI marking procedures"
+      - "Audit CUI marking compliance during media inventory reviews"
+    console_path: "Warlock > Media Protection > CUI Marking"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.4 -- Media Marking"
+      - "CMMC Assessment Guide: MP.L2-3.8.4"
+      - "32 CFR Part 2002: CUI Program"
+    evidence_types:
+      - "marking_verification"
+      - "dlp_policy"
+    assertion_name: "media_marked"
+
+  "MP.L2-3.8.5":
+    summary: "Control access to media during transport and maintain accountability"
+    remediation_steps:
+      - "Implement chain-of-custody procedures for CUI media during transport"
+      - "Use tamper-evident packaging for physical media in transit"
+      - "Track media movements using asset management or courier tracking systems"
+      - "Require signed receipts for CUI media delivery"
+      - "Audit media transport logs quarterly"
+    console_path: "Warlock > Media Protection > Transport"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.5 -- Media Transport Accountability"
+      - "CMMC Assessment Guide: MP.L2-3.8.5"
+    evidence_types:
+      - "transport_log"
+      - "chain_of_custody"
+    assertion_name: "media_transport_controlled"
+
+  "MP.L2-3.8.6":
+    summary: "Implement cryptographic mechanisms to protect CUI on digital media during transport"
+    remediation_steps:
+      - "Encrypt all CUI on portable digital media using FIPS 140-validated modules"
+      - "Use AES-256 encryption for removable storage devices"
+      - "Implement encrypted USB drives for authorized portable CUI storage"
+      - "Verify encryption before releasing media for transport"
+      - "Document encryption methods and key management for transported media"
+    console_path: "Warlock > Media Protection > Transport Encryption"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.6 -- Transport Cryptography"
+      - "CMMC Assessment Guide: MP.L2-3.8.6"
+    evidence_types:
+      - "encryption_configuration"
+      - "transport_log"
+    assertion_name: "media_transport_encrypted"
+
+  "MP.L2-3.8.7":
+    summary: "Control the use of removable media on system components"
+    remediation_steps:
+      - "Establish a policy restricting removable media types on CUI systems"
+      - "Implement endpoint controls to block unauthorized removable devices"
+      - "Configure approved removable media to require scanning before use"
+      - "Deploy USB device control through EDR or endpoint management"
+      - "Audit removable media usage and investigate unauthorized connections"
+    console_path: "Warlock > Media Protection > Removable Media"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.7 -- Removable Media"
+      - "CMMC Assessment Guide: MP.L2-3.8.7"
+    evidence_types:
+      - "device_control_config"
+      - "media_usage_log"
+    assertion_name: "removable_media_controlled"
+
+  "MP.L2-3.8.8":
+    summary: "Prohibit the use of portable storage devices when such devices have no identifiable owner"
+    remediation_steps:
+      - "Require registration of all portable storage devices with assigned owners"
+      - "Block unregistered USB devices through endpoint device control policies"
+      - "Maintain a registry of approved portable storage devices with owner attribution"
+      - "Decommission portable devices when owners leave the organization"
+      - "Audit for unregistered device connections monthly"
+    console_path: "Warlock > Media Protection > Device Registration"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.8 -- Shared Portable Storage"
+      - "CMMC Assessment Guide: MP.L2-3.8.8"
+    evidence_types:
+      - "device_registry"
+      - "device_control_config"
+    assertion_name: "portable_storage_registered"
+
+  "MP.L2-3.8.9":
+    summary: "Protect the confidentiality of backup CUI at storage locations"
+    remediation_steps:
+      - "Encrypt all CUI backups at rest using AES-256 or equivalent"
+      - "Store backup media in physically secure off-site locations"
+      - "Implement access controls on backup storage equivalent to production data"
+      - "Verify backup encryption through periodic testing"
+      - "Monitor backup storage access and alert on unauthorized attempts"
+    console_path: "Warlock > Media Protection > Backup Protection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.8.9 -- Backup Confidentiality"
+      - "CMMC Assessment Guide: MP.L2-3.8.9"
+    evidence_types:
+      - "backup_configuration"
+      - "encryption_configuration"
+    assertion_name: "backup_cui_protected"
+
+  "PS.L2-3.9.1":
+    summary: "Screen individuals prior to authorizing access to systems containing CUI"
+    remediation_steps:
+      - "Conduct background investigations for all personnel with CUI system access"
+      - "Verify employment eligibility and references before granting access"
+      - "Implement tiered screening based on access level and CUI sensitivity"
+      - "Complete screening before provisioning any CUI system access"
+      - "Re-screen personnel periodically or when access levels change"
+    console_path: "Warlock > Personnel > Screening"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.9.1 -- Personnel Screening"
+      - "CMMC Assessment Guide: PS.L2-3.9.1"
+    evidence_types:
+      - "background_check_record"
+      - "hr_record"
+    assertion_name: "personnel_screened"
+
+  "PS.L2-3.9.2":
+    summary: "Ensure systems containing CUI are protected during and after personnel actions such as terminations and transfers"
+    remediation_steps:
+      - "Implement immediate access revocation upon personnel termination"
+      - "Conduct exit interviews covering CUI handling and non-disclosure obligations"
+      - "Retrieve all organization-owned devices, badges, and access tokens"
+      - "Transfer CUI access appropriately during role changes"
+      - "Audit terminated employee accounts within 24 hours to verify complete access removal"
+    console_path: "Warlock > Personnel > Termination and Transfer"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.9.2 -- Personnel Actions"
+      - "CMMC Assessment Guide: PS.L2-3.9.2"
+    evidence_types:
+      - "termination_checklist"
+      - "access_revocation_record"
+    assertion_name: "personnel_actions_secured"
+
+  "PE.L2-3.10.1":
+    summary: "Limit physical access to organizational systems, equipment, and operating environments to authorized individuals"
+    remediation_steps:
+      - "Implement physical access controls (badge readers, biometrics) at facility entry points"
+      - "Maintain an authorized access list for areas containing CUI systems"
+      - "Deploy physical barriers (locked doors, mantrap, turnstiles) at controlled areas"
+      - "Issue access badges with appropriate clearance level indicators"
+      - "Review physical access authorizations quarterly"
+    console_path: "Warlock > Physical Security > Access Controls"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.10.1 -- Physical Access Authorization"
+      - "CMMC Assessment Guide: PE.L2-3.10.1"
+    evidence_types:
+      - "physical_access_log"
+      - "access_authorization_list"
+    assertion_name: "physical_access_limited"
+
+  "PE.L2-3.10.2":
+    summary: "Protect and monitor the physical facility and support infrastructure"
+    remediation_steps:
+      - "Deploy surveillance cameras at facility entry points and CUI processing areas"
+      - "Implement intrusion detection systems with 24/7 monitoring"
+      - "Install environmental monitoring (temperature, humidity, water) in server rooms"
+      - "Establish security guard or reception desk presence at primary entry points"
+      - "Review surveillance footage and access logs for anomalies weekly"
+    console_path: "Warlock > Physical Security > Facility Monitoring"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.10.2 -- Physical Access Monitoring"
+      - "CMMC Assessment Guide: PE.L2-3.10.2"
+    evidence_types:
+      - "surveillance_configuration"
+      - "monitoring_report"
+    assertion_name: "facility_monitored"
+
+  "PE.L2-3.10.3":
+    summary: "Escort visitors and monitor visitor activity in areas with CUI"
+    remediation_steps:
+      - "Require all visitors to sign in and present valid identification"
+      - "Issue temporary visitor badges that are visually distinct from employee badges"
+      - "Assign authorized escorts for visitors in CUI areas"
+      - "Monitor visitor activity and restrict access to authorized areas only"
+      - "Maintain visitor logs with name, organization, escort, and duration"
+    console_path: "Warlock > Physical Security > Visitor Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.10.3 -- Visitor Escort"
+      - "CMMC Assessment Guide: PE.L2-3.10.3"
+    evidence_types:
+      - "visitor_log"
+      - "visitor_procedure"
+    assertion_name: "visitors_escorted"
+
+  "PE.L2-3.10.4":
+    summary: "Maintain audit logs of physical access to facilities"
+    remediation_steps:
+      - "Enable electronic access logging at all badge reader entry points"
+      - "Maintain physical sign-in logs at locations without electronic access control"
+      - "Retain physical access logs for the organization-defined retention period"
+      - "Review physical access logs monthly for anomalies"
+      - "Protect physical access logs from unauthorized modification"
+    console_path: "Warlock > Physical Security > Access Logs"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.10.4 -- Physical Access Logs"
+      - "CMMC Assessment Guide: PE.L2-3.10.4"
+    evidence_types:
+      - "physical_access_log"
+      - "review_record"
+    assertion_name: "physical_access_logged"
+
+  "PE.L2-3.10.5":
+    summary: "Control and manage physical access devices such as keys, locks, combinations, and card readers"
+    remediation_steps:
+      - "Inventory all physical access devices including keys, cards, and combination locks"
+      - "Change combinations and rekey locks periodically and upon personnel changes"
+      - "Deactivate lost or stolen access credentials immediately"
+      - "Implement key management procedures with issuance and return tracking"
+      - "Audit physical access device inventory quarterly"
+    console_path: "Warlock > Physical Security > Access Devices"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.10.5 -- Physical Access Device Management"
+      - "CMMC Assessment Guide: PE.L2-3.10.5"
+    evidence_types:
+      - "device_inventory"
+      - "key_management_record"
+    assertion_name: "access_devices_managed"
+
+  "PE.L2-3.10.6":
+    summary: "Enforce safeguarding measures for CUI at alternate work sites"
+    remediation_steps:
+      - "Define security requirements for alternate work sites (home offices, satellite locations)"
+      - "Require encrypted network connections and managed devices for CUI access"
+      - "Implement physical security controls (locked workspace, screen privacy) at alternate sites"
+      - "Include alternate work site requirements in telework agreements"
+      - "Conduct periodic reviews of alternate work site security compliance"
+    console_path: "Warlock > Physical Security > Alternate Work Sites"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.10.6 -- Alternate Work Site"
+      - "CMMC Assessment Guide: PE.L2-3.10.6"
+    evidence_types:
+      - "telework_agreement"
+      - "site_assessment"
+    assertion_name: "alternate_worksite_secured"
+
+  "RA.L2-3.11.1":
+    summary: "Periodically assess risk to organizational operations, assets, and individuals from CUI system operation"
+    remediation_steps:
+      - "Conduct a comprehensive risk assessment at least annually"
+      - "Identify threats and vulnerabilities specific to CUI processing environments"
+      - "Assess likelihood and impact of identified risks"
+      - "Prioritize risks and develop risk treatment plans"
+      - "Update risk assessments when significant changes occur"
+    console_path: "Warlock > Risk Assessment > Risk Analysis"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.11.1 -- Risk Assessment"
+      - "CMMC Assessment Guide: RA.L2-3.11.1"
+      - "NIST SP 800-30 Rev 1: Guide for Conducting Risk Assessments"
+    evidence_types:
+      - "risk_assessment_document"
+      - "risk_register"
+    assertion_name: "risk_assessment_current"
+
+  "RA.L2-3.11.2":
+    summary: "Scan for vulnerabilities in systems and applications periodically and when new vulnerabilities are identified"
+    remediation_steps:
+      - "Conduct authenticated vulnerability scans at least monthly"
+      - "Perform additional scans when new critical vulnerabilities are published"
+      - "Scan all CUI system components including OS, applications, and network devices"
+      - "Use updated vulnerability databases and scanning tools"
+      - "Track scan coverage to ensure all systems are included"
+    console_path: "Warlock > Vulnerability > Scanning"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.11.2 -- Vulnerability Scan"
+      - "CMMC Assessment Guide: RA.L2-3.11.2"
+    evidence_types:
+      - "vulnerability_scan"
+      - "scan_coverage_report"
+    assertion_name: "vulnerability_scanning_current"
+
+  "RA.L2-3.11.3":
+    summary: "Remediate vulnerabilities in accordance with risk assessments within defined timeframes"
+    remediation_steps:
+      - "Prioritize vulnerability remediation based on severity, exploitability, and CUI impact"
+      - "Remediate critical vulnerabilities within 15 days and high vulnerabilities within 30 days"
+      - "Track remediation progress through a formal POA&M process"
+      - "Verify remediation through re-scanning"
+      - "Document risk acceptance for vulnerabilities that cannot be remediated within timelines"
+    console_path: "Warlock > Vulnerability > Remediation"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.11.3 -- Vulnerability Remediation"
+      - "CMMC Assessment Guide: RA.L2-3.11.3"
+    evidence_types:
+      - "remediation_report"
+      - "poam_document"
+    assertion_name: "vulnerability_remediation_tracked"
+
+  "CA.L2-3.12.1":
+    summary: "Periodically assess security controls to determine if they are effective in their application"
+    remediation_steps:
+      - "Conduct annual security control assessments per NIST SP 800-171A"
+      - "Use a combination of automated and manual assessment methods"
+      - "Document assessment findings with evidence of control effectiveness"
+      - "Track deficiencies in a POA&M with defined remediation milestones"
+      - "Engage independent assessors for objectivity when possible"
+    console_path: "Warlock > Compliance > Security Assessment"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.12.1 -- Security Control Assessment"
+      - "CMMC Assessment Guide: CA.L2-3.12.1"
+      - "NIST SP 800-171A: Assessing Security Requirements"
+    evidence_types:
+      - "assessment_report"
+      - "poam_document"
+    assertion_name: "security_assessment_current"
+
+  "CA.L2-3.12.2":
+    summary: "Develop and implement plans of action to correct deficiencies and reduce vulnerabilities"
+    remediation_steps:
+      - "Create POA&M entries for all identified deficiencies and vulnerabilities"
+      - "Assign responsible parties and define remediation milestones with target dates"
+      - "Prioritize POA&M items based on risk severity and exploitability"
+      - "Review POA&M progress monthly and update status"
+      - "Close POA&M items only after verification of effective remediation"
+    console_path: "Warlock > Compliance > POA&M"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.12.2 -- Plan of Action"
+      - "CMMC Assessment Guide: CA.L2-3.12.2"
+    evidence_types:
+      - "poam_document"
+      - "remediation_evidence"
+    assertion_name: "poam_current"
+
+  "CA.L2-3.12.3":
+    summary: "Monitor security controls on an ongoing basis to ensure continued effectiveness"
+    remediation_steps:
+      - "Implement continuous monitoring using cloud-native tools (Security Hub, Defender, SCC)"
+      - "Configure automated compliance scanning against NIST 800-171 requirements"
+      - "Establish metrics and dashboards for security control effectiveness"
+      - "Review monitoring results monthly and investigate degradation trends"
+      - "Update monitoring strategy based on threat landscape changes"
+    console_path: "Warlock > Compliance > Continuous Monitoring"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.12.3 -- Security Control Monitoring"
+      - "CMMC Assessment Guide: CA.L2-3.12.3"
+      - "NIST SP 800-137: Information Security Continuous Monitoring"
+    evidence_types:
+      - "monitoring_report"
+      - "compliance_dashboard"
+    assertion_name: "continuous_monitoring_active"
+
+  "CA.L2-3.12.4":
+    summary: "Develop, document, and periodically update system security plans"
+    remediation_steps:
+      - "Develop a System Security Plan (SSP) describing the CUI environment and security controls"
+      - "Include system boundaries, interconnections, and data flow diagrams"
+      - "Document how each NIST 800-171 requirement is implemented"
+      - "Review and update the SSP at least annually"
+      - "Distribute the SSP to relevant stakeholders and maintain version control"
+    console_path: "Warlock > Compliance > System Security Plan"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.12.4 -- System Security Plan"
+      - "CMMC Assessment Guide: CA.L2-3.12.4"
+    evidence_types:
+      - "system_security_plan"
+      - "policy_document"
+    assertion_name: "system_security_plan_current"
+
+  "SC.L2-3.13.1":
+    summary: "Monitor, control, and protect communications at external and key internal boundaries"
+    remediation_steps:
+      - "Deploy firewalls at all external network boundaries"
+      - "Implement IDS/IPS at boundary points to detect and prevent attacks"
+      - "Configure security groups and NACLs with default-deny policies"
+      - "Enable network flow logging at all boundary points"
+      - "Review boundary protection rules quarterly and remove unnecessary rules"
+    console_path: "Warlock > Network > Boundary Protection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.1 -- Boundary Protection"
+      - "CMMC Assessment Guide: SC.L2-3.13.1"
+    evidence_types:
+      - "firewall_configuration"
+      - "network_diagram"
+    assertion_name: "boundary_protection_active"
+
+  "SC.L2-3.13.2":
+    summary: "Employ architectural designs and engineering principles that promote effective information security"
+    remediation_steps:
+      - "Design network architecture with CUI environment segmentation"
+      - "Implement defense-in-depth with multiple security layers"
+      - "Separate CUI processing from general-purpose computing environments"
+      - "Document network architecture and security zones"
+      - "Review architecture against security principles during significant changes"
+    console_path: "Warlock > Network > Security Architecture"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.2 -- Security Architecture"
+      - "CMMC Assessment Guide: SC.L2-3.13.2"
+    evidence_types:
+      - "network_diagram"
+      - "architecture_review"
+    assertion_name: "security_architecture_documented"
+
+  "SC.L2-3.13.3":
+    summary: "Separate user functionality from system management functionality"
+    remediation_steps:
+      - "Implement separate management network or VLAN for administrative access"
+      - "Restrict management interfaces from end-user networks"
+      - "Use dedicated management workstations for system administration"
+      - "Configure application layer separation between user and management functions"
+      - "Verify separation through network scanning and penetration testing"
+    console_path: "Warlock > Network > Management Plane Separation"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.3 -- User-Management Separation"
+      - "CMMC Assessment Guide: SC.L2-3.13.3"
+    evidence_types:
+      - "network_configuration"
+      - "security_test_result"
+    assertion_name: "management_plane_separated"
+
+  "SC.L2-3.13.4":
+    summary: "Prevent unauthorized and unintended information transfer via shared system resources"
+    remediation_steps:
+      - "Implement memory and storage isolation between user sessions"
+      - "Configure shared resources to clear data between user access sessions"
+      - "Use separate virtual environments for different security classification levels"
+      - "Verify resource isolation through technical testing"
+      - "Document shared resource protections and test annually"
+    console_path: "Warlock > Infrastructure > Resource Isolation"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.4 -- Shared Resources"
+      - "CMMC Assessment Guide: SC.L2-3.13.4"
+    evidence_types:
+      - "configuration_snapshot"
+      - "technical_test_result"
+    assertion_name: "shared_resources_isolated"
+
+  "SC.L2-3.13.5":
+    summary: "Implement a default-deny network policy allowing traffic only by exception"
+    remediation_steps:
+      - "Configure all firewalls and security groups with explicit deny-all default rules"
+      - "Add specific allow rules only for documented and approved traffic flows"
+      - "Implement egress filtering to restrict outbound connections"
+      - "Review and document each permitted traffic flow with business justification"
+      - "Audit firewall rules quarterly and remove unnecessary allow rules"
+    console_path: "Warlock > Network > Default-Deny Policy"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.5 -- Default-Deny"
+      - "CMMC Assessment Guide: SC.L2-3.13.5"
+    evidence_types:
+      - "firewall_configuration"
+      - "traffic_flow_documentation"
+    assertion_name: "default_deny_enforced"
+
+  "SC.L2-3.13.6":
+    summary: "Deny network communications traffic by default and allow only by exception at managed interfaces"
+    remediation_steps:
+      - "Apply default-deny posture on all managed network interfaces"
+      - "Document each permitted traffic flow through managed interfaces"
+      - "Implement automated compliance checks for firewall rule consistency"
+      - "Alert on new allow rules added without approval"
+      - "Review managed interface rules monthly"
+    console_path: "Warlock > Network > Managed Interface Policy"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.6 -- Network Denial by Default"
+      - "CMMC Assessment Guide: SC.L2-3.13.6"
+    evidence_types:
+      - "firewall_configuration"
+      - "interface_documentation"
+    assertion_name: "managed_interface_deny_default"
+
+  "SC.L2-3.13.7":
+    summary: "Prevent split tunneling for remote devices connected to organizational systems"
+    remediation_steps:
+      - "Configure VPN clients to route all traffic through the organizational network (no split tunneling)"
+      - "Implement VPN policies that enforce full tunnel mode"
+      - "Monitor for split-tunnel configurations and alert on violations"
+      - "Test VPN configurations to verify split tunneling is prevented"
+      - "Document split-tunneling prohibition in the remote access policy"
+    console_path: "Warlock > Network > Split Tunneling Prevention"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.7 -- Split Tunneling"
+      - "CMMC Assessment Guide: SC.L2-3.13.7"
+    evidence_types:
+      - "vpn_configuration"
+      - "policy_document"
+    assertion_name: "split_tunneling_prevented"
+
+  "SC.L2-3.13.8":
+    summary: "Implement cryptographic mechanisms to prevent unauthorized disclosure of CUI during transmission"
+    remediation_steps:
+      - "Enforce TLS 1.2+ for all CUI data in transit"
+      - "Configure IPsec VPN for site-to-site CUI data transmission"
+      - "Disable weak cipher suites and legacy protocols"
+      - "Use FIPS-validated cryptographic modules for transmission encryption"
+      - "Test encryption configurations through security scanning and penetration testing"
+    console_path: "Warlock > Encryption > Data in Transit"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.8 -- Transmission Confidentiality"
+      - "CMMC Assessment Guide: SC.L2-3.13.8"
+    evidence_types:
+      - "encryption_configuration"
+      - "security_scan_result"
+    assertion_name: "transmission_encryption_enforced"
+
+  "SC.L2-3.13.9":
+    summary: "Terminate network connections at the end of sessions or after a defined period of inactivity"
+    remediation_steps:
+      - "Configure idle timeout on all network connections (VPN, SSH, web sessions)"
+      - "Set maximum session duration limits for long-running connections"
+      - "Implement session termination on network devices and application servers"
+      - "Monitor for sessions exceeding configured timeouts"
+      - "Test session termination behavior to verify proper cleanup"
+    console_path: "Warlock > Network > Session Termination"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.9 -- Network Disconnection"
+      - "CMMC Assessment Guide: SC.L2-3.13.9"
+    evidence_types:
+      - "network_configuration"
+      - "session_policy"
+    assertion_name: "network_sessions_terminated"
+
+  "SC.L2-3.13.10":
+    summary: "Establish and manage cryptographic keys for cryptography employed in organizational systems"
+    remediation_steps:
+      - "Implement key management using cloud KMS or hardware security modules (HSMs)"
+      - "Define key lifecycle procedures (generation, distribution, storage, rotation, destruction)"
+      - "Configure automatic key rotation on an annual schedule"
+      - "Restrict key management access to authorized security administrators"
+      - "Audit key management activities and usage patterns"
+    console_path: "Warlock > Encryption > Key Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.10 -- Cryptographic Key Management"
+      - "CMMC Assessment Guide: SC.L2-3.13.10"
+      - "NIST SP 800-57 Part 1: Recommendations for Key Management"
+    evidence_types:
+      - "key_management_configuration"
+      - "key_rotation_report"
+    assertion_name: "key_management_established"
+
+  "SC.L2-3.13.11":
+    summary: "Employ FIPS-validated cryptography when used to protect the confidentiality of CUI"
+    remediation_steps:
+      - "Identify all cryptographic implementations protecting CUI"
+      - "Verify each cryptographic module has a current FIPS 140-2 or 140-3 validation certificate"
+      - "Replace non-FIPS-validated modules with validated alternatives"
+      - "Enable FIPS mode on operating systems and applications where supported"
+      - "Document FIPS compliance status for all cryptographic implementations"
+    console_path: "Warlock > Encryption > FIPS Compliance"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.11 -- FIPS-Validated Cryptography"
+      - "CMMC Assessment Guide: SC.L2-3.13.11"
+      - "NIST CMVP: Validated Modules List"
+    evidence_types:
+      - "fips_validation_record"
+      - "encryption_configuration"
+    assertion_name: "fips_cryptography_enforced"
+
+  "SC.L2-3.13.12":
+    summary: "Prohibit remote activation of collaborative computing devices and provide usage indication"
+    remediation_steps:
+      - "Disable remote activation of cameras and microphones by default"
+      - "Implement physical or visual indicators when cameras and microphones are active"
+      - "Configure endpoint policies to prevent remote webcam or microphone activation"
+      - "Provide physical camera covers for devices in CUI processing areas"
+      - "Monitor for unauthorized remote device activation attempts"
+    console_path: "Warlock > Endpoint > Collaborative Device Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.12 -- Collaborative Computing Devices"
+      - "CMMC Assessment Guide: SC.L2-3.13.12"
+    evidence_types:
+      - "endpoint_configuration"
+      - "device_policy"
+    assertion_name: "collaborative_devices_controlled"
+
+  "SC.L2-3.13.13":
+    summary: "Control and monitor the use of mobile code"
+    remediation_steps:
+      - "Define acceptable and unacceptable mobile code technologies"
+      - "Implement browser and endpoint controls to restrict unauthorized mobile code execution"
+      - "Block macro execution in Office documents by default"
+      - "Monitor for mobile code execution and alert on policy violations"
+      - "Review mobile code policies annually based on threat intelligence"
+    console_path: "Warlock > Endpoint > Mobile Code Control"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.13 -- Mobile Code"
+      - "CMMC Assessment Guide: SC.L2-3.13.13"
+    evidence_types:
+      - "endpoint_configuration"
+      - "policy_document"
+    assertion_name: "mobile_code_controlled"
+
+  "SC.L2-3.13.14":
+    summary: "Control and monitor the use of Voice over Internet Protocol (VoIP) technologies"
+    remediation_steps:
+      - "Establish VoIP usage policies and restrictions for CUI communications"
+      - "Encrypt VoIP traffic using SRTP or equivalent protocols"
+      - "Segment VoIP traffic from data networks using VLANs"
+      - "Monitor VoIP systems for unauthorized use and eavesdropping attempts"
+      - "Restrict VoIP to approved platforms and providers"
+    console_path: "Warlock > Network > VoIP Security"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.14 -- VoIP"
+      - "CMMC Assessment Guide: SC.L2-3.13.14"
+    evidence_types:
+      - "voip_configuration"
+      - "network_configuration"
+    assertion_name: "voip_controlled"
+
+  "SC.L2-3.13.15":
+    summary: "Protect the authenticity of communications sessions"
+    remediation_steps:
+      - "Implement TLS with mutual authentication for sensitive communications"
+      - "Use digital signatures and message authentication codes for critical data exchanges"
+      - "Configure certificate validation and revocation checking (OCSP, CRL)"
+      - "Prevent session hijacking through secure session token management"
+      - "Test session authentication through security assessments"
+    console_path: "Warlock > Network > Session Authenticity"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.15 -- Session Authenticity"
+      - "CMMC Assessment Guide: SC.L2-3.13.15"
+    evidence_types:
+      - "tls_configuration"
+      - "security_test_result"
+    assertion_name: "session_authenticity_protected"
+
+  "SC.L2-3.13.16":
+    summary: "Protect the confidentiality of CUI at rest using encryption"
+    remediation_steps:
+      - "Encrypt all CUI at rest using AES-256 with FIPS-validated modules"
+      - "Enable encryption on all storage services (S3, EBS, RDS, Azure Storage, GCS)"
+      - "Implement full-disk encryption on all endpoints accessing CUI"
+      - "Manage encryption keys through a dedicated KMS with rotation"
+      - "Scan for unencrypted CUI storage and remediate within 30 days"
+    console_path: "Warlock > Encryption > Data at Rest"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.13.16 -- Data at Rest Confidentiality"
+      - "CMMC Assessment Guide: SC.L2-3.13.16"
+    evidence_types:
+      - "encryption_configuration"
+      - "compliance_scan_report"
+    assertion_name: "encryption_at_rest_enforced"
+
+  "SI.L2-3.14.1":
+    summary: "Identify, report, and correct system flaws in a timely manner through patch management"
+    remediation_steps:
+      - "Establish a patch management process with severity-based timelines"
+      - "Identify applicable patches within 48 hours of release"
+      - "Apply critical patches within 15 days and high patches within 30 days"
+      - "Test patches in staging environments before production deployment"
+      - "Monitor patch compliance and report status to management"
+    console_path: "Warlock > Vulnerability > Patch Management"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.1 -- Flaw Remediation"
+      - "CMMC Assessment Guide: SI.L2-3.14.1"
+    evidence_types:
+      - "patch_report"
+      - "vulnerability_scan"
+    assertion_name: "patch_management_current"
+
+  "SI.L2-3.14.2":
+    summary: "Provide protection from malicious code at designated locations within organizational systems"
+    remediation_steps:
+      - "Deploy EDR/anti-malware on all endpoints and servers in the CUI environment"
+      - "Configure real-time scanning with automatic quarantine of detected threats"
+      - "Enable email filtering and web gateway scanning for malicious content"
+      - "Monitor EDR coverage to ensure 100% deployment across CUI systems"
+      - "Review and respond to malware detections within defined SLAs"
+    console_path: "Warlock > Endpoint > Malware Protection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.2 -- Malicious Code Protection"
+      - "CMMC Assessment Guide: SI.L2-3.14.2"
+    evidence_types:
+      - "endpoint_protection_report"
+      - "malware_detection_log"
+    assertion_name: "malware_protection_deployed"
+
+  "SI.L2-3.14.3":
+    summary: "Monitor system security alerts and advisories and take action in response"
+    remediation_steps:
+      - "Subscribe to CISA alerts, NVD feeds, and vendor security advisories"
+      - "Assess advisory applicability to CUI systems within 48 hours of publication"
+      - "Implement recommended mitigations within defined severity-based timelines"
+      - "Document assessment and response for each applicable advisory"
+      - "Track advisory responses and report compliance to management"
+    console_path: "Warlock > Vulnerability > Advisory Monitoring"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.3 -- Security Alert Monitoring"
+      - "CMMC Assessment Guide: SI.L2-3.14.3"
+    evidence_types:
+      - "advisory_response_log"
+      - "mitigation_record"
+    assertion_name: "security_advisories_monitored"
+
+  "SI.L2-3.14.4":
+    summary: "Update malicious code protection mechanisms when new releases are available"
+    remediation_steps:
+      - "Configure anti-malware tools for automatic signature and engine updates"
+      - "Verify update deployment across all protected systems daily"
+      - "Monitor for systems with outdated definitions and remediate immediately"
+      - "Test anti-malware effectiveness through periodic EICAR or controlled testing"
+      - "Alert on systems that fail to update signatures within 24 hours"
+    console_path: "Warlock > Endpoint > Signature Updates"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.4 -- Malicious Code Updates"
+      - "CMMC Assessment Guide: SI.L2-3.14.4"
+    evidence_types:
+      - "signature_update_report"
+      - "endpoint_compliance_report"
+    assertion_name: "malware_signatures_current"
+
+  "SI.L2-3.14.5":
+    summary: "Perform periodic full system scans and real-time scans of files from external sources"
+    remediation_steps:
+      - "Schedule weekly full system scans on all CUI endpoints and servers"
+      - "Enable on-access scanning for all file operations (download, open, execute)"
+      - "Configure scanning of email attachments and web downloads"
+      - "Monitor scan completion and investigate endpoints that miss scheduled scans"
+      - "Review scan results and escalate persistent detections"
+    console_path: "Warlock > Endpoint > Scan Schedule"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.5 -- System Scanning"
+      - "CMMC Assessment Guide: SI.L2-3.14.5"
+    evidence_types:
+      - "scan_schedule_config"
+      - "scan_completion_report"
+    assertion_name: "system_scanning_active"
+
+  "SI.L2-3.14.6":
+    summary: "Monitor organizational systems including inbound and outbound communications to detect attacks"
+    remediation_steps:
+      - "Deploy network IDS/IPS (GuardDuty, Azure Firewall, Suricata) at boundary points"
+      - "Implement SIEM with detection rules for known attack patterns"
+      - "Monitor inbound and outbound traffic for indicators of compromise"
+      - "Configure alerting for detected attacks with defined response procedures"
+      - "Review detection coverage monthly and update rules based on threat intelligence"
+    console_path: "Warlock > Monitoring > Network Detection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.6 -- Communications Monitoring"
+      - "CMMC Assessment Guide: SI.L2-3.14.6"
+    evidence_types:
+      - "ids_configuration"
+      - "detection_rule_inventory"
+    assertion_name: "network_monitoring_active"
+
+  "SI.L2-3.14.7":
+    summary: "Identify unauthorized use of organizational systems"
+    remediation_steps:
+      - "Implement user behavior analytics (UBA) to detect anomalous activity"
+      - "Monitor for unauthorized software execution on CUI systems"
+      - "Detect and alert on access from unauthorized devices or locations"
+      - "Investigate detected unauthorized use within defined response times"
+      - "Document all unauthorized use findings and corrective actions"
+    console_path: "Warlock > Monitoring > Unauthorized Use Detection"
+    recommended_reading:
+      - "NIST SP 800-171 Rev 2: 3.14.7 -- Unauthorized Use Detection"
+      - "CMMC Assessment Guide: SI.L2-3.14.7"
+    evidence_types:
+      - "monitoring_alert"
+      - "investigation_record"
+    assertion_name: "unauthorized_use_detected"

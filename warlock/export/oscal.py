@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -494,27 +496,49 @@ class OscalExporter:
             ctrl_details.setdefault(oscal_ctrl, []).append(cr)
             ctrl_original_ids[oscal_ctrl] = cr.control_id
 
+        # --- Parallel AI narrative generation (#6) ---
+        # Pre-fetch all AI narratives concurrently using a thread pool with
+        # max_workers=10.  A semaphore prevents more than 10 in-flight LLM
+        # requests at once.  Individual failures are caught per-control so
+        # one slow or broken control never blocks the rest.
+        ai_narratives: dict[str, Any] = {}  # ctrl_id -> narrative or None
+        if narrator is not None:
+            from warlock.assessors.ai_narrator import aggregate_control_evidence
+
+            _sem = threading.Semaphore(10)
+            sorted_ctrl_ids = sorted(ctrl_statuses.keys())
+
+            def _fetch_narrative(ctrl_id: str) -> tuple[str, Any]:
+                original_ctrl = ctrl_original_ids.get(ctrl_id, ctrl_id)
+                with _sem:
+                    try:
+                        evidence = aggregate_control_evidence(session, framework, original_ctrl)
+                        if not evidence.findings:
+                            return ctrl_id, None
+                        narrative = narrator.generate_implementation(evidence)
+                        log.info(
+                            "AI narrative generated for %s/%s (confidence=%.2f)",
+                            framework, original_ctrl, narrative.confidence,
+                        )
+                        return ctrl_id, narrative
+                    except Exception:
+                        log.exception("AI narrative failed for %s/%s", framework, original_ctrl)
+                        return ctrl_id, None
+
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = {executor.submit(_fetch_narrative, cid): cid for cid in sorted_ctrl_ids}
+                for future in as_completed(futures):
+                    cid, narrative = future.result()
+                    ai_narratives[cid] = narrative
+
         implemented_requirements: list[dict[str, Any]] = []
         for ctrl_id in sorted(ctrl_statuses.keys()):
             statuses = ctrl_statuses[ctrl_id]
             crs = ctrl_details[ctrl_id]
             agg_status = self._aggregate_impl_status(statuses)
-            original_ctrl = ctrl_original_ids.get(ctrl_id, ctrl_id)
 
-            # --- AI narrative generation (if narrator available) ---
-            ai_narrative = None
-            if narrator is not None:
-                try:
-                    from warlock.assessors.ai_narrator import aggregate_control_evidence
-                    evidence = aggregate_control_evidence(session, framework, original_ctrl)
-                    if evidence.findings:
-                        ai_narrative = narrator.generate_implementation(evidence)
-                        log.info(
-                            "AI narrative generated for %s/%s (confidence=%.2f)",
-                            framework, original_ctrl, ai_narrative.confidence,
-                        )
-                except Exception:
-                    log.exception("AI narrative failed for %s/%s", framework, original_ctrl)
+            # Retrieve pre-fetched narrative (None if narrator unavailable or failed)
+            ai_narrative = ai_narratives.get(ctrl_id) if narrator is not None else None
 
             # Build the implementation description
             if ai_narrative and ai_narrative.narrative:

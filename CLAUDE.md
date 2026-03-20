@@ -98,7 +98,7 @@ Must complete with 40 connectors succeeded, 0 failed.
 opa check policies/ && opa test policies/
 ```
 
-All 631+ tests must pass.
+All 666+ OPA tests must pass.
 
 ### Step 5: Terraform validation
 
@@ -260,7 +260,7 @@ warlock/
   frameworks/    — 10 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
 tests/           — 190 pytest tests (9 files)
-policies/        — 616 OPA/Rego files (631 tests) across 7 frameworks
+policies/        — 634 OPA/Rego files (666 tests) across 7 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 10 frameworks
 terraform/       — 5 IaC modules (AWS, Azure, GCP)
 .github/workflows/

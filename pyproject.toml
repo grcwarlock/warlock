@@ -37,6 +37,7 @@ gcp = [
     "google-cloud-compute>=1.18",
 ]
 ai = ["anthropic>=0.25", "openai>=1.30"]
+monitoring = ["prometheus-client>=0.20"]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
 
 [project.scripts]

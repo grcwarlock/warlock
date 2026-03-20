@@ -1,0 +1,671 @@
+controls:
+  "A.2.2":
+    summary: "Establish an AI policy that provides a framework for setting AI system objectives and governance principles"
+    remediation_steps:
+      - "Draft an organizational AI policy covering responsible use, governance, and risk management"
+      - "Define AI principles (fairness, transparency, accountability, safety, privacy)"
+      - "Obtain executive leadership approval and publish to all relevant stakeholders"
+      - "Align AI policy with organizational values and applicable regulations (EU AI Act, NIST AI RMF)"
+      - "Review and update the AI policy at least annually or when regulatory landscape changes"
+    console_path: "Warlock > AI Governance > AI Policy"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.2.2 -- AI Policy"
+      - "NIST AI RMF 1.0: Govern Function"
+      - "OECD AI Principles"
+    evidence_types:
+      - "policy_document"
+      - "policy_approval_record"
+    assertion_name: "ai_policy_current"
+
+  "A.2.3":
+    summary: "Define internal organizational roles, responsibilities, and authorities for AI system management"
+    remediation_steps:
+      - "Define roles for AI system lifecycle management (AI owner, model owner, data steward, ethics lead)"
+      - "Document responsibilities and authorities for each role in a RACI matrix"
+      - "Assign AI governance roles to specific individuals with documented appointments"
+      - "Ensure separation of duties between AI development and AI oversight functions"
+      - "Review role assignments quarterly and update when personnel changes occur"
+    console_path: "Warlock > AI Governance > Roles and Responsibilities"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.2.3 -- Internal Organization"
+      - "NIST AI RMF 1.0: Govern 1 -- Roles and Responsibilities"
+    evidence_types:
+      - "organizational_chart"
+      - "raci_matrix"
+    assertion_name: "ai_roles_defined"
+
+  "A.2.4":
+    summary: "Establish policies for AI system lifecycle management from development through retirement"
+    remediation_steps:
+      - "Define lifecycle stages for AI systems (design, development, testing, deployment, monitoring, retirement)"
+      - "Document policies governing each lifecycle stage including approval gates"
+      - "Establish criteria for transitioning AI systems between lifecycle stages"
+      - "Include model versioning and change management requirements"
+      - "Review lifecycle policies annually and after major AI incidents"
+    console_path: "Warlock > AI Governance > Lifecycle Policy"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.2.4 -- AI System Lifecycle"
+      - "NIST AI RMF 1.0: Map Function"
+      - "ISO/IEC 22989:2022 -- AI Concepts and Terminology"
+    evidence_types:
+      - "policy_document"
+      - "lifecycle_documentation"
+    assertion_name: "ai_lifecycle_policy_current"
+
+  "A.3.2":
+    summary: "Define and communicate roles, responsibilities, and authorities for AI management system"
+    remediation_steps:
+      - "Document AI system access roles with corresponding privilege levels"
+      - "Implement RBAC for AI platforms, model registries, and data repositories"
+      - "Ensure AI model deployment requires multi-party approval"
+      - "Map AI roles to identity management system (Okta, Entra ID, SailPoint)"
+      - "Conduct periodic access reviews for AI system roles and entitlements"
+    console_path: "Warlock > AI Governance > Access Roles"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.3.2 -- Roles and Responsibilities"
+      - "NIST AI RMF 1.0: Govern 2 -- Accountability"
+    evidence_types:
+      - "role_definition"
+      - "access_review_report"
+    assertion_name: "ai_access_roles_defined"
+
+  "A.3.3":
+    summary: "Establish reporting mechanisms for AI system performance, risks, and incidents"
+    remediation_steps:
+      - "Define AI reporting requirements including metrics, frequency, and audience"
+      - "Establish dashboards for AI model performance monitoring (accuracy, drift, bias)"
+      - "Create escalation paths for AI system anomalies and failures"
+      - "Implement regular AI governance reporting to senior leadership"
+      - "Document all AI incidents and near-misses with root cause analysis"
+    console_path: "Warlock > AI Governance > Reporting"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.3.3 -- Reporting"
+      - "NIST AI RMF 1.0: Govern 3 -- Reporting"
+    evidence_types:
+      - "governance_report"
+      - "incident_record"
+    assertion_name: "ai_reporting_established"
+
+  "A.4.2":
+    summary: "Determine and provide resources needed for the AI management system"
+    remediation_steps:
+      - "Assess resource requirements for AI system development, deployment, and monitoring"
+      - "Allocate budget for AI governance, ethics review, and compliance activities"
+      - "Ensure adequate compute, storage, and tooling resources for AI operations"
+      - "Staff AI teams with appropriate skills and experience levels"
+      - "Review resource adequacy quarterly and adjust based on AI system portfolio changes"
+    console_path: "Warlock > AI Governance > Resource Planning"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.4.2 -- Resources"
+      - "NIST AI RMF 1.0: Govern 1.2 -- Organizational Resources"
+    evidence_types:
+      - "resource_plan"
+      - "budget_allocation"
+    assertion_name: "ai_resources_adequate"
+
+  "A.4.3":
+    summary: "Determine necessary competence for personnel involved in AI system management"
+    remediation_steps:
+      - "Define competency requirements for each AI-related role (data science, ML ops, AI ethics)"
+      - "Assess current team competencies against requirements and identify gaps"
+      - "Provide training on AI ethics, responsible AI practices, and regulatory requirements"
+      - "Require AI-specific certifications or continuing education for key roles"
+      - "Evaluate competency annually through skills assessments and performance reviews"
+    console_path: "Warlock > AI Governance > Competence"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.4.3 -- Competence"
+      - "NIST AI RMF 1.0: Govern 1.3 -- Workforce Diversity and Competency"
+    evidence_types:
+      - "competency_assessment"
+      - "training_record"
+    assertion_name: "ai_competence_assessed"
+
+  "A.4.4":
+    summary: "Ensure personnel are aware of the AI policy, their contribution to AI management, and implications of non-conformity"
+    remediation_steps:
+      - "Include AI policy awareness in onboarding for all personnel working with AI systems"
+      - "Conduct annual AI awareness training covering organizational AI policy and principles"
+      - "Communicate consequences of AI policy violations and non-conformity"
+      - "Distribute AI governance updates when policies or procedures change"
+      - "Track awareness training completion and maintain records"
+    console_path: "Warlock > AI Governance > Awareness"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.4.4 -- Awareness"
+      - "NIST AI RMF 1.0: Govern 4 -- Organizational Culture"
+    evidence_types:
+      - "training_completion_record"
+      - "awareness_material"
+    assertion_name: "ai_awareness_current"
+
+  "A.4.5":
+    summary: "Establish internal and external communication processes relevant to the AI management system"
+    remediation_steps:
+      - "Define communication channels for AI governance (internal reports, stakeholder updates)"
+      - "Establish procedures for communicating AI system changes to affected parties"
+      - "Create communication templates for AI incident notification"
+      - "Implement mechanisms for stakeholders to provide feedback on AI systems"
+      - "Document and maintain records of AI-related communications"
+    console_path: "Warlock > AI Governance > Communications"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.4.5 -- Communication"
+      - "NIST AI RMF 1.0: Govern 5 -- Stakeholder Engagement"
+    evidence_types:
+      - "communication_plan"
+      - "stakeholder_register"
+    assertion_name: "ai_communication_established"
+
+  "A.4.6":
+    summary: "Determine and document tools and frameworks used in AI system development and deployment"
+    remediation_steps:
+      - "Inventory all AI/ML tools, frameworks, and platforms in use (TensorFlow, PyTorch, SageMaker, etc.)"
+      - "Evaluate tools against organizational security and compliance requirements"
+      - "Establish approved tool and framework lists for AI development"
+      - "Document tool selection criteria including bias detection capabilities"
+      - "Review tool inventory quarterly and assess new tools before adoption"
+    console_path: "Warlock > AI Governance > Tools and Frameworks"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.4.6 -- Tools and Frameworks"
+      - "NIST AI RMF 1.0: Map 2 -- AI Technology and Resources"
+    evidence_types:
+      - "tool_inventory"
+      - "evaluation_record"
+    assertion_name: "ai_tools_documented"
+
+  "A.5.2":
+    summary: "Conduct AI system impact assessments to identify risks and benefits"
+    remediation_steps:
+      - "Develop an AI impact assessment methodology covering fairness, safety, privacy, and societal impact"
+      - "Conduct impact assessments before deploying new AI systems or significant updates"
+      - "Assess potential for bias, discrimination, and unintended consequences"
+      - "Evaluate impact on affected individuals and communities"
+      - "Document assessment findings and required mitigation measures"
+    console_path: "Warlock > AI Governance > Impact Assessment"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.5.2 -- AI System Impact Assessment"
+      - "NIST AI RMF 1.0: Map 5 -- Impact Assessment"
+      - "OECD Framework for Classifying AI Systems"
+    evidence_types:
+      - "impact_assessment"
+      - "risk_assessment_document"
+    assertion_name: "ai_impact_assessed"
+
+  "A.5.3":
+    summary: "Document AI system impact assessments with findings, risk levels, and mitigation plans"
+    remediation_steps:
+      - "Create standardized templates for AI impact assessment documentation"
+      - "Record all identified risks with severity ratings and likelihood estimates"
+      - "Document mitigation measures for each identified risk"
+      - "Maintain traceability between risks and implemented controls"
+      - "Archive impact assessment documents with version control"
+    console_path: "Warlock > AI Governance > Impact Documentation"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.5.3 -- Impact Assessment Documentation"
+      - "NIST AI RMF 1.0: Map 5 -- Documentation Requirements"
+    evidence_types:
+      - "impact_assessment"
+      - "risk_register"
+    assertion_name: "ai_impact_documented"
+
+  "A.5.4":
+    summary: "Monitor AI system impacts on an ongoing basis and respond to changes"
+    remediation_steps:
+      - "Implement continuous monitoring for AI model performance and drift detection"
+      - "Configure alerts for model accuracy degradation, bias drift, and anomalous outputs"
+      - "Establish thresholds that trigger re-assessment of AI system impacts"
+      - "Conduct periodic re-evaluation of AI system impacts (at minimum quarterly)"
+      - "Document monitoring results and actions taken in response to detected changes"
+    console_path: "Warlock > AI Governance > Impact Monitoring"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.5.4 -- Ongoing Impact Monitoring"
+      - "NIST AI RMF 1.0: Measure Function"
+    evidence_types:
+      - "monitoring_report"
+      - "alert_record"
+    assertion_name: "ai_impact_monitoring_active"
+
+  "A.6.1.2":
+    summary: "Establish responsible AI principles that guide AI system development and use"
+    remediation_steps:
+      - "Define organizational responsible AI principles (fairness, transparency, safety, accountability)"
+      - "Align principles with international standards and guidelines (OECD, UNESCO, EU AI Act)"
+      - "Embed responsible AI principles into development processes and review gates"
+      - "Establish an AI ethics review board or committee to oversee principle adherence"
+      - "Publish responsible AI principles externally and report on adherence annually"
+    console_path: "Warlock > AI Governance > Responsible AI Principles"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.1.2 -- Responsible AI Principles"
+      - "NIST AI RMF 1.0: Govern 1.1 -- Policies and Procedures"
+      - "OECD AI Principles"
+    evidence_types:
+      - "policy_document"
+      - "ethics_review_record"
+    assertion_name: "responsible_ai_principles_defined"
+
+  "A.6.1.3":
+    summary: "Define objectives for each AI system aligned with organizational goals and responsible AI principles"
+    remediation_steps:
+      - "Document the intended purpose and objectives for each AI system"
+      - "Align AI system objectives with organizational strategy and responsible AI principles"
+      - "Define measurable success criteria for each AI system"
+      - "Identify and document constraints, limitations, and boundaries for AI system behavior"
+      - "Review AI system objectives periodically and update based on operational experience"
+    console_path: "Warlock > AI Governance > System Objectives"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.1.3 -- AI System Objectives"
+      - "NIST AI RMF 1.0: Map 1 -- Context and Purpose"
+    evidence_types:
+      - "system_documentation"
+      - "objectives_document"
+    assertion_name: "ai_objectives_defined"
+
+  "A.6.2.2":
+    summary: "Define requirements for AI systems including functional, performance, fairness, and safety requirements"
+    remediation_steps:
+      - "Document functional requirements including expected inputs, outputs, and behavior"
+      - "Define performance requirements (accuracy, latency, throughput) with acceptance thresholds"
+      - "Specify fairness requirements including protected attributes and acceptable bias levels"
+      - "Define safety requirements and failure mode behavior"
+      - "Obtain stakeholder sign-off on requirements before development begins"
+    console_path: "Warlock > AI Governance > System Requirements"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.2 -- AI System Requirements"
+      - "NIST AI RMF 1.0: Map 2 -- Requirements"
+      - "ISO/IEC 25010:2023 -- System and Software Quality"
+    evidence_types:
+      - "requirements_document"
+      - "sign_off_record"
+    assertion_name: "ai_requirements_documented"
+
+  "A.6.2.3":
+    summary: "Verify and validate AI systems against defined requirements and objectives"
+    remediation_steps:
+      - "Establish verification and validation (V&V) procedures for AI systems"
+      - "Conduct functional testing against defined requirements"
+      - "Perform bias testing and fairness validation across protected attributes"
+      - "Validate model performance on representative holdout datasets"
+      - "Document V&V results and obtain approval before deployment"
+    console_path: "Warlock > AI Governance > Verification and Validation"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.3 -- Verification and Validation"
+      - "NIST AI RMF 1.0: Measure 2 -- AI System Evaluation"
+    evidence_types:
+      - "test_report"
+      - "validation_record"
+    assertion_name: "ai_verification_completed"
+
+  "A.6.2.4":
+    summary: "Document AI system design and development decisions including architecture, algorithms, and data choices"
+    remediation_steps:
+      - "Maintain design documentation covering system architecture and component interactions"
+      - "Document algorithm selection rationale and alternatives considered"
+      - "Record hyperparameter choices, training configurations, and optimization decisions"
+      - "Document known limitations and failure modes of the chosen approach"
+      - "Version control all design and development documentation alongside code"
+    console_path: "Warlock > AI Governance > Design Documentation"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.4 -- Design and Development Documentation"
+      - "NIST AI RMF 1.0: Map 3 -- AI System Documentation"
+    evidence_types:
+      - "design_document"
+      - "architecture_record"
+    assertion_name: "ai_design_documented"
+
+  "A.6.2.5":
+    summary: "Manage data used in AI systems throughout its lifecycle including collection, storage, and disposal"
+    remediation_steps:
+      - "Implement data governance policies specific to AI training and evaluation data"
+      - "Classify and label all AI datasets by sensitivity, source, and authorized use"
+      - "Encrypt AI data at rest and in transit using appropriate cryptographic controls"
+      - "Implement access controls limiting AI data access to authorized personnel and processes"
+      - "Define retention and disposal procedures for AI datasets"
+    console_path: "Warlock > AI Governance > Data Management"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.5 -- AI Data Management"
+      - "NIST AI RMF 1.0: Map 2.3 -- Data and Input"
+    evidence_types:
+      - "data_governance_policy"
+      - "data_inventory"
+    assertion_name: "ai_data_managed"
+
+  "A.6.2.6":
+    summary: "Ensure AI data preparation processes maintain data quality, integrity, and representativeness"
+    remediation_steps:
+      - "Document data preparation pipelines including cleaning, transformation, and augmentation steps"
+      - "Implement data quality checks at each stage of the preparation pipeline"
+      - "Assess dataset representativeness across relevant demographic and contextual dimensions"
+      - "Validate that data preparation does not introduce or amplify bias"
+      - "Maintain data lineage records from source through prepared datasets"
+    console_path: "Warlock > AI Governance > Data Preparation"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.6 -- Data Preparation"
+      - "NIST AI RMF 1.0: Measure 2.6 -- Data Quality"
+    evidence_types:
+      - "data_preparation_record"
+      - "data_quality_report"
+    assertion_name: "ai_data_preparation_documented"
+
+  "A.6.2.7":
+    summary: "Document model selection criteria and rationale for chosen algorithms and architectures"
+    remediation_steps:
+      - "Define model selection criteria including accuracy, interpretability, fairness, and efficiency"
+      - "Evaluate multiple model candidates against selection criteria"
+      - "Document the rationale for the selected model architecture"
+      - "Assess model interpretability and explainability capabilities"
+      - "Record trade-offs considered during model selection"
+    console_path: "Warlock > AI Governance > Model Selection"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.7 -- Model Selection"
+      - "NIST AI RMF 1.0: Map 2.2 -- Model Development"
+    evidence_types:
+      - "model_evaluation_record"
+      - "selection_rationale"
+    assertion_name: "ai_model_selection_documented"
+
+  "A.6.2.8":
+    summary: "Manage model training processes ensuring reproducibility, fairness, and documentation"
+    remediation_steps:
+      - "Implement reproducible training pipelines with version-controlled code and data"
+      - "Document training hyperparameters, hardware configuration, and random seeds"
+      - "Monitor training for convergence, overfitting, and bias amplification"
+      - "Validate training data quality and representativeness before each training run"
+      - "Maintain training logs and experiment tracking for all production model versions"
+    console_path: "Warlock > AI Governance > Model Training"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.8 -- Model Training"
+      - "NIST AI RMF 1.0: Measure 2 -- Model Evaluation"
+    evidence_types:
+      - "training_log"
+      - "experiment_record"
+    assertion_name: "ai_training_documented"
+
+  "A.6.2.9":
+    summary: "Evaluate AI models against defined performance, fairness, and safety criteria before deployment"
+    remediation_steps:
+      - "Define evaluation metrics covering accuracy, fairness, robustness, and safety"
+      - "Conduct evaluation on representative holdout datasets not used during training"
+      - "Assess model performance across different demographic groups and edge cases"
+      - "Perform adversarial testing to evaluate model robustness"
+      - "Document evaluation results and obtain approval from AI governance before deployment"
+    console_path: "Warlock > AI Governance > Model Evaluation"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.9 -- Model Evaluation"
+      - "NIST AI RMF 1.0: Measure 2 -- Evaluation Metrics"
+    evidence_types:
+      - "evaluation_report"
+      - "fairness_assessment"
+    assertion_name: "ai_model_evaluated"
+
+  "A.6.2.10":
+    summary: "Test AI systems end-to-end including integration, performance, and security testing"
+    remediation_steps:
+      - "Develop a comprehensive test plan covering functional, integration, and performance testing"
+      - "Conduct security testing including input validation, injection attacks, and model extraction"
+      - "Perform load testing to verify system behavior under expected and peak conditions"
+      - "Test failure modes and graceful degradation behavior"
+      - "Document test results and obtain sign-off before production deployment"
+    console_path: "Warlock > AI Governance > System Testing"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.10 -- AI System Testing"
+      - "NIST AI RMF 1.0: Measure 3 -- Testing and Validation"
+    evidence_types:
+      - "test_report"
+      - "security_test_result"
+    assertion_name: "ai_system_tested"
+
+  "A.6.2.11":
+    summary: "Deploy AI systems with appropriate controls, monitoring, and rollback capabilities"
+    remediation_steps:
+      - "Implement staged deployment (canary, blue-green) for AI system releases"
+      - "Configure deployment monitoring for model performance and system health"
+      - "Establish automated rollback procedures triggered by performance degradation"
+      - "Enable comprehensive audit logging for all AI system operations"
+      - "Document deployment procedures and maintain deployment history"
+    console_path: "Warlock > AI Governance > System Deployment"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.11 -- AI System Deployment"
+      - "NIST AI RMF 1.0: Govern 6 -- Deployment"
+    evidence_types:
+      - "deployment_record"
+      - "configuration_snapshot"
+    assertion_name: "ai_deployment_controlled"
+
+  "A.6.2.12":
+    summary: "Monitor AI systems in production for performance drift, bias, anomalies, and incidents"
+    remediation_steps:
+      - "Implement model performance monitoring (accuracy, latency, throughput, error rates)"
+      - "Configure data drift detection to identify changes in input distribution"
+      - "Monitor for concept drift affecting model prediction quality"
+      - "Set up automated alerts for performance degradation beyond defined thresholds"
+      - "Conduct regular model retraining assessments based on monitoring data"
+    console_path: "Warlock > AI Governance > Operations Monitoring"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.12 -- AI System Operation and Monitoring"
+      - "NIST AI RMF 1.0: Measure 4 -- Monitoring in Production"
+    evidence_types:
+      - "monitoring_report"
+      - "drift_analysis"
+    assertion_name: "ai_operations_monitored"
+
+  "A.6.2.13":
+    summary: "Retire AI systems safely with data preservation, stakeholder notification, and documentation"
+    remediation_steps:
+      - "Define AI system retirement criteria and decommissioning procedures"
+      - "Notify all stakeholders and dependent systems before retirement"
+      - "Archive model artifacts, training data, and documentation per retention policies"
+      - "Safely dispose of or repurpose compute and storage resources"
+      - "Document retirement rationale, actions taken, and lessons learned"
+    console_path: "Warlock > AI Governance > System Retirement"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.6.2.13 -- AI System Retirement"
+      - "NIST AI RMF 1.0: Manage 4 -- Decommissioning"
+    evidence_types:
+      - "retirement_record"
+      - "archive_log"
+    assertion_name: "ai_retirement_documented"
+
+  "A.7.2":
+    summary: "Ensure data quality for AI systems including accuracy, completeness, consistency, and timeliness"
+    remediation_steps:
+      - "Define data quality metrics and thresholds for each AI dataset"
+      - "Implement automated data quality checks in data pipelines"
+      - "Monitor data quality continuously and alert on threshold violations"
+      - "Establish data quality remediation procedures for identified issues"
+      - "Report data quality metrics to AI governance and data stewards"
+    console_path: "Warlock > AI Governance > Data Quality"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.7.2 -- Data Quality"
+      - "NIST AI RMF 1.0: Measure 2.6 -- Data Quality"
+      - "ISO/IEC 25012:2008 -- Data Quality Model"
+    evidence_types:
+      - "data_quality_report"
+      - "quality_metrics"
+    assertion_name: "ai_data_quality_monitored"
+
+  "A.7.3":
+    summary: "Maintain data provenance records tracking origin, transformations, and ownership of AI data"
+    remediation_steps:
+      - "Implement data lineage tracking from source through all transformations"
+      - "Record data origin, collection method, and consent or legal basis"
+      - "Document all transformations applied to data with version tracking"
+      - "Maintain chain of custody for sensitive or regulated datasets"
+      - "Enable audit trail for data access, modification, and deletion events"
+    console_path: "Warlock > AI Governance > Data Provenance"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.7.3 -- Data Provenance"
+      - "NIST AI RMF 1.0: Map 2.3 -- Data Provenance"
+    evidence_types:
+      - "lineage_record"
+      - "audit_log"
+    assertion_name: "ai_data_provenance_tracked"
+
+  "A.7.4":
+    summary: "Ensure data preparation processes preserve data integrity and support AI system objectives"
+    remediation_steps:
+      - "Document data preparation workflows with reproducible steps"
+      - "Implement version control for data preparation scripts and configurations"
+      - "Validate prepared data against quality criteria before use in AI systems"
+      - "Assess prepared datasets for bias and representativeness"
+      - "Maintain records of data preparation decisions and their rationale"
+    console_path: "Warlock > AI Governance > Data Preparation Quality"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.7.4 -- Data Preparation"
+      - "NIST AI RMF 1.0: Map 2.3 -- Data Preparation"
+    evidence_types:
+      - "preparation_record"
+      - "validation_report"
+    assertion_name: "ai_data_preparation_validated"
+
+  "A.7.5":
+    summary: "Establish processes for acquiring data ensuring legal compliance and ethical sourcing"
+    remediation_steps:
+      - "Define data acquisition policies covering legal basis, ethical sourcing, and consent"
+      - "Assess data sources for reliability, bias, and compliance with privacy regulations"
+      - "Document licensing and usage rights for all acquired datasets"
+      - "Implement due diligence procedures for third-party data acquisitions"
+      - "Maintain a registry of all data sources with provenance and licensing information"
+    console_path: "Warlock > AI Governance > Data Acquisition"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.7.5 -- Acquiring Data"
+      - "NIST AI RMF 1.0: Map 2.3 -- Data Acquisition"
+    evidence_types:
+      - "data_source_registry"
+      - "licensing_record"
+    assertion_name: "ai_data_acquisition_documented"
+
+  "A.8.2":
+    summary: "Disclose to users when they are interacting with or affected by an AI system"
+    remediation_steps:
+      - "Identify all user touchpoints where AI systems make or influence decisions"
+      - "Implement clear disclosure mechanisms (labels, banners, notifications) for AI interactions"
+      - "Provide information about the nature and purpose of the AI system"
+      - "Ensure disclosures are accessible and understandable to the target audience"
+      - "Review disclosure adequacy periodically and update based on user feedback"
+    console_path: "Warlock > AI Governance > Transparency > Disclosure"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.8.2 -- Disclosure of AI Interaction"
+      - "NIST AI RMF 1.0: Govern 4 -- Transparency"
+      - "EU AI Act: Transparency Requirements"
+    evidence_types:
+      - "disclosure_documentation"
+      - "user_interface_review"
+    assertion_name: "ai_disclosure_implemented"
+
+  "A.8.3":
+    summary: "Provide information about AI system capabilities, limitations, and appropriate use"
+    remediation_steps:
+      - "Create user documentation describing AI system capabilities and known limitations"
+      - "Document accuracy levels, confidence thresholds, and conditions for reliable performance"
+      - "Publish information about data used, model type, and evaluation results"
+      - "Communicate known failure modes and scenarios where the AI may perform poorly"
+      - "Update reporting information when AI system capabilities or limitations change"
+    console_path: "Warlock > AI Governance > Transparency > Reporting"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.8.3 -- Reporting Information"
+      - "NIST AI RMF 1.0: Govern 4.2 -- Transparency Documentation"
+    evidence_types:
+      - "system_documentation"
+      - "capability_report"
+    assertion_name: "ai_reporting_information_published"
+
+  "A.8.4":
+    summary: "Provide information about how AI system decisions are made to enable understanding and contestability"
+    remediation_steps:
+      - "Implement model explainability techniques (SHAP, LIME, feature importance) for decision support"
+      - "Provide decision explanations at appropriate levels of detail for different audiences"
+      - "Document the factors and data that influence AI system decisions"
+      - "Establish procedures for users to request detailed explanations of specific decisions"
+      - "Enable contestability mechanisms for AI-influenced decisions"
+    console_path: "Warlock > AI Governance > Transparency > Decision Explanation"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.8.4 -- AI Decision Information"
+      - "NIST AI RMF 1.0: Govern 4 -- Explainability"
+    evidence_types:
+      - "explainability_documentation"
+      - "decision_explanation_sample"
+    assertion_name: "ai_decision_explainability_enabled"
+
+  "A.9.2":
+    summary: "Document intended use for each AI system including scope, constraints, and authorized contexts"
+    remediation_steps:
+      - "Define and document the intended use case and operational context for each AI system"
+      - "Specify authorized use scenarios and explicitly prohibited uses"
+      - "Document environmental and contextual constraints for reliable operation"
+      - "Communicate intended use to all operators, users, and affected parties"
+      - "Review intended use documentation when AI system updates or new use cases emerge"
+    console_path: "Warlock > AI Governance > Intended Use"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.9.2 -- Intended Use Documentation"
+      - "NIST AI RMF 1.0: Map 1 -- Intended Purpose and Context"
+    evidence_types:
+      - "use_case_documentation"
+      - "constraints_document"
+    assertion_name: "ai_intended_use_documented"
+
+  "A.9.3":
+    summary: "Implement controls to prevent misuse of AI systems"
+    remediation_steps:
+      - "Identify potential misuse scenarios through threat modeling and red-teaming"
+      - "Implement technical controls to prevent identified misuse patterns (input validation, rate limiting)"
+      - "Configure access controls restricting AI system use to authorized purposes and personnel"
+      - "Deploy monitoring to detect potential misuse patterns and alert operators"
+      - "Establish reporting mechanisms for suspected misuse and response procedures"
+    console_path: "Warlock > AI Governance > Misuse Prevention"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.9.3 -- Misuse Prevention"
+      - "NIST AI RMF 1.0: Manage 2 -- Risk Management"
+    evidence_types:
+      - "threat_model"
+      - "access_control_report"
+    assertion_name: "ai_misuse_controls_implemented"
+
+  "A.9.4":
+    summary: "Ensure appropriate human oversight of AI system operations and decisions"
+    remediation_steps:
+      - "Define human oversight requirements for each AI system based on risk level"
+      - "Implement human-in-the-loop or human-on-the-loop controls for high-risk decisions"
+      - "Provide operators with tools to monitor, intervene, and override AI system outputs"
+      - "Train human overseers on AI system behavior, limitations, and intervention procedures"
+      - "Log all human oversight actions including interventions and overrides"
+    console_path: "Warlock > AI Governance > Human Oversight"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.9.4 -- Human Oversight"
+      - "NIST AI RMF 1.0: Govern 1.5 -- Human Oversight"
+      - "EU AI Act: Human Oversight Requirements"
+    evidence_types:
+      - "oversight_procedure"
+      - "intervention_log"
+    assertion_name: "ai_human_oversight_active"
+
+  "A.10.2":
+    summary: "Define terms and conditions for AI system usage by third parties including suppliers and partners"
+    remediation_steps:
+      - "Define terms and conditions for third-party AI system usage"
+      - "Include data handling, model governance, and ethical use requirements in contracts"
+      - "Establish SLAs for third-party AI system performance and availability"
+      - "Require third parties to comply with organizational responsible AI principles"
+      - "Review and update third-party terms annually and upon contract renewal"
+    console_path: "Warlock > AI Governance > Third Party Terms"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.10.2 -- Terms and Conditions"
+      - "NIST AI RMF 1.0: Govern 6 -- Third Party Management"
+    evidence_types:
+      - "contract_document"
+      - "terms_of_service"
+    assertion_name: "ai_third_party_terms_defined"
+
+  "A.10.3":
+    summary: "Monitor third-party AI system suppliers for compliance with organizational requirements"
+    remediation_steps:
+      - "Maintain an inventory of all third-party AI system suppliers and services"
+      - "Conduct periodic assessments of supplier AI governance and security practices"
+      - "Monitor supplier service performance against defined SLAs and quality metrics"
+      - "Review supplier compliance with organizational responsible AI requirements"
+      - "Establish escalation procedures for supplier non-compliance or incidents"
+    console_path: "Warlock > AI Governance > Supplier Monitoring"
+    recommended_reading:
+      - "ISO/IEC 42001:2023 Annex A.10.3 -- Supplier Monitoring"
+      - "NIST AI RMF 1.0: Govern 6.2 -- Supply Chain Risk Management"
+    evidence_types:
+      - "supplier_assessment"
+      - "monitoring_report"
+    assertion_name: "ai_supplier_monitoring_active"

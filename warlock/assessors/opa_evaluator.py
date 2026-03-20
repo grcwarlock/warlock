@@ -157,7 +157,16 @@ class OPAComplianceEvaluator:
         normalized_data: dict[str, Any],
         policy_map: dict[str, tuple[str, str]] | None = None,
     ) -> list[ControlResultData]:
-        """Evaluate all policies for a framework.
+        """Evaluate all policies for a framework in a single OPA call.
+
+        Instead of issuing one HTTP request per policy package (N calls),
+        this method posts ``normalized_data`` once to the framework's
+        namespace root, then walks all rule results returned in the single
+        response.  This reduces ~592 HTTP calls to ~7 (one per framework).
+
+        Falls back to per-policy ``evaluate_policy()`` calls if the batch
+        endpoint returns no parseable results, so OPA server versions that
+        don't support namespace-level queries continue to work.
 
         Parameters
         ----------
@@ -176,12 +185,101 @@ class OPAComplianceEvaluator:
             log.warning("No policy map provided for framework %s", framework)
             return []
 
+        # Collect only the packages that belong to this framework
+        fw_packages = {
+            pkg: ctrl_id
+            for pkg, (fw, ctrl_id) in policy_map.items()
+            if fw == framework
+        }
+        if not fw_packages:
+            return []
+
+        client = self._get_client()
+        if client is None:
+            if self.fail_mode == "open":
+                return []
+            raise RuntimeError("OPA client unavailable (httpx not installed)")
+
+        # Derive the framework namespace root from any package path.
+        # Package paths look like "warlock.nist_800_53.ac_2" so the root
+        # is "warlock/nist_800_53" (first two segments).
+        sample_pkg = next(iter(fw_packages))
+        segments = sample_pkg.replace(".", "/").split("/")
+        framework_root = "/".join(segments[:2]) if len(segments) >= 2 else segments[0]
+
+        batch_url = f"{self.base_url}/{framework_root}"
+        payload = {"input": {"normalized_data": normalized_data}}
+
         results: list[ControlResultData] = []
+        batch_succeeded = False
 
-        for package_path, (fw, control_id) in policy_map.items():
-            if fw != framework:
-                continue
+        try:
+            resp = client.post(batch_url, json=payload)
+            resp.raise_for_status()
+            batch_data = resp.json()
 
+            # OPA returns {"result": {<rule_name>: <value>, ...}} for a
+            # namespace query.  Each policy exports a "result" sub-key with
+            # the standard shape: {control_id, compliant, findings, severity}.
+            namespace_result = batch_data.get("result")
+            if isinstance(namespace_result, dict):
+                for rule_name, rule_value in namespace_result.items():
+                    if not isinstance(rule_value, dict):
+                        continue
+                    # Each rule_value may itself have a "result" sub-key (the
+                    # policy-level shape) or be the result directly.
+                    result_data = rule_value.get("result", rule_value)
+                    if not isinstance(result_data, dict):
+                        continue
+
+                    # Reconstruct the package path so we can look up the
+                    # canonical control_id from the policy_map.
+                    pkg_path = f"{sample_pkg.rsplit('.', 1)[0]}.{rule_name}"
+                    # Prefer the policy_map control_id; fall back to the
+                    # value embedded in the result itself.
+                    control_id = fw_packages.get(
+                        pkg_path, result_data.get("control_id", rule_name)
+                    )
+
+                    compliant = bool(result_data.get("compliant", False))
+                    status = "compliant" if compliant else "non_compliant"
+                    cr = ControlResultData(
+                        finding_id="",
+                        control_mapping_id="",
+                        framework=framework,
+                        control_id=control_id,
+                        status=status,
+                        severity=result_data.get("severity", "info"),
+                        assertion_name=pkg_path,
+                        assertion_passed=compliant,
+                        assertion_findings=result_data.get("findings", []),
+                        assessor=f"opa:{pkg_path}",
+                        assessed_at=datetime.now(timezone.utc),
+                    )
+                    results.append(cr)
+
+                if results:
+                    batch_succeeded = True
+                    log.debug(
+                        "OPA batch evaluation for %s: %d results from %s",
+                        framework, len(results), batch_url,
+                    )
+
+        except Exception as exc:
+            log.warning(
+                "OPA batch evaluation failed for framework %s: %s — falling back to per-policy calls",
+                framework, exc,
+            )
+
+        if batch_succeeded:
+            return results
+
+        # --- Fallback: per-policy calls (original behaviour) ---
+        log.debug(
+            "OPA batch returned no results for %s; falling back to %d per-policy calls",
+            framework, len(fw_packages),
+        )
+        for package_path, control_id in fw_packages.items():
             opa_result = self.evaluate_policy(package_path, normalized_data)
             if opa_result is None:
                 continue
@@ -190,7 +288,7 @@ class OPAComplianceEvaluator:
             cr = ControlResultData(
                 finding_id="",
                 control_mapping_id="",
-                framework=fw,
+                framework=framework,
                 control_id=control_id,
                 status=status,
                 severity=opa_result.severity,

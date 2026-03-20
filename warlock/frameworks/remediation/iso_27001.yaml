@@ -1,0 +1,1650 @@
+controls:
+  # ---------------------------------------------------------------------------
+  # A.5 — Organizational controls
+  # ---------------------------------------------------------------------------
+  A.5.1:
+    summary: "Information security policies must be defined, approved by management, published, and communicated"
+    remediation_steps:
+      - "Draft comprehensive information security policy aligned with business objectives"
+      - "Obtain management approval and formal sign-off"
+      - "Publish policy on internal wiki/Confluence"
+      - "Communicate to all employees and relevant external parties"
+      - "Schedule annual review cycle with policy owner assignment"
+    console_path: "Confluence > SEC Space > Information Security Policy"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.1"
+      - "ISO/IEC 27002:2022 Section 5.1 Guidance"
+    evidence_types:
+      - "confluence_pages"
+      - "policy_review_date"
+    assertion_name: "policy_reviewed_within_year"
+
+  A.5.2:
+    summary: "Information security roles and responsibilities must be defined and allocated"
+    remediation_steps:
+      - "Define RACI matrix for information security roles"
+      - "Assign security responsibilities in SailPoint role definitions"
+      - "Document role descriptions including security duties"
+      - "Review GCP IAM policy bindings for role alignment"
+      - "Conduct quarterly review of role assignments"
+    console_path: "SailPoint > Roles > Security Role Definitions"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.2"
+      - "ISO/IEC 27002:2022 Section 5.2 Guidance"
+    evidence_types:
+      - "sailpoint_roles"
+      - "gcp_iam_policies"
+    assertion_name: null
+
+  A.5.3:
+    summary: "Segregation of duties must be implemented to reduce risk of fraud or error"
+    remediation_steps:
+      - "Identify conflicting duties across business processes"
+      - "Configure SailPoint SoD policies for conflicting entitlements"
+      - "Review CyberArk privileged account separation"
+      - "Implement compensating controls where segregation is not feasible"
+      - "Generate SoD violation reports quarterly"
+    console_path: "SailPoint > Access Policies > Segregation of Duties"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.3"
+      - "ISO/IEC 27002:2022 Section 5.3 Guidance"
+    evidence_types:
+      - "sailpoint_roles"
+      - "sailpoint_entitlements"
+      - "cyberark_accounts"
+    assertion_name: null
+
+  A.5.4:
+    summary: "Management must require employees and contractors to apply information security in accordance with policies"
+    remediation_steps:
+      - "Include security responsibilities in employment contracts"
+      - "Conduct management-led security awareness briefings"
+      - "Schedule SailPoint access certifications with manager attestation"
+      - "Track management participation in security governance"
+      - "Document management accountability in ISMS governance charter"
+    console_path: "SailPoint > Certifications > Manager Certifications"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.4"
+      - "ISO/IEC 27002:2022 Section 5.4 Guidance"
+    evidence_types:
+      - "sailpoint_certifications"
+    assertion_name: null
+
+  A.5.5:
+    summary: "Contact with relevant authorities must be maintained"
+    remediation_steps:
+      - "Maintain contact list for law enforcement, regulatory bodies, ISACs"
+      - "Document authority contact procedures in incident response plan"
+      - "Publish contact registry on internal Confluence"
+      - "Review and update contact information quarterly"
+      - "Assign responsibility for authority liaison"
+    console_path: "Confluence > SEC Space > Authority Contact Register"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.5"
+      - "ISO/IEC 27002:2022 Section 5.5 Guidance"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.5.6:
+    summary: "Contact with special interest groups or forums must be maintained"
+    remediation_steps:
+      - "Identify relevant security forums, ISACs, and professional associations"
+      - "Document memberships and participation cadence"
+      - "Subscribe to threat intelligence sharing communities"
+      - "Track participation and intelligence received"
+      - "Review membership value annually"
+    console_path: "Confluence > SEC Space > Industry Group Memberships"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.6"
+      - "ISO/IEC 27002:2022 Section 5.6 Guidance"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.5.7:
+    summary: "Threat intelligence must be collected and analyzed to produce actionable information"
+    remediation_steps:
+      - "Enable AWS GuardDuty across all accounts and regions"
+      - "Enable AWS Security Hub with CIS/PCI standards"
+      - "Configure GCP Security Command Center findings export"
+      - "Enable Azure Defender alerts and integrate with SIEM"
+      - "Aggregate EDR threat feeds from CrowdStrike and SentinelOne"
+      - "Establish threat intelligence review cadence"
+    console_path: "AWS Console > GuardDuty > Settings | Azure Portal > Defender for Cloud"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.7"
+      - "ISO/IEC 27002:2022 Section 5.7 Guidance"
+    evidence_types:
+      - "guardduty_detectors"
+      - "securityhub_hub"
+      - "scc_findings"
+      - "defender_alerts"
+    assertion_name: "guardduty_enabled"
+
+  A.5.8:
+    summary: "Information security must be integrated into project management"
+    remediation_steps:
+      - "Include security review gates in project management methodology"
+      - "Require security risk assessment for new projects"
+      - "Document security requirements in ServiceNow change requests"
+      - "Publish project security checklist on Confluence"
+      - "Track security deliverables in project milestones"
+    console_path: "ServiceNow > Change Management > Security Review"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.8"
+      - "ISO/IEC 27002:2022 Section 5.8 Guidance"
+    evidence_types:
+      - "confluence_pages"
+      - "snow_change_requests"
+    assertion_name: null
+
+  A.5.9:
+    summary: "An inventory of information and associated assets must be maintained"
+    remediation_steps:
+      - "Deploy asset discovery across cloud accounts (AWS, Azure, GCP)"
+      - "Maintain endpoint inventory via CrowdStrike/SentinelOne/Defender"
+      - "Sync identity inventory through SailPoint and IdP connectors"
+      - "Consolidate vulnerability scanner asset inventory (Tenable)"
+      - "Reconcile inventories quarterly for completeness"
+      - "Assign asset owners and classify by criticality"
+    console_path: "Wiz > Inventory > All Assets | Prisma Cloud > Inventory"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.9"
+      - "ISO/IEC 27002:2022 Section 5.9 Guidance"
+    evidence_types:
+      - "prisma_assets"
+      - "falcon_device_details"
+      - "sailpoint_identities"
+      - "asset_export"
+    assertion_name: null
+
+  A.5.10:
+    summary: "Rules for acceptable use of information and assets must be defined"
+    remediation_steps:
+      - "Draft acceptable use policy covering devices, internet, email, cloud"
+      - "Enforce policy through Okta/Entra conditional access policies"
+      - "Publish AUP and require employee acknowledgment"
+      - "Monitor compliance through IdP policy enforcement"
+      - "Review and update annually"
+    console_path: "Okta Admin > Security > Policies | Entra > Conditional Access"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.10"
+      - "ISO/IEC 27002:2022 Section 5.10 Guidance"
+    evidence_types:
+      - "okta_policies"
+      - "entra_conditional_access_policies"
+    assertion_name: null
+
+  A.5.11:
+    summary: "Assets must be returned upon termination of employment or contract"
+    remediation_steps:
+      - "Integrate termination workflow with SailPoint identity lifecycle"
+      - "Automate account deprovisioning in Okta and Entra ID"
+      - "Include asset return checklist in HR offboarding process"
+      - "Verify IAM user removal across cloud providers"
+      - "Audit deprovisioned accounts within 24 hours of termination"
+    console_path: "SailPoint > Identity Lifecycle > Termination Workflow"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.11"
+      - "ISO/IEC 27002:2022 Section 5.11 Guidance"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_users"
+    assertion_name: null
+
+  A.5.12:
+    summary: "Information must be classified according to confidentiality, integrity, and availability needs"
+    remediation_steps:
+      - "Define data classification scheme (Public, Internal, Confidential, Restricted)"
+      - "Apply classification tags to S3 buckets and storage accounts"
+      - "Configure GCP storage bucket labels for classification"
+      - "Document classification criteria and handling procedures"
+      - "Train data owners on classification responsibilities"
+    console_path: "AWS Console > S3 > Bucket Tags | Azure Portal > Storage > Tags"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.12"
+      - "ISO/IEC 27002:2022 Section 5.12 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  A.5.13:
+    summary: "Labelling of information must follow the classification scheme"
+    remediation_steps:
+      - "Implement consistent labelling across cloud storage services"
+      - "Apply AWS resource tags for classification labels"
+      - "Configure Azure sensitivity labels via Purview"
+      - "Apply GCP resource labels to storage buckets"
+      - "Automate labelling enforcement through cloud policies"
+    console_path: "AWS Console > S3 > Bucket Tags | Azure Purview > Sensitivity Labels"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.13"
+      - "ISO/IEC 27002:2022 Section 5.13 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  A.5.14:
+    summary: "Rules and procedures for information transfer must be in place"
+    remediation_steps:
+      - "Define information transfer policies for each classification level"
+      - "Review security group rules governing data flow"
+      - "Verify NSG rules restrict unauthorized data transfer"
+      - "Configure GCP firewall rules for data transfer controls"
+      - "Enforce TLS for all data in transit"
+      - "Document approved transfer mechanisms"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.14"
+      - "ISO/IEC 27002:2022 Section 5.14 Guidance"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "compute_firewall_rules"
+    assertion_name: null
+
+  A.5.15:
+    summary: "Access control rules must be established and implemented"
+    remediation_steps:
+      - "Define role-based access control policy"
+      - "Enforce MFA on all privileged and user accounts"
+      - "Review IAM credential reports for compliance"
+      - "Configure Okta/Entra conditional access policies"
+      - "Implement CyberArk for privileged access management"
+      - "Conduct quarterly access reviews via SailPoint"
+    console_path: "AWS Console > IAM > Credential Report | Okta Admin > Security"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.15"
+      - "ISO/IEC 27002:2022 Section 5.15 Guidance"
+    evidence_types:
+      - "iam_credential_report"
+      - "okta_users"
+      - "entra_conditional_access_policies"
+      - "cyberark_accounts"
+    assertion_name: "mfa_enabled"
+
+  A.5.16:
+    summary: "The full lifecycle of identities must be managed"
+    remediation_steps:
+      - "Implement SailPoint for identity governance and lifecycle"
+      - "Automate joiner/mover/leaver processes"
+      - "Sync identities across cloud IAM, Okta, and Entra ID"
+      - "Schedule quarterly identity reconciliation"
+      - "Review orphaned and dormant accounts"
+    console_path: "SailPoint > Identities > Identity List | Okta Admin > People"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.16"
+      - "ISO/IEC 27002:2022 Section 5.16 Guidance"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_users"
+    assertion_name: "access_reviews_current"
+
+  A.5.17:
+    summary: "Authentication information must be controlled through a management process"
+    remediation_steps:
+      - "Configure AWS IAM password policy (min 14 chars, complexity, rotation)"
+      - "Enforce Okta password policies with strong requirements"
+      - "Require MFA enrollment for all users via Entra conditional access"
+      - "Verify CyberArk password compliance for privileged accounts"
+      - "Review IAM credential report for key rotation compliance"
+    console_path: "AWS Console > IAM > Account Settings > Password Policy"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.17"
+      - "ISO/IEC 27002:2022 Section 5.17 Guidance"
+    evidence_types:
+      - "iam_password_policy"
+      - "okta_policies"
+      - "okta_factors"
+      - "cyberark_password_compliance"
+    assertion_name: "password_policy_compliant"
+
+  A.5.18:
+    summary: "Access rights must be provisioned, reviewed, and revoked in accordance with policy"
+    remediation_steps:
+      - "Implement SailPoint access request and approval workflows"
+      - "Schedule access certification campaigns in SailPoint"
+      - "Review privileged access in CyberArk safes"
+      - "Audit cloud IAM policies for least privilege"
+      - "Automate access revocation on role change or termination"
+    console_path: "SailPoint > Certifications > Active Campaigns"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.18"
+      - "ISO/IEC 27002:2022 Section 5.18 Guidance"
+    evidence_types:
+      - "sailpoint_certifications"
+      - "sailpoint_entitlements"
+      - "cyberark_accounts"
+    assertion_name: null
+
+  A.5.19:
+    summary: "Processes for managing information security in supplier relationships must be defined"
+    remediation_steps:
+      - "Maintain vendor security assessment program"
+      - "Review Entra service principal permissions and scopes"
+      - "Audit Okta application integrations for data access"
+      - "Include security requirements in vendor contracts"
+      - "Track vendor security posture via SecurityScorecard"
+    console_path: "Entra Admin > App Registrations | Okta Admin > Applications"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.19"
+      - "ISO/IEC 27002:2022 Section 5.19 Guidance"
+    evidence_types:
+      - "entra_service_principals"
+      - "okta_applications"
+    assertion_name: null
+
+  A.5.20:
+    summary: "Security requirements must be established in supplier agreements"
+    remediation_steps:
+      - "Include security clauses in vendor agreements (encryption, access control, audit rights)"
+      - "Review Entra service principal consent scopes"
+      - "Document security requirements per vendor tier"
+      - "Require vendor SOC 2 or ISO 27001 attestation"
+      - "Schedule annual vendor agreement review"
+    console_path: "Entra Admin > Enterprise Applications > Permissions"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.20"
+      - "ISO/IEC 27002:2022 Section 5.20 Guidance"
+    evidence_types:
+      - "entra_service_principals"
+      - "entra_app_registrations"
+    assertion_name: null
+
+  A.5.21:
+    summary: "ICT supply chain risks must be managed"
+    remediation_steps:
+      - "Identify critical suppliers in the ICT supply chain"
+      - "Review third-party application integrations in Entra and Okta"
+      - "Monitor supply chain security posture via Wiz config findings"
+      - "Implement vendor risk tiering based on data access and criticality"
+      - "Require SBOM from software vendors"
+    console_path: "Entra Admin > Enterprise Applications | Wiz > Third Party"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.21"
+      - "ISO/IEC 27002:2022 Section 5.21 Guidance"
+    evidence_types:
+      - "entra_service_principals"
+      - "okta_applications"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  A.5.22:
+    summary: "Supplier services must be regularly monitored, reviewed, and change-managed"
+    remediation_steps:
+      - "Monitor Entra directory audit logs for supplier activity"
+      - "Review Okta system logs for third-party application events"
+      - "Conduct quarterly supplier security reviews"
+      - "Track supplier SLA compliance and security metrics"
+      - "Document supplier change notification procedures"
+    console_path: "Entra Admin > Audit Logs | Okta Admin > Reports > System Log"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.22"
+      - "ISO/IEC 27002:2022 Section 5.22 Guidance"
+    evidence_types:
+      - "entra_directory_audits"
+      - "okta_system_log"
+    assertion_name: null
+
+  A.5.23:
+    summary: "Security for use of cloud services must be established"
+    remediation_steps:
+      - "Deploy CSPM tools (Wiz, Prisma Cloud) across all cloud accounts"
+      - "Enable AWS Security Hub and Config for compliance monitoring"
+      - "Enable Azure Policy compliance and Defender for Cloud"
+      - "Enable GCP Security Command Center"
+      - "Establish cloud security baseline and monitor drift"
+      - "Review CSPM findings weekly and remediate critical issues"
+    console_path: "Wiz > Issues > All Issues | AWS Console > Security Hub"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.23"
+      - "ISO/IEC 27002:2022 Section 5.23 Guidance"
+    evidence_types:
+      - "wiz_config_findings"
+      - "securityhub_hub"
+      - "config_recorders"
+      - "policy_compliance"
+    assertion_name: "config_recorder_enabled"
+
+  A.5.24:
+    summary: "Information security incident management must be planned and prepared"
+    remediation_steps:
+      - "Document incident response plan with roles, escalation, and communication"
+      - "Configure SIEM detection rules in Sentinel/Splunk/Elastic"
+      - "Enable EDR prevention policies in CrowdStrike and SentinelOne"
+      - "Conduct tabletop exercises quarterly"
+      - "Test detection rules against MITRE ATT&CK techniques"
+    console_path: "Sentinel > Analytics Rules | Splunk > Correlation Rules"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.24"
+      - "ISO/IEC 27002:2022 Section 5.24 Guidance"
+    evidence_types:
+      - "sentinel_analytics_rules"
+      - "splunk_correlation_rules"
+      - "falcon_sensor_policies"
+    assertion_name: null
+
+  A.5.25:
+    summary: "Information security events must be assessed and classified"
+    remediation_steps:
+      - "Define incident severity classification criteria"
+      - "Configure SIEM triage workflows with severity assignment"
+      - "Integrate EDR detections with SIEM for centralized triage"
+      - "Establish SLA for event assessment by severity tier"
+      - "Review event classification accuracy monthly"
+    console_path: "Sentinel > Incidents | Splunk > Notable Events"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.25"
+      - "ISO/IEC 27002:2022 Section 5.25 Guidance"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+      - "falcon_detection_details"
+    assertion_name: "siem_monitoring_active"
+
+  A.5.26:
+    summary: "Information security incidents must be responded to according to documented procedures"
+    remediation_steps:
+      - "Execute incident response playbooks per incident type"
+      - "Coordinate response across SIEM, EDR, and cloud platforms"
+      - "Document containment, eradication, and recovery actions"
+      - "Notify relevant stakeholders per communication plan"
+      - "Preserve forensic evidence throughout response"
+    console_path: "Sentinel > Incidents > Active | CrowdStrike > Detections"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.26"
+      - "ISO/IEC 27002:2022 Section 5.26 Guidance"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+      - "falcon_detection_details"
+    assertion_name: "siem_monitoring_active"
+
+  A.5.27:
+    summary: "Knowledge from security incidents must be used to strengthen controls"
+    remediation_steps:
+      - "Conduct post-incident reviews within 5 business days"
+      - "Document lessons learned and update runbooks"
+      - "Create new detection rules based on incident findings"
+      - "Update Sentinel hunting queries for new TTPs"
+      - "Track remediation items from post-incident reviews"
+    console_path: "Sentinel > Hunting Queries | Splunk > Saved Searches"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.27"
+      - "ISO/IEC 27002:2022 Section 5.27 Guidance"
+    evidence_types:
+      - "sentinel_incidents"
+      - "sentinel_hunting_queries"
+    assertion_name: null
+
+  A.5.28:
+    summary: "Evidence collection procedures must be defined and applied"
+    remediation_steps:
+      - "Enable CloudTrail in all AWS accounts with multi-region logging"
+      - "Enable GCP audit logs for admin and data access"
+      - "Configure Azure Activity Log export to Log Analytics"
+      - "Centralize Okta system logs and Entra audit logs in SIEM"
+      - "Define evidence chain of custody procedures"
+      - "Ensure log immutability with write-once storage"
+    console_path: "AWS Console > CloudTrail > Trails | Azure Portal > Activity Log"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.28"
+      - "ISO/IEC 27002:2022 Section 5.28 Guidance"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  A.5.29:
+    summary: "Information security must be maintained during disruption"
+    remediation_steps:
+      - "Verify SIEM data connector health during disruptions"
+      - "Monitor Splunk indexer health and ingestion rates"
+      - "Ensure Elastic agent status remains healthy"
+      - "Document security monitoring continuity procedures"
+      - "Test failover of security monitoring tools"
+    console_path: "Sentinel > Data Connectors | Splunk > Monitoring Console"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.29"
+      - "ISO/IEC 27002:2022 Section 5.29 Guidance"
+    evidence_types:
+      - "sentinel_data_connectors"
+      - "splunk_index_health"
+    assertion_name: null
+
+  A.5.30:
+    summary: "ICT readiness must be planned, implemented, and tested for business continuity"
+    remediation_steps:
+      - "Define ICT continuity requirements per critical system"
+      - "Verify SIEM and EDR agent deployment coverage"
+      - "Test monitoring tool redundancy and failover"
+      - "Document recovery procedures for security infrastructure"
+      - "Conduct annual ICT continuity testing"
+    console_path: "Sentinel > Data Connectors | CrowdStrike > Host Management"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.30"
+      - "ISO/IEC 27002:2022 Section 5.30 Guidance"
+    evidence_types:
+      - "sentinel_data_connectors"
+      - "falcon_device_details"
+      - "s1_agents"
+    assertion_name: null
+
+  A.5.31:
+    summary: "Legal, statutory, regulatory, and contractual requirements must be identified and met"
+    remediation_steps:
+      - "Maintain regulatory obligation register"
+      - "Map compliance requirements to Prisma/Azure policy compliance"
+      - "Conduct quarterly compliance posture assessments"
+      - "Track regulatory changes and update controls accordingly"
+      - "Document compliance evidence per regulatory requirement"
+    console_path: "Prisma Cloud > Compliance | Azure Policy > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.31"
+      - "ISO/IEC 27002:2022 Section 5.31 Guidance"
+    evidence_types:
+      - "prisma_compliance"
+      - "policy_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  A.5.32:
+    summary: "Intellectual property rights must be protected"
+    remediation_steps:
+      - "Document IP protection procedures and ownership"
+      - "Maintain software license register on Confluence"
+      - "Review ServiceNow policies for IP-related procedures"
+      - "Include IP clauses in employment and contractor agreements"
+      - "Audit open-source license compliance"
+    console_path: "Confluence > Legal Space > IP Register"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.32"
+      - "ISO/IEC 27002:2022 Section 5.32 Guidance"
+    evidence_types:
+      - "confluence_pages"
+      - "snow_policies"
+    assertion_name: null
+
+  A.5.33:
+    summary: "Records must be protected from loss, destruction, falsification, and unauthorized access"
+    remediation_steps:
+      - "Enable versioning on S3 buckets and storage accounts"
+      - "Configure object lock or immutability policies for critical records"
+      - "Implement encryption at rest using KMS/Key Vault"
+      - "Define retention periods per record classification"
+      - "Audit access to record storage quarterly"
+    console_path: "AWS Console > S3 > Bucket Properties | Azure Portal > Key Vault"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.33"
+      - "ISO/IEC 27002:2022 Section 5.33 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "key_vault"
+    assertion_name: null
+
+  A.5.34:
+    summary: "Privacy and protection of personal information must be ensured per applicable legislation"
+    remediation_steps:
+      - "Identify PII processing activities and legal bases"
+      - "Enforce access controls on PII via Okta/Entra conditional access"
+      - "Restrict privileged access to PII via CyberArk"
+      - "Encrypt PII at rest in S3/Azure Storage using KMS/Key Vault"
+      - "Conduct DPIA for high-risk processing activities"
+    console_path: "Okta Admin > Policies | AWS Console > S3 > Encryption"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.34"
+      - "ISO/IEC 27002:2022 Section 5.34 Guidance"
+    evidence_types:
+      - "okta_policies"
+      - "cyberark_accounts"
+      - "s3_buckets"
+      - "key_vault"
+    assertion_name: null
+
+  A.5.35:
+    summary: "Independent review of the information security approach must be conducted"
+    remediation_steps:
+      - "Schedule annual independent ISMS audit"
+      - "Review Prisma Cloud compliance posture against standards"
+      - "Engage third-party assessors for ISO 27001 surveillance audits"
+      - "Track audit findings and remediation progress"
+      - "Report review results to management"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.35"
+      - "ISO/IEC 27002:2022 Section 5.35 Guidance"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  A.5.36:
+    summary: "Compliance with information security policies, rules, and standards must be reviewed"
+    remediation_steps:
+      - "Configure Azure Policy compliance for organizational standards"
+      - "Monitor Prisma Cloud compliance posture continuously"
+      - "Review Wiz configuration findings against policy baselines"
+      - "Generate compliance dashboards for management review"
+      - "Remediate non-compliant resources within SLA"
+    console_path: "Azure Policy > Compliance | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.36"
+      - "ISO/IEC 27002:2022 Section 5.36 Guidance"
+    evidence_types:
+      - "policy_compliance"
+      - "prisma_compliance"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  A.5.37:
+    summary: "Operating procedures must be documented and made available"
+    remediation_steps:
+      - "Document all operating procedures on Confluence"
+      - "Assign procedure owners and review schedules"
+      - "Ensure procedures are accessible to relevant personnel"
+      - "Track document review dates and version history"
+      - "Update procedures when processes change"
+    console_path: "Confluence > SEC Space > Operating Procedures"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.5.37"
+      - "ISO/IEC 27002:2022 Section 5.37 Guidance"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: "policy_reviewed_within_year"
+
+  # ---------------------------------------------------------------------------
+  # A.6 — People controls
+  # ---------------------------------------------------------------------------
+  A.6.1:
+    summary: "Personnel screening must be carried out prior to employment"
+    remediation_steps:
+      - "Define screening requirements per role sensitivity level"
+      - "Conduct background checks via Workday integration"
+      - "Verify screening completion before granting system access"
+      - "Document screening results and retain per policy"
+      - "Re-screen personnel in high-sensitivity roles periodically"
+    console_path: "Workday > Recruiting > Background Check Status"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.1"
+      - "ISO/IEC 27002:2022 Section 6.1 Guidance"
+    evidence_types:
+      - "workday_background_checks"
+    assertion_name: "background_check_completed"
+
+  A.6.2:
+    summary: "Employment contractual agreements must state security responsibilities"
+    remediation_steps:
+      - "Include information security responsibilities in employment contracts"
+      - "Require NDA/confidentiality agreement signature"
+      - "Track agreement completion in Workday"
+      - "Review agreement templates annually for adequacy"
+      - "Extend security obligations to contractors and third parties"
+    console_path: "Workday > Documents > Employment Agreements"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.2"
+      - "ISO/IEC 27002:2022 Section 6.2 Guidance"
+    evidence_types:
+      - "workday_agreements"
+    assertion_name: "employment_agreement_signed"
+
+  A.6.3:
+    summary: "Personnel must receive appropriate security awareness education and training"
+    remediation_steps:
+      - "Deploy security awareness training via KnowBe4"
+      - "Track completion rates in SailPoint certifications"
+      - "Conduct phishing simulations monthly"
+      - "Require annual security training for all employees"
+      - "Provide role-specific training for privileged users"
+      - "Maintain completion rate above 95%"
+    console_path: "KnowBe4 > Training > Campaigns | SailPoint > Certifications"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.3"
+      - "ISO/IEC 27002:2022 Section 6.3 Guidance"
+    evidence_types:
+      - "kb4_training_enrollments"
+      - "sailpoint_certifications"
+    assertion_name: "training_completion_rate"
+
+  A.6.4:
+    summary: "A disciplinary process must be formalized for information security violations"
+    remediation_steps:
+      - "Document disciplinary process for security policy violations"
+      - "Define escalation tiers based on violation severity"
+      - "Track disciplinary actions in Workday"
+      - "Communicate consequences of policy violations to all staff"
+      - "Review process effectiveness annually"
+    console_path: "Workday > HR > Disciplinary Actions"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.4"
+      - "ISO/IEC 27002:2022 Section 6.4 Guidance"
+    evidence_types:
+      - "workday_disciplinary"
+    assertion_name: null
+
+  A.6.5:
+    summary: "Information security responsibilities that remain valid after termination must be enforced"
+    remediation_steps:
+      - "Automate account deprovisioning via SailPoint lifecycle events"
+      - "Disable Okta, Entra, and cloud IAM accounts within 24 hours"
+      - "Revoke VPN, email, and application access on termination date"
+      - "Conduct post-termination access audit"
+      - "Enforce post-employment confidentiality obligations"
+    console_path: "SailPoint > Identities > Lifecycle Events | Okta Admin > People"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.5"
+      - "ISO/IEC 27002:2022 Section 6.5 Guidance"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_users"
+      - "iam_users"
+    assertion_name: "access_reviews_current"
+
+  A.6.6:
+    summary: "Confidentiality or non-disclosure agreements must be identified, documented, and reviewed"
+    remediation_steps:
+      - "Require NDA signature as part of onboarding in Workday"
+      - "Maintain NDA register with expiration tracking"
+      - "Extend NDA requirements to contractors and third parties"
+      - "Review NDA adequacy annually"
+      - "Track NDA compliance percentage"
+    console_path: "Workday > Documents > NDA Agreements"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.6"
+      - "ISO/IEC 27002:2022 Section 6.6 Guidance"
+    evidence_types:
+      - "workday_agreements"
+    assertion_name: "employment_agreement_signed"
+
+  A.6.7:
+    summary: "Security measures for remote working must be implemented"
+    remediation_steps:
+      - "Configure conditional access policies requiring compliant devices"
+      - "Enforce Okta sign-on policies for remote access scenarios"
+      - "Enable CrowdStrike Zero Trust Assessment for remote endpoints"
+      - "Require VPN or zero-trust network access for sensitive resources"
+      - "Document remote working security procedures"
+    console_path: "Entra > Conditional Access | Okta Admin > Sign-On Policies"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.7"
+      - "ISO/IEC 27002:2022 Section 6.7 Guidance"
+    evidence_types:
+      - "entra_conditional_access_policies"
+      - "okta_policies"
+      - "falcon_zero_trust"
+    assertion_name: null
+
+  A.6.8:
+    summary: "A mechanism for personnel to report security events must be provided"
+    remediation_steps:
+      - "Establish security incident reporting channel (email, portal, hotline)"
+      - "Integrate reporting with SIEM incident creation workflow"
+      - "Train personnel on when and how to report security events"
+      - "Track reporting volume and response times"
+      - "Protect reporters from retaliation"
+    console_path: "Sentinel > Incidents | Splunk > Notable Events"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.6.8"
+      - "ISO/IEC 27002:2022 Section 6.8 Guidance"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # A.7 — Physical controls
+  # ---------------------------------------------------------------------------
+  A.7.1:
+    summary: "Physical security perimeters must be defined and used to protect areas with information"
+    remediation_steps:
+      - "Define physical security zones and perimeter boundaries"
+      - "Deploy Verkada door access controls at zone boundaries"
+      - "Configure access control lists per security zone"
+      - "Monitor perimeter access events continuously"
+      - "Review physical access logs monthly"
+    console_path: "Verkada > Access Control > Doors"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.1"
+      - "ISO/IEC 27002:2022 Section 7.1 Guidance"
+    evidence_types:
+      - "verkada_doors"
+      - "verkada_access_events"
+    assertion_name: null
+
+  A.7.2:
+    summary: "Secure areas must be protected by entry controls"
+    remediation_steps:
+      - "Implement badge-based entry controls for secure areas"
+      - "Review Verkada access event logs for unauthorized attempts"
+      - "Configure visitor management procedures"
+      - "Implement two-person entry for highest-security areas"
+      - "Audit physical access rights quarterly"
+    console_path: "Verkada > Access Control > Events"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.2"
+      - "ISO/IEC 27002:2022 Section 7.2 Guidance"
+    evidence_types:
+      - "verkada_access_events"
+    assertion_name: null
+
+  A.7.3:
+    summary: "Physical security for offices, rooms, and facilities must be designed and implemented"
+    remediation_steps:
+      - "Implement door locks and access controls on all offices"
+      - "Configure Verkada door policies per room classification"
+      - "Restrict access to server rooms and network closets"
+      - "Implement clean desk policy for open offices"
+      - "Review physical security design annually"
+    console_path: "Verkada > Access Control > Door Policies"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.3"
+      - "ISO/IEC 27002:2022 Section 7.3 Guidance"
+    evidence_types:
+      - "verkada_doors"
+    assertion_name: null
+
+  A.7.4:
+    summary: "Physical security monitoring must be continuously performed"
+    remediation_steps:
+      - "Deploy video surveillance in secure areas"
+      - "Monitor CyberArk session recordings for privileged physical access"
+      - "Configure alerts for after-hours access"
+      - "Retain surveillance footage per retention policy"
+      - "Review monitoring coverage and blind spots"
+    console_path: "Verkada > Cameras | CyberArk > Session Recordings"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.4"
+      - "ISO/IEC 27002:2022 Section 7.4 Guidance"
+    evidence_types:
+      - "cyberark_recordings"
+    assertion_name: null
+
+  A.7.5:
+    summary: "Protection against physical and environmental threats must be designed and implemented"
+    remediation_steps:
+      - "Assess environmental threats (fire, flood, power, temperature)"
+      - "Deploy environmental monitoring in data centers and server rooms"
+      - "Verify cloud provider environmental controls via compliance reports"
+      - "Document environmental protection measures"
+      - "Test environmental controls annually"
+    console_path: "Azure Policy > Compliance > Physical Controls"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.5"
+      - "ISO/IEC 27002:2022 Section 7.5 Guidance"
+    evidence_types:
+      - "policy_compliance"
+    assertion_name: null
+
+  A.7.6:
+    summary: "Working in secure areas must follow defined procedures"
+    remediation_steps:
+      - "Define procedures for working in data centers and server rooms"
+      - "Restrict and monitor access via Verkada access events"
+      - "Implement escort procedures for visitors"
+      - "Prohibit photography and personal device use in secure areas"
+      - "Review procedures annually"
+    console_path: "Verkada > Access Control > Events > Secure Areas"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.6"
+      - "ISO/IEC 27002:2022 Section 7.6 Guidance"
+    evidence_types:
+      - "verkada_access_events"
+    assertion_name: null
+
+  A.7.7:
+    summary: "A clear desk and clear screen policy must be adopted"
+    remediation_steps:
+      - "Implement auto-lock screen policy via Intune compliance"
+      - "Set screen lock timeout to 5 minutes or less"
+      - "Require password-protected screensavers"
+      - "Communicate clear desk guidelines to all employees"
+      - "Conduct periodic workplace assessments"
+    console_path: "Intune > Device Compliance > Policies"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.7"
+      - "ISO/IEC 27002:2022 Section 7.7 Guidance"
+    evidence_types:
+      - "intune_compliance_states"
+    assertion_name: null
+
+  A.7.8:
+    summary: "Equipment must be sited and protected to reduce risks"
+    remediation_steps:
+      - "Inventory equipment locations via asset management tools"
+      - "Verify equipment is placed in appropriate security zones"
+      - "Monitor equipment via Prisma/Tenable asset inventory"
+      - "Document equipment placement and protection requirements"
+      - "Review equipment siting during facility changes"
+    console_path: "Prisma Cloud > Inventory | Tenable > Assets"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.8"
+      - "ISO/IEC 27002:2022 Section 7.8 Guidance"
+    evidence_types:
+      - "prisma_assets"
+      - "asset_export"
+    assertion_name: null
+
+  A.7.9:
+    summary: "Off-premises assets must be protected"
+    remediation_steps:
+      - "Deploy EDR agents on all off-premises endpoints"
+      - "Monitor CrowdStrike device details for remote endpoint health"
+      - "Verify SentinelOne agent connectivity for remote devices"
+      - "Enforce full-disk encryption on all portable devices"
+      - "Document off-premises asset protection requirements"
+    console_path: "CrowdStrike > Host Management | SentinelOne > Sentinels"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.9"
+      - "ISO/IEC 27002:2022 Section 7.9 Guidance"
+    evidence_types:
+      - "falcon_device_details"
+      - "s1_agents"
+    assertion_name: null
+
+  A.7.10:
+    summary: "Storage media must be managed through their lifecycle"
+    remediation_steps:
+      - "Classify storage media based on data sensitivity"
+      - "Encrypt S3 buckets, Azure storage accounts, and GCP buckets"
+      - "Define retention and disposal procedures per classification"
+      - "Track media through lifecycle from provisioning to disposal"
+      - "Verify encryption configuration regularly"
+    console_path: "AWS Console > S3 > Bucket Encryption | Azure Portal > Storage"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.10"
+      - "ISO/IEC 27002:2022 Section 7.10 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  A.7.11:
+    summary: "Facilities must have supporting utilities with redundancy"
+    remediation_steps:
+      - "Verify UPS and generator capacity for critical infrastructure"
+      - "Review cloud provider utility redundancy via compliance reports"
+      - "Monitor utility availability via Azure Policy compliance"
+      - "Document utility dependencies and failover procedures"
+      - "Test utility failover annually"
+    console_path: "Azure Policy > Compliance > Infrastructure Controls"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.11"
+      - "ISO/IEC 27002:2022 Section 7.11 Guidance"
+    evidence_types:
+      - "policy_compliance"
+    assertion_name: null
+
+  A.7.12:
+    summary: "Cabling carrying power and data must be protected from damage and interception"
+    remediation_steps:
+      - "Secure network cabling in conduits and protected pathways"
+      - "Separate power and data cabling"
+      - "Verify cloud provider physical cabling controls"
+      - "Document cabling standards and protection measures"
+      - "Inspect cabling infrastructure during facility audits"
+    console_path: "Azure Policy > Compliance > Physical Controls"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.12"
+      - "ISO/IEC 27002:2022 Section 7.12 Guidance"
+    evidence_types:
+      - "policy_compliance"
+    assertion_name: null
+
+  A.7.13:
+    summary: "Equipment must be maintained correctly to ensure availability and integrity"
+    remediation_steps:
+      - "Schedule preventive maintenance for on-premises equipment"
+      - "Monitor endpoint health via Intune and CrowdStrike"
+      - "Track device firmware and hardware lifecycle"
+      - "Document maintenance procedures and schedules"
+      - "Verify maintenance completion records"
+    console_path: "Intune > Devices | CrowdStrike > Host Management"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.13"
+      - "ISO/IEC 27002:2022 Section 7.13 Guidance"
+    evidence_types:
+      - "intune_devices"
+      - "falcon_device_details"
+    assertion_name: null
+
+  A.7.14:
+    summary: "Equipment must be securely disposed of or re-used"
+    remediation_steps:
+      - "Define secure disposal procedures per equipment type"
+      - "Wipe devices using certified data sanitization tools"
+      - "Track device disposition in Intune"
+      - "Obtain destruction certificates for storage media"
+      - "Audit disposal records quarterly"
+    console_path: "Intune > Devices > Retired"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.7.14"
+      - "ISO/IEC 27002:2022 Section 7.14 Guidance"
+    evidence_types:
+      - "intune_devices"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # A.8 — Technological controls
+  # ---------------------------------------------------------------------------
+  A.8.1:
+    summary: "User endpoint devices must be protected"
+    remediation_steps:
+      - "Deploy EDR agents (CrowdStrike/SentinelOne/Defender) on all endpoints"
+      - "Enforce endpoint compliance via CrowdStrike ZTA and Intune policies"
+      - "Verify SentinelOne agent policy enforcement"
+      - "Monitor device compliance status in Intune"
+      - "Block non-compliant devices from accessing corporate resources"
+    console_path: "CrowdStrike > Host Management | Intune > Device Compliance"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.1"
+      - "ISO/IEC 27002:2022 Section 8.1 Guidance"
+    evidence_types:
+      - "falcon_device_details"
+      - "s1_agents"
+      - "intune_compliance_states"
+    assertion_name: "device_compliant"
+
+  A.8.2:
+    summary: "Privileged access rights must be restricted and managed"
+    remediation_steps:
+      - "Onboard privileged accounts to CyberArk safes"
+      - "Enforce password rotation via CyberArk platform policies"
+      - "Review privileged roles in SailPoint entitlements"
+      - "Audit cloud IAM for over-privileged users"
+      - "Implement just-in-time privileged access where possible"
+      - "Monitor privileged session recordings"
+    console_path: "CyberArk > Accounts | SailPoint > Entitlements"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.2"
+      - "ISO/IEC 27002:2022 Section 8.2 Guidance"
+    evidence_types:
+      - "cyberark_accounts"
+      - "cyberark_safes"
+      - "sailpoint_roles"
+      - "iam_credential_report"
+    assertion_name: "privileged_access_managed"
+
+  A.8.3:
+    summary: "Access to information and application system functions must be restricted"
+    remediation_steps:
+      - "Enforce least-privilege access via Okta and Entra policies"
+      - "Configure conditional access policies for sensitive applications"
+      - "Review GCP IAM bindings for excessive permissions"
+      - "Implement application-level access controls"
+      - "Audit access restriction effectiveness quarterly"
+    console_path: "Okta Admin > Applications > Access Policies | Entra > Conditional Access"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.3"
+      - "ISO/IEC 27002:2022 Section 8.3 Guidance"
+    evidence_types:
+      - "okta_policies"
+      - "entra_conditional_access_policies"
+      - "gcp_iam_policies"
+    assertion_name: null
+
+  A.8.4:
+    summary: "Access to source code must be managed and controlled"
+    remediation_steps:
+      - "Restrict source code repository access to authorized developers"
+      - "Review Entra app registrations for code repository integrations"
+      - "Enforce MFA for source code management systems"
+      - "Implement branch protection rules"
+      - "Audit code repository access quarterly"
+    console_path: "Entra Admin > App Registrations > Source Code Apps"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.4"
+      - "ISO/IEC 27002:2022 Section 8.4 Guidance"
+    evidence_types:
+      - "entra_app_registrations"
+      - "entra_service_principals"
+    assertion_name: null
+
+  A.8.5:
+    summary: "Secure authentication mechanisms must be implemented"
+    remediation_steps:
+      - "Enforce MFA for all users via Okta factors and Entra conditional access"
+      - "Review IAM credential report for MFA compliance"
+      - "Configure strong password policies in AWS IAM and Okta"
+      - "Monitor sign-in risk events in Entra risky users"
+      - "Block legacy authentication protocols"
+    console_path: "Okta Admin > Security > Multifactor | Entra > Conditional Access"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.5"
+      - "ISO/IEC 27002:2022 Section 8.5 Guidance"
+    evidence_types:
+      - "okta_factors"
+      - "entra_conditional_access_policies"
+      - "iam_credential_report"
+      - "entra_risky_users"
+    assertion_name: "mfa_enabled"
+
+  A.8.6:
+    summary: "Capacity management must ensure adequate resources"
+    remediation_steps:
+      - "Monitor SIEM storage capacity and ingestion rates"
+      - "Review Splunk index health for capacity issues"
+      - "Configure Sentinel data connector throughput monitoring"
+      - "Set capacity alerts and auto-scaling where possible"
+      - "Review capacity trends quarterly"
+    console_path: "Splunk > Monitoring Console > Indexer Health"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.6"
+      - "ISO/IEC 27002:2022 Section 8.6 Guidance"
+    evidence_types:
+      - "splunk_index_health"
+      - "sentinel_data_connectors"
+    assertion_name: null
+
+  A.8.7:
+    summary: "Protection against malware must be implemented"
+    remediation_steps:
+      - "Deploy EDR with anti-malware on all endpoints"
+      - "Review CrowdStrike and SentinelOne detection details"
+      - "Monitor Defender alert feeds for malware detections"
+      - "Verify agent deployment coverage meets 100% target"
+      - "Configure automatic quarantine and remediation"
+    console_path: "CrowdStrike > Detections | SentinelOne > Threats"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.7"
+      - "ISO/IEC 27002:2022 Section 8.7 Guidance"
+    evidence_types:
+      - "falcon_detection_details"
+      - "s1_threats"
+      - "falcon_device_details"
+    assertion_name: "endpoint_protection_active"
+
+  A.8.8:
+    summary: "Information about technical vulnerabilities must be obtained and remediations applied"
+    remediation_steps:
+      - "Run vulnerability scans via Tenable, Qualys, or CrowdStrike Spotlight"
+      - "Monitor CSPM vulnerability findings from Wiz and Prisma"
+      - "Prioritize remediation using CVSS and exploitability context"
+      - "Track remediation SLAs (Critical: 7d, High: 30d, Medium: 90d)"
+      - "Review Defender recommendations for cloud vulnerability guidance"
+    console_path: "Tenable > Vulnerabilities | Wiz > Vulnerabilities"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.8"
+      - "ISO/IEC 27002:2022 Section 8.8 Guidance"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "falcon_vulnerabilities"
+      - "defender_recommendations"
+    assertion_name: "vulnerability_scan_current"
+
+  A.8.9:
+    summary: "Configurations of hardware, software, services, and networks must be managed"
+    remediation_steps:
+      - "Enable AWS Config recorders in all regions"
+      - "Enable AWS Security Hub for configuration compliance"
+      - "Configure Azure Policy compliance for resource standards"
+      - "Deploy CSPM (Wiz/Prisma) for cross-cloud configuration monitoring"
+      - "Establish configuration baselines and detect drift"
+    console_path: "AWS Console > Config > Rules | Azure Policy > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.9"
+      - "ISO/IEC 27002:2022 Section 8.9 Guidance"
+    evidence_types:
+      - "config_recorders"
+      - "securityhub_hub"
+      - "policy_compliance"
+      - "wiz_config_findings"
+    assertion_name: "config_recorder_enabled"
+
+  A.8.10:
+    summary: "Information stored in systems and devices must be deleted when no longer required"
+    remediation_steps:
+      - "Configure S3 lifecycle policies for automatic object expiration"
+      - "Set Azure storage account lifecycle management rules"
+      - "Configure GCP storage bucket lifecycle policies"
+      - "Verify deletion procedures for classified data"
+      - "Audit data retention compliance quarterly"
+    console_path: "AWS Console > S3 > Lifecycle Rules | Azure Portal > Storage > Lifecycle"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.10"
+      - "ISO/IEC 27002:2022 Section 8.10 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  A.8.11:
+    summary: "Data masking must be used in accordance with access control and business requirements"
+    remediation_steps:
+      - "Identify data requiring masking based on classification"
+      - "Implement masking in S3 bucket access policies"
+      - "Configure dynamic data masking in Azure SQL/storage"
+      - "Document masking rules per data classification"
+      - "Test masking effectiveness periodically"
+    console_path: "AWS Console > S3 > Access Points | Azure Portal > SQL > Dynamic Data Masking"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.11"
+      - "ISO/IEC 27002:2022 Section 8.11 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  A.8.12:
+    summary: "Data leakage prevention measures must be applied"
+    remediation_steps:
+      - "Deploy Microsoft Purview DLP policies for sensitive data types"
+      - "Configure DLP rules for email, Teams, and SharePoint"
+      - "Monitor Wiz configuration findings for data exposure"
+      - "Review security group rules for unauthorized data egress"
+      - "Track DLP policy violations and remediation"
+    console_path: "Microsoft Purview > DLP > Policies | Wiz > Data Security"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.12"
+      - "ISO/IEC 27002:2022 Section 8.12 Guidance"
+    evidence_types:
+      - "purview_dlp_alerts"
+      - "wiz_config_findings"
+      - "ec2_security_groups"
+    assertion_name: "dlp_policies_active"
+
+  A.8.13:
+    summary: "Backup copies of information, software, and systems must be maintained and tested"
+    remediation_steps:
+      - "Configure Veeam backup jobs for critical systems"
+      - "Enable S3 versioning for critical data buckets"
+      - "Configure Azure storage account backup and replication"
+      - "Verify backup job completion and success rates"
+      - "Test restore procedures quarterly"
+    console_path: "Veeam > Backup Jobs | AWS Console > S3 > Versioning"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.13"
+      - "ISO/IEC 27002:2022 Section 8.13 Guidance"
+    evidence_types:
+      - "veeam_backup_sessions"
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: "backup_job_successful"
+
+  A.8.14:
+    summary: "Information processing facilities must be implemented with redundancy"
+    remediation_steps:
+      - "Deploy SIEM data connectors with redundant paths"
+      - "Configure Splunk indexer clustering for redundancy"
+      - "Verify multi-AZ deployment for critical services"
+      - "Document redundancy architecture"
+      - "Test failover procedures annually"
+    console_path: "Sentinel > Data Connectors | Splunk > Distributed Architecture"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.14"
+      - "ISO/IEC 27002:2022 Section 8.14 Guidance"
+    evidence_types:
+      - "sentinel_data_connectors"
+      - "splunk_index_health"
+    assertion_name: null
+
+  A.8.15:
+    summary: "Logs that record activities, exceptions, faults, and events must be produced and kept"
+    remediation_steps:
+      - "Enable CloudTrail logging in all AWS accounts and regions"
+      - "Enable GCP audit logs for admin and data access"
+      - "Configure Azure Activity Log diagnostic settings"
+      - "Centralize IdP logs (Okta system log, Entra sign-in and audit logs)"
+      - "Forward all logs to SIEM (Sentinel/Splunk/Elastic)"
+      - "Define log retention periods per regulatory requirement"
+    console_path: "AWS Console > CloudTrail > Trails | Sentinel > Data Connectors"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.15"
+      - "ISO/IEC 27002:2022 Section 8.15 Guidance"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "okta_system_log"
+      - "entra_sign_ins"
+    assertion_name: "cloudtrail_enabled"
+
+  A.8.16:
+    summary: "Networks, systems, and applications must be monitored for anomalous behavior"
+    remediation_steps:
+      - "Configure SIEM analytics rules for threat detection"
+      - "Enable CSPM monitoring via Wiz, Prisma, Security Hub"
+      - "Configure Azure Monitor alerts for infrastructure anomalies"
+      - "Tune detection rules to minimize false positives"
+      - "Review monitoring coverage against MITRE ATT&CK matrix"
+    console_path: "Sentinel > Analytics Rules | Splunk > Correlation Searches"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.16"
+      - "ISO/IEC 27002:2022 Section 8.16 Guidance"
+    evidence_types:
+      - "sentinel_analytics_rules"
+      - "splunk_correlation_rules"
+      - "wiz_issues"
+      - "monitor_alerts"
+    assertion_name: "siem_monitoring_active"
+
+  A.8.17:
+    summary: "Clocks of information processing systems must be synchronized"
+    remediation_steps:
+      - "Verify CloudTrail events have consistent timestamps"
+      - "Confirm GCP audit log time synchronization"
+      - "Use NTP or cloud-native time sync for all systems"
+      - "Document authoritative time source"
+      - "Monitor clock drift across systems"
+    console_path: "AWS Console > CloudTrail > Event History (verify timestamps)"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.17"
+      - "ISO/IEC 27002:2022 Section 8.17 Guidance"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+    assertion_name: null
+
+  A.8.18:
+    summary: "Use of privileged utility programs must be restricted and controlled"
+    remediation_steps:
+      - "Route all privileged utility access through CyberArk"
+      - "Record privileged sessions in CyberArk PSM"
+      - "Restrict direct access to privileged utilities"
+      - "Audit privileged utility usage monthly"
+      - "Implement break-glass procedures for emergency access"
+    console_path: "CyberArk > Session Recordings | CyberArk > Accounts"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.18"
+      - "ISO/IEC 27002:2022 Section 8.18 Guidance"
+    evidence_types:
+      - "cyberark_recordings"
+      - "cyberark_accounts"
+    assertion_name: null
+
+  A.8.19:
+    summary: "Installation of software on operational systems must be controlled"
+    remediation_steps:
+      - "Monitor installed applications via SentinelOne application inventory"
+      - "Review CrowdStrike device details for unauthorized software"
+      - "Enforce application allow-listing policies"
+      - "Block unauthorized software installation via endpoint policies"
+      - "Audit software inventory monthly"
+    console_path: "SentinelOne > Applications | CrowdStrike > Host Details"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.19"
+      - "ISO/IEC 27002:2022 Section 8.19 Guidance"
+    evidence_types:
+      - "s1_applications"
+      - "falcon_device_details"
+    assertion_name: null
+
+  A.8.20:
+    summary: "Networks must be managed and controlled to protect information"
+    remediation_steps:
+      - "Review AWS security groups for overly permissive rules"
+      - "Audit Azure NSG rules for open management ports"
+      - "Verify GCP firewall rules restrict inbound access"
+      - "Remove 0.0.0.0/0 ingress rules on sensitive ports"
+      - "Implement network flow logging for audit trails"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.20"
+      - "ISO/IEC 27002:2022 Section 8.20 Guidance"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "compute_firewall_rules"
+    assertion_name: "no_open_security_groups"
+
+  A.8.21:
+    summary: "Security mechanisms, service levels, and requirements for network services must be defined"
+    remediation_steps:
+      - "Define network service security requirements per classification"
+      - "Review security group rules for network service access"
+      - "Configure NSG and firewall rules per service requirements"
+      - "Document network service agreements and security levels"
+      - "Audit network service configurations quarterly"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.21"
+      - "ISO/IEC 27002:2022 Section 8.21 Guidance"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "compute_firewall_rules"
+    assertion_name: null
+
+  A.8.22:
+    summary: "Groups of information services, users, and systems must be segregated in networks"
+    remediation_steps:
+      - "Implement VPC/VNet segmentation per environment and trust level"
+      - "Configure NACLs for subnet-level isolation"
+      - "Review security groups for cross-segment access"
+      - "Verify GCP firewall rules enforce network segregation"
+      - "Document network segmentation architecture"
+    console_path: "AWS Console > VPC > NACLs | Azure Portal > NSGs"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.22"
+      - "ISO/IEC 27002:2022 Section 8.22 Guidance"
+    evidence_types:
+      - "ec2_network_acls"
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "compute_firewall_rules"
+    assertion_name: "no_open_security_groups"
+
+  A.8.23:
+    summary: "Access to external websites must be managed to reduce exposure to malicious content"
+    remediation_steps:
+      - "Implement web filtering via CrowdStrike Zero Trust or proxy"
+      - "Configure security group rules to restrict outbound web access"
+      - "Review NSG rules for web traffic filtering"
+      - "Block known malicious domains"
+      - "Monitor web access logs for policy violations"
+    console_path: "CrowdStrike > Zero Trust | AWS Console > Security Groups"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.23"
+      - "ISO/IEC 27002:2022 Section 8.23 Guidance"
+    evidence_types:
+      - "ec2_security_groups"
+      - "network_security_groups"
+      - "falcon_zero_trust"
+    assertion_name: null
+
+  A.8.24:
+    summary: "Rules for effective use of cryptography must be defined and implemented"
+    remediation_steps:
+      - "Manage encryption keys in Azure Key Vault and AWS KMS"
+      - "Enable encryption at rest for all S3 buckets (AES-256 or aws:kms)"
+      - "Enable encryption for Azure storage accounts and GCP buckets"
+      - "Define cryptographic standards (algorithms, key lengths)"
+      - "Implement key rotation schedules"
+    console_path: "Azure Portal > Key Vault | AWS Console > KMS"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.24"
+      - "ISO/IEC 27002:2022 Section 8.24 Guidance"
+    evidence_types:
+      - "key_vault"
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: "encryption_at_rest"
+
+  A.8.25:
+    summary: "Rules for secure development of software and systems must be established"
+    remediation_steps:
+      - "Define secure development lifecycle (SDLC) standards"
+      - "Integrate SAST/DAST into CI/CD pipelines via Snyk"
+      - "Monitor cloud configuration compliance during development"
+      - "Require security review before production deployment"
+      - "Train developers on secure coding practices"
+    console_path: "Snyk > Projects | Wiz > CICD Scans"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.25"
+      - "ISO/IEC 27002:2022 Section 8.25 Guidance"
+    evidence_types:
+      - "snyk_projects"
+      - "wiz_config_findings"
+      - "prisma_compliance"
+    assertion_name: null
+
+  A.8.26:
+    summary: "Application security requirements must be identified, specified, and approved"
+    remediation_steps:
+      - "Define application security requirements per risk tier"
+      - "Run vulnerability scans on applications via Wiz and Prisma"
+      - "Integrate security testing into release processes"
+      - "Track application vulnerabilities to resolution"
+      - "Conduct application threat modeling"
+    console_path: "Wiz > Vulnerabilities | Prisma Cloud > Alerts"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.26"
+      - "ISO/IEC 27002:2022 Section 8.26 Guidance"
+    evidence_types:
+      - "wiz_vuln_findings"
+      - "prisma_alerts"
+    assertion_name: null
+
+  A.8.27:
+    summary: "Secure system architecture and engineering principles must be applied"
+    remediation_steps:
+      - "Define secure architecture patterns and reference designs"
+      - "Validate cloud configurations against security baselines"
+      - "Use Wiz and Prisma to detect architectural misconfigurations"
+      - "Review architecture during change management process"
+      - "Document security architecture decisions"
+    console_path: "Wiz > Configuration Findings | AWS Console > Config"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.27"
+      - "ISO/IEC 27002:2022 Section 8.27 Guidance"
+    evidence_types:
+      - "wiz_config_findings"
+      - "prisma_compliance"
+      - "config_recorders"
+    assertion_name: null
+
+  A.8.28:
+    summary: "Secure coding principles must be applied in software development"
+    remediation_steps:
+      - "Integrate Snyk into development workflows for dependency scanning"
+      - "Run SAST via Wiz and Prisma on code repositories"
+      - "Enforce code review for security-sensitive changes"
+      - "Track and remediate code vulnerabilities within SLA"
+      - "Maintain secure coding guidelines"
+    console_path: "Snyk > Issues | Wiz > Vulnerabilities > Code"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.28"
+      - "ISO/IEC 27002:2022 Section 8.28 Guidance"
+    evidence_types:
+      - "snyk_issues"
+      - "wiz_vuln_findings"
+      - "prisma_alerts"
+    assertion_name: "no_critical_code_vulns"
+
+  A.8.29:
+    summary: "Security testing must be defined and implemented in the development lifecycle"
+    remediation_steps:
+      - "Conduct vulnerability assessments using Tenable and Wiz"
+      - "Integrate Snyk for code vulnerability detection"
+      - "Perform penetration testing on critical applications annually"
+      - "Track security test results and remediation"
+      - "Require security test sign-off before production release"
+    console_path: "Tenable > Vulnerabilities | Snyk > Issues"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.29"
+      - "ISO/IEC 27002:2022 Section 8.29 Guidance"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "snyk_issues"
+    assertion_name: "no_critical_code_vulns"
+
+  A.8.30:
+    summary: "Outsourced development must be directed, monitored, and reviewed"
+    remediation_steps:
+      - "Review Entra service principals for outsourced development access"
+      - "Audit app registrations used by development vendors"
+      - "Include security requirements in outsourced development contracts"
+      - "Conduct security reviews of outsourced deliverables"
+      - "Monitor vendor access to code repositories"
+    console_path: "Entra Admin > App Registrations > External Developer Apps"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.30"
+      - "ISO/IEC 27002:2022 Section 8.30 Guidance"
+    evidence_types:
+      - "entra_service_principals"
+      - "entra_app_registrations"
+    assertion_name: null
+
+  A.8.31:
+    summary: "Development, testing, and production environments must be separated"
+    remediation_steps:
+      - "Implement separate AWS accounts or Azure subscriptions per environment"
+      - "Verify environment separation via AWS Config rules"
+      - "Review Wiz configuration findings for cross-environment access"
+      - "Restrict production access to authorized personnel only"
+      - "Document environment boundaries and access controls"
+    console_path: "AWS Console > Config > Rules | Wiz > Configuration Findings"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.31"
+      - "ISO/IEC 27002:2022 Section 8.31 Guidance"
+    evidence_types:
+      - "config_recorders"
+      - "wiz_config_findings"
+      - "prisma_assets"
+    assertion_name: null
+
+  A.8.32:
+    summary: "Changes to information processing facilities and systems must be subject to change management"
+    remediation_steps:
+      - "Submit all changes through ServiceNow change management"
+      - "Monitor cloud changes via CloudTrail, GCP Audit, Azure Activity"
+      - "Verify AWS Config compliance after changes"
+      - "Track IdP changes via Okta system log and Entra audit logs"
+      - "Require approval and rollback plan for all changes"
+    console_path: "ServiceNow > Change Management | AWS Console > CloudTrail"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.32"
+      - "ISO/IEC 27002:2022 Section 8.32 Guidance"
+    evidence_types:
+      - "snow_change_requests"
+      - "cloudtrail_trails"
+      - "config_recorders"
+      - "okta_system_log"
+    assertion_name: "change_request_approved"
+
+  A.8.33:
+    summary: "Test information must be appropriately selected, protected, and managed"
+    remediation_steps:
+      - "Do not use production data in test environments without anonymization"
+      - "Configure S3 bucket policies to prevent production data copy to test"
+      - "Implement data masking for test data generation"
+      - "Document test data management procedures"
+      - "Audit test environment data controls quarterly"
+    console_path: "AWS Console > S3 > Test Environment Buckets"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.33"
+      - "ISO/IEC 27002:2022 Section 8.33 Guidance"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  A.8.34:
+    summary: "Audit and test activities involving operational systems must be planned and controlled"
+    remediation_steps:
+      - "Protect audit logs from tampering via CloudTrail log file validation"
+      - "Enable GCP audit log integrity verification"
+      - "Secure CyberArk session recordings against modification"
+      - "Restrict access to audit log storage"
+      - "Document audit protection procedures"
+    console_path: "AWS Console > CloudTrail > Trail Settings > Log File Validation"
+    recommended_reading:
+      - "ISO/IEC 27001:2022 Annex A.8.34"
+      - "ISO/IEC 27002:2022 Section 8.34 Guidance"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "cyberark_recordings"
+    assertion_name: null

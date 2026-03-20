@@ -1,0 +1,1615 @@
+controls:
+  # ---------------------------------------------------------------------------
+  # CL5 — PIMS-specific requirements relating to ISO 27001 (Clauses 5)
+  # ---------------------------------------------------------------------------
+  5.2.1:
+    summary: "The organization must understand its context in relation to PII processing"
+    remediation_steps:
+      - "Inventory all systems processing PII via Prisma and Wiz"
+      - "Map PII processing activities to business processes"
+      - "Identify internal and external factors affecting PII protection"
+      - "Document PII processing context in PIMS scope"
+      - "Review context annually or on significant change"
+    console_path: "Prisma Cloud > Inventory | Wiz > Graph"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 5.2.1"
+      - "ISO/IEC 27001:2022 Clause 4.1"
+    evidence_types:
+      - "prisma_assets"
+      - "asset_export"
+    assertion_name: null
+
+  5.2.2:
+    summary: "The needs and expectations of interested parties regarding PII must be determined"
+    remediation_steps:
+      - "Identify all interested parties (data subjects, regulators, processors)"
+      - "Document their requirements and expectations"
+      - "Map regulatory requirements per jurisdiction"
+      - "Review interested party requirements annually"
+      - "Communicate requirements to relevant teams"
+    console_path: "Confluence > Privacy Space > Interested Parties Register"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 5.2.2"
+      - "ISO/IEC 27001:2022 Clause 4.2"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  5.2.3:
+    summary: "The scope of the PIMS must be determined"
+    remediation_steps:
+      - "Define PIMS scope covering all PII processing activities"
+      - "Verify scope alignment with Prisma compliance standards"
+      - "Conduct compliance audits to validate scope coverage"
+      - "Document scope boundaries and exclusions"
+      - "Review scope when processing activities change"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 5.2.3"
+      - "ISO/IEC 27001:2022 Clause 4.3"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  5.2.4:
+    summary: "The PIMS must be established, implemented, maintained, and continually improved"
+    remediation_steps:
+      - "Establish PIMS processes and documentation"
+      - "Monitor PIMS effectiveness via Prisma compliance posture"
+      - "Conduct management reviews of PIMS performance"
+      - "Track continual improvement actions"
+      - "Review PIMS maturity annually"
+    console_path: "Prisma Cloud > Compliance > Posture"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 5.2.4"
+      - "ISO/IEC 27001:2022 Clause 4.4"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_posture"
+    assertion_name: null
+
+  5.4.1.2:
+    summary: "Information security risk assessment must include PII processing risks"
+    remediation_steps:
+      - "Include PII-specific threats in risk assessment methodology"
+      - "Run vulnerability scans covering PII processing systems"
+      - "Assess risks from Tenable, CrowdStrike, Defender, and Wiz"
+      - "Quantify PII breach impact using FAIR methodology"
+      - "Document PII risk assessment results"
+    console_path: "Tenable > Vulnerabilities | Wiz > Issues"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 5.4.1.2"
+      - "GDPR Article 35 — DPIA"
+    evidence_types:
+      - "vuln_export"
+      - "wiz_vuln_findings"
+      - "falcon_vulnerabilities"
+    assertion_name: null
+
+  5.4.1.3:
+    summary: "Risk treatment must address PII processing risks"
+    remediation_steps:
+      - "Develop PII-specific risk treatment plans"
+      - "Prioritize using Defender recommendations"
+      - "Assign risk treatment owners for Wiz and Prisma PII findings"
+      - "Track treatment implementation"
+      - "Review treatment effectiveness quarterly"
+    console_path: "Defender > Recommendations | Wiz > Issues"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 5.4.1.3"
+    evidence_types:
+      - "defender_recommendations"
+      - "wiz_issues"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CL6 — PIMS-specific guidance relating to ISO 27002 (Clauses 6)
+  # ---------------------------------------------------------------------------
+  6.3.1.1:
+    summary: "Privacy roles and responsibilities must be defined and assigned"
+    remediation_steps:
+      - "Appoint DPO or privacy lead with defined responsibilities"
+      - "Assign privacy roles in SailPoint identity platform"
+      - "Define privacy-specific entitlements for data handlers"
+      - "Document privacy role descriptions"
+      - "Review privacy role assignments quarterly"
+    console_path: "SailPoint > Identities > Privacy Roles"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.3.1.1"
+      - "GDPR Article 37 — DPO Designation"
+    evidence_types:
+      - "sailpoint_identities"
+      - "sailpoint_roles"
+    assertion_name: null
+
+  6.5.2.1:
+    summary: "Access control to PII must follow least privilege and need-to-know"
+    remediation_steps:
+      - "Enforce MFA on all accounts with PII access"
+      - "Review IAM credential reports for PII system access"
+      - "Configure Okta and Entra policies for PII application access"
+      - "Restrict PII access via CyberArk privileged management"
+      - "Manage PII access lifecycle through SailPoint"
+    console_path: "AWS Console > IAM | Okta Admin > Policies | CyberArk > Safes"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.5.2.1"
+      - "GDPR Article 32 — Security of Processing"
+    evidence_types:
+      - "iam_credential_report"
+      - "okta_users"
+      - "entra_conditional_access_policies"
+      - "cyberark_accounts"
+    assertion_name: "mfa_enabled"
+
+  6.5.2.2:
+    summary: "User access to PII systems must be provisioned through formal processes"
+    remediation_steps:
+      - "Implement SailPoint access request workflows for PII systems"
+      - "Require manager approval for PII access provisioning"
+      - "Monitor Entra directory audits for PII access changes"
+      - "Verify provisioning follows data classification requirements"
+      - "Audit PII access provisioning quarterly"
+    console_path: "SailPoint > Access Requests | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.5.2.2"
+    evidence_types:
+      - "sailpoint_identities"
+      - "okta_users"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  6.5.2.3:
+    summary: "Privileged access to PII processing systems must be restricted"
+    remediation_steps:
+      - "Onboard PII system privileged accounts to CyberArk"
+      - "Enforce password rotation for PII admin accounts"
+      - "Review SailPoint privileged entitlements for PII systems"
+      - "Audit IAM policies for PII database access"
+      - "Implement just-in-time access for PII administration"
+    console_path: "CyberArk > Accounts | SailPoint > Entitlements"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.5.2.3"
+    evidence_types:
+      - "cyberark_accounts"
+      - "cyberark_safes"
+      - "sailpoint_roles"
+    assertion_name: null
+
+  6.5.3.1:
+    summary: "Cryptographic controls must protect PII confidentiality and integrity"
+    remediation_steps:
+      - "Encrypt PII at rest using Azure Key Vault or AWS KMS"
+      - "Enable encryption on S3 buckets containing PII"
+      - "Enable encryption on Azure storage accounts with PII"
+      - "Define cryptographic standards for PII protection"
+      - "Implement key rotation schedules"
+    console_path: "Azure Portal > Key Vault | AWS Console > S3 > Encryption"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.5.3.1"
+      - "GDPR Article 32(1)(a) — Encryption"
+    evidence_types:
+      - "key_vault"
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: "encryption_at_rest"
+
+  6.6.2.1:
+    summary: "PII processing events must be logged"
+    remediation_steps:
+      - "Enable CloudTrail logging for PII processing AWS accounts"
+      - "Enable GCP audit logs for PII processing projects"
+      - "Configure Azure Activity Log for PII subscriptions"
+      - "Centralize Okta and Entra logs for PII access events"
+      - "Forward logs to SIEM with PII processing context"
+    console_path: "AWS Console > CloudTrail | Sentinel > Data Connectors"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.6.2.1"
+      - "GDPR Article 30 — Records of Processing"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "okta_system_log"
+      - "splunk_index_health"
+    assertion_name: "cloudtrail_enabled"
+
+  6.6.2.2:
+    summary: "PII processing logs must be protected from unauthorized access"
+    remediation_steps:
+      - "Enable CloudTrail log file validation"
+      - "Store PII-related logs in S3 with object lock"
+      - "Monitor AWS Config for log protection compliance"
+      - "Restrict access to PII log storage"
+      - "Verify log integrity periodically"
+    console_path: "AWS Console > CloudTrail > Settings | S3 > Object Lock"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.6.2.2"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "s3_buckets"
+      - "config_recorders"
+    assertion_name: null
+
+  6.8.2.7:
+    summary: "Network security must protect PII in transit"
+    remediation_steps:
+      - "Review security groups restricting PII data flows"
+      - "Audit NACLs for PII subnet isolation"
+      - "Verify GCP firewall rules for PII network protection"
+      - "Review NSGs for PII data path restrictions"
+      - "Enforce TLS 1.2+ on all PII data transfers"
+    console_path: "AWS Console > VPC > Security Groups | Azure Portal > NSGs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.8.2.7"
+      - "GDPR Article 32 — Encryption in Transit"
+    evidence_types:
+      - "ec2_security_groups"
+      - "ec2_network_acls"
+      - "network_security_groups"
+    assertion_name: "no_open_security_groups"
+
+  6.8.2.8:
+    summary: "Network segmentation must isolate PII processing environments"
+    remediation_steps:
+      - "Segment PII processing into dedicated VPCs/VNets"
+      - "Configure NACLs for PII subnet isolation"
+      - "Review security groups for cross-segment PII access"
+      - "Verify GCP firewall rules enforce PII segmentation"
+      - "Document PII network segmentation architecture"
+    console_path: "AWS Console > VPC > NACLs | Azure Portal > NSGs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.8.2.8"
+    evidence_types:
+      - "ec2_security_groups"
+      - "ec2_network_acls"
+      - "network_security_groups"
+    assertion_name: null
+
+  6.9.3.1:
+    summary: "Records containing PII must be protected"
+    remediation_steps:
+      - "Enable versioning and encryption on PII storage"
+      - "Configure immutability policies for PII records"
+      - "Manage encryption keys via Key Vault"
+      - "Define PII retention periods per regulatory requirement"
+      - "Audit PII record access quarterly"
+    console_path: "AWS Console > S3 > Versioning | Azure Portal > Key Vault"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.9.3.1"
+      - "GDPR Article 5(1)(e) — Storage Limitation"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "key_vault"
+    assertion_name: "encryption_at_rest"
+
+  6.9.4.1:
+    summary: "Privacy and PII protection compliance must be monitored"
+    remediation_steps:
+      - "Configure Prisma policies for PII protection compliance"
+      - "Monitor Wiz configuration findings for PII exposure"
+      - "Review Azure Policy compliance for privacy requirements"
+      - "Track privacy compliance metrics"
+      - "Report privacy posture to DPO"
+    console_path: "Prisma Cloud > Compliance > Privacy | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.9.4.1"
+    evidence_types:
+      - "prisma_policies"
+      - "wiz_config_findings"
+      - "policy_compliance"
+    assertion_name: null
+
+  6.9.4.2:
+    summary: "Privacy compliance must be reviewed by independent assessors"
+    remediation_steps:
+      - "Schedule independent privacy compliance audits"
+      - "Review Prisma compliance reports for privacy standards"
+      - "Track privacy compliance posture trends"
+      - "Document assessment findings and actions"
+      - "Report results to management"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 6.9.4.2"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # CL7 — PII Controller guidance (Clauses 7)
+  # ---------------------------------------------------------------------------
+  7.2.1:
+    summary: "Conditions for collecting and processing PII must be determined"
+    remediation_steps:
+      - "Identify legal basis for each PII processing activity"
+      - "Configure Prisma policies enforcing collection conditions"
+      - "Conduct compliance audits for collection practices"
+      - "Document lawful basis per processing activity"
+      - "Review conditions when processing changes"
+    console_path: "Prisma Cloud > Policies | Compliance Audits"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.1"
+      - "GDPR Article 6 — Lawful Basis"
+    evidence_types:
+      - "prisma_policies"
+      - "compliance_audits"
+    assertion_name: null
+
+  7.2.2:
+    summary: "Consent must be obtained from PII principals where required"
+    remediation_steps:
+      - "Implement consent collection mechanisms"
+      - "Configure Prisma policies for consent enforcement"
+      - "Track consent records with timestamps and scope"
+      - "Provide mechanisms to withdraw consent"
+      - "Audit consent compliance quarterly"
+    console_path: "Prisma Cloud > Policies"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.2"
+      - "GDPR Article 7 — Conditions for Consent"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null
+
+  7.2.3:
+    summary: "PII accuracy and quality must be maintained"
+    remediation_steps:
+      - "Define data quality standards for PII"
+      - "Implement data validation at collection points"
+      - "Provide mechanisms for PII principals to update their data"
+      - "Schedule periodic PII accuracy reviews"
+      - "Document data quality procedures"
+    console_path: "Confluence > Privacy Space > Data Quality"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.3"
+      - "GDPR Article 5(1)(d) — Accuracy"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.2.4:
+    summary: "Privacy impact assessments must be conducted for PII processing"
+    remediation_steps:
+      - "Conduct DPIA for high-risk PII processing activities"
+      - "Review Wiz issues for PII exposure risks"
+      - "Verify Prisma compliance for PII protection"
+      - "Document DPIA findings and remediation plans"
+      - "Consult DPO during impact assessment"
+    console_path: "Wiz > Issues | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.4"
+      - "GDPR Article 35 — DPIA"
+    evidence_types:
+      - "wiz_issues"
+      - "prisma_compliance"
+    assertion_name: null
+
+  7.2.5:
+    summary: "Contracts with PII processors must include privacy requirements"
+    remediation_steps:
+      - "Include GDPR Article 28 requirements in processor contracts"
+      - "Define data processing agreements (DPAs) with all processors"
+      - "Specify processing instructions, security measures, and audit rights"
+      - "Track DPA execution and renewal"
+      - "Review processor contracts annually"
+    console_path: "Confluence > Legal Space > Processor Agreements"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.5"
+      - "GDPR Article 28 — Processor Obligations"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.2.6:
+    summary: "Joint controller arrangements must be documented"
+    remediation_steps:
+      - "Identify joint controller relationships"
+      - "Document joint controller agreements per GDPR Article 26"
+      - "Define responsibilities for data subject rights fulfillment"
+      - "Communicate joint processing to data subjects"
+      - "Review arrangements annually"
+    console_path: "Confluence > Legal Space > Joint Controller Agreements"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.6"
+      - "GDPR Article 26 — Joint Controllers"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.2.7:
+    summary: "Records of PII processing activities must be maintained"
+    remediation_steps:
+      - "Maintain Article 30 records of processing activities"
+      - "Track processing via CloudTrail, GCP audit, and Azure activity logs"
+      - "Monitor Entra directory audits for PII access events"
+      - "Document processing purposes, categories, and recipients"
+      - "Update records when processing activities change"
+    console_path: "CloudTrail > Events | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.7"
+      - "GDPR Article 30 — Records of Processing"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  7.2.8:
+    summary: "Cross-border PII transfers must be governed"
+    remediation_steps:
+      - "Identify all cross-border PII transfer destinations"
+      - "Implement appropriate transfer mechanisms (SCCs, adequacy)"
+      - "Configure policy compliance for transfer requirements"
+      - "Document transfer impact assessments"
+      - "Review transfer mechanisms when regulations change"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.2.8"
+      - "GDPR Chapter V — Cross-Border Transfers"
+    evidence_types:
+      - "policy_compliance"
+      - "prisma_policies"
+    assertion_name: null
+
+  7.3.1:
+    summary: "Obligations to PII principals regarding their rights must be determined"
+    remediation_steps:
+      - "Map data subject rights per applicable regulation"
+      - "Monitor Okta and Entra logs for rights-related requests"
+      - "Define SLA for rights request fulfillment"
+      - "Document rights fulfillment procedures"
+      - "Train staff on data subject rights handling"
+    console_path: "Okta > System Log | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.3.1"
+      - "GDPR Articles 12-23 — Data Subject Rights"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  7.3.2:
+    summary: "PII principals must be provided with information about processing"
+    remediation_steps:
+      - "Publish privacy notice covering all required information"
+      - "Include processing purposes, legal basis, and rights"
+      - "Provide notice in clear, plain language"
+      - "Update notice when processing changes"
+      - "Track notice delivery mechanisms"
+    console_path: "Confluence > Privacy Space > Privacy Notice"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.3.2"
+      - "GDPR Articles 13-14 — Information to Data Subjects"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.3.3:
+    summary: "Access, rectification, and erasure requests must be fulfilled"
+    remediation_steps:
+      - "Implement DSAR fulfillment workflows"
+      - "Monitor Okta and Entra logs for access and deletion events"
+      - "Fulfill requests within regulatory timelines (30 days GDPR)"
+      - "Document request handling and outcomes"
+      - "Track fulfillment metrics"
+    console_path: "Okta > System Log | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.3.3"
+      - "GDPR Articles 15-17 — Access, Rectification, Erasure"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  7.3.4:
+    summary: "Notification obligations must be fulfilled when PII is processed"
+    remediation_steps:
+      - "Define notification triggers and procedures"
+      - "Notify data subjects of processing as required"
+      - "Track notification delivery and acknowledgment"
+      - "Document notification obligations per regulation"
+      - "Review notification procedures annually"
+    console_path: "Confluence > Privacy Space > Notification Procedures"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.3.4"
+      - "GDPR Article 34 — Communication to Data Subject"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.3.5:
+    summary: "Automated decision-making and profiling must be transparent"
+    remediation_steps:
+      - "Identify automated decision-making processes involving PII"
+      - "Provide data subjects with information about automated decisions"
+      - "Implement human oversight mechanisms"
+      - "Allow data subjects to contest automated decisions"
+      - "Document automated decision-making procedures"
+    console_path: "Confluence > Privacy Space > Automated Decisions"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.3.5"
+      - "GDPR Article 22 — Automated Decision-Making"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.3.6:
+    summary: "Complaints handling mechanisms must be established"
+    remediation_steps:
+      - "Establish privacy complaints channel"
+      - "Define complaint handling procedures and SLA"
+      - "Track complaints to resolution"
+      - "Escalate unresolved complaints to supervisory authority"
+      - "Report complaint metrics to management"
+    console_path: "Confluence > Privacy Space > Complaints Register"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.3.6"
+      - "GDPR Article 77 — Right to Lodge Complaint"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.4.1:
+    summary: "PII collection must be limited to what is necessary"
+    remediation_steps:
+      - "Review PII collection points for necessity"
+      - "Configure Prisma policies for collection limitation"
+      - "Monitor Wiz findings for excessive PII collection"
+      - "Document data minimization decisions"
+      - "Audit PII collection scope quarterly"
+    console_path: "Prisma Cloud > Policies | Wiz > Configuration Findings"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.1"
+      - "GDPR Article 5(1)(c) — Data Minimization"
+    evidence_types:
+      - "prisma_policies"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  7.4.2:
+    summary: "PII processing must be limited to identified purposes"
+    remediation_steps:
+      - "Restrict PII processing to documented purposes"
+      - "Configure Prisma and Azure policies for processing limits"
+      - "Monitor for unauthorized processing activities"
+      - "Document processing purpose for each PII category"
+      - "Audit processing against stated purposes"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.2"
+      - "GDPR Article 5(1)(b) — Purpose Limitation"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null
+
+  7.4.3:
+    summary: "PII accuracy and quality must be maintained by the controller"
+    remediation_steps:
+      - "Implement data quality validation rules"
+      - "Provide data subjects with update mechanisms"
+      - "Schedule periodic PII accuracy reviews"
+      - "Document data quality standards"
+      - "Track data quality metrics"
+    console_path: "Confluence > Privacy Space > Data Quality Standards"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.3"
+      - "GDPR Article 5(1)(d) — Accuracy"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.4.4:
+    summary: "Data minimization objectives must be achieved"
+    remediation_steps:
+      - "Minimize PII collection to what is strictly necessary"
+      - "Configure Prisma policies for minimization enforcement"
+      - "Monitor Wiz findings for unnecessary PII storage"
+      - "Review data stores for PII that exceeds stated purposes"
+      - "Document minimization decisions"
+    console_path: "Prisma Cloud > Policies | Wiz > Configuration Findings"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.4"
+    evidence_types:
+      - "prisma_policies"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  7.4.5:
+    summary: "PII must be de-identified and deleted at end of processing"
+    remediation_steps:
+      - "Implement de-identification procedures for PII no longer needed"
+      - "Configure automated deletion at retention period expiry"
+      - "Document de-identification and deletion methods"
+      - "Verify deletion completeness"
+      - "Audit retention compliance quarterly"
+    console_path: "Confluence > Privacy Space > De-identification Procedures"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.5"
+      - "GDPR Article 5(1)(e) — Storage Limitation"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.4.6:
+    summary: "PII retention and disposal policies must be implemented"
+    remediation_steps:
+      - "Configure S3 lifecycle policies for PII retention"
+      - "Set Azure storage lifecycle rules for PII data"
+      - "Configure GCP bucket lifecycle policies"
+      - "Define retention periods per PII category and regulation"
+      - "Audit retention compliance quarterly"
+    console_path: "AWS Console > S3 > Lifecycle | Azure Portal > Storage > Lifecycle"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.6"
+      - "GDPR Article 5(1)(e) — Storage Limitation"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  7.4.7:
+    summary: "PII must be securely disposed of when no longer needed"
+    remediation_steps:
+      - "Implement crypto-shredding for PII disposal"
+      - "Configure secure deletion policies"
+      - "Verify PII deletion across all storage locations"
+      - "Maintain disposal records"
+      - "Audit disposal completeness"
+    console_path: "AWS Console > S3 > Delete Objects | Azure Portal > Storage"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.7"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  7.4.8:
+    summary: "PII must be returned to the principal upon request"
+    remediation_steps:
+      - "Implement data portability mechanisms"
+      - "Provide PII in structured, machine-readable format"
+      - "Fulfill portability requests within regulatory timelines"
+      - "Document data return procedures"
+      - "Track portability request metrics"
+    console_path: "Confluence > Privacy Space > Data Portability"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.8"
+      - "GDPR Article 20 — Right to Data Portability"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.4.9:
+    summary: "PII transmission must be protected with encryption and access controls"
+    remediation_steps:
+      - "Encrypt PII in transit using TLS 1.2+ and Key Vault managed keys"
+      - "Review security group rules for PII data transfer paths"
+      - "Verify NSG and firewall rules protect PII transmission"
+      - "Enable HTTPS-only on S3 buckets and storage accounts with PII"
+      - "Document PII transmission security requirements"
+    console_path: "Azure Portal > Key Vault | AWS Console > VPC > Security Groups"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.4.9"
+      - "GDPR Article 32(1)(a) — Encryption"
+    evidence_types:
+      - "key_vault"
+      - "ec2_security_groups"
+      - "s3_buckets"
+    assertion_name: "encryption_at_rest"
+
+  7.5.1:
+    summary: "The legal basis for cross-border PII transfers must be identified"
+    remediation_steps:
+      - "Identify legal basis for each cross-border transfer"
+      - "Verify transfer mechanisms (SCCs, adequacy, BCRs)"
+      - "Monitor policy compliance for transfer requirements"
+      - "Document transfer legal basis per destination"
+      - "Review transfer basis when regulations change"
+    console_path: "Prisma Cloud > Policies | Azure Policy > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.5.1"
+      - "GDPR Chapter V — Transfers"
+    evidence_types:
+      - "policy_compliance"
+      - "prisma_compliance"
+    assertion_name: null
+
+  7.5.2:
+    summary: "Countries and organizations receiving PII must be documented"
+    remediation_steps:
+      - "Maintain register of PII transfer destinations"
+      - "Assess adequacy and safeguards per destination"
+      - "Document organizations and their transfer basis"
+      - "Review destination register when processing changes"
+      - "Report cross-border transfers to DPO"
+    console_path: "Confluence > Privacy Space > Transfer Register"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.5.2"
+      - "GDPR Article 49 — Derogations for Transfers"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  7.5.3:
+    summary: "Records of PII transfers must be maintained"
+    remediation_steps:
+      - "Log PII transfers via CloudTrail and audit logs"
+      - "Track Azure Activity Log for PII transfer events"
+      - "Maintain transfer records with dates, recipients, and basis"
+      - "Store transfer records per retention requirements"
+      - "Audit transfer records quarterly"
+    console_path: "CloudTrail > Events | Azure Portal > Activity Log"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.5.3"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "activity_log"
+    assertion_name: null
+
+  7.5.4:
+    summary: "Records of PII disclosure to third parties must be maintained"
+    remediation_steps:
+      - "Log PII disclosures via CloudTrail and audit logs"
+      - "Monitor Entra directory audits for third-party access"
+      - "Document disclosure recipients and purposes"
+      - "Maintain disclosure records per retention requirements"
+      - "Audit disclosure records quarterly"
+    console_path: "CloudTrail > Events | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Clause 7.5.4"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # Annex A.7.2 — PII Controller conditions (Annex A)
+  # ---------------------------------------------------------------------------
+  A.7.2.1:
+    summary: "The purpose for PII processing must be identified and documented"
+    remediation_steps:
+      - "Document processing purposes per PII category"
+      - "Configure Prisma policies aligned with stated purposes"
+      - "Conduct compliance audits for purpose documentation"
+      - "Review purposes when processing activities change"
+      - "Communicate purposes in privacy notice"
+    console_path: "Prisma Cloud > Policies | Compliance Audits"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.1"
+      - "GDPR Article 5(1)(b)"
+    evidence_types:
+      - "prisma_policies"
+      - "compliance_audits"
+    assertion_name: null
+
+  A.7.2.2:
+    summary: "The lawful basis for PII processing must be determined"
+    remediation_steps:
+      - "Identify lawful basis for each processing activity"
+      - "Verify basis via policy compliance monitoring"
+      - "Document lawful basis per activity in RoPA"
+      - "Review legal basis when processing changes"
+      - "Consult DPO on lawful basis determination"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.2"
+      - "GDPR Article 6"
+    evidence_types:
+      - "policy_compliance"
+      - "prisma_policies"
+    assertion_name: null
+
+  A.7.2.3:
+    summary: "Applicability of consent requirements must be determined"
+    remediation_steps:
+      - "Assess whether consent is required for each processing activity"
+      - "Verify compliance via Prisma compliance standards"
+      - "Document consent requirements per processing activity"
+      - "Implement consent mechanisms where required"
+      - "Review consent applicability when processing changes"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.3"
+      - "GDPR Article 6(1)(a)"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  A.7.2.4:
+    summary: "Consent must be obtained in a valid manner"
+    remediation_steps:
+      - "Implement clear, affirmative consent mechanisms"
+      - "Ensure consent is freely given, specific, informed, and unambiguous"
+      - "Track consent records with timestamps"
+      - "Provide withdrawal mechanisms"
+      - "Document consent collection procedures"
+    console_path: "Confluence > Privacy Space > Consent Procedures"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.4"
+      - "GDPR Article 7"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.2.5:
+    summary: "Privacy impact assessments must be conducted by the controller"
+    remediation_steps:
+      - "Conduct DPIA for high-risk PII processing"
+      - "Review Wiz issues for PII exposure risks"
+      - "Verify Prisma compliance for DPIA requirements"
+      - "Document DPIA methodology and findings"
+      - "Consult supervisory authority for high residual risk"
+    console_path: "Wiz > Issues | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.5"
+      - "GDPR Article 35"
+    evidence_types:
+      - "wiz_issues"
+      - "prisma_compliance"
+    assertion_name: null
+
+  A.7.2.6:
+    summary: "Contracts with PII processors must be formalized"
+    remediation_steps:
+      - "Execute DPAs with all PII processors"
+      - "Include GDPR Article 28 requirements in contracts"
+      - "Define processing instructions and security measures"
+      - "Track DPA execution and renewal"
+      - "Review processor contracts annually"
+    console_path: "Confluence > Legal Space > Processor DPAs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.6"
+      - "GDPR Article 28"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.2.7:
+    summary: "Joint PII controller arrangements must be documented"
+    remediation_steps:
+      - "Document joint controller arrangements per GDPR Article 26"
+      - "Define respective responsibilities clearly"
+      - "Communicate arrangements to data subjects"
+      - "Implement coordination mechanisms"
+      - "Review arrangements annually"
+    console_path: "Confluence > Legal Space > Joint Controller Agreements"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.7"
+      - "GDPR Article 26"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.2.8:
+    summary: "Records of PII processing must be maintained by the controller"
+    remediation_steps:
+      - "Maintain comprehensive RoPA per GDPR Article 30"
+      - "Track processing via CloudTrail, GCP audit, and Azure logs"
+      - "Monitor Entra and Okta logs for PII access events"
+      - "Update records when processing activities change"
+      - "Make records available to supervisory authority"
+    console_path: "CloudTrail > Events | Okta > System Log"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.2.8"
+      - "GDPR Article 30"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "okta_system_log"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # Annex A.7.3 — PII Controller obligations to PII principals
+  # ---------------------------------------------------------------------------
+  A.7.3.1:
+    summary: "Obligations to PII principals must be determined and met"
+    remediation_steps:
+      - "Map all data subject rights obligations per regulation"
+      - "Monitor Entra and Okta logs for rights-related events"
+      - "Verify Prisma compliance for rights fulfillment"
+      - "Define SLAs for rights request fulfillment"
+      - "Track fulfillment metrics"
+    console_path: "Entra > Audit Logs | Prisma Cloud > Compliance"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.1"
+    evidence_types:
+      - "entra_directory_audits"
+      - "okta_system_log"
+      - "prisma_compliance"
+    assertion_name: null
+
+  A.7.3.2:
+    summary: "Information to be provided to PII principals must be determined"
+    remediation_steps:
+      - "Identify all information required per GDPR Articles 13-14"
+      - "Document information requirements per processing activity"
+      - "Update privacy notice to include all required information"
+      - "Provide information in clear language"
+      - "Review information completeness annually"
+    console_path: "Confluence > Privacy Space > Privacy Notice"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.2"
+      - "GDPR Articles 13-14"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.3.3:
+    summary: "Information must be provided to PII principals"
+    remediation_steps:
+      - "Deliver privacy information at point of collection"
+      - "Publish comprehensive privacy notice on website"
+      - "Provide layered notice where appropriate"
+      - "Track notice delivery mechanisms"
+      - "Review notice accessibility"
+    console_path: "Confluence > Privacy Space > Privacy Notice"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.3"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.3.4:
+    summary: "Mechanisms to modify or withdraw consent must be provided"
+    remediation_steps:
+      - "Implement consent modification and withdrawal mechanisms"
+      - "Monitor Okta and Entra logs for consent change events"
+      - "Process withdrawals within regulatory timelines"
+      - "Document consent change handling procedures"
+      - "Track consent withdrawal metrics"
+    console_path: "Okta > System Log | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.4"
+      - "GDPR Article 7(3) — Withdrawal of Consent"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  A.7.3.5:
+    summary: "Mechanisms for PII principals to object to processing must be provided"
+    remediation_steps:
+      - "Implement objection handling mechanisms"
+      - "Process objections within regulatory timelines"
+      - "Document objection handling procedures"
+      - "Cease processing upon valid objection"
+      - "Track objection metrics"
+    console_path: "Confluence > Privacy Space > Objection Procedures"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.5"
+      - "GDPR Article 21 — Right to Object"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.3.6:
+    summary: "Access, correction, and erasure mechanisms must be provided"
+    remediation_steps:
+      - "Implement DSAR fulfillment workflows"
+      - "Monitor Okta and Entra logs for access and deletion events"
+      - "Fulfill requests within 30 days per GDPR"
+      - "Document request handling procedures"
+      - "Track DSAR fulfillment metrics"
+    console_path: "Okta > System Log | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.6"
+      - "GDPR Articles 15-17"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  A.7.3.7:
+    summary: "Controller obligations to notify third parties of PII changes must be fulfilled"
+    remediation_steps:
+      - "Identify third parties who received PII"
+      - "Notify third parties of rectification, erasure, or restriction"
+      - "Document notification procedures"
+      - "Track notification compliance"
+      - "Review third-party notification obligations"
+    console_path: "Confluence > Privacy Space > Third Party Notifications"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.7"
+      - "GDPR Article 19 — Notification Obligation"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.3.8:
+    summary: "Copies of PII processed must be provided to principals on request"
+    remediation_steps:
+      - "Implement data export capabilities"
+      - "Track data copy requests via audit logs"
+      - "Provide PII in commonly used electronic format"
+      - "Fulfill requests within regulatory timelines"
+      - "Document data copy procedures"
+    console_path: "CloudTrail > Events | GCP Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.8"
+      - "GDPR Article 15(3) — Right of Access"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+    assertion_name: null
+
+  A.7.3.9:
+    summary: "Data subject requests must be handled within regulatory timelines"
+    remediation_steps:
+      - "Implement request intake and tracking system"
+      - "Monitor Okta and Entra logs for request-related events"
+      - "Fulfill requests within 30 days per GDPR"
+      - "Extend timeline by 60 days for complex requests with notification"
+      - "Track request handling metrics"
+    console_path: "Okta > System Log | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.9"
+      - "GDPR Article 12(3) — Response Timelines"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  A.7.3.10:
+    summary: "Automated decision-making processes must include safeguards"
+    remediation_steps:
+      - "Identify automated decision-making processes"
+      - "Implement human review mechanisms"
+      - "Allow data subjects to contest automated decisions"
+      - "Document automated decision-making safeguards"
+      - "Review safeguards when processes change"
+    console_path: "Confluence > Privacy Space > Automated Decisions"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.3.10"
+      - "GDPR Article 22"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # Annex A.7.4 — PII Controller privacy by design
+  # ---------------------------------------------------------------------------
+  A.7.4.1:
+    summary: "PII collection must be limited to what is necessary"
+    remediation_steps:
+      - "Review collection points for data minimization"
+      - "Configure Prisma policies for collection limits"
+      - "Monitor Wiz findings for excessive PII storage"
+      - "Document minimization decisions"
+      - "Audit collection scope quarterly"
+    console_path: "Prisma Cloud > Policies | Wiz > Configuration Findings"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.1"
+    evidence_types:
+      - "prisma_policies"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  A.7.4.2:
+    summary: "PII processing must be limited to stated purposes"
+    remediation_steps:
+      - "Configure policies to restrict processing to stated purposes"
+      - "Monitor for unauthorized processing activities"
+      - "Document processing limitations per PII category"
+      - "Audit processing activities against purposes"
+      - "Report processing scope to DPO"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.2"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null
+
+  A.7.4.3:
+    summary: "PII accuracy and quality must be maintained by the controller"
+    remediation_steps:
+      - "Implement data quality validation at input"
+      - "Provide update mechanisms for PII principals"
+      - "Schedule periodic accuracy reviews"
+      - "Document quality standards"
+      - "Track accuracy metrics"
+    console_path: "Confluence > Privacy Space > Data Quality"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.3"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.4.4:
+    summary: "Data minimization objectives must be defined and achieved"
+    remediation_steps:
+      - "Define minimization objectives per processing activity"
+      - "Configure Prisma policies for minimization enforcement"
+      - "Monitor Wiz findings for unnecessary data"
+      - "Review data stores for PII exceeding purposes"
+      - "Document minimization achievements"
+    console_path: "Prisma Cloud > Policies | Wiz > Configuration Findings"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.4"
+    evidence_types:
+      - "prisma_policies"
+      - "wiz_config_findings"
+    assertion_name: null
+
+  A.7.4.5:
+    summary: "PII must be de-identified and deleted at end of lifecycle"
+    remediation_steps:
+      - "Implement de-identification procedures"
+      - "Configure automated deletion at retention expiry"
+      - "Verify deletion across all storage locations"
+      - "Document de-identification methods"
+      - "Audit lifecycle compliance quarterly"
+    console_path: "Confluence > Privacy Space > De-identification"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.5"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: "encryption_at_rest"
+
+  A.7.4.6:
+    summary: "Temporary files containing PII must be managed securely"
+    remediation_steps:
+      - "Monitor AWS Config for temporary file management"
+      - "Review S3 bucket policies for temporary PII data"
+      - "Configure Azure storage lifecycle for temporary files"
+      - "Delete temporary PII files within defined timeframes"
+      - "Audit temporary file management quarterly"
+    console_path: "AWS Console > Config | S3 > Lifecycle Rules"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.6"
+    evidence_types:
+      - "config_recorders"
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  A.7.4.7:
+    summary: "PII must be securely disposed of"
+    remediation_steps:
+      - "Implement secure PII deletion procedures"
+      - "Use crypto-shredding where applicable"
+      - "Verify deletion across all storage locations"
+      - "Maintain disposal records"
+      - "Audit disposal compliance"
+    console_path: "AWS Console > S3 | Azure Portal > Storage"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.7"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  A.7.4.8:
+    summary: "PII must be returned or transferred to principals on request"
+    remediation_steps:
+      - "Implement data portability mechanisms"
+      - "Provide PII in structured, machine-readable format"
+      - "Fulfill requests within regulatory timelines"
+      - "Document return and transfer procedures"
+      - "Track request metrics"
+    console_path: "Confluence > Privacy Space > Data Portability"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.8"
+      - "GDPR Article 20"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  A.7.4.9:
+    summary: "PII transmission must be secured with encryption and access controls"
+    remediation_steps:
+      - "Encrypt PII in transit via Key Vault managed keys and TLS"
+      - "Review security groups for PII transfer path restrictions"
+      - "Verify NSG and GCP firewall rules protect PII transmission"
+      - "Enable HTTPS-only on storage with PII"
+      - "Document PII transmission security"
+    console_path: "Azure Portal > Key Vault | AWS Console > VPC > Security Groups"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.4.9"
+    evidence_types:
+      - "key_vault"
+      - "ec2_security_groups"
+      - "s3_buckets"
+    assertion_name: "encryption_at_rest"
+
+  # ---------------------------------------------------------------------------
+  # Annex A.7.5 — PII Controller cross-border transfers
+  # ---------------------------------------------------------------------------
+  A.7.5.1:
+    summary: "The legal basis for cross-border PII transfers must be identified"
+    remediation_steps:
+      - "Identify legal basis per transfer destination"
+      - "Verify transfer mechanisms (SCCs, adequacy, BCRs)"
+      - "Configure policy compliance monitoring for transfers"
+      - "Document transfer basis per destination"
+      - "Review when regulations change"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.5.1"
+      - "GDPR Chapter V"
+    evidence_types:
+      - "policy_compliance"
+      - "prisma_compliance"
+    assertion_name: null
+
+  A.7.5.2:
+    summary: "Countries and organizations receiving PII must be documented"
+    remediation_steps:
+      - "Maintain register of all PII transfer destinations"
+      - "Verify Prisma compliance for destination requirements"
+      - "Document adequacy decisions and safeguards"
+      - "Review destination register when processing changes"
+      - "Report to DPO"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.5.2"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  A.7.5.3:
+    summary: "Records of PII transfers must be maintained"
+    remediation_steps:
+      - "Log PII transfers via CloudTrail and audit logs"
+      - "Track Azure Activity Log for transfer events"
+      - "Maintain records with dates, recipients, and basis"
+      - "Store records per retention requirements"
+      - "Audit transfer records quarterly"
+    console_path: "CloudTrail > Events | Azure Portal > Activity Log"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.5.3"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+    assertion_name: null
+
+  A.7.5.4:
+    summary: "Records of PII disclosure to third parties must be maintained"
+    remediation_steps:
+      - "Log disclosures via CloudTrail and audit logs"
+      - "Monitor Entra audits for third-party PII access"
+      - "Document disclosure recipients and purposes"
+      - "Maintain records per retention requirements"
+      - "Audit disclosure records quarterly"
+    console_path: "CloudTrail > Events | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex A.7.5.4"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # Annex B.8.2 — PII Processor conditions
+  # ---------------------------------------------------------------------------
+  B.8.2.1:
+    summary: "Processor must have agreement with controller defining processing terms"
+    remediation_steps:
+      - "Execute DPA with each controller"
+      - "Verify agreement covers GDPR Article 28 requirements"
+      - "Conduct compliance audits against agreement terms"
+      - "Track agreement execution and renewals"
+      - "Review agreements annually"
+    console_path: "Prisma Cloud > Compliance > Audits"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.2.1"
+      - "GDPR Article 28"
+    evidence_types:
+      - "compliance_audits"
+      - "prisma_compliance"
+    assertion_name: null
+
+  B.8.2.2:
+    summary: "Processor must not process PII beyond controller instructions"
+    remediation_steps:
+      - "Restrict processing to documented controller instructions"
+      - "Configure Prisma policies enforcing processing scope"
+      - "Monitor for unauthorized processing activities"
+      - "Document processing limitations"
+      - "Audit processing scope quarterly"
+    console_path: "Prisma Cloud > Policies"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.2.2"
+      - "GDPR Article 28(3)(a)"
+    evidence_types:
+      - "prisma_policies"
+      - "policy_compliance"
+    assertion_name: null
+
+  B.8.2.3:
+    summary: "Processor must not use PII for marketing without authorization"
+    remediation_steps:
+      - "Implement controls preventing unauthorized marketing use"
+      - "Document restrictions on PII use for marketing"
+      - "Audit processing for marketing-related activities"
+      - "Train staff on PII use restrictions"
+      - "Review controls annually"
+    console_path: "Confluence > Privacy Space > Processing Restrictions"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.2.3"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  B.8.2.4:
+    summary: "Processor must inform controller of instructions that may infringe regulations"
+    remediation_steps:
+      - "Establish process for flagging potentially infringing instructions"
+      - "Document notification procedures"
+      - "Train processing staff on regulatory requirements"
+      - "Track instances of infringing instruction identification"
+      - "Review procedures annually"
+    console_path: "Confluence > Privacy Space > Instruction Review"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.2.4"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  B.8.2.5:
+    summary: "Processor must support controller obligations"
+    remediation_steps:
+      - "Implement technical measures to support DSAR fulfillment"
+      - "Conduct compliance audits verifying controller support"
+      - "Provide audit access as required by DPA"
+      - "Document support procedures"
+      - "Review support effectiveness annually"
+    console_path: "Prisma Cloud > Compliance > Audits"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.2.5"
+      - "GDPR Article 28(3)(e)"
+    evidence_types:
+      - "compliance_audits"
+      - "prisma_compliance"
+    assertion_name: null
+
+  B.8.2.6:
+    summary: "Records of PII processing must be maintained by the processor"
+    remediation_steps:
+      - "Maintain processor RoPA per GDPR Article 30(2)"
+      - "Log processing via CloudTrail, audit logs, and Entra"
+      - "Track Okta system log for processing events"
+      - "Update records when processing activities change"
+      - "Make records available to supervisory authority"
+    console_path: "CloudTrail > Events | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.2.6"
+      - "GDPR Article 30(2)"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # Annex B.8.3 — PII Processor obligations to PII principals
+  # ---------------------------------------------------------------------------
+  B.8.3.1:
+    summary: "Processor must support controller in fulfilling obligations to PII principals"
+    remediation_steps:
+      - "Implement technical measures for DSAR support"
+      - "Monitor Okta and Entra logs for data subject events"
+      - "Provide data extraction capabilities for controller"
+      - "Document support procedures and SLAs"
+      - "Track support request metrics"
+    console_path: "Okta > System Log | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.3.1"
+    evidence_types:
+      - "okta_system_log"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  B.8.3.2:
+    summary: "Processor must provide information to customer about processing"
+    remediation_steps:
+      - "Provide processing transparency reports to controllers"
+      - "Document processing activities and security measures"
+      - "Make security certifications available"
+      - "Report processing metrics to controllers"
+      - "Review reporting adequacy annually"
+    console_path: "Confluence > Privacy Space > Processor Reports"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.3.2"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  # ---------------------------------------------------------------------------
+  # Annex B.8.4 — PII Processor privacy by design
+  # ---------------------------------------------------------------------------
+  B.8.4.1:
+    summary: "Temporary files must be managed and deleted by the processor"
+    remediation_steps:
+      - "Monitor AWS Config for temporary PII file management"
+      - "Review S3 bucket policies for temporary data"
+      - "Configure Azure storage lifecycle for temporary files"
+      - "Delete temporary PII within defined timeframes"
+      - "Audit temporary file management quarterly"
+    console_path: "AWS Console > Config | S3 > Lifecycle Rules"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.4.1"
+    evidence_types:
+      - "config_recorders"
+      - "s3_buckets"
+      - "storage_accounts"
+    assertion_name: null
+
+  B.8.4.2:
+    summary: "PII must be returned, transferred, or disposed of at end of processing"
+    remediation_steps:
+      - "Implement PII return and deletion procedures"
+      - "Configure secure deletion for end-of-contract disposal"
+      - "Verify deletion across all storage locations"
+      - "Provide deletion certificates to controllers"
+      - "Document return/disposal procedures"
+    console_path: "AWS Console > S3 | Azure Portal > Storage"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.4.2"
+      - "GDPR Article 28(3)(g)"
+    evidence_types:
+      - "s3_buckets"
+      - "storage_accounts"
+      - "storage_buckets"
+    assertion_name: null
+
+  B.8.4.3:
+    summary: "PII transmission controls must be implemented by the processor"
+    remediation_steps:
+      - "Encrypt PII in transit using Key Vault keys and TLS"
+      - "Review security groups for PII data path restrictions"
+      - "Verify NSG and GCP firewall rules for PII protection"
+      - "Enable HTTPS-only on storage accounts with PII"
+      - "Document transmission security controls"
+    console_path: "Azure Portal > Key Vault | AWS Console > VPC > Security Groups"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.4.3"
+    evidence_types:
+      - "key_vault"
+      - "ec2_security_groups"
+      - "s3_buckets"
+    assertion_name: "encryption_at_rest"
+
+  # ---------------------------------------------------------------------------
+  # Annex B.8.5 — PII Processor cross-border transfers
+  # ---------------------------------------------------------------------------
+  B.8.5.1:
+    summary: "Processor must identify legal basis for cross-border PII transfers"
+    remediation_steps:
+      - "Identify legal basis per transfer destination"
+      - "Verify transfer mechanisms with controller"
+      - "Configure policy compliance monitoring"
+      - "Document transfer basis per destination"
+      - "Review when regulations change"
+    console_path: "Prisma Cloud > Policies | Azure Policy"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.1"
+      - "GDPR Chapter V"
+    evidence_types:
+      - "policy_compliance"
+      - "prisma_compliance"
+    assertion_name: null
+
+  B.8.5.2:
+    summary: "Processor must document countries and organizations receiving PII"
+    remediation_steps:
+      - "Maintain register of transfer destinations"
+      - "Verify Prisma compliance for destination requirements"
+      - "Document adequacy and safeguards per destination"
+      - "Share destination register with controller"
+      - "Review when processing changes"
+    console_path: "Prisma Cloud > Compliance > Standards"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.2"
+    evidence_types:
+      - "prisma_compliance"
+      - "compliance_audits"
+    assertion_name: null
+
+  B.8.5.3:
+    summary: "Processor must maintain records of PII disclosure"
+    remediation_steps:
+      - "Log disclosures via CloudTrail and audit logs"
+      - "Monitor Entra audits for third-party access"
+      - "Document disclosure recipients and purposes"
+      - "Share records with controller as required"
+      - "Audit disclosure records quarterly"
+    console_path: "CloudTrail > Events | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.3"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "entra_directory_audits"
+    assertion_name: null
+
+  B.8.5.4:
+    summary: "Processor must notify controller of government disclosure requests"
+    remediation_steps:
+      - "Establish government disclosure notification procedures"
+      - "Monitor SIEM incidents for disclosure-related events"
+      - "Notify controller promptly unless legally prohibited"
+      - "Document notification procedures"
+      - "Track disclosure request metrics"
+    console_path: "Sentinel > Incidents | Splunk > Notable Events"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.4"
+    evidence_types:
+      - "sentinel_incidents"
+      - "splunk_notable_events"
+    assertion_name: null
+
+  B.8.5.5:
+    summary: "Processor must handle legally binding PII disclosure requests"
+    remediation_steps:
+      - "Define procedures for handling legal disclosure requests"
+      - "Assess validity of disclosure requests"
+      - "Notify controller before disclosure where permitted"
+      - "Document all disclosure requests and responses"
+      - "Review disclosure procedures annually"
+    console_path: "Confluence > Legal Space > Disclosure Procedures"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.5"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  B.8.5.6:
+    summary: "Processor must disclose use of subcontractors to controllers"
+    remediation_steps:
+      - "Maintain register of subcontractors processing PII"
+      - "Disclose subcontractor details to controllers"
+      - "Obtain controller approval for new subcontractors"
+      - "Document subcontractor agreements"
+      - "Review subcontractor register quarterly"
+    console_path: "Confluence > Privacy Space > Subcontractor Register"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.6"
+      - "GDPR Article 28(2)"
+    evidence_types:
+      - "confluence_pages"
+    assertion_name: null
+
+  B.8.5.7:
+    summary: "Processor must ensure subcontractors meet equivalent security requirements"
+    remediation_steps:
+      - "Include security requirements in subcontractor agreements"
+      - "Conduct compliance audits on subcontractors"
+      - "Verify Prisma compliance for subcontractor environments"
+      - "Track subcontractor security assessments"
+      - "Review subcontractor security annually"
+    console_path: "Prisma Cloud > Compliance > Audits"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.7"
+      - "GDPR Article 28(4)"
+    evidence_types:
+      - "compliance_audits"
+      - "prisma_compliance"
+    assertion_name: null
+
+  B.8.5.8:
+    summary: "Changes to subcontractors must be managed and communicated"
+    remediation_steps:
+      - "Notify controller of subcontractor changes"
+      - "Track changes via CloudTrail and audit logs"
+      - "Monitor Entra audits for subcontractor access changes"
+      - "Allow controller to object to new subcontractors"
+      - "Document change management procedures"
+    console_path: "CloudTrail > Events | Entra > Audit Logs"
+    recommended_reading:
+      - "ISO/IEC 27701:2019 Annex B.8.5.8"
+    evidence_types:
+      - "cloudtrail_trails"
+      - "audit_logs"
+      - "entra_directory_audits"
+    assertion_name: null
