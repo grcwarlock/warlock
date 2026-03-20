@@ -64,7 +64,7 @@ echo "  Press Enter at any prompt to skip and run in deterministic mode."
 echo ""
 echo "  Providers: 1) Anthropic  2) OpenAI  3) Ollama  4) Gemini"
 printf "  Provider [1-4] (Enter to skip): "
-read -r AI_CHOICE
+read -r AI_CHOICE < /dev/tty
 if [ -n "$AI_CHOICE" ]; then
     case "$AI_CHOICE" in
         1|anthropic|Anthropic)
@@ -94,13 +94,15 @@ if [ -n "$AI_CHOICE" ]; then
             ;;
     esac
 
-    if [ "$WLK_AI_ENABLED" != "false" ]; then
+    # Reset AI_ENABLED (was set to false for seed speed in step 5)
+    export WLK_AI_ENABLED=true
+    if [ "$WLK_AI_PROVIDER" != "" ]; then
         printf "  API Key: "
-        read -r AI_KEY
+        read -r AI_KEY < /dev/tty
         if [ -n "$AI_KEY" ]; then
             export WLK_AI_API_KEY="$AI_KEY"
             printf "  Model [${DEFAULT_MODEL}]: "
-            read -r AI_MODEL
+            read -r AI_MODEL < /dev/tty
             export WLK_AI_MODEL="${AI_MODEL:-$DEFAULT_MODEL}"
             export WLK_AI_ENABLED=true
             echo ""
