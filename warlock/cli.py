@@ -359,6 +359,206 @@ def coverage(framework: str | None, use_ai: bool | None) -> None:
 
 
 @cli.command()
+@click.argument("control_id")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option(
+    "--remediate/--no-remediate",
+    "show_remediation",
+    default=True,
+    help="Show/hide remediation guidance (default: show)",
+)
+@click.option(
+    "--ai/--no-ai", "use_ai", default=None, help="AI-enhanced per-resource remediation commands"
+)
+@click.option(
+    "--ask", is_flag=True, default=False, help="Interactive AI reasoning about this control"
+)
+def control(
+    control_id: str,
+    framework: str | None,
+    show_remediation: bool,
+    use_ai: bool | None,
+    ask: bool,
+) -> None:
+    """Show control detail: status, resources, and remediation guidance.
+
+    \b
+    Examples:
+        warlock control SC-28                        # show control across all frameworks
+        warlock control AC-2 -f nist_800_53          # filter to NIST 800-53
+        warlock control CC6.1 --no-remediate          # hide remediation section
+        warlock control SC-28 --ai                   # AI-enhanced per-resource commands
+        warlock control AC-2 --ask                   # interactive AI reasoning
+    """
+    from rich.panel import Panel
+
+    from warlock.assessors.remediation_loader import get_control_detail
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    with get_session() as session:
+        detail = get_control_detail(session, control_id, framework)
+
+    if not detail:
+        _error(f"No results found for control '{control_id}'. Check the ID or specify --framework.")
+
+    # --- Control header ---
+    fw_list = ", ".join(detail["frameworks"])
+    desc = detail["description"] or "[dim]no description[/dim]"
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]{control_id}[/bold]\n\n{desc}\n\nFramework(s): [cyan]{fw_list}[/cyan]",
+            title="[bold cyan]Control Detail[/bold cyan]",
+            border_style="cyan",
+        )
+    )
+
+    # --- Status summary ---
+    total = detail["total_results"]
+    compliant = detail["compliant_count"]
+    non_compliant = detail["non_compliant_count"]
+    partial = detail["partial_count"]
+    not_assessed = detail["not_assessed_count"]
+    console.print(
+        f"  [green]Compliant: {compliant}[/green]  "
+        f"[red]Non-compliant: {non_compliant}[/red]  "
+        f"[yellow]Partial: {partial}[/yellow]  "
+        f"[dim]Not assessed: {not_assessed}[/dim]  "
+        f"Total: {total}\n"
+    )
+
+    # --- Passing resources table ---
+    if detail["passing_resources"]:
+        pass_table = Table(title="Passing Resources", border_style="green")
+        pass_table.add_column("Resource ID", style="green")
+        pass_table.add_column("Type", style="green")
+        pass_table.add_column("Source", style="green")
+        for res in detail["passing_resources"]:
+            pass_table.add_row(
+                res["resource_id"] or "",
+                res["resource_type"] or "",
+                res["source"] or "",
+            )
+        console.print(pass_table)
+        console.print()
+
+    # --- Failing resources table ---
+    if detail["failing_resources"]:
+        fail_table = Table(title="Failing Resources", border_style="red")
+        fail_table.add_column("Resource ID", style="red")
+        fail_table.add_column("Type", style="red")
+        fail_table.add_column("Source", style="red")
+        fail_table.add_column("Severity", style="red")
+        for res in detail["failing_resources"]:
+            sev = res["severity"]
+            sev_style = (
+                "bold red"
+                if sev == "critical"
+                else "red"
+                if sev == "high"
+                else "yellow"
+                if sev == "medium"
+                else "dim"
+            )
+            fail_table.add_row(
+                res["resource_id"] or "",
+                res["resource_type"] or "",
+                res["source"] or "",
+                f"[{sev_style}]{sev}[/]",
+            )
+        console.print(fail_table)
+        console.print()
+
+    # --- KB Remediation section ---
+    if show_remediation and detail["remediation"]:
+        guidance = detail["remediation"]
+        remediation_text = ""
+        if guidance.get("summary"):
+            remediation_text += f"[bold]Summary:[/bold] {guidance['summary']}\n\n"
+        steps = guidance.get("steps") or guidance.get("remediation_steps") or []
+        if steps:
+            remediation_text += "[bold]Steps:[/bold]\n"
+            for i, step in enumerate(steps, 1):
+                remediation_text += f"  {i}. {step}\n"
+            remediation_text += "\n"
+        if guidance.get("console_path"):
+            remediation_text += f"[bold]Console path:[/bold] {guidance['console_path']}\n"
+        if guidance.get("recommended_reading"):
+            remediation_text += "\n[bold]Recommended reading:[/bold]\n"
+            for ref in guidance["recommended_reading"]:
+                remediation_text += f"  - {ref}\n"
+
+        if remediation_text.strip():
+            console.print(
+                Panel(
+                    remediation_text.rstrip(),
+                    title="[bold green]Remediation Guidance[/bold green]",
+                    border_style="green",
+                )
+            )
+
+    # --- AI-enhanced per-resource commands ---
+    if _check_ai_available(use_ai) and use_ai is not None and detail["failing_resources"]:
+        try:
+            from warlock.assessors.remediation_loader import get_ai_control_remediation
+
+            fw = framework or detail["frameworks"][0]
+            with get_session() as ai_session:
+                ai_result = get_ai_control_remediation(
+                    session=ai_session,
+                    control_id=control_id,
+                    framework=fw,
+                    failing_resources=detail["failing_resources"],
+                )
+            if ai_result:
+                console.print("\n[bold]AI Per-Resource Remediation:[/bold]")
+                if isinstance(ai_result, dict):
+                    for key, val in ai_result.items():
+                        console.print(f"  [cyan]{key}:[/cyan] {val}")
+                elif isinstance(ai_result, str):
+                    console.print(ai_result)
+                else:
+                    console.print(str(ai_result))
+        except Exception as exc:
+            console.print(f"\n[dim]AI remediation unavailable: {exc.__class__.__name__}[/dim]")
+
+    # --- Interactive AI reasoning ---
+    if ask:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import ConversationContext
+
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print(
+                "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+            )
+            return
+
+        import uuid
+
+        session_id = uuid.uuid4().hex
+        entity_data = {
+            "control_id": control_id,
+            "frameworks": detail["frameworks"],
+            "compliant_count": detail["compliant_count"],
+            "non_compliant_count": detail["non_compliant_count"],
+            "partial_count": detail["partial_count"],
+            "not_assessed_count": detail["not_assessed_count"],
+            "failing_count": len(detail["failing_resources"]),
+            "passing_count": len(detail["passing_resources"]),
+            "remediation": detail["remediation"],
+        }
+        ctx = ConversationContext(
+            entity_type="control",
+            entity_id=control_id,
+            entity_data=entity_data,
+            session_id=session_id,
+        )
+        _ai_repl(svc, session_id, ctx, f"control {control_id}")
+
+
+@cli.command()
 @click.option("--ask", default=None, help="Ask AI a question about the listed findings")
 def findings(ask: str | None) -> None:
     """Show recent findings."""

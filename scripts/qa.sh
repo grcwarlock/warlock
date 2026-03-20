@@ -494,14 +494,14 @@ if 'ai ' not in r.output and 'ai' not in r.output:
     errors.append('ai group missing from top-level help')
 
 # --ai flag on key commands
-for cmd in ['coverage', 'remediate', 'simulate-audit', 'policy-coverage']:
+for cmd in ['coverage', 'control', 'remediate', 'simulate-audit', 'policy-coverage']:
     parts = cmd.split('-')
     r = runner.invoke(cli, [cmd, '--help'])
     if '--ai' not in r.output:
         errors.append(f'{cmd} missing --ai flag')
 
 # --ask flag on interactive commands
-for cmd in ['remediate', 'findings', 'issues']:
+for cmd in ['remediate', 'control', 'findings', 'issues']:
     r = runner.invoke(cli, [cmd, '--help'])
     if '--ask' not in r.output:
         errors.append(f'{cmd} missing --ask flag')

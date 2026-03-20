@@ -174,7 +174,7 @@ warlock/
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (139 routes, ABAC-scoped)
-  cli.py         — Click CLI (41 commands including dashboard + tui)
+  cli.py         — Click CLI (42 commands including dashboard + tui)
   tui/           — Textual TUI dashboard (7 screens) + plotext charts + Trogon command browser
   db/            — SQLAlchemy models (34) + Alembic migrations (11)
   export/        — OSCAL, binder, alerts, reports

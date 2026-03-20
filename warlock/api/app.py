@@ -14,6 +14,7 @@ Endpoints:
 - /api/v1/results                       -- list/filter control results
 - /api/v1/results/coverage              -- coverage summary
 - /api/v1/results/posture               -- posture scores
+- /api/v1/controls/{id}                 -- control detail + remediation
 - /api/v1/connectors                    -- list connectors
 - /api/v1/connectors/{provider}/status  -- connector health
 - /api/v1/export/oscal                  -- export OSCAL (AR, SSP, POA&M)
@@ -240,6 +241,37 @@ class PostureResponse(BaseModel):
     evidence_freshness: float | None
 
     model_config = {"from_attributes": True}
+
+
+class ControlDetailResource(BaseModel):
+    resource_id: str
+    resource_type: str
+    source: str
+    provider: str | None = None
+    region: str | None = None
+    severity: str | None = None
+
+
+class ControlDetailRemediation(BaseModel):
+    summary: str | None = None
+    steps: list[str] = []
+    console_path: str | None = None
+    recommended_reading: list[str] = []
+
+
+class ControlDetailResponse(BaseModel):
+    control_id: str
+    frameworks: list[str]
+    description: str | None = None
+    total_results: int
+    compliant_count: int
+    non_compliant_count: int
+    partial_count: int
+    not_assessed_count: int
+    passing_resources: list[ControlDetailResource]
+    failing_resources: list[ControlDetailResource]
+    remediation: ControlDetailRemediation | None = None
+    ai_remediation: dict | None = None  # per-resource AI commands, only when ai=true
 
 
 class ConnectorResponse(BaseModel):
@@ -1280,6 +1312,106 @@ def results_posture(
         )
         for p in rows
     ]
+
+
+# =========================================================================
+# Control Detail
+# =========================================================================
+
+
+@app.get(PREFIX + "/controls/{control_id}", response_model=ControlDetailResponse)
+def get_control_detail_endpoint(
+    control_id: str,
+    framework: str | None = Query(None, description="Filter to specific framework"),
+    ai: bool = Query(False, description="Include AI-enhanced remediation"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Full control detail: status counts, passing/failing resources, remediation."""
+    from warlock.assessors.remediation_loader import (
+        get_control_detail,
+        get_ai_control_remediation,
+    )
+
+    detail = get_control_detail(db, control_id, framework)
+    if detail is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No results found for control '{control_id}'",
+        )
+
+    # Map status_counts to the response model fields
+    sc = detail.get("status_counts", {})
+    compliant_count = sc.get("compliant", 0)
+    non_compliant_count = sc.get("non_compliant", 0)
+    partial_count = sc.get("partial", 0)
+    not_assessed_count = (
+        detail["total_resources"] - compliant_count - non_compliant_count - partial_count
+    )
+
+    # Build resource lists
+    passing = [
+        ControlDetailResource(
+            resource_id=r.get("resource_id", ""),
+            resource_type=r.get("resource_type", ""),
+            source=r.get("source", ""),
+            provider=r.get("provider") if r.get("provider") else None,
+            region=r.get("region"),
+            severity=r.get("severity"),
+        )
+        for r in detail.get("passing_resources", [])
+    ]
+    failing = [
+        ControlDetailResource(
+            resource_id=r.get("resource_id", ""),
+            resource_type=r.get("resource_type", ""),
+            source=r.get("source", ""),
+            provider=r.get("provider") if r.get("provider") else None,
+            region=r.get("region"),
+            severity=r.get("severity"),
+        )
+        for r in detail.get("failing_resources", [])
+    ]
+
+    # Build remediation model from KB dict
+    remediation = None
+    kb = detail.get("remediation")
+    if kb:
+        remediation = ControlDetailRemediation(
+            summary=kb.get("summary"),
+            steps=kb.get("remediation_steps", kb.get("steps", [])),
+            console_path=kb.get("console_path"),
+            recommended_reading=kb.get("recommended_reading", []),
+        )
+
+    # AI-enhanced remediation (only when requested)
+    ai_remediation = None
+    if ai and failing:
+        try:
+            fw = framework or (detail["frameworks"][0] if detail["frameworks"] else "unknown")
+            ai_remediation = get_ai_control_remediation(
+                control_id=control_id,
+                framework=fw,
+                failing_resources=detail.get("failing_resources", []),
+                remediation=kb,
+            )
+        except Exception:
+            log.warning("AI remediation failed for %s", control_id, exc_info=True)
+
+    return ControlDetailResponse(
+        control_id=detail["control_id"],
+        frameworks=detail["frameworks"],
+        description=detail.get("description"),
+        total_results=detail["total_resources"],
+        compliant_count=compliant_count,
+        non_compliant_count=non_compliant_count,
+        partial_count=partial_count,
+        not_assessed_count=not_assessed_count,
+        passing_resources=passing,
+        failing_resources=failing,
+        remediation=remediation,
+        ai_remediation=ai_remediation,
+    )
 
 
 # =========================================================================

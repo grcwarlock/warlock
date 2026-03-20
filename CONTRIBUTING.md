@@ -246,7 +246,7 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
 - **API** (`warlock/api/`) — FastAPI REST endpoints (139 routes), ABAC-scoped access control
-- **CLI** (`warlock/cli.py`) — Click CLI (41 commands) for pipeline, monitoring, export, workflows
+- **CLI** (`warlock/cli.py`) — Click CLI (42 commands) for pipeline, monitoring, export, workflows
 - **TUI** (`warlock/tui/`) — Textual interactive dashboard (7 screens) + Trogon command browser
 - **Database** (`warlock/db/`) — SQLAlchemy ORM, 35 models, 11 Alembic migrations
 - **Frameworks** (`warlock/frameworks/`) — 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
