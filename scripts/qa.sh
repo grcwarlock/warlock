@@ -527,6 +527,43 @@ else
     section_fail
 fi
 
+# --- CI Workflow Reality Check ---
+section_start "CI Workflow Reality Check"
+CI_OK=true
+CI_FILE="${DIR}/.github/workflows/ci.yml"
+if [ -f "$CI_FILE" ]; then
+    # Extract CLI group names tested in CI and verify they exist
+    CI_GROUPS=$(grep -oE '"[a-z_-]+"' "$CI_FILE" | tr -d '"' | sort -u)
+    for grp in $CI_GROUPS; do
+        # Only check if it looks like a warlock CLI command reference in the smoke test section
+        if grep -q "warlock.*$grp.*--help" "$CI_FILE" 2>/dev/null; then
+            if ! "$PYTHON" -c "from warlock.cli import cli; assert '$grp' in [c for c in cli.list_commands(None)]" 2>/dev/null; then
+                # Check if it's a group (subcommand of a group)
+                if ! "$PYTHON" -c "
+from warlock.cli import cli
+import click
+for name, cmd in cli.commands.items():
+    if isinstance(cmd, click.Group) and '$grp' in [c for c in cmd.list_commands(None)]:
+        exit(0)
+exit(1)
+" 2>/dev/null; then
+                    echo "  CI tests 'warlock $grp' but command does not exist"
+                    CI_OK=false
+                fi
+            fi
+        fi
+    done
+    if $CI_OK; then
+        echo "  All CI-referenced CLI commands exist"
+        section_pass
+    else
+        section_fail
+    fi
+else
+    echo "  CI workflow not found — skipping"
+    section_skip
+fi
+
 # ==========================================================================
 # SUMMARY
 # ==========================================================================
