@@ -13,26 +13,26 @@ echo ""
 
 # 1. Activate venv
 if [ ! -d ".venv" ]; then
-    echo "[1/6] Creating virtual environment..."
+    echo "[1/7] Creating virtual environment..."
     python3 -m venv .venv
 else
-    echo "[1/6] Virtual environment exists."
+    echo "[1/7] Virtual environment exists."
 fi
 source .venv/bin/activate
 
 # 2. Install
-echo "[2/6] Installing dependencies..."
+echo "[2/7] Installing dependencies..."
 pip install -e ".[dev,ai]" --quiet 2>/dev/null
 
 # 3. Kill anything on our ports
-echo "[3/6] Clearing ports..."
+echo "[3/7] Clearing ports..."
 lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null || true
 lsof -ti:8181 2>/dev/null | xargs kill -9 2>/dev/null || true
 sleep 1
 
 # 4. Start OPA server with policy bundle
 if command -v opa &>/dev/null; then
-    echo "[4/6] Starting OPA server (port 8181)..."
+    echo "[4/7] Starting OPA server (port 8181)..."
     opa run --server --addr :8181 --bundle policies/ &>/dev/null &
     OPA_PID=$!
     sleep 2
@@ -44,19 +44,46 @@ if command -v opa &>/dev/null; then
         echo "       OPA failed to start — running without policy evaluation"
     fi
 else
-    echo "[4/6] OPA not installed — skipping policy evaluation"
+    echo "[4/7] OPA not installed — skipping policy evaluation"
     echo "       Install with: brew install opa"
 fi
 
-# 5. Fresh database + seed
-echo "[5/6] Seeding demo environment..."
+# 5. Fresh database + seed (AI disabled for speed)
+echo "[5/7] Seeding demo environment..."
 rm -f warlock.db
+export WLK_AI_ENABLED=false
 alembic upgrade head 2>&1 | tail -1
 python scripts/demo_seed.py 2>&1 | grep -E "^\[|^  Raw|^  Find|^  Cont|^  Conn|^  Dur|Seed complete"
 echo ""
 
-# 6. Start API server
-echo "[6/6] Starting API server (port 8000)..."
+# 6. AI configuration prompt
+echo "[6/7] AI Reasoning (optional)"
+echo ""
+echo "  Warlock supports AI-powered compliance reasoning via Ollama, Anthropic,"
+echo "  OpenAI, or Gemini. Paste your API key to enable, or press Enter to skip."
+echo ""
+printf "  API Key (Enter to skip): "
+read -r AI_KEY
+if [ -n "$AI_KEY" ]; then
+    export WLK_AI_ENABLED=true
+    export WLK_AI_API_KEY="$AI_KEY"
+    export WLK_AI_PROVIDER="${WLK_AI_PROVIDER:-ollama}"
+    export WLK_AI_MODEL="${WLK_AI_MODEL:-qwen3-coder:30b}"
+    export WLK_AI_BASE_URL="${WLK_AI_BASE_URL:-https://ollama.com}"
+    echo ""
+    echo "       AI enabled: ${WLK_AI_PROVIDER}/${WLK_AI_MODEL}"
+    echo "       Use --ai flag on commands: warlock coverage --ai"
+    echo "       Interactive reasoning:     warlock remediate <id> --ask"
+else
+    export WLK_AI_ENABLED=false
+    echo ""
+    echo "       Running in deterministic mode (no AI). You can enable later:"
+    echo "       export WLK_AI_PROVIDER=ollama WLK_AI_API_KEY=<key> WLK_AI_MODEL=qwen3-coder:30b WLK_AI_ENABLED=true"
+fi
+echo ""
+
+# 7. Start API server
+echo "[7/7] Starting API server (port 8000)..."
 warlock-api &>/dev/null &
 API_PID=$!
 sleep 2

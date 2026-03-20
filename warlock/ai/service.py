@@ -234,7 +234,7 @@ class AIService:
             ))
             return result
         except Exception as exc:
-            log.exception("AI call failed for task %s", task.value)
+            log.debug("AI call failed for task %s: %s", task.value, exc, exc_info=True)
             if fallback is not None:
                 fb_result = AIResult(
                     value=fallback(),
@@ -400,7 +400,7 @@ class AIService:
             ))
             return result
         except Exception as exc:
-            log.exception("Converse call failed for session %s", session_id)
+            log.debug("Converse call failed for session %s: %s", session_id, exc, exc_info=True)
             _audit_log.record(AIAuditEntry.create(
                 task=AITask.FOLLOW_UP.value,
                 provider=self._provider,
