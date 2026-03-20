@@ -37,8 +37,16 @@ from warlock.db.models import (
 # ---------------------------------------------------------------------------
 # Download token signing — HMAC-SHA256, 1-hour TTL
 # ---------------------------------------------------------------------------
-# In production, replace this constant with a secret from settings.
-_DOWNLOAD_TOKEN_SECRET = "wlk-trust-portal-download-secret-v1"
+# Load from settings — refuse hardcoded default in production
+def _get_download_secret() -> str:
+    from warlock.config import get_settings
+    s = get_settings()
+    secret = getattr(s, "trust_portal_secret", "") or ""
+    if not secret:
+        if getattr(s, "env", "development") == "production":
+            raise RuntimeError("WLK_TRUST_PORTAL_SECRET must be set in production")
+        secret = "wlk-trust-portal-dev-only-secret"
+    return secret
 
 log = logging.getLogger(__name__)
 
@@ -385,7 +393,7 @@ def _sign_download_token(doc_id: str, expires_at: int) -> str:
     """Return an HMAC-SHA256 token for a time-limited download URL."""
     msg = f"{doc_id}:{expires_at}"
     return hmac.new(  # type: ignore[attr-defined]  # stdlib alias
-        _DOWNLOAD_TOKEN_SECRET.encode(),
+        _get_download_secret().encode(),
         msg.encode(),
         hashlib.sha256,
     ).hexdigest()
@@ -462,6 +470,11 @@ async def upload_trust_document(
             detail=f"Invalid classification_tier '{classification_tier}'. Must be one of: {sorted(_VALID_TIERS)}",
         )
 
+    # Validate file type
+    _ALLOWED_TYPES = {"application/pdf", "image/png", "image/jpeg", "text/csv", "application/json"}
+    if file.content_type and file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail=f"File type '{file.content_type}' not allowed. Allowed: {sorted(_ALLOWED_TYPES)}")
+
     # Sanitize title and build a storage key
     safe_title = re.sub(r"[^\w\s\-.]", "", title)[:120].strip().replace(" ", "_")
     if not safe_title:
@@ -471,7 +484,12 @@ async def upload_trust_document(
     import uuid
 
     doc_id = str(uuid.uuid4())
-    content = await file.read()
+
+    # Read with size limit (50MB)
+    _MAX_UPLOAD_SIZE = 50 * 1024 * 1024
+    content = await file.read(_MAX_UPLOAD_SIZE + 1)
+    if len(content) > _MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="File exceeds maximum upload size of 50MB")
     file_size = len(content)
 
     # Store under exports/trust_documents/<tier>/<id>_<safe_title>
@@ -519,11 +537,16 @@ async def list_trust_documents(
 ):
     """List available compliance documents.
 
-    Unauthenticated callers only see 'public' tier.
-    Pass ?tier=nda or ?tier=contract for higher tiers (auth required elsewhere;
-    enforcement is handled via the access-request approval flow).
+    Public tier is unauthenticated. NDA and contract tiers require authentication.
     """
     allowed_tier = tier or "public"
+    # Enforce auth for non-public tiers
+    if allowed_tier in ("nda", "contract"):
+        # Non-public tiers should not be browseable without auth
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required for NDA and contract tier documents. Use the access-request flow.",
+        )
     if allowed_tier not in _VALID_TIERS:
         raise HTTPException(
             status_code=400,

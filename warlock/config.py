@@ -237,6 +237,9 @@ class Settings(BaseSettings):
     opa_bundle_path: str = "policies/"
     opa_frameworks: list[str] = Field(default_factory=list)  # empty = all available
 
+    # Trust portal
+    trust_portal_secret: str = ""  # HMAC secret for download token signing
+
     # Change event retention
     change_event_retention_days: int = 90  # auto-purge change events older than this
 
