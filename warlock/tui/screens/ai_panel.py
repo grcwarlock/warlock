@@ -1,250 +1,122 @@
-"""Interactive AI reasoning panel.
+"""AI Reasoning Panel — simple chat interface.
 
-Chat-style interface for conversing with the AI about GRC entities --
-findings, issues, POA&Ms, and controls. Supports quick-action buttons
-and displays entity context alongside the conversation.
+Type a question, get an answer grounded in your compliance data.
+No entity selection needed — the AI searches across everything.
+
+Examples:
+  "What are my biggest risks in AWS?"
+  "How do I fix AC-2?"
+  "Show me non-compliant controls in SOC 2"
+  "What's the remediation for SC-28?"
+  "Summarize my compliance posture"
 """
 
 from __future__ import annotations
 
+import json
 import logging
-import uuid
-from datetime import datetime
-from typing import Any
+from datetime import datetime, timezone
 
 from textual import work
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.widgets import (
-    Button,
-    Input,
-    Label,
-    Markdown,
-    Select,
-    Static,
-)
+from textual.containers import Vertical, VerticalScroll
+from textual.widgets import Button, Input, Label, Markdown, Static
 
 log = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Entity types the user can reason about
-# ---------------------------------------------------------------------------
-
-_ENTITY_TYPES = [
-    ("Finding", "finding"),
-    ("Issue", "issue"),
-    ("POA&M", "poam"),
-    ("Control", "control"),
-]
-
-# Quick action prompts
-_QUICK_ACTIONS = [
-    ("Why is this non-compliant?", "why_noncompliant"),
-    ("How do I fix this?", "how_to_fix"),
-    ("What's the business impact?", "business_impact"),
-    ("Generate remediation plan", "remediation_plan"),
-]
-
-_QUICK_ACTION_PROMPTS: dict[str, str] = {
-    "why_noncompliant": (
-        "Analyze this entity and explain why it is non-compliant. "
-        "Reference the specific control requirements that are not being met."
-    ),
-    "how_to_fix": (
-        "Provide step-by-step remediation guidance for this entity. "
-        "Include specific technical actions and configuration changes needed."
-    ),
-    "business_impact": (
-        "Assess the business impact of this entity's current state. "
-        "Consider financial, operational, reputational, and regulatory risks."
-    ),
-    "remediation_plan": (
-        "Generate a detailed remediation plan for this entity. Include: "
-        "1) Immediate actions (24-48h), 2) Short-term fixes (1-2 weeks), "
-        "3) Long-term improvements (1-3 months), with responsible roles and "
-        "estimated effort for each."
-    ),
-}
-
-
-# ---------------------------------------------------------------------------
-# CSS
-# ---------------------------------------------------------------------------
-
-AI_PANEL_CSS = """\
-#ai-screen {
-    layout: horizontal;
-}
-
-#conversation-column {
-    width: 2fr;
-    layout: vertical;
-}
-
-#context-column {
-    width: 1fr;
-    border-left: solid $accent;
-    padding: 1;
-}
-
-#status-bar {
-    height: 3;
-    padding: 0 2;
-    border-bottom: solid $accent;
-    content-align: left middle;
-}
-
-#entity-selector {
-    height: 5;
-    padding: 0 2;
-}
-
-#entity-selector Select {
-    width: 30;
-    margin-right: 1;
-}
-
-#entity-selector Input {
-    width: 40;
-}
-
-#chat-area {
-    height: 1fr;
-    padding: 1 2;
-    overflow-y: auto;
-}
-
-.user-message {
-    text-align: right;
-    margin: 1 0 1 10;
-    padding: 1 2;
-    background: $primary-darken-2;
-    border: round $primary;
-}
-
-.ai-message {
-    margin: 1 10 1 0;
-    padding: 1 2;
-    background: $surface;
-    border: round $accent;
-}
-
-.system-message {
-    text-align: center;
-    color: $text-muted;
-    margin: 1 4;
-}
-
-#input-bar {
-    height: 5;
-    padding: 1 2;
-    border-top: solid $accent;
-}
-
-#input-bar Input {
-    width: 1fr;
-    margin-right: 1;
-}
-
-#quick-actions {
-    height: auto;
-    padding: 0 2 1 2;
-}
-
-#quick-actions Button {
-    margin-right: 1;
-    min-width: 20;
-}
-
-#context-panel {
-    height: 1fr;
-}
-
-#setup-guide {
-    padding: 4;
-    text-align: center;
-}
-
-#no-entity-label {
-    text-align: center;
-    padding: 4;
-    color: $text-muted;
-}
-"""
-
-
-# ---------------------------------------------------------------------------
-# Screen
-# ---------------------------------------------------------------------------
-
 
 class AIPanelScreen(VerticalScroll):
-    """Interactive AI reasoning interface."""
+    """Simple chat interface — type a question, get an AI-powered answer."""
 
-    DEFAULT_CSS = AI_PANEL_CSS
+    DEFAULT_CSS = """
+    AIPanelScreen {
+        padding: 1 2;
+    }
+    #ai-status-bar {
+        height: 1;
+        margin-bottom: 1;
+        color: $text-muted;
+    }
+    #chat-history {
+        min-height: 10;
+        max-height: 80vh;
+        border: solid $surface-lighten-2;
+        padding: 1;
+        margin-bottom: 1;
+    }
+    .user-msg {
+        color: $text;
+        margin: 0 0 1 4;
+    }
+    .ai-msg {
+        margin: 0 4 1 0;
+    }
+    .system-msg {
+        color: $text-muted;
+        text-align: center;
+        margin: 1 0;
+    }
+    #quick-actions {
+        height: 3;
+        margin-bottom: 1;
+    }
+    #quick-actions Button {
+        margin-right: 1;
+    }
+    #input-row {
+        height: 3;
+    }
+    #chat-input {
+        width: 1fr;
+    }
+    #send-btn {
+        width: 10;
+    }
+    #setup-guide {
+        padding: 2 4;
+    }
+    """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self._session_id: str = str(uuid.uuid4())
-        self._entity_type: str = ""
-        self._entity_id: str = ""
-        self._entity_data: dict[str, Any] = {}
-        self._ai_available: bool = False
-        self._messages: list[dict[str, str]] = []
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._ai_available = False
+        self._session_id = None
+        self._messages: list[dict] = []
 
     def compose(self) -> ComposeResult:
-        with Container(id="ai-screen"):
-            # Left column: conversation
-            with Vertical(id="conversation-column"):
-                # Status bar
-                yield Static("", id="status-bar")
+        yield Static("", id="ai-status-bar")
 
-                # Entity selector
-                with Horizontal(id="entity-selector"):
-                    yield Select(
-                        _ENTITY_TYPES,
-                        prompt="Entity type",
-                        id="entity-type-select",
+        # Chat interface (hidden until AI is confirmed available)
+        with Vertical(id="chat-area"):
+            yield VerticalScroll(
+                Static("[dim]Ask anything about your compliance data.[/dim]", classes="system-msg"),
+                id="chat-history",
+            )
+            with Vertical(id="quick-actions"):
+                yield Label("[dim]Quick questions:[/dim]")
+                with Vertical():
+                    yield Button("What are my top risks?", id="q-risks", variant="default")
+                    yield Button("Show non-compliant controls", id="q-noncomp", variant="default")
+                    yield Button("Summarize compliance posture", id="q-posture", variant="default")
+                    yield Button(
+                        "What needs remediation first?", id="q-remediate", variant="default"
                     )
-                    yield Input(
-                        placeholder="Entity ID (e.g., finding UUID)",
-                        id="entity-id-input",
-                    )
-                    yield Button("Load", variant="primary", id="load-entity-btn")
-
-                # Quick action buttons
-                with Horizontal(id="quick-actions"):
-                    for label, action_id in _QUICK_ACTIONS:
-                        yield Button(label, id=f"qa-{action_id}", variant="default")
-
-                # Chat area
-                yield VerticalScroll(id="chat-area")
-
-                # Input bar
-                with Horizontal(id="input-bar"):
-                    yield Input(
-                        placeholder="Ask a question about this entity...",
-                        id="chat-input",
-                    )
-                    yield Button("Send", variant="primary", id="send-btn")
-
-            # Right column: entity context
-            with Vertical(id="context-column"):
-                yield Label("[bold]Entity Context[/bold]")
-                yield VerticalScroll(
-                    Markdown("*Select an entity to view its context.*", id="context-md"),
-                    id="context-panel",
-                )
+            with Vertical(id="input-row"):
+                yield Input(placeholder="Ask a question...", id="chat-input")
+                yield Button("Send", variant="primary", id="send-btn")
 
         # Setup guide (shown when AI is not configured)
-        yield Container(
+        yield Vertical(
             Label(
-                "[bold]AI Reasoning Not Configured[/bold]\n\n"
-                "Run [bold]warlock ai configure[/bold] to enable AI reasoning.\n\n"
-                "Supported providers: OpenAI, Anthropic, Google Gemini, Ollama.\n\n"
-                "Once configured, you can ask the AI about any finding, issue, "
-                "POA&M, or control in your GRC data.",
-                id="setup-guide-text",
+                "[bold]AI Reasoning[/bold]\n\n"
+                "AI is not configured. To enable:\n\n"
+                "  1. Run the demo with AI:  [bold]./scripts/demo.sh[/bold]  (select a provider)\n"
+                "  2. Or set env vars:\n"
+                "     [dim]export WLK_AI_PROVIDER=anthropic[/dim]\n"
+                "     [dim]export WLK_AI_API_KEY=your-key[/dim]\n"
+                "     [dim]export WLK_AI_MODEL=claude-sonnet-4-20250514[/dim]\n"
+                "     [dim]export WLK_AI_ENABLED=true[/dim]\n\n"
+                "Supported: Anthropic, OpenAI, Ollama, Gemini",
             ),
             id="setup-guide",
         )
@@ -252,317 +124,259 @@ class AIPanelScreen(VerticalScroll):
     def on_mount(self) -> None:
         self._check_ai_status()
 
-    # ------------------------------------------------------------------
-    # AI availability check
-    # ------------------------------------------------------------------
-
     def _check_ai_status(self) -> None:
-        """Check whether AI is configured and update the status bar."""
-        status_bar = self.query_one("#status-bar", Static)
-
+        status_bar = self.query_one("#ai-status-bar", Static)
         try:
             from warlock.ai.service import get_ai_service
 
             svc = get_ai_service()
             if svc.is_available():
                 self._ai_available = True
-                provider_name = getattr(svc, "_provider", "unknown")
-                model_name = getattr(svc, "_model", "unknown")
+                provider = getattr(svc, "_provider", "unknown")
+                model = getattr(svc, "_model", "unknown")
                 status_bar.update(
-                    f"[green bold]AI Enabled[/]  |  "
-                    f"Provider: {provider_name}  |  "
-                    f"Model: {model_name}"
+                    f"[green bold]AI Enabled[/]  |  Provider: {provider}  |  Model: {model}"
                 )
                 self.query_one("#setup-guide").display = False
-                self.query_one("#ai-screen").display = True
+                self.query_one("#chat-area").display = True
             else:
-                self._show_setup_guide(status_bar)
+                self._show_setup()
         except Exception:
-            self._show_setup_guide(status_bar)
+            self._show_setup()
 
-    def _show_setup_guide(self, status_bar: Static) -> None:
-        status_bar.update("[red bold]AI Disabled[/]  |  Run 'warlock ai configure' to enable")
-        self._ai_available = False
+    def _show_setup(self) -> None:
+        status_bar = self.query_one("#ai-status-bar", Static)
+        status_bar.update("[yellow]AI Not Configured[/]")
+        self.query_one("#chat-area").display = False
         self.query_one("#setup-guide").display = True
-        self.query_one("#ai-screen").display = False
 
     # ------------------------------------------------------------------
-    # Event handlers
+    # Input handling
     # ------------------------------------------------------------------
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        btn_id = event.button.id or ""
-
-        if btn_id == "send-btn":
-            self._send_message()
-        elif btn_id == "load-entity-btn":
-            self._load_entity()
-        elif btn_id.startswith("qa-"):
-            action_key = btn_id[3:]  # strip "qa-" prefix
-            prompt = _QUICK_ACTION_PROMPTS.get(action_key, "")
-            if prompt:
-                self._send_user_message(prompt)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.input.id == "chat-input":
-            self._send_message()
-        elif event.input.id == "entity-id-input":
-            self._load_entity()
+        if event.input.id == "chat-input" and event.value.strip():
+            self._send_message(event.value.strip())
+            event.input.value = ""
 
-    def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id == "entity-type-select" and event.value is not Select.BLANK:
-            self._entity_type = str(event.value)
-
-    # ------------------------------------------------------------------
-    # Entity loading
-    # ------------------------------------------------------------------
-
-    def _load_entity(self) -> None:
-        """Load the selected entity from the DB and display its context."""
-        entity_type_select = self.query_one("#entity-type-select", Select)
-        entity_id_input = self.query_one("#entity-id-input", Input)
-
-        if entity_type_select.value is Select.BLANK:
-            self.notify("Select an entity type first.", severity="warning")
-            return
-
-        self._entity_type = str(entity_type_select.value)
-        self._entity_id = entity_id_input.value.strip()
-
-        if not self._entity_id:
-            self.notify("Enter an entity ID.", severity="warning")
-            return
-
-        self._load_entity_worker(self._entity_type, self._entity_id)
-
-    @work(thread=True, exclusive=True, group="entity-load")
-    def _load_entity_worker(self, entity_type: str, entity_id: str) -> None:
-        """Fetch entity data from the DB in a background thread."""
-        try:
-            from warlock.db.engine import get_session
-
-            session_gen = get_session()
-            session = next(session_gen)
-            try:
-                entity_data = self._fetch_entity(session, entity_type, entity_id)
-                if entity_data:
-                    self._entity_data = entity_data
-                    self.app.call_from_thread(self._display_context, entity_data)
-                    self.app.call_from_thread(
-                        self._add_system_message,
-                        f"Loaded {entity_type} {entity_id[:8]}... Ready for questions.",
-                    )
-                    # Start a fresh conversation session for this entity
-                    self._session_id = str(uuid.uuid4())
-                    self._messages.clear()
-                else:
-                    self.app.call_from_thread(
-                        self.notify,
-                        f"{entity_type} '{entity_id}' not found.",
-                        severity="warning",
-                    )
-            finally:
-                try:
-                    next(session_gen)
-                except StopIteration:
-                    pass
-        except Exception as exc:
-            log.exception("Failed to load entity")
-            self.app.call_from_thread(self.notify, f"Load failed: {exc}", severity="error")
-
-    def _fetch_entity(
-        self, session: Any, entity_type: str, entity_id: str
-    ) -> dict[str, Any] | None:
-        """Query the DB for the given entity and return a serializable dict."""
-        from warlock.db import models
-
-        model_map: dict[str, type] = {
-            "finding": models.Finding,
-            "control": models.ControlResult,
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        quick_questions = {
+            "q-risks": "What are my top 5 risks across all frameworks? Include dollar amounts if available.",
+            "q-noncomp": "Show me all non-compliant controls grouped by framework with severity.",
+            "q-posture": "Give me an executive summary of my compliance posture across all 14 frameworks.",
+            "q-remediate": "What should I remediate first? Prioritize by risk impact and effort.",
         }
+        question = quick_questions.get(event.button.id)
+        if question:
+            self._send_message(question)
+        elif event.button.id == "send-btn":
+            chat_input = self.query_one("#chat-input", Input)
+            if chat_input.value.strip():
+                self._send_message(chat_input.value.strip())
+                chat_input.value = ""
 
-        # Check for optional models that may exist
-        if hasattr(models, "Issue"):
-            model_map["issue"] = models.Issue
-        if hasattr(models, "POAM"):
-            model_map["poam"] = models.POAM
-        elif hasattr(models, "Poam"):
-            model_map["poam"] = models.Poam
-
-        model_cls = model_map.get(entity_type)
-        if model_cls is None:
-            return None
-
-        entity = session.get(model_cls, entity_id)
-        if entity is None:
-            # Try partial ID match
-            entity = session.query(model_cls).filter(model_cls.id.like(f"{entity_id}%")).first()
-
-        if entity is None:
-            return None
-
-        # Convert to dict -- use column inspection
-        data: dict[str, Any] = {}
-        for col in entity.__table__.columns:
-            val = getattr(entity, col.name, None)
-            if isinstance(val, datetime):
-                val = val.isoformat()
-            data[col.name] = val
-
-        return data
-
-    # ------------------------------------------------------------------
-    # Conversation
-    # ------------------------------------------------------------------
-
-    def _send_message(self) -> None:
-        """Send the current input as a user message."""
-        chat_input = self.query_one("#chat-input", Input)
-        message = chat_input.value.strip()
-        if not message:
-            return
-        chat_input.value = ""
-        self._send_user_message(message)
-
-    def _send_user_message(self, message: str) -> None:
-        """Add user message to chat and trigger AI response."""
+    def _send_message(self, message: str) -> None:
         if not self._ai_available:
-            self.notify(
-                "AI not configured. Run 'warlock ai configure' first.",
-                severity="warning",
-            )
             return
 
-        if not self._entity_id:
-            self.notify("Load an entity first.", severity="warning")
-            return
+        # Add user message to chat
+        history = self.query_one("#chat-history", VerticalScroll)
+        history.mount(Static(f"[bold]You:[/bold] {message}", classes="user-msg"))
 
-        self._add_user_bubble(message)
-        self._messages.append({"role": "user", "content": message})
-        self._get_ai_response_worker(message)
+        # Add thinking indicator
+        thinking = Static("[dim italic]Thinking...[/dim italic]", id="thinking-indicator")
+        history.mount(thinking)
+        history.scroll_end()
 
-    @work(thread=True, exclusive=True, group="ai-response")
-    def _get_ai_response_worker(self, message: str) -> None:
-        """Call the AI service in a background thread."""
-        self.app.call_from_thread(self._add_typing_indicator)
+        # Send to AI in background
+        self._call_ai(message)
 
+    @work(thread=True)
+    def _call_ai(self, message: str) -> None:
+        """Send message to AI with full compliance context."""
         try:
+            context = self._build_context(message)
+
             from warlock.ai.service import get_ai_service
             from warlock.ai.types import ConversationContext
 
             svc = get_ai_service()
-            context = ConversationContext(
-                entity_type=self._entity_type,
-                entity_id=self._entity_id,
-                entity_data=self._entity_data,
+
+            if self._session_id is None:
+                import uuid
+
+                self._session_id = str(uuid.uuid4())
+
+            conv_context = ConversationContext(
+                entity_type="search",
+                entity_id="all",
+                entity_data=context,
+                related_controls=[],
+                related_findings=[],
+                compliance_context={},
+                messages=self._messages,
+                session_id=self._session_id,
+                created_at=datetime.now(timezone.utc),
+                last_activity=datetime.now(timezone.utc),
             )
 
             result = svc.converse(
                 session_id=self._session_id,
                 message=message,
-                context=context,
+                context=conv_context,
             )
 
-            self.app.call_from_thread(self._remove_typing_indicator)
-
-            if result.ai_used and result.value:
-                response_text = str(result.value)
-                self._messages.append({"role": "assistant", "content": response_text})
-                latency = result.latency_ms
-                model = result.model
-                self.app.call_from_thread(
-                    self._add_ai_bubble,
-                    response_text,
-                    f"{model} | {latency}ms",
-                )
+            if result.ai_used:
+                response = result.value if isinstance(result.value, str) else str(result.value)
+                self._messages.append({"role": "user", "content": message})
+                self._messages.append({"role": "assistant", "content": response})
             else:
-                reason = result.fallback_reason or "AI unavailable"
-                self.app.call_from_thread(
-                    self._add_system_message,
-                    f"AI could not respond: {reason}",
-                )
+                response = f"AI unavailable: {result.fallback_reason or 'unknown reason'}"
+
+            self.app.call_from_thread(self._display_response, response, result.ai_used)
+
         except Exception as exc:
-            log.exception("AI conversation failed")
-            self.app.call_from_thread(self._remove_typing_indicator)
+            log.debug("AI call failed: %s", exc, exc_info=True)
             self.app.call_from_thread(
-                self._add_system_message,
-                f"Error: {exc}",
+                self._display_response,
+                f"Error: {exc.__class__.__name__}: {exc}",
+                False,
             )
 
-    # ------------------------------------------------------------------
-    # Chat UI helpers (run on main thread)
-    # ------------------------------------------------------------------
+    def _display_response(self, response: str, ai_used: bool) -> None:
+        """Display AI response in the chat history."""
+        history = self.query_one("#chat-history", VerticalScroll)
 
-    def _add_user_bubble(self, text: str) -> None:
-        """Add a user message bubble to the chat area."""
-        chat = self.query_one("#chat-area", VerticalScroll)
-        bubble = Static(f"[bold]You:[/bold] {text}", classes="user-message")
-        chat.mount(bubble)
-        bubble.scroll_visible()
-
-    def _add_ai_bubble(self, text: str, meta: str = "") -> None:
-        """Add an AI response bubble with markdown rendering."""
-        chat = self.query_one("#chat-area", VerticalScroll)
-        container = Vertical(classes="ai-message")
-        chat.mount(container)
-        md = Markdown(text)
-        container.mount(md)
-        if meta:
-            container.mount(Static(f"[dim]{meta}[/dim]"))
-        container.scroll_visible()
-
-    def _add_system_message(self, text: str) -> None:
-        """Add a system/info message to the chat area."""
-        chat = self.query_one("#chat-area", VerticalScroll)
-        msg = Static(f"[dim italic]{text}[/]", classes="system-message")
-        chat.mount(msg)
-        msg.scroll_visible()
-
-    def _add_typing_indicator(self) -> None:
-        """Show a typing indicator while waiting for AI."""
-        chat = self.query_one("#chat-area", VerticalScroll)
-        indicator = Static(
-            "[dim italic]AI is thinking...[/]",
-            classes="system-message",
-            id="typing-indicator",
-        )
-        chat.mount(indicator)
-        indicator.scroll_visible()
-
-    def _remove_typing_indicator(self) -> None:
-        """Remove the typing indicator."""
+        # Remove thinking indicator
         try:
-            indicator = self.query_one("#typing-indicator")
-            indicator.remove()
+            thinking = self.query_one("#thinking-indicator")
+            thinking.remove()
         except Exception:
             pass
 
-    def _display_context(self, data: dict[str, Any]) -> None:
-        """Render entity data in the context panel."""
-        md_parts: list[str] = [f"## {self._entity_type.title()}: `{self._entity_id[:12]}...`\n"]
+        # Add response
+        if ai_used:
+            history.mount(Markdown(f"**AI:** {response}", classes="ai-msg"))
+        else:
+            history.mount(Static(f"[yellow]{response}[/yellow]", classes="system-msg"))
 
-        for key, value in data.items():
-            if value is None:
-                continue
-            display_key = key.replace("_", " ").title()
-            if isinstance(value, dict):
-                md_parts.append(f"**{display_key}:**\n```json\n{_format_json(value)}\n```\n")
-            elif isinstance(value, list):
-                md_parts.append(f"**{display_key}:** {len(value)} items\n")
-            elif isinstance(value, str) and len(value) > 100:
-                md_parts.append(f"**{display_key}:**\n> {value[:200]}...\n")
-            else:
-                md_parts.append(f"**{display_key}:** {value}\n")
+        history.scroll_end()
 
-        md_text = "\n".join(md_parts)
-        self.query_one("#context-md", Markdown).update(md_text)
+    def _build_context(self, message: str) -> dict:
+        """Build compliance context by searching the DB based on the user's question."""
+        from warlock.db.engine import get_session, init_db
+        from warlock.db.models import ControlResult, Finding, Issue, POAM, RiskAnalysis
+        from sqlalchemy import func, desc
 
+        init_db()
+        context = {}
 
-def _format_json(data: Any) -> str:
-    """Format a dict/list as indented JSON for display."""
-    import json
+        try:
+            with get_session() as session:
+                # Framework coverage summary
+                coverage_rows = (
+                    session.query(
+                        ControlResult.framework,
+                        func.count().label("total"),
+                        func.sum(func.cast(ControlResult.status == "compliant", type_=None)).label(
+                            "compliant"
+                        ),
+                        func.sum(
+                            func.cast(ControlResult.status == "non_compliant", type_=None)
+                        ).label("non_compliant"),
+                    )
+                    .group_by(ControlResult.framework)
+                    .all()
+                )
+                context["coverage"] = [
+                    {
+                        "framework": r.framework,
+                        "total": r.total,
+                        "compliant": int(r.compliant or 0),
+                        "non_compliant": int(r.non_compliant or 0),
+                        "rate": round(int(r.compliant or 0) / r.total * 100, 1) if r.total else 0,
+                    }
+                    for r in coverage_rows
+                ]
 
-    try:
-        return json.dumps(data, indent=2, default=str)[:500]
-    except Exception:
-        return str(data)[:500]
+                # Top findings by severity
+                top_findings = (
+                    session.query(Finding).order_by(desc(Finding.severity)).limit(20).all()
+                )
+                context["top_findings"] = [
+                    {
+                        "severity": f.severity,
+                        "source": f.source,
+                        "title": f.title[:100] if hasattr(f, "title") else f.observation_type,
+                        "resource": f.resource_id,
+                        "control_ids": f.control_id if hasattr(f, "control_id") else "",
+                    }
+                    for f in top_findings
+                ]
+
+                # Open issues summary
+                open_issues = (
+                    session.query(func.count(Issue.id))
+                    .filter(Issue.status.in_(["open", "in_progress"]))
+                    .scalar()
+                )
+                critical_issues = (
+                    session.query(func.count(Issue.id))
+                    .filter(Issue.status.in_(["open", "in_progress"]), Issue.priority == "critical")
+                    .scalar()
+                )
+                context["issues"] = {"open": open_issues or 0, "critical": critical_issues or 0}
+
+                # Overdue POA&Ms
+                overdue_poams = (
+                    session.query(func.count(POAM.id))
+                    .filter(
+                        POAM.status.in_(["open", "in_progress"]),
+                        POAM.scheduled_completion < datetime.now(timezone.utc),
+                    )
+                    .scalar()
+                )
+                context["overdue_poams"] = overdue_poams or 0
+
+                # Latest risk analysis
+                latest_risk = (
+                    session.query(RiskAnalysis).order_by(desc(RiskAnalysis.created_at)).first()
+                )
+                if latest_risk and latest_risk.details:
+                    portfolio = latest_risk.details.get("portfolio_result", {})
+                    context["risk"] = {
+                        "framework": latest_risk.framework,
+                        "total_mean_ale": portfolio.get("total_mean_ale"),
+                        "total_var_95": portfolio.get("total_var_95"),
+                    }
+
+                # Non-compliant control sample (for remediation questions)
+                non_compliant = (
+                    session.query(ControlResult)
+                    .filter(ControlResult.status == "non_compliant")
+                    .limit(30)
+                    .all()
+                )
+                context["non_compliant_controls"] = [
+                    {
+                        "framework": r.framework,
+                        "control_id": r.control_id,
+                        "severity": r.severity,
+                        "remediation_summary": r.remediation_summary[:200]
+                        if r.remediation_summary
+                        else None,
+                    }
+                    for r in non_compliant
+                ]
+
+        except Exception as exc:
+            log.debug("Context build failed: %s", exc)
+            context["error"] = str(exc)
+
+        # Truncate for prompt size
+        context_str = json.dumps(context, default=str)
+        if len(context_str) > 8000:
+            context["top_findings"] = context["top_findings"][:10]
+            context["non_compliant_controls"] = context["non_compliant_controls"][:15]
+
+        return context
