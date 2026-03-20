@@ -22,7 +22,7 @@ source .venv/bin/activate
 
 # 2. Install
 echo "[2/7] Installing dependencies..."
-pip install -e ".[dev,ai]" --quiet 2>/dev/null
+pip install -e ".[dev,ai]" --quiet > /dev/null 2>&1
 
 # 3. Kill anything on our ports
 echo "[3/7] Clearing ports..."

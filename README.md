@@ -56,12 +56,24 @@ See **[DEMO.md](DEMO.md)** for step-by-step instructions to provision a fully op
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,ai]"
-alembic upgrade head
-python scripts/demo_seed.py            # 40 connectors, 547 findings, 29K results (~7s)
-warlock coverage                       # verify it worked
+.venv/bin/alembic upgrade head
+.venv/bin/python scripts/demo_seed.py
+warlock coverage
+```
+
+Or use the one-command demo (recommended):
+
+```bash
+git clone https://github.com/grcwarlock/warlock.git && cd warlock
+./scripts/demo.sh
+```
+
+The demo script handles venv creation, dependencies, OPA, database, seeding, AI configuration, and starts the API server. After it completes:
+
+```bash
+warlock coverage                       # compliance overview
 warlock dashboard                      # interactive TUI dashboard
-warlock-api                            # start REST API on :8000
-./scripts/demo_api.sh                  # query API with auto-auth
+warlock-api                            # REST API on :8000
 ```
 
 ## Interactive TUI
