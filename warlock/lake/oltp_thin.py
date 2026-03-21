@@ -163,6 +163,22 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
     return stats
 
 
+def thin_oltp_safe(session: Any, dry_run: bool = True) -> ThinStats:
+    """thin_oltp with legal hold checking.
+
+    Checks for active legal holds before thinning OLTP.
+    If any hold is active, returns ThinStats with error.
+    """
+    from warlock.db.models import LegalHold
+    active_holds = session.query(LegalHold).filter(LegalHold.is_active == True).count()
+    if active_holds > 0:
+        stats = ThinStats()
+        stats.errors.append(f"Blocked by {active_holds} active legal hold(s)")
+        log.warning("OLTP thinning blocked: %d active legal hold(s)", active_holds)
+        return stats
+    return thin_oltp(session, dry_run=dry_run)
+
+
 def current_state_projection(session: Any, framework: str = None) -> list[dict]:
     """Return the latest control result per (framework, control_id).
 

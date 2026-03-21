@@ -71,3 +71,101 @@ class TestPostureReaders:
         assert len(result) == 1
         assert result[0]["framework"] == "soc2"
         readers.close()
+
+
+class TestLegalHoldChecking:
+    def test_expire_blocked_by_legal_hold(self):
+        from warlock.lake.maintenance import expire_snapshots_safe
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+        from warlock.db.models import Base, LegalHold
+        from datetime import datetime, timezone
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            session.add(LegalHold(
+                id="lh-1",
+                reason="Litigation hold for investigation",
+                start_date=datetime.now(timezone.utc),
+                is_active=True,
+            ))
+            session.flush()
+            result = expire_snapshots_safe(session, "/tmp/empty-lake")
+            assert result.get("blocked_by_hold") is True
+
+    def test_expire_proceeds_without_hold(self):
+        from warlock.lake.maintenance import expire_snapshots_safe
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+        from warlock.db.models import Base
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            result = expire_snapshots_safe(session, "/tmp/empty-lake")
+            assert result.get("blocked_by_hold") is not True
+
+    def test_thin_blocked_by_legal_hold(self):
+        from warlock.lake.oltp_thin import thin_oltp_safe
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+        from warlock.db.models import Base, LegalHold
+        from datetime import datetime, timezone
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            session.add(LegalHold(
+                id="lh-1",
+                reason="Litigation hold for investigation",
+                start_date=datetime.now(timezone.utc),
+                is_active=True,
+            ))
+            session.flush()
+            stats = thin_oltp_safe(session, dry_run=True)
+            assert stats.total_removed == 0
+            assert any("legal hold" in e.lower() for e in stats.errors)
+
+    def test_thin_proceeds_without_hold(self):
+        from warlock.lake.oltp_thin import thin_oltp_safe
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+        from warlock.db.models import Base
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            stats = thin_oltp_safe(session, dry_run=True)
+            assert not stats.errors or not any("legal hold" in e.lower() for e in stats.errors)
+
+
+class TestHashReconciliation:
+    def test_matching_hashes(self):
+        from warlock.lake.reconciliation import sample_hashes
+        oltp_hashes = {"evt-1": "abc123", "evt-2": "def456"}
+        lake_hashes = {"evt-1": "abc123", "evt-2": "def456"}
+        mismatches = sample_hashes(oltp_hashes, lake_hashes)
+        assert len(mismatches) == 0
+
+    def test_mismatched_hashes(self):
+        from warlock.lake.reconciliation import sample_hashes
+        oltp_hashes = {"evt-1": "abc123", "evt-2": "def456"}
+        lake_hashes = {"evt-1": "abc123", "evt-2": "WRONG"}
+        mismatches = sample_hashes(oltp_hashes, lake_hashes)
+        assert len(mismatches) == 1
+        assert mismatches[0]["id"] == "evt-2"
+        assert mismatches[0]["reason"] == "hash_mismatch"
+
+    def test_missing_in_lake(self):
+        from warlock.lake.reconciliation import sample_hashes
+        oltp_hashes = {"evt-1": "abc123", "evt-2": "def456"}
+        lake_hashes = {"evt-1": "abc123"}
+        mismatches = sample_hashes(oltp_hashes, lake_hashes)
+        assert len(mismatches) == 1
+        assert mismatches[0]["reason"] == "missing_in_lake"
+
+    def test_empty_hashes(self):
+        from warlock.lake.reconciliation import sample_hashes
+        mismatches = sample_hashes({}, {})
+        assert len(mismatches) == 0

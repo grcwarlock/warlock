@@ -151,6 +151,20 @@ def run_all_maintenance(lake_path: str) -> dict[str, Any]:
     return results
 
 
+def expire_snapshots_safe(session, lake_path: str, **kwargs) -> dict:
+    """expire_snapshots with legal hold checking.
+
+    Checks for active legal holds before expiring any files.
+    If any hold is active, returns immediately without deleting.
+    """
+    from warlock.db.models import LegalHold
+    active_holds = session.query(LegalHold).filter(LegalHold.is_active == True).count()
+    if active_holds > 0:
+        log.warning("Snapshot expiry blocked: %d active legal hold(s)", active_holds)
+        return {"blocked_by_hold": True, "active_holds": active_holds}
+    return expire_snapshots(lake_path, **kwargs)
+
+
 def _iter_leaf_dirs(base: Path):
     """Iterate leaf directories (dirs with parquet files, no subdirs with parquets)."""
     for dirpath, dirnames, filenames in os.walk(str(base)):
