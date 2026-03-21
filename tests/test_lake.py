@@ -100,3 +100,31 @@ class TestDuckDBQuery:
         )
         assert isinstance(result[0], dict)
         assert result[0]["id"] == "a"
+
+
+class TestSchemaGenerator:
+    def test_generates_schema_for_control_result(self):
+        from warlock.lake.schema import generate_iceberg_schema
+        from warlock.db.models import ControlResult
+        schema = generate_iceberg_schema(ControlResult)
+        field_names = [f.name for f in schema.fields]
+        assert "id" in field_names
+        assert "framework" in field_names
+        assert "status" in field_names
+        assert "assessed_at" in field_names
+
+    def test_generates_schema_for_finding(self):
+        from warlock.lake.schema import generate_iceberg_schema
+        from warlock.db.models import Finding
+        schema = generate_iceberg_schema(Finding)
+        field_names = [f.name for f in schema.fields]
+        assert "id" in field_names
+        assert "severity" in field_names
+        assert "observed_at" in field_names
+
+    def test_maps_sqlalchemy_types_correctly(self):
+        from warlock.lake.schema import generate_iceberg_schema
+        from warlock.db.models import ControlResult
+        schema = generate_iceberg_schema(ControlResult)
+        id_field = next(f for f in schema.fields if f.name == "id")
+        assert id_field.field_type.__class__.__name__ == "StringType"
