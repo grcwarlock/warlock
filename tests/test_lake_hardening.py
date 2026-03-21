@@ -470,3 +470,160 @@ class TestTypedParquetColumns:
         assert result[0]["t"] == "VARCHAR"
         assert result[0]["title"] == "Fix AC-2"
         engine.close()
+
+
+class TestSCDType2:
+    def test_new_entity(self):
+        from warlock.lake.scd import apply_scd_type2
+        existing = []
+        incoming = [{"id": "p-1", "email": "alice@co.com", "department": "eng"}]
+        result = apply_scd_type2(existing, incoming, key_fields=["id"])
+        assert len(result) == 1
+        assert result[0]["is_current"] == "true"
+        assert result[0]["valid_to"] == "9999-12-31"
+
+    def test_unchanged_entity(self):
+        from warlock.lake.scd import apply_scd_type2
+        existing = [{"id": "p-1", "email": "alice@co.com", "department": "eng",
+                     "valid_from": "2026-01-01", "valid_to": "9999-12-31", "is_current": "true"}]
+        incoming = [{"id": "p-1", "email": "alice@co.com", "department": "eng"}]
+        result = apply_scd_type2(existing, incoming, key_fields=["id"])
+        assert len(result) == 1  # No new version needed
+        assert result[0]["is_current"] == "true"
+
+    def test_changed_entity_closes_old(self):
+        from warlock.lake.scd import apply_scd_type2
+        existing = [{"id": "p-1", "email": "alice@co.com", "department": "eng",
+                     "valid_from": "2026-01-01", "valid_to": "9999-12-31", "is_current": "true"}]
+        incoming = [{"id": "p-1", "email": "alice@co.com", "department": "security"}]
+        result = apply_scd_type2(existing, incoming, key_fields=["id"],
+                                  change_date="2026-03-21")
+        assert len(result) == 2
+        old = next(r for r in result if r["department"] == "eng")
+        assert old["is_current"] == "false"
+        assert old["valid_to"] == "2026-03-21"
+        new = next(r for r in result if r["department"] == "security")
+        assert new["is_current"] == "true"
+        assert new["valid_from"] == "2026-03-21"
+
+    def test_multiple_entities(self):
+        from warlock.lake.scd import apply_scd_type2
+        existing = [
+            {"id": "p-1", "name": "Alice", "dept": "eng", "valid_from": "2026-01-01",
+             "valid_to": "9999-12-31", "is_current": "true"},
+            {"id": "p-2", "name": "Bob", "dept": "sales", "valid_from": "2026-01-01",
+             "valid_to": "9999-12-31", "is_current": "true"},
+        ]
+        incoming = [
+            {"id": "p-1", "name": "Alice", "dept": "security"},  # changed
+            {"id": "p-2", "name": "Bob", "dept": "sales"},  # unchanged
+            {"id": "p-3", "name": "Charlie", "dept": "eng"},  # new
+        ]
+        result = apply_scd_type2(existing, incoming, key_fields=["id"])
+        assert len(result) == 4  # 2 existing + 1 closed + 1 new version + 1 new entity... wait
+        # p-1: old (closed) + new (current) = 2
+        # p-2: unchanged = 1
+        # p-3: new = 1
+        # Total: 4
+        current_records = [r for r in result if str(r.get("is_current", "")).lower() == "true"]
+        assert len(current_records) == 3
+
+    def test_empty_inputs(self):
+        from warlock.lake.scd import apply_scd_type2
+        result = apply_scd_type2([], [], key_fields=["id"])
+        assert result == []
+
+
+class TestLakeRAG:
+    @pytest.fixture
+    def seeded_lake_for_rag(self, tmp_path):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        date = "2026-03-21"
+
+        # Control results
+        cr = {"id": ["cr-1", "cr-2"], "finding_id": ["f-1", "f-2"],
+              "control_mapping_id": ["cm-1", "cm-2"],
+              "framework": ["nist_800_53", "soc2"],
+              "control_id": ["AC-2", "CC6.1"],
+              "status": ["compliant", "non_compliant"],
+              "severity": ["high", "critical"],
+              "assertion_name": ["mfa_check", "encryption_check"],
+              "assertion_passed": [True, False],
+              "assessed_at": [datetime.now(timezone.utc).isoformat()] * 2,
+              "run_id": ["run-1"] * 2}
+        for fw in ["nist_800_53", "soc2"]:
+            d = Path(tmp_path) / "curated" / "control_results" / fw / date
+            d.mkdir(parents=True, exist_ok=True)
+            fw_data = {k: [v for v, f in zip(cr[k], cr["framework"]) if f == fw] for k in cr}
+            pq.write_table(pa.table(fw_data), str(d / "run-1.parquet"))
+
+        # Findings
+        f = {"id": ["f-1", "f-2"], "title": ["No MFA enabled", "Disk unencrypted"],
+             "severity": ["high", "critical"], "source": ["aws", "aws"],
+             "observation_type": ["iam_user", "ebs_volume"],
+             "raw_event_id": ["r-1", "r-2"], "detail": ["", ""],
+             "resource_id": ["u-1", "v-1"], "resource_type": ["user", "volume"],
+             "source_type": ["cloud", "cloud"], "provider": ["aws", "aws"],
+             "confidence": [1.0, 1.0],
+             "observed_at": [datetime.now(timezone.utc).isoformat()] * 2,
+             "ingested_at": [datetime.now(timezone.utc).isoformat()] * 2,
+             "sha256": ["abc", "def"], "run_id": ["run-1"] * 2}
+        d = Path(tmp_path) / "enrichment" / "aws" / date
+        d.mkdir(parents=True, exist_ok=True)
+        pq.write_table(pa.table(f), str(d / "run-1.parquet"))
+
+        # Control mappings
+        cm = {"id": ["cm-1", "cm-2"], "finding_id": ["f-1", "f-2"],
+              "framework": ["nist_800_53", "soc2"],
+              "control_id": ["AC-2", "CC6.1"],
+              "control_family": ["AC", "CC6"],
+              "mapping_method": ["explicit", "explicit"],
+              "confidence": [1.0, 1.0],
+              "created_at": [datetime.now(timezone.utc).isoformat()] * 2,
+              "run_id": ["run-1"] * 2}
+        d = Path(tmp_path) / "curated" / "control_mappings" / date
+        d.mkdir(parents=True, exist_ok=True)
+        pq.write_table(pa.table(cm), str(d / "run-1.parquet"))
+
+        return str(tmp_path)
+
+    def test_index_builds(self, seeded_lake_for_rag):
+        from warlock.lake.rag import LakeRAG
+        rag = LakeRAG(seeded_lake_for_rag)
+        count = rag.index()
+        assert count > 0
+        assert rag.document_count > 0
+
+    def test_query_returns_results(self, seeded_lake_for_rag):
+        from warlock.lake.rag import LakeRAG
+        rag = LakeRAG(seeded_lake_for_rag)
+        rag.index()
+        results = rag.query("access control compliance")
+        assert len(results) > 0
+        assert results[0].score > 0
+
+    def test_query_relevance(self, seeded_lake_for_rag):
+        from warlock.lake.rag import LakeRAG
+        rag = LakeRAG(seeded_lake_for_rag)
+        rag.index()
+        results = rag.query("MFA authentication")
+        # Should find the MFA-related control
+        found_mfa = any("mfa" in r.document.content.lower() for r in results)
+        assert found_mfa
+
+    def test_empty_lake(self, tmp_path):
+        from warlock.lake.rag import LakeRAG
+        rag = LakeRAG(str(tmp_path))
+        count = rag.index()
+        assert count == 0
+        results = rag.query("anything")
+        assert results == []
+
+    def test_empty_query(self, seeded_lake_for_rag):
+        from warlock.lake.rag import LakeRAG
+        rag = LakeRAG(seeded_lake_for_rag)
+        rag.index()
+        results = rag.query("")
+        assert results == []
