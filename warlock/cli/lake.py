@@ -202,6 +202,75 @@ def lake_aggregate(path: str | None) -> None:
         console.print("[green]Aggregation refresh complete.[/green]")
 
 
+@lake.command("query")
+@click.argument("question")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def lake_query(question: str, path: str | None) -> None:
+    """Query the lake with a natural language question."""
+    from warlock.config import get_settings
+    from warlock.lake.ask import query_lake
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+
+    result = query_lake(lake_path, question)
+    console.print(f"\n[cyan]{result['answer']}[/cyan]\n")
+
+
+@lake.command("assess")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--framework", default=None, help="Limit to specific framework")
+def lake_assess(path: str | None, framework: str | None) -> None:
+    """Run batch aggregate control assessment from lake data."""
+    from collections import Counter
+
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.batch_assessor import aggregate_control_statuses, write_aggregate_assessments
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+
+    console.print("[cyan]Computing aggregate control assessments...[/cyan]")
+    aggregates = aggregate_control_statuses(lake_path)
+
+    if framework:
+        aggregates = [a for a in aggregates if a["framework"] == framework]
+
+    if not aggregates:
+        console.print("[yellow]No control results found in lake.[/yellow]")
+        return
+
+    written = write_aggregate_assessments(lake_path, aggregates)
+
+    table = Table(title=f"Aggregate Control Assessments ({written} total)")
+    table.add_column("Framework")
+    table.add_column("Controls", justify="right")
+    table.add_column("Compliant", justify="right", style="green")
+    table.add_column("Non-Compliant", justify="right", style="red")
+    table.add_column("Partial", justify="right", style="yellow")
+
+    by_fw: dict[str, Counter] = {}
+    for a in aggregates:
+        fw = a["framework"]
+        if fw not in by_fw:
+            by_fw[fw] = Counter()
+        by_fw[fw][a["aggregate_status"]] += 1
+
+    for fw in sorted(by_fw):
+        c = by_fw[fw]
+        table.add_row(
+            fw,
+            str(sum(c.values())),
+            str(c.get("compliant", 0)),
+            str(c.get("non_compliant", 0)),
+            str(c.get("partial", 0)),
+        )
+    console.print(table)
+    console.print(f"[green]{written} aggregate assessments written.[/green]")
+
+
 def _format_size(size_bytes: int) -> str:
     """Format bytes as human-readable size."""
     if size_bytes < 1024:

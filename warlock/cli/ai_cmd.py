@@ -163,3 +163,19 @@ def ai_test(prompt: str) -> None:
             console.print(f"[yellow]AI not used: {result.fallback_reason}[/yellow]")
     except Exception as exc:
         _error(f"AI test failed: {exc}")
+
+
+@cli.command("ask")
+@click.argument("question")
+def ask(question: str) -> None:
+    """Ask a compliance question (queries the data lake)."""
+    from warlock.config import get_settings
+    from warlock.lake.ask import query_lake
+
+    settings = get_settings()
+    if not settings.lake_enabled:
+        console.print("[yellow]Lake not enabled. Set WLK_LAKE_ENABLED=true.[/yellow]")
+        return
+
+    result = query_lake(settings.lake_path, question)
+    console.print(f"\n[cyan]{result['answer']}[/cyan]\n")
