@@ -347,3 +347,126 @@ class TestABACLakeReaders:
         assert "iso_27001" not in frameworks
         assert len(frameworks) == 2
         readers.close()
+
+
+class TestBridgeTables:
+    def test_write_crosswalk(self, tmp_path):
+        from warlock.lake.bridges import write_bridge_tables
+        from warlock.lake.query import LakeQueryEngine
+        crosswalks = [
+            {"source_framework": "nist_800_53", "source_control": "AC-2",
+             "target_framework": "iso_27001", "target_control": "A.9.2.1",
+             "confidence": 0.95},
+        ]
+        count = write_bridge_tables(str(tmp_path), "run-1", crosswalks=crosswalks)
+        assert count == 1
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(f"SELECT * FROM read_parquet('{tmp_path}/curated/bridge_control_crosswalk/**/*.parquet')")
+        assert len(result) == 1
+        assert result[0]["source_framework"] == "nist_800_53"
+        engine.close()
+
+    def test_write_entity_relationships(self, tmp_path):
+        from warlock.lake.bridges import write_bridge_tables
+        relationships = [
+            {"source_entity": "user-1", "target_entity": "laptop-1",
+             "relationship_type": "owns", "effective_date": "2026-03-21"},
+        ]
+        count = write_bridge_tables(str(tmp_path), "run-1", entity_relationships=relationships)
+        assert count == 1
+
+    def test_write_incident_bridges(self, tmp_path):
+        from warlock.lake.bridges import write_bridge_tables
+        controls = [{"incident_id": "inc-1", "control_id": "AC-2",
+                      "framework": "nist_800_53", "failure_type": "bypassed"}]
+        entities = [{"incident_id": "inc-1", "entity_id": "srv-1",
+                      "entity_type": "server", "impact": "compromised"}]
+        count = write_bridge_tables(str(tmp_path), "run-1",
+                                     incident_controls=controls, incident_entities=entities)
+        assert count == 2
+
+    def test_write_data_flow(self, tmp_path):
+        from warlock.lake.bridges import write_bridge_tables
+        flows = [{"source_entity": "app-1", "destination_entity": "db-1",
+                   "data_classification": "PII", "transfer_mechanism": "TLS",
+                   "legal_basis": "consent", "cross_border_flag": False}]
+        count = write_bridge_tables(str(tmp_path), "run-1", data_flows=flows)
+        assert count == 1
+
+    def test_write_boundary_membership(self, tmp_path):
+        from warlock.lake.bridges import write_bridge_tables
+        memberships = [{"entity_id": "srv-1", "boundary_id": "fedramp-moderate",
+                         "inclusion_type": "in_boundary"}]
+        count = write_bridge_tables(str(tmp_path), "run-1", boundary_memberships=memberships)
+        assert count == 1
+
+    def test_empty_bridge_tables(self, tmp_path):
+        from warlock.lake.bridges import write_bridge_tables
+        count = write_bridge_tables(str(tmp_path), "run-1")
+        assert count == 0
+
+
+class TestTypedParquetColumns:
+    def test_numeric_fields_stored_as_numbers(self, tmp_path):
+        """Numeric fields should be stored as numbers, not strings."""
+        from warlock.lake.domains import write_risk_facts
+        from warlock.lake.query import LakeQueryEngine
+
+        risk_sims = [{"id": "rs-1", "framework": "nist_800_53", "scenario_name": "breach",
+                       "mean_ale": 500000.0, "var_95": 1200000.0, "var_99": 2500000.0,
+                       "control_effectiveness": 0.85, "created_at": "2026-03-21"}]
+        write_risk_facts(str(tmp_path), "run-1", risk_simulations=risk_sims)
+
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(
+            f"SELECT mean_ale, typeof(mean_ale) as t FROM read_parquet('{tmp_path}/curated/risk_simulations/**/*.parquet')"
+        )
+        assert result[0]["t"] != "VARCHAR", f"mean_ale stored as {result[0]['t']}, expected numeric"
+        engine.close()
+
+    def test_boolean_fields_stored_as_bool(self, tmp_path):
+        from warlock.lake.domains import write_entity_facts
+        from warlock.lake.query import LakeQueryEngine
+
+        resources = [{"id": "r-1", "resource_type": "server", "is_current": True,
+                       "resource_id": "srv-1", "account_id": "acc-1"}]
+        write_entity_facts(str(tmp_path), "run-1", resources=resources)
+
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(
+            f"SELECT is_current, typeof(is_current) as t FROM read_parquet('{tmp_path}/curated/resources/**/*.parquet')"
+        )
+        assert result[0]["t"] == "BOOLEAN", f"is_current stored as {result[0]['t']}"
+        engine.close()
+
+    def test_integer_fields_stored_as_int(self, tmp_path):
+        from warlock.lake.domains import write_pipeline_health_facts
+        from warlock.lake.query import LakeQueryEngine
+
+        runs = [{"id": "pr-1", "run_id": "run-1", "raw_events_collected": 100,
+                  "findings_normalized": 50, "controls_mapped": 200, "results_assessed": 200,
+                  "duration_seconds": 5.2, "hash_chain_valid": True}]
+        write_pipeline_health_facts(str(tmp_path), "run-1", pipeline_runs=runs)
+
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(
+            f"SELECT raw_events_collected, typeof(raw_events_collected) as t FROM read_parquet('{tmp_path}/curated/pipeline_runs/**/*.parquet')"
+        )
+        assert result[0]["t"] in ("INTEGER", "BIGINT"), f"raw_events_collected stored as {result[0]['t']}"
+        engine.close()
+
+    def test_string_fields_still_work(self, tmp_path):
+        from warlock.lake.domains import write_governance_facts
+        from warlock.lake.query import LakeQueryEngine
+
+        issues = [{"id": "iss-1", "title": "Fix AC-2", "status": "open",
+                    "priority": "high", "assigned_to": "alice"}]
+        write_governance_facts(str(tmp_path), "run-1", issues=issues)
+
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(
+            f"SELECT title, typeof(title) as t FROM read_parquet('{tmp_path}/curated/issues/**/*.parquet')"
+        )
+        assert result[0]["t"] == "VARCHAR"
+        assert result[0]["title"] == "Fix AC-2"
+        engine.close()

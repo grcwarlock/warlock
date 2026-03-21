@@ -32,11 +32,33 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+def _build_columns(keys: list[str], rows: list[dict]) -> dict[str, list]:
+    """Build a columnar dict from list-of-dicts, preserving native Python types.
+
+    Detects bool/int/float from the first non-None value; falls back to str.
+    bool must be checked before int because bool is a subclass of int.
+    """
+    columns: dict[str, list] = {}
+    for key in keys:
+        values = [r.get(key) for r in rows]
+        sample = next((v for v in values if v is not None), "")
+        if isinstance(sample, bool):
+            columns[key] = [bool(v) if v is not None else False for v in values]
+        elif isinstance(sample, int):
+            columns[key] = [int(v) if v is not None else 0 for v in values]
+        elif isinstance(sample, float):
+            columns[key] = [float(v) if v is not None else 0.0 for v in values]
+        else:
+            columns[key] = [str(v) if v is not None else "" for v in values]
+    return columns
+
+
 def _write_table(lake_path: str, table_name: str, run_id: str, rows: list[dict]) -> int:
     """Generic writer: dicts -> Parquet in curated/{table_name}/{date}/{run_id}.parquet.
 
-    All dict values are coerced to strings so DuckDB can handle type
-    coercion at query time.  Returns row count written.
+    Native Python types (bool, int, float) are preserved in Parquet so that
+    DuckDB can perform numeric aggregations without casting.
+    Returns row count written.
     """
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -44,10 +66,7 @@ def _write_table(lake_path: str, table_name: str, run_id: str, rows: list[dict])
     if not rows:
         return 0
 
-    # Build columnar dict from list-of-dicts, coercing everything to str.
-    columns: dict[str, list[str]] = {}
-    for key in rows[0]:
-        columns[key] = [str(r.get(key, "")) for r in rows]
+    columns = _build_columns(list(rows[0].keys()), rows)
 
     table = pa.table(columns)
     date_part = today_partition()
@@ -77,9 +96,7 @@ def _write_partitioned_by_framework(
     total = 0
     date_part = today_partition()
     for fw, items in by_fw.items():
-        columns: dict[str, list[str]] = {}
-        for key in items[0]:
-            columns[key] = [str(i.get(key, "")) for i in items]
+        columns = _build_columns(list(items[0].keys()), items)
 
         table = pa.table(columns)
         out_dir = Path(lake_path) / "curated" / table_name / fw / date_part
