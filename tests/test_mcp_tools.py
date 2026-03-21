@@ -1,6 +1,8 @@
 """Tests for MCP tool interface."""
 import pytest
 
+pytest.importorskip("pyarrow")
+
 
 class TestMCPToolDefinitions:
     def test_get_tools_returns_list(self):

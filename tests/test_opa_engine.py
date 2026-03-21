@@ -7,16 +7,14 @@ Covers:
   - UCF policy registration
 """
 
-import json
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
 
 from warlock.assessors.data_assembler import NormalizedDataAssembler
-from warlock.assessors.engine import ControlResultData
-from warlock.assessors.opa_evaluator import OPAComplianceEvaluator, OPAPolicyResult
+from warlock.assessors.opa_evaluator import OPAComplianceEvaluator
 from warlock.assessors.policy_registry import PolicyRegistry
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import FindingData

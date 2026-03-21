@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import secrets
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -25,28 +24,19 @@ os.environ.setdefault("WLK_DATABASE_URL", "sqlite:///:memory:")
 from warlock.db.models import (  # noqa: E402
     APIKey,
     AuditEntry,
-    AuditEngagement,
-    Attestation,
     Base,
-    CompensatingControl,
     ConnectorRun,
     ControlMapping,
     ControlResult,
     Finding,
     Issue,
-    IssueComment,
-    POAM,
     RawEvent,
-    RiskAcceptance,
-    SystemProfile,
-    User,
 )
 from warlock.api.app import create_app  # noqa: E402
 from warlock.api.deps import get_db  # noqa: E402
 from warlock.api.auth import (  # noqa: E402
     create_access_token,
     create_user,
-    hash_password,
     generate_api_key,
 )
 
@@ -371,13 +361,17 @@ class TestAuthLogin:
         assert resp.status_code == 401
 
     def test_login_mfa_enabled_user(self, client, db):
-        from warlock.api.auth import enroll_mfa, confirm_mfa, verify_totp, generate_totp_secret
+        from warlock.api.auth import enroll_mfa, confirm_mfa
 
         user = _make_user(db, "mfa@test.com", "MFA User", "viewer")
         enrollment = enroll_mfa(db, user)
         secret = enrollment["secret"]
         # Generate a valid TOTP code to confirm enrollment
-        import base64, struct, time, hmac as hmac_mod, hashlib as hl
+        import base64
+        import struct
+        import time
+        import hmac as hmac_mod
+        import hashlib as hl
 
         key = base64.b32decode(secret)
         counter = struct.pack(">Q", int(time.time()) // 30)
@@ -512,7 +506,7 @@ class TestAuthAPIKeys:
 
 class TestAuthRefreshAndLogout:
     def test_refresh_token_valid(self, client, db):
-        user = _make_user(db, "refresh@test.com", "Refresh User", "viewer")
+        _user = _make_user(db, "refresh@test.com", "Refresh User", "viewer")
         login_resp = client.post(
             "/api/v1/auth/login",
             json={
@@ -560,7 +554,7 @@ class TestAuthRefreshAndLogout:
         assert resp2.status_code == 401
 
     def test_logout_revokes_tokens(self, client, db):
-        user = _make_user(db, "logout@test.com", "Logout User", "viewer")
+        _user = _make_user(db, "logout@test.com", "Logout User", "viewer")
         login_resp = client.post(
             "/api/v1/auth/login",
             json={
@@ -587,7 +581,11 @@ class TestMFAVerify:
 
     def test_mfa_verify_invalid_code(self, client, db):
         from warlock.api.auth import enroll_mfa, confirm_mfa, create_mfa_challenge
-        import base64, struct, time, hmac as hmac_mod, hashlib as hl
+        import base64
+        import struct
+        import time
+        import hmac as hmac_mod
+        import hashlib as hl
 
         user = _make_user(db, "mfa2@test.com", "MFA2 User", "viewer")
         enrollment = enroll_mfa(db, user)

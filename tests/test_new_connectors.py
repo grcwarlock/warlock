@@ -5,10 +5,8 @@ Confluence, Verkada, OneTrust, Proofpoint, MLflow, Vault, Kubernetes,
 GitHub, SecurityScorecard.
 """
 
-import pytest
 from datetime import datetime, timezone, timedelta
 from warlock.connectors.base import RawEventData, SourceType
-from warlock.normalizers.base import FindingData
 
 
 # ===================================================================
@@ -1186,7 +1184,6 @@ def test_api_modules_import():
         generate_api_key,
         PERMISSIONS,
     )
-    from warlock.api.app import app
 
     # Test password hashing
     pw = hash_password("test123")

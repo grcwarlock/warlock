@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 import pytest
 
+pytest.importorskip("pyarrow")
+
 
 @pytest.fixture
 def lake_with_posture(tmp_path):

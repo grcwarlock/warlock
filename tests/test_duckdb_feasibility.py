@@ -17,6 +17,8 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import pytest
 
+pytest.importorskip("pyarrow")
+
 FRAMEWORKS = [
     "nist_800_53", "iso_27001", "soc2", "hipaa", "fedramp",
     "pci_dss", "cmmc_l2", "gdpr", "iso_27701", "iso_42001",

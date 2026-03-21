@@ -1,5 +1,4 @@
 """Tests for shadow query comparator."""
-import pytest
 
 
 class TestCompareResults:

@@ -2,7 +2,6 @@
 crosswalks, the assertion library, and multiple source types.
 """
 
-from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import create_engine, func
@@ -10,8 +9,6 @@ from sqlalchemy.orm import sessionmaker
 
 from warlock.db.models import (
     Base,
-    ConnectorRun,
-    RawEvent,
     Finding,
     ControlMapping,
     ControlResult,
@@ -322,7 +319,7 @@ def test_full_pipeline_with_frameworks():
         session.query(ControlResult)
         .filter(
             ControlResult.assertion_name == "mfa_enabled",
-            ControlResult.assertion_passed == False,
+            ControlResult.assertion_passed.is_(False),
         )
         .all()
     )
@@ -339,7 +336,7 @@ def test_full_pipeline_with_frameworks():
 
     # -- Print summary --
     print(f"\n{'=' * 70}")
-    print(f"COMPREHENSIVE PIPELINE TEST PASSED")
+    print("COMPREHENSIVE PIPELINE TEST PASSED")
     print(f"{'=' * 70}")
     print(f"Raw events:        {stats.raw_events_collected}")
     print(f"Findings:          {finding_count}")
@@ -356,7 +353,7 @@ def test_full_pipeline_with_frameworks():
     # Show non-compliant results
     nc_results = session.query(ControlResult).filter(ControlResult.status == "non_compliant").all()
     if nc_results:
-        print(f"\nNon-compliant findings:")
+        print("\nNon-compliant findings:")
         for r in nc_results:
             print(f"  {r.framework}:{r.control_id} — {r.assertion_name} — {r.assertion_findings}")
 
@@ -370,15 +367,15 @@ def test_webhook_ingestion():
     Session = sessionmaker(bind=engine_db, expire_on_commit=False)
     session = Session()
 
-    bus = EventBus()
+    _bus = EventBus()
 
     # Use generic normalizer for webhook data
     normalizers = NormalizerRegistry()
     normalizers.register(GenericNormalizer())
 
-    mapper = ControlMapper()
+    _mapper = ControlMapper()
     load_assertions()
-    assessor = Assessor(engine=assertion_engine)
+    _assessor = Assessor(engine=assertion_engine)
 
     # Ingest via webhook
     receiver = WebhookReceiver()

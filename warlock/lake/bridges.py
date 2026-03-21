@@ -11,7 +11,6 @@ Bridge tables connect entities across curated zone domains:
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from warlock.lake.utils import today_partition, ensure_dir
 

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 
 from warlock.lake.utils import ensure_dir, serialize_json_field, today_partition
 

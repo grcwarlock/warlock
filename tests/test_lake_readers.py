@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
+
+import pytest
+
+pytest.importorskip("pyarrow")
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pytest
 
 from warlock.lake.readers import LakeReaders
 

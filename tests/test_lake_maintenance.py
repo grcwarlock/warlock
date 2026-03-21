@@ -1,6 +1,7 @@
 """Tests for lake maintenance jobs."""
-from pathlib import Path
 import pytest
+
+pytest.importorskip("pyarrow")
 
 
 class TestCompaction:
@@ -98,7 +99,7 @@ class TestOrphanCleanup:
         zone.mkdir(parents=True)
         pq.write_table(pa.table({"id": ["r-1"]}), str(zone / "data.parquet"))
 
-        stats = cleanup_orphans(str(tmp_path))
+        cleanup_orphans(str(tmp_path))
         assert zone.exists()
 
 

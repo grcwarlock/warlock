@@ -2,8 +2,10 @@
 
 import json
 from datetime import datetime, timezone
-
 import pytest
+
+pytest.importorskip("pyarrow")
+
 
 
 class TestZoneWriters:

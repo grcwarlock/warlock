@@ -170,7 +170,7 @@ def thin_oltp_safe(session: Any, dry_run: bool = True) -> ThinStats:
     If any hold is active, returns ThinStats with error.
     """
     from warlock.db.models import LegalHold
-    active_holds = session.query(LegalHold).filter(LegalHold.is_active == True).count()
+    active_holds = session.query(LegalHold).filter(LegalHold.is_active.is_(True)).count()
     if active_holds > 0:
         stats = ThinStats()
         stats.errors.append(f"Blocked by {active_holds} active legal hold(s)")

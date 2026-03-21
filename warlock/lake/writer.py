@@ -228,7 +228,7 @@ class LakeWriter:
         total_cm = 0
         total_conn = 0
         if cr_dicts or cm_dicts or conn_dicts:
-            total = writer_fn(self._lake_path, run_id, cr_dicts, cm_dicts, conn_dicts)
+            writer_fn(self._lake_path, run_id, cr_dicts, cm_dicts, conn_dicts)
             total_cr = len(cr_dicts)
             total_cm = len(cm_dicts)
             total_conn = len(conn_dicts)
@@ -258,9 +258,8 @@ class LakeWriter:
         except Exception:
             log.debug("ComplianceDrift table not available, skipping")
 
-        total = 0
         if snap_dicts or drift_dicts:
-            total = write_temporal_facts(
+            write_temporal_facts(
                 self._lake_path,
                 run_id,
                 posture_snapshots=snap_dicts or None,

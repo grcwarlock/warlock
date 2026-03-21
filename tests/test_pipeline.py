@@ -4,7 +4,6 @@ Proves: Ingest → Normalize → Map → Assess flows through all 4 stages,
 persists to all 5 tables, and publishes events on the bus.
 """
 
-from datetime import datetime, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -27,7 +26,7 @@ from warlock.connectors.base import (
     RawEventData,
     SourceType,
 )
-from warlock.normalizers.base import BaseNormalizer, FindingData, NormalizerRegistry
+from warlock.normalizers.base import NormalizerRegistry
 from warlock.mappers.control_mapper import ControlMapper, ExplicitRule, CrosswalkEdge
 from warlock.assessors.engine import AssertionEngine, Assessor
 
@@ -275,7 +274,7 @@ def test_full_pipeline():
 
     # Print summary
     print(f"\n{'=' * 60}")
-    print(f"PIPELINE TEST PASSED")
+    print("PIPELINE TEST PASSED")
     print(f"{'=' * 60}")
     print(f"Raw events:      {len(raw_events)}")
     print(f"Findings:        {len(findings)}")

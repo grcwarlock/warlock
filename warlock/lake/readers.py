@@ -14,7 +14,7 @@ callers that enforce ABAC must pass the user's granted scopes.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 

@@ -1,10 +1,8 @@
 """Unit tests for every pipeline component."""
 
-import json
 from datetime import datetime, timezone
-from uuid import uuid4
 
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from warlock.db.models import (
@@ -35,7 +33,7 @@ from warlock.mappers.control_mapper import (
     CrosswalkEdge,
     MappedFinding,
 )
-from warlock.assessors.engine import AssertionEngine, Assessor, ControlResultData
+from warlock.assessors.engine import AssertionEngine, Assessor
 from warlock.assessors.ai_reasoning import AIReasoningResult, create_reasoner
 from warlock.connectors.webhook import WebhookReceiver
 from warlock.pipeline.orchestrator import Pipeline
@@ -790,7 +788,7 @@ def test_database_persistence():
         assessor=assessor,
         bus=bus,
     )
-    stats = pipeline.run(session)
+    pipeline.run(session)
     session.commit()
 
     # Verify all tables populated

@@ -1,6 +1,5 @@
 """Tests for OLTP thinning."""
 from datetime import datetime, timezone, timedelta
-import pytest
 
 
 # Required non-nullable FK placeholders — SQLite in-memory doesn't enforce FK constraints
@@ -74,7 +73,7 @@ class TestOLTPThin:
     def test_current_state_projection(self):
         from sqlalchemy import create_engine
         from sqlalchemy.orm import Session
-        from warlock.db.models import Base, ControlResult
+        from warlock.db.models import Base
         from warlock.lake.oltp_thin import current_state_projection
 
         engine = create_engine("sqlite:///:memory:")

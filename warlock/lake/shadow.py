@@ -43,10 +43,10 @@ def compare_results(query_name: str, oltp_result: Any, lake_result: Any) -> Comp
         )
         return result
 
-    for i, (o, l) in enumerate(zip(oltp_list, lake_list)):
-        if o != l:
+    for i, (o, lake_val) in enumerate(zip(oltp_list, lake_list)):
+        if o != lake_val:
             result.match = False
-            result.discrepancies.append(f"Row {i} differs: OLTP={o!r}, Lake={l!r}")
+            result.discrepancies.append(f"Row {i} differs: OLTP={o!r}, Lake={lake_val!r}")
             if len(result.discrepancies) > 10:
                 result.discrepancies.append("... (truncated)")
                 break

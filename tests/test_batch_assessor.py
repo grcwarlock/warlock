@@ -2,6 +2,8 @@
 from datetime import datetime, timezone
 import pytest
 
+pytest.importorskip("pyarrow")
+
 
 @pytest.fixture
 def seeded_lake_for_assess(tmp_path):

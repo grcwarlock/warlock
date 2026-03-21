@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
-import pyarrow.parquet as pq
 import pytest
+
+pytest.importorskip("pyarrow")
+
+import pyarrow.parquet as pq
 
 from warlock.lake.domains import (
     write_entity_facts,

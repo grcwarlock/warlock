@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 import pytest
 
+pytest.importorskip("pyarrow")
+
 
 @pytest.fixture
 def seeded_lake_for_ask(tmp_path):

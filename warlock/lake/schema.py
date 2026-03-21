@@ -19,11 +19,9 @@ from pyiceberg.types import (
     LongType,
     NestedField,
     StringType,
-    TimestampType,
     TimestamptzType,
 )
 from sqlalchemy import inspect as sa_inspect
-from sqlalchemy.orm import DeclarativeBase
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +97,7 @@ def generate_all_schemas() -> dict[str, Schema]:
     return {name: generate_iceberg_schema(model) for name, model in models.items()}
 
 
-def get_pyarrow_schema(model_class: type) -> "pa.Schema":
+def get_pyarrow_schema(model_class: type) -> Any:
     """Generate a PyArrow schema from a SQLAlchemy model class.
 
     Useful for writing strongly-typed Parquet files.
