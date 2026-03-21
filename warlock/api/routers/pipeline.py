@@ -7,11 +7,11 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db, require_permission
-from warlock.db.models import ConnectorRun, User
+from warlock.db.models import User
+from warlock.db.repository import get_repos
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -103,7 +103,8 @@ def pipeline_collect(
 ):
     """Trigger a full pipeline run in the background."""
     # Check for already-running pipeline via database (multi-worker safe)
-    running = db.query(ConnectorRun).filter(ConnectorRun.status == "running").first()
+    repos = get_repos(db)
+    running = repos.connector_runs.find_running()
     if running:
         raise HTTPException(
             status_code=409,
@@ -121,14 +122,15 @@ def pipeline_status(
     current_user: User = Depends(require_permission("read")),
 ):
     """Pipeline run status."""
-    latest_run = db.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).first()
-    is_running = db.query(ConnectorRun).filter(ConnectorRun.status == "running").count() > 0
+    repos = get_repos(db)
+    latest_run = repos.connector_runs.latest_run()
+    is_running = repos.connector_runs.is_running()
 
     # Use cached event_count from ConnectorRun records to avoid 3 full-table
     # COUNT queries on potentially large raw_events/findings/control_results tables.
     # Summing event_count across all runs is a cheap index scan on connector_runs.
     if latest_run is not None:
-        raw_count = int(db.query(func.sum(ConnectorRun.event_count)).scalar() or 0)
+        raw_count = repos.connector_runs.total_event_count()
     else:
         raw_count = 0
     finding_count = 0

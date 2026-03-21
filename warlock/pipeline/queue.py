@@ -8,6 +8,7 @@ Backends:
   - RedisStreamBus — Redis Streams (persistent, supports consumer groups)
   - KafkaBus — Apache Kafka (high-throughput, partitioned)
   - SQSBus — AWS SQS (serverless, managed)
+  - NATSBus — NATS JetStream (lightweight, self-hosted, durable)
   - InMemoryBus — the existing EventBus (re-exported for convenience)
 
 All backends use the same PipelineEvent dataclass from bus.py.
@@ -69,6 +70,14 @@ try:
     _boto3_available = True
 except ImportError:
     _boto3 = None  # type: ignore[assignment]
+
+_nats_available = False
+try:
+    import nats as _nats_mod  # type: ignore[import-untyped]
+
+    _nats_available = True
+except ImportError:
+    _nats_mod = None  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
@@ -782,6 +791,148 @@ class SQSBus:
                 _safe_call(h, event)
 
 
+class NATSBus:
+    """EventBus backed by NATS JetStream.
+
+    Lightweight durable event bus for self-hosted deployments. No JVM,
+    no Kafka cluster — single binary. Uses JetStream for persistence
+    and at-least-once delivery.
+    """
+
+    def __init__(self, config: QueueConfig) -> None:
+        if not _nats_available:
+            raise RuntimeError("nats-py package is not installed — run `pip install nats-py`")
+
+        self._config = config
+        self._prefix = config.stream_prefix
+        self._url = config.url or "nats://localhost:4222"
+        self._lock = threading.Lock()
+        self._running = True
+
+        self._handlers: dict[str, list[Handler]] = {}
+        self._wildcard_handlers: list[Handler] = []
+        self._consumers: list[threading.Thread] = []
+
+        # Async internals managed via a dedicated event loop thread.
+        import asyncio
+        self._loop = asyncio.new_event_loop()
+        self._loop_thread = threading.Thread(
+            target=self._loop.run_forever, name="nats-loop", daemon=True
+        )
+        self._loop_thread.start()
+
+        # Connect synchronously (block until connected).
+        import concurrent.futures  # noqa: F401
+        future = asyncio.run_coroutine_threadsafe(self._connect(), self._loop)
+        future.result(timeout=10)
+
+    async def _connect(self) -> None:
+        self._nc = await _nats_mod.connect(self._url)
+        self._js = self._nc.jetstream()
+        # Ensure stream exists.
+        try:
+            await self._js.find_stream_name_by_subject(f"{self._prefix}.>")
+        except Exception:
+            await self._js.add_stream(
+                name=self._prefix, subjects=[f"{self._prefix}.>"]
+            )
+
+    def _subject(self, event_type: str) -> str:
+        return f"{self._prefix}.{event_type}"
+
+    def subscribe(self, event_type: str, handler: Handler) -> None:
+        subject = self._subject(event_type)
+        with self._lock:
+            self._handlers.setdefault(event_type, []).append(handler)
+        t = threading.Thread(
+            target=self._consume_sync,
+            args=(subject, event_type),
+            name=f"nats-{subject}",
+            daemon=True,
+        )
+        self._consumers.append(t)
+        t.start()
+
+    def subscribe_all(self, handler: Handler) -> None:
+        subject = f"{self._prefix}.>"
+        with self._lock:
+            self._wildcard_handlers.append(handler)
+        if not any(t.name == "nats-wildcard" for t in self._consumers):
+            t = threading.Thread(
+                target=self._consume_sync,
+                args=(subject, None),
+                name="nats-wildcard",
+                daemon=True,
+            )
+            self._consumers.append(t)
+            t.start()
+
+    def publish(self, event: PipelineEvent) -> None:
+        subject = self._subject(event.event_type)
+        payload = _event_to_json(event).encode("utf-8")
+        import asyncio
+        future = asyncio.run_coroutine_threadsafe(
+            self._js.publish(subject, payload), self._loop
+        )
+        future.result(timeout=5)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._handlers.clear()
+            self._wildcard_handlers.clear()
+
+    def close(self) -> None:
+        self._running = False
+        import asyncio
+        try:
+            future = asyncio.run_coroutine_threadsafe(self._nc.close(), self._loop)
+            future.result(timeout=5)
+        except Exception:
+            pass
+        self._loop.call_soon_threadsafe(self._loop.stop)
+        self._loop_thread.join(timeout=2)
+        for t in self._consumers:
+            t.join(timeout=2)
+        self._consumers.clear()
+
+    def _consume_sync(self, subject: str, event_type: str | None) -> None:
+        import asyncio
+        future = asyncio.run_coroutine_threadsafe(
+            self._consume(subject, event_type), self._loop
+        )
+        try:
+            future.result()
+        except Exception:
+            if self._running:
+                log.exception("NATS consumer error on %s", subject)
+
+    async def _consume(self, subject: str, event_type: str | None) -> None:
+        import asyncio
+        durable = f"{self._config.consumer_group}-{subject.replace('.', '-')}"
+        sub = await self._js.subscribe(subject, durable=durable)
+        while self._running:
+            try:
+                msg = await asyncio.wait_for(sub.next_msg(timeout=1), timeout=2)
+                event = _event_from_json(msg.data)
+                self._dispatch(event, event_type)
+                await msg.ack()
+            except asyncio.TimeoutError:
+                continue
+            except Exception:
+                if self._running:
+                    log.exception("Error processing NATS message on %s", subject)
+                    await asyncio.sleep(1)
+
+    def _dispatch(self, event: PipelineEvent, event_type: str | None) -> None:
+        with self._lock:
+            wildcard = list(self._wildcard_handlers)
+            handlers = list(self._handlers.get(event.event_type, [])) if event_type else []
+        for h in wildcard:
+            _safe_call(h, event)
+        for h in handlers:
+            _safe_call(h, event)
+
+
 # ---------------------------------------------------------------------------
 # Factory functions
 # ---------------------------------------------------------------------------
@@ -791,10 +942,11 @@ _BACKEND_MAP: dict[str, type] = {
     "redis": RedisStreamBus,
     "kafka": KafkaBus,
     "sqs": SQSBus,
+    "nats": NATSBus,
 }
 
 
-def create_bus(config: QueueConfig | None = None) -> EventBus | RedisStreamBus | KafkaBus | SQSBus:
+def create_bus(config: QueueConfig | None = None) -> EventBus | RedisStreamBus | KafkaBus | SQSBus | NATSBus:
     """Create an EventBus from a QueueConfig.
 
     Returns an InMemoryBus if *config* is ``None`` or if the required
@@ -821,7 +973,7 @@ def create_bus(config: QueueConfig | None = None) -> EventBus | RedisStreamBus |
         return EventBus()
 
 
-def create_bus_from_settings() -> EventBus | RedisStreamBus | KafkaBus | SQSBus:
+def create_bus_from_settings() -> EventBus | RedisStreamBus | KafkaBus | SQSBus | NATSBus:
     """Create an EventBus from environment variables.
 
     Reads:

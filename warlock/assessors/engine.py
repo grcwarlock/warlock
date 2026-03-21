@@ -229,8 +229,13 @@ class Assessor:
             result.status = "not_assessed"
             result.assessor = "none"
 
-        # Tier 2: AI reasoning
-        if result.status == "not_assessed" and self.ai_reasoner:
+        # Tier 2: AI reasoning (optional — can be deferred to lake batch assessor)
+        # When ai_inline_disabled=True, AI does not run in the pipeline.
+        # Instead, batch assessment runs post-pipeline via `warlock lake assess`.
+        from warlock.config import get_settings as _get_settings
+
+        _ai_inline = not _get_settings().ai_inline_disabled
+        if result.status == "not_assessed" and self.ai_reasoner and _ai_inline:
             try:
                 ai_result = self.ai_reasoner.evaluate(finding, mapping, raw_data)
                 result.ai_assessment = ai_result.assessment

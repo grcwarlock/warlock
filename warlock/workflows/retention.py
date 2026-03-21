@@ -184,6 +184,22 @@ class RetentionManager:
         referencing deleted Findings) may remain. The caller should wrap
         this in a transaction and retry on failure to avoid partial purges.
         """
+        # Phase 2 data lake migration: freeze automated purging while lake
+        # is being validated. Legally-mandated deletions (GDPR Art. 17, CCPA)
+        # bypass this freeze via the GDPR workflow, not retention purge.
+        from warlock.config import get_settings
+
+        if get_settings().retention_purge_frozen:
+            return {
+                "purged": False,
+                "reason": "Retention purge frozen during lake migration (WLK_RETENTION_PURGE_FROZEN=true)",
+                "raw_events": 0,
+                "findings": 0,
+                "control_results": 0,
+                "control_mappings": 0,
+                "total": 0,
+            }
+
         if self._has_active_hold(session):
             return {
                 "purged": False,
