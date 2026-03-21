@@ -355,13 +355,12 @@ def authenticate_user(session: Session, email: str, password: str) -> User | dic
         user.locked_until = None
         user.last_login = datetime.now(timezone.utc)
 
-        # #21: If MFA is enabled, return partial auth — do not complete login
+        # #21: If MFA is enabled, return partial auth with signed challenge token
         if user.mfa_enabled:
-            log.info("MFA required for user %s — returning partial auth", user.email)
+            log.info("MFA required for user %s — returning signed challenge", user.email)
             return {
                 "mfa_required": True,
-                "user_id": user.id,
-                "email": user.email,
+                "mfa_token": create_mfa_challenge(user.id),
             }
 
         return user
@@ -436,6 +435,35 @@ _DUMMY_HASH: str = hash_password("dummy-timing-oracle-prevention")
 # ---------------------------------------------------------------------------
 # MFA / TOTP (#21)
 # ---------------------------------------------------------------------------
+
+
+def _get_field_encryptor():
+    """Lazy-load FieldEncryptor for MFA secret encryption."""
+    try:
+        from warlock.utils.crypto import FieldEncryptor
+
+        return FieldEncryptor()
+    except (ValueError, ImportError):
+        return None
+
+
+def _encrypt_mfa_secret(secret: str) -> str:
+    """Encrypt MFA TOTP secret before storing in DB."""
+    enc = _get_field_encryptor()
+    if enc:
+        return enc.encrypt(secret)
+    return secret
+
+
+def _decrypt_mfa_secret(stored: str) -> str:
+    """Decrypt MFA TOTP secret from DB. Handles plaintext for migration."""
+    if not stored:
+        return stored
+    enc = _get_field_encryptor()
+    if enc and enc.is_encrypted(stored):
+        return enc.decrypt(stored)
+    # Plaintext (pre-encryption migration) — encrypt on next write
+    return stored
 
 
 def generate_totp_secret() -> str:
@@ -520,8 +548,8 @@ def enroll_mfa(session: Session, user: User | str) -> dict:
     totp_secret = generate_totp_secret()
     plaintext_codes, hashed_codes = generate_backup_codes()
 
-    # Store secret and hashed backup codes (MFA not yet active)
-    user.mfa_secret = totp_secret
+    # Store encrypted secret and hashed backup codes (MFA not yet active)
+    user.mfa_secret = _encrypt_mfa_secret(totp_secret)
     user.mfa_backup_codes = hashed_codes
     session.flush()
 
@@ -552,7 +580,11 @@ def confirm_mfa(user_id: str, code: str, session: Session) -> bool:
     if user.mfa_enabled:
         raise ValueError("MFA is already confirmed and active")
 
-    if verify_totp(user.mfa_secret, code):
+    decrypted_secret = _decrypt_mfa_secret(user.mfa_secret)
+    if verify_totp(decrypted_secret, code):
+        # Re-encrypt if it was stored as plaintext (migration)
+        if not _get_field_encryptor() or not _get_field_encryptor().is_encrypted(user.mfa_secret):
+            user.mfa_secret = _encrypt_mfa_secret(decrypted_secret)
         user.mfa_enabled = True
         user.mfa_verified_at = datetime.now(timezone.utc)
         session.flush()
@@ -575,8 +607,9 @@ def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
     if not user.mfa_enabled or not user.mfa_secret:
         raise ValueError("MFA is not enabled for this user")
 
-    # Try TOTP first
-    if verify_totp(user.mfa_secret, code):
+    # Try TOTP first (decrypt the stored secret)
+    decrypted_secret = _decrypt_mfa_secret(user.mfa_secret)
+    if verify_totp(decrypted_secret, code):
         log.info("MFA login verified via TOTP for user %s", user.email)
         return True
 
@@ -597,6 +630,54 @@ def verify_mfa_login(user_id: str, code: str, session: Session) -> bool:
 
     log.warning("MFA login verification failed for user %s", user.email)
     return False
+
+
+_MFA_CHALLENGE_TTL = 300  # 5 minutes
+
+
+def create_mfa_challenge(user_id: str) -> str:
+    """Create a signed, time-limited MFA challenge token.
+
+    Replaces exposing raw user_id in the MFA flow. The token is
+    HMAC-signed with the JWT secret and expires after 5 minutes.
+    """
+    secret = _get_jwt_secret()
+    payload = {
+        "sub": user_id,
+        "purpose": "mfa_challenge",
+        "exp": time.time() + _MFA_CHALLENGE_TTL,
+        "jti": secrets.token_hex(8),
+    }
+    payload_bytes = json.dumps(payload, default=str).encode()
+    payload_b64 = base64.urlsafe_b64encode(payload_bytes).rstrip(b"=").decode()
+    sig = hmac.new(secret.encode(), payload_b64.encode(), hashlib.sha256).hexdigest()[:32]
+    return f"{payload_b64}.{sig}"
+
+
+def verify_mfa_challenge(token: str) -> str | None:
+    """Verify an MFA challenge token and return the user_id.
+
+    Returns None if the token is invalid, expired, or tampered.
+    """
+    secret = _get_jwt_secret()
+    parts = token.split(".")
+    if len(parts) != 2:
+        return None
+    payload_b64, sig = parts
+    expected_sig = hmac.new(secret.encode(), payload_b64.encode(), hashlib.sha256).hexdigest()[:32]
+    if not hmac.compare_digest(sig, expected_sig):
+        return None
+    # Restore padding
+    padded = payload_b64 + "=" * (4 - len(payload_b64) % 4) if len(payload_b64) % 4 else payload_b64
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(padded))
+    except Exception:
+        return None
+    if payload.get("purpose") != "mfa_challenge":
+        return None
+    if float(payload.get("exp", 0)) < time.time():
+        return None
+    return payload.get("sub")
 
 
 def verify_mfa_and_login(session: Session, user_id: str, totp_code: str) -> dict | None:
