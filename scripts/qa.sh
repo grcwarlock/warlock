@@ -144,15 +144,15 @@ else
 fi
 
 # --- Test Count Baseline ---
-section_start "Test Count Baseline (>= 190)"
+section_start "Test Count Baseline (>= 295)"
 COLLECT_OUTPUT=$("$PYTEST" --collect-only -q 2>&1) || true
 TEST_COUNT=$(echo "$COLLECT_OUTPUT" | grep -oE "^[0-9]+ tests?" | head -1 | grep -oE "^[0-9]+")
 TEST_COUNT=${TEST_COUNT:-0}
 echo "  Collected: ${TEST_COUNT} tests"
-if [[ "$TEST_COUNT" -ge 190 ]]; then
+if [[ "$TEST_COUNT" -ge 295 ]]; then
     section_pass
 else
-    echo "  Baseline is 190. Test count dropped!"
+    echo "  Baseline is 295. Test count dropped!"
     section_fail
 fi
 

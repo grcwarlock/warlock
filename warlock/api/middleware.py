@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import defaultdict
-from threading import Lock
 from typing import Callable
 
 from fastapi import HTTPException
@@ -39,10 +37,11 @@ _ENDPOINT_LIMITS: dict[str, tuple[int, int]] = {
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Sliding window rate limiter per API key or client IP.
+    """Counter-based rate limiter per API key or client IP.
 
-    Uses an in-memory sliding window. For multi-process deployments,
-    swap the storage backend to Redis.
+    Uses the shared cache backend (in-memory or Redis) for counter storage.
+    When Redis is configured via WLK_CACHE_URL, rate limits are enforced
+    consistently across all workers.
 
     Per-endpoint overrides are defined in ``_ENDPOINT_LIMITS``.
     """
@@ -56,20 +55,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.burst = burst
-        self.window_seconds = 60.0
-        # client_key -> list of request timestamps
-        self._windows: dict[str, list[float]] = defaultdict(list)
-        self._lock = Lock()
-
-        import multiprocessing
-
-        workers = multiprocessing.cpu_count()  # rough proxy for worker count
-        if workers > 1:
-            log.warning(
-                "In-memory rate limiter is per-process. With multiple workers, "
-                "effective rate limit is %dx. Use Redis-backed limiter for production.",
-                workers,
-            )
+        self.window_seconds = 60
 
     def _client_key(self, request: Request) -> str:
         """Derive a rate-limit key from the request.
@@ -89,8 +75,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return f"ip:{host}"
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        from warlock.utils.cache import get_cache
+
         key = self._client_key(request)
-        now = time.monotonic()
 
         # Apply per-endpoint limits when defined; fall back to instance defaults
         path = request.url.path
@@ -99,37 +86,22 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         else:
             rpm, burst = self.requests_per_minute, self.burst
 
-        with self._lock:
-            # Prune timestamps outside the window
-            window = self._windows[key]
-            cutoff = now - self.window_seconds
-            self._windows[key] = window = [t for t in window if t > cutoff]
+        max_allowed = rpm + burst
+        cache_key = f"ratelimit:{key}"
+        count = get_cache().increment(cache_key, ttl=self.window_seconds)
 
-            # Check if over limit (allow burst above steady rate)
-            max_allowed = rpm + burst
-            if len(window) >= max_allowed:
-                # Calculate Retry-After from oldest request in window
-                retry_after = int(self.window_seconds - (now - window[0])) + 1
-                retry_after = max(retry_after, 1)
-                log.warning(
-                    "Rate limit exceeded for %s (%d requests in window)",
-                    key,
-                    len(window),
-                )
-                return Response(
-                    content='{"detail":"Rate limit exceeded"}',
-                    status_code=429,
-                    media_type="application/json",
-                    headers={"Retry-After": str(retry_after)},
-                )
-
-            window.append(now)
-
-            # Periodically evict idle clients to prevent memory leak
-            if len(self._windows) > 1000:
-                empty_keys = [k for k, v in self._windows.items() if not v]
-                for k in empty_keys:
-                    del self._windows[k]
+        if count > max_allowed:
+            log.warning(
+                "Rate limit exceeded for %s (%d requests in window)",
+                key,
+                count,
+            )
+            return Response(
+                content='{"detail":"Rate limit exceeded"}',
+                status_code=429,
+                media_type="application/json",
+                headers={"Retry-After": str(self.window_seconds)},
+            )
 
         return await call_next(request)
 
@@ -360,17 +332,17 @@ def register_middleware(app) -> None:
     Starlette processes middleware in reverse registration order,
     so we register in reverse: audit first, rate limit second, headers last.
     """
-    # S-6: Warn if running production without Redis-backed rate limiter
+    # S-6: Warn if running production without Redis-backed shared cache
     import os
 
     wlk_env = os.environ.get("WLK_ENV", "").strip().lower()
-    redis_url = os.environ.get("WLK_QUEUE_URL", "").strip()
-    if wlk_env == "production" and not redis_url:
+    cache_url = os.environ.get("WLK_CACHE_URL", "").strip()
+    if wlk_env == "production" and not cache_url:
         log.warning(
-            "PRODUCTION WARNING: No Redis URL configured (WLK_QUEUE_URL). "
-            "Rate limiter is running in per-process in-memory mode. "
-            "Rate limits will not be shared across workers. "
-            "Configure WLK_QUEUE_URL to a Redis instance for production deployments."
+            "PRODUCTION WARNING: No cache URL configured (WLK_CACHE_URL). "
+            "Rate limiter and caches are running in per-process in-memory mode. "
+            "State will not be shared across workers. "
+            "Configure WLK_CACHE_URL to a Redis instance for production deployments."
         )
 
     app.add_middleware(SecurityHeadersMiddleware)

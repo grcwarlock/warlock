@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -30,12 +29,9 @@ log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# In-process TTL caches
+# TTL caches (backed by shared cache for multi-worker compatibility)
 # ---------------------------------------------------------------------------
 _COVERAGE_CACHE_TTL = 300  # seconds
-_coverage_cache: dict[tuple, dict] = {}
-
-_DASHBOARD_CACHE: dict[str, dict] = {}
 _DASHBOARD_CACHE_TTL = 300  # 5 minutes
 
 
@@ -412,17 +408,18 @@ def results_coverage(
     latest ``ConnectorRun.started_at`` timestamp against the value stored
     when the cache entry was written).
     """
-    cache_key = (framework, str(current_user.id))
-    now = time.monotonic()
+    from warlock.utils.cache import get_cache
+
+    cache_key = f"coverage:{framework}:{current_user.id}"
 
     # Fetch the latest ConnectorRun timestamp cheaply (single scalar query)
     latest_run: datetime | None = db.query(func.max(ConnectorRun.started_at)).scalar()
+    latest_run_str = latest_run.isoformat() if latest_run else ""
 
-    cached = _coverage_cache.get(cache_key)
+    cached = get_cache().get(cache_key)
     if cached is not None:
-        age = now - cached["ts"]
-        if age < _COVERAGE_CACHE_TTL and cached["latest_run"] == latest_run:
-            log.debug("coverage cache hit (age=%.1fs, key=%s)", age, cache_key)
+        if cached.get("latest_run") == latest_run_str:
+            log.debug("coverage cache hit (key=%s)", cache_key)
             return cached["data"]
 
     # --- Cache miss: compute fresh ---
@@ -473,7 +470,9 @@ def results_coverage(
         for fw, s in sorted(fw_stats.items())
     ]
 
-    _coverage_cache[cache_key] = {"data": response, "ts": now, "latest_run": latest_run}
+    get_cache().set(
+        cache_key, {"data": response, "latest_run": latest_run_str}, ttl=_COVERAGE_CACHE_TTL
+    )
     log.debug("coverage cache miss — refreshed (key=%s)", cache_key)
 
     if ai:
@@ -1006,11 +1005,12 @@ def dashboard_summary(
 
     Cached per user for 5 minutes (TTL = 300 s).
     """
-    now_ts = time.time()
-    cache_key = current_user.id
-    cached = _DASHBOARD_CACHE.get(cache_key)
-    if cached and (now_ts - cached["ts"]) < _DASHBOARD_CACHE_TTL:
-        return cached["data"]
+    from warlock.utils.cache import get_cache
+
+    cache_key = f"dashboard:{current_user.id}"
+    cached = get_cache().get(cache_key)
+    if cached is not None:
+        return cached
 
     # -----------------------------------------------------------------
     # frameworks: per-framework compliance rate, control counts, trend
@@ -1229,7 +1229,7 @@ def dashboard_summary(
         "cache_ttl_seconds": _DASHBOARD_CACHE_TTL,
     }
 
-    _DASHBOARD_CACHE[cache_key] = {"data": payload, "ts": now_ts}
+    get_cache().set(cache_key, payload, ttl=_DASHBOARD_CACHE_TTL)
 
     if ai:
         from warlock.ai.service import get_ai_service

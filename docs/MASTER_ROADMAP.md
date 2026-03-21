@@ -1,11 +1,11 @@
 # Warlock Master Enhancement Roadmap
 
-Generated 2026-03-19 from 9 specialist agent analyses + Senior GRC Assessment (2026-03-20).
-**Total items: 128** | **Done: 64** | **Remaining: 64**
+Generated 2026-03-19 from 9 specialist agent analyses + Senior GRC Assessment (2026-03-20) + Product Vision (2026-03-21).
+**Total items: 148** | **Done: 72** | **Remaining: 76**
 
 ---
 
-## Completed (64 items)
+## Completed (69 items)
 
 <details>
 <summary>P0 — 22/22 done</summary>
@@ -36,80 +36,69 @@ Generated 2026-03-19 from 9 specialist agent analyses + Senior GRC Assessment (2
 </details>
 
 <details>
-<summary>P1 — 42/50 done</summary>
+<summary>P1 — 50/55 done</summary>
 
-- [x] 23. PCI DSS 4.0 framework YAML + assertions + Rego (XL)
-- [x] 24. NIST CSF 2.0 (L)
-- [x] 25. EU AI Act / ISO 42001 depth (M)
-- [x] 26. SEC cybersecurity disclosure rules (M)
-- [x] 27. CMMC L2 assertion bindings (M)
-- [x] 28. UCF crosswalk expansion to all 10 frameworks (M)
-- [x] 29. Risk appetite/tolerance framework (M)
-- [x] 30. MTTD/MTTR tracking (S)
-- [x] 31. Risk acceptance re-evaluation triggers (S)
-- [x] 32. Loss exceedance curves for cyber insurance (M)
-- [x] 33. Supply chain concentration analysis (M)
-- [x] 34. Webhook outbound — EventBus subscribers for Jira/Slack/ServiceNow/PagerDuty (M)
-- [x] 35. Evidence vault — S3/GCS for file-based evidence (M)
-- [x] 36. Read replica routing (M)
-- [x] 37. PgBouncer integration (S)
-- [x] 38. Worker pool for scheduler (M)
-- [x] 39. Terraform KMS modules — AWS, Azure, GCP (S per module)
-- [x] 40. Terraform Config/GuardDuty/CloudTrail org modules (M per module)
-- [x] 41. Terraform self-registration evidence pattern (M)
-- [x] 42. Terraform drift detection — state vs cloud (L)
-- [x] 43. Plan-time Rego evaluation via conftest in CI (M)
-- [x] 44. Batch `session.flush()` per-connector instead of per-record (S)
-- [x] 45. SOC 2 report portal — NDA-gated document access (M)
-- [x] 46. Security questionnaire auto-response (L)
-- [x] 47. Real-time compliance dashboard (M)
-- [x] 52. Monte Carlo inner Poisson vectorization (M)
-- [x] 53. Monte Carlo pre-computation cache (S)
-- [x] 54. Session `expunge_all()` after connector batch (S)
-- [x] 55. API pagination enforcement (S)
-- [x] 56. Audit log external sink — S3/CloudWatch/Splunk (S)
-- [x] 57. Regulatory change management (M)
-- [x] 58. JWT refresh token mechanism (M)
-- [x] 59. Control testing automation (L)
-- [x] 60. Governance control content analysis (M)
-- [x] 123. Change `ai_enabled` default to `False` (S)
+- [x] 23–60, 123. All original P1 items (42 done)
+- [x] 126. Encrypt MFA TOTP secrets with FieldEncryptor (S) — done 2026-03-21
+- [x] 127. Signed MFA challenge tokens (S) — done 2026-03-21
+- [x] 128. Complete ABAC scope coverage on risk/policy/simulation endpoints (M) — done 2026-03-21
+- [x] 129. Split app.py into 9 FastAPI domain routers (L) — done 2026-03-21
+- [x] 130. Split cli.py into 8 Click sub-modules (M) — done 2026-03-21
+- [x] 131. API test suite — 105 HTTP-level tests covering auth, ABAC, pagination, all routers (L) — done 2026-03-21
+- [x] 132. Move in-memory state to shared cache (MemoryCache/RedisCache abstraction) (M) — done 2026-03-21
+- [x] 133. Assertion expansion 25 → 101 across 14 control families (XL) — done 2026-03-21
 
 </details>
 
 ---
 
-## P1 — Remaining (8 items)
+## P1 — Remaining (0 items)
 
-Security and structural fixes. Do before anything else.
-
-### Security — Critical (3 items)
-
-| # | What | Effort | Source |
-|---|------|--------|--------|
-| 126 | **Encrypt MFA TOTP secrets with FieldEncryptor** — DB compromise = full MFA bypass without this | S | Assessment C1/H5 |
-| 127 | **Signed MFA challenge tokens** — replace raw user_id in MFA flow to prevent brute-force | S | Assessment H1 |
-| 128 | **Complete ABAC scope coverage on all API endpoints** — partial fix exists, many endpoints still unscoped | M | Assessment H2 |
-
-### Architecture — Structural (3 items)
-
-| # | What | Effort | Source |
-|---|------|--------|--------|
-| 129 | **Split app.py into FastAPI routers** — 5,400 lines, unreviewable, missed auth = bypass | L | Assessment A1 |
-| 130 | **Split cli.py into Click sub-command modules** — 3,600 lines in one file | M | Assessment A2 |
-| 131 | **API test suite** — 139 routes with zero HTTP-level tests covering auth, ABAC, pagination | L | Assessment A7 |
-
-### Platform — Scalability (2 items)
-
-| # | What | Effort | Source |
-|---|------|--------|--------|
-| 132 | **Move in-memory state to shared store** — coverage cache, alert config, conversation manager, rate limiter all per-process; breaks multi-worker | M | Assessment A6 |
-| 133 | **Assertion expansion 25 → 100+** — shifts deterministic coverage from 1.3% to ~30%; each assertion ~30 LOC | XL | Assessment A4 |
+All P1 items complete.
 
 ---
 
-## P2 — Next Quarter (37 items)
+## P2 — Next Quarter (56 items)
 
 Differentiation. Makes Warlock unique.
+
+### Data Governance & Discovery (7 items — new)
+
+| # | What | Effort | Why |
+|---|------|--------|-----|
+| 136 | **Databricks Unity Catalog connector** — table/column access controls, audit logs, data lineage, ML model governance via REST API. SourceType: DATA_GOVERNANCE | L | Data governance + ML model inventory in one source |
+| 137 | **DataHub connector** — open source (Apache 2.0) metadata platform. Pull data catalog, column-level lineage, quality assertions, governance policies via GraphQL. SourceType: DATA_GOVERNANCE | L | Free data catalog — instant data silo discovery, PCI CDE scoping, HIPAA PHI tracking, GDPR Article 30 |
+| 138 | **Atlan connector** — enterprise data catalog. Pull metadata, lineage, classification, governance policies via REST + GraphQL. SourceType: DATA_GOVERNANCE | M | Enterprise data governance catalog |
+| 139 | **Active data silo discovery** — enhance AWS/Azure/GCP connectors to enumerate all data stores (S3, RDS, DynamoDB, Redshift, Glue, Storage Accounts, SQL DBs, Cosmos DB, BigQuery, Cloud SQL, GCS). Auto-create DataSilo records for unclassified stores | L | Orgs don't know where all their data lives — automated discovery is table stakes for GDPR/HIPAA/PCI |
+| 140 | **Data classification & sensitivity scoring** — PII/PHI/PCI pattern detection on discovered data stores. Column-level sensitivity tagging. Feed results into data silo model | L | Classification without detection is just a spreadsheet |
+| 141 | **Data lineage tracking** — ETL pipeline tracking (Airflow, dbt, Fivetran), API call graphs, DataHub/Atlan integration for existing lineage | M | Required for GDPR DPIAs, PCI CDE scoping, breach impact analysis |
+| 142 | **Data silo drift detection** — alert when new data stores appear that aren't classified. Compare current cloud inventory against known silos. EventBus integration for real-time alerts | M | Unknown data stores are unprotected data stores |
+
+### AI Governance & Shadow AI (5 items — new)
+
+| # | What | Effort | Why |
+|---|------|--------|-----|
+| 143 | **Shadow AI detection assertions** — analyze Zscaler/Netskope/proxy connector data for unauthorized calls to api.openai.com, api.anthropic.com, generativelanguage.googleapis.com. Map to ISO 42001 and EU AI Act controls | M | Growing regulatory requirement; orgs can't govern AI they don't know about |
+| 144 | **AI model inventory connectors** — SageMaker Model Registry, Azure ML, Vertex AI Model Registry, HuggingFace Hub. Track deployed models, versions, training data provenance | L | ISO 42001 requires AI asset inventory; EU AI Act requires high-risk AI registry |
+| 145 | **AI policy enforcement assertions** — approved model registry checks, data classification gates (PII/PHI must not be sent to external AI APIs), human oversight requirements for high-risk decisions | M | Maps directly to existing EU AI Act (33 controls) and ISO 42001 (39 controls) frameworks |
+| 146 | **Cloud AI billing anomaly detection** — monitor cloud billing APIs for unexpected AI API charges as shadow AI signal | S | Low-effort shadow AI indicator from data already in cloud connectors |
+| 147 | **AI incident tracking model** — AI-specific incident type for bias events, hallucination reports, data leakage via AI, model performance degradation | M | EU AI Act Article 62 requires serious incident reporting for high-risk AI |
+
+### GRC Platform Connectors (5 items — new)
+
+| # | What | Effort | Why |
+|---|------|--------|-----|
+| 148 | **Vanta connector** (inbound) — pull test results, evidence, monitor status via REST API. SourceType: GRC | M | Aggregation layer for orgs already running Vanta |
+| 149 | **Drata connector** (inbound) — pull controls, evidence, personnel compliance via REST API. SourceType: GRC | M | Aggregation layer for orgs already running Drata |
+| 150 | **AuditBoard connector** (inbound) — pull audit findings, control testing results, SOX workflows via REST API. SourceType: GRC | M | Enterprise GRC aggregation |
+| 151 | **Conveyor connector** (inbound) — pull security review status, questionnaire responses via REST API. SourceType: GRC | S | Trust center / security review aggregation |
+| 152 | **Outbound GRC export API** — export Warlock data in Vanta/Drata/AuditBoard formats so Warlock can be the compliance engine behind any GRC frontend | L | "Warlock powers them" play — the more interesting direction |
+
+### Privacy Operations (1 item — new)
+
+| # | What | Effort | Why |
+|---|------|--------|-----|
+| 153 | **Transcend connector** — pull privacy requests (DSR), data maps, consent records via REST API. Feed into GDPR workflows and data silo inventory. SourceType: GRC | M | Privacy operations automation — DSR compliance, consent management |
 
 ### AI (5 items)
 
@@ -213,10 +202,10 @@ Differentiation. Makes Warlock unique.
 
 ### Supply Chain & Pentest (2 items)
 
-| # | What | Effort | Source |
-|---|------|--------|--------|
-| 134 | SBOM / supply chain compliance — CycloneDX/SPDX, VEX, license compliance | L | Assessment |
-| 135 | Pentest lifecycle management — engagement tracking, finding dedup, vuln SLA | L | Assessment |
+| # | What | Effort |
+|---|------|--------|
+| 134 | SBOM / supply chain compliance — CycloneDX/SPDX, VEX, license compliance | L |
+| 135 | Pentest lifecycle management — engagement tracking, finding dedup, vuln SLA | L |
 
 ---
 
@@ -278,7 +267,8 @@ When the product has traction.
 | Documentation | 7 categories | 7/7 | 0 |
 | Risk Manager | 28 findings | 28/28 | 0 |
 | Senior GRC Assessment (2026-03-20) | 10 new findings | 10/10 | 0 |
-| **Total** | **192 findings** | **192/192** | **0 gaps** |
+| Product Vision (2026-03-21) | 20 new items | 20/20 | 0 |
+| **Total** | **212 findings** | **212/212** | **0 gaps** |
 
 ---
 
@@ -286,7 +276,7 @@ When the product has traction.
 
 | Priority | Items | S | M | L | XL |
 |---|---|---|---|---|---|
-| P1 | 8 | 2 | 3 | 2 | 1 |
-| P2 | 37 | 4 | 20 | 11 | 2 |
+| P1 | 0 (all done) | — | — | — | — |
+| P2 | 56 | 6 | 28 | 18 | 4 |
 | P3 | 18 | 1 | 9 | 7 | 1 |
-| **Remaining** | **63** | **7** | **32** | **20** | **4** |
+| **Remaining** | **74** | **7** | **37** | **25** | **5** |

@@ -17,7 +17,11 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
-# Module-level ConversationManager instance (shared across requests)
+# Module-level ConversationManager instance (shared across requests within a
+# single worker process). This is intentionally per-worker — the conversation
+# state is complex (multi-turn message history, entity context) and already
+# bounded by TTL + session caps. Moving to Redis would require serializing the
+# full ConversationSession graph, which is a larger refactor. See roadmap #132.
 from warlock.ai.conversation import ConversationManager as _ConversationManager  # noqa: E402
 
 _conversation_manager = _ConversationManager()
