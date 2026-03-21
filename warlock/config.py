@@ -126,6 +126,18 @@ class Settings(BaseSettings):
     cloudflare_account_id: str = ""
     cloudflare_zone_ids: list[str] = Field(default_factory=list)
 
+    # Network Security — Palo Alto Networks
+    palo_alto_enabled: bool = False
+    palo_alto_base_url: str = ""
+
+    # Network Security — Fortinet FortiGate
+    fortinet_enabled: bool = False
+    fortinet_base_url: str = ""
+
+    # Network Security — Zscaler
+    zscaler_enabled: bool = False
+    zscaler_cloud: str = ""  # e.g. zscloud.net
+
     # HRIS — Workday
     workday_enabled: bool = False
     workday_tenant: str = ""
@@ -207,6 +219,13 @@ class Settings(BaseSettings):
     ai_batch_concurrency: int = 10
     ai_audit_enabled: bool = True
 
+    # Vector / RAG embeddings
+    embedding_provider: str = ""  # "openai", "ollama" — empty = disabled
+    embedding_api_key: str = ""  # defaults to ai_api_key if empty
+    embedding_model: str = ""  # defaults per provider
+    embedding_base_url: str = ""  # defaults to ai_base_url if empty
+    embedding_min_similarity: float = 0.6  # minimum cosine similarity for semantic matches
+
     # Field encryption
     encryption_key: str = ""  # key for field-level encryption (crypto.py)
 
@@ -226,6 +245,30 @@ class Settings(BaseSettings):
     queue_consumer_group: str = "warlock-pipeline"
     queue_max_retries: int = 3
     queue_batch_size: int = 100
+
+    # Outbound — Slack
+    slack_webhook_url: str = ""
+    slack_channel: str = ""
+    slack_min_severity: str = "medium"
+
+    # Outbound — PagerDuty
+    pagerduty_routing_key: str = ""
+    pagerduty_min_severity: str = "high"
+
+    # Outbound — Jira
+    jira_base_url: str = ""
+    jira_email: str = ""
+    jira_api_token: str = ""
+    jira_project_key: str = "GRC"
+    jira_issue_type: str = "Bug"
+    jira_min_severity: str = "high"
+
+    # Outbound — ServiceNow
+    servicenow_outbound_instance: str = ""
+    servicenow_outbound_username: str = ""
+    servicenow_outbound_password: str = ""
+    servicenow_min_severity: str = "high"
+    servicenow_assignment_group: str = ""
 
     # Scheduler
     scheduler_interval_minutes: int = 60  # pipeline collection interval
