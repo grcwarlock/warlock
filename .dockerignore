@@ -10,7 +10,6 @@ build
 .venv
 tests/
 docs/
-scripts/
 exports/
 *.db
 *.db-shm
@@ -18,11 +17,10 @@ exports/
 .env
 .env.*
 !.env.example
-Dockerfile*
-docker-compose*
 .github/
 terraform/
-policies/
 frameworks-oscal/
-docs/
 *.md
+!alembic.ini
+lake/
+.claude/

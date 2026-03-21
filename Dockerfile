@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 ARG PYTHON_VERSION=3.12
 
-# --- Builder ---
+# --- Builder: install dependencies only ---
 FROM python:${PYTHON_VERSION}-slim AS builder
 WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
@@ -15,12 +15,18 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # --- Runtime ---
 FROM python:${PYTHON_VERSION}-slim AS runtime
 RUN groupadd --gid 1001 warlock && useradd --uid 1001 --gid warlock --no-create-home warlock
-RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY warlock/ warlock/
 COPY alembic.ini .
-RUN mkdir -p /data && chown warlock:warlock /data
+COPY pyproject.toml .
+COPY scripts/demo_seed.py scripts/demo_seed.py
+COPY scripts/docker-demo.sh scripts/docker-demo.sh
+RUN chmod +x scripts/docker-demo.sh
+# Reinstall warlock itself (not deps) so entry points resolve against full source
+RUN pip install --no-deps -e . 2>/dev/null || pip install --no-deps .
+RUN mkdir -p /data /app/lake && chown -R warlock:warlock /data /app/lake
 USER warlock:warlock
 ENV WLK_DATABASE_URL=sqlite:////data/warlock.db \
     WLK_API_HOST=0.0.0.0 \

@@ -224,7 +224,7 @@ class ControlResult(Base):
     severity = Column(String(20), nullable=False)
 
     # Tier 1: deterministic assertion
-    assertion_name = Column(String(100))
+    assertion_name = Column(String(255))
     assertion_passed = Column(Boolean)
     assertion_findings = Column(JSONType)  # specific failure reasons
 
@@ -241,7 +241,7 @@ class ControlResult(Base):
     # Lineage
     evidence_ids = Column(JSONType)  # [raw_event UUIDs] that informed this
     assessed_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
-    assessor = Column(String(100), nullable=False)  # "assertion:mfa_check" or "ai:claude"
+    assessor = Column(String(255), nullable=False)  # "assertion:mfa_check" or "ai:claude"
 
     # Phase 5b: Auditor examination
     examined_at = Column(DateTime(timezone=True))
