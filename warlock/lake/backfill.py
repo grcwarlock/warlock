@@ -14,6 +14,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from warlock.lake.utils import model_to_dict
+
 log = logging.getLogger(__name__)
 
 
@@ -44,19 +46,6 @@ class BackfillStats:
             + self.compliance_drifts
             + self.audit_entries
         )
-
-
-def _model_to_dict(obj: Any) -> dict[str, Any]:
-    """Convert a SQLAlchemy model instance to a dict."""
-    import json
-
-    d: dict[str, Any] = {}
-    for col in obj.__table__.columns:
-        val = getattr(obj, col.name, None)
-        if isinstance(val, (dict, list)):
-            val = json.dumps(val, sort_keys=True, default=str)
-        d[col.name] = val
-    return d
 
 
 def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillStats:
@@ -108,7 +97,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            dicts = [_model_to_dict(r) for r in batch]
+            dicts = [model_to_dict(r) for r in batch]
             written = write_raw_zone(lake_path, run_id, dicts)
             stats.raw_events += written
             offset += batch_size
@@ -131,7 +120,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            dicts = [_model_to_dict(r) for r in batch]
+            dicts = [model_to_dict(r) for r in batch]
             written = write_enrichment_zone(lake_path, run_id, dicts)
             stats.findings += written
             offset += batch_size
@@ -155,7 +144,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            cr_dicts.extend(_model_to_dict(r) for r in batch)
+            cr_dicts.extend(model_to_dict(r) for r in batch)
             offset += batch_size
 
         cm_dicts: list[dict] = []
@@ -170,7 +159,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            cm_dicts.extend(_model_to_dict(r) for r in batch)
+            cm_dicts.extend(model_to_dict(r) for r in batch)
             offset += batch_size
 
         conn_dicts: list[dict] = []
@@ -185,7 +174,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            conn_dicts.extend(_model_to_dict(r) for r in batch)
+            conn_dicts.extend(model_to_dict(r) for r in batch)
             offset += batch_size
 
         if cr_dicts or cm_dicts or conn_dicts:
@@ -218,7 +207,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            snapshot_dicts.extend(_model_to_dict(r) for r in batch)
+            snapshot_dicts.extend(model_to_dict(r) for r in batch)
             offset += batch_size
 
         if snapshot_dicts:
@@ -244,7 +233,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            drift_dicts.extend(_model_to_dict(r) for r in batch)
+            drift_dicts.extend(model_to_dict(r) for r in batch)
             offset += batch_size
 
         if drift_dicts:
@@ -270,7 +259,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
             )
             if not batch:
                 break
-            audit_dicts.extend(_model_to_dict(r) for r in batch)
+            audit_dicts.extend(model_to_dict(r) for r in batch)
             offset += batch_size
 
         if audit_dicts:

@@ -12,12 +12,12 @@ Anti-patterns avoided:
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from warlock.lake.utils import model_to_dict
 from warlock.pipeline.bus import PipelineEvent
 
 log = logging.getLogger(__name__)
@@ -37,21 +37,6 @@ class LakeWriteStats:
     compliance_drifts_written: int = 0
     duration_seconds: float = 0.0
     errors: list[str] = field(default_factory=list)
-
-
-def _model_to_dict(obj: Any) -> dict[str, Any]:
-    """Convert a SQLAlchemy model instance to a dict.
-
-    Handles JSON fields by serializing with sort_keys=True for hash integrity.
-    """
-    d: dict[str, Any] = {}
-    for col in obj.__table__.columns:
-        val = getattr(obj, col.name, None)
-        # Serialize JSON-like fields deterministically
-        if isinstance(val, (dict, list)):
-            val = json.dumps(val, sort_keys=True, default=str)
-        d[col.name] = val
-    return d
 
 
 class LakeWriter:
@@ -179,7 +164,7 @@ class LakeWriter:
         if not records:
             return 0
 
-        dicts = [_model_to_dict(r) for r in records]
+        dicts = [model_to_dict(r) for r in records]
         return writer_fn(self._lake_path, run_id, dicts)
 
     def _flush_findings(self, session: Any, run_id: str, writer_fn: Any) -> int:
@@ -193,7 +178,7 @@ class LakeWriter:
         if not records:
             return 0
 
-        dicts = [_model_to_dict(r) for r in records]
+        dicts = [model_to_dict(r) for r in records]
         return writer_fn(self._lake_path, run_id, dicts)
 
     def _flush_curated(
@@ -209,7 +194,7 @@ class LakeWriter:
                 .filter(ControlResult.id.in_(self._control_result_ids))
                 .all()
             )
-            cr_dicts = [_model_to_dict(r) for r in records]
+            cr_dicts = [model_to_dict(r) for r in records]
 
         cm_dicts: list[dict] = []
         if self._control_mapping_ids:
@@ -219,7 +204,7 @@ class LakeWriter:
                 .filter(ControlMapping.finding_id.in_(self._control_mapping_ids))
                 .all()
             )
-            cm_dicts = [_model_to_dict(r) for r in records]
+            cm_dicts = [model_to_dict(r) for r in records]
 
         # Get connector runs associated with this pipeline run's raw events
         conn_dicts: list[dict] = []
@@ -237,7 +222,7 @@ class LakeWriter:
                 records = (
                     session.query(ConnectorRun).filter(ConnectorRun.id.in_(cr_ids)).all()
                 )
-                conn_dicts = [_model_to_dict(r) for r in records]
+                conn_dicts = [model_to_dict(r) for r in records]
 
         total_cr = 0
         total_cm = 0
@@ -262,14 +247,14 @@ class LakeWriter:
         snap_dicts: list[dict] = []
         try:
             records = session.query(PostureSnapshot).all()
-            snap_dicts = [_model_to_dict(r) for r in records] if records else []
+            snap_dicts = [model_to_dict(r) for r in records] if records else []
         except Exception:
             log.debug("PostureSnapshot table not available, skipping")
 
         drift_dicts: list[dict] = []
         try:
             records = session.query(ComplianceDrift).all()
-            drift_dicts = [_model_to_dict(r) for r in records] if records else []
+            drift_dicts = [model_to_dict(r) for r in records] if records else []
         except Exception:
             log.debug("ComplianceDrift table not available, skipping")
 

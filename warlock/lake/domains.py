@@ -20,8 +20,9 @@ Domains:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
+
+from warlock.lake.utils import ensure_dir, today_partition
 
 log = logging.getLogger(__name__)
 
@@ -29,14 +30,6 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
-
-def _today_partition() -> str:
-    """Return today's date as YYYY-MM-DD for partitioning."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-
-def _ensure_dir(path: Path) -> None:
-    path.mkdir(parents=True, exist_ok=True)
 
 
 def _write_table(lake_path: str, table_name: str, run_id: str, rows: list[dict]) -> int:
@@ -57,9 +50,9 @@ def _write_table(lake_path: str, table_name: str, run_id: str, rows: list[dict])
         columns[key] = [str(r.get(key, "")) for r in rows]
 
     table = pa.table(columns)
-    date_part = _today_partition()
+    date_part = today_partition()
     out_dir = Path(lake_path) / "curated" / table_name / date_part
-    _ensure_dir(out_dir)
+    ensure_dir(out_dir)
     out_file = out_dir / f"{run_id}.parquet"
     pq.write_table(table, str(out_file))
     log.info("Wrote %d rows to %s", len(rows), out_file)
@@ -82,7 +75,7 @@ def _write_partitioned_by_framework(
         by_fw.setdefault(fw, []).append(r)
 
     total = 0
-    date_part = _today_partition()
+    date_part = today_partition()
     for fw, items in by_fw.items():
         columns: dict[str, list[str]] = {}
         for key in items[0]:
@@ -90,7 +83,7 @@ def _write_partitioned_by_framework(
 
         table = pa.table(columns)
         out_dir = Path(lake_path) / "curated" / table_name / fw / date_part
-        _ensure_dir(out_dir)
+        ensure_dir(out_dir)
         out_file = out_dir / f"{run_id}.parquet"
         pq.write_table(table, str(out_file))
         total += len(items)
