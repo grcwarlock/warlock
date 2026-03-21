@@ -72,20 +72,8 @@ The demo script handles venv creation, dependencies, OPA, database, seeding, AI 
 
 ```bash
 warlock coverage                       # compliance overview
-warlock dashboard                      # interactive TUI dashboard
 warlock-api                            # REST API on :8000
 ```
-
-## Interactive TUI
-
-Warlock includes a full terminal UI dashboard built with [Textual](https://textual.textualize.io/):
-
-```bash
-warlock dashboard     # 7-tab dashboard: Overview, Coverage, Findings, Risk, Issues, Pipeline, AI
-warlock tui           # form-based command browser (via Trogon)
-```
-
-The dashboard features plotext charts, color-coded compliance tables, interactive findings browser, FAIR risk viewer with loss exceedance curves, and an AI reasoning chat panel.
 
 ## CLI Commands
 

@@ -101,6 +101,8 @@ class ControlMapper:
         self._explicit_by_event_type: dict[str, list[ExplicitRule]] = defaultdict(list)
         self._explicit_wildcard_rules: list[ExplicitRule] = []
         self._resource_by_type: dict[str, list[ResourceRule]] = defaultdict(list)
+        # Semantic mapper fallback (set via set_semantic_mapper)
+        self._semantic_mapper: Any | None = None
 
     # -- Configuration --
 
@@ -169,6 +171,20 @@ class ControlMapper:
                             )
                         )
 
+    def set_semantic_mapper(self, semantic_mapper: Any) -> None:
+        """Set the semantic mapper for fallback control matching.
+
+        When set, the mapper will attempt semantic (RAG-based) matching
+        if explicit and resource rules produce no mappings for a finding.
+
+        Parameters
+        ----------
+        semantic_mapper:
+            A SemanticMapper instance (from warlock.ai.rag).
+        """
+        self._semantic_mapper = semantic_mapper
+        log.info("Semantic mapper enabled for fallback control matching")
+
     def load_crosswalk_yaml(self, crosswalks: list[dict[str, Any]]) -> None:
         """Load crosswalk edges from config.
 
@@ -228,7 +244,23 @@ class ControlMapper:
                             )
                         )
 
-        # Priority 3: Crosswalk — expand existing mappings to other frameworks
+        # Priority 3: Semantic fallback — only when explicit + resource rules found nothing
+        if not mappings and self._semantic_mapper is not None:
+            try:
+                semantic_results = self._semantic_mapper.map_finding(finding)
+                for sm in semantic_results:
+                    key = (sm.framework, sm.control_id)
+                    if key not in seen:
+                        seen.add(key)
+                        mappings.append(sm)
+            except Exception:
+                log.debug(
+                    "Semantic mapping failed for finding %s — continuing without",
+                    finding.id,
+                    exc_info=True,
+                )
+
+        # Priority 4: Crosswalk — expand existing mappings to other frameworks
         crosswalked: list[ControlMappingData] = []
         for m in mappings:
             graph_key = (m.framework, m.control_id)

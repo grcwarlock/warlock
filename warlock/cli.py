@@ -137,36 +137,6 @@ def cli(verbose: bool) -> None:
     )
 
 
-@cli.command("dashboard")
-@click.option(
-    "--web", is_flag=True, default=False, help="Serve dashboard in browser at http://localhost:8566"
-)
-@click.option("--port", default=8566, help="Port for web mode (default: 8566)")
-def dashboard(web: bool, port: int) -> None:
-    """Open the interactive TUI dashboard.
-
-    Default: runs in terminal. Use --web to serve in browser.
-    """
-    try:
-        from warlock.tui.app import WarlockDashboard
-    except ImportError as exc:
-        _error(f"TUI dependencies missing: {exc}\n  Install with: pip install 'warlock[tui]'")
-
-    if web:
-        try:
-            from textual_serve.server import Server
-        except ImportError:
-            _error("textual-serve not installed. Run: pip install textual-serve")
-        console.print(
-            f"[green]Warlock Dashboard — opening in browser at http://localhost:{port}[/green]"
-        )
-        console.print("[dim]Press Ctrl+C to stop[/dim]")
-        server = Server("warlock.tui.app:WarlockDashboard", host="localhost", port=port)
-        server.serve()
-    else:
-        app = WarlockDashboard()
-        app.run()
-
 
 @cli.command()
 def init() -> None:
@@ -3619,15 +3589,6 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
     finally:
         os.unlink(d2_file)
 
-
-# --- Trogon interactive command browser (optional dependency) ---
-try:
-    from trogon import tui as _trogon_tui
-
-    # trogon.tui is a decorator that adds a 'tui' command to a Click group
-    _trogon_tui(command="tui", help="Open interactive command browser")(cli)
-except ImportError:
-    pass
 
 
 if __name__ == "__main__":

@@ -77,6 +77,9 @@ _CONNECTOR_MODULES = [
     "warlock.connectors.kubernetes",
     "warlock.connectors.github",
     "warlock.connectors.securityscorecard",
+    "warlock.connectors.palo_alto",
+    "warlock.connectors.fortinet",
+    "warlock.connectors.zscaler",
 ]
 
 _NORMALIZER_MODULES = [
@@ -120,6 +123,9 @@ _NORMALIZER_MODULES = [
     "warlock.normalizers.kubernetes",
     "warlock.normalizers.github",
     "warlock.normalizers.securityscorecard",
+    "warlock.normalizers.palo_alto",
+    "warlock.normalizers.fortinet",
+    "warlock.normalizers.zscaler",
     # Generic / fallback normalizer — must be last so it doesn't shadow others.
     "warlock.normalizers.generic",
 ]
@@ -270,6 +276,9 @@ _SOURCE_DEFS: list[tuple[str, str, SourceType]] = [
     ("kubernetes", "kubernetes", SourceType.CLOUD),
     ("github", "github", SourceType.CODE),
     ("securityscorecard", "securityscorecard", SourceType.GRC),
+    ("palo_alto", "palo_alto", SourceType.NETWORK),
+    ("fortinet", "fortinet", SourceType.NETWORK),
+    ("zscaler", "zscaler", SourceType.NETWORK),
 ]
 
 
@@ -356,6 +365,41 @@ def build_pipeline(
     # 3. Build mapper and load framework YAML configs
     mapper = ControlMapper()
     load_framework_configs(framework_dir, mapper)
+
+    # 3b. Attach semantic mapper if embedding provider is configured
+    if settings.embedding_provider:
+        try:
+            from warlock.ai.embeddings import EmbeddingProvider
+            from warlock.ai.rag import SemanticMapper, VectorStore
+            from warlock.db.engine import get_session_factory
+
+            emb_provider = EmbeddingProvider(
+                provider=settings.embedding_provider,
+                api_key=settings.embedding_api_key or settings.ai_api_key,
+                model=settings.embedding_model,
+                base_url=settings.embedding_base_url or settings.ai_base_url,
+            )
+
+            session_factory = get_session_factory()
+            vector_store = VectorStore(
+                session_factory=session_factory,
+                embedding_provider=emb_provider,
+            )
+            semantic_mapper = SemanticMapper(
+                vector_store=vector_store,
+                min_similarity=settings.embedding_min_similarity,
+            )
+            mapper.set_semantic_mapper(semantic_mapper)
+            log.info(
+                "Semantic control mapping enabled: %s/%s",
+                settings.embedding_provider,
+                emb_provider.model,
+            )
+        except Exception:
+            log.warning(
+                "Embedding provider configured but failed to initialize "
+                "— running without semantic mapping"
+            )
 
     # 4. Build assessor (with AI reasoning if configured)
     ai_reasoner = None

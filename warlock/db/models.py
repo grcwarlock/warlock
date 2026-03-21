@@ -1353,3 +1353,32 @@ class EvidenceRequest(Base):
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Vector Embeddings — RAG-based semantic control matching
+# ---------------------------------------------------------------------------
+
+
+class Embedding(Base):
+    """Stored embedding vectors for semantic search over controls and findings.
+
+    Vectors are stored as JSON arrays (list[float]) for SQLite compatibility.
+    For production PostgreSQL deployments with pgvector, a migration can add
+    a proper vector column alongside the JSON representation.
+    """
+
+    __tablename__ = "embeddings"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    entity_type = Column(String(50), nullable=False)  # "control", "remediation", "finding"
+    entity_id = Column(String(100), nullable=False)  # control_id, remediation KB key, etc.
+    entity_text = Column(Text, nullable=False)  # the text that was embedded
+    vector = Column(JSONType, nullable=False)  # embedding vector as JSON array
+    model_name = Column(String(100), nullable=False)  # which model produced this embedding
+    dimensions = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_embedding_entity", "entity_type", "entity_id", unique=True),
+    )

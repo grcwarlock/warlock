@@ -102,6 +102,43 @@ def _register_default_subscribers(bus: "EventBus") -> None:
             len([u for u in webhook_urls.split(",") if u.strip()]),
         )
 
+    # Slack
+    slack_url = os.environ.get("WLK_SLACK_WEBHOOK_URL", "").strip()
+    if slack_url:
+        from warlock.integrations.slack import SlackNotifier
+
+        subscriber = SlackNotifier()
+        for event_type in ("finding.normalized", "control.assessed"):
+            bus.subscribe(event_type, subscriber)
+        log.info("SlackNotifier registered")
+
+    # PagerDuty
+    pd_key = os.environ.get("WLK_PAGERDUTY_ROUTING_KEY", "").strip()
+    if pd_key:
+        from warlock.integrations.pagerduty import PagerDutyNotifier
+
+        subscriber = PagerDutyNotifier()
+        bus.subscribe("control.assessed", subscriber)
+        log.info("PagerDutyNotifier registered")
+
+    # Jira
+    jira_url = os.environ.get("WLK_JIRA_BASE_URL", "").strip()
+    if jira_url:
+        from warlock.integrations.jira_integration import JiraNotifier
+
+        subscriber = JiraNotifier()
+        bus.subscribe("control.assessed", subscriber)
+        log.info("JiraNotifier registered")
+
+    # ServiceNow
+    snow_instance = os.environ.get("WLK_SERVICENOW_INSTANCE", "").strip()
+    if snow_instance:
+        from warlock.integrations.servicenow_integration import ServiceNowNotifier
+
+        subscriber = ServiceNowNotifier()
+        bus.subscribe("control.assessed", subscriber)
+        log.info("ServiceNowNotifier registered")
+
     # Audit event subscriber — wire when an external sink backend is configured.
     # Guards against default test runs by checking for WLK_AUDIT_SINK_BACKEND.
     # The "stdout" default is intentionally excluded because stdout is not a
