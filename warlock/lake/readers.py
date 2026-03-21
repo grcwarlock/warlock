@@ -218,20 +218,70 @@ class LakeReaders:
         return result
 
     # --- PostureSnapshotRepository equivalents ---
-    # Note: Posture snapshots are not yet written to the lake.
-    # These methods will be implemented when posture materialization is added.
-    # For now, placeholder stubs that return empty results.
+
+    def _posture_glob(self) -> str:
+        return str(self._base / "curated" / "posture_snapshots" / "**" / "*.parquet")
 
     def latest_snapshot_date(self) -> datetime | None:
-        """Placeholder -- posture snapshots not yet in lake."""
+        """Latest snapshot date from lake posture data."""
+        glob = self._posture_glob()
+        if not list(self._base.glob("curated/posture_snapshots/**/*.parquet")):
+            return None
+        result = self._engine.query(f"""
+            SELECT MAX(snapshot_date) as max_date
+            FROM read_parquet('{glob}', union_by_name=true)
+        """)
+        if result and result[0]["max_date"]:
+            val = result[0]["max_date"]
+            return datetime.fromisoformat(str(val)) if isinstance(val, str) else val
         return None
 
     def framework_avg_scores_at(self, snapshot_date=None) -> list[tuple[str, float]]:
-        """Placeholder -- posture snapshots not yet in lake."""
-        return []
+        """Average posture score per framework."""
+        glob = self._posture_glob()
+        if not list(self._base.glob("curated/posture_snapshots/**/*.parquet")):
+            return []
+        if snapshot_date:
+            result = self._engine.query(
+                f"""
+                SELECT framework, AVG(CAST(posture_score AS DOUBLE)) as avg_score
+                FROM read_parquet('{glob}', union_by_name=true)
+                WHERE snapshot_date = ?
+                GROUP BY framework ORDER BY framework
+            """,
+                [str(snapshot_date)],
+            )
+        else:
+            result = self._engine.query(f"""
+                SELECT framework, AVG(CAST(posture_score AS DOUBLE)) as avg_score
+                FROM read_parquet('{glob}', union_by_name=true)
+                GROUP BY framework ORDER BY framework
+            """)
+        return [(r["framework"], float(r["avg_score"])) for r in result]
 
     def effectiveness_latest(
         self, framework: str = None, days: int = 30
     ) -> list[dict]:
-        """Placeholder -- posture snapshots not yet in lake."""
-        return []
+        """Control effectiveness from posture snapshots."""
+        glob = self._posture_glob()
+        if not list(self._base.glob("curated/posture_snapshots/**/*.parquet")):
+            return []
+        if framework:
+            result = self._engine.query(
+                f"""
+                SELECT framework, control_id, status,
+                       CAST(posture_score AS DOUBLE) as posture_score, snapshot_date
+                FROM read_parquet('{glob}', union_by_name=true)
+                WHERE framework = ?
+                ORDER BY snapshot_date DESC
+            """,
+                [framework],
+            )
+        else:
+            result = self._engine.query(f"""
+                SELECT framework, control_id, status,
+                       CAST(posture_score AS DOUBLE) as posture_score, snapshot_date
+                FROM read_parquet('{glob}', union_by_name=true)
+                ORDER BY snapshot_date DESC
+            """)
+        return result
