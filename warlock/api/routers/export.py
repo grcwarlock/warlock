@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from warlock.api.deps import get_db, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
 from warlock.db.models import Questionnaire, QuestionnaireTemplate, User
+from warlock.db.repository import get_repos
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -182,12 +183,8 @@ def list_questionnaire_templates(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    rows = (
-        db.query(QuestionnaireTemplate)
-        .filter(QuestionnaireTemplate.is_active == True)  # noqa: E712
-        .order_by(QuestionnaireTemplate.name)
-        .all()
-    )
+    repos = get_repos(db)
+    rows = repos.questionnaire_templates.active_templates()
     return [_template_to_response(t) for t in rows]
 
 
@@ -244,13 +241,10 @@ def list_questionnaires(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    query = db.query(Questionnaire)
-    if vendor_name:
-        query = query.filter(Questionnaire.vendor_name == vendor_name)
-    if q_status:
-        query = query.filter(Questionnaire.status == q_status)
-    total = query.count()
-    rows = query.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    rows, total = repos.questionnaires.list_filtered(
+        vendor_name=vendor_name, status=q_status, limit=limit, offset=offset,
+    )
     items = [_questionnaire_to_response(q) for q in rows]
     return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
@@ -284,7 +278,8 @@ def get_questionnaire(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    q = db.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
+    repos = get_repos(db)
+    q = repos.questionnaires.get(questionnaire_id)
     if not q:
         raise HTTPException(status_code=404, detail="Questionnaire not found")
     return _questionnaire_to_response(q)
