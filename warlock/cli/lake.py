@@ -938,6 +938,31 @@ def lake_maintenance(path: str | None) -> None:
     console.print("[green]Maintenance complete.[/green]")
 
 
+@lake.command("thin-oltp")
+@click.option("--dry-run/--no-dry-run", default=True, help="Count only, don't delete")
+@click.confirmation_option(prompt="This will remove historical records from OLTP. Continue?")
+def lake_thin_oltp(dry_run: bool) -> None:
+    """Remove historical records from OLTP (keep latest per control only)."""
+    from warlock.db.engine import get_session
+    from warlock.lake.oltp_thin import thin_oltp
+
+    with get_session() as session:
+        stats = thin_oltp(session, dry_run=dry_run)
+        if not dry_run:
+            session.commit()
+
+    action = "Would remove" if dry_run else "Removed"
+    console.print(f"\n  Control results kept:    {stats.control_results_kept}")
+    console.print(f"  Control results {action.lower()}: {stats.control_results_removed}")
+    console.print(f"  Mappings {action.lower()}:         {stats.control_mappings_removed}")
+    console.print(f"  Findings {action.lower()}:         {stats.findings_removed}")
+    console.print(f"  Raw events {action.lower()}:       {stats.raw_events_removed}")
+    console.print(f"  Total {action.lower()}:            {stats.total_removed}")
+
+    if dry_run:
+        console.print("\n[yellow]Dry run — no changes made. Use --no-dry-run to execute.[/yellow]")
+
+
 def _format_size(size_bytes: int) -> str:
     """Format bytes as human-readable size."""
     if size_bytes < 1024:
