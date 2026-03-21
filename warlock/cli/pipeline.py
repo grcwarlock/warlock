@@ -24,11 +24,12 @@ def collect(source: tuple[str, ...]) -> None:
     """Run the full pipeline: collect -> normalize -> map -> assess."""
     from warlock.db.engine import get_session, init_db
     from warlock.pipeline.bus import EventBus
-    from warlock.pipeline.loader import build_pipeline
+    from warlock.pipeline.loader import build_pipeline, register_lake_writer
 
     # Bootstrap
     init_db()
     bus = EventBus()
+    lake_writer = register_lake_writer(bus)
     pipeline = build_pipeline(bus, sources=source or None)
 
     # Wire up a simple event logger
@@ -39,6 +40,17 @@ def collect(source: tuple[str, ...]) -> None:
     # Run
     with get_session() as session:
         stats = pipeline.run(session)
+
+    # Flush lake writer if enabled
+    if lake_writer is not None:
+        with get_session() as lake_session:
+            lake_stats = lake_writer.flush(stats.run_id, lake_session)
+            logging.getLogger(__name__).info(
+                "Lake write: %d raw, %d findings, %d results",
+                lake_stats.raw_events_written,
+                lake_stats.findings_written,
+                lake_stats.control_results_written,
+            )
 
     # Report
     _print_stats(stats)

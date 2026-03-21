@@ -97,3 +97,38 @@ def generate_all_schemas() -> dict[str, Schema]:
     }
 
     return {name: generate_iceberg_schema(model) for name, model in models.items()}
+
+
+def get_pyarrow_schema(model_class: type) -> "pa.Schema":
+    """Generate a PyArrow schema from a SQLAlchemy model class.
+
+    Useful for writing strongly-typed Parquet files.
+    """
+    import pyarrow as pa
+
+    mapper = sa_inspect(model_class)
+    fields = []
+
+    _PA_TYPE_MAP = {
+        "VARCHAR": pa.string(),
+        "TEXT": pa.string(),
+        "STRING": pa.string(),
+        "INTEGER": pa.int64(),
+        "BIGINT": pa.int64(),
+        "SMALLINT": pa.int32(),
+        "FLOAT": pa.float64(),
+        "DOUBLE": pa.float64(),
+        "BOOLEAN": pa.bool_(),
+        "DATETIME": pa.timestamp("us", tz="UTC"),
+        "TIMESTAMP": pa.timestamp("us", tz="UTC"),
+        "DATE": pa.date32(),
+        "JSON": pa.string(),
+        "JSONB": pa.string(),
+    }
+
+    for column in mapper.columns:
+        type_name = type(column.type).__name__.upper()
+        pa_type = _PA_TYPE_MAP.get(type_name, pa.string())
+        fields.append(pa.field(column.name, pa_type, nullable=column.nullable))
+
+    return pa.schema(fields)

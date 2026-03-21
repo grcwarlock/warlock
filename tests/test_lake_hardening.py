@@ -627,3 +627,54 @@ class TestLakeRAG:
         rag.index()
         results = rag.query("")
         assert results == []
+
+
+class TestIcebergWiring:
+    def test_register_table(self, tmp_path):
+        from warlock.lake.catalog import create_catalog, register_table, ensure_namespace
+        from warlock.lake.schema import generate_iceberg_schema
+        from warlock.db.models import ControlResult
+
+        catalog = create_catalog("sqlite", str(tmp_path / "catalog.db"))
+        ensure_namespace(catalog, "warlock")
+        schema = generate_iceberg_schema(ControlResult)
+        table = register_table(
+            catalog, "warlock", "control_results", schema,
+            location=str(tmp_path / "curated" / "control_results"),
+        )
+        assert table is not None
+
+    def test_register_table_idempotent(self, tmp_path):
+        from warlock.lake.catalog import create_catalog, register_table, ensure_namespace
+        from warlock.lake.schema import generate_iceberg_schema
+        from warlock.db.models import ControlResult
+
+        catalog = create_catalog("sqlite", str(tmp_path / "catalog.db"))
+        ensure_namespace(catalog, "warlock")
+        schema = generate_iceberg_schema(ControlResult)
+        location = str(tmp_path / "curated" / "control_results")
+
+        table1 = register_table(catalog, "warlock", "control_results", schema, location=location)
+        table2 = register_table(catalog, "warlock", "control_results", schema, location=location)
+        assert table1 is not None
+        assert table2 is not None
+
+    def test_get_pyarrow_schema(self):
+        import pyarrow as pa
+        from warlock.lake.schema import get_pyarrow_schema
+        from warlock.db.models import ControlResult
+
+        schema = get_pyarrow_schema(ControlResult)
+        assert isinstance(schema, pa.Schema)
+        field_names = [f.name for f in schema]
+        assert "id" in field_names
+        assert "framework" in field_names
+        assert "status" in field_names
+
+    def test_register_pipeline_tables(self, tmp_path):
+        from warlock.lake.catalog import register_pipeline_tables
+
+        results = register_pipeline_tables(str(tmp_path))
+        assert len(results) > 0
+        # At least some should register
+        assert any(v == "registered" for v in results.values())

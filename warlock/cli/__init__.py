@@ -171,6 +171,7 @@ from warlock.cli import monitoring as _monitoring  # noqa: F401, E402
 from warlock.cli import admin as _admin  # noqa: F401, E402
 from warlock.cli import ai_cmd as _ai_cmd  # noqa: F401, E402
 from warlock.cli import export as _export  # noqa: F401, E402
+from warlock.cli import lake as _lake  # noqa: F401, E402
 
 
 if __name__ == "__main__":
