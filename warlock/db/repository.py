@@ -401,6 +401,17 @@ class ControlResultRepository(BaseRepository):
         Returns list of (framework, status, count) tuples.
         ``scope_filter`` applies ABAC restrictions before aggregation.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("coverage_by_status"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.coverage_by_status(framework)
+            finally:
+                readers.close()
         query = self.session.query(ControlResult)
         if scope_filter is not None:
             query = scope_filter(query, ControlResult)
@@ -415,6 +426,17 @@ class ControlResultRepository(BaseRepository):
 
     def distinct_frameworks(self) -> list[str]:
         """Return a list of distinct framework names that have control results."""
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("distinct_frameworks"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.distinct_frameworks()
+            finally:
+                readers.close()
         rows = self.session.query(distinct(ControlResult.framework)).all()
         return [fw for (fw,) in rows]
 
@@ -423,6 +445,17 @@ class ControlResultRepository(BaseRepository):
 
         Returns list of (framework, status, count) tuples.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("dashboard_framework_summary"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.dashboard_framework_summary()
+            finally:
+                readers.close()
         return (
             self.session.query(
                 ControlResult.framework,
@@ -438,6 +471,17 @@ class ControlResultRepository(BaseRepository):
 
         Returns list of rows with .framework, .control_id, .severity, .cnt attrs.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("top_non_compliant_risks"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.top_non_compliant_risks()
+            finally:
+                readers.close()
         return (
             self.session.query(
                 ControlResult.framework,
@@ -452,6 +496,17 @@ class ControlResultRepository(BaseRepository):
 
     def last_assessed_at(self) -> datetime | None:
         """Timestamp of the most recent control result assessment."""
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("last_assessed_at"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.last_assessed_at()
+            finally:
+                readers.close()
         row = (
             self.session.query(ControlResult.assessed_at)
             .order_by(ControlResult.assessed_at.desc())
@@ -532,6 +587,17 @@ class PostureSnapshotRepository(BaseRepository):
 
     def latest_snapshot_date(self) -> datetime | None:
         """Return the most recent snapshot_date across all snapshots."""
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("latest_snapshot_date"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.latest_snapshot_date()
+            finally:
+                readers.close()
         return self.session.query(func.max(PostureSnapshot.snapshot_date)).scalar()
 
     def list_latest_posture(
@@ -569,6 +635,17 @@ class PostureSnapshotRepository(BaseRepository):
 
         Returns list of (framework, avg_score) tuples.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("framework_avg_scores_at"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.framework_avg_scores_at(snapshot_date)
+            finally:
+                readers.close()
         return (
             self.session.query(
                 PostureSnapshot.framework,
@@ -709,6 +786,17 @@ class ConnectorRunRepository(BaseRepository):
 
     def latest_per_connector(self) -> list[ConnectorRun]:
         """Most recent run per connector (by provider + source_type)."""
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("latest_per_connector"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.latest_per_connector()
+            finally:
+                readers.close()
         subq = (
             self.session.query(
                 ConnectorRun.provider,
@@ -751,6 +839,17 @@ class ConnectorRunRepository(BaseRepository):
 
         Used by dashboard to show connector health per provider.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("latest_per_provider"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.latest_per_provider()
+            finally:
+                readers.close()
         subq = (
             self.session.query(
                 ConnectorRun.provider,
@@ -805,6 +904,17 @@ class ConnectorRunRepository(BaseRepository):
 
     def total_event_count(self) -> int:
         """Sum of event_count across all connector runs."""
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("total_event_count"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.total_event_count()
+            finally:
+                readers.close()
         return int(self.session.query(func.sum(ConnectorRun.event_count)).scalar() or 0)
 
 
@@ -1284,6 +1394,17 @@ class ControlMappingRepository(BaseRepository):
         Returns list of (framework_name, control_count) tuples.
         ``scope_filter`` is an optional callable ``(query, model) -> query``.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("list_frameworks"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.list_frameworks(limit, offset)
+            finally:
+                readers.close()
         query = self.session.query(ControlMapping)
         if scope_filter is not None:
             query = scope_filter(query, ControlMapping)
@@ -1311,6 +1432,17 @@ class ControlMappingRepository(BaseRepository):
         Returns list of (framework, control_id, control_family, result_count) tuples.
         ``scope_filter`` is an optional callable ``(query, model) -> query``.
         """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if settings.lake_reads_enabled("list_controls"):
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            try:
+                return readers.list_controls(framework_id, limit, offset)
+            finally:
+                readers.close()
         query = self.session.query(ControlMapping)
         if scope_filter is not None:
             query = scope_filter(query, ControlMapping)
