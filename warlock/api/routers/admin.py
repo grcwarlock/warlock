@@ -12,7 +12,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.api.auth import PERMISSIONS
-from warlock.api.deps import get_db, require_permission, apply_framework_scope, apply_source_scope
+from warlock.api.deps import get_db, require_permission, apply_source_scope
 from warlock.api.routers.schemas import (
     MessageResponse,
     PaginatedResponse,
@@ -34,8 +34,9 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
-# In-memory alert config (persisted per-process; swap to DB/file in prod)
-_alert_config: dict[str, Any] = {"alert_rules": []}
+# Alert config key for shared cache (survives across workers when Redis is configured)
+_ALERT_CONFIG_KEY = "alert_config"
+_ALERT_CONFIG_TTL = 86400  # 24 hours
 
 
 # ---------------------------------------------------------------------------
@@ -597,7 +598,14 @@ def list_systems(
 
     mgr = SystemProfileManager()
     profiles = mgr.list_active(db)
-    profiles = apply_framework_scope(profiles, current_user)
+    # Filter by user's allowed frameworks (list-based, not query-based)
+    if current_user.allowed_frameworks:
+        allowed = set(current_user.allowed_frameworks)
+        profiles = [
+            sp
+            for sp in profiles
+            if not sp.frameworks or any(f in allowed for f in (sp.frameworks or []))
+        ]
     return [_system_profile_to_response(sp) for sp in profiles[offset : offset + limit]]
 
 
@@ -1073,7 +1081,10 @@ def verify_audit_trail(
 def get_alert_config(
     current_user: User = Depends(require_permission("read")),
 ):
-    return AlertConfigResponse(alert_rules=_alert_config.get("alert_rules", []))
+    from warlock.utils.cache import get_cache
+
+    config = get_cache().get(_ALERT_CONFIG_KEY) or {"alert_rules": []}
+    return AlertConfigResponse(alert_rules=config.get("alert_rules", []))
 
 
 @router.put("/alerts/config", response_model=AlertConfigResponse)
@@ -1081,8 +1092,11 @@ def update_alert_config(
     body: AlertConfigUpdateRequest,
     current_user: User = Depends(require_permission("write")),
 ):
-    _alert_config["alert_rules"] = body.alert_rules
-    return AlertConfigResponse(alert_rules=_alert_config["alert_rules"])
+    from warlock.utils.cache import get_cache
+
+    config = {"alert_rules": body.alert_rules}
+    get_cache().set(_ALERT_CONFIG_KEY, config, ttl=_ALERT_CONFIG_TTL)
+    return AlertConfigResponse(alert_rules=config["alert_rules"])
 
 
 # ---------------------------------------------------------------------------

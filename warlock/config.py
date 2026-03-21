@@ -295,6 +295,9 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_reload: bool = False
 
+    # Shared cache (multi-worker state)
+    cache_url: str = ""  # redis://localhost:6379 for multi-worker; empty = in-memory
+
     # Queue backend
     queue_backend: str = "memory"  # "memory", "redis", "kafka", "sqs"
     queue_url: str = ""  # redis://localhost:6379, kafka broker, SQS region

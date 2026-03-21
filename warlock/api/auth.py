@@ -403,8 +403,12 @@ def authenticate_api_key(session: Session, raw_key: str) -> tuple[User | None, A
     if api_key.key_hash == legacy_hash and api_key.key_hash != key_hash:
         log.info("Migrating API key %s from SHA-256 to HMAC-SHA256", api_key.id[:8])
         api_key.key_hash = key_hash
-    if api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc):
-        return None, None
+    expires = api_key.expires_at
+    if expires:
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if expires < datetime.now(timezone.utc):
+            return None, None
     user = session.query(User).filter(User.id == api_key.user_id).first()
     api_key.last_used = datetime.now(timezone.utc)
     return user, api_key

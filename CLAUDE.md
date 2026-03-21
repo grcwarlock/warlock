@@ -72,7 +72,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (190+ baseline), demo seed (40 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
+The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (40 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -172,7 +172,7 @@ warlock/
   connectors/    — 58 source connectors
   normalizers/   — 59 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
-  assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
+  assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
   cli/           — Click CLI package (40 commands, 8 domain modules)
   db/            — SQLAlchemy models (34) + Alembic migrations (11)
@@ -181,7 +181,7 @@ warlock/
   pipeline/      — orchestrator, event bus, queue backends, scheduler
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 190 pytest tests (9 files)
+tests/           — 295 pytest tests (10 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
@@ -209,7 +209,7 @@ Two GitHub Actions workflows run on every push/PR:
 
 ### `.github/workflows/ci.yml` — Python CI
 - **Triggers:** push to main, all PRs
-- **Jobs:** lint (ruff), test (pytest 190 tests), build (Docker image)
+- **Jobs:** lint (ruff), test (pytest 295 tests), build (Docker image)
 - If lint fails (like the 128 F401 errors on 2026-03-19), the whole pipeline is red. Run `ruff check warlock/` locally first.
 
 ### `.github/workflows/compliance-gate.yaml` — Compliance CI

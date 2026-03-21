@@ -117,7 +117,7 @@ All pull requests must pass the full test suite:
 ```
 
 Expected output (as of this date):
-- 190 tests across 9 files
+- 295 tests across 10 files
 - 0 failures
 - 0 errors
 - All green
