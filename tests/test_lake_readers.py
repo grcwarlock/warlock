@@ -255,3 +255,102 @@ class TestPlaceholderMethods:
 
     def test_effectiveness_latest(self, seeded_lake):
         assert seeded_lake.effectiveness_latest() == []
+
+
+@pytest.fixture
+def seeded_lake_path(tmp_path):
+    """Create a lake directory with sample Parquet data and return the path string."""
+    lake = tmp_path / "lake"
+
+    # --- Control results (curated/control_results/) ---
+    cr_dir = lake / "curated" / "control_results" / "2026-03-21"
+    cr_dir.mkdir(parents=True)
+    cr_table = pa.table(
+        {
+            "framework": ["nist_800_53", "nist_800_53", "soc2", "soc2", "iso_27001"],
+            "control_id": ["AC-2", "AC-3", "CC6.1", "CC6.2", "A.5.1"],
+            "status": [
+                "compliant",
+                "non_compliant",
+                "compliant",
+                "non_compliant",
+                "compliant",
+            ],
+            "severity": ["high", "critical", "medium", "high", "low"],
+            "assessed_at": [
+                datetime(2026, 3, 20, 10, 0, tzinfo=timezone.utc),
+                datetime(2026, 3, 21, 12, 0, tzinfo=timezone.utc),
+                datetime(2026, 3, 19, 8, 0, tzinfo=timezone.utc),
+                datetime(2026, 3, 21, 11, 0, tzinfo=timezone.utc),
+                datetime(2026, 3, 18, 9, 0, tzinfo=timezone.utc),
+            ],
+        }
+    )
+    pq.write_table(cr_table, str(cr_dir / "data.parquet"))
+
+    # --- Control mappings (curated/control_mappings/) ---
+    cm_dir = lake / "curated" / "control_mappings" / "2026-03-21"
+    cm_dir.mkdir(parents=True)
+    cm_table = pa.table(
+        {
+            "framework": ["nist_800_53", "nist_800_53", "soc2", "soc2", "iso_27001"],
+            "control_id": ["AC-2", "AC-3", "CC6.1", "CC6.2", "A.5.1"],
+            "control_family": [
+                "Access Control",
+                "Access Control",
+                "Common Criteria",
+                "Common Criteria",
+                "Policies",
+            ],
+            "mapping_method": [
+                "keyword",
+                "keyword",
+                "keyword",
+                "semantic",
+                "keyword",
+            ],
+        }
+    )
+    pq.write_table(cm_table, str(cm_dir / "data.parquet"))
+
+    yield str(lake)
+
+
+class TestAggregations:
+    def test_refresh_framework_posture(self, seeded_lake_path):
+        from warlock.lake.aggregations import refresh_aggregations
+        from warlock.lake.query import LakeQueryEngine
+
+        counts = refresh_aggregations(seeded_lake_path)
+        assert "agg_framework_posture" in counts
+        assert counts["agg_framework_posture"] > 0
+
+        engine = LakeQueryEngine(seeded_lake_path)
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{seeded_lake_path}/curated/agg_framework_posture/*.parquet')"
+        )
+        assert len(result) > 0
+        assert "framework" in result[0]
+        assert "compliant_count" in result[0]
+        assert "compliance_pct" in result[0]
+        engine.close()
+
+    def test_refresh_control_family_posture(self, seeded_lake_path):
+        from warlock.lake.aggregations import refresh_aggregations
+        from warlock.lake.query import LakeQueryEngine
+
+        counts = refresh_aggregations(seeded_lake_path)
+        assert "agg_control_family_posture" in counts
+
+        engine = LakeQueryEngine(seeded_lake_path)
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{seeded_lake_path}/curated/agg_control_family_posture/*.parquet')"
+        )
+        assert len(result) > 0
+        assert "control_family" in result[0]
+        engine.close()
+
+    def test_refresh_empty_lake(self, tmp_path):
+        from warlock.lake.aggregations import refresh_aggregations
+        counts = refresh_aggregations(str(tmp_path))
+        assert counts == {}
