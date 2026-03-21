@@ -12497,26 +12497,24 @@ class DemoSonarQubeConnector(BaseConnector):
                             "name": "ACME API",
                             "qualifier": "TRK",
                             "lastAnalysisDate": NOW.isoformat(),
-                            "qualityGate": "OK",
-                            "measures": {
-                                "coverage": 82.5,
-                                "bugs": 3,
-                                "vulnerabilities": 1,
-                                "code_smells": 45,
-                            },
+                            "measures": [
+                                {"metric": "alert_status", "value": "OK"},
+                                {"metric": "coverage", "value": "82.5"},
+                                {"metric": "bugs", "value": "3"},
+                                {"metric": "vulnerabilities", "value": "1"},
+                            ],
                         },
                         {
                             "key": "acme-web",
                             "name": "ACME Web Frontend",
                             "qualifier": "TRK",
                             "lastAnalysisDate": NOW.isoformat(),
-                            "qualityGate": "ERROR",
-                            "measures": {
-                                "coverage": 34.2,
-                                "bugs": 12,
-                                "vulnerabilities": 7,
-                                "code_smells": 189,
-                            },
+                            "measures": [
+                                {"metric": "alert_status", "value": "ERROR"},
+                                {"metric": "coverage", "value": "34.2"},
+                                {"metric": "bugs", "value": "12"},
+                                {"metric": "vulnerabilities", "value": "7"},
+                            ],
                         },
                     ]
                 },
