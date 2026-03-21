@@ -60,3 +60,43 @@ class TestLocalStorage:
         assert store.exists("nope") is False
         store.put("yes", b"data")
         assert store.exists("yes") is True
+
+
+class TestDuckDBQuery:
+    def test_query_parquet_file(self, tmp_path):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        from warlock.lake.query import LakeQueryEngine
+
+        # Create a sample parquet file
+        table = pa.table({
+            "framework": ["nist_800_53", "nist_800_53", "soc2"],
+            "status": ["compliant", "non_compliant", "compliant"],
+            "count": [10, 5, 8],
+        })
+        pq.write_table(table, str(tmp_path / "results.parquet"))
+
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(
+            "SELECT framework, SUM(count) as total FROM read_parquet(?) GROUP BY framework ORDER BY framework",
+            [str(tmp_path / "results.parquet")],
+        )
+        assert len(result) == 2
+        assert result[0]["framework"] == "nist_800_53"
+        assert result[0]["total"] == 15
+
+    def test_query_returns_dicts(self, tmp_path):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        from warlock.lake.query import LakeQueryEngine
+
+        table = pa.table({"id": ["a", "b"], "value": [1, 2]})
+        pq.write_table(table, str(tmp_path / "test.parquet"))
+
+        engine = LakeQueryEngine(str(tmp_path))
+        result = engine.query(
+            "SELECT * FROM read_parquet(?)",
+            [str(tmp_path / "test.parquet")],
+        )
+        assert isinstance(result[0], dict)
+        assert result[0]["id"] == "a"
