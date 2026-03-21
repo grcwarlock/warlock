@@ -13,8 +13,10 @@ from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
+    APIKey,
     Attestation,
     AuditEngagement,
+    AuditEntry,
     ComplianceDrift,
     ConnectorRun,
     ControlMapping,
@@ -23,6 +25,7 @@ from warlock.db.models import (
     Finding,
     Issue,
     IssueComment,
+    LegalHold,
     Personnel,
     PostureSnapshot,
     Questionnaire,
@@ -640,6 +643,28 @@ class UserRepository(BaseRepository):
             .all()
         )
 
+    def list_filtered(
+        self,
+        *,
+        role: str | None = None,
+        is_active: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[User]:
+        """Filtered user list with optional role/active filters."""
+        query = self.session.query(User)
+        if role:
+            query = query.filter(User.role == role)
+        if is_active is not None:
+            query = query.filter(User.is_active == is_active)
+        return query.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
+
+    def deactivate_api_keys(self, user_id: str) -> None:
+        """Deactivate all active API keys for a user."""
+        self.session.query(APIKey).filter(
+            APIKey.user_id == user_id, APIKey.is_active == True  # noqa: E712
+        ).update({"is_active": False}, synchronize_session="fetch")
+
 
 # ---------------------------------------------------------------------------
 # Audit Engagement Repository
@@ -752,6 +777,35 @@ class ConnectorRunRepository(BaseRepository):
             .order_by(ConnectorRun.started_at.desc())
             .first()
         )
+
+    def find_running(self) -> ConnectorRun | None:
+        """Return a currently-running connector run, or None."""
+        return (
+            self.session.query(ConnectorRun)
+            .filter(ConnectorRun.status == "running")
+            .first()
+        )
+
+    def is_running(self) -> bool:
+        """Check if any pipeline run is currently in progress."""
+        return (
+            self.session.query(ConnectorRun)
+            .filter(ConnectorRun.status == "running")
+            .count()
+            > 0
+        )
+
+    def latest_run(self) -> ConnectorRun | None:
+        """Most recent connector run by started_at."""
+        return (
+            self.session.query(ConnectorRun)
+            .order_by(ConnectorRun.started_at.desc())
+            .first()
+        )
+
+    def total_event_count(self) -> int:
+        """Sum of event_count across all connector runs."""
+        return int(self.session.query(func.sum(ConnectorRun.event_count)).scalar() or 0)
 
 
 # ---------------------------------------------------------------------------
@@ -982,6 +1036,29 @@ class PersonnelRepository(BaseRepository):
             .all()
         )
 
+    def list_filtered(
+        self,
+        *,
+        department: str | None = None,
+        hr_status: str | None = None,
+        has_flags: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Personnel], int]:
+        """Filtered active personnel list with total count. Returns (rows, total)."""
+        query = self.session.query(Personnel).filter(Personnel.is_active == True)  # noqa: E712
+        if department:
+            query = query.filter(Personnel.department == department)
+        if hr_status:
+            query = query.filter(Personnel.hr_status == hr_status)
+        if has_flags is True:
+            query = query.filter(Personnel.risk_score > 0)
+        elif has_flags is False:
+            query = query.filter(Personnel.risk_score == 0)
+        total = query.count()
+        rows = query.order_by(Personnel.full_name).offset(offset).limit(limit).all()
+        return rows, total
+
 
 # ---------------------------------------------------------------------------
 # Questionnaire Repository
@@ -1054,6 +1131,24 @@ class QuestionnaireRepository(BaseRepository):
             .limit(limit)
             .all()
         )
+
+    def list_filtered(
+        self,
+        *,
+        vendor_name: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Questionnaire], int]:
+        """Filtered questionnaire list with total count. Returns (rows, total)."""
+        query = self.session.query(Questionnaire)
+        if vendor_name:
+            query = query.filter(Questionnaire.vendor_name == vendor_name)
+        if status:
+            query = query.filter(Questionnaire.status == status)
+        total = query.count()
+        rows = query.order_by(Questionnaire.created_at.desc()).offset(offset).limit(limit).all()
+        return rows, total
 
 
 # ---------------------------------------------------------------------------
@@ -1136,6 +1231,34 @@ class DataSiloRepository(BaseRepository):
             .order_by(DataSilo.name)
             .all()
         )
+
+    def list_filtered(
+        self,
+        *,
+        scope_filter: Any = None,
+        silo_type: str | None = None,
+        classification: str | None = None,
+        provider: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[DataSilo], int]:
+        """Filtered active data silo list with total count. Returns (rows, total).
+
+        ``scope_filter`` is an optional callable ``(query, model) -> query``
+        for ABAC scope restrictions.
+        """
+        query = self.session.query(DataSilo).filter(DataSilo.is_active == True)  # noqa: E712
+        if scope_filter is not None:
+            query = scope_filter(query, DataSilo)
+        if silo_type:
+            query = query.filter(DataSilo.silo_type == silo_type)
+        if classification:
+            query = query.filter(DataSilo.data_classification == classification)
+        if provider:
+            query = query.filter(DataSilo.provider == provider)
+        total = query.count()
+        rows = query.order_by(DataSilo.name).offset(offset).limit(limit).all()
+        return rows, total
 
 
 # ---------------------------------------------------------------------------
@@ -1233,6 +1356,69 @@ class ComplianceDriftRepository(BaseRepository):
 
 
 # ---------------------------------------------------------------------------
+# Audit Entry Repository
+# ---------------------------------------------------------------------------
+
+
+class AuditEntryRepository(BaseRepository):
+    """Audit trail queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, AuditEntry)
+
+    def list_filtered(
+        self,
+        *,
+        action: str | None = None,
+        entity_type: str | None = None,
+        entity_id: str | None = None,
+        actor: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        escape_like_fn: Any = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[AuditEntry], int]:
+        """Filtered audit trail with total count. Returns (rows, total).
+
+        ``escape_like_fn`` escapes LIKE wildcards for the actor search.
+        """
+        query = self.session.query(AuditEntry)
+        if action:
+            query = query.filter(AuditEntry.action == action)
+        if entity_type:
+            query = query.filter(AuditEntry.entity_type == entity_type)
+        if entity_id:
+            query = query.filter(AuditEntry.entity_id == entity_id)
+        if actor:
+            escaped = escape_like_fn(actor) if escape_like_fn else actor
+            query = query.filter(AuditEntry.actor.ilike(f"%{escaped}%"))
+        if date_from:
+            query = query.filter(AuditEntry.created_at >= date_from)
+        if date_to:
+            query = query.filter(AuditEntry.created_at <= date_to)
+        total = query.count()
+        rows = query.order_by(AuditEntry.sequence.desc()).offset(offset).limit(limit).all()
+        return rows, total
+
+    def total_count(self) -> int:
+        """Total number of audit entries."""
+        return self.session.query(func.count(AuditEntry.id)).scalar() or 0
+
+
+# ---------------------------------------------------------------------------
+# Legal Hold Repository
+# ---------------------------------------------------------------------------
+
+
+class LegalHoldRepository(BaseRepository):
+    """Legal hold queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, LegalHold)
+
+
+# ---------------------------------------------------------------------------
 # Repository factory
 # ---------------------------------------------------------------------------
 
@@ -1256,6 +1442,8 @@ class Repositories:
         self.data_silos = DataSiloRepository(session)
         self.control_mappings = ControlMappingRepository(session)
         self.compliance_drift = ComplianceDriftRepository(session)
+        self.audit_entries = AuditEntryRepository(session)
+        self.legal_holds = LegalHoldRepository(session)
 
 
 def get_repos(session: Session) -> Repositories:

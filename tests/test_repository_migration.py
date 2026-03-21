@@ -9,15 +9,14 @@ ROUTERS_DIR = Path("warlock/api/routers")
 # These routers should have zero raw session.query() calls after migration
 MIGRATED_ROUTERS = [
     "compliance.py",
-]
-
-# These routers are pending migration (Task 8)
-PENDING_MIGRATION_ROUTERS = [
     "risk.py",
     "admin.py",
     "export.py",
     "pipeline.py",
 ]
+
+# These routers are pending migration (none remaining)
+PENDING_MIGRATION_ROUTERS: list[str] = []
 
 # These routers are allowed to keep raw session.query() (OLTP-only permanently)
 EXEMPT_ROUTERS = ["auth_routes.py", "health.py", "ai_routes.py", "governance.py"]
@@ -38,5 +37,5 @@ class TestRepositoryMigration:
         assert len(raw_query_calls) == 0, (
             f"{router_file} has {len(raw_query_calls)} raw db.query()/session.query() calls "
             f"at lines {raw_query_calls[:10]}. Use repository methods instead.\n"
-            + "\n".join(f"  line {l}" for l in raw_query_calls[:5])
+            + "\n".join(f"  line {ln}" for ln in raw_query_calls[:5])
         )

@@ -8,7 +8,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.api.auth import PERMISSIONS
@@ -20,15 +19,8 @@ from warlock.api.routers.schemas import (
     _escape_like,
     _parse_dt,
 )
-from warlock.db.models import (
-    APIKey,
-    AuditEntry,
-    DataSilo,
-    LegalHold,
-    Personnel,
-    SystemProfile,
-    User,
-)
+from warlock.db.models import DataSilo, Personnel, SystemProfile, User
+from warlock.db.repository import get_repos
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -509,12 +501,8 @@ def list_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manage_users")),
 ):
-    query = db.query(User)
-    if role:
-        query = query.filter(User.role == role)
-    if is_active is not None:
-        query = query.filter(User.is_active == is_active)
-    rows = query.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    rows = repos.users.list_filtered(role=role, is_active=is_active, limit=limit, offset=offset)
     return [_user_to_response(u) for u in rows]
 
 
@@ -524,7 +512,8 @@ def get_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manage_users")),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    repos = get_repos(db)
+    user = repos.users.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return _user_to_response(user)
@@ -537,7 +526,8 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manage_users")),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    repos = get_repos(db)
+    user = repos.users.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if body.name is not None:
@@ -562,7 +552,8 @@ def deactivate_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manage_users")),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    repos = get_repos(db)
+    user = repos.users.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if user.id == current_user.id:
@@ -571,9 +562,7 @@ def deactivate_user(
     # S-4: Revoke all tokens by setting token_valid_after to now
     user.token_valid_after = datetime.now(timezone.utc)
     # S-4: Deactivate all associated API keys
-    db.query(APIKey).filter(APIKey.user_id == user_id, APIKey.is_active == True).update(  # noqa: E712
-        {"is_active": False}, synchronize_session="fetch"
-    )
+    repos.users.deactivate_api_keys(user_id)
     log.info(
         "User %s deactivated: tokens revoked, %s API keys deactivated", user.email, user_id[:8]
     )
@@ -644,7 +633,8 @@ def get_system(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    sp = db.query(SystemProfile).filter(SystemProfile.id == system_id).first()
+    repos = get_repos(db)
+    sp = repos.system_profiles.get(system_id)
     if not sp:
         raise HTTPException(status_code=404, detail="System profile not found")
     return _system_profile_to_response(sp)
@@ -679,7 +669,8 @@ def archive_system(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("delete")),
 ):
-    sp = db.query(SystemProfile).filter(SystemProfile.id == system_id).first()
+    repos = get_repos(db)
+    sp = repos.system_profiles.get(system_id)
     if not sp:
         raise HTTPException(status_code=404, detail="System profile not found")
     sp.is_active = False
@@ -765,18 +756,11 @@ def list_personnel(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    query = db.query(Personnel).filter(Personnel.is_active == True)  # noqa: E712
-    if department:
-        query = query.filter(Personnel.department == department)
-    if hr_status:
-        query = query.filter(Personnel.hr_status == hr_status)
-    if has_flags is True:
-        query = query.filter(Personnel.risk_score > 0)
-    elif has_flags is False:
-        query = query.filter(Personnel.risk_score == 0)
-
-    total = query.count()
-    rows = query.order_by(Personnel.full_name).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    rows, total = repos.personnel.list_filtered(
+        department=department, hr_status=hr_status, has_flags=has_flags,
+        limit=limit, offset=offset,
+    )
     items = [_personnel_to_response(p) for p in rows]
     return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
@@ -787,13 +771,8 @@ def personnel_flags(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    rows = (
-        db.query(Personnel)
-        .filter(Personnel.is_active == True, Personnel.risk_score > 0)  # noqa: E712
-        .order_by(Personnel.risk_score.desc())
-        .limit(limit)
-        .all()
-    )
+    repos = get_repos(db)
+    rows = repos.personnel.flagged(limit=limit)
     return [_personnel_to_response(p) for p in rows]
 
 
@@ -838,7 +817,8 @@ def get_personnel(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    p = db.query(Personnel).filter(Personnel.id == personnel_id).first()
+    repos = get_repos(db)
+    p = repos.personnel.get(personnel_id)
     if not p:
         raise HTTPException(status_code=404, detail="Personnel record not found")
     return _personnel_to_response(p)
@@ -883,6 +863,7 @@ def create_legal_hold(
     from warlock.workflows.retention import RetentionManager
 
     mgr = RetentionManager()
+    repos = get_repos(db)
     hold_id = mgr.set_legal_hold(
         db,
         reason=body.reason,
@@ -890,7 +871,7 @@ def create_legal_hold(
         end_date=body.end_date,
         actor=current_user.email,
     )
-    hold = db.query(LegalHold).filter(LegalHold.id == hold_id).first()
+    hold = repos.legal_holds.get(hold_id)
     return LegalHoldResponse(
         id=hold.id,
         reason=hold.reason,
@@ -1024,23 +1005,18 @@ def list_audit_trail(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    query = db.query(AuditEntry)
-
-    if action:
-        query = query.filter(AuditEntry.action == action)
-    if entity_type:
-        query = query.filter(AuditEntry.entity_type == entity_type)
-    if entity_id:
-        query = query.filter(AuditEntry.entity_id == entity_id)
-    if actor:
-        query = query.filter(AuditEntry.actor.ilike(f"%{_escape_like(actor)}%"))
-    if date_from:
-        query = query.filter(AuditEntry.created_at >= _parse_dt(date_from))
-    if date_to:
-        query = query.filter(AuditEntry.created_at <= _parse_dt(date_to))
-
-    total = query.count()
-    rows = query.order_by(AuditEntry.sequence.desc()).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    rows, total = repos.audit_entries.list_filtered(
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        actor=actor,
+        date_from=_parse_dt(date_from) if date_from else None,
+        date_to=_parse_dt(date_to) if date_to else None,
+        escape_like_fn=_escape_like,
+        limit=limit,
+        offset=offset,
+    )
 
     items = [
         AuditEntryResponse(
@@ -1066,9 +1042,10 @@ def verify_audit_trail(
 ):
     from warlock.db.audit import AuditTrail
 
+    repos = get_repos(db)
     trail = AuditTrail(db)
     valid, errors = trail.verify_chain()
-    total = db.query(func.count(AuditEntry.id)).scalar() or 0
+    total = repos.audit_entries.total_count()
     return AuditVerifyResponse(valid=valid, total_entries=total, errors=errors)
 
 
@@ -1114,17 +1091,17 @@ def list_data_silos(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    query = db.query(DataSilo).filter(DataSilo.is_active == True)  # noqa: E712
-    # S-1: Apply ABAC scope filters
-    query = apply_source_scope(query, DataSilo, current_user)
-    if silo_type:
-        query = query.filter(DataSilo.silo_type == silo_type)
-    if classification:
-        query = query.filter(DataSilo.data_classification == classification)
-    if provider:
-        query = query.filter(DataSilo.provider == provider)
-    total = query.count()
-    rows = query.order_by(DataSilo.name).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    # S-1: Apply ABAC scope filters via repository
+    scope_fn = lambda q, m: apply_source_scope(q, m, current_user)  # noqa: E731
+    rows, total = repos.data_silos.list_filtered(
+        scope_filter=scope_fn,
+        silo_type=silo_type,
+        classification=classification,
+        provider=provider,
+        limit=limit,
+        offset=offset,
+    )
     items = [_data_silo_to_response(s) for s in rows]
     return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
@@ -1212,7 +1189,8 @@ def get_data_silo(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    s = db.query(DataSilo).filter(DataSilo.id == silo_id).first()
+    repos = get_repos(db)
+    s = repos.data_silos.get(silo_id)
     if not s:
         raise HTTPException(status_code=404, detail="Data silo not found")
     return _data_silo_to_response(s)
@@ -1225,7 +1203,8 @@ def update_data_silo(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
-    silo = db.query(DataSilo).filter(DataSilo.id == silo_id).first()
+    repos = get_repos(db)
+    silo = repos.data_silos.get(silo_id)
     if not silo:
         raise HTTPException(status_code=404, detail="Data silo not found")
 
