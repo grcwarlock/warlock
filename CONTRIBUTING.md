@@ -44,9 +44,9 @@ warlock-api
 Expected demo output shows:
 - 77 connectors succeeded
 - 0 connectors failed
-- 259 raw events collected
-- 692 findings normalized
-- 32,817 controls mapped
+- 348 raw events collected
+- 4,995 findings normalized
+- 373,852 controls mapped
 
 ---
 

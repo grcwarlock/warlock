@@ -47,9 +47,9 @@ Expected output — verify these exact numbers:
 ```
 Connectors succeeded:   77
 Connectors failed:      0
-Raw events collected:   259
-Findings normalized:    692
-Controls mapped:        32,817
+Raw events collected:   348
+Findings normalized:    4,995
+Controls mapped:        373,852
 ```
 
 If any number changes, you broke something. Stop and fix it.
@@ -196,7 +196,7 @@ terraform/       — 12 IaC modules (AWS, Azure, GCP)
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
-  demo_seed.py   — 77 mock connectors, 692 findings, 32K+ results
+  demo_seed.py   — 77 mock connectors, 4,995 findings, 373K+ results
   demo_api.sh    — API query helper with auto-auth
   docker-demo.sh — Docker demo entrypoint (migrate + seed + serve)
 ```
