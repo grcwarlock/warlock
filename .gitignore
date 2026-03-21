@@ -21,4 +21,4 @@ htmlcov/
 exports/
 terraform/**/.terraform/
 terraform/**/.terraform.lock.hcl
-lake/
+/lake/
