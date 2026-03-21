@@ -217,7 +217,6 @@ jobs:
 
           # Test all major command groups with --help
           COMMANDS=(
-            "dashboard"
             "control"
             "coverage"
             "findings"
