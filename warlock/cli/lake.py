@@ -271,6 +271,673 @@ def lake_assess(path: str | None, framework: str | None) -> None:
     console.print(f"[green]{written} aggregate assessments written.[/green]")
 
 
+# ---------------------------------------------------------------------------
+# Evidence Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.group()
+def evidence() -> None:
+    """Evidence management commands."""
+
+
+@evidence.command("list")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--limit", default=20, type=int, help="Maximum rows to display")
+def evidence_list(path: str | None, limit: int) -> None:
+    """List evidence artifacts from the lake."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "evidence_artifacts" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/evidence_artifacts/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT id, source_connector, artifact_type, collected_at FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+            [limit],
+        )
+        table = Table(title="Evidence Artifacts")
+        for col in ["id", "source_connector", "artifact_type", "collected_at"]:
+            table.add_column(col, style="cyan" if col == "source_connector" else None)
+        for row in result:
+            table.add_row(str(row.get("id", "")), str(row.get("source_connector", "")),
+                          str(row.get("artifact_type", "")), str(row.get("collected_at", "")))
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@evidence.command("freshness")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def evidence_freshness(path: str | None) -> None:
+    """Show evidence freshness status."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "evidence_freshness" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/evidence_freshness/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Evidence Freshness")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+# ---------------------------------------------------------------------------
+# Incident Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.group()
+def incidents() -> None:
+    """Incident management commands."""
+
+
+@incidents.command("list")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--status", default=None, help="Filter by status")
+@click.option("--limit", default=20, type=int, help="Maximum rows to display")
+def incidents_list(path: str | None, status: str | None, limit: int) -> None:
+    """List incidents from the lake."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "incidents" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/incidents/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        if status:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE status = ? LIMIT ?",
+                [status, limit],
+            )
+        else:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+                [limit],
+            )
+        table = Table(title="Incidents")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@incidents.command("events")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--severity", default=None, help="Filter by severity")
+@click.option("--limit", default=20, type=int, help="Maximum rows to display")
+def incidents_events(path: str | None, severity: str | None, limit: int) -> None:
+    """List security events."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "security_events" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/security_events/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        if severity:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE severity = ? LIMIT ?",
+                [severity, limit],
+            )
+        else:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+                [limit],
+            )
+        table = Table(title="Security Events")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+# ---------------------------------------------------------------------------
+# Privacy Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.group()
+def privacy() -> None:
+    """Privacy management commands."""
+
+
+@privacy.command("dsars")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--status", default=None, help="Filter by status")
+def privacy_dsars(path: str | None, status: str | None) -> None:
+    """List DSAR requests."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "dsars" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/dsars/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        if status:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE status = ?",
+                [status],
+            )
+        else:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+        table = Table(title="DSAR Requests")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@privacy.command("processing")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def privacy_processing(path: str | None) -> None:
+    """List processing activities (GDPR Art. 30)."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "processing_activities" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/processing_activities/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Processing Activities (GDPR Art. 30)")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@privacy.command("transfers")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def privacy_transfers(path: str | None) -> None:
+    """List cross-border data transfers."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "data_transfers" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/data_transfers/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Cross-Border Data Transfers")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+# ---------------------------------------------------------------------------
+# Supply Chain Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.group()
+def supply_chain() -> None:
+    """Supply chain risk commands."""
+
+
+@supply_chain.command("sbom")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--limit", default=50, type=int, help="Maximum rows to display")
+def supply_chain_sbom(path: str | None, limit: int) -> None:
+    """List SBOM components."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "sbom_components" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/sbom_components/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+            [limit],
+        )
+        table = Table(title="SBOM Components")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@supply_chain.command("suppliers")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def supply_chain_suppliers(path: str | None) -> None:
+    """List supplier assessments."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "supplier_assessments" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/supplier_assessments/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Supplier Assessments")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@supply_chain.command("concentration")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def supply_chain_concentration(path: str | None) -> None:
+    """Show concentration risk analysis."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "concentration_risk" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/concentration_risk/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Concentration Risk")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+# ---------------------------------------------------------------------------
+# Analytics Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.group()
+def analytics() -> None:
+    """Analytics and trend commands."""
+
+
+@analytics.command("trends")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--framework", default=None, help="Limit to specific framework")
+def analytics_trends(path: str | None, framework: str | None) -> None:
+    """Show compliance posture trends."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "agg_framework_posture" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/agg_framework_posture/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        if framework:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE framework = ?",
+                [framework],
+            )
+        else:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+        table = Table(title="Compliance Posture Trends")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@analytics.command("heatmap")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--framework", default=None, help="Limit to specific framework")
+def analytics_heatmap(path: str | None, framework: str | None) -> None:
+    """Show control family compliance heatmap."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "agg_control_family_posture" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/agg_control_family_posture/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        if framework:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE framework = ?",
+                [framework],
+            )
+        else:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+        table = Table(title="Control Family Compliance Heatmap")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+# ---------------------------------------------------------------------------
+# Pipeline Health Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.group()
+def health() -> None:
+    """Pipeline health commands."""
+
+
+@health.command("runs")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--limit", default=10, type=int, help="Maximum rows to display")
+def health_runs(path: str | None, limit: int) -> None:
+    """Show recent pipeline runs."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "pipeline_runs" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/pipeline_runs/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+            [limit],
+        )
+        table = Table(title="Recent Pipeline Runs")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@health.command("freshness")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def health_freshness(path: str | None) -> None:
+    """Show data freshness per connector."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "data_freshness" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/data_freshness/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Data Freshness per Connector")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+@health.command("coverage")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def health_coverage(path: str | None) -> None:
+    """Show data coverage metrics."""
+    from rich.table import Table
+
+    from warlock.config import get_settings
+    from warlock.lake.query import LakeQueryEngine
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    base = Path(lake_path)
+    glob = str(base / "curated" / "coverage_metrics" / "**" / "*.parquet")
+
+    if not list(base.glob("curated/coverage_metrics/**/*.parquet")):
+        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        return
+
+    engine = LakeQueryEngine(lake_path)
+    try:
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+            [],
+        )
+        table = Table(title="Data Coverage Metrics")
+        if result:
+            for col in result[0].keys():
+                table.add_column(col)
+            for row in result:
+                table.add_row(*[str(v) for v in row.values()])
+        console.print(table)
+    finally:
+        engine.close()
+
+
+# ---------------------------------------------------------------------------
+# Maintenance Commands
+# ---------------------------------------------------------------------------
+
+
+@lake.command("compact")
+@click.option("--path", default=None)
+@click.option("--target-size", default=256, type=int, help="Target file size in MB")
+def lake_compact(path: str | None, target_size: int) -> None:
+    """Compact small Parquet files into larger ones."""
+    from warlock.config import get_settings
+    from warlock.lake.maintenance import compact
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    stats = compact(lake_path, target_size_mb=target_size)
+    if stats:
+        for zone, count in stats.items():
+            console.print(f"  Compacted {count} files in {zone}")
+    else:
+        console.print("[dim]No compaction needed.[/dim]")
+
+
+@lake.command("maintenance")
+@click.option("--path", default=None)
+def lake_maintenance(path: str | None) -> None:
+    """Run all lake maintenance jobs (compact, expire, cleanup)."""
+    from warlock.config import get_settings
+    from warlock.lake.maintenance import run_all_maintenance
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    console.print(f"[cyan]Running maintenance on {lake_path}...[/cyan]")
+    results = run_all_maintenance(lake_path)
+    for job, stats in results.items():
+        if stats:
+            console.print(f"  [green]{job}:[/green] {stats}")
+        else:
+            console.print(f"  [dim]{job}: nothing to do[/dim]")
+    console.print("[green]Maintenance complete.[/green]")
+
+
 def _format_size(size_bytes: int) -> str:
     """Format bytes as human-readable size."""
     if size_bytes < 1024:

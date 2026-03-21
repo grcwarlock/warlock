@@ -420,3 +420,145 @@ class TestCrossDomain:
         frameworks = {p.name for p in curated.iterdir() if p.is_dir()}
         assert "nist_800_53" in frameworks
         assert "soc2" in frameworks
+
+
+# ---------------------------------------------------------------------------
+# Domain CLI Tests
+# ---------------------------------------------------------------------------
+
+
+class TestDomainCLI:
+    def test_evidence_list_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "evidence", "list", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_evidence_freshness_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "evidence", "freshness", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_incidents_list_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "incidents", "list", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_incidents_events_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "incidents", "events", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_privacy_dsars_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "privacy", "dsars", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_privacy_processing_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "privacy", "processing", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_privacy_transfers_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "privacy", "transfers", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_supply_chain_sbom_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "supply-chain", "sbom", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_supply_chain_suppliers_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "supply-chain", "suppliers", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_supply_chain_concentration_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "supply-chain", "concentration", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_analytics_trends_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "analytics", "trends", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_analytics_heatmap_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "analytics", "heatmap", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_health_runs_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "health", "runs", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_health_freshness_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "health", "freshness", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
+
+    def test_health_coverage_no_data(self):
+        from click.testing import CliRunner
+
+        from warlock.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["lake", "health", "coverage", "--path", "/tmp/empty-lake"])
+        assert result.exit_code == 0
