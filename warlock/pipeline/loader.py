@@ -490,3 +490,27 @@ def build_pipeline(
         bus=bus,
         opa_evaluator=opa_evaluator,
     )
+
+
+# ---------------------------------------------------------------------------
+# Lake writer registration
+# ---------------------------------------------------------------------------
+
+
+def register_lake_writer(bus: EventBus) -> Any:
+    """Register the lake writer if lake is enabled.
+
+    Returns the ``LakeWriter`` instance, or ``None`` if the lake is disabled.
+    The writer subscribes to all bus events and accumulates payload IDs.
+    Call ``writer.flush(run_id, session)`` after ``pipeline.run()`` succeeds.
+    """
+    settings = get_settings()
+    if not settings.lake_enabled:
+        return None
+
+    from warlock.lake.writer import LakeWriter
+
+    writer = LakeWriter(settings.lake_path)
+    bus.subscribe_all(writer.handle_event)
+    log.info("Lake writer registered (lake_path=%s)", settings.lake_path)
+    return writer

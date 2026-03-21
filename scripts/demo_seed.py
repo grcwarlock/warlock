@@ -13048,6 +13048,19 @@ def main():
     # 2. Build pipeline with real framework configs + assertions
     print("[2/20] Loading frameworks, assertions, and normalizers...")
     bus = EventBus()
+
+    # Register lake writer if enabled (WLK_LAKE_ENABLED=true)
+    import os as _os
+
+    lake_writer = None
+    if _os.environ.get("WLK_LAKE_ENABLED", "").lower() in ("true", "1", "yes"):
+        from warlock.config import get_settings as _get_settings
+        from warlock.lake.writer import LakeWriter as _LakeWriter
+
+        _lake_settings = _get_settings()
+        lake_writer = _LakeWriter(_lake_settings.lake_path)
+        bus.subscribe_all(lake_writer.handle_event)
+        print(f"  Lake writer enabled (path={_lake_settings.lake_path})")
     load_assertions()
 
     connectors = ConnectorRegistry()
@@ -13291,6 +13304,16 @@ def main():
     print(f"[3/20] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
     with get_session() as session:
         stats = pipeline.run(session)
+
+    # 3b. Flush lake writer if enabled
+    if lake_writer is not None:
+        with get_session() as lake_session:
+            lake_stats = lake_writer.flush(stats.run_id, lake_session)
+            print(
+                f"  Lake write: {lake_stats.raw_events_written} raw, "
+                f"{lake_stats.findings_written} findings, "
+                f"{lake_stats.control_results_written} results"
+            )
 
     # 4. Print results
     print("[4/20] Done with pipeline!\n")

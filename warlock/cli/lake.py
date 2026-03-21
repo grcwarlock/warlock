@@ -901,6 +901,22 @@ def health_coverage(path: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
+@lake.command("register")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+def lake_register(path: str | None) -> None:
+    """Register lake tables with the Iceberg catalog."""
+    from warlock.config import get_settings
+    from warlock.lake.catalog import register_pipeline_tables
+
+    settings = get_settings()
+    lake_path = path or settings.lake_path
+    console.print("[cyan]Registering tables with Iceberg catalog...[/cyan]")
+    results = register_pipeline_tables(lake_path)
+    for table, status in results.items():
+        style = "green" if status == "registered" else "yellow"
+        console.print(f"  [{style}]{table}: {status}[/{style}]")
+
+
 @lake.command("compact")
 @click.option("--path", default=None)
 @click.option("--target-size", default=256, type=int, help="Target file size in MB")
