@@ -380,6 +380,7 @@ class Settings(BaseSettings):
     lake_read_overrides: str = "{}"  # JSON dict of per-query overrides {"method_name": false}
     retention_purge_frozen: bool = False  # Freeze automated OLTP retention purging during Phase 2
     ai_inline_disabled: bool = False  # Phase 3: disable AI in pipeline Stage 4, use lake batch assessor instead
+    lake_oltp_thin: bool = False  # Phase 3: thin OLTP after lake writes confirmed
 
     def lake_reads_enabled(self, query_name: str = "") -> bool:
         """Check if lake reads are enabled for a specific query.
