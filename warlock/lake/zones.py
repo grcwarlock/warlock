@@ -8,36 +8,13 @@ Three zones:
 
 from __future__ import annotations
 
-import json
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from warlock.lake.utils import ensure_dir, serialize_json_field, today_partition
+
 log = logging.getLogger(__name__)
-
-
-def _ensure_dir(path: Path) -> None:
-    """Create directory and parents if they don't exist."""
-    path.mkdir(parents=True, exist_ok=True)
-
-
-def _today_partition() -> str:
-    """Return today's date as YYYY-MM-DD for partitioning."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-
-def _serialize_json_field(value: Any) -> str:
-    """Serialize a JSON-capable field to a deterministic string.
-
-    Uses sort_keys=True and default=str to preserve SHA-256 hash integrity
-    across OLTP and lake representations.
-    """
-    if isinstance(value, str):
-        return value
-    if value is None:
-        return ""
-    return json.dumps(value, sort_keys=True, default=str)
 
 
 def write_raw_zone(lake_path: str, run_id: str, raw_events: list[dict]) -> int:
@@ -51,7 +28,7 @@ def write_raw_zone(lake_path: str, run_id: str, raw_events: list[dict]) -> int:
     if not raw_events:
         return 0
 
-    date_part = _today_partition()
+    date_part = today_partition()
 
     # Group events by source for partitioning
     by_source: dict[str, list[dict]] = {}
@@ -80,14 +57,14 @@ def write_raw_zone(lake_path: str, run_id: str, raw_events: list[dict]) -> int:
             rows["source_type"].append(str(evt.get("source_type", "")))
             rows["provider"].append(str(evt.get("provider", "")))
             rows["event_type"].append(str(evt.get("event_type", "")))
-            rows["raw_data"].append(_serialize_json_field(evt.get("raw_data")))
+            rows["raw_data"].append(serialize_json_field(evt.get("raw_data")))
             rows["sha256"].append(str(evt.get("sha256", "")))
             rows["ingested_at"].append(str(evt.get("ingested_at", "")))
             rows["run_id"].append(run_id)
 
         table = pa.table(rows)
         out_dir = Path(lake_path) / "raw" / source / date_part
-        _ensure_dir(out_dir)
+        ensure_dir(out_dir)
         out_file = out_dir / f"{run_id}.parquet"
         pq.write_table(table, str(out_file))
         total += len(events)
@@ -107,7 +84,7 @@ def write_enrichment_zone(lake_path: str, run_id: str, findings: list[dict]) -> 
     if not findings:
         return 0
 
-    date_part = _today_partition()
+    date_part = today_partition()
 
     # Group by source
     by_source: dict[str, list[dict]] = {}
@@ -140,7 +117,7 @@ def write_enrichment_zone(lake_path: str, run_id: str, findings: list[dict]) -> 
             rows["raw_event_id"].append(str(f.get("raw_event_id", "")))
             rows["observation_type"].append(str(f.get("observation_type", "")))
             rows["title"].append(str(f.get("title", "")))
-            rows["detail"].append(_serialize_json_field(f.get("detail")))
+            rows["detail"].append(serialize_json_field(f.get("detail")))
             rows["resource_id"].append(str(f.get("resource_id", "")))
             rows["resource_type"].append(str(f.get("resource_type", "")))
             rows["source"].append(str(f.get("source", "")))
@@ -155,7 +132,7 @@ def write_enrichment_zone(lake_path: str, run_id: str, findings: list[dict]) -> 
 
         table = pa.table(rows)
         out_dir = Path(lake_path) / "enrichment" / source / date_part
-        _ensure_dir(out_dir)
+        ensure_dir(out_dir)
         out_file = out_dir / f"{run_id}.parquet"
         pq.write_table(table, str(out_file))
         total += len(items)
@@ -180,7 +157,7 @@ def write_curated_zone(
     import pyarrow as pa
     import pyarrow.parquet as pq
 
-    date_part = _today_partition()
+    date_part = today_partition()
     total = 0
 
     # --- Control results (partitioned by framework/date) ---
@@ -219,7 +196,7 @@ def write_curated_zone(
 
             table = pa.table(rows)
             out_dir = Path(lake_path) / "curated" / "control_results" / framework / date_part
-            _ensure_dir(out_dir)
+            ensure_dir(out_dir)
             out_file = out_dir / f"{run_id}.parquet"
             pq.write_table(table, str(out_file))
             total += len(items)
@@ -251,7 +228,7 @@ def write_curated_zone(
 
         table = pa.table(rows)
         out_dir = Path(lake_path) / "curated" / "control_mappings" / date_part
-        _ensure_dir(out_dir)
+        ensure_dir(out_dir)
         out_file = out_dir / f"{run_id}.parquet"
         pq.write_table(table, str(out_file))
         total += len(control_mappings)
@@ -289,7 +266,7 @@ def write_curated_zone(
 
         table = pa.table(rows)
         out_dir = Path(lake_path) / "curated" / "connector_runs" / date_part
-        _ensure_dir(out_dir)
+        ensure_dir(out_dir)
         out_file = out_dir / f"{run_id}.parquet"
         pq.write_table(table, str(out_file))
         total += len(connector_runs)
