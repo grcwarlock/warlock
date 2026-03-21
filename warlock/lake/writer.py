@@ -33,6 +33,8 @@ class LakeWriteStats:
     control_mappings_written: int = 0
     control_results_written: int = 0
     connector_runs_written: int = 0
+    posture_snapshots_written: int = 0
+    compliance_drifts_written: int = 0
     duration_seconds: float = 0.0
     errors: list[str] = field(default_factory=list)
 
@@ -137,6 +139,16 @@ class LakeWriter:
                 log.exception(msg)
                 stats.errors.append(msg)
 
+            # Write temporal domain tables (posture snapshots + compliance drifts)
+            try:
+                snap_count, drift_count = self._flush_temporal(session, run_id)
+                stats.posture_snapshots_written = snap_count
+                stats.compliance_drifts_written = drift_count
+            except Exception as exc:
+                msg = f"Failed to write temporal zone: {exc}"
+                log.exception(msg)
+                stats.errors.append(msg)
+
         # Always clear buffers, even on error
         self._raw_event_ids.clear()
         self._finding_ids.clear()
@@ -237,6 +249,40 @@ class LakeWriter:
             total_conn = len(conn_dicts)
 
         return total_cr, total_cm, total_conn
+
+    def _flush_temporal(self, session: Any, run_id: str) -> tuple[int, int]:
+        """Read recent posture snapshots and compliance drifts from OLTP.
+
+        These aren't event-sourced — we query for any rows created since
+        the last flush.  Returns (snapshot_count, drift_count).
+        """
+        from warlock.db.models import ComplianceDrift, PostureSnapshot
+        from warlock.lake.domains import write_temporal_facts
+
+        snap_dicts: list[dict] = []
+        try:
+            records = session.query(PostureSnapshot).all()
+            snap_dicts = [_model_to_dict(r) for r in records] if records else []
+        except Exception:
+            log.debug("PostureSnapshot table not available, skipping")
+
+        drift_dicts: list[dict] = []
+        try:
+            records = session.query(ComplianceDrift).all()
+            drift_dicts = [_model_to_dict(r) for r in records] if records else []
+        except Exception:
+            log.debug("ComplianceDrift table not available, skipping")
+
+        total = 0
+        if snap_dicts or drift_dicts:
+            total = write_temporal_facts(
+                self._lake_path,
+                run_id,
+                posture_snapshots=snap_dicts or None,
+                compliance_drifts=drift_dicts or None,
+            )
+
+        return len(snap_dicts), len(drift_dicts)
 
     @property
     def pending_count(self) -> int:
