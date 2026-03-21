@@ -5,8 +5,8 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (58 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (42 parsers) → FindingData       → transform to universal findings
+Stage 1: Connectors (78 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (78 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
@@ -33,52 +33,50 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (58)
+## Connectors (78)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
-**EDR:** CrowdStrike, Microsoft Defender, SentinelOne
-**IAM:** Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault
+**EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos
+**IAM:** Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault, JumpCloud, Auth0
 **Scanners:** Tenable, Qualys, Wiz
 **CSPM:** Prisma Cloud
 **SIEM:** Sentinel, Splunk, Elastic
 **Network Security:** Palo Alto Networks, Fortinet FortiGate, Zscaler
-**HRIS:** Workday, BambooHR | **ITSM:** ServiceNow | **Training:** KnowBe4
-**Code Security:** Snyk, GitHub Advanced Security, Checkmarx, SonarQube
-**DLP:** Microsoft Purview, Netskope | **Backup:** Veeam | **MDM:** Microsoft Intune, Jamf
+**HRIS:** Workday, BambooHR, Gusto, Rippling | **ITSM:** ServiceNow | **Training:** KnowBe4
+**Code Security:** Snyk, GitHub Advanced Security, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode
+**DLP:** Microsoft Purview, Netskope | **Backup:** Veeam | **MDM:** Microsoft Intune, Jamf, Kandji
 **MFA / Password:** Duo Security, 1Password, Bitwarden
-**Observability:** Datadog, New Relic | **Cloud Threat:** AWS GuardDuty
-**Email Security:** Proofpoint, Abnormal Security
-**GRC:** Confluence, OneTrust | **Physical:** Verkada | **EDR:** Sophos
-**Third-Party Risk:** SecurityScorecard | **Container:** Kubernetes | **AI Tracking:** MLflow
+**Collaboration:** Slack, Google Workspace | **DevOps:** GitLab, Jira
+**Observability:** Datadog, New Relic, Grafana | **Cloud Threat:** AWS GuardDuty
+**Email Security:** Proofpoint, Abnormal Security, Exchange Online
+**GRC:** Confluence, OneTrust | **Physical:** Verkada
+**Third-Party Risk:** SecurityScorecard, BitSight | **Container:** Kubernetes, Aqua Security
+**Infrastructure:** Terraform Cloud | **AI/ML:** MLflow, SageMaker, Databricks
 **Scanner:** Nessus (standalone)
 **Ingest:** Webhook (generic)
 
-## Quick Start
-
-See **[DEMO.md](DEMO.md)** for step-by-step instructions to provision a fully operational demo environment with CLI + REST API.
+## Quick Start (Docker — recommended)
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev,ai]"
-.venv/bin/alembic upgrade head
-.venv/bin/python scripts/demo_seed.py
-warlock coverage
+docker compose up demo
 ```
 
-Or use the one-command demo (recommended):
+That's it. Postgres, Redis, OPA, migrations, seed data, and API server — all in one command.
+
+- API: http://localhost:8000/docs
+- Login: admin@acme.com / WarlockAdmin2026!
+- Stop: `docker compose down`
+- Fresh reset: `docker compose down -v && docker compose up demo`
+
+### Quick Start (local Python)
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
 ./scripts/demo.sh
 ```
 
-The demo script handles venv creation, dependencies, OPA, database, seeding, AI configuration, and starts the API server. After it completes:
-
-```bash
-warlock coverage                       # compliance overview
-warlock-api                            # REST API on :8000
-```
+Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
 ## CLI Commands
 
@@ -151,13 +149,25 @@ warlock-api                            # REST API on :8000
 | `warlock retention report` | Retention report (record ages, purgeable counts) |
 | `warlock retention purge --execute` | Purge expired records (respects legal holds) |
 
+### Data Lake
+
+| Command | Description |
+|---|---|
+| `warlock lake status` | Lake zone file counts and sizes |
+| `warlock lake backfill` | Backfill historical OLTP data to lake |
+| `warlock lake reconcile` | Compare OLTP vs lake row counts + hashes |
+| `warlock lake query "question"` | Natural language compliance query |
+| `warlock lake assess` | Batch AI assessment over curated zone |
+| `warlock lake compact` | Compact small Parquet files |
+| `warlock ask "are we SOC 2 ready?"` | Conversational compliance from terminal |
+
 ## REST API
 
 ```bash
 # Start the API server
 warlock-api
 # or with docker
-docker compose up api
+docker compose up demo
 
 # Health & readiness
 GET  /api/v1/health           # basic health check
@@ -256,12 +266,12 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 58 source connectors (Stage 1)
-├── normalizers/          # 59 normalizers (Stage 2)
+├── connectors/           # 78 source connectors (Stage 1)
+├── normalizers/          # 78 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
-│   ├── assertions.py     # 25 deterministic assertions bound to 99 controls
+│   ├── assertions.py     # 101 deterministic assertions across 14 control families
 │   ├── ai_reasoning.py   # Tier 2: LLM evaluation with full compliance context
 │   ├── ai_narrator.py    # SSP/POA&M narrative generation
 │   ├── posture.py        # Posture aggregation, sufficiency scoring, time-series
@@ -277,6 +287,19 @@ warlock/
 │   ├── queue.py          # Redis/Kafka/SQS backends
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
+├── lake/                 # GRC Data Lake (24 modules)
+│   ├── writer.py         # Event-sourced Parquet writer
+│   ├── readers.py        # DuckDB analytical queries with ABAC
+│   ├── zones.py          # Raw/enrichment/curated zone writers
+│   ├── domains.py        # 10 curated domain writers
+│   ├── query.py           # Embedded DuckDB query engine
+│   ├── rag.py            # TF-IDF semantic search over curated zone
+│   ├── catalog.py        # Iceberg table catalog
+│   ├── bridges.py        # 6 bridge table writers
+│   ├── scd.py            # SCD Type 2 dimension management
+│   ├── reconciliation.py # OLTP/lake row count + hash comparison
+│   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
+│   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
 │   ├── models.py         # 36 SQLAlchemy models
 │   ├── migrations/       # Alembic migrations (11 revisions)
@@ -313,7 +336,7 @@ warlock/
 │   ├── crosswalks.yaml   # 1,843 crosswalk edges
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
-└── cli.py                # Click CLI
+└── cli.py                # Click CLI package (42+ commands, 8 domain modules)
 ```
 
 ## Database
@@ -335,6 +358,7 @@ warlock/
 - **ORM:** SQLAlchemy 2.0 + Alembic
 - **Database:** SQLite (dev), PostgreSQL (prod) — generic JSON maps to JSONB
 - **Queue:** Redis Streams / Kafka / SQS (pluggable)
+- **Data Lake:** DuckDB + PyArrow + Parquet (analytical layer)
 - **AI:** Anthropic, OpenAI, Gemini, Ollama (optional Tier 2 + narrative generation)
 - **CLI:** Click + Rich
 - **Validation:** Pydantic 2.0

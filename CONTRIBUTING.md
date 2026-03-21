@@ -8,6 +8,7 @@ Thank you for considering a contribution to Warlock, the pipeline-first GRC plat
 - Python 3.12 or higher
 - pip and virtualenv
 - git
+- Docker (recommended for demo environment)
 - (Optional but recommended) OPA for policy evaluation
 
 ### Clone and Install
@@ -22,6 +23,12 @@ pip install -e ".[dev,ai]"
 
 ### Verify Installation
 
+**Docker (recommended):**
+```bash
+docker compose up demo          # Full demo: Postgres + Redis + OPA + seed + API
+```
+
+**Local Python:**
 ```bash
 make demo                      # Full demo: DB setup, seed data, API start
 ```
@@ -35,11 +42,11 @@ warlock-api
 ```
 
 Expected demo output shows:
-- 40 connectors succeeded
+- 77 connectors succeeded
 - 0 connectors failed
-- 191 raw events collected
-- 547 findings normalized
-- 29,207 controls mapped
+- 259 raw events collected
+- 692 findings normalized
+- 32,817 controls mapped
 
 ---
 
@@ -221,7 +228,7 @@ Closes #123 (if applicable)
 - [ ] Linting passes
 - [ ] Docstrings added
 - [ ] Related files updated
-- [ ] Demo still works (`make demo`)
+- [ ] Demo still works (`docker compose up demo` or `make demo`)
 ```
 
 ---
@@ -231,8 +238,8 @@ Closes #123 (if applicable)
 Warlock's architecture is **pipeline-first**: evidence flows through four immutable stages with SHA-256 integrity hashing at every step.
 
 ```
-Stage 1: Connectors (58)    → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (59)   → FindingData          → transform to universal findings format
+Stage 1: Connectors (78)    → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (78)   → FindingData          → transform to universal findings format
 Stage 3: Control Mapper     → ControlMappingData   → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4) → ControlResultData  → deterministic assertions + optional AI reasoning
 ```
@@ -241,7 +248,7 @@ Every control result traces back to its raw API response — the hash chain is t
 
 ### Key Components
 
-- **Connectors** (`warlock/connectors/`) — 58 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
+- **Connectors** (`warlock/connectors/`) — 78 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI

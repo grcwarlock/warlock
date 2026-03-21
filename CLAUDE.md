@@ -36,16 +36,20 @@ On 2026-03-19, Agent 3 wrote a migration and Agent 4 added columns to models.py.
 Half the bugs in this project were found by running the demo, not by running tests. After ANY change to pipeline, models, connectors, normalizers, seed, or config:
 
 ```bash
+# Docker (preferred)
+docker compose down -v && docker compose up demo
+
+# Or local (SQLite)
 rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/demo_seed.py
 ```
 
 Expected output — verify these exact numbers:
 ```
-Connectors succeeded:   40
+Connectors succeeded:   77
 Connectors failed:      0
-Raw events collected:   191
-Findings normalized:    547
-Controls mapped:        29,207
+Raw events collected:   259
+Findings normalized:    692
+Controls mapped:        32,817
 ```
 
 If any number changes, you broke something. Stop and fix it.
@@ -72,7 +76,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (40 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
+The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (77 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -162,6 +166,7 @@ When you change the left column, you MUST update every file in the right column.
 | Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader doesn't crash, update README.md framework table |
 | CLI command (`warlock/cli.py`) | `.github/workflows/ci.yml` CLI smoke test list, README.md, DEMO.md, CONTRIBUTING.md |
 | CI workflows (`.github/workflows/`) | Verify command/group names match actual CLI, test locally before pushing — CI failures block all PRs |
+| Docker (`Dockerfile`, `docker-compose.yml`) | Rebuild image (`docker compose build demo`), verify `docker compose up demo` succeeds |
 
 ---
 
@@ -169,19 +174,20 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 58 source connectors
-  normalizers/   — 59 parsers (raw → FindingData)
+  connectors/    — 78 source connectors
+  normalizers/   — 78 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
-  cli/           — Click CLI package (40 commands, 8 domain modules)
+  cli/           — Click CLI package (42+ commands, 8 domain modules)
   db/            — SQLAlchemy models (34) + Alembic migrations (11)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
+  lake/          — 24 GRC data lake modules (DuckDB, Parquet, RAG, Iceberg)
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 295 pytest tests (10 files)
+tests/           — 535 pytest tests (23 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
@@ -189,9 +195,10 @@ terraform/       — 12 IaC modules (AWS, Azure, GCP)
   ci.yml             — Python lint + test + Docker build
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
-  demo.sh        — one-command full demo (DB + OPA + seed + API)
-  demo_seed.py   — 40 mock connectors, 547+ findings, 29K results
+  demo.sh        — one-command local demo (DB + OPA + seed + API)
+  demo_seed.py   — 77 mock connectors, 692 findings, 32K+ results
   demo_api.sh    — API query helper with auto-auth
+  docker-demo.sh — Docker demo entrypoint (migrate + seed + serve)
 ```
 
 ## Key Patterns
