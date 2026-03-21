@@ -188,7 +188,11 @@ class FortinetNormalizer(BaseNormalizer):
             proto = entry.get("proto", entry.get("service", ""))
             ref_url = entry.get("ref", "")
 
-            severity = severity_str if severity_str in ("critical", "high", "medium", "low", "info") else "medium"
+            severity = (
+                severity_str
+                if severity_str in ("critical", "high", "medium", "low", "info")
+                else "medium"
+            )
 
             # Elevate critical IPS detections
             if severity_str == "critical" or entry.get("crscore", 0) >= 40:
@@ -341,7 +345,11 @@ class FortinetNormalizer(BaseNormalizer):
             filename = event.get("filename", "")
             severity_str = event.get("severity", "high").lower()
 
-            severity = severity_str if severity_str in ("critical", "high", "medium", "low", "info") else "high"
+            severity = (
+                severity_str
+                if severity_str in ("critical", "high", "medium", "low", "info")
+                else "high"
+            )
 
             findings.append(
                 FindingData(

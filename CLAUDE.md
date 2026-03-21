@@ -169,8 +169,8 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 41 source connectors
-  normalizers/   — 42 parsers (raw → FindingData)
+  connectors/    — 44 source connectors
+  normalizers/   — 45 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (139 routes, ABAC-scoped)

@@ -131,7 +131,10 @@ class SlackNotifier:
                             "fields": [
                                 {"type": "mrkdwn", "text": f"*Severity:*\n{severity}"},
                                 {"type": "mrkdwn", "text": f"*Resource:*\n{resource}"},
-                                {"type": "mrkdwn", "text": f"*Framework / Control:*\n{framework} / {control_id}"},
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Framework / Control:*\n{framework} / {control_id}",
+                                },
                                 {"type": "mrkdwn", "text": f"*Status:*\n{status}"},
                             ],
                         },

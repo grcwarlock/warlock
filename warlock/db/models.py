@@ -1379,6 +1379,4 @@ class Embedding(Base):
     dimensions = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    __table_args__ = (
-        Index("idx_embedding_entity", "entity_type", "entity_id", unique=True),
-    )
+    __table_args__ = (Index("idx_embedding_entity", "entity_type", "entity_id", unique=True),)

@@ -101,9 +101,7 @@ class FortinetConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             policies = data.get("results", [])
-            result.events.append(
-                self._raw_event("forti_firewall_policies", {"policies": policies})
-            )
+            result.events.append(self._raw_event("forti_firewall_policies", {"policies": policies}))
         except Exception as e:
             log.debug("FortiGate firewall policies collection failed: %s", e)
             result.errors.append(f"forti_firewall_policies: {e}")
@@ -116,9 +114,7 @@ class FortinetConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             logs = data.get("results", [])
-            result.events.append(
-                self._raw_event("forti_threat_logs", {"logs": logs})
-            )
+            result.events.append(self._raw_event("forti_threat_logs", {"logs": logs}))
         except Exception as e:
             log.debug("FortiGate IPS threat logs collection failed: %s", e)
             result.errors.append(f"forti_threat_logs: {e}")
@@ -131,9 +127,7 @@ class FortinetConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             status = data.get("results", data)
-            result.events.append(
-                self._raw_event("forti_system_status", {"status": status})
-            )
+            result.events.append(self._raw_event("forti_system_status", {"status": status}))
         except Exception as e:
             log.debug("FortiGate system status collection failed: %s", e)
             result.errors.append(f"forti_system_status: {e}")
@@ -146,9 +140,7 @@ class FortinetConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             tunnels = data.get("results", [])
-            result.events.append(
-                self._raw_event("forti_vpn_tunnels", {"tunnels": tunnels})
-            )
+            result.events.append(self._raw_event("forti_vpn_tunnels", {"tunnels": tunnels}))
         except Exception as e:
             log.debug("FortiGate VPN tunnels collection failed: %s", e)
             result.errors.append(f"forti_vpn_tunnels: {e}")
@@ -161,9 +153,7 @@ class FortinetConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             events = data.get("results", [])
-            result.events.append(
-                self._raw_event("forti_antivirus", {"events": events})
-            )
+            result.events.append(self._raw_event("forti_antivirus", {"events": events}))
         except Exception as e:
             log.debug("FortiGate antivirus logs collection failed: %s", e)
             result.errors.append(f"forti_antivirus: {e}")
