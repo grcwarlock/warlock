@@ -169,3 +169,181 @@ class TestHashReconciliation:
         from warlock.lake.reconciliation import sample_hashes
         mismatches = sample_hashes({}, {})
         assert len(mismatches) == 0
+
+
+# ── ABAC scope filtering tests ──────────────────────────────────────
+
+
+@pytest.fixture
+def lake_for_abac(tmp_path):
+    """Seed lake with multi-framework data for ABAC testing."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    date = "2026-03-21"
+    cr = {
+        "id": ["cr-1", "cr-2", "cr-3"],
+        "finding_id": ["f-1", "f-2", "f-3"],
+        "control_mapping_id": ["cm-1", "cm-2", "cm-3"],
+        "framework": ["nist_800_53", "soc2", "iso_27001"],
+        "control_id": ["AC-2", "CC6.1", "A.9.1"],
+        "status": ["compliant", "non_compliant", "compliant"],
+        "severity": ["high", "critical", "medium"],
+        "system_profile_id": ["sys-prod", "sys-prod", "sys-staging"],
+        "assertion_name": ["mfa", "encrypt", "access"],
+        "assertion_passed": [True, False, True],
+        "assessed_at": [datetime.now(timezone.utc).isoformat()] * 3,
+        "run_id": ["run-1"] * 3,
+    }
+    for fw in ["nist_800_53", "soc2", "iso_27001"]:
+        d = Path(tmp_path) / "curated" / "control_results" / fw / date
+        d.mkdir(parents=True, exist_ok=True)
+        fw_data = {
+            k: [v for v, f in zip(cr[k], cr["framework"]) if f == fw] for k in cr
+        }
+        pq.write_table(pa.table(fw_data), str(d / "run-1.parquet"))
+
+    # Control mappings
+    cm = {
+        "id": ["cm-1", "cm-2", "cm-3"],
+        "finding_id": ["f-1", "f-2", "f-3"],
+        "framework": ["nist_800_53", "soc2", "iso_27001"],
+        "control_id": ["AC-2", "CC6.1", "A.9.1"],
+        "control_family": ["AC", "CC6", "A.9"],
+        "mapping_method": ["explicit", "explicit", "keyword"],
+        "confidence": [1.0, 1.0, 0.8],
+        "created_at": [datetime.now(timezone.utc).isoformat()] * 3,
+        "run_id": ["run-1"] * 3,
+    }
+    d = Path(tmp_path) / "curated" / "control_mappings" / date
+    d.mkdir(parents=True, exist_ok=True)
+    pq.write_table(pa.table(cm), str(d / "run-1.parquet"))
+
+    return str(tmp_path)
+
+
+class TestABACLakeReaders:
+    def test_dashboard_framework_scope(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.dashboard_framework_summary(allowed_frameworks=["soc2"])
+        assert all(r[0] == "soc2" for r in result)
+        assert len(result) > 0
+        readers.close()
+
+    def test_dashboard_system_profile_scope(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.dashboard_framework_summary(
+            allowed_system_profiles=["sys-prod"]
+        )
+        # sys-prod has nist_800_53 and soc2 (not iso_27001 which is sys-staging)
+        frameworks = {r[0] for r in result}
+        assert "iso_27001" not in frameworks
+        readers.close()
+
+    def test_dashboard_no_scope_returns_all(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.dashboard_framework_summary()
+        frameworks = {r[0] for r in result}
+        assert len(frameworks) == 3
+        readers.close()
+
+    def test_coverage_with_framework_scope(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.coverage_by_status(allowed_frameworks=["nist_800_53"])
+        assert all(r[0] == "nist_800_53" for r in result)
+        readers.close()
+
+    def test_distinct_frameworks_scoped(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.distinct_frameworks(
+            allowed_frameworks=["soc2", "iso_27001"]
+        )
+        assert "nist_800_53" not in result
+        assert "soc2" in result
+        readers.close()
+
+    def test_list_frameworks_scoped(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.list_frameworks(allowed_frameworks=["nist_800_53"])
+        assert len(result) == 1
+        assert result[0][0] == "nist_800_53"
+        readers.close()
+
+    def test_list_controls_scoped(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        # Request controls for nist_800_53 but ABAC only allows soc2 → empty
+        result = readers.list_controls(
+            "nist_800_53", allowed_frameworks=["soc2"]
+        )
+        assert len(result) == 0
+        readers.close()
+
+    def test_top_non_compliant_risks_scoped(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        # Only soc2 has a non_compliant row
+        result = readers.top_non_compliant_risks(allowed_frameworks=["soc2"])
+        assert len(result) == 1
+        assert result[0]["framework"] == "soc2"
+        readers.close()
+
+    def test_top_non_compliant_risks_no_match(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        # nist_800_53 has only compliant rows
+        result = readers.top_non_compliant_risks(
+            allowed_frameworks=["nist_800_53"]
+        )
+        assert len(result) == 0
+        readers.close()
+
+    def test_last_assessed_at_scoped(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        result = readers.last_assessed_at(allowed_frameworks=["soc2"])
+        assert result is not None
+        readers.close()
+
+    def test_combined_framework_and_profile_scope(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        # nist_800_53 is sys-prod, iso_27001 is sys-staging
+        # Filter to nist_800_53 + sys-prod → should get 1 result
+        result = readers.dashboard_framework_summary(
+            allowed_frameworks=["nist_800_53"],
+            allowed_system_profiles=["sys-prod"],
+        )
+        assert len(result) == 1
+        assert result[0][0] == "nist_800_53"
+        readers.close()
+
+    def test_profile_scope_excludes_staging(self, lake_for_abac):
+        from warlock.lake.readers import LakeReaders
+
+        readers = LakeReaders(lake_for_abac)
+        # sys-prod only → iso_27001 (sys-staging) excluded
+        result = readers.coverage_by_status(
+            allowed_system_profiles=["sys-prod"]
+        )
+        frameworks = {r[0] for r in result}
+        assert "iso_27001" not in frameworks
+        assert len(frameworks) == 2
+        readers.close()
