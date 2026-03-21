@@ -169,8 +169,8 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 44 source connectors
-  normalizers/   — 45 parsers (raw → FindingData)
+  connectors/    — 58 source connectors
+  normalizers/   — 59 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (139 routes, ABAC-scoped)
@@ -276,7 +276,7 @@ Dispatch ALL in parallel:
 | `terraform-engineer` | `terraform/` changes |
 | `compliance-auditor` | Policies, OSCAL, frameworks, assessors |
 | `security-engineer` | API routes, auth, ABAC, JWT |
-| `grc-engineer` | OPA policies, compliance logic |
+| `grc-unicorn` | OPA policies, compliance logic |
 
 ### Tier 3 — Weekly or before releases
 

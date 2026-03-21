@@ -109,6 +109,20 @@ from warlock.normalizers.workday import WorkdayNormalizer
 from warlock.normalizers.palo_alto import PaloAltoNormalizer
 from warlock.normalizers.fortinet import FortinetNormalizer
 from warlock.normalizers.zscaler import ZscalerNormalizer
+from warlock.normalizers.jamf import JamfNormalizer
+from warlock.normalizers.duo import DuoNormalizer
+from warlock.normalizers.onepassword import OnePasswordNormalizer
+from warlock.normalizers.bitwarden import BitwardenNormalizer
+from warlock.normalizers.guardduty import GuardDutyNormalizer
+from warlock.normalizers.datadog import DatadogNormalizer
+from warlock.normalizers.newrelic import NewRelicNormalizer
+from warlock.normalizers.checkmarx import CheckmarxNormalizer
+from warlock.normalizers.sonarqube import SonarQubeNormalizer
+from warlock.normalizers.abnormal_security import AbnormalSecurityNormalizer
+from warlock.normalizers.netskope import NetskopeNormalizer
+from warlock.normalizers.nessus import NessusNormalizer
+from warlock.normalizers.bamboohr import BambooHRNormalizer
+from warlock.normalizers.sophos import SophosNormalizer
 from warlock.assessors.engine import Assessor, engine as assertion_engine
 from warlock.mappers.control_mapper import ControlMapper
 from warlock.pipeline.bus import EventBus
@@ -11680,6 +11694,1342 @@ class DemoZscalerConnector(BaseConnector):
         return result
 
 
+class DemoJamfConnector(BaseConnector):
+    """Simulates Jamf Pro MDM collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="jamf",
+            source_type=SourceType.MDM,
+            provider="jamf",
+        )
+        result.events.append(
+            RawEventData(
+                source="jamf",
+                source_type=SourceType.MDM,
+                provider="jamf",
+                event_type="jamf_devices",
+                raw_data={
+                    "devices": [
+                        {
+                            "id": 1001,
+                            "general": {
+                                "name": "ENG-MBP-001",
+                                "serialNumber": "C02Z1234HKLM",
+                                "managementStatus": {"enrolled": True},
+                                "lastContactTime": NOW.isoformat(),
+                            },
+                            "hardware": {"serialNumber": "C02Z1234HKLM", "osVersion": "14.3"},
+                            "operatingSystem": {"version": "14.3"},
+                            "security": {"fileVault2Status": "ALL_ENCRYPTED"},
+                        },
+                        {
+                            "id": 1002,
+                            "general": {
+                                "name": "SALES-MBP-042",
+                                "serialNumber": "C02Y9876WXYZ",
+                                "managementStatus": {"enrolled": True},
+                                "lastContactTime": NOW.isoformat(),
+                            },
+                            "hardware": {"serialNumber": "C02Y9876WXYZ", "osVersion": "12.7.1"},
+                            "operatingSystem": {"version": "12.7.1"},
+                            "security": {"fileVault2Status": "NOT_ENCRYPTED"},
+                        },
+                        {
+                            "id": 1003,
+                            "general": {
+                                "name": "EXEC-MBP-007",
+                                "serialNumber": "C02X5555ABCD",
+                                "managementStatus": {"enrolled": True},
+                                "lastContactTime": (NOW - timedelta(days=14)).isoformat(),
+                            },
+                            "hardware": {"serialNumber": "C02X5555ABCD", "osVersion": "14.2"},
+                            "operatingSystem": {"version": "14.2"},
+                            "security": {"fileVault2Status": "ALL_ENCRYPTED"},
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="jamf",
+                source_type=SourceType.MDM,
+                provider="jamf",
+                event_type="jamf_policies",
+                raw_data={
+                    "policies": [
+                        {
+                            "id": 501,
+                            "name": "FileVault Enforcement",
+                            "enabled": True,
+                            "scope": {"all_computers": True},
+                            "category": "Security",
+                        },
+                        {
+                            "id": 502,
+                            "name": "OS Update Nudge",
+                            "enabled": True,
+                            "scope": {"all_computers": True},
+                            "category": "Maintenance",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoDuoConnector(BaseConnector):
+    """Simulates Duo Security MFA collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="duo",
+            source_type=SourceType.IAM,
+            provider="duo",
+        )
+        result.events.append(
+            RawEventData(
+                source="duo",
+                source_type=SourceType.IAM,
+                provider="duo",
+                event_type="duo_users",
+                raw_data={
+                    "users": [
+                        {
+                            "user_id": "DUO-U001",
+                            "username": "alice.chen",
+                            "email": "alice.chen@acme.com",
+                            "status": "active",
+                            "is_enrolled": True,
+                            "phones": [{"phone_id": "DP001"}],
+                            "tokens": [],
+                            "last_login": (NOW - timedelta(hours=2)).isoformat(),
+                        },
+                        {
+                            "user_id": "DUO-U002",
+                            "username": "bob.martinez",
+                            "email": "bob.martinez@acme.com",
+                            "status": "active",
+                            "is_enrolled": False,
+                            "phones": [],
+                            "tokens": [],
+                            "last_login": (NOW - timedelta(days=3)).isoformat(),
+                        },
+                        {
+                            "user_id": "DUO-U003",
+                            "username": "svc-legacy-app",
+                            "email": "svc-legacy@acme.com",
+                            "status": "bypass",
+                            "is_enrolled": False,
+                            "phones": [],
+                            "tokens": [],
+                            "last_login": (NOW - timedelta(days=30)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="duo",
+                source_type=SourceType.IAM,
+                provider="duo",
+                event_type="duo_auth_logs",
+                raw_data={
+                    "logs": [
+                        {
+                            "txid": "tx-auth-001",
+                            "result": "SUCCESS",
+                            "reason": "user_approved",
+                            "event_type": "authentication",
+                            "factor": "push",
+                            "user": {"name": "alice.chen"},
+                            "access_device": {"ip": "10.0.1.50"},
+                            "timestamp": int(NOW.timestamp()),
+                        },
+                        {
+                            "txid": "tx-auth-002",
+                            "result": "FRAUD",
+                            "reason": "user_marked_fraud",
+                            "event_type": "authentication",
+                            "factor": "push",
+                            "user": {"name": "bob.martinez"},
+                            "access_device": {"ip": "198.51.100.44"},
+                            "timestamp": int(NOW.timestamp()),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoOnePasswordConnector(BaseConnector):
+    """Simulates 1Password Events API collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="onepassword",
+            source_type=SourceType.IAM,
+            provider="onepassword",
+        )
+        result.events.append(
+            RawEventData(
+                source="onepassword",
+                source_type=SourceType.IAM,
+                provider="onepassword",
+                event_type="onepassword_signin_attempts",
+                raw_data={
+                    "items": [
+                        {
+                            "uuid": "op-signin-001",
+                            "session_uuid": "sess-001",
+                            "type": "credentials_ok",
+                            "category": "success",
+                            "target_user": {
+                                "uuid": "user-001",
+                                "email": "alice.chen@acme.com",
+                                "name": "Alice Chen",
+                            },
+                            "client": {"app_name": "1Password for Mac", "ip": "10.0.1.50"},
+                            "location": {"country": "US", "region": "California"},
+                            "timestamp": NOW.isoformat(),
+                        },
+                        {
+                            "uuid": "op-signin-002",
+                            "session_uuid": "sess-002",
+                            "type": "credentials_failed",
+                            "category": "credentials_failed",
+                            "target_user": {
+                                "uuid": "user-002",
+                                "email": "bob.martinez@acme.com",
+                                "name": "Bob Martinez",
+                            },
+                            "client": {"app_name": "1Password for Web", "ip": "198.51.100.77"},
+                            "location": {"country": "RU", "region": "Moscow"},
+                            "timestamp": NOW.isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="onepassword",
+                source_type=SourceType.IAM,
+                provider="onepassword",
+                event_type="onepassword_item_usage",
+                raw_data={
+                    "items": [
+                        {
+                            "uuid": "op-usage-001",
+                            "user": {
+                                "uuid": "user-001",
+                                "email": "alice.chen@acme.com",
+                                "name": "Alice Chen",
+                            },
+                            "item": {
+                                "uuid": "item-001",
+                                "title": "AWS Root Credentials",
+                            },
+                            "vault": {
+                                "uuid": "vault-001",
+                                "title": "Engineering",
+                            },
+                            "action": "fill",
+                            "client": {"app_name": "1Password for Chrome"},
+                            "timestamp": NOW.isoformat(),
+                        },
+                        {
+                            "uuid": "op-usage-002",
+                            "user": {
+                                "uuid": "user-003",
+                                "email": "charlie.wong@acme.com",
+                                "name": "Charlie Wong",
+                            },
+                            "item": {
+                                "uuid": "item-002",
+                                "title": "Production Database",
+                            },
+                            "vault": {
+                                "uuid": "vault-002",
+                                "title": "Infrastructure",
+                            },
+                            "action": "reveal",
+                            "client": {"app_name": "1Password for Web"},
+                            "timestamp": NOW.isoformat(),
+                        },
+                        {
+                            "uuid": "op-usage-003",
+                            "user": {
+                                "uuid": "user-003",
+                                "email": "charlie.wong@acme.com",
+                                "name": "Charlie Wong",
+                            },
+                            "item": {
+                                "uuid": "item-003",
+                                "title": "Stripe API Key",
+                            },
+                            "vault": {
+                                "uuid": "vault-002",
+                                "title": "Infrastructure",
+                            },
+                            "action": "export",
+                            "client": {"app_name": "1Password for Web"},
+                            "timestamp": NOW.isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoBitwardenConnector(BaseConnector):
+    """Simulates Bitwarden organization collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="bitwarden",
+            source_type=SourceType.IAM,
+            provider="bitwarden",
+        )
+        result.events.append(
+            RawEventData(
+                source="bitwarden",
+                source_type=SourceType.IAM,
+                provider="bitwarden",
+                event_type="bitwarden_members",
+                raw_data={
+                    "members": [
+                        {
+                            "id": "bw-m001",
+                            "userId": "bw-u001",
+                            "email": "alice.chen@acme.com",
+                            "name": "Alice Chen",
+                            "status": 2,
+                            "type": 0,
+                            "twoFactorEnabled": True,
+                            "collections": [{"id": "col-001", "name": "Engineering"}],
+                        },
+                        {
+                            "id": "bw-m002",
+                            "userId": "bw-u002",
+                            "email": "bob.martinez@acme.com",
+                            "name": "Bob Martinez",
+                            "status": 2,
+                            "type": 1,
+                            "twoFactorEnabled": False,
+                            "collections": [{"id": "col-002", "name": "DevOps"}],
+                        },
+                        {
+                            "id": "bw-m003",
+                            "userId": "bw-u003",
+                            "email": "former.employee@acme.com",
+                            "name": "Former Employee",
+                            "status": -1,
+                            "type": 2,
+                            "twoFactorEnabled": False,
+                            "collections": [],
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="bitwarden",
+                source_type=SourceType.IAM,
+                provider="bitwarden",
+                event_type="bitwarden_policies",
+                raw_data={
+                    "policies": [
+                        {
+                            "id": "pol-001",
+                            "type": 0,
+                            "enabled": True,
+                            "data": {"minComplexity": 3, "minLength": 12},
+                        },
+                        {
+                            "id": "pol-002",
+                            "type": 1,
+                            "enabled": False,
+                            "data": {},
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGuardDutyConnector(BaseConnector):
+    """Simulates AWS GuardDuty findings collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="guardduty",
+            source_type=SourceType.CLOUD,
+            provider="guardduty",
+        )
+        result.events.append(
+            RawEventData(
+                source="guardduty",
+                source_type=SourceType.CLOUD,
+                provider="guardduty",
+                event_type="guardduty_findings",
+                raw_data={
+                    "detector_id": "d-gd-demo-001",
+                    "findings": [
+                        {
+                            "Id": "gd-finding-001",
+                            "Type": "UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B",
+                            "Title": "Console login from unusual IP",
+                            "Description": "An API call was invoked from an IP address that is included on a threat list.",
+                            "Severity": 8.0,
+                            "Confidence": 90,
+                            "AccountId": "912345678012",
+                            "Region": "us-east-1",
+                            "Resource": {
+                                "ResourceType": "AccessKey",
+                                "AccessKeyDetails": {
+                                    "AccessKeyId": "DEMO-KEY-00000000000",
+                                    "UserName": "admin-user",
+                                    "UserType": "IAMUser",
+                                },
+                            },
+                            "Service": {
+                                "ServiceName": "guardduty",
+                                "Action": {"ActionType": "AWS_API_CALL"},
+                                "Count": 3,
+                            },
+                            "CreatedAt": (NOW - timedelta(hours=2)).isoformat(),
+                            "UpdatedAt": NOW.isoformat(),
+                        },
+                        {
+                            "Id": "gd-finding-002",
+                            "Type": "CryptoCurrency:EC2/BitcoinTool.B!DNS",
+                            "Title": "EC2 instance querying cryptocurrency domain",
+                            "Description": "EC2 instance i-0abc123def is querying a domain associated with Bitcoin.",
+                            "Severity": 9.0,
+                            "Confidence": 95,
+                            "AccountId": "912345678012",
+                            "Region": "us-east-1",
+                            "Resource": {
+                                "ResourceType": "Instance",
+                                "InstanceDetails": {
+                                    "InstanceId": "i-0abc123def",
+                                    "InstanceType": "c5.4xlarge",
+                                },
+                            },
+                            "Service": {
+                                "ServiceName": "guardduty",
+                                "Action": {"ActionType": "DNS_REQUEST"},
+                                "Count": 142,
+                            },
+                            "CreatedAt": (NOW - timedelta(hours=1)).isoformat(),
+                            "UpdatedAt": NOW.isoformat(),
+                        },
+                    ],
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="guardduty",
+                source_type=SourceType.CLOUD,
+                provider="guardduty",
+                event_type="guardduty_detector_status",
+                raw_data={
+                    "detector_id": "d-gd-demo-001",
+                    "detector": {
+                        "Status": "ENABLED",
+                        "CreatedAt": "2024-01-15T00:00:00Z",
+                        "FindingPublishingFrequency": "FIFTEEN_MINUTES",
+                        "DataSources": {
+                            "CloudTrail": {"Status": "ENABLED"},
+                            "DNSLogs": {"Status": "ENABLED"},
+                            "FlowLogs": {"Status": "ENABLED"},
+                            "S3Logs": {"Status": "ENABLED"},
+                        },
+                        "Features": [
+                            {"Name": "EBS_MALWARE_PROTECTION", "Status": "ENABLED"},
+                            {"Name": "LAMBDA_NETWORK_LOGS", "Status": "DISABLED"},
+                        ],
+                    },
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoDatadogConnector(BaseConnector):
+    """Simulates Datadog observability collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="datadog",
+            source_type=SourceType.OBSERVABILITY,
+            provider="datadog",
+        )
+        result.events.append(
+            RawEventData(
+                source="datadog",
+                source_type=SourceType.OBSERVABILITY,
+                provider="datadog",
+                event_type="datadog_monitors",
+                raw_data={
+                    "monitors": [
+                        {
+                            "id": 10001,
+                            "name": "High CPU on prod-api",
+                            "type": "metric alert",
+                            "overall_state": "OK",
+                            "query": "avg(last_5m):avg:system.cpu.user{env:prod} > 90",
+                            "tags": ["env:prod", "team:platform"],
+                            "created": (NOW - timedelta(days=90)).isoformat(),
+                        },
+                        {
+                            "id": 10002,
+                            "name": "Error rate spike - payments",
+                            "type": "metric alert",
+                            "overall_state": "Alert",
+                            "query": "avg(last_5m):sum:trace.http.request.errors{service:payments} > 50",
+                            "tags": ["env:prod", "team:payments"],
+                            "created": (NOW - timedelta(days=60)).isoformat(),
+                        },
+                        {
+                            "id": 10003,
+                            "name": "Disk usage warning",
+                            "type": "metric alert",
+                            "overall_state": "Warn",
+                            "query": "avg(last_15m):avg:system.disk.in_use{env:prod} > 0.8",
+                            "tags": ["env:prod", "team:infra"],
+                            "created": (NOW - timedelta(days=30)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="datadog",
+                source_type=SourceType.OBSERVABILITY,
+                provider="datadog",
+                event_type="datadog_slos",
+                raw_data={
+                    "slos": [
+                        {
+                            "id": "slo-001",
+                            "name": "API Availability",
+                            "type": "metric",
+                            "target_threshold": 99.9,
+                            "overall_status": [
+                                {
+                                    "status": "OK",
+                                    "error_budget_remaining": 15.2,
+                                    "timeframe": "7d",
+                                    "target": 99.9,
+                                }
+                            ],
+                            "tags": ["service:api", "tier:critical"],
+                        },
+                        {
+                            "id": "slo-002",
+                            "name": "Payment Latency P99",
+                            "type": "metric",
+                            "target_threshold": 99.5,
+                            "overall_status": [
+                                {
+                                    "status": "BREACHED",
+                                    "error_budget_remaining": -3.7,
+                                    "timeframe": "7d",
+                                    "target": 99.5,
+                                }
+                            ],
+                            "tags": ["service:payments", "tier:critical"],
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoNewRelicConnector(BaseConnector):
+    """Simulates New Relic observability collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="newrelic",
+            source_type=SourceType.OBSERVABILITY,
+            provider="newrelic",
+        )
+        result.events.append(
+            RawEventData(
+                source="newrelic",
+                source_type=SourceType.OBSERVABILITY,
+                provider="newrelic",
+                event_type="newrelic_alerts",
+                raw_data={
+                    "violations": [
+                        {
+                            "id": 55001,
+                            "condition_name": "High error rate",
+                            "entity": {"name": "prod-api", "type": "APPLICATION"},
+                            "priority": "CRITICAL",
+                            "opened_at": int((NOW - timedelta(hours=1)).timestamp()),
+                            "closed_at": None,
+                            "duration": 3600,
+                            "label": "Error rate > 5%",
+                        },
+                        {
+                            "id": 55002,
+                            "condition_name": "Apdex below threshold",
+                            "entity": {"name": "web-frontend", "type": "APPLICATION"},
+                            "priority": "WARNING",
+                            "opened_at": int((NOW - timedelta(hours=3)).timestamp()),
+                            "closed_at": None,
+                            "duration": 10800,
+                            "label": "Apdex < 0.7",
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="newrelic",
+                source_type=SourceType.OBSERVABILITY,
+                provider="newrelic",
+                event_type="newrelic_entities",
+                raw_data={
+                    "entities": [
+                        {
+                            "guid": "nr-entity-001",
+                            "name": "prod-api",
+                            "type": "APPLICATION",
+                            "alertSeverity": "CRITICAL",
+                            "reporting": True,
+                            "domain": "APM",
+                            "tags": [
+                                {"key": "environment", "values": ["production"]},
+                                {"key": "team", "values": ["platform"]},
+                            ],
+                        },
+                        {
+                            "guid": "nr-entity-002",
+                            "name": "web-frontend",
+                            "type": "APPLICATION",
+                            "alertSeverity": "WARNING",
+                            "reporting": True,
+                            "domain": "APM",
+                            "tags": [
+                                {"key": "environment", "values": ["production"]},
+                            ],
+                        },
+                        {
+                            "guid": "nr-entity-003",
+                            "name": "batch-processor",
+                            "type": "APPLICATION",
+                            "alertSeverity": "NOT_ALERTING",
+                            "reporting": False,
+                            "domain": "APM",
+                            "tags": [
+                                {"key": "environment", "values": ["production"]},
+                            ],
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoCheckmarxConnector(BaseConnector):
+    """Simulates Checkmarx SAST/SCA collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="checkmarx",
+            source_type=SourceType.CODE,
+            provider="checkmarx",
+        )
+        result.events.append(
+            RawEventData(
+                source="checkmarx",
+                source_type=SourceType.CODE,
+                provider="checkmarx",
+                event_type="checkmarx_vulnerabilities",
+                raw_data={
+                    "vulnerabilities": [
+                        {
+                            "id": "cx-vuln-001",
+                            "queryName": "SQL_Injection",
+                            "severity": "Critical",
+                            "state": "To Verify",
+                            "status": "New",
+                            "language": "Python",
+                            "fileName": "app/api/users.py",
+                            "line": 142,
+                            "column": 28,
+                            "description": "User input flows into SQL query without parameterization",
+                            "categories": ["OWASP Top 10 2021: A03 - Injection"],
+                            "cweId": 89,
+                            "projectName": "acme-api",
+                            "scanId": "scan-cx-001",
+                        },
+                        {
+                            "id": "cx-vuln-002",
+                            "queryName": "Reflected_XSS",
+                            "severity": "High",
+                            "state": "To Verify",
+                            "status": "New",
+                            "language": "JavaScript",
+                            "fileName": "frontend/src/components/Search.jsx",
+                            "line": 87,
+                            "column": 15,
+                            "description": "User input rendered without escaping in HTML context",
+                            "categories": ["OWASP Top 10 2021: A03 - Injection"],
+                            "cweId": 79,
+                            "projectName": "acme-web",
+                            "scanId": "scan-cx-002",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoSonarQubeConnector(BaseConnector):
+    """Simulates SonarQube code quality collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="sonarqube",
+            source_type=SourceType.CODE,
+            provider="sonarqube",
+        )
+        result.events.append(
+            RawEventData(
+                source="sonarqube",
+                source_type=SourceType.CODE,
+                provider="sonarqube",
+                event_type="sonarqube_projects",
+                raw_data={
+                    "projects": [
+                        {
+                            "key": "acme-api",
+                            "name": "ACME API",
+                            "qualifier": "TRK",
+                            "lastAnalysisDate": NOW.isoformat(),
+                            "qualityGate": "OK",
+                            "measures": {
+                                "coverage": 82.5,
+                                "bugs": 3,
+                                "vulnerabilities": 1,
+                                "code_smells": 45,
+                            },
+                        },
+                        {
+                            "key": "acme-web",
+                            "name": "ACME Web Frontend",
+                            "qualifier": "TRK",
+                            "lastAnalysisDate": NOW.isoformat(),
+                            "qualityGate": "ERROR",
+                            "measures": {
+                                "coverage": 34.2,
+                                "bugs": 12,
+                                "vulnerabilities": 7,
+                                "code_smells": 189,
+                            },
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="sonarqube",
+                source_type=SourceType.CODE,
+                provider="sonarqube",
+                event_type="sonarqube_issues",
+                raw_data={
+                    "issues": [
+                        {
+                            "key": "sq-issue-001",
+                            "rule": "python:S3649",
+                            "severity": "BLOCKER",
+                            "type": "VULNERABILITY",
+                            "component": "acme-api:app/db/queries.py",
+                            "line": 55,
+                            "message": "Make sure that formatting this SQL query is safe.",
+                            "status": "OPEN",
+                            "effort": "30min",
+                            "creationDate": (NOW - timedelta(days=5)).isoformat(),
+                        },
+                        {
+                            "key": "sq-issue-002",
+                            "rule": "javascript:S5131",
+                            "severity": "CRITICAL",
+                            "type": "VULNERABILITY",
+                            "component": "acme-web:src/utils/render.js",
+                            "line": 23,
+                            "message": "Make sure disabling auto-escaping is safe here.",
+                            "status": "OPEN",
+                            "effort": "15min",
+                            "creationDate": (NOW - timedelta(days=3)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoAbnormalSecurityConnector(BaseConnector):
+    """Simulates Abnormal Security email threat detection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="abnormal_security",
+            source_type=SourceType.EMAIL,
+            provider="abnormal_security",
+        )
+        result.events.append(
+            RawEventData(
+                source="abnormal_security",
+                source_type=SourceType.EMAIL,
+                provider="abnormal_security",
+                event_type="abnormal_threats",
+                raw_data={
+                    "threats": [
+                        {
+                            "threatId": "abn-t001",
+                            "abxMessageId": "msg-001",
+                            "subject": "Urgent: Wire Transfer Required",
+                            "fromAddress": "ceo-lookalike@acme-corp.net",
+                            "toAddress": "cfo@acme.com",
+                            "recipientAddress": "cfo@acme.com",
+                            "attackType": "BEC",
+                            "attackStrategy": "Impersonation: Executive",
+                            "sentTime": NOW.isoformat(),
+                            "receivedTime": NOW.isoformat(),
+                            "remediationStatus": "Auto-Remediated",
+                            "severity": "critical",
+                            "isRead": False,
+                            "attackVector": "Text",
+                            "summaryInsights": [
+                                "Sender domain is a lookalike of acme.com",
+                                "Requests urgent wire transfer",
+                            ],
+                        },
+                        {
+                            "threatId": "abn-t002",
+                            "abxMessageId": "msg-002",
+                            "subject": "Your account has been compromised",
+                            "fromAddress": "support@micros0ft-security.com",
+                            "toAddress": "alice.chen@acme.com",
+                            "recipientAddress": "alice.chen@acme.com",
+                            "attackType": "Phishing: Credential",
+                            "attackStrategy": "Brand Impersonation",
+                            "sentTime": NOW.isoformat(),
+                            "receivedTime": NOW.isoformat(),
+                            "remediationStatus": "Auto-Remediated",
+                            "severity": "high",
+                            "isRead": False,
+                            "attackVector": "Link",
+                            "summaryInsights": [
+                                "Impersonates Microsoft branding",
+                                "Contains credential harvesting link",
+                            ],
+                        },
+                        {
+                            "threatId": "abn-t003",
+                            "abxMessageId": "msg-003",
+                            "subject": "Quarterly Board Presentation - CONFIDENTIAL",
+                            "fromAddress": "exec-assistant@acme-partners.io",
+                            "toAddress": "ceo@acme.com",
+                            "recipientAddress": "ceo@acme.com",
+                            "attackType": "BEC",
+                            "attackStrategy": "Impersonation: Executive",
+                            "sentTime": NOW.isoformat(),
+                            "receivedTime": NOW.isoformat(),
+                            "remediationStatus": "Pending",
+                            "severity": "critical",
+                            "isRead": True,
+                            "attackVector": "Attachment",
+                            "summaryInsights": [
+                                "Targets C-suite executive",
+                                "Contains suspicious attachment",
+                            ],
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoNetskopeConnector(BaseConnector):
+    """Simulates Netskope CASB/DLP collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="netskope",
+            source_type=SourceType.DLP,
+            provider="netskope",
+        )
+        result.events.append(
+            RawEventData(
+                source="netskope",
+                source_type=SourceType.DLP,
+                provider="netskope",
+                event_type="netskope_alerts",
+                raw_data={
+                    "alerts": [
+                        {
+                            "alert_id": "nsk-alert-001",
+                            "alert_name": "DLP: SSN detected in cloud upload",
+                            "alert_type": "DLP",
+                            "severity": "critical",
+                            "user": "bob.martinez@acme.com",
+                            "app": "Google Drive",
+                            "object": "employee_data_export.xlsx",
+                            "activity": "Upload",
+                            "policy": "PII Protection Policy",
+                            "dlp_profile": "US PII - Social Security Numbers",
+                            "dlp_rule": "SSN Pattern Match",
+                            "dlp_incident_id": "dlp-inc-001",
+                            "file_size": 2048000,
+                            "timestamp": int(NOW.timestamp()),
+                            "action": "block",
+                            "status": "open",
+                        },
+                        {
+                            "alert_id": "nsk-alert-002",
+                            "alert_name": "Compromised credential detected",
+                            "alert_type": "Compromised Credential",
+                            "severity": "high",
+                            "user": "charlie.wong@acme.com",
+                            "app": "Slack",
+                            "object": "",
+                            "activity": "Login",
+                            "breach_id": "breach-2025-04",
+                            "breach_date": (NOW - timedelta(days=15)).isoformat(),
+                            "timestamp": int(NOW.timestamp()),
+                            "action": "alert",
+                            "status": "open",
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="netskope",
+                source_type=SourceType.DLP,
+                provider="netskope",
+                event_type="netskope_clients",
+                raw_data={
+                    "clients": [
+                        {
+                            "client_id": "nsk-client-001",
+                            "host_info": {
+                                "hostname": "ENG-MBP-001",
+                                "os": "macOS 14.3",
+                                "device_id": "dev-001",
+                            },
+                            "user": "alice.chen@acme.com",
+                            "client_version": "117.0.2",
+                            "status": "Connected",
+                            "last_event_time": NOW.isoformat(),
+                        },
+                        {
+                            "client_id": "nsk-client-002",
+                            "host_info": {
+                                "hostname": "SALES-WIN-042",
+                                "os": "Windows 11",
+                                "device_id": "dev-002",
+                            },
+                            "user": "dave.johnson@acme.com",
+                            "client_version": "115.1.0",
+                            "status": "Disconnected",
+                            "last_event_time": (NOW - timedelta(days=7)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoNessusConnector(BaseConnector):
+    """Simulates Tenable Nessus vulnerability scanner collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="nessus",
+            source_type=SourceType.SCANNER,
+            provider="nessus",
+        )
+        result.events.append(
+            RawEventData(
+                source="nessus",
+                source_type=SourceType.SCANNER,
+                provider="nessus",
+                event_type="nessus_scans",
+                raw_data={
+                    "scans": [
+                        {
+                            "id": 3001,
+                            "name": "Weekly Infrastructure Scan",
+                            "status": "completed",
+                            "last_modification_date": int(NOW.timestamp()),
+                            "creation_date": int((NOW - timedelta(days=90)).timestamp()),
+                            "starttime": (NOW - timedelta(hours=4)).isoformat(),
+                            "host_count": 128,
+                            "info_count": 45,
+                            "low_count": 12,
+                            "medium_count": 8,
+                            "high_count": 3,
+                            "critical_count": 1,
+                        },
+                        {
+                            "id": 3002,
+                            "name": "PCI Quarterly Scan",
+                            "status": "completed",
+                            "last_modification_date": int((NOW - timedelta(days=40)).timestamp()),
+                            "creation_date": int((NOW - timedelta(days=120)).timestamp()),
+                            "starttime": (NOW - timedelta(days=40)).isoformat(),
+                            "host_count": 64,
+                            "info_count": 20,
+                            "low_count": 5,
+                            "medium_count": 2,
+                            "high_count": 1,
+                            "critical_count": 0,
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="nessus",
+                source_type=SourceType.SCANNER,
+                provider="nessus",
+                event_type="nessus_vulnerabilities",
+                raw_data={
+                    "vulnerabilities": [
+                        {
+                            "plugin_id": 97861,
+                            "plugin_name": "OpenSSL < 3.0.13 Multiple Vulnerabilities",
+                            "severity": 4,
+                            "severity_text": "Critical",
+                            "host_ip": "10.0.1.15",
+                            "host_fqdn": "db-primary.internal.acme.com",
+                            "port": 443,
+                            "protocol": "tcp",
+                            "cvss3_base_score": 9.8,
+                            "cve": ["CVE-2024-0727"],
+                            "exploit_available": True,
+                            "exploit_code_maturity": "functional",
+                            "solution": "Upgrade OpenSSL to 3.0.13 or later.",
+                            "scan_id": 3001,
+                        },
+                        {
+                            "plugin_id": 156032,
+                            "plugin_name": "Apache HTTP Server < 2.4.58 RCE",
+                            "severity": 4,
+                            "severity_text": "Critical",
+                            "host_ip": "10.0.2.30",
+                            "host_fqdn": "web-legacy.internal.acme.com",
+                            "port": 80,
+                            "protocol": "tcp",
+                            "cvss3_base_score": 9.1,
+                            "cve": ["CVE-2023-44487"],
+                            "exploit_available": False,
+                            "exploit_code_maturity": "unproven",
+                            "solution": "Upgrade Apache HTTP Server to 2.4.58 or later.",
+                            "scan_id": 3001,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoBambooHRConnector(BaseConnector):
+    """Simulates BambooHR HRIS collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="bamboohr",
+            source_type=SourceType.HRIS,
+            provider="bamboohr",
+        )
+        result.events.append(
+            RawEventData(
+                source="bamboohr",
+                source_type=SourceType.HRIS,
+                provider="bamboohr",
+                event_type="bamboohr_employees",
+                raw_data={
+                    "employees": [
+                        {
+                            "id": 7001,
+                            "displayName": "Alice Chen",
+                            "status": "Active",
+                            "department": "Engineering",
+                            "jobTitle": "Senior Engineer",
+                            "hireDate": "2022-03-15",
+                            "terminationDate": None,
+                            "supervisor": "Diana Prince",
+                            "supervisorId": "7010",
+                            "workEmail": "alice.chen@acme.com",
+                        },
+                        {
+                            "id": 7002,
+                            "displayName": "John Smith",
+                            "status": "Active",
+                            "department": "Sales",
+                            "jobTitle": "Account Executive",
+                            "hireDate": "2021-06-01",
+                            "terminationDate": "2026-02-28",
+                            "supervisor": "Jane Doe",
+                            "supervisorId": "7011",
+                            "workEmail": "john.smith@acme.com",
+                        },
+                        {
+                            "id": 7003,
+                            "displayName": "Eve Adams",
+                            "status": "Active",
+                            "department": "Engineering",
+                            "jobTitle": "Junior Developer",
+                            "hireDate": "2025-11-01",
+                            "terminationDate": None,
+                            "supervisor": "",
+                            "supervisorId": "",
+                            "workEmail": "eve.adams@acme.com",
+                        },
+                        {
+                            "id": 7004,
+                            "displayName": "Bob Martinez",
+                            "status": "Active",
+                            "department": "DevOps",
+                            "jobTitle": "DevOps Engineer",
+                            "hireDate": "2023-08-15",
+                            "terminationDate": None,
+                            "supervisor": "Diana Prince",
+                            "supervisorId": "7010",
+                            "workEmail": "bob.martinez@acme.com",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoSophosConnector(BaseConnector):
+    """Simulates Sophos Central EDR collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="sophos",
+            source_type=SourceType.EDR,
+            provider="sophos",
+        )
+        result.events.append(
+            RawEventData(
+                source="sophos",
+                source_type=SourceType.EDR,
+                provider="sophos",
+                event_type="sophos_endpoints",
+                raw_data={
+                    "endpoints": [
+                        {
+                            "id": "soph-ep-001",
+                            "hostname": "ENG-MBP-001",
+                            "os": {"name": "macOS", "platform": "macOS", "majorVersion": 14},
+                            "health": {"overall": "good", "threats": {"status": "good"}},
+                            "tamperProtectionEnabled": True,
+                            "associatedPerson": {"viaLogin": "alice.chen@acme.com"},
+                            "lastSeenAt": NOW.isoformat(),
+                            "ipv4Addresses": ["10.0.1.50"],
+                        },
+                        {
+                            "id": "soph-ep-002",
+                            "hostname": "SALES-WIN-042",
+                            "os": {"name": "Windows 11", "platform": "windows", "majorVersion": 11},
+                            "health": {"overall": "bad", "threats": {"status": "bad"}},
+                            "tamperProtectionEnabled": True,
+                            "associatedPerson": {"viaLogin": "dave.johnson@acme.com"},
+                            "lastSeenAt": NOW.isoformat(),
+                            "ipv4Addresses": ["10.0.2.88"],
+                        },
+                        {
+                            "id": "soph-ep-003",
+                            "hostname": "DEV-LNX-009",
+                            "os": {"name": "Ubuntu 22.04", "platform": "linux", "majorVersion": 22},
+                            "health": {"overall": "good", "threats": {"status": "good"}},
+                            "tamperProtectionEnabled": False,
+                            "associatedPerson": {"viaLogin": "eve.adams@acme.com"},
+                            "lastSeenAt": (NOW - timedelta(days=3)).isoformat(),
+                            "ipv4Addresses": ["10.0.3.15"],
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="sophos",
+                source_type=SourceType.EDR,
+                provider="sophos",
+                event_type="sophos_alerts",
+                raw_data={
+                    "alerts": [
+                        {
+                            "id": "soph-alert-001",
+                            "description": "Malware detected: Trojan.GenericKD",
+                            "severity": "high",
+                            "category": "malware",
+                            "managedAgent": {
+                                "id": "soph-ep-002",
+                                "type": "computer",
+                            },
+                            "person": {"id": "p-002"},
+                            "type": "Event::Endpoint::Threat::Detected",
+                            "groupKey": "threat-grp-001",
+                            "product": "endpoint",
+                            "raisedAt": (NOW - timedelta(hours=3)).isoformat(),
+                            "allowedActions": ["clean", "authPUA"],
+                            "status": "raised",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -11753,6 +13103,29 @@ def main():
     connectors.register("palo_alto", DemoPaloAltoConnector)
     connectors.register("fortinet", DemoFortinetConnector)
     connectors.register("zscaler", DemoZscalerConnector)
+    # MDM & Auth
+    connectors.register("jamf", DemoJamfConnector)
+    connectors.register("duo", DemoDuoConnector)
+    connectors.register("onepassword", DemoOnePasswordConnector)
+    connectors.register("bitwarden", DemoBitwardenConnector)
+    # Cloud threat detection
+    connectors.register("guardduty", DemoGuardDutyConnector)
+    # Observability
+    connectors.register("datadog", DemoDatadogConnector)
+    connectors.register("newrelic", DemoNewRelicConnector)
+    # Code security
+    connectors.register("checkmarx", DemoCheckmarxConnector)
+    connectors.register("sonarqube", DemoSonarQubeConnector)
+    # Email security
+    connectors.register("abnormal_security", DemoAbnormalSecurityConnector)
+    # CASB / DLP
+    connectors.register("netskope", DemoNetskopeConnector)
+    # Scanner
+    connectors.register("nessus", DemoNessusConnector)
+    # HRIS
+    connectors.register("bamboohr", DemoBambooHRConnector)
+    # Endpoint
+    connectors.register("sophos", DemoSophosConnector)
 
     # Create all connector instances
     _connector_configs = [
@@ -11799,6 +13172,20 @@ def main():
         ("demo-palo_alto", SourceType.NETWORK, "palo_alto"),
         ("demo-fortinet", SourceType.NETWORK, "fortinet"),
         ("demo-zscaler", SourceType.NETWORK, "zscaler"),
+        ("demo-jamf", SourceType.MDM, "jamf"),
+        ("demo-duo", SourceType.IAM, "duo"),
+        ("demo-onepassword", SourceType.IAM, "onepassword"),
+        ("demo-bitwarden", SourceType.IAM, "bitwarden"),
+        ("demo-guardduty", SourceType.CLOUD, "guardduty"),
+        ("demo-datadog", SourceType.OBSERVABILITY, "datadog"),
+        ("demo-newrelic", SourceType.OBSERVABILITY, "newrelic"),
+        ("demo-checkmarx", SourceType.CODE, "checkmarx"),
+        ("demo-sonarqube", SourceType.CODE, "sonarqube"),
+        ("demo-abnormal_security", SourceType.EMAIL, "abnormal_security"),
+        ("demo-netskope", SourceType.DLP, "netskope"),
+        ("demo-nessus", SourceType.SCANNER, "nessus"),
+        ("demo-bamboohr", SourceType.HRIS, "bamboohr"),
+        ("demo-sophos", SourceType.EDR, "sophos"),
     ]
     for name, stype, provider in _connector_configs:
         connectors.create(ConnectorConfig(name=name, source_type=stype, provider=provider))
@@ -11848,6 +13235,20 @@ def main():
     normalizers.register(PaloAltoNormalizer())
     normalizers.register(FortinetNormalizer())
     normalizers.register(ZscalerNormalizer())
+    normalizers.register(JamfNormalizer())
+    normalizers.register(DuoNormalizer())
+    normalizers.register(OnePasswordNormalizer())
+    normalizers.register(BitwardenNormalizer())
+    normalizers.register(GuardDutyNormalizer())
+    normalizers.register(DatadogNormalizer())
+    normalizers.register(NewRelicNormalizer())
+    normalizers.register(CheckmarxNormalizer())
+    normalizers.register(SonarQubeNormalizer())
+    normalizers.register(AbnormalSecurityNormalizer())
+    normalizers.register(NetskopeNormalizer())
+    normalizers.register(NessusNormalizer())
+    normalizers.register(BambooHRNormalizer())
+    normalizers.register(SophosNormalizer())
     normalizers.register(GenericNormalizer())  # Generic must be last (fallback)
 
     mapper = ControlMapper()

@@ -137,7 +137,6 @@ def cli(verbose: bool) -> None:
     )
 
 
-
 @cli.command()
 def init() -> None:
     """Initialize the database."""
@@ -3588,7 +3587,6 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
             )
     finally:
         os.unlink(d2_file)
-
 
 
 if __name__ == "__main__":
