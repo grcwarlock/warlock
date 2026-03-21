@@ -8,21 +8,12 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db, require_permission, apply_framework_scope, apply_source_scope
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str, _escape_like, _parse_dt
-from warlock.db.models import (
-    ComplianceDrift,
-    ConnectorRun,
-    ControlMapping,
-    ControlResult,
-    Finding,
-    Issue,
-    PostureSnapshot,
-    User,
-)
+from warlock.db.models import User
+from warlock.db.repository import get_repos
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -196,15 +187,11 @@ def list_frameworks(
 ):
     # S-12: Added pagination defaults
     # S-1: Apply ABAC scope filters
-    base_q = apply_framework_scope(db.query(ControlMapping), ControlMapping, current_user)
-    rows = (
-        base_q.with_entities(
-            ControlMapping.framework, func.count(func.distinct(ControlMapping.control_id))
-        )
-        .group_by(ControlMapping.framework)
-        .offset(offset)
-        .limit(limit)
-        .all()
+    repos = get_repos(db)
+    rows = repos.control_mappings.list_frameworks(
+        scope_filter=lambda q, m: apply_framework_scope(q, m, current_user),
+        limit=limit,
+        offset=offset,
     )
     return [FrameworkResponse(name=fw, control_count=cnt) for fw, cnt in rows]
 
@@ -219,22 +206,12 @@ def list_controls(
 ):
     # S-12: Added pagination defaults
     # S-1: Apply ABAC scope filters
-    base_q = apply_framework_scope(db.query(ControlMapping), ControlMapping, current_user)
-    rows = (
-        base_q.with_entities(
-            ControlMapping.framework,
-            ControlMapping.control_id,
-            ControlMapping.control_family,
-            func.count(ControlResult.id),
-        )
-        .outerjoin(ControlResult, ControlResult.control_mapping_id == ControlMapping.id)
-        .filter(ControlMapping.framework == framework_id)
-        .group_by(
-            ControlMapping.framework, ControlMapping.control_id, ControlMapping.control_family
-        )
-        .offset(offset)
-        .limit(limit)
-        .all()
+    repos = get_repos(db)
+    rows = repos.control_mappings.list_controls(
+        framework_id,
+        scope_filter=lambda q, m: apply_framework_scope(q, m, current_user),
+        limit=limit,
+        offset=offset,
     )
     return [
         ControlResponse(framework=fw, control_id=cid, control_family=cf, result_count=cnt)
@@ -262,34 +239,21 @@ def list_findings(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    query = db.query(Finding)
     # S-1: Apply ABAC scope filters
-    query = apply_source_scope(query, Finding, current_user)
-
-    if framework:
-        # Use a JOIN instead of IN(subquery) for better query plan efficiency.
-        query = (
-            query.join(ControlMapping, ControlMapping.finding_id == Finding.id)
-            .filter(ControlMapping.framework == framework)
-            .distinct()
-        )
-    if severity:
-        query = query.filter(Finding.severity == severity)
-    if observation_type:
-        query = query.filter(Finding.observation_type == observation_type)
-    if source:
-        query = query.filter(Finding.source == source)
-    if provider:
-        query = query.filter(Finding.provider == provider)
-    if resource_type:
-        query = query.filter(Finding.resource_type == resource_type)
-    if date_from:
-        query = query.filter(Finding.observed_at >= _parse_dt(date_from))
-    if date_to:
-        query = query.filter(Finding.observed_at <= _parse_dt(date_to))
-
-    total = query.count()
-    rows = query.order_by(Finding.observed_at.desc()).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    rows, total = repos.findings.list_filtered(
+        scope_filter=lambda q, m: apply_source_scope(q, m, current_user),
+        framework=framework,
+        severity=severity,
+        observation_type=observation_type,
+        source=source,
+        provider=provider,
+        resource_type=resource_type,
+        date_from=_parse_dt(date_from) if date_from else None,
+        date_to=_parse_dt(date_to) if date_to else None,
+        limit=limit,
+        offset=offset,
+    )
 
     items = [
         FindingResponse(
@@ -316,8 +280,11 @@ def get_finding(
     current_user: User = Depends(require_permission("read")),
 ):
     # S-1: Apply ABAC scope filters
-    query = apply_source_scope(db.query(Finding), Finding, current_user)
-    f = query.filter(Finding.id == finding_id).first()
+    repos = get_repos(db)
+    f = repos.findings.get_scoped(
+        finding_id,
+        scope_filter=lambda q, m: apply_source_scope(q, m, current_user),
+    )
     if not f:
         raise HTTPException(status_code=404, detail="Finding not found")
     return FindingResponse(
@@ -353,27 +320,21 @@ def list_results(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    query = db.query(ControlResult)
     # S-1: Apply ABAC scope filters
-    query = apply_framework_scope(query, ControlResult, current_user)
-
-    if framework:
-        query = query.filter(ControlResult.framework == framework)
-    if control_id:
-        query = query.filter(ControlResult.control_id == control_id)
-    if result_status:
-        query = query.filter(ControlResult.status == result_status)
-    if severity:
-        query = query.filter(ControlResult.severity == severity)
-    if assessor:
-        query = query.filter(ControlResult.assessor.ilike(f"%{_escape_like(assessor)}%"))
-    if date_from:
-        query = query.filter(ControlResult.assessed_at >= _parse_dt(date_from))
-    if date_to:
-        query = query.filter(ControlResult.assessed_at <= _parse_dt(date_to))
-
-    total = query.count()
-    rows = query.order_by(ControlResult.assessed_at.desc()).offset(offset).limit(limit).all()
+    repos = get_repos(db)
+    rows, total = repos.control_results.list_filtered(
+        scope_filter=lambda q, m: apply_framework_scope(q, m, current_user),
+        framework=framework,
+        control_id=control_id,
+        result_status=result_status,
+        severity=severity,
+        assessor=assessor,
+        date_from=_parse_dt(date_from) if date_from else None,
+        date_to=_parse_dt(date_to) if date_to else None,
+        limit=limit,
+        offset=offset,
+        escape_like_fn=_escape_like,
+    )
 
     items = [
         ControlResultResponse(
@@ -412,8 +373,10 @@ def results_coverage(
 
     cache_key = f"coverage:{framework}:{current_user.id}"
 
+    repos = get_repos(db)
+
     # Fetch the latest ConnectorRun timestamp cheaply (single scalar query)
-    latest_run: datetime | None = db.query(func.max(ConnectorRun.started_at)).scalar()
+    latest_run: datetime | None = repos.connector_runs.latest_started_at()
     latest_run_str = latest_run.isoformat() if latest_run else ""
 
     cached = get_cache().get(cache_key)
@@ -424,17 +387,10 @@ def results_coverage(
 
     # --- Cache miss: compute fresh ---
     # S-1: Apply ABAC scope filter before aggregation
-    base_q = apply_framework_scope(db.query(ControlResult), ControlResult, current_user)
-    query = base_q.with_entities(
-        ControlResult.framework,
-        ControlResult.status,
-        func.count(ControlResult.id),
-    ).group_by(ControlResult.framework, ControlResult.status)
-
-    if framework:
-        query = query.filter(ControlResult.framework == framework)
-
-    rows = query.all()
+    rows = repos.control_results.coverage_by_status(
+        scope_filter=lambda q, m: apply_framework_scope(q, m, current_user),
+        framework=framework,
+    )
 
     # Aggregate per framework
     fw_stats: dict[str, dict[str, int]] = {}
@@ -524,25 +480,19 @@ def results_posture(
     current_user: User = Depends(require_permission("read")),
 ):
     """Posture scores from the latest snapshot."""
-    query = db.query(PostureSnapshot)
-    # S-1: Apply ABAC scope filters
-    query = apply_framework_scope(query, PostureSnapshot, current_user)
-
-    if framework:
-        query = query.filter(PostureSnapshot.framework == framework)
-    if control_id:
-        query = query.filter(PostureSnapshot.control_id == control_id)
+    repos = get_repos(db)
 
     # Get the latest snapshot date
-    latest_date_subq = db.query(func.max(PostureSnapshot.snapshot_date)).scalar()
-    if latest_date_subq:
-        query = query.filter(PostureSnapshot.snapshot_date == latest_date_subq)
+    latest_date_subq = repos.posture.latest_snapshot_date()
 
-    rows = (
-        query.order_by(PostureSnapshot.framework, PostureSnapshot.control_id)
-        .offset(offset)
-        .limit(limit)
-        .all()
+    # S-1: Apply ABAC scope filters
+    rows = repos.posture.list_latest_posture(
+        scope_filter=lambda q, m: apply_framework_scope(q, m, current_user),
+        framework=framework,
+        control_id=control_id,
+        latest_date=latest_date_subq,
+        limit=limit,
+        offset=offset,
     )
 
     return [
@@ -747,17 +697,17 @@ def get_sufficiency(
 ):
     """Evidence sufficiency scores per control."""
     from warlock.assessors.posture import EvidenceSufficiencyScorer
-    from sqlalchemy import distinct
 
+    repos = get_repos(db)
     scorer = EvidenceSufficiencyScorer()
 
     if framework:
         fw_result = scorer.score_framework(db, framework)
         scores = fw_result.control_scores
     else:
-        fw_rows = db.query(distinct(ControlResult.framework)).all()
+        fw_names = repos.control_results.distinct_frameworks()
         scores = []
-        for (fw,) in fw_rows:
+        for fw in fw_names:
             fw_result = scorer.score_framework(db, fw)
             scores.extend(fw_result.control_scores)
 
@@ -792,25 +742,8 @@ def list_connectors(
     current_user: User = Depends(require_permission("read")),
 ):
     """List connectors with their last run status."""
-    subq = (
-        db.query(
-            ConnectorRun.provider,
-            ConnectorRun.source_type,
-            func.max(ConnectorRun.started_at).label("max_started"),
-        )
-        .group_by(ConnectorRun.provider, ConnectorRun.source_type)
-        .subquery()
-    )
-
-    rows = (
-        db.query(ConnectorRun)
-        .join(
-            subq,
-            (ConnectorRun.provider == subq.c.provider)
-            & (ConnectorRun.started_at == subq.c.max_started),
-        )
-        .all()
-    )
+    repos = get_repos(db)
+    rows = repos.connector_runs.latest_per_connector()
 
     # Also include registered connectors that may not have runs yet
     try:
@@ -854,12 +787,8 @@ def connector_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    last_run = (
-        db.query(ConnectorRun)
-        .filter(ConnectorRun.provider == provider)
-        .order_by(ConnectorRun.started_at.desc())
-        .first()
-    )
+    repos = get_repos(db)
+    last_run = repos.connector_runs.latest_by_provider(provider)
 
     if not last_run:
         # Check if the connector is at least registered
@@ -937,37 +866,8 @@ def get_effectiveness(
     #22 fix: Use a subquery to get the latest snapshot per (framework, control_id)
     instead of loading all rows and deduplicating in Python.
     """
-    from datetime import timedelta
-
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-
-    # Subquery: max snapshot_date per (framework, control_id)
-    latest_sub = (
-        db.query(
-            PostureSnapshot.framework,
-            PostureSnapshot.control_id,
-            func.max(PostureSnapshot.snapshot_date).label("max_date"),
-        )
-        .filter(
-            PostureSnapshot.snapshot_date >= cutoff,
-            PostureSnapshot.uptime_pct.isnot(None),
-        )
-        .group_by(PostureSnapshot.framework, PostureSnapshot.control_id)
-    )
-    if framework:
-        latest_sub = latest_sub.filter(PostureSnapshot.framework == framework)
-    latest_sub = latest_sub.subquery()
-
-    rows = (
-        db.query(PostureSnapshot)
-        .join(
-            latest_sub,
-            (PostureSnapshot.framework == latest_sub.c.framework)
-            & (PostureSnapshot.control_id == latest_sub.c.control_id)
-            & (PostureSnapshot.snapshot_date == latest_sub.c.max_date),
-        )
-        .all()
-    )
+    repos = get_repos(db)
+    rows = repos.posture.effectiveness_latest(framework=framework, days=days)
 
     return [
         {
@@ -1012,18 +912,12 @@ def dashboard_summary(
     if cached is not None:
         return cached
 
+    repos = get_repos(db)
+
     # -----------------------------------------------------------------
     # frameworks: per-framework compliance rate, control counts, trend
     # -----------------------------------------------------------------
-    fw_rows = (
-        db.query(
-            ControlResult.framework,
-            ControlResult.status,
-            func.count(ControlResult.id).label("cnt"),
-        )
-        .group_by(ControlResult.framework, ControlResult.status)
-        .all()
-    )
+    fw_rows = repos.control_results.dashboard_framework_summary()
 
     fw_agg: dict[str, dict] = {}
     for framework_val, status_val, cnt in fw_rows:
@@ -1037,17 +931,9 @@ def dashboard_summary(
 
     # Trend: compare current rate against most-recent posture snapshot rate
     snapshot_rates: dict[str, float] = {}
-    latest_snapshot_date = db.query(func.max(PostureSnapshot.snapshot_date)).scalar()
+    latest_snapshot_date = repos.posture.latest_snapshot_date()
     if latest_snapshot_date:
-        snap_rows = (
-            db.query(
-                PostureSnapshot.framework,
-                func.avg(PostureSnapshot.posture_score).label("avg_score"),
-            )
-            .filter(PostureSnapshot.snapshot_date == latest_snapshot_date)
-            .group_by(PostureSnapshot.framework)
-            .all()
-        )
+        snap_rows = repos.posture.framework_avg_scores_at(latest_snapshot_date)
         for fw_name, avg_score in snap_rows:
             snapshot_rates[fw_name] = float(avg_score or 0)
 
@@ -1095,17 +981,7 @@ def dashboard_summary(
     # -----------------------------------------------------------------
     _severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 
-    top_risk_rows = (
-        db.query(
-            ControlResult.framework,
-            ControlResult.control_id,
-            ControlResult.severity,
-            func.count(ControlResult.id).label("cnt"),
-        )
-        .filter(ControlResult.status == "non_compliant")
-        .group_by(ControlResult.framework, ControlResult.control_id, ControlResult.severity)
-        .all()
-    )
+    top_risk_rows = repos.control_results.top_non_compliant_risks()
 
     top_risk_sorted = sorted(
         top_risk_rows,
@@ -1125,9 +1001,7 @@ def dashboard_summary(
     # -----------------------------------------------------------------
     # recent_drift: last 5 compliance drift events
     # -----------------------------------------------------------------
-    drift_rows = (
-        db.query(ComplianceDrift).order_by(ComplianceDrift.detected_at.desc()).limit(5).all()
-    )
+    drift_rows = repos.compliance_drift.recent(limit=5)
 
     recent_drift = []
     for d in drift_rows:
@@ -1148,12 +1022,7 @@ def dashboard_summary(
     # -----------------------------------------------------------------
     # open_issues: count by priority
     # -----------------------------------------------------------------
-    issue_rows = (
-        db.query(Issue.priority, func.count(Issue.id).label("cnt"))
-        .filter(Issue.status.notin_(["closed", "verified"]))
-        .group_by(Issue.priority)
-        .all()
-    )
+    issue_rows = repos.issues.open_issues_by_priority()
     open_issues: dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0}
     for priority, cnt in issue_rows:
         if priority in open_issues:
@@ -1162,24 +1031,7 @@ def dashboard_summary(
     # -----------------------------------------------------------------
     # connectors: health of most recent run per provider
     # -----------------------------------------------------------------
-    latest_run_subq = (
-        db.query(
-            ConnectorRun.provider,
-            func.max(ConnectorRun.started_at).label("latest_started"),
-        )
-        .group_by(ConnectorRun.provider)
-        .subquery()
-    )
-
-    connector_runs = (
-        db.query(ConnectorRun)
-        .join(
-            latest_run_subq,
-            (ConnectorRun.provider == latest_run_subq.c.provider)
-            & (ConnectorRun.started_at == latest_run_subq.c.latest_started),
-        )
-        .all()
-    )
+    connector_runs = repos.connector_runs.latest_per_provider()
 
     connectors = []
     for run in connector_runs:
@@ -1204,15 +1056,12 @@ def dashboard_summary(
     # -----------------------------------------------------------------
     # last_assessment: most recent pipeline completion
     # -----------------------------------------------------------------
-    last_result = (
-        db.query(ControlResult.assessed_at).order_by(ControlResult.assessed_at.desc()).first()
-    )
+    last_assessed = repos.control_results.last_assessed_at()
     last_assessment = None
-    if last_result and last_result.assessed_at:
-        dt = last_result.assessed_at
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        last_assessment = dt.isoformat()
+    if last_assessed:
+        if last_assessed.tzinfo is None:
+            last_assessed = last_assessed.replace(tzinfo=timezone.utc)
+        last_assessment = last_assessed.isoformat()
 
     # -----------------------------------------------------------------
     # Assemble and cache

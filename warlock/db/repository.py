@@ -9,13 +9,15 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     Attestation,
     AuditEngagement,
+    ComplianceDrift,
     ConnectorRun,
+    ControlMapping,
     ControlResult,
     DataSilo,
     Finding,
@@ -171,6 +173,64 @@ class FindingRepository(BaseRepository):
             .all()
         )
 
+    def list_filtered(
+        self,
+        *,
+        scope_filter: Any = None,
+        framework: str | None = None,
+        severity: str | None = None,
+        observation_type: str | None = None,
+        source: str | None = None,
+        provider: str | None = None,
+        resource_type: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Finding], int]:
+        """Filtered finding list with total count.  Returns (rows, total).
+
+        ``scope_filter`` is an optional callable ``(query, model) -> query``
+        that applies ABAC scope restrictions.
+        """
+        query = self.session.query(Finding)
+        if scope_filter is not None:
+            query = scope_filter(query, Finding)
+        if framework:
+            query = (
+                query.join(ControlMapping, ControlMapping.finding_id == Finding.id)
+                .filter(ControlMapping.framework == framework)
+                .distinct()
+            )
+        if severity:
+            query = query.filter(Finding.severity == severity)
+        if observation_type:
+            query = query.filter(Finding.observation_type == observation_type)
+        if source:
+            query = query.filter(Finding.source == source)
+        if provider:
+            query = query.filter(Finding.provider == provider)
+        if resource_type:
+            query = query.filter(Finding.resource_type == resource_type)
+        if date_from:
+            query = query.filter(Finding.observed_at >= date_from)
+        if date_to:
+            query = query.filter(Finding.observed_at <= date_to)
+        total = query.count()
+        rows = query.order_by(Finding.observed_at.desc()).offset(offset).limit(limit).all()
+        return rows, total
+
+    def get_scoped(
+        self,
+        finding_id: str,
+        scope_filter: Any = None,
+    ) -> Finding | None:
+        """Fetch a single finding with optional ABAC scope filter."""
+        query = self.session.query(Finding)
+        if scope_filter is not None:
+            query = scope_filter(query, Finding)
+        return query.filter(Finding.id == finding_id).first()
+
 
 # ---------------------------------------------------------------------------
 # Control Result Repository
@@ -285,6 +345,117 @@ class ControlResultRepository(BaseRepository):
             .all()
         )
 
+    def list_filtered(
+        self,
+        *,
+        scope_filter: Any = None,
+        framework: str | None = None,
+        control_id: str | None = None,
+        result_status: str | None = None,
+        severity: str | None = None,
+        assessor: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        limit: int = 50,
+        offset: int = 0,
+        escape_like_fn: Any = None,
+    ) -> tuple[list[ControlResult], int]:
+        """Filtered control result list with total count.  Returns (rows, total).
+
+        ``scope_filter`` is an optional callable ``(query, model) -> query``
+        for ABAC scope restrictions.  ``escape_like_fn`` escapes LIKE wildcards.
+        """
+        query = self.session.query(ControlResult)
+        if scope_filter is not None:
+            query = scope_filter(query, ControlResult)
+        if framework:
+            query = query.filter(ControlResult.framework == framework)
+        if control_id:
+            query = query.filter(ControlResult.control_id == control_id)
+        if result_status:
+            query = query.filter(ControlResult.status == result_status)
+        if severity:
+            query = query.filter(ControlResult.severity == severity)
+        if assessor:
+            escaped = escape_like_fn(assessor) if escape_like_fn else assessor
+            query = query.filter(ControlResult.assessor.ilike(f"%{escaped}%"))
+        if date_from:
+            query = query.filter(ControlResult.assessed_at >= date_from)
+        if date_to:
+            query = query.filter(ControlResult.assessed_at <= date_to)
+        total = query.count()
+        rows = query.order_by(ControlResult.assessed_at.desc()).offset(offset).limit(limit).all()
+        return rows, total
+
+    def coverage_by_status(
+        self,
+        *,
+        scope_filter: Any = None,
+        framework: str | None = None,
+    ) -> list[tuple[str, str, int]]:
+        """Aggregate status counts grouped by (framework, status).
+
+        Returns list of (framework, status, count) tuples.
+        ``scope_filter`` applies ABAC restrictions before aggregation.
+        """
+        query = self.session.query(ControlResult)
+        if scope_filter is not None:
+            query = scope_filter(query, ControlResult)
+        query = query.with_entities(
+            ControlResult.framework,
+            ControlResult.status,
+            func.count(ControlResult.id),
+        ).group_by(ControlResult.framework, ControlResult.status)
+        if framework:
+            query = query.filter(ControlResult.framework == framework)
+        return query.all()
+
+    def distinct_frameworks(self) -> list[str]:
+        """Return a list of distinct framework names that have control results."""
+        rows = self.session.query(distinct(ControlResult.framework)).all()
+        return [fw for (fw,) in rows]
+
+    def dashboard_framework_summary(self) -> list[tuple[str, str, int]]:
+        """Per-framework status counts for dashboard.
+
+        Returns list of (framework, status, count) tuples.
+        """
+        return (
+            self.session.query(
+                ControlResult.framework,
+                ControlResult.status,
+                func.count(ControlResult.id).label("cnt"),
+            )
+            .group_by(ControlResult.framework, ControlResult.status)
+            .all()
+        )
+
+    def top_non_compliant_risks(self) -> list[Any]:
+        """Non-compliant controls grouped by (framework, control_id, severity).
+
+        Returns list of rows with .framework, .control_id, .severity, .cnt attrs.
+        """
+        return (
+            self.session.query(
+                ControlResult.framework,
+                ControlResult.control_id,
+                ControlResult.severity,
+                func.count(ControlResult.id).label("cnt"),
+            )
+            .filter(ControlResult.status == "non_compliant")
+            .group_by(ControlResult.framework, ControlResult.control_id, ControlResult.severity)
+            .all()
+        )
+
+    def last_assessed_at(self) -> datetime | None:
+        """Timestamp of the most recent control result assessment."""
+        row = (
+            self.session.query(ControlResult.assessed_at)
+            .order_by(ControlResult.assessed_at.desc())
+            .first()
+        )
+        return row.assessed_at if row else None
+
 
 # ---------------------------------------------------------------------------
 # Posture Snapshot Repository
@@ -355,6 +526,94 @@ class PostureSnapshotRepository(BaseRepository):
             }
             for row in rows
         ]
+
+    def latest_snapshot_date(self) -> datetime | None:
+        """Return the most recent snapshot_date across all snapshots."""
+        return self.session.query(func.max(PostureSnapshot.snapshot_date)).scalar()
+
+    def list_latest_posture(
+        self,
+        *,
+        scope_filter: Any = None,
+        framework: str | None = None,
+        control_id: str | None = None,
+        latest_date: Any = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PostureSnapshot]:
+        """Posture snapshots filtered to the latest snapshot date.
+
+        ``scope_filter`` is an optional callable ``(query, model) -> query``.
+        """
+        query = self.session.query(PostureSnapshot)
+        if scope_filter is not None:
+            query = scope_filter(query, PostureSnapshot)
+        if framework:
+            query = query.filter(PostureSnapshot.framework == framework)
+        if control_id:
+            query = query.filter(PostureSnapshot.control_id == control_id)
+        if latest_date is not None:
+            query = query.filter(PostureSnapshot.snapshot_date == latest_date)
+        return (
+            query.order_by(PostureSnapshot.framework, PostureSnapshot.control_id)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def framework_avg_scores_at(self, snapshot_date: Any) -> list[tuple[str, float]]:
+        """Average posture score per framework at a specific snapshot date.
+
+        Returns list of (framework, avg_score) tuples.
+        """
+        return (
+            self.session.query(
+                PostureSnapshot.framework,
+                func.avg(PostureSnapshot.posture_score).label("avg_score"),
+            )
+            .filter(PostureSnapshot.snapshot_date == snapshot_date)
+            .group_by(PostureSnapshot.framework)
+            .all()
+        )
+
+    def effectiveness_latest(
+        self,
+        *,
+        framework: str | None = None,
+        days: int = 365,
+    ) -> list[PostureSnapshot]:
+        """Latest effectiveness snapshot per (framework, control_id).
+
+        Uses a subquery to get the max snapshot_date per (framework, control_id)
+        where uptime_pct is not null, within the given day window.
+        """
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        latest_sub = (
+            self.session.query(
+                PostureSnapshot.framework,
+                PostureSnapshot.control_id,
+                func.max(PostureSnapshot.snapshot_date).label("max_date"),
+            )
+            .filter(
+                PostureSnapshot.snapshot_date >= cutoff,
+                PostureSnapshot.uptime_pct.isnot(None),
+            )
+            .group_by(PostureSnapshot.framework, PostureSnapshot.control_id)
+        )
+        if framework:
+            latest_sub = latest_sub.filter(PostureSnapshot.framework == framework)
+        latest_sub = latest_sub.subquery()
+
+        return (
+            self.session.query(PostureSnapshot)
+            .join(
+                latest_sub,
+                (PostureSnapshot.framework == latest_sub.c.framework)
+                & (PostureSnapshot.control_id == latest_sub.c.control_id)
+                & (PostureSnapshot.snapshot_date == latest_sub.c.max_date),
+            )
+            .all()
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -458,6 +717,42 @@ class ConnectorRunRepository(BaseRepository):
             .all()
         )
 
+    def latest_started_at(self) -> datetime | None:
+        """Timestamp of the most recent connector run start."""
+        return self.session.query(func.max(ConnectorRun.started_at)).scalar()
+
+    def latest_per_provider(self) -> list[ConnectorRun]:
+        """Most recent run per provider (ignoring source_type).
+
+        Used by dashboard to show connector health per provider.
+        """
+        subq = (
+            self.session.query(
+                ConnectorRun.provider,
+                func.max(ConnectorRun.started_at).label("latest_started"),
+            )
+            .group_by(ConnectorRun.provider)
+            .subquery()
+        )
+        return (
+            self.session.query(ConnectorRun)
+            .join(
+                subq,
+                (ConnectorRun.provider == subq.c.provider)
+                & (ConnectorRun.started_at == subq.c.latest_started),
+            )
+            .all()
+        )
+
+    def latest_by_provider(self, provider: str) -> ConnectorRun | None:
+        """Most recent run for a specific provider."""
+        return (
+            self.session.query(ConnectorRun)
+            .filter(ConnectorRun.provider == provider)
+            .order_by(ConnectorRun.started_at.desc())
+            .first()
+        )
+
 
 # ---------------------------------------------------------------------------
 # Issue Repository
@@ -520,6 +815,19 @@ class IssueRepository(BaseRepository):
             self.session.query(IssueComment)
             .filter(IssueComment.issue_id == issue_id)
             .order_by(IssueComment.created_at.asc())
+            .all()
+        )
+
+    def open_issues_by_priority(self) -> list[tuple[str, int]]:
+        """Count of open issues grouped by priority.
+
+        Returns list of (priority, count) tuples.
+        Excludes issues with status 'closed' or 'verified'.
+        """
+        return (
+            self.session.query(Issue.priority, func.count(Issue.id).label("cnt"))
+            .filter(Issue.status.notin_(["closed", "verified"]))
+            .group_by(Issue.priority)
             .all()
         )
 
@@ -831,6 +1139,100 @@ class DataSiloRepository(BaseRepository):
 
 
 # ---------------------------------------------------------------------------
+# Control Mapping Repository
+# ---------------------------------------------------------------------------
+
+
+class ControlMappingRepository(BaseRepository):
+    """Control mapping queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, ControlMapping)
+
+    def list_frameworks(
+        self,
+        *,
+        scope_filter: Any = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[tuple[str, int]]:
+        """Distinct frameworks with control counts.
+
+        Returns list of (framework_name, control_count) tuples.
+        ``scope_filter`` is an optional callable ``(query, model) -> query``.
+        """
+        query = self.session.query(ControlMapping)
+        if scope_filter is not None:
+            query = scope_filter(query, ControlMapping)
+        return (
+            query.with_entities(
+                ControlMapping.framework,
+                func.count(func.distinct(ControlMapping.control_id)),
+            )
+            .group_by(ControlMapping.framework)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def list_controls(
+        self,
+        framework_id: str,
+        *,
+        scope_filter: Any = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[tuple[str, str, str | None, int]]:
+        """Controls within a framework with result counts.
+
+        Returns list of (framework, control_id, control_family, result_count) tuples.
+        ``scope_filter`` is an optional callable ``(query, model) -> query``.
+        """
+        query = self.session.query(ControlMapping)
+        if scope_filter is not None:
+            query = scope_filter(query, ControlMapping)
+        return (
+            query.with_entities(
+                ControlMapping.framework,
+                ControlMapping.control_id,
+                ControlMapping.control_family,
+                func.count(ControlResult.id),
+            )
+            .outerjoin(ControlResult, ControlResult.control_mapping_id == ControlMapping.id)
+            .filter(ControlMapping.framework == framework_id)
+            .group_by(
+                ControlMapping.framework,
+                ControlMapping.control_id,
+                ControlMapping.control_family,
+            )
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
+# Compliance Drift Repository
+# ---------------------------------------------------------------------------
+
+
+class ComplianceDriftRepository(BaseRepository):
+    """Compliance drift queries."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, ComplianceDrift)
+
+    def recent(self, limit: int = 5) -> list[ComplianceDrift]:
+        """Most recent drift events."""
+        return (
+            self.session.query(ComplianceDrift)
+            .order_by(ComplianceDrift.detected_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+
+# ---------------------------------------------------------------------------
 # Repository factory
 # ---------------------------------------------------------------------------
 
@@ -852,6 +1254,8 @@ class Repositories:
         self.questionnaire_templates = QuestionnaireTemplateRepository(session)
         self.questionnaires = QuestionnaireRepository(session)
         self.data_silos = DataSiloRepository(session)
+        self.control_mappings = ControlMappingRepository(session)
+        self.compliance_drift = ComplianceDriftRepository(session)
 
 
 def get_repos(session: Session) -> Repositories:
