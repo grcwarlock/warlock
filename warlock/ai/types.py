@@ -37,6 +37,8 @@ class AITask(str, Enum):
     EVIDENCE_EVALUATION = "evidence_evaluation"
     EXECUTIVE_REPORT = "executive_report"
     AUDIT_READINESS = "audit_readiness"
+    AGGREGATE_CONTROL_ASSESSMENT = "aggregate_control_assessment"
+    COMPLIANCE_QUERY = "compliance_query"
 
 
 # ---------------------------------------------------------------------------
