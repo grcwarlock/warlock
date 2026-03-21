@@ -357,3 +357,178 @@ class TestLakeWriter:
 
         assert len(writer._raw_event_ids) == 1
         assert len(writer._control_result_ids) == 1
+
+
+class TestRegisterLakeWriter:
+    def test_register_lake_writer_disabled(self, monkeypatch):
+        """Returns None when lake is disabled."""
+        monkeypatch.setenv("WLK_LAKE_ENABLED", "false")
+        import warlock.config as _cfg
+
+        _cfg._settings = None
+        try:
+            from warlock.pipeline.bus import EventBus
+            from warlock.pipeline.loader import register_lake_writer
+
+            bus = EventBus()
+            result = register_lake_writer(bus)
+            assert result is None
+        finally:
+            _cfg._settings = None
+
+    def test_register_lake_writer_enabled(self, monkeypatch, tmp_path):
+        """Returns LakeWriter when lake is enabled."""
+        monkeypatch.setenv("WLK_LAKE_ENABLED", "true")
+        monkeypatch.setenv("WLK_LAKE_PATH", str(tmp_path))
+        import warlock.config as _cfg
+
+        _cfg._settings = None
+        try:
+            from warlock.lake.writer import LakeWriter
+            from warlock.pipeline.bus import EventBus, PipelineEvent
+            from warlock.pipeline.loader import register_lake_writer
+
+            bus = EventBus()
+            writer = register_lake_writer(bus)
+            assert isinstance(writer, LakeWriter)
+
+            # Verify it's wired to the bus
+            bus.publish(
+                PipelineEvent(
+                    event_type="raw_event.created",
+                    payload_id="evt-test",
+                    metadata={},
+                )
+            )
+            assert "evt-test" in writer._raw_event_ids
+        finally:
+            _cfg._settings = None
+
+
+class TestBackfill:
+    def test_backfill_empty_db(self, tmp_path):
+        """Backfill on empty DB produces zero rows."""
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+
+        from warlock.db.models import Base
+        from warlock.lake.backfill import backfill
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            stats = backfill(session, str(tmp_path))
+
+        assert stats.total == 0
+        assert stats.errors == []
+
+    def test_backfill_stats_defaults(self):
+        """BackfillStats has sensible defaults."""
+        from warlock.lake.backfill import BackfillStats
+
+        stats = BackfillStats()
+        assert stats.total == 0
+        assert stats.duration_seconds == 0.0
+        assert stats.errors == []
+
+
+class TestReconciliation:
+    def test_reconcile_empty(self, tmp_path):
+        """Reconciliation with empty OLTP and empty lake passes."""
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+
+        from warlock.db.models import Base
+        from warlock.lake.reconciliation import reconcile
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            result = reconcile(session, str(tmp_path))
+
+        assert result.passed
+        assert len(result.comparisons) == 5
+        for comp in result.comparisons:
+            assert comp.oltp_count == 0
+            assert comp.lake_count == 0
+            assert comp.match
+
+    def test_table_comparison_drift(self):
+        """TableComparison calculates drift correctly."""
+        from warlock.lake.reconciliation import TableComparison
+
+        # Perfect match
+        c = TableComparison(table="test", oltp_count=100, lake_count=100)
+        assert c.drift == 0.0
+        assert c.match
+
+        # 10% drift
+        c = TableComparison(table="test", oltp_count=100, lake_count=90)
+        assert abs(c.drift - 0.1) < 0.001
+        assert not c.match
+
+        # Zero OLTP, non-zero lake
+        c = TableComparison(table="test", oltp_count=0, lake_count=5)
+        assert c.drift == 1.0
+
+        # Both zero
+        c = TableComparison(table="test", oltp_count=0, lake_count=0)
+        assert c.drift == 0.0
+        assert c.match
+
+    def test_reconciliation_result_passed(self):
+        """ReconciliationResult.passed reflects threshold check."""
+        from warlock.lake.reconciliation import ReconciliationResult, TableComparison
+
+        result = ReconciliationResult(threshold=0.05)
+        result.comparisons = [
+            TableComparison(table="a", oltp_count=100, lake_count=100),
+            TableComparison(table="b", oltp_count=100, lake_count=98),
+        ]
+        assert result.passed
+
+        result.comparisons.append(
+            TableComparison(table="c", oltp_count=100, lake_count=50)
+        )
+        assert not result.passed
+        assert len(result.drifted) == 1
+
+
+class TestLakeCLI:
+    def test_lake_init(self, tmp_path, monkeypatch):
+        """Lake init creates directory structure."""
+        monkeypatch.setenv("WLK_LAKE_PATH", str(tmp_path / "test-lake"))
+        import warlock.config as _cfg
+
+        _cfg._settings = None
+        try:
+            from click.testing import CliRunner
+            from warlock.cli import cli
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["lake", "init", "--path", str(tmp_path / "test-lake")])
+            assert result.exit_code == 0
+
+            # Verify directories were created
+            assert (tmp_path / "test-lake" / "raw").is_dir()
+            assert (tmp_path / "test-lake" / "enrichment").is_dir()
+            assert (tmp_path / "test-lake" / "curated" / "control_results").is_dir()
+        finally:
+            _cfg._settings = None
+
+    def test_lake_status_no_dir(self, tmp_path, monkeypatch):
+        """Lake status handles missing directory gracefully."""
+        monkeypatch.setenv("WLK_LAKE_PATH", str(tmp_path / "nonexistent"))
+        import warlock.config as _cfg
+
+        _cfg._settings = None
+        try:
+            from click.testing import CliRunner
+            from warlock.cli import cli
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["lake", "status", "--path", str(tmp_path / "nonexistent")])
+            assert result.exit_code == 0
+            assert "does not exist" in result.output
+        finally:
+            _cfg._settings = None
