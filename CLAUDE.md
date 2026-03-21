@@ -173,8 +173,8 @@ warlock/
   normalizers/   — 59 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (25 assertions) + AI reasoning + OPA evaluator
-  api/           — FastAPI REST API (139 routes, ABAC-scoped)
-  cli.py         — Click CLI (40 commands)
+  api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
+  cli/           — Click CLI package (40 commands, 8 domain modules)
   db/            — SQLAlchemy models (34) + Alembic migrations (11)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
