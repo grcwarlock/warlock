@@ -148,3 +148,25 @@ class TestNATSBackend:
         from warlock.pipeline.queue import _BACKEND_MAP
         # The backend map should include "nats"
         assert "nats" in _BACKEND_MAP, "NATS backend not registered in _BACKEND_MAP"
+
+
+class TestLakeDemo:
+    def test_init_creates_lake_directory(self, tmp_path):
+        from warlock.lake.demo import init_lake
+        lake_path = str(tmp_path / "lake")
+        init_lake(lake_path)
+        assert (tmp_path / "lake").exists()
+        assert (tmp_path / "lake" / "raw").exists()
+        assert (tmp_path / "lake" / "enrichment").exists()
+        assert (tmp_path / "lake" / "curated").exists()
+
+    def test_write_sample_parquet(self, tmp_path):
+        from warlock.lake.demo import write_sample_parquet
+        lake_path = str(tmp_path / "lake")
+        write_sample_parquet(lake_path, "test_table", {"id": ["a"], "value": [1]})
+        from warlock.lake.query import LakeQueryEngine
+        engine = LakeQueryEngine(lake_path)
+        result = engine.query(
+            f"SELECT * FROM read_parquet('{tmp_path}/lake/curated/test_table/*.parquet')"
+        )
+        assert len(result) == 1
