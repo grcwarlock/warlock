@@ -376,6 +376,29 @@ class Settings(BaseSettings):
     lake_storage_backend: str = "local"  # "local", "s3", "azure"
     lake_storage_url: str = ""  # S3 bucket URL or Azure container URL
     lake_storage_region: str = ""  # For S3-compatible stores
+    lake_reads: bool = False  # Master switch for lake reads (requires lake_enabled too)
+    lake_read_overrides: str = "{}"  # JSON dict of per-query overrides {"method_name": false}
+    retention_purge_frozen: bool = False  # Freeze automated OLTP retention purging during Phase 2
+
+    def lake_reads_enabled(self, query_name: str = "") -> bool:
+        """Check if lake reads are enabled for a specific query.
+
+        Returns True only if:
+        1. lake_enabled is True (lake infrastructure exists)
+        2. lake_reads is True (master read switch)
+        3. No per-query override disables this specific query
+        """
+        if not self.lake_enabled or not self.lake_reads:
+            return False
+        if query_name and self.lake_read_overrides != "{}":
+            import json
+            try:
+                overrides = json.loads(self.lake_read_overrides)
+                if query_name in overrides:
+                    return bool(overrides[query_name])
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return True
 
 
 _settings: Settings | None = None
