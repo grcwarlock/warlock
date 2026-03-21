@@ -140,3 +140,11 @@ class TestIcebergCatalog:
         from warlock.lake.catalog import create_catalog
         with pytest.raises(ValueError, match="Unknown catalog type"):
             create_catalog("invalid", "")
+
+
+class TestNATSBackend:
+    def test_nats_backend_registered_in_factory(self):
+        """Verify the factory recognizes 'nats' as a valid backend."""
+        from warlock.pipeline.queue import _BACKEND_MAP
+        # The backend map should include "nats"
+        assert "nats" in _BACKEND_MAP, "NATS backend not registered in _BACKEND_MAP"
