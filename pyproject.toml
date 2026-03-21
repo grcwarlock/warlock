@@ -43,6 +43,7 @@ gcp = [
 ]
 ai = []  # codebase uses raw httpx; no SDK deps needed
 monitoring = ["prometheus-client>=0.20"]
+lake = ["duckdb>=1.1", "pyarrow>=17.0", "pyiceberg[pyarrow]>=0.7"]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4", "pip-audit>=2.7"]
 
 [project.scripts]
