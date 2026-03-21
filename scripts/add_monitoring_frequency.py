@@ -16,75 +16,75 @@ import yaml
 # NIST 800-53 control family frequency defaults based on FedRAMP ConMon
 NIST_FAMILY_DEFAULTS = {
     # High volatility — daily/weekly monitoring
-    "AC": "weekly",     # Access Control — account changes happen constantly
-    "AU": "weekly",     # Audit & Accountability — log review
-    "SI": "weekly",     # System & Info Integrity — vulnerability/malware
-    "IA": "weekly",     # Identification & Authentication — credential status
-    "SC": "monthly",    # System & Communications Protection
-    "CM": "monthly",    # Configuration Management
-    "RA": "monthly",    # Risk Assessment
-    "CA": "monthly",    # Assessment, Authorization & Monitoring
-    "IR": "monthly",    # Incident Response
-    "SA": "monthly",    # System & Services Acquisition
-    "SR": "monthly",    # Supply Chain Risk Management
+    "AC": "weekly",  # Access Control — account changes happen constantly
+    "AU": "weekly",  # Audit & Accountability — log review
+    "SI": "weekly",  # System & Info Integrity — vulnerability/malware
+    "IA": "weekly",  # Identification & Authentication — credential status
+    "SC": "monthly",  # System & Communications Protection
+    "CM": "monthly",  # Configuration Management
+    "RA": "monthly",  # Risk Assessment
+    "CA": "monthly",  # Assessment, Authorization & Monitoring
+    "IR": "monthly",  # Incident Response
+    "SA": "monthly",  # System & Services Acquisition
+    "SR": "monthly",  # Supply Chain Risk Management
     "MA": "quarterly",  # Maintenance
     "MP": "quarterly",  # Media Protection
     "CP": "quarterly",  # Contingency Planning
     "AT": "quarterly",  # Awareness & Training
     "PS": "quarterly",  # Personnel Security
-    "PE": "annual",     # Physical & Environmental Protection
-    "PL": "annual",     # Planning
-    "PM": "annual",     # Program Management
-    "PT": "annual",     # PII Processing & Transparency
+    "PE": "annual",  # Physical & Environmental Protection
+    "PL": "annual",  # Planning
+    "PM": "annual",  # Program Management
+    "PT": "annual",  # PII Processing & Transparency
 }
 
 # Override specific high-volatility controls to daily
 NIST_CONTROL_OVERRIDES = {
-    "AC-2": "daily",      # Account management — user provisioning/deprovisioning
-    "AC-6": "weekly",     # Least privilege
-    "AU-6": "daily",      # Audit review, analysis, and reporting
-    "AU-6(1)": "daily",   # Automated process integration
-    "SI-4": "daily",      # System monitoring
-    "SI-2": "weekly",     # Flaw remediation
-    "SI-3": "daily",      # Malicious code protection
-    "IA-5": "weekly",     # Authenticator management (password/MFA)
-    "RA-5": "weekly",     # Vulnerability monitoring and scanning
-    "CA-7": "weekly",     # Continuous monitoring (meta — monitors itself)
-    "CM-6": "weekly",     # Configuration settings
-    "CM-3": "weekly",     # Configuration change control
+    "AC-2": "daily",  # Account management — user provisioning/deprovisioning
+    "AC-6": "weekly",  # Least privilege
+    "AU-6": "daily",  # Audit review, analysis, and reporting
+    "AU-6(1)": "daily",  # Automated process integration
+    "SI-4": "daily",  # System monitoring
+    "SI-2": "weekly",  # Flaw remediation
+    "SI-3": "daily",  # Malicious code protection
+    "IA-5": "weekly",  # Authenticator management (password/MFA)
+    "RA-5": "weekly",  # Vulnerability monitoring and scanning
+    "CA-7": "weekly",  # Continuous monitoring (meta — monitors itself)
+    "CM-6": "weekly",  # Configuration settings
+    "CM-3": "weekly",  # Configuration change control
 }
 
 # SOC 2 TSC defaults
 SOC2_DEFAULTS = {
     "CC1": "quarterly",  # Control environment
     "CC2": "quarterly",  # Communication & information
-    "CC3": "monthly",    # Risk assessment
-    "CC4": "monthly",    # Monitoring activities
-    "CC5": "monthly",    # Control activities
-    "CC6": "weekly",     # Logical & physical access
-    "CC7": "weekly",     # System operations
-    "CC8": "monthly",    # Change management
+    "CC3": "monthly",  # Risk assessment
+    "CC4": "monthly",  # Monitoring activities
+    "CC5": "monthly",  # Control activities
+    "CC6": "weekly",  # Logical & physical access
+    "CC7": "weekly",  # System operations
+    "CC8": "monthly",  # Change management
     "CC9": "quarterly",  # Risk mitigation
-    "A1": "monthly",     # Availability
-    "C1": "monthly",     # Confidentiality
-    "PI1": "monthly",    # Processing integrity
-    "P1": "quarterly",   # Privacy
+    "A1": "monthly",  # Availability
+    "C1": "monthly",  # Confidentiality
+    "PI1": "monthly",  # Processing integrity
+    "P1": "quarterly",  # Privacy
 }
 
 # ISO 27001 defaults — most are monthly, some exceptions
 ISO27001_DEFAULTS = {
-    "A.5": "quarterly",   # Information security policies
-    "A.6": "monthly",     # Organization of information security
-    "A.7": "monthly",     # Human resource security
-    "A.8": "monthly",     # Asset management
-    "A.9": "weekly",      # Access control
-    "A.10": "monthly",    # Cryptography
-    "A.11": "annual",     # Physical and environmental security
-    "A.12": "weekly",     # Operations security
-    "A.13": "monthly",    # Communications security
-    "A.14": "monthly",    # System acquisition, development, maintenance
+    "A.5": "quarterly",  # Information security policies
+    "A.6": "monthly",  # Organization of information security
+    "A.7": "monthly",  # Human resource security
+    "A.8": "monthly",  # Asset management
+    "A.9": "weekly",  # Access control
+    "A.10": "monthly",  # Cryptography
+    "A.11": "annual",  # Physical and environmental security
+    "A.12": "weekly",  # Operations security
+    "A.13": "monthly",  # Communications security
+    "A.14": "monthly",  # System acquisition, development, maintenance
     "A.15": "quarterly",  # Supplier relationships
-    "A.16": "weekly",     # Info security incident management
+    "A.16": "weekly",  # Info security incident management
     "A.17": "quarterly",  # Business continuity
     "A.18": "quarterly",  # Compliance
 }

@@ -121,6 +121,18 @@ class Settings(BaseSettings):
     ovh_service_name: str = ""
     ovh_endpoint: str = "eu.api.ovh.com"
 
+    # Cloud — AWS GuardDuty
+    guardduty_enabled: bool = False
+    guardduty_detector_id: str = ""
+
+    # Observability — Datadog
+    datadog_enabled: bool = False
+    datadog_site: str = "datadoghq.com"
+
+    # Observability — New Relic
+    newrelic_enabled: bool = False
+    newrelic_account_id: str = ""
+
     # Cloud — Cloudflare
     cloudflare_enabled: bool = False
     cloudflare_account_id: str = ""
@@ -149,6 +161,15 @@ class Settings(BaseSettings):
     # Training — KnowBe4
     knowbe4_enabled: bool = False
     knowbe4_region: str = "us"
+
+    # Code Security — Checkmarx
+    checkmarx_enabled: bool = False
+    checkmarx_base_url: str = ""
+    checkmarx_client_id: str = ""
+
+    # Code Security — SonarQube
+    sonarqube_enabled: bool = False
+    sonarqube_base_url: str = ""
 
     # Code Security — Snyk
     snyk_enabled: bool = False
@@ -182,6 +203,42 @@ class Settings(BaseSettings):
     # Privacy — OneTrust
     onetrust_enabled: bool = False
     onetrust_host: str = ""
+
+    # Email Security — Abnormal Security
+    abnormal_security_enabled: bool = False
+
+    # CASB — Netskope
+    netskope_enabled: bool = False
+    netskope_tenant_url: str = ""
+
+    # Scanner — Nessus (standalone)
+    nessus_enabled: bool = False
+    nessus_base_url: str = ""
+
+    # HRIS — BambooHR
+    bamboohr_enabled: bool = False
+    bamboohr_subdomain: str = ""
+
+    # EDR — Sophos
+    sophos_enabled: bool = False
+
+    # MDM — Jamf
+    jamf_enabled: bool = False
+    jamf_base_url: str = ""
+    jamf_client_id: str = ""
+    jamf_client_secret: str = ""
+
+    # IAM — Duo Security
+    duo_enabled: bool = False
+    duo_api_host: str = ""
+
+    # IAM — 1Password
+    onepassword_enabled: bool = False
+    onepassword_domain: str = ""
+
+    # IAM — Bitwarden
+    bitwarden_enabled: bool = False
+    bitwarden_base_url: str = ""
 
     # Email Security — Proofpoint
     proofpoint_enabled: bool = False

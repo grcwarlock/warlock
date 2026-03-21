@@ -5,7 +5,7 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (44 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 1: Connectors (58 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (42 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
@@ -33,7 +33,7 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (44)
+## Connectors (58)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne
@@ -42,11 +42,15 @@ Every finding traces back to its raw API response. Every control result traces b
 **CSPM:** Prisma Cloud
 **SIEM:** Sentinel, Splunk, Elastic
 **Network Security:** Palo Alto Networks, Fortinet FortiGate, Zscaler
-**HRIS:** Workday | **ITSM:** ServiceNow | **Training:** KnowBe4
-**Code Security:** Snyk, GitHub Advanced Security
-**DLP:** Microsoft Purview | **Backup:** Veeam | **MDM:** Microsoft Intune
-**GRC:** Confluence, OneTrust | **Physical:** Verkada | **Email:** Proofpoint
+**HRIS:** Workday, BambooHR | **ITSM:** ServiceNow | **Training:** KnowBe4
+**Code Security:** Snyk, GitHub Advanced Security, Checkmarx, SonarQube
+**DLP:** Microsoft Purview, Netskope | **Backup:** Veeam | **MDM:** Microsoft Intune, Jamf
+**MFA / Password:** Duo Security, 1Password, Bitwarden
+**Observability:** Datadog, New Relic | **Cloud Threat:** AWS GuardDuty
+**Email Security:** Proofpoint, Abnormal Security
+**GRC:** Confluence, OneTrust | **Physical:** Verkada | **EDR:** Sophos
 **Third-Party Risk:** SecurityScorecard | **Container:** Kubernetes | **AI Tracking:** MLflow
+**Scanner:** Nessus (standalone)
 **Ingest:** Webhook (generic)
 
 ## Quick Start
@@ -252,8 +256,8 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 44 source connectors (Stage 1)
-├── normalizers/          # 45 normalizers (Stage 2)
+├── connectors/           # 58 source connectors (Stage 1)
+├── normalizers/          # 59 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)

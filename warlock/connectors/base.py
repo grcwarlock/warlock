@@ -44,6 +44,7 @@ class SourceType(str, Enum):
     MDM = "mdm"  # Intune, Jamf
     GRC = "grc"  # OneTrust, Drata, Confluence
     EMAIL = "email"  # Proofpoint, Mimecast
+    OBSERVABILITY = "observability"  # Datadog, New Relic
     NETWORK = "network"  # Palo Alto, Fortinet, Zscaler
     CUSTOM = "custom"
 

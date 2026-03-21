@@ -209,10 +209,10 @@ if $SEED_OK; then
     CONN_COUNT=$(echo "$SEED_OUTPUT" | grep -oE "Connectors succeeded:\s+[0-9]+" | grep -oE "[0-9]+" || echo "0")
     CONN_FAIL=$(echo "$SEED_OUTPUT" | grep -oE "Connectors failed:\s+[0-9]+" | grep -oE "[0-9]+" || echo "?")
     echo "  Connectors succeeded: ${CONN_COUNT}, failed: ${CONN_FAIL}"
-    if [[ "$CONN_COUNT" -ge 43 && "$CONN_FAIL" == "0" ]]; then
+    if [[ "$CONN_COUNT" -ge 55 && "$CONN_FAIL" == "0" ]]; then
         section_pass
     else
-        echo "  Expected >= 43 succeeded, 0 failed"
+        echo "  Expected >= 55 succeeded, 0 failed"
         section_fail
     fi
 else
