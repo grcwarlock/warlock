@@ -13028,6 +13028,1593 @@ class DemoSophosConnector(BaseConnector):
         return result
 
 
+class DemoJumpCloudConnector(BaseConnector):
+    """Simulates JumpCloud IAM collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="jumpcloud",
+            source_type=SourceType.IAM,
+            provider="jumpcloud",
+        )
+        result.events.append(
+            RawEventData(
+                source="jumpcloud",
+                source_type=SourceType.IAM,
+                provider="jumpcloud",
+                event_type="jumpcloud_users",
+                raw_data={
+                    "users": [
+                        {
+                            "id": "jc-usr-001",
+                            "username": "alice.chen",
+                            "email": "alice.chen@acme.com",
+                            "mfa_enabled": True,
+                            "suspended": False,
+                            "created": "2024-01-15T00:00:00Z",
+                            "last_login": (NOW - timedelta(hours=2)).isoformat(),
+                        },
+                        {
+                            "id": "jc-usr-002",
+                            "username": "bob.martinez",
+                            "email": "bob.martinez@acme.com",
+                            "mfa_enabled": False,
+                            "suspended": False,
+                            "created": "2024-03-10T00:00:00Z",
+                            "last_login": (NOW - timedelta(days=1)).isoformat(),
+                        },
+                        {
+                            "id": "jc-usr-003",
+                            "username": "carol.wang",
+                            "email": "carol.wang@acme.com",
+                            "mfa_enabled": True,
+                            "suspended": True,
+                            "created": "2023-11-20T00:00:00Z",
+                            "last_login": (NOW - timedelta(days=90)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="jumpcloud",
+                source_type=SourceType.IAM,
+                provider="jumpcloud",
+                event_type="jumpcloud_devices",
+                raw_data={
+                    "devices": [
+                        {
+                            "id": "jc-dev-001",
+                            "hostname": "ENG-MBP-101",
+                            "os": "macOS 14.3",
+                            "disk_encryption": True,
+                            "agent_version": "2.8.1",
+                            "last_contact": NOW.isoformat(),
+                        },
+                        {
+                            "id": "jc-dev-002",
+                            "hostname": "SALES-WIN-055",
+                            "os": "Windows 11",
+                            "disk_encryption": False,
+                            "agent_version": "2.7.0",
+                            "last_contact": (NOW - timedelta(hours=6)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoAuth0Connector(BaseConnector):
+    """Simulates Auth0 IAM collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="auth0",
+            source_type=SourceType.IAM,
+            provider="auth0",
+        )
+        result.events.append(
+            RawEventData(
+                source="auth0",
+                source_type=SourceType.IAM,
+                provider="auth0",
+                event_type="auth0_users",
+                raw_data={
+                    "users": [
+                        {
+                            "user_id": "auth0|usr-001",
+                            "email": "alice.chen@acme.com",
+                            "name": "Alice Chen",
+                            "mfa_enrolled": True,
+                            "blocked": False,
+                            "last_login": (NOW - timedelta(hours=1)).isoformat(),
+                            "logins_count": 342,
+                        },
+                        {
+                            "user_id": "auth0|usr-002",
+                            "email": "bob.martinez@acme.com",
+                            "name": "Bob Martinez",
+                            "mfa_enrolled": False,
+                            "blocked": False,
+                            "last_login": (NOW - timedelta(days=2)).isoformat(),
+                            "logins_count": 87,
+                        },
+                        {
+                            "user_id": "auth0|usr-003",
+                            "email": "eve.malicious@external.com",
+                            "name": "Eve Malicious",
+                            "mfa_enrolled": False,
+                            "blocked": True,
+                            "last_login": (NOW - timedelta(days=30)).isoformat(),
+                            "logins_count": 5,
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="auth0",
+                source_type=SourceType.IAM,
+                provider="auth0",
+                event_type="auth0_connections",
+                raw_data={
+                    "connections": [
+                        {
+                            "id": "con-001",
+                            "name": "Username-Password-Authentication",
+                            "strategy": "auth0",
+                            "enabled_clients": ["app-web", "app-mobile"],
+                        },
+                        {
+                            "id": "con-002",
+                            "name": "google-oauth2",
+                            "strategy": "google-oauth2",
+                            "enabled_clients": ["app-web"],
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="auth0",
+                source_type=SourceType.IAM,
+                provider="auth0",
+                event_type="auth0_logs",
+                raw_data={
+                    "logs": [
+                        {
+                            "log_id": "log-001",
+                            "type": "s",
+                            "description": "Successful login",
+                            "user_id": "auth0|usr-001",
+                            "ip": "203.0.113.42",
+                            "date": (NOW - timedelta(hours=1)).isoformat(),
+                        },
+                        {
+                            "log_id": "log-002",
+                            "type": "f",
+                            "description": "Failed login: wrong password",
+                            "user_id": "auth0|usr-003",
+                            "ip": "198.51.100.99",
+                            "date": (NOW - timedelta(minutes=30)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGitLabConnector(BaseConnector):
+    """Simulates GitLab code security collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="gitlab",
+            source_type=SourceType.CODE,
+            provider="gitlab",
+        )
+        result.events.append(
+            RawEventData(
+                source="gitlab",
+                source_type=SourceType.CODE,
+                provider="gitlab",
+                event_type="gitlab_projects",
+                raw_data={
+                    "projects": [
+                        {
+                            "id": 101,
+                            "name": "platform-api",
+                            "visibility": "private",
+                            "merge_requests_enabled": True,
+                            "approvals_before_merge": 2,
+                            "default_branch": "main",
+                            "last_activity_at": NOW.isoformat(),
+                        },
+                        {
+                            "id": 102,
+                            "name": "public-docs",
+                            "visibility": "public",
+                            "merge_requests_enabled": True,
+                            "approvals_before_merge": 1,
+                            "default_branch": "main",
+                            "last_activity_at": (NOW - timedelta(days=3)).isoformat(),
+                        },
+                        {
+                            "id": 103,
+                            "name": "data-pipeline",
+                            "visibility": "internal",
+                            "merge_requests_enabled": True,
+                            "approvals_before_merge": 0,
+                            "default_branch": "main",
+                            "last_activity_at": (NOW - timedelta(hours=8)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="gitlab",
+                source_type=SourceType.CODE,
+                provider="gitlab",
+                event_type="gitlab_vulnerabilities",
+                raw_data={
+                    "vulnerabilities": [
+                        {
+                            "id": "gl-vuln-001",
+                            "title": "SQL Injection in user search endpoint",
+                            "severity": "critical",
+                            "state": "detected",
+                            "project_id": 101,
+                            "scanner": "sast",
+                            "location": {"file": "src/api/users.py", "line": 142},
+                            "detected_at": (NOW - timedelta(days=5)).isoformat(),
+                        },
+                        {
+                            "id": "gl-vuln-002",
+                            "title": "Outdated dependency with known CVE",
+                            "severity": "high",
+                            "state": "detected",
+                            "project_id": 103,
+                            "scanner": "dependency_scanning",
+                            "location": {"file": "requirements.txt", "line": 15},
+                            "detected_at": (NOW - timedelta(days=2)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoJiraConnector(BaseConnector):
+    """Simulates Jira ITSM collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="jira",
+            source_type=SourceType.ITSM,
+            provider="jira",
+        )
+        result.events.append(
+            RawEventData(
+                source="jira",
+                source_type=SourceType.ITSM,
+                provider="jira",
+                event_type="jira_security_bugs",
+                raw_data={
+                    "issues": [
+                        {
+                            "key": "SEC-101",
+                            "summary": "XSS vulnerability in admin panel",
+                            "priority": "Critical",
+                            "status": "Open",
+                            "assignee": "alice.chen@acme.com",
+                            "created": (NOW - timedelta(days=14)).isoformat(),
+                            "due_date": (NOW - timedelta(days=7)).isoformat(),
+                            "labels": ["security", "vulnerability"],
+                        },
+                        {
+                            "key": "SEC-102",
+                            "summary": "Upgrade TLS to 1.3 on API gateway",
+                            "priority": "High",
+                            "status": "In Progress",
+                            "assignee": "bob.martinez@acme.com",
+                            "created": (NOW - timedelta(days=5)).isoformat(),
+                            "due_date": (NOW + timedelta(days=10)).isoformat(),
+                            "labels": ["security", "infrastructure"],
+                        },
+                        {
+                            "key": "SEC-103",
+                            "summary": "Implement CSP headers on web app",
+                            "priority": "Medium",
+                            "status": "To Do",
+                            "assignee": None,
+                            "created": (NOW - timedelta(days=2)).isoformat(),
+                            "due_date": (NOW + timedelta(days=30)).isoformat(),
+                            "labels": ["security", "hardening"],
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="jira",
+                source_type=SourceType.ITSM,
+                provider="jira",
+                event_type="jira_sla_status",
+                raw_data={
+                    "sla_records": [
+                        {
+                            "issue_key": "SEC-101",
+                            "sla_name": "Critical Bug Resolution",
+                            "target_hours": 72,
+                            "elapsed_hours": 336,
+                            "breached": True,
+                        },
+                        {
+                            "issue_key": "SEC-102",
+                            "sla_name": "High Bug Resolution",
+                            "target_hours": 168,
+                            "elapsed_hours": 120,
+                            "breached": False,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoSlackConnector(BaseConnector):
+    """Simulates Slack collaboration collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="slack",
+            source_type=SourceType.COLLABORATION,
+            provider="slack",
+        )
+        result.events.append(
+            RawEventData(
+                source="slack",
+                source_type=SourceType.COLLABORATION,
+                provider="slack",
+                event_type="slack_workspace",
+                raw_data={
+                    "workspace": {
+                        "id": "T0001ACME",
+                        "name": "Acme Corp",
+                        "domain": "acme-corp",
+                        "two_factor_required": False,
+                        "sso_enabled": True,
+                        "message_retention_days": 365,
+                        "file_retention_days": 365,
+                    }
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="slack",
+                source_type=SourceType.COLLABORATION,
+                provider="slack",
+                event_type="slack_users",
+                raw_data={
+                    "users": [
+                        {
+                            "id": "U001",
+                            "name": "alice.chen",
+                            "email": "alice.chen@acme.com",
+                            "is_admin": True,
+                            "is_owner": False,
+                            "has_2fa": True,
+                            "is_sso": True,
+                            "status": "active",
+                        },
+                        {
+                            "id": "U002",
+                            "name": "bob.martinez",
+                            "email": "bob.martinez@acme.com",
+                            "is_admin": False,
+                            "is_owner": False,
+                            "has_2fa": True,
+                            "is_sso": True,
+                            "status": "active",
+                        },
+                        {
+                            "id": "U003",
+                            "name": "contractor.dave",
+                            "email": "dave@external-vendor.com",
+                            "is_admin": False,
+                            "is_owner": False,
+                            "has_2fa": False,
+                            "is_sso": False,
+                            "status": "active",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGoogleWorkspaceConnector(BaseConnector):
+    """Simulates Google Workspace collaboration collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="google_workspace",
+            source_type=SourceType.COLLABORATION,
+            provider="google",
+        )
+        result.events.append(
+            RawEventData(
+                source="google_workspace",
+                source_type=SourceType.COLLABORATION,
+                provider="google",
+                event_type="gws_users",
+                raw_data={
+                    "users": [
+                        {
+                            "id": "gws-usr-001",
+                            "primaryEmail": "alice.chen@acme.com",
+                            "name": {"fullName": "Alice Chen"},
+                            "isEnrolledIn2Sv": True,
+                            "suspended": False,
+                            "lastLoginTime": (NOW - timedelta(hours=3)).isoformat(),
+                            "isAdmin": True,
+                        },
+                        {
+                            "id": "gws-usr-002",
+                            "primaryEmail": "bob.martinez@acme.com",
+                            "name": {"fullName": "Bob Martinez"},
+                            "isEnrolledIn2Sv": False,
+                            "suspended": False,
+                            "lastLoginTime": (NOW - timedelta(days=1)).isoformat(),
+                            "isAdmin": False,
+                        },
+                        {
+                            "id": "gws-usr-003",
+                            "primaryEmail": "carol.wang@acme.com",
+                            "name": {"fullName": "Carol Wang"},
+                            "isEnrolledIn2Sv": True,
+                            "suspended": True,
+                            "lastLoginTime": (NOW - timedelta(days=60)).isoformat(),
+                            "isAdmin": False,
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="google_workspace",
+                source_type=SourceType.COLLABORATION,
+                provider="google",
+                event_type="gws_admin_activity",
+                raw_data={
+                    "activities": [
+                        {
+                            "id": "gws-act-001",
+                            "actor": {"email": "alice.chen@acme.com"},
+                            "event_name": "CHANGE_APPLICATION_SETTING",
+                            "parameters": {"name": "ENABLE_LESS_SECURE_APPS", "value": "true"},
+                            "time": (NOW - timedelta(hours=12)).isoformat(),
+                        },
+                        {
+                            "id": "gws-act-002",
+                            "actor": {"email": "alice.chen@acme.com"},
+                            "event_name": "ADD_GROUP_MEMBER",
+                            "parameters": {"group": "security-team@acme.com", "member": "bob.martinez@acme.com"},
+                            "time": (NOW - timedelta(hours=6)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoSemgrepConnector(BaseConnector):
+    """Simulates Semgrep code security collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="semgrep",
+            source_type=SourceType.CODE,
+            provider="semgrep",
+        )
+        result.events.append(
+            RawEventData(
+                source="semgrep",
+                source_type=SourceType.CODE,
+                provider="semgrep",
+                event_type="semgrep_findings",
+                raw_data={
+                    "findings": [
+                        {
+                            "id": "sg-find-001",
+                            "rule_id": "python.lang.security.audit.dangerous-subprocess-use",
+                            "severity": "critical",
+                            "message": "SQL injection via string concatenation in query builder",
+                            "path": "src/db/queries.py",
+                            "line": 88,
+                            "repository": "acme/platform-api",
+                            "state": "open",
+                            "first_seen": (NOW - timedelta(days=10)).isoformat(),
+                        },
+                        {
+                            "id": "sg-find-002",
+                            "rule_id": "python.flask.security.xss.direct-use-of-jinja2",
+                            "severity": "high",
+                            "message": "Potential XSS via unescaped template variable",
+                            "path": "src/web/templates.py",
+                            "line": 34,
+                            "repository": "acme/platform-api",
+                            "state": "open",
+                            "first_seen": (NOW - timedelta(days=7)).isoformat(),
+                        },
+                        {
+                            "id": "sg-find-003",
+                            "rule_id": "python.lang.best-practice.open-never-closed",
+                            "severity": "medium",
+                            "message": "File handle opened but never closed",
+                            "path": "src/utils/export.py",
+                            "line": 12,
+                            "repository": "acme/data-pipeline",
+                            "state": "open",
+                            "first_seen": (NOW - timedelta(days=3)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoTrivyConnector(BaseConnector):
+    """Simulates Trivy vulnerability scanner collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="trivy",
+            source_type=SourceType.SCANNER,
+            provider="trivy",
+        )
+        result.events.append(
+            RawEventData(
+                source="trivy",
+                source_type=SourceType.SCANNER,
+                provider="trivy",
+                event_type="trivy_container_vulns",
+                raw_data={
+                    "target": "acme/platform-api:latest",
+                    "vulnerabilities": [
+                        {
+                            "VulnerabilityID": "CVE-2024-29018",
+                            "PkgName": "libcurl",
+                            "InstalledVersion": "7.88.1",
+                            "FixedVersion": "8.6.0",
+                            "Severity": "CRITICAL",
+                            "Title": "libcurl HSTS bypass via IDN",
+                            "Description": "HTTP Strict Transport Security bypass in libcurl",
+                        },
+                        {
+                            "VulnerabilityID": "CVE-2024-28849",
+                            "PkgName": "follow-redirects",
+                            "InstalledVersion": "1.15.3",
+                            "FixedVersion": "1.15.6",
+                            "Severity": "HIGH",
+                            "Title": "Credential leak on cross-origin redirect",
+                            "Description": "Authorization header leaked to third-party site on redirect",
+                        },
+                        {
+                            "VulnerabilityID": "CVE-2024-22365",
+                            "PkgName": "pam",
+                            "InstalledVersion": "1.5.2",
+                            "FixedVersion": "1.5.3",
+                            "Severity": "MEDIUM",
+                            "Title": "Linux-PAM denial of service",
+                            "Description": "Local DoS via pam_namespace.so misconfiguration",
+                        },
+                    ],
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="trivy",
+                source_type=SourceType.SCANNER,
+                provider="trivy",
+                event_type="trivy_iac_misconfigs",
+                raw_data={
+                    "misconfigurations": [
+                        {
+                            "ID": "AVD-AWS-0086",
+                            "Title": "S3 bucket has public access enabled",
+                            "Severity": "HIGH",
+                            "Resource": "aws_s3_bucket.data_export",
+                            "File": "terraform/s3.tf",
+                            "Line": 15,
+                        },
+                        {
+                            "ID": "AVD-AWS-0107",
+                            "Title": "RDS instance not encrypted at rest",
+                            "Severity": "HIGH",
+                            "Resource": "aws_db_instance.main",
+                            "File": "terraform/rds.tf",
+                            "Line": 8,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGitGuardianConnector(BaseConnector):
+    """Simulates GitGuardian code security collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="gitguardian",
+            source_type=SourceType.CODE,
+            provider="gitguardian",
+        )
+        result.events.append(
+            RawEventData(
+                source="gitguardian",
+                source_type=SourceType.CODE,
+                provider="gitguardian",
+                event_type="gitguardian_incidents",
+                raw_data={
+                    "incidents": [
+                        {
+                            "id": "gg-inc-001",
+                            "date": (NOW - timedelta(days=2)).isoformat(),
+                            "detector_name": "AWS Keys",
+                            "status": "OPEN",
+                            "severity": "critical",
+                            "secret_hash": "a1b2c3d4e5f6",
+                            "repository": "acme/infrastructure",
+                            "file_path": "deploy/config.py",
+                            "author": "bob.martinez@acme.com",
+                            "validity": "valid",
+                        },
+                        {
+                            "id": "gg-inc-002",
+                            "date": (NOW - timedelta(days=15)).isoformat(),
+                            "detector_name": "Slack Bot Token",
+                            "status": "RESOLVED",
+                            "severity": "high",
+                            "secret_hash": "f6e5d4c3b2a1",
+                            "repository": "acme/chatbot",
+                            "file_path": "src/integrations/slack.py",
+                            "author": "alice.chen@acme.com",
+                            "validity": "revoked",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoVeracodeConnector(BaseConnector):
+    """Simulates Veracode code security collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="veracode",
+            source_type=SourceType.CODE,
+            provider="veracode",
+        )
+        result.events.append(
+            RawEventData(
+                source="veracode",
+                source_type=SourceType.CODE,
+                provider="veracode",
+                event_type="veracode_applications",
+                raw_data={
+                    "applications": [
+                        {
+                            "guid": "vc-app-001",
+                            "profile": {"name": "Platform API"},
+                            "policy_compliance_status": "PASS",
+                            "last_scan_date": (NOW - timedelta(days=1)).isoformat(),
+                            "business_criticality": "Very High",
+                        },
+                        {
+                            "guid": "vc-app-002",
+                            "profile": {"name": "Data Pipeline"},
+                            "policy_compliance_status": "DID_NOT_PASS",
+                            "last_scan_date": (NOW - timedelta(days=7)).isoformat(),
+                            "business_criticality": "High",
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="veracode",
+                source_type=SourceType.CODE,
+                provider="veracode",
+                event_type="veracode_findings",
+                raw_data={
+                    "findings": [
+                        {
+                            "issue_id": "vc-find-001",
+                            "scan_type": "STATIC",
+                            "severity": 5,
+                            "severity_label": "Very High",
+                            "cwe_id": 89,
+                            "cwe_name": "SQL Injection",
+                            "file_path": "src/db/queries.py",
+                            "line": 142,
+                            "finding_status": "OPEN",
+                            "app_guid": "vc-app-002",
+                        },
+                        {
+                            "issue_id": "vc-find-002",
+                            "scan_type": "DYNAMIC",
+                            "severity": 3,
+                            "severity_label": "Medium",
+                            "cwe_id": 79,
+                            "cwe_name": "Cross-site Scripting",
+                            "file_path": "src/web/views.py",
+                            "line": 55,
+                            "finding_status": "OPEN",
+                            "app_guid": "vc-app-001",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoTerraformCloudConnector(BaseConnector):
+    """Simulates Terraform Cloud infrastructure collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="terraform_cloud",
+            source_type=SourceType.INFRASTRUCTURE,
+            provider="hashicorp",
+        )
+        result.events.append(
+            RawEventData(
+                source="terraform_cloud",
+                source_type=SourceType.INFRASTRUCTURE,
+                provider="hashicorp",
+                event_type="tfc_workspaces",
+                raw_data={
+                    "workspaces": [
+                        {
+                            "id": "ws-prod-001",
+                            "name": "production-infra",
+                            "environment": "production",
+                            "terraform_version": "1.7.3",
+                            "auto_apply": False,
+                            "resource_count": 142,
+                            "current_run_status": "applied",
+                            "drift_detected": False,
+                            "updated_at": (NOW - timedelta(hours=4)).isoformat(),
+                        },
+                        {
+                            "id": "ws-stg-001",
+                            "name": "staging-infra",
+                            "environment": "staging",
+                            "terraform_version": "1.6.6",
+                            "auto_apply": True,
+                            "resource_count": 98,
+                            "current_run_status": "planned",
+                            "drift_detected": True,
+                            "updated_at": (NOW - timedelta(days=2)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="terraform_cloud",
+                source_type=SourceType.INFRASTRUCTURE,
+                provider="hashicorp",
+                event_type="tfc_policy_checks",
+                raw_data={
+                    "policy_checks": [
+                        {
+                            "id": "polchk-001",
+                            "workspace_id": "ws-prod-001",
+                            "result": "passed",
+                            "policy_set": "security-policies",
+                            "checked_at": (NOW - timedelta(hours=4)).isoformat(),
+                        },
+                        {
+                            "id": "polchk-002",
+                            "workspace_id": "ws-stg-001",
+                            "result": "hard_failed",
+                            "policy_set": "security-policies",
+                            "failure_reason": "Sentinel policy 'no-public-s3' failed",
+                            "checked_at": (NOW - timedelta(days=2)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoAquaConnector(BaseConnector):
+    """Simulates Aqua container security collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="aqua",
+            source_type=SourceType.CONTAINER_SECURITY,
+            provider="aqua",
+        )
+        result.events.append(
+            RawEventData(
+                source="aqua",
+                source_type=SourceType.CONTAINER_SECURITY,
+                provider="aqua",
+                event_type="aqua_images",
+                raw_data={
+                    "images": [
+                        {
+                            "name": "acme/platform-api:v2.4.1",
+                            "registry": "ecr",
+                            "os": "debian:12",
+                            "critical_vulns": 0,
+                            "high_vulns": 2,
+                            "compliant": True,
+                            "scan_date": (NOW - timedelta(hours=6)).isoformat(),
+                        },
+                        {
+                            "name": "acme/data-worker:v1.8.0",
+                            "registry": "ecr",
+                            "os": "alpine:3.18",
+                            "critical_vulns": 3,
+                            "high_vulns": 5,
+                            "compliant": False,
+                            "scan_date": (NOW - timedelta(hours=2)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="aqua",
+                source_type=SourceType.CONTAINER_SECURITY,
+                provider="aqua",
+                event_type="aqua_compliance",
+                raw_data={
+                    "checks": [
+                        {
+                            "id": "CIS-DI-0001",
+                            "title": "Ensure a user for the container has been created",
+                            "status": "pass",
+                            "benchmark": "CIS Docker Benchmark v1.6",
+                            "image": "acme/platform-api:v2.4.1",
+                        },
+                        {
+                            "id": "CIS-DI-0005",
+                            "title": "Ensure Content Trust is enabled",
+                            "status": "fail",
+                            "benchmark": "CIS Docker Benchmark v1.6",
+                            "image": "acme/data-worker:v1.8.0",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoKandjiConnector(BaseConnector):
+    """Simulates Kandji MDM collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="kandji",
+            source_type=SourceType.MDM,
+            provider="kandji",
+        )
+        result.events.append(
+            RawEventData(
+                source="kandji",
+                source_type=SourceType.MDM,
+                provider="kandji",
+                event_type="kandji_devices",
+                raw_data={
+                    "devices": [
+                        {
+                            "device_id": "kj-dev-001",
+                            "device_name": "ENG-MBP-201",
+                            "model": "MacBook Pro 16-inch (M3 Max)",
+                            "os_version": "14.3.1",
+                            "serial_number": "C02ABC123DEF",
+                            "filevault_enabled": True,
+                            "firewall_enabled": True,
+                            "user": "alice.chen@acme.com",
+                            "last_check_in": NOW.isoformat(),
+                        },
+                        {
+                            "device_id": "kj-dev-002",
+                            "device_name": "SALES-MBP-042",
+                            "model": "MacBook Air 13-inch (M2)",
+                            "os_version": "14.3.1",
+                            "serial_number": "C02DEF456GHI",
+                            "filevault_enabled": False,
+                            "firewall_enabled": True,
+                            "user": "dave.johnson@acme.com",
+                            "last_check_in": (NOW - timedelta(hours=12)).isoformat(),
+                        },
+                        {
+                            "device_id": "kj-dev-003",
+                            "device_name": "EXEC-MBP-001",
+                            "model": "MacBook Pro 14-inch (M3 Pro)",
+                            "os_version": "13.6.4",
+                            "serial_number": "C02GHI789JKL",
+                            "filevault_enabled": True,
+                            "firewall_enabled": False,
+                            "user": "ceo@acme.com",
+                            "last_check_in": (NOW - timedelta(days=3)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGrafanaConnector(BaseConnector):
+    """Simulates Grafana observability collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="grafana",
+            source_type=SourceType.OBSERVABILITY,
+            provider="grafana",
+        )
+        result.events.append(
+            RawEventData(
+                source="grafana",
+                source_type=SourceType.OBSERVABILITY,
+                provider="grafana",
+                event_type="grafana_alerts",
+                raw_data={
+                    "alerts": [
+                        {
+                            "id": "gf-alert-001",
+                            "title": "High API latency (p99 > 2s)",
+                            "state": "firing",
+                            "severity": "warning",
+                            "dashboard_uid": "api-perf-001",
+                            "panel_id": 4,
+                            "value": 2.8,
+                            "started_at": (NOW - timedelta(hours=1)).isoformat(),
+                        },
+                        {
+                            "id": "gf-alert-002",
+                            "title": "Database connection pool exhaustion",
+                            "state": "resolved",
+                            "severity": "critical",
+                            "dashboard_uid": "db-health-001",
+                            "panel_id": 2,
+                            "value": 0.15,
+                            "started_at": (NOW - timedelta(hours=6)).isoformat(),
+                            "resolved_at": (NOW - timedelta(hours=5)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="grafana",
+                source_type=SourceType.OBSERVABILITY,
+                provider="grafana",
+                event_type="grafana_datasources",
+                raw_data={
+                    "datasources": [
+                        {
+                            "id": 1,
+                            "name": "Prometheus",
+                            "type": "prometheus",
+                            "url": "http://prometheus:9090",
+                            "access": "proxy",
+                            "is_default": True,
+                        },
+                        {
+                            "id": 2,
+                            "name": "Loki",
+                            "type": "loki",
+                            "url": "http://loki:3100",
+                            "access": "proxy",
+                            "is_default": False,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoBitSightConnector(BaseConnector):
+    """Simulates BitSight third-party risk collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="bitsight",
+            source_type=SourceType.THIRD_PARTY_RISK,
+            provider="bitsight",
+        )
+        result.events.append(
+            RawEventData(
+                source="bitsight",
+                source_type=SourceType.THIRD_PARTY_RISK,
+                provider="bitsight",
+                event_type="bitsight_ratings",
+                raw_data={
+                    "company": {
+                        "name": "Acme Corp",
+                        "guid": "bs-comp-001",
+                        "rating": 640,
+                        "rating_date": NOW.strftime("%Y-%m-%d"),
+                        "industry": "Technology",
+                        "percentile": 45,
+                    }
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="bitsight",
+                source_type=SourceType.THIRD_PARTY_RISK,
+                provider="bitsight",
+                event_type="bitsight_risk_vectors",
+                raw_data={
+                    "risk_vectors": [
+                        {
+                            "name": "Patching Cadence",
+                            "grade": "B",
+                            "rating": 720,
+                            "percentile": 65,
+                            "details": "Most systems patched within 30 days",
+                        },
+                        {
+                            "name": "Open Ports",
+                            "grade": "D",
+                            "rating": 480,
+                            "percentile": 20,
+                            "details": "12 unnecessary open ports detected on public-facing hosts",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGustoConnector(BaseConnector):
+    """Simulates Gusto HR collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="gusto",
+            source_type=SourceType.HRIS,
+            provider="gusto",
+        )
+        result.events.append(
+            RawEventData(
+                source="gusto",
+                source_type=SourceType.HRIS,
+                provider="gusto",
+                event_type="gusto_employees",
+                raw_data={
+                    "employees": [
+                        {
+                            "id": "gusto-emp-001",
+                            "first_name": "Alice",
+                            "last_name": "Chen",
+                            "email": "alice.chen@acme.com",
+                            "department": "Engineering",
+                            "status": "active",
+                            "hire_date": "2023-01-15",
+                            "manager_id": "gusto-emp-010",
+                        },
+                        {
+                            "id": "gusto-emp-002",
+                            "first_name": "Bob",
+                            "last_name": "Martinez",
+                            "email": "bob.martinez@acme.com",
+                            "department": "Engineering",
+                            "status": "active",
+                            "hire_date": "2023-06-01",
+                            "manager_id": "gusto-emp-010",
+                        },
+                        {
+                            "id": "gusto-emp-003",
+                            "first_name": "Dave",
+                            "last_name": "Johnson",
+                            "email": "dave.johnson@acme.com",
+                            "department": "Sales",
+                            "status": "terminated",
+                            "hire_date": "2022-03-10",
+                            "termination_date": "2024-11-30",
+                            "manager_id": "gusto-emp-011",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoRipplingConnector(BaseConnector):
+    """Simulates Rippling HR collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="rippling",
+            source_type=SourceType.HRIS,
+            provider="rippling",
+        )
+        result.events.append(
+            RawEventData(
+                source="rippling",
+                source_type=SourceType.HRIS,
+                provider="rippling",
+                event_type="rippling_employees",
+                raw_data={
+                    "employees": [
+                        {
+                            "id": "rpl-emp-001",
+                            "name": "Alice Chen",
+                            "email": "alice.chen@acme.com",
+                            "department": "Engineering",
+                            "employment_status": "ACTIVE",
+                            "start_date": "2023-01-15",
+                            "role": "Senior Engineer",
+                        },
+                        {
+                            "id": "rpl-emp-002",
+                            "name": "Bob Martinez",
+                            "email": "bob.martinez@acme.com",
+                            "department": "Engineering",
+                            "employment_status": "ACTIVE",
+                            "start_date": "2023-06-01",
+                            "role": "DevOps Engineer",
+                        },
+                        {
+                            "id": "rpl-emp-003",
+                            "name": "Carol Wang",
+                            "email": "carol.wang@acme.com",
+                            "department": "Marketing",
+                            "employment_status": "TERMINATED",
+                            "start_date": "2022-08-15",
+                            "end_date": "2024-10-31",
+                            "role": "Marketing Manager",
+                            "has_company_devices": True,
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="rippling",
+                source_type=SourceType.HRIS,
+                provider="rippling",
+                event_type="rippling_devices",
+                raw_data={
+                    "devices": [
+                        {
+                            "id": "rpl-dev-001",
+                            "device_name": "ENG-MBP-301",
+                            "assigned_to": "rpl-emp-001",
+                            "managed": True,
+                            "os": "macOS 14.3",
+                            "encryption_enabled": True,
+                        },
+                        {
+                            "id": "rpl-dev-002",
+                            "device_name": "MKT-MBP-050",
+                            "assigned_to": "rpl-emp-003",
+                            "managed": False,
+                            "os": "macOS 13.6",
+                            "encryption_enabled": True,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoSageMakerConnector(BaseConnector):
+    """Simulates AWS SageMaker AI/ML collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="sagemaker",
+            source_type=SourceType.AI_ML,
+            provider="aws",
+        )
+        result.events.append(
+            RawEventData(
+                source="sagemaker",
+                source_type=SourceType.AI_ML,
+                provider="aws",
+                event_type="sagemaker_endpoints",
+                raw_data={
+                    "endpoints": [
+                        {
+                            "EndpointName": "fraud-detection-prod",
+                            "EndpointStatus": "InService",
+                            "KmsKeyId": "arn:aws:kms:us-east-1:912345678012:key/abc-123",
+                            "CreationTime": "2024-06-01T00:00:00Z",
+                            "LastModifiedTime": (NOW - timedelta(hours=12)).isoformat(),
+                            "InstanceType": "ml.m5.xlarge",
+                        },
+                        {
+                            "EndpointName": "recommendation-staging",
+                            "EndpointStatus": "InService",
+                            "KmsKeyId": None,
+                            "CreationTime": "2024-09-15T00:00:00Z",
+                            "LastModifiedTime": (NOW - timedelta(days=5)).isoformat(),
+                            "InstanceType": "ml.m5.large",
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="sagemaker",
+                source_type=SourceType.AI_ML,
+                provider="aws",
+                event_type="sagemaker_notebooks",
+                raw_data={
+                    "notebooks": [
+                        {
+                            "NotebookInstanceName": "ds-team-notebook-01",
+                            "NotebookInstanceStatus": "InService",
+                            "RootAccess": "Disabled",
+                            "DirectInternetAccess": "Disabled",
+                            "KmsKeyId": "arn:aws:kms:us-east-1:912345678012:key/def-456",
+                            "VolumeSizeInGB": 50,
+                        },
+                        {
+                            "NotebookInstanceName": "research-notebook-02",
+                            "NotebookInstanceStatus": "InService",
+                            "RootAccess": "Enabled",
+                            "DirectInternetAccess": "Enabled",
+                            "KmsKeyId": None,
+                            "VolumeSizeInGB": 100,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoDatabricksConnector(BaseConnector):
+    """Simulates Databricks data governance collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="databricks",
+            source_type=SourceType.DATA_GOVERNANCE,
+            provider="databricks",
+        )
+        result.events.append(
+            RawEventData(
+                source="databricks",
+                source_type=SourceType.DATA_GOVERNANCE,
+                provider="databricks",
+                event_type="databricks_clusters",
+                raw_data={
+                    "clusters": [
+                        {
+                            "cluster_id": "db-clust-001",
+                            "cluster_name": "production-etl",
+                            "state": "RUNNING",
+                            "spark_version": "14.3.x-scala2.12",
+                            "node_type_id": "i3.xlarge",
+                            "num_workers": 4,
+                            "enable_elastic_disk": True,
+                            "disk_encryption": True,
+                            "creator_user_name": "alice.chen@acme.com",
+                        },
+                        {
+                            "cluster_id": "db-clust-002",
+                            "cluster_name": "dev-exploration",
+                            "state": "RUNNING",
+                            "spark_version": "13.3.x-scala2.12",
+                            "node_type_id": "m5.large",
+                            "num_workers": 2,
+                            "enable_elastic_disk": False,
+                            "disk_encryption": False,
+                            "creator_user_name": "bob.martinez@acme.com",
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="databricks",
+                source_type=SourceType.DATA_GOVERNANCE,
+                provider="databricks",
+                event_type="databricks_unity_catalog",
+                raw_data={
+                    "tables": [
+                        {
+                            "catalog_name": "main",
+                            "schema_name": "finance",
+                            "table_name": "transactions",
+                            "table_type": "MANAGED",
+                            "owner": "finance-team",
+                            "has_acl": True,
+                            "column_count": 15,
+                            "row_count": 2500000,
+                        },
+                        {
+                            "catalog_name": "main",
+                            "schema_name": "raw",
+                            "table_name": "user_events",
+                            "table_type": "MANAGED",
+                            "owner": "data-eng",
+                            "has_acl": False,
+                            "column_count": 22,
+                            "row_count": 15000000,
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoExchangeOnlineConnector(BaseConnector):
+    """Simulates Exchange Online email security collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="exchange_online",
+            source_type=SourceType.EMAIL_SECURITY,
+            provider="microsoft",
+        )
+        result.events.append(
+            RawEventData(
+                source="exchange_online",
+                source_type=SourceType.EMAIL_SECURITY,
+                provider="microsoft",
+                event_type="exchange_mail_flow_rules",
+                raw_data={
+                    "rules": [
+                        {
+                            "id": "exo-rule-001",
+                            "name": "Encrypt PII Outbound",
+                            "state": "Enabled",
+                            "priority": 0,
+                            "mode": "Enforce",
+                            "conditions": ["SubjectContainsWords: SSN, PII, Confidential"],
+                            "actions": ["ApplyRightsProtectionTemplate: Encrypt"],
+                        },
+                        {
+                            "id": "exo-rule-002",
+                            "name": "Allow External Forwarding for Execs",
+                            "state": "Enabled",
+                            "priority": 1,
+                            "mode": "Enforce",
+                            "conditions": ["FromMemberOf: exec-group@acme.com"],
+                            "actions": ["RedirectMessageTo: exec-assistant@external-firm.com"],
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="exchange_online",
+                source_type=SourceType.EMAIL_SECURITY,
+                provider="microsoft",
+                event_type="exchange_atp_policies",
+                raw_data={
+                    "atp_policies": [
+                        {
+                            "id": "atp-pol-001",
+                            "name": "Default Safe Attachments Policy",
+                            "enabled": True,
+                            "action": "DynamicDelivery",
+                            "safe_links_enabled": True,
+                            "anti_phishing_enabled": True,
+                            "impersonation_protection": True,
+                            "applied_to": "all-users@acme.com",
+                        }
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -13138,6 +14725,28 @@ def main():
     # Endpoint
     connectors.register("sophos", DemoSophosConnector)
 
+    # New connectors (batch 2)
+    connectors.register("jumpcloud", DemoJumpCloudConnector)
+    connectors.register("auth0", DemoAuth0Connector)
+    connectors.register("gitlab", DemoGitLabConnector)
+    connectors.register("jira", DemoJiraConnector)
+    connectors.register("slack", DemoSlackConnector)
+    connectors.register("google_workspace", DemoGoogleWorkspaceConnector)
+    connectors.register("semgrep", DemoSemgrepConnector)
+    connectors.register("trivy", DemoTrivyConnector)
+    connectors.register("gitguardian", DemoGitGuardianConnector)
+    connectors.register("veracode", DemoVeracodeConnector)
+    connectors.register("hashicorp", DemoTerraformCloudConnector)
+    connectors.register("aqua", DemoAquaConnector)
+    connectors.register("kandji", DemoKandjiConnector)
+    connectors.register("grafana", DemoGrafanaConnector)
+    connectors.register("bitsight", DemoBitSightConnector)
+    connectors.register("gusto", DemoGustoConnector)
+    connectors.register("rippling", DemoRipplingConnector)
+    connectors.register("aws_sagemaker", DemoSageMakerConnector)
+    connectors.register("databricks", DemoDatabricksConnector)
+    connectors.register("microsoft_exchange", DemoExchangeOnlineConnector)
+
     # Create all connector instances
     _connector_configs = [
         ("demo-aws", SourceType.CLOUD, "aws"),
@@ -13197,6 +14806,27 @@ def main():
         ("demo-nessus", SourceType.SCANNER, "nessus"),
         ("demo-bamboohr", SourceType.HRIS, "bamboohr"),
         ("demo-sophos", SourceType.EDR, "sophos"),
+        # New connectors (batch 2)
+        ("demo-jumpcloud", SourceType.IAM, "jumpcloud"),
+        ("demo-auth0", SourceType.IAM, "auth0"),
+        ("demo-gitlab", SourceType.CODE, "gitlab"),
+        ("demo-jira", SourceType.ITSM, "jira"),
+        ("demo-slack", SourceType.COLLABORATION, "slack"),
+        ("demo-google-workspace", SourceType.COLLABORATION, "google_workspace"),
+        ("demo-semgrep", SourceType.CODE, "semgrep"),
+        ("demo-trivy", SourceType.SCANNER, "trivy"),
+        ("demo-gitguardian", SourceType.CODE, "gitguardian"),
+        ("demo-veracode", SourceType.CODE, "veracode"),
+        ("demo-terraform-cloud", SourceType.INFRASTRUCTURE, "hashicorp"),
+        ("demo-aqua", SourceType.CONTAINER_SECURITY, "aqua"),
+        ("demo-kandji", SourceType.MDM, "kandji"),
+        ("demo-grafana", SourceType.OBSERVABILITY, "grafana"),
+        ("demo-bitsight", SourceType.THIRD_PARTY_RISK, "bitsight"),
+        ("demo-gusto", SourceType.HRIS, "gusto"),
+        ("demo-rippling", SourceType.HRIS, "rippling"),
+        ("demo-sagemaker", SourceType.AI_ML, "aws_sagemaker"),
+        ("demo-databricks", SourceType.DATA_GOVERNANCE, "databricks"),
+        ("demo-exchange-online", SourceType.EMAIL_SECURITY, "microsoft_exchange"),
     ]
     for name, stype, provider in _connector_configs:
         connectors.create(ConnectorConfig(name=name, source_type=stype, provider=provider))

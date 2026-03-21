@@ -46,6 +46,13 @@ class SourceType(str, Enum):
     EMAIL = "email"  # Proofpoint, Mimecast
     OBSERVABILITY = "observability"  # Datadog, New Relic
     NETWORK = "network"  # Palo Alto, Fortinet, Zscaler
+    COLLABORATION = "collaboration"  # Slack, Google Workspace
+    INFRASTRUCTURE = "infrastructure"  # Terraform Cloud, Pulumi
+    CONTAINER_SECURITY = "container_security"  # Aqua, Twistlock
+    THIRD_PARTY_RISK = "third_party_risk"  # BitSight, SecurityScorecard
+    AI_ML = "ai_ml"  # SageMaker, Vertex AI
+    DATA_GOVERNANCE = "data_governance"  # Databricks, Snowflake
+    EMAIL_SECURITY = "email_security"  # Exchange Online, Proofpoint
     CUSTOM = "custom"
 
 
