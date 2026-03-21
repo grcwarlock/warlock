@@ -368,6 +368,15 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "text"  # "text" or "json" for structured logging
 
+    # --- Data Lake ---
+    lake_enabled: bool = False
+    lake_path: str = "lake"  # Local filesystem path or object store prefix
+    lake_catalog_type: str = "sqlite"  # "sqlite" (dev) or "rest" (cloud)
+    lake_catalog_url: str = ""  # REST catalog URL (cloud only)
+    lake_storage_backend: str = "local"  # "local", "s3", "azure"
+    lake_storage_url: str = ""  # S3 bucket URL or Azure container URL
+    lake_storage_region: str = ""  # For S3-compatible stores
+
 
 _settings: Settings | None = None
 
