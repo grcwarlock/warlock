@@ -170,3 +170,47 @@ class TestLakeDemo:
             f"SELECT * FROM read_parquet('{tmp_path}/lake/curated/test_table/*.parquet')"
         )
         assert len(result) == 1
+
+
+class TestLakeReadFlags:
+    def test_lake_reads_disabled_by_default(self):
+        import warlock.config as _cfg
+        _cfg._settings = None
+        try:
+            s = _cfg.get_settings()
+            assert s.lake_reads_enabled("dashboard_framework_summary") is False
+        finally:
+            _cfg._settings = None
+
+    def test_lake_reads_enabled_when_both_flags_true(self, monkeypatch):
+        import warlock.config as _cfg
+        monkeypatch.setenv("WLK_LAKE_ENABLED", "true")
+        monkeypatch.setenv("WLK_LAKE_READS", "true")
+        _cfg._settings = None
+        try:
+            s = _cfg.get_settings()
+            assert s.lake_reads_enabled("dashboard_framework_summary") is True
+        finally:
+            _cfg._settings = None
+
+    def test_lake_reads_per_query_override(self, monkeypatch):
+        import warlock.config as _cfg
+        monkeypatch.setenv("WLK_LAKE_ENABLED", "true")
+        monkeypatch.setenv("WLK_LAKE_READS", "true")
+        monkeypatch.setenv("WLK_LAKE_READ_OVERRIDES", '{"dashboard_framework_summary": false}')
+        _cfg._settings = None
+        try:
+            s = _cfg.get_settings()
+            assert s.lake_reads_enabled("dashboard_framework_summary") is False
+            assert s.lake_reads_enabled("coverage_by_status") is True
+        finally:
+            _cfg._settings = None
+
+    def test_retention_purge_frozen_default(self):
+        import warlock.config as _cfg
+        _cfg._settings = None
+        try:
+            s = _cfg.get_settings()
+            assert s.retention_purge_frozen is False
+        finally:
+            _cfg._settings = None
