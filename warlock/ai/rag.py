@@ -227,11 +227,7 @@ class VectorStore:
 
         session = self._session_factory()
         try:
-            embeddings = (
-                session.query(Embedding)
-                .filter_by(entity_type="control")
-                .all()
-            )
+            embeddings = session.query(Embedding).filter_by(entity_type="control").all()
 
             results: list[dict[str, Any]] = []
             for emb in embeddings:
@@ -246,12 +242,14 @@ class VectorStore:
                     framework = parts[0] if len(parts) > 1 else ""
                     control_id = parts[1] if len(parts) > 1 else emb.entity_id
 
-                    results.append({
-                        "framework": framework,
-                        "control_id": control_id,
-                        "similarity": round(sim, 4),
-                        "entity_text": emb.entity_text,
-                    })
+                    results.append(
+                        {
+                            "framework": framework,
+                            "control_id": control_id,
+                            "similarity": round(sim, 4),
+                            "entity_text": emb.entity_text,
+                        }
+                    )
 
             # Sort by similarity descending and return top_k
             results.sort(key=lambda r: r["similarity"], reverse=True)
@@ -293,11 +291,7 @@ class VectorStore:
 
         session = self._session_factory()
         try:
-            embeddings = (
-                session.query(Embedding)
-                .filter_by(entity_type="finding")
-                .all()
-            )
+            embeddings = session.query(Embedding).filter_by(entity_type="finding").all()
 
             results: list[dict[str, Any]] = []
             for emb in embeddings:
@@ -307,11 +301,13 @@ class VectorStore:
 
                 sim = cosine_similarity(query_vector, stored_vector)
                 if sim >= min_similarity:
-                    results.append({
-                        "entity_id": emb.entity_id,
-                        "similarity": round(sim, 4),
-                        "entity_text": emb.entity_text,
-                    })
+                    results.append(
+                        {
+                            "entity_id": emb.entity_id,
+                            "similarity": round(sim, 4),
+                            "entity_text": emb.entity_text,
+                        }
+                    )
 
             results.sort(key=lambda r: r["similarity"], reverse=True)
             return results[:top_k]

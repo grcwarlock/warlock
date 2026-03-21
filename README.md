@@ -5,7 +5,7 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (41 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 1: Connectors (44 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (42 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
@@ -33,7 +33,7 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (41)
+## Connectors (44)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne
@@ -41,6 +41,7 @@ Every finding traces back to its raw API response. Every control result traces b
 **Scanners:** Tenable, Qualys, Wiz
 **CSPM:** Prisma Cloud
 **SIEM:** Sentinel, Splunk, Elastic
+**Network Security:** Palo Alto Networks, Fortinet FortiGate, Zscaler
 **HRIS:** Workday | **ITSM:** ServiceNow | **Training:** KnowBe4
 **Code Security:** Snyk, GitHub Advanced Security
 **DLP:** Microsoft Purview | **Backup:** Veeam | **MDM:** Microsoft Intune
@@ -251,8 +252,8 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 41 source connectors (Stage 1)
-├── normalizers/          # 42 normalizers (Stage 2)
+├── connectors/           # 44 source connectors (Stage 1)
+├── normalizers/          # 45 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
@@ -273,7 +274,7 @@ warlock/
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
 ├── db/
-│   ├── models.py         # 35 SQLAlchemy models
+│   ├── models.py         # 36 SQLAlchemy models
 │   ├── migrations/       # Alembic migrations (11 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
@@ -313,7 +314,7 @@ warlock/
 
 ## Database
 
-35 tables across 11 Alembic migrations:
+36 tables across 11 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency

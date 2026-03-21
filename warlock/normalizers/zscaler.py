@@ -135,7 +135,9 @@ class ZscalerNormalizer(BaseNormalizer):
             name = policy.get("name", f"dlp-{policy_id}")
             state = policy.get("state", policy.get("enabled", "ENABLED"))
             departments = policy.get("departments", [])
-            excluded_departments = policy.get("excludedDepartments", policy.get("excluded_departments", []))
+            excluded_departments = policy.get(
+                "excludedDepartments", policy.get("excluded_departments", [])
+            )
 
             is_enabled = state in ("ENABLED", True, "enabled")
 

@@ -165,7 +165,11 @@ class PaloAltoNormalizer(BaseNormalizer):
             action = entry.get("action", "")
             category = entry.get("category", "")
 
-            severity = severity_str if severity_str in ("critical", "high", "medium", "low", "info") else "medium"
+            severity = (
+                severity_str
+                if severity_str in ("critical", "high", "medium", "low", "info")
+                else "medium"
+            )
 
             findings.append(
                 FindingData(

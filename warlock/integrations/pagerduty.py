@@ -159,9 +159,7 @@ class PagerDutyNotifier:
 
         for attempt in range(_MAX_RETRIES):
             try:
-                resp = httpx.post(
-                    _PD_EVENTS_URL, content=body, headers=headers, timeout=_TIMEOUT
-                )
+                resp = httpx.post(_PD_EVENTS_URL, content=body, headers=headers, timeout=_TIMEOUT)
                 resp.raise_for_status()
                 log.debug(
                     "PagerDuty event delivered: event=%s dedup_key=%s action=%s status=%d",

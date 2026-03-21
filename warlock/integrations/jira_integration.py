@@ -138,7 +138,7 @@ class JiraNotifier:
         jql = (
             f'project = "{self._project_key}" '
             f'AND summary ~ "{summary}" '
-            f'AND status NOT IN (Done, Closed, Resolved)'
+            f"AND status NOT IN (Done, Closed, Resolved)"
         )
         url = f"{self._base_url}/rest/api/3/search"
         headers = {

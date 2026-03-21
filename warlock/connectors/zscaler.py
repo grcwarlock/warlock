@@ -142,9 +142,7 @@ class ZscalerConnector(BaseConnector):
             policies = resp.json()
             if not isinstance(policies, list):
                 policies = policies.get("rules", policies.get("result", []))
-            result.events.append(
-                self._raw_event("zscaler_web_policies", {"policies": policies})
-            )
+            result.events.append(self._raw_event("zscaler_web_policies", {"policies": policies}))
         except Exception as e:
             log.debug("Zscaler web policies collection failed: %s", e)
             result.errors.append(f"zscaler_web_policies: {e}")
@@ -158,9 +156,7 @@ class ZscalerConnector(BaseConnector):
             policies = resp.json()
             if not isinstance(policies, list):
                 policies = policies.get("rules", policies.get("result", []))
-            result.events.append(
-                self._raw_event("zscaler_dlp_policies", {"policies": policies})
-            )
+            result.events.append(self._raw_event("zscaler_dlp_policies", {"policies": policies}))
         except Exception as e:
             log.debug("Zscaler DLP policies collection failed: %s", e)
             result.errors.append(f"zscaler_dlp_policies: {e}")
@@ -174,9 +170,7 @@ class ZscalerConnector(BaseConnector):
             rules = resp.json()
             if not isinstance(rules, list):
                 rules = rules.get("rules", rules.get("result", []))
-            result.events.append(
-                self._raw_event("zscaler_firewall_rules", {"rules": rules})
-            )
+            result.events.append(self._raw_event("zscaler_firewall_rules", {"rules": rules}))
         except Exception as e:
             log.debug("Zscaler firewall rules collection failed: %s", e)
             result.errors.append(f"zscaler_firewall_rules: {e}")
@@ -190,9 +184,7 @@ class ZscalerConnector(BaseConnector):
             rules = resp.json()
             if not isinstance(rules, list):
                 rules = rules.get("rules", rules.get("result", []))
-            result.events.append(
-                self._raw_event("zscaler_url_filter", {"rules": rules})
-            )
+            result.events.append(self._raw_event("zscaler_url_filter", {"rules": rules}))
         except Exception as e:
             log.debug("Zscaler URL filtering collection failed: %s", e)
             result.errors.append(f"zscaler_url_filter: {e}")
@@ -206,9 +198,7 @@ class ZscalerConnector(BaseConnector):
             submissions = resp.json()
             if not isinstance(submissions, list):
                 submissions = submissions.get("submissions", submissions.get("result", []))
-            result.events.append(
-                self._raw_event("zscaler_sandbox", {"submissions": submissions})
-            )
+            result.events.append(self._raw_event("zscaler_sandbox", {"submissions": submissions}))
         except Exception as e:
             log.debug("Zscaler sandbox collection failed: %s", e)
             result.errors.append(f"zscaler_sandbox: {e}")

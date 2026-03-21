@@ -97,8 +97,11 @@ class EmbeddingProvider:
         self.provider = provider.lower()
         self.api_key = api_key
         self.model = model or _DEFAULT_MODELS.get(self.provider, "text-embedding-3-small")
-        self.base_url = (base_url.rstrip("/") if base_url else
-                         _DEFAULT_BASE_URLS.get(self.provider, "https://api.openai.com"))
+        self.base_url = (
+            base_url.rstrip("/")
+            if base_url
+            else _DEFAULT_BASE_URLS.get(self.provider, "https://api.openai.com")
+        )
         self._dimensions: int | None = _DEFAULT_DIMENSIONS.get(self.model)
 
     @property
@@ -208,8 +211,9 @@ class EmbeddingProvider:
             "input": text,
         }
 
-        resp = httpx.post(url, json=payload, headers={"Content-Type": "application/json"},
-                          timeout=30.0)
+        resp = httpx.post(
+            url, json=payload, headers={"Content-Type": "application/json"}, timeout=30.0
+        )
         resp.raise_for_status()
         body = resp.json()
 
@@ -229,8 +233,9 @@ class EmbeddingProvider:
             "input": texts,
         }
 
-        resp = httpx.post(url, json=payload, headers={"Content-Type": "application/json"},
-                          timeout=120.0)
+        resp = httpx.post(
+            url, json=payload, headers={"Content-Type": "application/json"}, timeout=120.0
+        )
         resp.raise_for_status()
         body = resp.json()
 

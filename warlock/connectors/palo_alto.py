@@ -42,7 +42,9 @@ class PaloAltoConnector(BaseConnector):
     def health_check(self) -> bool:
         try:
             client = self._client()
-            resp = client.get(f"{self._base_url()}/api/?type=op&cmd=<show><system><info></info></system></show>")
+            resp = client.get(
+                f"{self._base_url()}/api/?type=op&cmd=<show><system><info></info></system></show>"
+            )
             return resp.status_code == 200
         except Exception:
             return False
@@ -101,9 +103,7 @@ class PaloAltoConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             rules = data.get("result", {}).get("entry", [])
-            result.events.append(
-                self._raw_event("pan_security_rules", {"rules": rules})
-            )
+            result.events.append(self._raw_event("pan_security_rules", {"rules": rules}))
         except Exception as e:
             log.debug("PAN security rules collection failed: %s", e)
             result.errors.append(f"pan_security_rules: {e}")
@@ -120,9 +120,7 @@ class PaloAltoConnector(BaseConnector):
             resp = client.get(url, params=params)
             resp.raise_for_status()
             # PAN-OS returns XML by default; parse what we get
-            result.events.append(
-                self._raw_event("pan_threat_logs", {"raw_response": resp.text})
-            )
+            result.events.append(self._raw_event("pan_threat_logs", {"raw_response": resp.text}))
         except Exception as e:
             log.debug("PAN threat logs collection failed: %s", e)
             result.errors.append(f"pan_threat_logs: {e}")
@@ -155,9 +153,7 @@ class PaloAltoConnector(BaseConnector):
             }
             resp = client.get(url, params=params)
             resp.raise_for_status()
-            result.events.append(
-                self._raw_event("pan_system_info", {"raw_response": resp.text})
-            )
+            result.events.append(self._raw_event("pan_system_info", {"raw_response": resp.text}))
         except Exception as e:
             log.debug("PAN system info collection failed: %s", e)
             result.errors.append(f"pan_system_info: {e}")
@@ -172,9 +168,7 @@ class PaloAltoConnector(BaseConnector):
             }
             resp = client.get(url, params=params)
             resp.raise_for_status()
-            result.events.append(
-                self._raw_event("pan_globalprotect", {"raw_response": resp.text})
-            )
+            result.events.append(self._raw_event("pan_globalprotect", {"raw_response": resp.text}))
         except Exception as e:
             log.debug("PAN GlobalProtect collection failed: %s", e)
             result.errors.append(f"pan_globalprotect: {e}")

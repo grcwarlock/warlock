@@ -209,10 +209,10 @@ if $SEED_OK; then
     CONN_COUNT=$(echo "$SEED_OUTPUT" | grep -oE "Connectors succeeded:\s+[0-9]+" | grep -oE "[0-9]+" || echo "0")
     CONN_FAIL=$(echo "$SEED_OUTPUT" | grep -oE "Connectors failed:\s+[0-9]+" | grep -oE "[0-9]+" || echo "?")
     echo "  Connectors succeeded: ${CONN_COUNT}, failed: ${CONN_FAIL}"
-    if [[ "$CONN_COUNT" -ge 40 && "$CONN_FAIL" == "0" ]]; then
+    if [[ "$CONN_COUNT" -ge 43 && "$CONN_FAIL" == "0" ]]; then
         section_pass
     else
-        echo "  Expected >= 40 succeeded, 0 failed"
+        echo "  Expected >= 43 succeeded, 0 failed"
         section_fail
     fi
 else
@@ -253,12 +253,18 @@ else
     section_fail
 fi
 
-# --- TUI Import ---
-section_start "TUI Import Verification"
-if "$PYTHON" -c "from warlock.tui import app; print('  TUI module imports OK')" 2>&1; then
+# --- Integrations Import ---
+section_start "Integrations Import Verification"
+if "$PYTHON" -c "
+from warlock.integrations.slack import SlackNotifier
+from warlock.integrations.pagerduty import PagerDutyNotifier
+from warlock.integrations.jira_integration import JiraNotifier
+from warlock.integrations.servicenow_integration import ServiceNowNotifier
+print('  All 4 outbound integrations import OK')
+" 2>&1; then
     section_pass
 else
-    echo "  TUI import failed"
+    echo "  Integrations import failed"
     section_fail
 fi
 
@@ -525,6 +531,73 @@ if "$PYTHON" -c "from warlock.ai.service import get_ai_service; print('  AI serv
     section_pass
 else
     section_fail
+fi
+
+# --- Network Connectors ---
+section_start "Network Connector Import"
+NET_RESULT=$("$PYTHON" -c "
+from warlock.connectors.palo_alto import PaloAltoConnector
+from warlock.connectors.fortinet import FortinetConnector
+from warlock.connectors.zscaler import ZscalerConnector
+from warlock.normalizers.palo_alto import PaloAltoNormalizer
+from warlock.normalizers.fortinet import FortinetNormalizer
+from warlock.normalizers.zscaler import ZscalerNormalizer
+from warlock.connectors.base import SourceType
+assert hasattr(SourceType, 'NETWORK'), 'NETWORK source type missing'
+print('  All 3 network connectors + normalizers + NETWORK source type OK')
+" 2>&1) || true
+echo "$NET_RESULT"
+if echo "$NET_RESULT" | grep -qE "Error|Traceback|assert"; then
+    section_fail
+else
+    section_pass
+fi
+
+# --- Vector / RAG ---
+section_start "Vector/RAG Import"
+RAG_RESULT=$("$PYTHON" -c "
+from warlock.ai.embeddings import EmbeddingProvider, cosine_similarity
+from warlock.ai.rag import VectorStore, SemanticMapper
+from warlock.db.models import Embedding
+# Verify cosine_similarity works
+sim = cosine_similarity([1.0, 0.0, 0.0], [1.0, 0.0, 0.0])
+assert abs(sim - 1.0) < 0.001, f'cosine_similarity(identical) should be 1.0, got {sim}'
+sim2 = cosine_similarity([1.0, 0.0], [0.0, 1.0])
+assert abs(sim2) < 0.001, f'cosine_similarity(orthogonal) should be 0.0, got {sim2}'
+print('  Embeddings, VectorStore, SemanticMapper, cosine_similarity OK')
+" 2>&1) || true
+echo "$RAG_RESULT"
+if echo "$RAG_RESULT" | grep -qE "Error|Traceback|assert"; then
+    section_fail
+else
+    section_pass
+fi
+
+# --- Outbound Integration Registration ---
+section_start "EventBus Subscriber Registration"
+BUS_RESULT=$("$PYTHON" -c "
+import os
+# Set env vars to trigger registration
+os.environ['WLK_SLACK_WEBHOOK_URL'] = 'https://hooks.slack.com/test'
+os.environ['WLK_PAGERDUTY_ROUTING_KEY'] = 'test-key'
+os.environ['WLK_JIRA_BASE_URL'] = 'https://test.atlassian.net'
+os.environ['WLK_SERVICENOW_INSTANCE'] = 'test'
+from warlock.pipeline.bus import EventBus, _register_default_subscribers
+bus = EventBus()
+_register_default_subscribers(bus)
+# Count registered handlers
+handler_count = sum(len(v) for v in bus._handlers.values())
+print(f'  {handler_count} event handlers registered across all event types')
+if handler_count < 4:
+    print('  Expected at least 4 handlers (Slack, PD, Jira, ServiceNow)')
+    exit(1)
+print('  All 4 outbound integrations register on EventBus OK')
+" 2>&1) || true
+echo "$BUS_RESULT"
+if echo "$BUS_RESULT" | grep -qE "Error|Traceback|Expected"; then
+    section_fail
+else
+    section_pass
 fi
 
 # --- CI Workflow Reality Check ---
