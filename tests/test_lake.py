@@ -128,3 +128,15 @@ class TestSchemaGenerator:
         schema = generate_iceberg_schema(ControlResult)
         id_field = next(f for f in schema.fields if f.name == "id")
         assert id_field.field_type.__class__.__name__ == "StringType"
+
+
+class TestIcebergCatalog:
+    def test_sqlite_catalog_creates_db(self, tmp_path):
+        from warlock.lake.catalog import create_catalog
+        catalog = create_catalog("sqlite", str(tmp_path / "catalog.db"))
+        assert catalog is not None
+
+    def test_catalog_factory_validates_type(self):
+        from warlock.lake.catalog import create_catalog
+        with pytest.raises(ValueError, match="Unknown catalog type"):
+            create_catalog("invalid", "")
