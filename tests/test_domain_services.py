@@ -176,3 +176,37 @@ class TestIssuesDomainService:
         items = svc.get_urgent_items(QueryFilters(frameworks=["soc2"]))
         for item in items:
             assert item.framework == "soc2"
+
+
+class TestEvidenceDomainService:
+    def test_domain_name(self):
+        from warlock.domains.evidence import EvidenceDomainService
+        svc = EvidenceDomainService.__new__(EvidenceDomainService)
+        assert svc.domain_name == "evidence"
+
+    def test_get_related_to_control(self, db_session):
+        from warlock.domains.evidence import EvidenceDomainService
+        _seed_full_chain(db_session, control_id="CC6.1")
+        svc = EvidenceDomainService(db_session)
+        related = svc.get_related_to("control", "CC6.1")
+        assert len(related) >= 1
+        assert any(r.entity_type == "evidence_summary" for r in related)
+
+    def test_get_urgent_items_finds_stale_evidence(self, db_session):
+        from warlock.domains.evidence import EvidenceDomainService
+        from warlock.db.models import ControlResult
+        _seed_full_chain(db_session, control_id="CC6.1")
+        # Make the assessed_at old
+        result = db_session.query(ControlResult).first()
+        result.assessed_at = datetime.now(timezone.utc) - timedelta(days=100)
+        db_session.commit()
+
+        svc = EvidenceDomainService(db_session, stale_threshold_days=90)
+        items = svc.get_urgent_items(QueryFilters())
+        assert len(items) >= 1
+        assert any("stale" in item.summary.lower() for item in items)
+
+    def test_get_related_returns_empty_for_unknown(self, db_session):
+        from warlock.domains.evidence import EvidenceDomainService
+        svc = EvidenceDomainService(db_session)
+        assert svc.get_related_to("control", "FAKE-99") == []
