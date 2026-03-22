@@ -58,3 +58,80 @@ class TestDomainDataclasses:
         scope = PolicyScope()
         assert scope.frameworks is None
         assert scope.severity is None
+
+
+class FakeService:
+    """Minimal DomainService for testing."""
+    def __init__(self, name: str, urgent: list | None = None, related: list | None = None):
+        self._name = name
+        self._urgent = urgent or []
+        self._related = related or []
+
+    @property
+    def domain_name(self) -> str:
+        return self._name
+
+    def get_urgent_items(self, filters):
+        return self._urgent
+
+    def get_related_to(self, entity_type: str, entity_id: str):
+        return self._related
+
+    def handle_event(self, event):
+        return []
+
+
+class TestDomainRegistry:
+    def test_register_and_get(self):
+        from warlock.domains.registry import DomainRegistry
+        reg = DomainRegistry()
+        svc = FakeService("risk")
+        reg.register(svc)
+        assert reg.get("risk") is svc
+
+    def test_get_unknown_returns_none(self):
+        from warlock.domains.registry import DomainRegistry
+        reg = DomainRegistry()
+        assert reg.get("nonexistent") is None
+
+    def test_all_services(self):
+        from warlock.domains.registry import DomainRegistry
+        reg = DomainRegistry()
+        reg.register(FakeService("a"))
+        reg.register(FakeService("b"))
+        assert len(reg.all_services()) == 2
+
+    def test_get_related_to_aggregates(self):
+        from warlock.domains.base import RelatedItem
+        from warlock.domains.registry import DomainRegistry
+        reg = DomainRegistry()
+        reg.register(FakeService("risk", related=[
+            RelatedItem(domain="risk", entity_type="score", entity_id="1", summary="$3.5M ALE")
+        ]))
+        reg.register(FakeService("evidence", related=[
+            RelatedItem(domain="evidence", entity_type="status", entity_id="2", summary="stale")
+        ]))
+        reg.register(FakeService("empty"))
+        result = reg.get_related_to("control", "AC-2")
+        assert "risk" in result
+        assert "evidence" in result
+        assert "empty" not in result
+        assert len(result) == 2
+
+    def test_get_briefing_sorts_by_priority(self):
+        from warlock.domains.base import UrgentItem
+        from warlock.domains.registry import DomainRegistry
+        reg = DomainRegistry()
+        reg.register(FakeService("a", urgent=[
+            UrgentItem(domain="a", entity_type="x", entity_id="1",
+                       summary="low", severity="low", priority_score=10.0,
+                       action_hint="fix it")
+        ]))
+        reg.register(FakeService("b", urgent=[
+            UrgentItem(domain="b", entity_type="x", entity_id="2",
+                       summary="high", severity="critical", priority_score=95.0,
+                       action_hint="fix it now")
+        ]))
+        items = reg.get_briefing()
+        assert items[0].priority_score == 95.0
+        assert items[1].priority_score == 10.0
