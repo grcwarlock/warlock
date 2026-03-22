@@ -185,15 +185,16 @@ warlock/
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
-  cli/           — Click CLI package (42+ commands, 8 domain modules)
-  db/            — SQLAlchemy models (34) + Alembic migrations (12)
+  cli/           — Click CLI package (45+ commands, 11 domain modules)
+  db/            — SQLAlchemy models (38) + Alembic migrations (12)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
   lake/          — 24 GRC data lake modules (DuckDB, Parquet, RAG, Iceberg)
+  domains/       — 8 domain service modules (registry, event bus, policy engine, controls, issues, evidence)
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 556 pytest tests (25 files)
+tests/           — 606 pytest tests (29 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)

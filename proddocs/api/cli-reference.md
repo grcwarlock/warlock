@@ -764,6 +764,83 @@ warlock lake status
 
 ---
 
+## Domain Commands
+
+### `warlock briefing`
+
+Cross-domain daily priority view. Aggregates open issues, stale controls, upcoming POA&M deadlines, and vendor assessments into a single prioritized digest.
+
+```bash
+warlock briefing                                   # all domains, default limit
+warlock briefing -f nist_800_53                    # filter to a single framework
+warlock briefing --owner alice@acme.com            # filter by resource owner
+warlock briefing --mode urgent                     # show only urgent items
+warlock briefing --limit 25                        # limit output rows
+```
+
+| Flag | Description |
+|------|-------------|
+| `--framework`, `-f` | Filter by framework |
+| `--owner` | Filter by resource or issue owner |
+| `--mode` | View mode: all, urgent, upcoming (default: all) |
+| `--limit`, `-n` | Max items per domain section (default: 10) |
+
+### `warlock control-hub <control_id>`
+
+Cross-domain view of a single control. Shows compliance status, open issues, POA&Ms, risk acceptances, compensating controls, and recent drift — all in one place.
+
+```bash
+warlock control-hub AC-2                           # all frameworks
+warlock control-hub CC6.1 -f soc2                  # specific framework
+warlock control-hub SC-28 -f nist_800_53           # NIST 800-53 scoped
+```
+
+| Argument | Description |
+|----------|-------------|
+| `control_id` | Control identifier (e.g., AC-2, CC6.1, A.9.2.1) — required |
+
+| Flag | Description |
+|------|-------------|
+| `--framework`, `-f` | Filter to a specific framework |
+
+### `warlock policy`
+
+Push and manage operational policies. Policies are stored in the database and evaluated by the domain policy engine.
+
+**Subcommands:**
+
+| Command | Description |
+|---------|-------------|
+| `policy set` | Create or update a policy from a JSON file or inline JSON |
+| `policy list` | List all policies, with optional type/enabled filters |
+| `policy show <id>` | Show full detail for a single policy |
+| `policy history <id>` | Show the audit history for a policy |
+
+```bash
+warlock policy set --type access --file policy.json       # create/update from file
+warlock policy set --type retention --rules '{"ttl": 90}' # inline JSON
+warlock policy list                                        # all policies
+warlock policy list --type access --enabled               # active access policies
+warlock policy show <id>                                   # full policy detail
+warlock policy history <id>                               # mutation audit trail
+```
+
+| Flag (set) | Description |
+|------------|-------------|
+| `--type` | Policy type (required) |
+| `--file` | Path to JSON file containing rules |
+| `--rules` | Inline JSON rules string |
+| `--priority` | Evaluation priority (default: 100) |
+| `--effective-at` | ISO datetime when policy activates (default: now) |
+| `--expires-at` | ISO datetime when policy expires |
+
+| Flag (list) | Description |
+|-------------|-------------|
+| `--type` | Filter by policy type |
+| `--enabled/--disabled` | Filter by enabled state |
+
+---
+
 ## Command Summary
 
 | Group | Commands |
@@ -777,3 +854,4 @@ warlock lake status
 | Export | `oscal`, `framework-diff`, `architecture` |
 | AI | `ai status/models/configure/test`, `ask` |
 | Lake | `lake init/status` |
+| Domain | `briefing`, `control-hub`, `policy set/list/show/history` |

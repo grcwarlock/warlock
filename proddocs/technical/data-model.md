@@ -1,6 +1,6 @@
 # Data Model Reference
 
-This document covers all 36 SQLAlchemy models in `warlock/db/models.py`, organized by domain. It describes the pipeline data flow, key relationships, JSON column contents, and how the OLTP schema relates to the GRC Data Lake.
+This document covers all 40 SQLAlchemy models in `warlock/db/models.py`, organized by domain. It describes the pipeline data flow, key relationships, JSON column contents, and how the OLTP schema relates to the GRC Data Lake.
 
 ## Overview
 
@@ -449,6 +449,77 @@ Prevents data purging during investigations or litigation. Checked by `expire_sn
 ### Embedding
 
 Stored embedding vectors for semantic search (TF-IDF or external models). Vectors stored as JSON arrays for SQLite compatibility; production PostgreSQL can add a pgvector column.
+
+## Domain 11: Domain Architecture (4 tables)
+
+These tables support the domain service layer: operational policy management, asset inventory, and vendor tracking.
+
+### Policy
+
+Operational policies pushed and managed via `warlock policy set/list/show/history`. Supports rule-based enforcement across the platform.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | String(36) PK | UUID |
+| `policy_type` | String(100) | Policy category (e.g., access, retention, alerting) |
+| `scope` | JSON | Scope constraints (frameworks, systems, resource types) |
+| `rules` | JSON | Structured rule definitions evaluated by the policy engine |
+| `priority` | Integer | Evaluation order; lower = higher priority |
+| `enabled` | Boolean | Whether the policy is active |
+| `created_by` | String(255) | Actor who created the policy |
+| `effective_at` | DateTime(tz) | When the policy becomes active |
+| `expires_at` | DateTime(tz) | Optional expiry (NULL = no expiry) |
+| `created_at` | DateTime(tz) | Record creation time |
+
+**Relationships:** `history` -> PolicyHistory (one-to-many)
+
+### PolicyHistory
+
+Append-only audit trail of every mutation to a Policy record.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | String(36) PK | UUID |
+| `policy_id` | String(36) FK | -> policies.id (CASCADE) |
+| `action` | String(50) | created, updated, enabled, disabled, deleted |
+| `old_rules` | JSON | Rules before the change (NULL for create) |
+| `new_rules` | JSON | Rules after the change |
+| `actor` | String(255) | Who made the change |
+| `timestamp` | DateTime(tz) | When the change occurred |
+
+### Asset
+
+Tracks discovered resources across cloud accounts and systems. Populated from pipeline findings.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | String(36) PK | UUID |
+| `resource_id` | Text | Unique resource identifier (ARN, Azure ID, hostname) — unique constraint |
+| `resource_type` | String(100) | ec2_instance, iam_user, s3_bucket, etc. |
+| `resource_name` | Text | Human-readable name |
+| `system_id` | String(36) FK | -> system_profiles.id (SET NULL) |
+| `owner` | String(255) | Owning team or person |
+| `classification` | String(50) | public, internal, confidential, restricted |
+| `criticality` | String(20) | low, medium, high, critical |
+| `status` | String(20) | active, inactive, decommissioned |
+| `first_seen` | DateTime(tz) | When first observed in pipeline |
+| `last_seen` | DateTime(tz) | Most recent pipeline observation |
+| `metadata` | JSON | Additional resource-specific attributes |
+
+### Vendor
+
+Third-party vendor records for risk tracking and assessment scheduling.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | String(36) PK | UUID |
+| `name` | String(255) | Vendor name — unique constraint |
+| `tier` | Integer | Risk tier (1 = highest risk) |
+| `risk_score` | Float | 0.0-100.0 composite risk score |
+| `contract_expires` | DateTime(tz) | Contract expiry date |
+| `last_assessment` | DateTime(tz) | Date of most recent risk assessment |
+| `assessment_cadence_days` | Integer | How often to reassess (e.g., 90, 180, 365) |
+| `metadata` | JSON | Additional vendor attributes |
 
 ## JSON Column Reference
 
