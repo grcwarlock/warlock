@@ -114,6 +114,10 @@ _CONNECTOR_MODULES = [
     "warlock.connectors.sagemaker",
     "warlock.connectors.databricks",
     "warlock.connectors.exchange_online",
+    "warlock.connectors.jenkins",
+    "warlock.connectors.github_actions",
+    "warlock.connectors.gitlab_ci",
+    "warlock.connectors.circleci",
 ]
 
 _NORMALIZER_MODULES = [
@@ -194,6 +198,10 @@ _NORMALIZER_MODULES = [
     "warlock.normalizers.sagemaker",
     "warlock.normalizers.databricks",
     "warlock.normalizers.exchange_online",
+    "warlock.normalizers.jenkins",
+    "warlock.normalizers.github_actions",
+    "warlock.normalizers.gitlab_ci",
+    "warlock.normalizers.circleci",
     # Generic / fallback normalizer — must be last so it doesn't shadow others.
     "warlock.normalizers.generic",
 ]

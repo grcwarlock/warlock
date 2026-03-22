@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-03-21
 **Sources:** MASTER_TODO.md, MASTER_ROADMAP.md, DATALAKE_TODO.md, TODO.md, DOCUMENTATION_TODO.md, Warlock_GRC_Data_Lake_Status.md, codebase audit
-**Total remaining:** 148 items | **Done today (data lake):** 48 items
+**Total remaining:** 144 items | **Done today (data lake):** 48 items
 
 ---
 
@@ -66,7 +66,7 @@ These are fixes to existing code. Ordered by severity.
 - [ ] Connection pool (5+10=15) too small for production with audit middleware
 - [ ] Test ordering dependency in `test_integration_e2e.py`
 - [ ] Tautological assertions in tests (`len(x) >= 0`, `assert True`)
-- [ ] 38/78 normalizers, 93/101 assertions, 8/16 workflows have zero behavioral tests
+- [ ] 38/82 normalizers, 93/101 assertions, 8/16 workflows have zero behavioral tests
 - [ ] No `UniqueConstraint` on natural keys for `ControlResult` and `PostureSnapshot`
 - [ ] `AuditEntry.sequence` is `Integer` in migration but `BigInteger` in model
 
@@ -137,7 +137,7 @@ Phases 0-3 and hardening are complete. The following items from the original spe
 
 ---
 
-## 3. New Connectors (34 remaining)
+## 3. New Connectors (30 remaining)
 
 ### Tier 1 — DONE (20 of 21 items built)
 
@@ -163,9 +163,9 @@ Ping Identity, OneLogin, VMware Workspace ONE, Sumo Logic, Cisco Umbrella, Drata
 
 Linode/Akamai, Hetzner, LogRhythm, Barracuda, F5 BIG-IP, Paylocity
 
-### Additional categories (11 items, build per customer demand)
+### Additional categories (10 items, build per customer demand)
 
-CI/CD Pipeline Security, Supply Chain/SBOM, Third-Party Risk/Vendor Intel, Backup & DR Validation, Physical Security, PAM (beyond CyberArk), Data Loss Prevention, API Gateways, CRM, DNS/Domain Security, Secrets Management (beyond Vault)
+~~CI/CD Pipeline Security~~ (Done: Jenkins, GitHub Actions, GitLab CI, CircleCI), Supply Chain/SBOM, Third-Party Risk/Vendor Intel, Backup & DR Validation, Physical Security, PAM (beyond CyberArk), Data Loss Prevention, API Gateways, CRM, DNS/Domain Security, Secrets Management (beyond Vault)
 
 ---
 
@@ -333,13 +333,13 @@ Release management (3), architecture decisions (7 ADRs), code style (2), securit
 | Hardening (Sprint 1-2 + backlog) | 0 | 17 |
 | Hardening (untriaged findings) | 0 | 15 |
 | Data Lake (Phases 0-3 + hardening) | 43 | 5 |
-| New Connectors | 20 | 34 |
+| New Connectors | 24 | 30 |
 | New Frameworks | 0 | 10 |
 | P2 Features | 0 | 56 |
 | P3 Features | 0 | 18 |
 | Documentation | 2 | 58 |
 | Operational | 0 | 5 |
-| **Total** | **141** | **218** |
+| **Total** | **145** | **214** |
 
 ---
 

@@ -53,6 +53,7 @@ class SourceType(str, Enum):
     AI_ML = "ai_ml"  # SageMaker, Vertex AI
     DATA_GOVERNANCE = "data_governance"  # Databricks, Snowflake
     EMAIL_SECURITY = "email_security"  # Exchange Online, Proofpoint
+    CI_CD = "ci_cd"  # Jenkins, GitHub Actions, GitLab CI, CircleCI
     CUSTOM = "custom"
 
 

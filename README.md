@@ -5,8 +5,8 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (78 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (78 parsers) → FindingData       → transform to universal findings
+Stage 1: Connectors (82 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (82 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
@@ -33,7 +33,7 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (78)
+## Connectors (82)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos
@@ -52,6 +52,7 @@ Every finding traces back to its raw API response. Every control result traces b
 **GRC:** Confluence, OneTrust | **Physical:** Verkada
 **Third-Party Risk:** SecurityScorecard, BitSight | **Container:** Kubernetes, Aqua Security
 **Infrastructure:** Terraform Cloud | **AI/ML:** MLflow, SageMaker, Databricks
+**CI/CD:** Jenkins, GitHub Actions, GitLab CI, CircleCI
 **Scanner:** Nessus (standalone)
 **Ingest:** Webhook (generic)
 
@@ -266,8 +267,8 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 78 source connectors (Stage 1)
-├── normalizers/          # 78 normalizers (Stage 2)
+├── connectors/           # 82 source connectors (Stage 1)
+├── normalizers/          # 82 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)

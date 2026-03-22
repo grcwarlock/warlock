@@ -16789,6 +16789,547 @@ class DemoExchangeOnlineConnector(BaseConnector):
         return result
 
 
+class DemoJenkinsConnector(BaseConnector):
+    """Simulates Jenkins CI/CD server collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="jenkins",
+            source_type=SourceType.CI_CD,
+            provider="jenkins",
+        )
+        result.events.append(
+            RawEventData(
+                source="jenkins",
+                source_type=SourceType.CI_CD,
+                provider="jenkins",
+                event_type="jenkins_jobs",
+                raw_data={
+                    "jobs": [
+                        {
+                            "name": "backend-build",
+                            "url": "https://jenkins.acme.com/job/backend-build/",
+                            "color": "blue",
+                            "last_build": {
+                                "number": 1247,
+                                "result": "SUCCESS",
+                                "timestamp": int((NOW - timedelta(hours=1)).timestamp() * 1000),
+                                "duration": 184000,
+                            },
+                        },
+                        {
+                            "name": "frontend-deploy",
+                            "url": "https://jenkins.acme.com/job/frontend-deploy/",
+                            "color": "blue",
+                            "last_build": {
+                                "number": 893,
+                                "result": "SUCCESS",
+                                "timestamp": int((NOW - timedelta(hours=3)).timestamp() * 1000),
+                                "duration": 312000,
+                            },
+                        },
+                        {
+                            "name": "security-scan-sast",
+                            "url": "https://jenkins.acme.com/job/security-scan-sast/",
+                            "color": "red",
+                            "last_build": {
+                                "number": 456,
+                                "result": "FAILURE",
+                                "timestamp": int((NOW - timedelta(hours=2)).timestamp() * 1000),
+                                "duration": 97000,
+                                "failure_reason": "SAST scan found 3 critical vulnerabilities in auth module",
+                            },
+                        },
+                        {
+                            "name": "integration-tests",
+                            "url": "https://jenkins.acme.com/job/integration-tests/",
+                            "color": "yellow",
+                            "last_build": {
+                                "number": 2104,
+                                "result": "UNSTABLE",
+                                "timestamp": int((NOW - timedelta(minutes=45)).timestamp() * 1000),
+                                "duration": 540000,
+                                "test_report": {"total": 342, "passed": 338, "failed": 4, "skipped": 0},
+                            },
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="jenkins",
+                source_type=SourceType.CI_CD,
+                provider="jenkins",
+                event_type="jenkins_nodes",
+                raw_data={
+                    "computer": [
+                        {
+                            "displayName": "built-in",
+                            "offline": False,
+                            "temporarilyOffline": False,
+                            "numExecutors": 2,
+                            "idle": False,
+                            "jnlpAgent": False,
+                            "monitorData": {"hudson.node_monitors.DiskSpaceMonitor": {"size": 53687091200}},
+                        },
+                        {
+                            "displayName": "build-agent-01",
+                            "offline": False,
+                            "temporarilyOffline": False,
+                            "numExecutors": 4,
+                            "idle": True,
+                            "jnlpAgent": True,
+                            "monitorData": {"hudson.node_monitors.DiskSpaceMonitor": {"size": 107374182400}},
+                        },
+                        {
+                            "displayName": "build-agent-02",
+                            "offline": True,
+                            "temporarilyOffline": False,
+                            "numExecutors": 4,
+                            "idle": False,
+                            "jnlpAgent": True,
+                            "offlineCauseReason": "Connection lost — agent process terminated unexpectedly",
+                            "monitorData": {},
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="jenkins",
+                source_type=SourceType.CI_CD,
+                provider="jenkins",
+                event_type="jenkins_security",
+                raw_data={
+                    "useSecurity": True,
+                    "crumbIssuer": {"crumbRequestField": "Jenkins-Crumb"},
+                    "securityRealm": {"type": "LDAPSecurityRealm", "server": "ldap://ldap.acme.com:389"},
+                    "authorizationStrategy": {"type": "RoleBased"},
+                    "slaveAgentPort": -1,
+                    "markupFormatter": "EscapedMarkupFormatter",
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGitHubActionsConnector(BaseConnector):
+    """Simulates GitHub Actions CI/CD collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="github_actions",
+            source_type=SourceType.CI_CD,
+            provider="github",
+        )
+        result.events.append(
+            RawEventData(
+                source="github_actions",
+                source_type=SourceType.CI_CD,
+                provider="github",
+                event_type="gha_workflow_runs",
+                raw_data={
+                    "total_count": 5,
+                    "workflow_runs": [
+                        {
+                            "id": 9800001,
+                            "name": "CI Pipeline",
+                            "head_branch": "main",
+                            "status": "completed",
+                            "conclusion": "success",
+                            "run_number": 1584,
+                            "event": "push",
+                            "created_at": (NOW - timedelta(hours=1)).isoformat(),
+                            "updated_at": (NOW - timedelta(minutes=45)).isoformat(),
+                            "run_attempt": 1,
+                            "triggering_actor": {"login": "dev-alice"},
+                        },
+                        {
+                            "id": 9800002,
+                            "name": "CI Pipeline",
+                            "head_branch": "feat/user-auth",
+                            "status": "completed",
+                            "conclusion": "success",
+                            "run_number": 1583,
+                            "event": "pull_request",
+                            "created_at": (NOW - timedelta(hours=2)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=1, minutes=30)).isoformat(),
+                            "run_attempt": 1,
+                            "triggering_actor": {"login": "dev-bob"},
+                        },
+                        {
+                            "id": 9800003,
+                            "name": "Nightly Security Scan",
+                            "head_branch": "main",
+                            "status": "completed",
+                            "conclusion": "success",
+                            "run_number": 312,
+                            "event": "schedule",
+                            "created_at": (NOW - timedelta(hours=8)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=7)).isoformat(),
+                            "run_attempt": 1,
+                            "triggering_actor": {"login": "github-actions[bot]"},
+                        },
+                        {
+                            "id": 9800004,
+                            "name": "SAST / Dependency Audit",
+                            "head_branch": "feat/payments-v2",
+                            "status": "completed",
+                            "conclusion": "failure",
+                            "run_number": 87,
+                            "event": "pull_request",
+                            "created_at": (NOW - timedelta(hours=3)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=2, minutes=50)).isoformat(),
+                            "run_attempt": 1,
+                            "triggering_actor": {"login": "dev-carol"},
+                            "failure_reason": "CodeQL found SQL injection in payments/checkout.py:142",
+                        },
+                        {
+                            "id": 9800005,
+                            "name": "Deploy Staging",
+                            "head_branch": "release/2.4.0",
+                            "status": "completed",
+                            "conclusion": "cancelled",
+                            "run_number": 45,
+                            "event": "workflow_dispatch",
+                            "created_at": (NOW - timedelta(hours=5)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=4, minutes=55)).isoformat(),
+                            "run_attempt": 1,
+                            "triggering_actor": {"login": "dev-dave"},
+                        },
+                    ],
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="github_actions",
+                source_type=SourceType.CI_CD,
+                provider="github",
+                event_type="gha_code_scanning",
+                raw_data={
+                    "alerts": [
+                        {
+                            "number": 101,
+                            "rule": {"id": "py/sql-injection", "severity": "error", "description": "SQL Injection"},
+                            "state": "open",
+                            "tool": {"name": "CodeQL"},
+                            "most_recent_instance": {
+                                "ref": "refs/heads/feat/payments-v2",
+                                "location": {"path": "payments/checkout.py", "start_line": 142},
+                                "message": {"text": "Unsanitized user input flows into SQL query"},
+                                "classifications": ["security"],
+                            },
+                            "severity": "critical",
+                            "created_at": (NOW - timedelta(hours=3)).isoformat(),
+                        },
+                        {
+                            "number": 102,
+                            "rule": {"id": "js/xss", "severity": "warning", "description": "Cross-site Scripting"},
+                            "state": "open",
+                            "tool": {"name": "CodeQL"},
+                            "most_recent_instance": {
+                                "ref": "refs/heads/main",
+                                "location": {"path": "frontend/src/components/UserProfile.jsx", "start_line": 87},
+                                "message": {"text": "User-controlled value rendered without escaping"},
+                                "classifications": ["security"],
+                            },
+                            "severity": "high",
+                            "created_at": (NOW - timedelta(days=2)).isoformat(),
+                        },
+                        {
+                            "number": 103,
+                            "rule": {"id": "py/insecure-hash", "severity": "note", "description": "Use of insecure hash algorithm"},
+                            "state": "open",
+                            "tool": {"name": "CodeQL"},
+                            "most_recent_instance": {
+                                "ref": "refs/heads/main",
+                                "location": {"path": "utils/legacy_auth.py", "start_line": 23},
+                                "message": {"text": "MD5 hash used for password comparison"},
+                                "classifications": ["security"],
+                            },
+                            "severity": "medium",
+                            "created_at": (NOW - timedelta(days=14)).isoformat(),
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="github_actions",
+                source_type=SourceType.CI_CD,
+                provider="github",
+                event_type="gha_runners",
+                raw_data={
+                    "total_count": 2,
+                    "runners": [
+                        {
+                            "id": 55001,
+                            "name": "github-hosted-ubuntu-latest",
+                            "os": "Linux",
+                            "status": "online",
+                            "busy": False,
+                            "labels": [{"name": "self-hosted"}, {"name": "Linux"}, {"name": "X64"}],
+                        },
+                        {
+                            "id": 55002,
+                            "name": "self-hosted-gpu-runner",
+                            "os": "Linux",
+                            "status": "offline",
+                            "busy": False,
+                            "labels": [{"name": "self-hosted"}, {"name": "Linux"}, {"name": "GPU"}],
+                            "last_active_at": (NOW - timedelta(days=3)).isoformat(),
+                        },
+                    ],
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoGitLabCIConnector(BaseConnector):
+    """Simulates GitLab CI/CD pipeline collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="gitlab_ci",
+            source_type=SourceType.CI_CD,
+            provider="gitlab",
+        )
+        result.events.append(
+            RawEventData(
+                source="gitlab_ci",
+                source_type=SourceType.CI_CD,
+                provider="gitlab",
+                event_type="gitlab_ci_pipelines",
+                raw_data={
+                    "pipelines": [
+                        {
+                            "id": 720001,
+                            "iid": 4501,
+                            "project_id": 42,
+                            "status": "success",
+                            "ref": "main",
+                            "sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+                            "source": "push",
+                            "created_at": (NOW - timedelta(hours=2)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=1, minutes=40)).isoformat(),
+                            "duration": 1200,
+                            "user": {"username": "gl-dev-alice"},
+                            "stages": ["build", "test", "deploy"],
+                        },
+                        {
+                            "id": 720002,
+                            "iid": 4502,
+                            "project_id": 42,
+                            "status": "success",
+                            "ref": "feat/api-v3",
+                            "sha": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3",
+                            "source": "merge_request_event",
+                            "created_at": (NOW - timedelta(hours=4)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=3, minutes=20)).isoformat(),
+                            "duration": 2400,
+                            "user": {"username": "gl-dev-bob"},
+                            "stages": ["build", "test", "sast", "deploy"],
+                        },
+                        {
+                            "id": 720003,
+                            "iid": 4503,
+                            "project_id": 42,
+                            "status": "failed",
+                            "ref": "feat/data-export",
+                            "sha": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+                            "source": "merge_request_event",
+                            "created_at": (NOW - timedelta(hours=6)).isoformat(),
+                            "updated_at": (NOW - timedelta(hours=5, minutes=30)).isoformat(),
+                            "duration": 480,
+                            "user": {"username": "gl-dev-carol"},
+                            "stages": ["build", "test", "sast"],
+                            "failed_jobs": [
+                                {
+                                    "name": "sast-semgrep",
+                                    "stage": "sast",
+                                    "failure_reason": "SAST detected hardcoded credentials in config/database.yml",
+                                }
+                            ],
+                        },
+                        {
+                            "id": 720004,
+                            "iid": 4504,
+                            "project_id": 42,
+                            "status": "running",
+                            "ref": "main",
+                            "sha": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+                            "source": "schedule",
+                            "created_at": (NOW - timedelta(minutes=15)).isoformat(),
+                            "updated_at": (NOW - timedelta(minutes=5)).isoformat(),
+                            "duration": None,
+                            "user": {"username": "gl-bot"},
+                            "stages": ["build", "test", "sast", "dast", "deploy"],
+                        },
+                    ]
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="gitlab_ci",
+                source_type=SourceType.CI_CD,
+                provider="gitlab",
+                event_type="gitlab_ci_variables",
+                raw_data={
+                    "variables": [
+                        {
+                            "key": "DEPLOY_TOKEN",
+                            "variable_type": "env_var",
+                            "protected": True,
+                            "masked": True,
+                            "environment_scope": "production",
+                        },
+                        {
+                            "key": "STAGING_API_KEY",
+                            "variable_type": "env_var",
+                            "protected": True,
+                            "masked": True,
+                            "environment_scope": "staging",
+                        },
+                        {
+                            "key": "DB_SECRET_PASSWORD",
+                            "variable_type": "env_var",
+                            "protected": False,
+                            "masked": False,
+                            "environment_scope": "*",
+                        },
+                    ]
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
+class DemoCircleCIConnector(BaseConnector):
+    """Simulates CircleCI pipeline collection."""
+
+    def validate(self):
+        return []
+
+    def health_check(self):
+        return True
+
+    def collect(self) -> ConnectorResult:
+        result = ConnectorResult(
+            connector_name=self.name,
+            source="circleci",
+            source_type=SourceType.CI_CD,
+            provider="circleci",
+        )
+        result.events.append(
+            RawEventData(
+                source="circleci",
+                source_type=SourceType.CI_CD,
+                provider="circleci",
+                event_type="circleci_pipelines",
+                raw_data={
+                    "items": [
+                        {
+                            "id": "cc-pipe-001",
+                            "project_slug": "gh/acme-corp/backend-api",
+                            "number": 2891,
+                            "state": "created",
+                            "status": "success",
+                            "created_at": (NOW - timedelta(hours=1)).isoformat(),
+                            "trigger": {"type": "webhook", "actor": {"login": "ci-dev-alice"}},
+                            "vcs": {"branch": "main", "revision": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"},
+                        },
+                        {
+                            "id": "cc-pipe-002",
+                            "project_slug": "gh/acme-corp/backend-api",
+                            "number": 2890,
+                            "state": "created",
+                            "status": "success",
+                            "created_at": (NOW - timedelta(hours=4)).isoformat(),
+                            "trigger": {"type": "webhook", "actor": {"login": "ci-dev-bob"}},
+                            "vcs": {"branch": "feat/notifications", "revision": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"},
+                        },
+                        {
+                            "id": "cc-pipe-003",
+                            "project_slug": "gh/acme-corp/frontend-app",
+                            "number": 1204,
+                            "state": "created",
+                            "status": "failed",
+                            "created_at": (NOW - timedelta(hours=6)).isoformat(),
+                            "trigger": {"type": "webhook", "actor": {"login": "ci-dev-carol"}},
+                            "vcs": {"branch": "feat/dashboard-v2", "revision": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"},
+                            "errors": [{"type": "config", "message": "Job 'deploy-prod' failed: exit code 1 — npm audit found 2 high severity vulnerabilities"}],
+                        },
+                    ],
+                    "next_page_token": None,
+                },
+            )
+        )
+        result.events.append(
+            RawEventData(
+                source="circleci",
+                source_type=SourceType.CI_CD,
+                provider="circleci",
+                event_type="circleci_contexts",
+                raw_data={
+                    "items": [
+                        {
+                            "id": "ctx-001",
+                            "name": "production-secrets",
+                            "created_at": (NOW - timedelta(days=180)).isoformat(),
+                            "environment_variables": [
+                                {"variable": "AWS_ACCESS_KEY_ID", "created_at": (NOW - timedelta(days=30)).isoformat()},
+                                {"variable": "AWS_SECRET_ACCESS_KEY", "created_at": (NOW - timedelta(days=30)).isoformat()},
+                                {"variable": "DATABASE_URL", "created_at": (NOW - timedelta(days=60)).isoformat()},
+                            ],
+                        },
+                        {
+                            "id": "ctx-002",
+                            "name": "staging-secrets",
+                            "created_at": (NOW - timedelta(days=365)).isoformat(),
+                            "environment_variables": [
+                                {"variable": "STAGING_DB_URL", "created_at": (NOW - timedelta(days=400)).isoformat()},
+                                {"variable": "LEGACY_API_TOKEN", "created_at": (NOW - timedelta(days=540)).isoformat()},
+                            ],
+                        },
+                    ],
+                    "next_page_token": None,
+                },
+            )
+        )
+        result.complete()
+        return result
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -16920,6 +17461,11 @@ def main():
     connectors.register("aws_sagemaker", DemoSageMakerConnector)
     connectors.register("databricks", DemoDatabricksConnector)
     connectors.register("microsoft_exchange", DemoExchangeOnlineConnector)
+    # CI/CD
+    connectors.register("jenkins", DemoJenkinsConnector)
+    connectors.register("github_actions", DemoGitHubActionsConnector)
+    connectors.register("gitlab_ci", DemoGitLabCIConnector)
+    connectors.register("circleci", DemoCircleCIConnector)
 
     # Create all connector instances
     _connector_configs = [
@@ -17001,6 +17547,11 @@ def main():
         ("demo-sagemaker", SourceType.AI_ML, "aws_sagemaker"),
         ("demo-databricks", SourceType.DATA_GOVERNANCE, "databricks"),
         ("demo-exchange-online", SourceType.EMAIL_SECURITY, "microsoft_exchange"),
+        # CI/CD
+        ("demo-jenkins", SourceType.CI_CD, "jenkins"),
+        ("demo-github-actions", SourceType.CI_CD, "github_actions"),
+        ("demo-gitlab-ci", SourceType.CI_CD, "gitlab_ci"),
+        ("demo-circleci", SourceType.CI_CD, "circleci"),
     ]
     for name, stype, provider in _connector_configs:
         connectors.create(ConnectorConfig(name=name, source_type=stype, provider=provider))

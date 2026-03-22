@@ -45,10 +45,10 @@ rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/d
 
 Expected output — verify these exact numbers:
 ```
-Connectors succeeded:   77
+Connectors succeeded:   81
 Connectors failed:      0
-Raw events collected:   348
-Findings normalized:    4,995
+Raw events collected:   358
+Findings normalized:    5,007
 Controls mapped:        373,852
 ```
 
@@ -76,7 +76,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (77 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
+The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (81 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -174,8 +174,8 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 78 source connectors
-  normalizers/   — 78 parsers (raw → FindingData)
+  connectors/    — 82 source connectors
+  normalizers/   — 82 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
@@ -196,7 +196,7 @@ terraform/       — 12 IaC modules (AWS, Azure, GCP)
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
-  demo_seed.py   — 77 mock connectors, 4,995 findings, 373K+ results
+  demo_seed.py   — 81 mock connectors, 5,007 findings, 373K+ results
   demo_api.sh    — API query helper with auto-auth
   docker-demo.sh — Docker demo entrypoint (migrate + seed + serve)
 ```
