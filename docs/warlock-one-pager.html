@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Warlock — Technical Overview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  @page {
+    size: letter;
+    margin: 0.65in 0.75in;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 10.5px;
+    line-height: 1.7;
+    color: #1e1e2e;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- Header --- */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+
+  .logo {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #1e1e2e;
+  }
+
+  .subtitle {
+    font-size: 11.5px;
+    color: #6b7280;
+    margin-bottom: 18px;
+  }
+
+  h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e1e2e;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    padding-left: 12px;
+    border-left: 3px solid #7c3aed;
+  }
+
+  p {
+    margin-bottom: 10px;
+    text-align: justify;
+    color: #374151;
+  }
+
+  /* --- Callout box --- */
+  .callout {
+    background: #f5f3ff;
+    border: 1px solid #e0d8fc;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+  }
+
+  .callout p {
+    margin-bottom: 0;
+    color: #4c1d95;
+    font-size: 10px;
+    line-height: 1.6;
+  }
+
+  .callout strong { color: #5b21b6; }
+
+  /* --- Architecture diagram --- */
+  .arch-diagram {
+    margin: 16px 0;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+
+  .arch-diagram .label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af;
+    margin-bottom: 14px;
+  }
+
+  .pipeline-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 16px;
+  }
+
+  .stage-box {
+    flex: 1;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 10px;
+    text-align: center;
+  }
+
+  .stage-box .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    color: #7c3aed;
+    margin-bottom: 3px;
+  }
+
+  .stage-box .name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1e1e2e;
+    margin-bottom: 2px;
+  }
+
+  .stage-box .desc {
+    font-size: 8.5px;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+
+  .arrow {
+    font-size: 14px;
+    color: #c4b5fd;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .arch-layers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .layer {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+
+  .layer .lname {
+    font-size: 9px;
+    font-weight: 600;
+    color: #1e1e2e;
+    margin-bottom: 2px;
+  }
+
+  .layer .ltech {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: #7c3aed;
+  }
+
+  .layer .ldetail {
+    font-size: 8px;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  /* --- Accent layers with color --- */
+  .layer.purple { border-top: 2.5px solid #7c3aed; }
+  .layer.blue { border-top: 2.5px solid #3b82f6; }
+  .layer.green { border-top: 2.5px solid #10b981; }
+  .layer.amber { border-top: 2.5px solid #f59e0b; }
+
+  /* --- Table --- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 10px;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-bottom: 2px solid #1e1e2e;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+  }
+
+  td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+    line-height: 1.5;
+    color: #374151;
+  }
+
+  td strong { color: #1e1e2e; }
+
+  /* --- Stat strip --- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .stat {
+    text-align: center;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 6px;
+  }
+
+  .stat .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #7c3aed;
+  }
+
+  .stat .lbl {
+    font-size: 8.5px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  /* --- Footer --- */
+  .footer {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 9px;
+    color: #9ca3af;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">W</div>
+  <h1>Warlock</h1>
+</div>
+<div class="subtitle">Pipeline-First Governance, Risk, and Compliance Platform</div>
+
+<h2>What Warlock Is</h2>
+
+<p>Warlock is a governance, risk, and compliance platform built on the premise that compliance is a telemetry problem, not a spreadsheet problem. The traditional GRC workflow asks compliance teams to spend weeks collecting screenshots, exporting CSVs, and assembling evidence binders by hand. By the time that binder reaches an auditor, half the evidence is already stale. Assessments are subjective because two people reviewing the same control can reach different conclusions, and traceability is nonexistent because reconstructing the chain from a raw data source to a compliance determination requires a human to manually piece together artifacts from different systems.</p>
+
+<p>Warlock eliminates all three problems. It continuously ingests security telemetry from the tools an organization already operates, normalizes that data into a universal finding format, maps those findings to compliance controls across fourteen frameworks simultaneously, and produces deterministic assessment results. Every stage of this process is SHA-256 hashed, creating a tamper-evident audit trail that runs from the original API response all the way through to the final control result.</p>
+
+<!-- Stats strip -->
+<div class="stats">
+  <div class="stat"><div class="val">82</div><div class="lbl">Source Connectors</div></div>
+  <div class="stat"><div class="val">14</div><div class="lbl">Frameworks</div></div>
+  <div class="stat"><div class="val">1,996</div><div class="lbl">Controls</div></div>
+  <div class="stat"><div class="val">670</div><div class="lbl">OPA Policies</div></div>
+  <div class="stat"><div class="val">101</div><div class="lbl">Assertions</div></div>
+</div>
+
+<h2>How the Pipeline Works</h2>
+
+<p>Evidence flows through four immutable stages. In the first stage, eighty-two source connectors pull security telemetry from cloud providers like AWS, Azure, and GCP; identity providers like Okta and Entra ID; endpoint detection platforms like CrowdStrike and SentinelOne; vulnerability scanners like Tenable, Qualys, and Wiz; code security tools like Snyk, Checkmarx, and Veracode; HRIS systems like Workday and BambooHR; SIEM platforms like Splunk and Sentinel; network security appliances from Palo Alto, Fortinet, and Zscaler; and dozens of other categories including CI/CD systems, MDM platforms, collaboration tools, email security gateways, and third-party risk scoring services. Each connector validates its configuration, verifies connectivity through a health check, and produces raw events that preserve the verbatim API response from the source system.</p>
+
+<p>In the second stage, each raw event passes through a matching normalizer that transforms provider-specific data into a universal finding format called FindingData. An AWS IAM credential report, an Okta user directory, and an Entra ID export all become the same structured object, enabling cross-provider analysis. During normalization, Warlock automatically detects and scrubs personally identifiable information. Email addresses, names, social security numbers, and phone numbers are replaced with deterministic pseudonyms using SHA-256 hashing, so the same person always maps to the same pseudonym for correlation, but the actual identity is never stored. Every finding carries a boolean flag indicating whether PII was detected and removed. The database, the data lake, and every export are clean by default.</p>
+
+<p>In the third stage, normalized findings are mapped to specific controls across all fourteen compliance frameworks using a crosswalk graph of 1,843 edges that link equivalent controls. A single finding about multi-factor authentication status can simultaneously map to NIST 800-53 AC-2, SOC 2 CC6.1, ISO 27001 A.8.5, HIPAA 164.312(d), and PCI DSS 8.3. Evidence collected for one framework automatically satisfies overlapping requirements in every other framework the organization is subject to.</p>
+
+<p>In the fourth stage, a four-tier assessment model evaluates each control. The first tier consists of 101 deterministic assertion functions that perform fast, auditable, reproducible checks. The second tier is AI reasoning, where a large language model evaluates controls for which assertions are unavailable, subject to a configurable confidence floor that defaults to 0.7 and rejects unreliable assessments. The AI provider is pluggable, supporting Anthropic, OpenAI, Google Gemini, and Ollama for local inference. The third tier is 670 OPA/Rego policies that provide policy-as-code evaluation. The fourth tier is control inheritance, which propagates parent status to child enhancements following the FedRAMP CRM pattern.</p>
+
+<!-- Architecture diagram -->
+<div class="arch-diagram">
+  <div class="label">Architecture</div>
+  <div class="pipeline-flow">
+    <div class="stage-box">
+      <div class="num">01</div>
+      <div class="name">Collect</div>
+      <div class="desc">82 connectors pull from cloud, identity, EDR, scanner, HRIS, SIEM, CI/CD APIs</div>
+    </div>
+    <div class="arrow">&#9654;</div>
+    <div class="stage-box">
+      <div class="num">02</div>
+      <div class="name">Normalize</div>
+      <div class="desc">Universal findings, PII scrubbing, integrity hashing</div>
+    </div>
+    <div class="arrow">&#9654;</div>
+    <div class="stage-box">
+      <div class="num">03</div>
+      <div class="name">Map</div>
+      <div class="desc">1,843 crosswalks across 14 frameworks, 1,996 controls</div>
+    </div>
+    <div class="arrow">&#9654;</div>
+    <div class="stage-box">
+      <div class="num">04</div>
+      <div class="name">Assess</div>
+      <div class="desc">Assertions, AI reasoning, OPA/Rego, inheritance</div>
+    </div>
+  </div>
+  <div class="arch-layers">
+    <div class="layer purple">
+      <div class="lname">REST API</div>
+      <div class="ltech">FastAPI</div>
+      <div class="ldetail">153 endpoints, ABAC</div>
+    </div>
+    <div class="layer purple">
+      <div class="lname">CLI</div>
+      <div class="ltech">Click + Rich</div>
+      <div class="ldetail">42+ commands</div>
+    </div>
+    <div class="layer blue">
+      <div class="lname">Database</div>
+      <div class="ltech">SQLAlchemy</div>
+      <div class="ldetail">34 models, Postgres</div>
+    </div>
+    <div class="layer blue">
+      <div class="lname">Data Lake</div>
+      <div class="ltech">DuckDB + Parquet</div>
+      <div class="ldetail">24 modules, 3 zones</div>
+    </div>
+    <div class="layer green">
+      <div class="lname">Policy Engine</div>
+      <div class="ltech">OPA / Rego</div>
+      <div class="ldetail">670 policies</div>
+    </div>
+    <div class="layer green">
+      <div class="lname">AI</div>
+      <div class="ltech">Pluggable</div>
+      <div class="ldetail">Claude, GPT, Gemini, Ollama</div>
+    </div>
+    <div class="layer amber">
+      <div class="lname">Infrastructure</div>
+      <div class="ltech">Terraform</div>
+      <div class="ldetail">12 modules, 3 clouds</div>
+    </div>
+    <div class="layer amber">
+      <div class="lname">Security</div>
+      <div class="ltech">JWT + RBAC + ABAC</div>
+      <div class="ldetail">Fail-closed, bcrypt</div>
+    </div>
+  </div>
+</div>
+
+<h2>Frameworks and Coverage</h2>
+
+<p>Warlock maps findings to 1,996 controls across fourteen compliance frameworks. The library covers NIST 800-53 Rev 5 with 1,176 controls spanning twenty families and their enhancements; ISO 27001:2022 with 93 Annex A controls; ISO 27701:2019 with 95 controls for privacy information management; ISO 42001:2023 with 39 controls for AI management; SOC 2 with 46 Trust Services Criteria; the Unified Compliance Framework with 115 controls mapping across all other frameworks; FedRAMP Moderate with 26 NIST 800-53 overlay controls; HIPAA Security Rule with 64 safeguard controls; CMMC Level 2 with 110 controls aligned with NIST 800-171; GDPR with 15 EU data protection controls; PCI DSS v4.0 with 63 payment card controls; NIST CSF 2.0 with 101 controls across six core functions; the EU AI Act with 33 high-risk AI controls; and SEC Cyber with 20 disclosure controls.</p>
+
+<div class="callout">
+  <p><strong>Cross-framework efficiency:</strong> The crosswalk graph connects equivalent controls with 1,843 edges. An organization pursuing SOC 2, ISO 27001, and HIPAA simultaneously collects evidence once and the pipeline maps it everywhere. The crosswalks are bidirectional and transitive, so adding a new framework immediately benefits from evidence already collected for others.</p>
+</div>
+
+<h2>What the Platform Produces</h2>
+
+<p>Beyond continuous assessment results, Warlock provides several output mechanisms. OSCAL export generates machine-readable Assessment Results, System Security Plans, and Plans of Action and Milestones in OSCAL 1.1.2 format, the NIST standard for security automation. The audit evidence binder packages findings, control results, and supporting documentation into a ZIP archive organized by engagement. Remediation workflows track non-compliant controls through Plans of Action and Milestones with deadlines and assignment, compensating controls for situations where a primary control cannot be fully implemented, risk acceptances with Authorizing Official approval and expiration tracking, and issues auto-created from failing results with comment threads and assignment.</p>
+
+<p>The GRC data lake provides an analytical layer built on DuckDB and Parquet files organized into three zones: raw events, enriched findings with control mappings, and curated domain-specific analytical tables. The lake supports TF-IDF semantic search for natural language compliance queries and batch AI assessment across the curated zone. A reconciliation engine compares the transactional database against the lake to verify data integrity.</p>
+
+<p>Risk quantification uses a FAIR Monte Carlo engine to model risk in financial terms, a vendor risk scoring system that evaluates third-party exposure, and an audit simulation that projects compliance posture at a future date to answer questions like "if we audit on September 1, what will our posture look like?" Evidence sufficiency scoring identifies gaps before auditors do, and posture history tracking provides trend lines with effectiveness metrics including control uptime percentage, mean time to remediation, and drift detection counts.</p>
+
+<h2>Security Model</h2>
+
+<p>The security model defaults to deny at every layer. OPA policy gates block API requests that fail policy evaluation. Assertion evaluation fails controls when it encounters unexpected data rather than silently passing. ABAC scoping restricts what each user can see based on their framework, source, and control family permissions. If the policy engine is unreachable, access is denied. JWT authentication uses HS256 with a mandatory 32-character secret, passwords are hashed with bcrypt at 12 rounds, and accounts lock after five failed login attempts for thirty minutes. GDPR data subject rights are implemented through a GDPRManager that handles right of access, right to erasure with deterministic anonymization, and right to rectification. All AI prompts are sanitized to strip control characters and prevent evidence-block injection.</p>
+
+<h2>Who It Serves</h2>
+
+<p>Compliance teams use Warlock to run the pipeline, review assessment results, manage remediation workflows, and prepare for audits with pre-built evidence binders and sufficiency scoring that identifies gaps before auditors arrive. Security engineers configure connectors for their organization's tooling, write custom assertion functions for organization-specific controls, and define OPA policies for automated enforcement. CISOs and risk managers track compliance posture trends over time, quantify risk using FAIR methodology, monitor compliance drift with correlated change detection, and produce board-ready reporting from posture history and effectiveness metrics. Auditors verify the hash-chained audit trail independently, consume machine-readable OSCAL exports, and review evidence binders organized per engagement through a public trust portal that exposes compliance status to external parties.</p>
+
+<p>The platform is written in Python 3.12+ and runs with a single Docker Compose command that starts PostgreSQL, Redis, OPA, runs database migrations, seeds demonstration data covering eighty-two connectors, over five thousand findings, and more than 373,000 control results, and starts the API server. For development, a shell script creates a virtual environment and seeds data using SQLite with no external dependencies.</p>
+
+<div class="footer">Warlock &mdash; Pipeline-First GRC Platform &mdash; Python 3.12+</div>
+
+</body>
+</html>

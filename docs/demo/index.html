@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warlock GRC Platform — Interactive Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   RESET & ROOT
+   ================================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-900:#09090b;--bg-800:#18181b;--bg-700:#27272a;--bg-600:#3f3f46;--bg-500:#52525b;
+  --text-100:#fafafa;--text-200:#e4e4e7;--text-300:#a1a1aa;--text-400:#71717a;
+  --purple:#8b5cf6;--purple-dim:#7c3aed;--purple-glow:rgba(139,92,246,0.15);
+  --red:#ef4444;--orange:#f97316;--yellow:#eab308;--green:#22c55e;--blue:#3b82f6;--cyan:#06b6d4;
+  --sidebar-w:240px;--topbar-h:56px;
+  --radius:6px;--radius-lg:12px;
+  --panel-w:520px;
+}
+html{font-size:14px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-900);color:var(--text-200);overflow:hidden;height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ================================================================
+   SCROLLBAR
+   ================================================================ */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg-600);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--bg-500)}
+
+/* ================================================================
+   LAYOUT SKELETON
+   ================================================================ */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg-800);border-right:1px solid var(--bg-700);display:flex;flex-direction:column;z-index:100;overflow:hidden}
+#topbar{position:fixed;left:var(--sidebar-w);top:0;right:0;height:var(--topbar-h);background:var(--bg-800);border-bottom:1px solid var(--bg-700);display:flex;align-items:center;padding:0 24px;z-index:90;gap:16px}
+#main{position:fixed;left:var(--sidebar-w);top:var(--topbar-h);right:0;bottom:0;overflow-y:auto;padding:24px}
+
+/* ================================================================
+   SIDEBAR
+   ================================================================ */
+.logo{padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bg-700);flex-shrink:0}
+.logo svg{width:26px;height:26px}
+.logo span{font-weight:700;font-size:1.1rem;color:var(--text-100);letter-spacing:-0.5px}
+.logo .version{font-size:0.65rem;color:var(--text-400);margin-left:4px;font-weight:400}
+.nav-section{padding:14px 12px 6px;font-size:0.65rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-400);font-weight:600;flex-shrink:0}
+.nav-scroll{flex:1;overflow-y:auto;padding:2px 8px 12px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:var(--radius);color:var(--text-300);cursor:pointer;font-size:0.85rem;font-weight:500;transition:all 0.15s;margin-bottom:1px;user-select:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg-700);color:var(--text-200)}
+.nav-item.active{background:var(--purple-glow);color:var(--purple);font-weight:600}
+.nav-item .icon{width:18px;text-align:center;flex-shrink:0;font-size:0.95rem}
+.nav-item .badge{margin-left:auto;background:var(--bg-700);color:var(--text-300);font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.nav-item.active .badge{background:rgba(139,92,246,0.2);color:var(--purple)}
+
+/* ================================================================
+   TOPBAR
+   ================================================================ */
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg-700);border:1px solid var(--bg-600);border-radius:var(--radius);padding:6px 12px;flex:1;max-width:420px}
+.search-box input{background:none;border:none;outline:none;color:var(--text-200);font-size:0.85rem;width:100%;font-family:'Inter',sans-serif}
+.search-box input::placeholder{color:var(--text-400)}
+.topbar-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.top-btn{background:var(--bg-700);border:1px solid var(--bg-600);color:var(--text-300);padding:6px 12px;border-radius:var(--radius);cursor:pointer;font-size:0.8rem;font-family:'Inter',sans-serif;transition:all 0.15s}
+.top-btn:hover{background:var(--bg-600);color:var(--text-100)}
+.env-badge{background:rgba(34,197,94,0.15);color:var(--green);font-size:0.7rem;padding:4px 10px;border-radius:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+
+/* ================================================================
+   VIEW CONTAINERS
+   ================================================================ */
+.view{display:none}
+.view.active{display:block}
+
+/* ================================================================
+   PAGE HEADERS
+   ================================================================ */
+.page-hdr{margin-bottom:20px}
+.page-hdr h1{font-size:1.5rem;font-weight:700;color:var(--text-100);margin-bottom:4px}
+.page-hdr p{color:var(--text-400);font-size:0.85rem}
+
+/* ================================================================
+   STAT CARDS
+   ================================================================ */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all 0.2s}
+.stat-card:hover{border-color:var(--purple);transform:translateY(-1px)}
+.stat-card .label{font-size:0.75rem;color:var(--text-400);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.stat-card .value{font-size:1.6rem;font-weight:700;color:var(--text-100);font-family:'JetBrains Mono',monospace}
+.stat-card .sub{font-size:0.75rem;color:var(--text-400);margin-top:4px}
+
+/* ================================================================
+   FILTER PILLS
+   ================================================================ */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.pill{padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.15s;border:1px solid var(--bg-600);background:var(--bg-800);color:var(--text-300);user-select:none}
+.pill:hover{border-color:var(--text-400);color:var(--text-200)}
+.pill.active{background:var(--purple-glow);border-color:var(--purple);color:var(--purple);font-weight:600}
+.pill .count{font-family:'JetBrains Mono',monospace;font-size:0.7rem;margin-left:4px;opacity:0.7}
+
+/* ================================================================
+   DATA TABLES
+   ================================================================ */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--bg-700);border-radius:var(--radius-lg);background:var(--bg-800)}
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+thead th{text-align:left;padding:10px 14px;color:var(--text-400);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--bg-700);cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:0;background:var(--bg-800);z-index:1}
+thead th:hover{color:var(--text-200)}
+thead th.sorted-asc::after{content:' \u25B2';font-size:0.6rem}
+thead th.sorted-desc::after{content:' \u25BC';font-size:0.6rem}
+tbody tr{border-bottom:1px solid var(--bg-700);cursor:pointer;transition:background 0.1s}
+tbody tr:hover{background:var(--bg-700)}
+tbody tr:last-child{border-bottom:none}
+td{padding:10px 14px;color:var(--text-200);white-space:nowrap}
+
+/* ================================================================
+   BADGES
+   ================================================================ */
+.badge-sev{display:inline-block;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+.badge-critical{background:rgba(239,68,68,0.15);color:var(--red)}
+.badge-high{background:rgba(249,115,22,0.15);color:var(--orange)}
+.badge-medium{background:rgba(234,179,8,0.15);color:var(--yellow)}
+.badge-low{background:rgba(59,130,246,0.15);color:var(--blue)}
+.badge-info{background:rgba(6,182,212,0.15);color:var(--cyan)}
+.badge-status{display:inline-block;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600}
+.badge-pass,.badge-active,.badge-running,.badge-completed,.badge-fixed,.badge-resolved,.badge-remediated{background:rgba(34,197,94,0.15);color:var(--green)}
+.badge-fail,.badge-critical-s,.badge-terminated,.badge-overdue,.badge-expired{background:rgba(239,68,68,0.15);color:var(--red)}
+.badge-partial,.badge-warning,.badge-investigating,.badge-in_progress,.badge-expiring,.badge-leave,.badge-stopped{background:rgba(234,179,8,0.15);color:var(--yellow)}
+.badge-new,.badge-open,.badge-sent{background:rgba(139,92,246,0.15);color:var(--purple)}
+.badge-suspended,.badge-deprovisioned,.badge-risk_accepted{background:rgba(113,113,122,0.15);color:var(--text-400)}
+
+/* ================================================================
+   DETAIL PANEL (slide-in from right)
+   ================================================================ */
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.panel-overlay.open{opacity:1;pointer-events:auto}
+.detail-panel{position:fixed;right:0;top:0;bottom:0;width:var(--panel-w);max-width:90vw;background:var(--bg-800);border-left:1px solid var(--bg-700);z-index:201;transform:translateX(100%);transition:transform 0.25s ease;overflow-y:auto;padding:0}
+.detail-panel.open{transform:translateX(0)}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bg-700);position:sticky;top:0;background:var(--bg-800);z-index:1}
+.panel-header h2{font-size:1.1rem;font-weight:600;color:var(--text-100)}
+.panel-close{background:none;border:none;color:var(--text-400);cursor:pointer;font-size:1.3rem;padding:4px 8px;border-radius:var(--radius);transition:all 0.15s}
+.panel-close:hover{background:var(--bg-700);color:var(--text-100)}
+.panel-body{padding:20px}
+.panel-section{margin-bottom:20px}
+.panel-section h3{font-size:0.8rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-400);margin-bottom:10px;font-weight:600}
+.panel-field{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg-700);font-size:0.85rem}
+.panel-field .lbl{color:var(--text-400)}
+.panel-field .val{color:var(--text-200);text-align:right;font-family:'JetBrains Mono',monospace;font-size:0.8rem}
+
+/* ================================================================
+   CLI COMMANDS
+   ================================================================ */
+.cli-section{background:var(--bg-900);border:1px solid var(--bg-700);border-radius:var(--radius);padding:12px;margin-top:12px}
+.cli-section h4{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-400);margin-bottom:10px}
+.cli-cmd{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-800);border-radius:var(--radius);margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--green);cursor:pointer;transition:all 0.15s;border:1px solid transparent}
+.cli-cmd:hover{border-color:var(--bg-600);background:var(--bg-700)}
+.cli-cmd .prompt{color:var(--text-400);user-select:none}
+.cli-cmd .copy-btn{margin-left:auto;font-size:0.65rem;color:var(--text-400);font-family:'Inter',sans-serif;padding:2px 8px;border-radius:4px;background:var(--bg-700);opacity:0;transition:opacity 0.15s;flex-shrink:0}
+.cli-cmd:hover .copy-btn{opacity:1}
+.cli-cmd .copy-btn.copied{color:var(--green);opacity:1}
+
+/* ================================================================
+   AI ANALYSIS BOX
+   ================================================================ */
+.ai-box{background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(6,182,212,0.05));border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-lg);padding:16px;margin-top:12px}
+.ai-box .ai-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-box .ai-hdr .ai-icon{font-size:1rem}
+.ai-box .ai-hdr .ai-title{font-size:0.85rem;font-weight:600;color:var(--purple)}
+.ai-box .ai-hdr .ai-conf{margin-left:auto;font-size:0.75rem;font-family:'JetBrains Mono',monospace;color:var(--cyan)}
+.ai-box .ai-body{font-size:0.82rem;color:var(--text-300);line-height:1.6}
+.ai-box .ai-body ul{padding-left:16px;margin:8px 0}
+.ai-box .ai-body li{margin-bottom:4px}
+.ai-box .ai-rec{margin-top:10px;padding:10px;background:rgba(34,197,94,0.08);border-radius:var(--radius);font-size:0.82rem;color:var(--green)}
+
+/* ================================================================
+   FRAMEWORK CARDS (Compliance view)
+   ================================================================ */
+.fw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.fw-card{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all 0.2s}
+.fw-card:hover{border-color:var(--purple);transform:translateY(-1px)}
+.fw-card .fw-name{font-weight:600;color:var(--text-100);font-size:0.95rem;margin-bottom:2px}
+.fw-card .fw-cat{font-size:0.7rem;color:var(--text-400);text-transform:uppercase;letter-spacing:0.5px}
+.fw-card .fw-score{font-size:2rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin:10px 0 6px}
+.fw-bar{height:6px;background:var(--bg-700);border-radius:3px;overflow:hidden;margin-top:8px}
+.fw-bar-fill{height:100%;border-radius:3px;transition:width 0.5s}
+.fw-stats{display:flex;gap:12px;margin-top:10px;font-size:0.75rem}
+.fw-stats span{display:flex;align-items:center;gap:4px}
+.fw-stats .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ================================================================
+   DASHBOARD SPECIFICS
+   ================================================================ */
+.pipeline-flow{display:flex;align-items:center;gap:0;margin-bottom:20px;overflow-x:auto;padding:16px 0}
+.pipeline-stage{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:14px 20px;text-align:center;cursor:pointer;transition:all 0.2s;min-width:140px;flex-shrink:0}
+.pipeline-stage:hover{border-color:var(--purple);transform:translateY(-2px)}
+.pipeline-stage .p-num{font-size:1.6rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text-100)}
+.pipeline-stage .p-label{font-size:0.75rem;color:var(--text-400);margin-top:4px}
+.pipeline-arrow{color:var(--text-400);font-size:1.2rem;padding:0 4px;flex-shrink:0}
+.activity-feed{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px}
+.activity-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg-700);cursor:pointer;transition:background 0.1s;font-size:0.82rem}
+.activity-item:hover{background:var(--bg-700);margin:0 -16px;padding-left:16px;padding-right:16px}
+.activity-item:last-child{border-bottom:none}
+.activity-item .a-icon{flex-shrink:0;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem}
+.activity-item .a-text{color:var(--text-300);line-height:1.4}
+.activity-item .a-time{margin-left:auto;color:var(--text-400);font-size:0.75rem;white-space:nowrap;font-family:'JetBrains Mono',monospace}
+
+/* ================================================================
+   CONNECTOR GRID
+   ================================================================ */
+.conn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.conn-chip{display:flex;align-items:center;gap:10px;background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius);padding:10px 14px;cursor:pointer;transition:all 0.15s}
+.conn-chip:hover{border-color:var(--purple);background:var(--bg-700)}
+.conn-chip .c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.conn-chip .c-name{font-weight:500;color:var(--text-200);font-size:0.85rem}
+.conn-chip .c-cat{margin-left:auto;font-size:0.7rem;color:var(--text-400)}
+
+/* ================================================================
+   REMEDIATION WORKFLOW
+   ================================================================ */
+.rem-layout{display:grid;grid-template-columns:280px 1fr 300px;gap:16px;min-height:500px}
+.rem-list{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);overflow-y:auto;max-height:600px}
+.rem-list-item{padding:12px 14px;border-bottom:1px solid var(--bg-700);cursor:pointer;transition:background 0.1s;font-size:0.85rem}
+.rem-list-item:hover,.rem-list-item.active{background:var(--bg-700)}
+.rem-center{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:20px}
+.rem-stages{display:flex;align-items:center;gap:4px;margin:20px 0;flex-wrap:wrap}
+.rem-stage{padding:8px 16px;border-radius:20px;font-size:0.8rem;font-weight:600;border:2px solid var(--bg-600);color:var(--text-400);transition:all 0.3s}
+.rem-stage.current{border-color:var(--purple);color:var(--purple);background:var(--purple-glow)}
+.rem-stage.done{border-color:var(--green);color:var(--green);background:rgba(34,197,94,0.1)}
+.rem-arrow{color:var(--text-400);font-size:0.8rem}
+.rem-ai{background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px;overflow-y:auto;max-height:600px}
+.rem-btn{padding:10px 20px;border-radius:var(--radius);font-size:0.85rem;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;font-family:'Inter',sans-serif}
+.rem-btn-primary{background:var(--purple);color:white}
+.rem-btn-primary:hover{background:var(--purple-dim)}
+.rem-btn-success{background:var(--green);color:white}
+.rem-btn-success:hover{background:#16a34a}
+
+/* ================================================================
+   SPARKLINES / POSTURE
+   ================================================================ */
+.sparkline{display:inline-flex;align-items:end;gap:1px;height:24px;vertical-align:middle}
+.sparkline .bar{width:4px;border-radius:1px;transition:height 0.3s}
+.trend-up{color:var(--green)}
+.trend-down{color:var(--red)}
+.trend-flat{color:var(--text-400)}
+
+/* ================================================================
+   TABS
+   ================================================================ */
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--bg-700);margin-bottom:16px}
+.tab{padding:10px 20px;font-size:0.85rem;font-weight:500;color:var(--text-400);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;user-select:none}
+.tab:hover{color:var(--text-200)}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* ================================================================
+   TWO COL GRID
+   ================================================================ */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:1200px){.grid-2,.grid-3,.rem-layout{grid-template-columns:1fr}}
+
+/* ================================================================
+   MISC
+   ================================================================ */
+.link{color:var(--purple);cursor:pointer;text-decoration:none}
+.link:hover{text-decoration:underline}
+.empty-state{text-align:center;padding:40px;color:var(--text-400);font-size:0.9rem}
+.tag{display:inline-block;padding:2px 8px;margin:2px;border-radius:4px;font-size:0.7rem;background:var(--bg-700);color:var(--text-300)}
+.section-title{font-size:0.85rem;font-weight:600;color:var(--text-100);margin:16px 0 10px}
+.divider{border:none;border-top:1px solid var(--bg-700);margin:16px 0}
+.text-mono{font-family:'JetBrains Mono',monospace}
+.text-sm{font-size:0.8rem}
+.text-xs{font-size:0.7rem}
+.text-muted{color:var(--text-400)}
+.text-green{color:var(--green)}
+.text-red{color:var(--red)}
+.text-yellow{color:var(--yellow)}
+.text-purple{color:var(--purple)}
+.mt-8{margin-top:8px}
+.mt-16{margin-top:16px}
+.mb-8{margin-bottom:8px}
+.mb-16{margin-bottom:16px}
+.flex{display:flex}.gap-8{gap:8px}.gap-16{gap:16px}.items-center{align-items:center}.flex-wrap{flex-wrap:wrap}
+.w-full{width:100%}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<div id="sidebar">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><path d="M16 2L4 8v16l12 6 12-6V8L16 2z" stroke="#8b5cf6" stroke-width="2" fill="rgba(139,92,246,0.1)"/><path d="M16 8l-6 3v10l6 3 6-3V11l-6-3z" fill="#8b5cf6" opacity="0.6"/><circle cx="16" cy="16" r="3" fill="#8b5cf6"/></svg>
+    <span>Warlock<span class="version">v2.0</span></span>
+  </div>
+  <div class="nav-scroll" id="nav-container"></div>
+</div>
+
+<!-- ============================================================
+     TOPBAR
+     ============================================================ -->
+<div id="topbar">
+  <div class="search-box">
+    <span style="color:var(--text-400)">&#x1F50D;</span>
+    <input type="text" id="global-search" placeholder="Search across all views..." autocomplete="off">
+  </div>
+  <div class="topbar-right">
+    <span class="env-badge">DEMO</span>
+    <button class="top-btn" onclick="location.reload()">Reset</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<div id="main"></div>
+
+<!-- ============================================================
+     DETAIL PANEL
+     ============================================================ -->
+<div class="panel-overlay" id="panel-overlay"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-header">
+    <h2 id="panel-title">Detail</h2>
+    <button class="panel-close" id="panel-close">&times;</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<script>
+/* ================================================================
+   SEEDED PRNG & DATA GENERATION
+   ================================================================ */
+class PRNG {
+  constructor(seed){this.seed=seed}
+  next(){this.seed=(this.seed*16807)%2147483647;return(this.seed-1)/2147483646}
+  int(min,max){return Math.floor(this.next()*(max-min+1))+min}
+  pick(arr){return arr[this.int(0,arr.length-1)]}
+  pickN(arr,n){const s=[...arr];const r=[];for(let i=0;i<n&&s.length;i++){const idx=this.int(0,s.length-1);r.push(s.splice(idx,1)[0])}return r}
+  chance(p){return this.next()<p}
+  date(start,end){return new Date(start.getTime()+this.next()*(end.getTime()-start.getTime()))}
+  uuid(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=this.int(0,15);return(c==='x'?r:(r&0x3|0x8)).toString(16)})}
+  ip(){return `${this.int(10,192)}.${this.int(0,255)}.${this.int(0,255)}.${this.int(1,254)}`}
+  hex(len){let s='';for(let i=0;i<len;i++)s+='0123456789abcdef'[this.int(0,15)];return s}
+}
+
+const FIRST_NAMES=['Alice','Bob','Carlos','Diana','Elena','Faisal','Grace','Hassan','Ingrid','James','Karen','Liam','Mei','Noah','Olivia','Priya','Quinn','Raj','Sofia','Tomas','Uma','Victor','Wendy','Xavier','Yuki','Zara','Aaron','Beth','Chen','David','Emily','Frank','Gita','Henry','Isla','Juan','Kate','Leo','Maria','Nadia','Oscar','Paula','Ravi','Sarah','Tyler','Vera','Will','Xena','Yolanda','Zach'];
+const LAST_NAMES=['Chen','Martinez','Johnson','Patel','Williams','Kim','O\'Brien','Garcia','Nakamura','Singh','Anderson','Kowalski','Ali','Thompson','Rodriguez','Lee','Johansson','Gupta','Mueller','Santos'];
+const DEPARTMENTS=['Engineering','Security','IT','Finance','Legal','HR','Sales','Marketing','Product','Support'];
+const CLOUD_REGIONS=['us-east-1','us-west-2','eu-west-1','ap-southeast-1'];
+const DEVICE_MODELS=['MacBook Pro 16-inch','MacBook Air M3','ThinkPad X1 Carbon','Dell XPS 15','Surface Pro 9'];
+const PLATFORMS=['macOS','Windows','Linux','iOS','Android'];
+const MFA_TYPES=['totp','push','hardware_key','sms'];
+const ROLES=['admin','analyst','viewer','manager','auditor','engineer'];
+const GROUPS=[['engineering','devops'],['security','soc'],['it-support','helpdesk'],['finance','accounting'],['legal','compliance'],['hr','people-ops'],['sales','bd'],['marketing','content'],['product','design'],['support','customer-success']];
+const INSTANCE_TYPES={aws:['t3.micro','t3.medium','m5.large','m5.xlarge','c5.2xlarge','r5.large'],azure:['Standard_B1s','Standard_D2s_v3','Standard_D4s_v3','Standard_E4s_v3'],gcp:['e2-micro','e2-medium','n2-standard-2','n2-standard-4','c2-standard-4']};
+const VULN_TITLES=['Remote Code Execution in OpenSSL','SQL Injection in REST API','Cross-Site Scripting in Admin Panel','Privilege Escalation via sudo','Insecure Deserialization in Java','Buffer Overflow in libpng','Path Traversal in File Upload','SSRF in Webhook Handler','XXE in XML Parser','Denial of Service in HTTP/2','Authentication Bypass in OAuth','Insecure Default Credentials','Missing Rate Limiting','Weak TLS Configuration','Cleartext Storage of Sensitive Data','Insufficient Logging','Open Redirect Vulnerability','CSRF Token Bypass','Broken Access Control','Insecure File Permissions'];
+const PACKAGES=['openssl','libcurl','nginx','apache2','nodejs','python3','postgresql','redis','docker','kubernetes','terraform','vault','consul','elasticsearch','grafana','prometheus','jenkins','gitlab','rabbitmq','mongodb'];
+const ALERT_TITLES=['Brute Force Login Attempt Detected','Unusual Outbound Data Transfer','Malware Signature Match','Unauthorized API Key Usage','Suspicious Process Execution','Lateral Movement Detected','Privilege Escalation Attempt','DNS Tunneling Activity','Cryptomining Process Detected','Phishing Email Delivered','Anomalous User Behavior','Impossible Travel Login','Credential Stuffing Attack','Data Exfiltration via DNS','Reverse Shell Connection','Ransomware File Encryption','Supply Chain Attack Vector','Zero-Day Exploit Attempt','Insider Threat Activity','Cloud API Abuse'];
+const TECHNIQUES=['T1190','T1566','T1059','T1053','T1078','T1110','T1021','T1071','T1048','T1203','T1547','T1136','T1562','T1027','T1055'];
+const TACTICS=['Initial Access','Execution','Persistence','Privilege Escalation','Defense Evasion','Credential Access','Discovery','Lateral Movement','Collection','Exfiltration'];
+const LANGUAGES=['Python','JavaScript','TypeScript','Go','Java','Rust','Ruby','C++','C#','Terraform'];
+const REPOS=['warlock-core','warlock-api','warlock-ui','infrastructure','data-pipeline','auth-service','billing-service','notification-svc','ml-models','iac-modules'];
+const CODE_RULES=['S001-hardcoded-secret','S002-sql-injection','S003-xss-vulnerability','S004-insecure-random','S005-weak-crypto','S006-path-traversal','S007-open-redirect','S008-ssrf','S009-xxe','S010-insecure-deser','S011-command-injection','S012-ldap-injection','S013-log-injection','S014-race-condition','S015-buffer-overflow'];
+const VENDOR_NAMES=['Acme Cloud','DataGuard Inc','SecureNet Corp','CloudVault','TechShield','InfoProtect','CyberSafe','DataFortress','NetGuard','SecurityFirst','ComplianceHub','RiskMatrix','ThreatWatch','PrivacyShield','AuditPro','GovCloud','HealthTech','FinSecure','AIGuard','EdgeSecurity','ManagedOps','DevSecOps Inc','CloudNative','ZeroTrust Corp','IdentityHub','AccessControl Inc','DataLake Corp','StreamGuard','APIShield','ContainerSec','ServerlessSec','MLSecure','IoTGuard','BlockchainSec','QuantumSafe','SupplyChainSec','CodeGuard','InfraShield','PlatformSec','ComplianceAI'];
+const VENDOR_CATS=['Cloud Infrastructure','Security','Data Management','Identity','Compliance','Risk','Monitoring','Development','Analytics','AI/ML'];
+const CERTIFICATIONS=['SOC 2 Type II','ISO 27001','HIPAA BAA','FedRAMP','PCI DSS','GDPR DPA','CSA STAR','NIST 800-171'];
+const COURSE_NAMES=['Security Awareness Fundamentals','Phishing Detection Training','GDPR Compliance Overview','Secure Coding Practices','Incident Response Procedures','Data Handling Best Practices','Cloud Security Essentials','Insider Threat Prevention','PCI DSS Requirements','HIPAA Privacy Training'];
+const SILO_NAMES=['Customer Database','Employee Records','Financial Transactions','Health Records','Payment Card Data','Marketing Analytics','Product Telemetry','Audit Logs','Vulnerability Scans','Threat Intelligence','Code Repository','CI/CD Pipeline','Cloud Infrastructure','Identity Store','Backup Archive','Email Archive','Chat Logs','Video Surveillance','Access Logs','Compliance Evidence','ML Training Data','API Gateway Logs','DNS Query Logs','Network Flow Data','Encryption Keys','Certificate Store','Container Registry','Artifact Store','Data Warehouse','Real-time Stream'];
+const SILO_TYPES=['Database','Object Store','Data Lake','File System','SaaS','API','Stream','Cache'];
+const SILO_PROVIDERS=['AWS RDS','AWS S3','Azure Blob','GCP BigQuery','Snowflake','PostgreSQL','MongoDB','Redis','Elasticsearch','Confluent'];
+
+const FRAMEWORKS=[
+  {id:'nist_800_53',name:'NIST 800-53',controls:1176,score:78,category:'Federal'},
+  {id:'iso_27001',name:'ISO 27001',controls:93,score:84,category:'International'},
+  {id:'iso_27701',name:'ISO 27701',controls:95,score:71,category:'Privacy'},
+  {id:'iso_42001',name:'ISO 42001',controls:39,score:67,category:'AI'},
+  {id:'soc2',name:'SOC 2',controls:46,score:89,category:'Audit'},
+  {id:'ucf',name:'UCF',controls:115,score:82,category:'Unified'},
+  {id:'fedramp',name:'FedRAMP',controls:26,score:76,category:'Federal'},
+  {id:'hipaa',name:'HIPAA',controls:64,score:88,category:'Healthcare'},
+  {id:'cmmc_l2',name:'CMMC L2',controls:110,score:73,category:'Defense'},
+  {id:'gdpr',name:'GDPR',controls:15,score:91,category:'Privacy'},
+  {id:'pci_dss',name:'PCI DSS v4.0',controls:63,score:85,category:'Financial'},
+  {id:'nist_csf',name:'NIST CSF 2.0',controls:101,score:80,category:'Framework'},
+  {id:'eu_ai_act',name:'EU AI Act',controls:33,score:64,category:'AI'},
+  {id:'sec_cyber',name:'SEC Cyber',controls:20,score:87,category:'Financial'}
+];
+
+const CONNECTORS=[
+  {name:'AWS',cat:'Cloud'},{name:'Azure',cat:'Cloud'},{name:'GCP',cat:'Cloud'},{name:'Alibaba',cat:'Cloud'},{name:'DigitalOcean',cat:'Cloud'},{name:'Huawei',cat:'Cloud'},{name:'IBM Cloud',cat:'Cloud'},{name:'OCI',cat:'Cloud'},{name:'OVH',cat:'Cloud'},{name:'Cloudflare',cat:'Cloud'},
+  {name:'Okta',cat:'IAM'},{name:'Entra ID',cat:'IAM'},{name:'CyberArk',cat:'IAM'},{name:'SailPoint',cat:'IAM'},{name:'Duo',cat:'IAM'},{name:'Auth0',cat:'IAM'},{name:'JumpCloud',cat:'IAM'},{name:'1Password',cat:'IAM'},{name:'Bitwarden',cat:'IAM'},{name:'Vault',cat:'IAM'},
+  {name:'CrowdStrike',cat:'EDR'},{name:'Defender',cat:'EDR'},{name:'SentinelOne',cat:'EDR'},{name:'Sophos',cat:'EDR'},
+  {name:'Sentinel',cat:'SIEM'},{name:'Splunk',cat:'SIEM'},{name:'Elastic',cat:'SIEM'},{name:'Datadog',cat:'SIEM'},{name:'New Relic',cat:'SIEM'},{name:'Grafana',cat:'SIEM'},
+  {name:'Tenable',cat:'Scanners'},{name:'Qualys',cat:'Scanners'},{name:'Nessus',cat:'Scanners'},{name:'Wiz',cat:'Scanners'},{name:'Prisma',cat:'Scanners'},{name:'Snyk',cat:'Scanners'},{name:'Checkmarx',cat:'Scanners'},{name:'SonarQube',cat:'Scanners'},{name:'Semgrep',cat:'Scanners'},{name:'Veracode',cat:'Scanners'},{name:'Trivy',cat:'Scanners'},{name:'Aqua',cat:'Scanners'},{name:'GitGuardian',cat:'Scanners'},{name:'Abnormal Security',cat:'Scanners'},{name:'Netskope',cat:'Scanners'},
+  {name:'ServiceNow',cat:'ITSM'},{name:'Jira',cat:'ITSM'},
+  {name:'Workday',cat:'HR'},{name:'BambooHR',cat:'HR'},{name:'Gusto',cat:'HR'},{name:'Rippling',cat:'HR'},
+  {name:'OneTrust',cat:'GRC'},{name:'SecurityScorecard',cat:'GRC'},{name:'BitSight',cat:'GRC'},{name:'Confluence',cat:'GRC'},{name:'KnowBe4',cat:'GRC'},
+  {name:'Palo Alto',cat:'Network'},{name:'Fortinet',cat:'Network'},{name:'Zscaler',cat:'Network'},
+  {name:'Intune',cat:'Endpoint'},{name:'Jamf',cat:'Endpoint'},{name:'Kandji',cat:'Endpoint'},
+  {name:'Veeam',cat:'Backup'},
+  {name:'Proofpoint',cat:'Email'},{name:'Exchange Online',cat:'Email'},
+  {name:'Verkada',cat:'Physical'},
+  {name:'Slack',cat:'Collaboration'},{name:'Google Workspace',cat:'Collaboration'},
+  {name:'GitHub',cat:'DevOps'},{name:'GitLab',cat:'DevOps'},{name:'Terraform Cloud',cat:'DevOps'},{name:'MLflow',cat:'DevOps'},{name:'Databricks',cat:'DevOps'},{name:'SageMaker',cat:'DevOps'},
+  {name:'Jenkins',cat:'CI/CD'},{name:'GitHub Actions',cat:'CI/CD'},{name:'GitLab CI',cat:'CI/CD'},{name:'CircleCI',cat:'CI/CD'},
+  {name:'GuardDuty',cat:'Misc'},{name:'Purview',cat:'Misc'},{name:'Webhook',cat:'Misc'}
+];
+
+const AI_TEMPLATES=[
+  {scenario:'encryption_at_rest',confidence:92,reasoning:['Scanned 47 storage volumes across AWS, Azure, and GCP','Found 3 unencrypted EBS volumes in us-east-1 (vol-0a1b2c, vol-0d3e4f, vol-0g5h6i)','Azure Blob containers in rg-analytics use Microsoft-managed keys instead of customer-managed','GCP persistent disks in project warlock-ml lack CMEK configuration','All S3 buckets properly configured with AES-256 or AWS KMS'],recommendation:'Enable encryption on the 3 identified EBS volumes using AWS KMS key arn:aws:kms:us-east-1:123456789:key/abc. Migrate Azure Blob to customer-managed keys. Configure CMEK for GCP persistent disks.',evidence:['AWS Config Rule: encrypted-volumes (3 non-compliant)','Azure Policy: storage-account-cmk (1 non-compliant)','GCP Asset Inventory: compute.disks (2 without CMEK)']},
+  {scenario:'mfa_enforcement',confidence:89,reasoning:['Analyzed 200 user accounts across Okta and Entra ID','12 users lack MFA enrollment (6 Engineering, 4 IT, 2 Finance)','3 admin accounts use SMS-based MFA instead of hardware keys','Service accounts correctly excluded from MFA requirement','Push notification MFA is dominant method (78% of enrolled users)'],recommendation:'Enforce MFA enrollment for the 12 identified users with a 48-hour grace period. Upgrade 3 admin accounts from SMS to hardware key (YubiKey 5) MFA. Add conditional access policy requiring phishing-resistant MFA for admin roles.',evidence:['Okta System Log: mfa.enrollment.status (12 not_enrolled)','Entra ID: conditionalAccess.policies (admin MFA gap)','CrowdStrike: identity_protection.mfa_coverage (88%)']},
+  {scenario:'access_review',confidence:87,reasoning:['Quarterly access review covering 200 users, 15 applications','28 users have excessive permissions (roles not matching job function)','5 terminated employees still have active accounts in SailPoint','Last access review was 97 days ago (exceeds 90-day requirement)','3 orphaned service accounts with no documented owner'],recommendation:'Immediately deactivate 5 terminated employee accounts. Initiate emergency access review for 28 users with excessive permissions. Assign owners to 3 orphaned service accounts or deactivate within 72 hours.',evidence:['SailPoint: identity.certifications (last_completed: 97d ago)','Workday: terminated_employees vs active_accounts (5 gaps)','Okta: application.assignments (28 role mismatches)']},
+  {scenario:'vulnerability_management',confidence:91,reasoning:['Analyzed 500 vulnerabilities across infrastructure and applications','23 critical vulnerabilities open beyond SLA (>7 days for critical)','Mean time to remediate critical: 12.3 days (target: 7 days)','45% of high vulnerabilities are in end-of-life software packages','Patch compliance rate: 82% (target: 95%)'],recommendation:'Prioritize remediation of 23 overdue critical vulnerabilities. Initiate end-of-life software replacement program for 12 affected packages. Implement automated patching for non-production environments to improve patch velocity.',evidence:['Tenable: vulnerability.sla_compliance (critical: 67%)','Snyk: dependency.eol_packages (12 packages)','Qualys: patch.compliance_rate (82%)']},
+  {scenario:'network_segmentation',confidence:85,reasoning:['Reviewed VPC configurations across 3 cloud providers','Production VPC has 4 overly permissive security groups (0.0.0.0/0 ingress)','Development environment can reach production database on port 5432','No network segmentation between PCI and non-PCI workloads','Web application firewall rules last updated 45 days ago'],recommendation:'Restrict 4 security groups to specific CIDR ranges. Implement network ACLs to isolate dev from prod databases. Create dedicated PCI segment with micro-segmentation. Update WAF rules to current OWASP Core Rule Set.',evidence:['AWS VPC Flow Logs: unrestricted_ingress (4 security groups)','Palo Alto: traffic.cross_zone (dev->prod:5432 allowed)','Zscaler: segmentation.pci_scope (not isolated)']},
+  {scenario:'logging_monitoring',confidence:88,reasoning:['Audited logging configuration across 82 connectors','7 connectors have incomplete log forwarding to SIEM','CloudTrail logging disabled in 2 AWS regions (ap-south-1, sa-east-1)','Average log ingestion latency: 4.2 minutes (target: <5 minutes)','No alerting configured for 15% of critical security events'],recommendation:'Enable CloudTrail in all AWS regions. Fix log forwarding for 7 identified connectors. Create alert rules for the 15% uncovered critical events. Implement log integrity verification using hash chains.',evidence:['Splunk: forwarder.health (7 degraded)','AWS Config: cloudtrail-enabled (2 regions non-compliant)','Datadog: monitor.coverage (85% of critical events)']},
+  {scenario:'data_protection',confidence:90,reasoning:['Scanned 30 data silos for classification and protection status','4 databases containing PII lack encryption in transit','DLP policies not enforced on 2 cloud storage buckets','Data retention policy expired for 6 data silos','Cross-border data transfer detected without adequate safeguards'],recommendation:'Enable TLS 1.3 for 4 identified databases. Apply DLP policies to uncovered storage buckets. Update retention schedules for 6 expired silos. Implement data transfer impact assessment for cross-border flows.',evidence:['Purview: data.classification (PII in 12 silos)','Netskope: dlp.policy_coverage (93% coverage)','OneTrust: retention.schedule (6 expired)']},
+  {scenario:'incident_response',confidence:86,reasoning:['Reviewed incident response metrics for last 90 days','Mean time to detect: 2.3 hours (target: <1 hour)','Mean time to respond: 4.7 hours (target: <4 hours)','3 incidents lacked proper post-mortem documentation','Incident runbooks exist for 78% of scenario types'],recommendation:'Implement automated detection rules to reduce MTTD. Staff on-call rotation to reduce MTTR. Complete post-mortem documentation for 3 incidents. Create runbooks for remaining 22% of scenario types.',evidence:['Sentinel: incident.metrics (MTTD: 2.3h, MTTR: 4.7h)','ServiceNow: incident.postmortem (3 missing)','Confluence: runbook.coverage (78%)']},
+  {scenario:'cloud_config',confidence:93,reasoning:['Assessed cloud configuration across 600 instances','18 instances have public IP addresses without justification','Root account MFA not enabled on 1 AWS account','5 Azure subscriptions lack resource locks on critical resources','GCP projects missing organization policy constraints'],recommendation:'Remove public IPs from 18 instances or document business justification. Enable root account MFA immediately. Apply resource locks to critical Azure resources. Configure GCP organization policies for all projects.',evidence:['Wiz: cloud.public_exposure (18 instances)','AWS Config: root-account-mfa (1 non-compliant)','Azure Policy: resource-locks (5 subscriptions)']},
+  {scenario:'compliance_gap',confidence:88,reasoning:['Cross-framework gap analysis across 14 frameworks','NIST 800-53 has 257 partially compliant controls requiring evidence','ISO 42001 AI governance controls lack implementation (67% score)','EU AI Act Article 9 risk management system incomplete','FedRAMP continuous monitoring cadence not meeting requirements'],recommendation:'Prioritize NIST 800-53 evidence collection for 257 partial controls. Implement AI governance framework for ISO 42001 compliance. Complete EU AI Act risk management documentation. Increase FedRAMP monitoring frequency to monthly.',evidence:['Warlock pipeline: control_results (14 frameworks assessed)','Evidence freshness: 23% stale (>30 days)','Gap analysis: 89 controls missing primary evidence']},
+  {scenario:'supply_chain',confidence:84,reasoning:['Analyzed 40 vendor assessments and software dependencies','8 vendors have not completed annual security questionnaire','3 critical vendors have declining security scores (BitSight <700)','Software bill of materials incomplete for 4 applications','2 vendors lack SOC 2 Type II certification (required by policy)'],recommendation:'Issue deadline notices to 8 vendors for questionnaire completion. Initiate vendor risk review for 3 declining-score vendors. Complete SBOM generation for 4 applications. Evaluate alternatives for 2 non-SOC 2 vendors.',evidence:['SecurityScorecard: vendor.scores (3 declining)','OneTrust: questionnaire.status (8 outstanding)','Snyk: sbom.coverage (4 applications incomplete)']},
+  {scenario:'identity_governance',confidence:91,reasoning:['Reviewed identity lifecycle across HR and IdP systems','Personnel records show 500 employees, IdP shows 512 accounts','12 orphaned accounts detected (no matching HR record)','Privileged access review overdue for 8 admin accounts','JIT access not implemented for production environments'],recommendation:'Reconcile 12 orphaned accounts with HR records. Complete privileged access review within 48 hours. Implement JIT access for production using CyberArk PAM. Automate identity lifecycle with HR-IdP sync.',evidence:['Workday: employee.count (500 active)','Okta: user.count (512 active, 12 orphaned)','CyberArk: privileged.review (8 overdue)']},
+  {scenario:'backup_recovery',confidence:87,reasoning:['Assessed backup and disaster recovery posture','Last DR test was 67 days ago (target: quarterly)','3 critical databases lack point-in-time recovery capability','Backup encryption not enabled for 2 storage targets','RPO target (4 hours) met for 92% of critical systems'],recommendation:'Schedule DR test within 2 weeks. Enable point-in-time recovery for 3 identified databases. Encrypt all backup storage targets. Address 8% RPO gap for remaining critical systems.',evidence:['Veeam: backup.compliance (92% RPO met)','AWS RDS: pitr.configuration (3 not enabled)','DR test log: last_completed (67 days ago)']},
+  {scenario:'endpoint_security',confidence:90,reasoning:['Analyzed 400 endpoint devices across MDM platforms','34 devices have outdated OS versions (>2 patches behind)','8 devices lack disk encryption (5 Windows, 3 macOS)','Firewall disabled on 12 devices','92% device compliance rate (target: 98%)'],recommendation:'Push OS updates to 34 outdated devices with 72-hour enforcement. Enable BitLocker/FileVault on 8 unencrypted devices. Enable firewall via MDM policy on 12 non-compliant devices. Block non-compliant devices from corporate resources.',evidence:['Intune: device.compliance (Windows: 90%)','Jamf: device.compliance (macOS: 94%)','CrowdStrike: endpoint.coverage (98% sensor installed)']},
+  {scenario:'api_security',confidence:86,reasoning:['Reviewed API security configuration for 153 endpoints','12 endpoints lack rate limiting','Authentication tokens use HS256 (should be RS256 for production)','3 endpoints accept user input without validation','API versioning not implemented consistently'],recommendation:'Implement rate limiting on all 12 unprotected endpoints. Migrate JWT signing from HS256 to RS256. Add input validation middleware for 3 identified endpoints. Standardize API versioning across all routes.',evidence:['OWASP ZAP: api.scan (12 rate limit findings)','Snyk: dependency.jwt_config (HS256 in use)','Semgrep: input.validation (3 endpoints vulnerable)']}
+];
+
+/* ================================================================
+   DATA GENERATOR
+   ================================================================ */
+class DataGen {
+  constructor(){
+    this._cache={};
+    this.rng=new PRNG(42);
+  }
+  _gen(key,fn){if(!this._cache[key])this._cache[key]=fn.call(this);return this._cache[key]}
+
+  get users(){return this._gen('users',()=>{
+    const r=new PRNG(100);const out=[];
+    for(let i=0;i<200;i++){
+      const fn=r.pick(FIRST_NAMES),ln=r.pick(LAST_NAMES);
+      const dept=r.pick(DEPARTMENTS);
+      const di=DEPARTMENTS.indexOf(dept);
+      const status=r.chance(0.88)?'active':r.chance(0.5)?'suspended':'deprovisioned';
+      const hasMFA=status==='active'?r.chance(0.88):false;
+      out.push({user_id:`USR-${String(i+1).padStart(4,'0')}`,username:`${fn.toLowerCase()}.${ln.toLowerCase().replace("'","")}`,email:`${fn.toLowerCase()}.${ln.toLowerCase().replace("'","")}@warlock.dev`,first_name:fn,last_name:ln,status,is_enrolled_mfa:hasMFA,mfa_type:hasMFA?r.pick(MFA_TYPES):null,department:dept,role:r.pick(ROLES),last_login:r.date(new Date('2026-02-01'),new Date('2026-03-22')),created_at:r.date(new Date('2023-01-01'),new Date('2025-12-31')),groups:r.pickN(GROUPS[di%GROUPS.length],r.int(1,2)).flat()});
+    }return out})}
+
+  get devices(){return this._gen('devices',()=>{
+    const r=new PRNG(200);const out=[];
+    for(let i=0;i<400;i++){
+      const plat=r.pick(PLATFORMS);
+      const enc=r.chance(0.92);const fw=r.chance(0.89);const sl=r.chance(0.95);
+      const user=r.pick(this.users);
+      out.push({device_id:`DEV-${String(i+1).padStart(4,'0')}`,device_name:`${user.first_name.toLowerCase()}-${r.pick(['laptop','desktop','tablet','phone'])}-${r.int(1,9)}`,serial_number:r.hex(12).toUpperCase(),platform:plat,os_version:plat==='macOS'?`14.${r.int(0,5)}`:plat==='Windows'?`11.${r.int(22,23)}H2`:plat==='Linux'?`Ubuntu 22.04.${r.int(1,4)}`:`${r.int(16,18)}.${r.int(0,4)}`,is_encrypted:enc,firewall_enabled:fw,screen_lock:sl,is_compliant:enc&&fw&&sl,last_seen:r.date(new Date('2026-03-15'),new Date('2026-03-22')),user_email:user.email,model:r.pick(DEVICE_MODELS)});
+    }return out})}
+
+  get cloud(){return this._gen('cloud',()=>{
+    const r=new PRNG(300);const out=[];
+    const clouds=['aws','azure','gcp'];
+    for(let i=0;i<600;i++){
+      const cloud=r.pick(clouds);
+      const state=r.chance(0.7)?'running':r.chance(0.6)?'stopped':'terminated';
+      const types=INSTANCE_TYPES[cloud];
+      out.push({instance_id:`${cloud==='aws'?'i-':cloud==='azure'?'vm-':'gce-'}${r.hex(8)}`,name:`${r.pick(['web','api','db','cache','worker','proxy','batch','ml','etl','monitor'])}-${r.pick(['prod','staging','dev','test'])}-${r.int(1,20)}`,cloud,region:r.pick(CLOUD_REGIONS),instance_type:r.pick(types),state,public_ip:state==='running'&&r.chance(0.3)?r.ip():null,private_ip:r.ip(),vpc_id:`vpc-${r.hex(8)}`,security_groups:r.pickN(['sg-web','sg-api','sg-db','sg-internal','sg-monitoring','sg-bastion','sg-default'],r.int(1,3)),tags:{Environment:r.pick(['production','staging','development','test']),Team:r.pick(DEPARTMENTS),CostCenter:r.pick(['CC-100','CC-200','CC-300','CC-400'])},launched_at:r.date(new Date('2024-01-01'),new Date('2026-03-22')),encrypted_volumes:r.chance(0.85)});
+    }return out})}
+
+  get vulns(){return this._gen('vulns',()=>{
+    const r=new PRNG(400);const out=[];
+    const sevs=['critical','high','medium','low'];const sevWeights=[0.08,0.22,0.45,0.25];
+    for(let i=0;i<500;i++){
+      const roll=r.next();const sev=roll<0.08?'critical':roll<0.30?'high':roll<0.75?'medium':'low';
+      const cvss=sev==='critical'?r.int(90,100)/10:sev==='high'?r.int(70,89)/10:sev==='medium'?r.int(40,69)/10:r.int(10,39)/10;
+      const inst=r.pick(this.cloud);
+      const pkg=r.pick(PACKAGES);
+      out.push({vuln_id:`VULN-${String(i+1).padStart(4,'0')}`,cve_id:`CVE-2026-${r.int(1000,9999)}`,title:r.pick(VULN_TITLES),severity:sev,cvss_score:cvss,affected_resource:inst.instance_id,affected_name:inst.name,status:r.chance(0.6)?'open':'fixed',package_name:pkg,installed_version:`${r.int(1,5)}.${r.int(0,20)}.${r.int(0,30)}`,fixed_version:`${r.int(5,8)}.${r.int(0,20)}.${r.int(0,30)}`});
+    }return out})}
+
+  get alerts(){return this._gen('alerts',()=>{
+    const r=new PRNG(500);const out=[];
+    for(let i=0;i<200;i++){
+      const sev=r.pick(['critical','high','medium','low']);
+      const status=r.pick(['new','investigating','resolved']);
+      out.push({alert_id:`ALR-${String(i+1).padStart(4,'0')}`,title:r.pick(ALERT_TITLES),severity:sev,source:r.pick(['CrowdStrike','Sentinel','Splunk','GuardDuty','Defender']),status,technique:r.pick(TECHNIQUES),tactic:r.pick(TACTICS),description:`Detected suspicious activity matching ${r.pick(TECHNIQUES)} technique pattern on monitored endpoint.`,affected_host:r.pick(this.cloud).name,detected_at:r.date(new Date('2026-03-01'),new Date('2026-03-22'))});
+    }return out})}
+
+  get employees(){return this._gen('employees',()=>{
+    const r=new PRNG(600);const out=[];
+    for(let i=0;i<500;i++){
+      const fn=r.pick(FIRST_NAMES),ln=r.pick(LAST_NAMES);
+      const dept=r.pick(DEPARTMENTS);
+      const titles={Engineering:['Software Engineer','Senior Engineer','Staff Engineer','Engineering Manager','Principal Engineer'],Security:['Security Analyst','Security Engineer','CISO','SOC Analyst','Penetration Tester'],IT:['IT Admin','Systems Engineer','Network Engineer','Help Desk','IT Manager'],Finance:['Financial Analyst','Controller','CFO','Accountant','AP Specialist'],Legal:['Legal Counsel','Compliance Officer','Privacy Analyst','Paralegal','GRC Analyst'],HR:['HR Manager','Recruiter','People Ops','HR Analyst','CHRO'],Sales:['Account Executive','Sales Manager','SDR','VP Sales','Solutions Engineer'],Marketing:['Marketing Manager','Content Writer','SEO Specialist','CMO','Growth Lead'],Product:['Product Manager','UX Designer','Product Analyst','VP Product','UX Researcher'],Support:['Support Engineer','Customer Success','Support Manager','Technical Writer','QA Analyst']};
+      out.push({employee_id:`EMP-${String(i+1).padStart(4,'0')}`,first_name:fn,last_name:ln,email:`${fn.toLowerCase()}.${ln.toLowerCase().replace("'","")}@warlock.dev`,department:dept,title:r.pick(titles[dept]||['Employee']),status:r.chance(0.9)?'active':r.chance(0.5)?'terminated':'leave',start_date:r.date(new Date('2020-01-01'),new Date('2026-01-01')),location:r.pick(['San Francisco','New York','London','Berlin','Tokyo','Singapore','Austin','Seattle','Toronto','Sydney'])});
+    }return out})}
+
+  get training(){return this._gen('training',()=>{
+    const r=new PRNG(700);const out=[];
+    for(let i=0;i<300;i++){
+      const emp=r.pick(this.employees);
+      const status=r.pick(['completed','in_progress','overdue']);
+      out.push({record_id:`TRN-${String(i+1).padStart(4,'0')}`,employee_email:emp.email,employee_name:`${emp.first_name} ${emp.last_name}`,course_name:r.pick(COURSE_NAMES),status,assigned_at:r.date(new Date('2025-10-01'),new Date('2026-02-01')),completed_at:status==='completed'?r.date(new Date('2026-01-01'),new Date('2026-03-22')):null});
+    }return out})}
+
+  get codeFindings(){return this._gen('codeFindings',()=>{
+    const r=new PRNG(800);const out=[];
+    const exts={Python:'.py',JavaScript:'.js',TypeScript:'.ts',Go:'.go',Java:'.java',Rust:'.rs',Ruby:'.rb','C++':'.cpp','C#':'.cs',Terraform:'.tf'};
+    for(let i=0;i<200;i++){
+      const lang=r.pick(LANGUAGES);
+      out.push({finding_id:`CSF-${String(i+1).padStart(4,'0')}`,title:r.pick(VULN_TITLES),severity:r.pick(['critical','high','medium','low']),file_path:`src/${r.pick(['api','core','utils','services','models','controllers','middleware'])}/${r.pick(['auth','user','data','config','handler','processor','validator'])}${exts[lang]}`,language:lang,repository:r.pick(REPOS),status:r.chance(0.55)?'open':'fixed',rule_id:r.pick(CODE_RULES),line_number:r.int(1,500)});
+    }return out})}
+
+  get incidents(){return this._gen('incidents',()=>{
+    const r=new PRNG(900);const out=[];
+    const types=['data_breach','malware','phishing','ddos','insider_threat','ransomware','unauthorized_access','service_outage','credential_compromise','supply_chain'];
+    for(let i=0;i<40;i++){
+      const sev=r.pick(['critical','high','medium']);
+      const status=r.pick(['new','investigating','contained','resolved','closed']);
+      const detected=r.date(new Date('2026-01-01'),new Date('2026-03-22'));
+      out.push({incident_id:`INC-${String(i+1).padStart(3,'0')}`,type:r.pick(types),title:`${r.pick(['Suspected','Confirmed','Potential','Active'])} ${r.pick(['data exfiltration','malware infection','phishing campaign','DDoS attack','unauthorized access','ransomware attempt','credential theft','service degradation','supply chain compromise','insider threat activity'])}`,severity:sev,status,affected_systems:r.pickN(this.cloud.slice(0,50).map(c=>c.name),r.int(1,5)),detected_at:detected,resolved_at:status==='resolved'||status==='closed'?new Date(detected.getTime()+r.int(3600000,259200000)):null});
+    }return out})}
+
+  get vendors(){return this._gen('vendors',()=>{
+    const r=new PRNG(1000);const out=[];
+    for(let i=0;i<40;i++){
+      const score=r.int(40,98);
+      out.push({vendor_id:`VND-${String(i+1).padStart(3,'0')}`,vendor_name:VENDOR_NAMES[i]||`Vendor ${i+1}`,category:r.pick(VENDOR_CATS),risk_score:score,rating:score>=85?'Low Risk':score>=70?'Medium Risk':score>=50?'High Risk':'Critical Risk',last_assessment:r.date(new Date('2025-06-01'),new Date('2026-03-22')),certifications:r.pickN(CERTIFICATIONS,r.int(1,4)),sla_compliance:r.int(85,100)});
+    }return out})}
+
+  get buckets(){return this._gen('buckets',()=>{
+    const r=new PRNG(1100);const out=[];
+    for(let i=0;i<80;i++){
+      const cloud=r.pick(['aws','azure','gcp']);
+      const isPublic=r.chance(0.08);
+      out.push({bucket_id:`BKT-${String(i+1).padStart(3,'0')}`,name:`${r.pick(['logs','backups','data','assets','artifacts','exports','uploads','archives','reports','configs'])}-${r.pick(['prod','staging','dev','shared'])}-${r.hex(4)}`,cloud,region:r.pick(CLOUD_REGIONS),is_public:isPublic,encryption:r.chance(0.9)?r.pick(['AES-256','AWS-KMS','Azure-SSE','GCP-CMEK']):'None',versioning:r.chance(0.7),logging:r.chance(0.8),object_count:r.int(100,500000),size_gb:r.int(1,5000)});
+    }return out})}
+
+  get issues(){return this._gen('issues',()=>{
+    const r=new PRNG(1200);const out=[];
+    const statuses=['open','in_progress','remediated','risk_accepted'];
+    const priorities=['critical','high','medium','low'];
+    for(let i=0;i<120;i++){
+      const fw=r.pick(FRAMEWORKS);
+      out.push({issue_id:`ISS-${String(i+1).padStart(4,'0')}`,framework:fw.name,framework_id:fw.id,control_id:`${fw.id==='nist_800_53'?'AC':fw.id==='iso_27001'?'A':fw.id==='soc2'?'CC':fw.id==='hipaa'?'§':fw.id==='pci_dss'?'Req':fw.id.substring(0,3).toUpperCase()}-${r.int(1,30)}`,title:r.pick(['Missing encryption at rest','Incomplete access review','Stale MFA enrollment','Unpatched critical vulnerability','Missing audit log retention','Insufficient network segmentation','Incomplete backup verification','Outdated incident response plan','Missing vendor risk assessment','Excessive admin privileges','Weak password policy enforcement','Incomplete data classification','Missing change management approval','Insufficient monitoring coverage','Outdated security training']),status:r.pick(statuses),priority:r.pick(priorities),assigned_to:`${r.pick(FIRST_NAMES)} ${r.pick(LAST_NAMES)}`,created_at:r.date(new Date('2025-10-01'),new Date('2026-03-22'))});
+    }return out})}
+
+  get poams(){return this._gen('poams',()=>{
+    const r=new PRNG(1300);const out=[];
+    for(let i=0;i<40;i++){
+      const fw=r.pick(FRAMEWORKS);
+      const status=r.pick(['open','in_progress','overdue']);
+      const due=r.date(new Date('2026-01-01'),new Date('2026-09-01'));
+      out.push({poam_id:`POA-${String(i+1).padStart(3,'0')}`,framework:fw.name,control:`${fw.id.substring(0,3).toUpperCase()}-${r.int(1,20)}`,weakness:r.pick(['Encryption not enforced on storage volumes','MFA not enabled for privileged users','Audit logs not retained for required period','Vulnerability scanning not performed weekly','Access reviews not completed quarterly','Incident response plan not tested annually','Backup restoration not verified monthly','Network segmentation incomplete','Data classification not applied','Security training completion below threshold']),status,due_date:due,milestones:[{name:'Assessment Complete',date:r.date(new Date('2025-11-01'),new Date('2026-02-01')),done:true},{name:'Remediation Plan Approved',date:r.date(new Date('2026-01-01'),new Date('2026-03-01')),done:r.chance(0.7)},{name:'Implementation Complete',date:r.date(new Date('2026-03-01'),new Date('2026-06-01')),done:r.chance(0.3)},{name:'Verification & Closure',date:due,done:false}],delays:status==='overdue'?r.int(1,4):0});
+    }return out})}
+
+  get riskAcceptances(){return this._gen('riskAcceptances',()=>{
+    const r=new PRNG(1400);const out=[];
+    for(let i=0;i<15;i++){
+      const fw=r.pick(FRAMEWORKS);
+      const expires=r.date(new Date('2026-03-01'),new Date('2027-03-01'));
+      const now=new Date('2026-03-22');
+      const status=expires<now?'expired':expires<new Date(now.getTime()+30*86400000)?'expiring':'active';
+      out.push({id:`RA-${String(i+1).padStart(3,'0')}`,framework:fw.name,control:`${fw.id.substring(0,3).toUpperCase()}-${r.int(1,15)}`,risk_level:r.pick(['high','medium','low']),status,approved_by:`${r.pick(FIRST_NAMES)} ${r.pick(LAST_NAMES)}`,approved_at:r.date(new Date('2025-06-01'),new Date('2026-03-01')),expires_at:expires,justification:r.pick(['Business-critical system migration in progress','Compensating controls implemented','Vendor patch not yet available','Regulatory exemption granted','Cost-benefit analysis supports acceptance'])});
+    }return out})}
+
+  get dataSilos(){return this._gen('dataSilos',()=>{
+    const r=new PRNG(1500);const out=[];
+    const classifications=['restricted','confidential','internal','public'];
+    for(let i=0;i<30;i++){
+      const cls=r.pick(classifications);
+      out.push({name:SILO_NAMES[i]||`Data Silo ${i+1}`,type:r.pick(SILO_TYPES),provider:r.pick(SILO_PROVIDERS),classification:cls,pii:cls==='restricted'||r.chance(0.3),phi:r.chance(0.15),pci:r.chance(0.1),encrypted:r.chance(0.88),logging:r.chance(0.85)});
+    }return out})}
+
+  get driftEvents(){return this._gen('driftEvents',()=>{
+    const r=new PRNG(1600);const out=[];
+    const statuses=['pass','fail','partial'];
+    for(let i=0;i<80;i++){
+      const fw=r.pick(FRAMEWORKS);
+      const dir=r.chance(0.4)?'degraded':'improved';
+      const from_s=dir==='degraded'?r.pick(['pass','partial']):r.pick(['fail','partial']);
+      const to_s=dir==='degraded'?r.pick(['fail','partial']):(from_s==='fail'?'partial':'pass');
+      out.push({drift_id:`DFT-${String(i+1).padStart(3,'0')}`,framework:fw.name,control:`${fw.id.substring(0,3).toUpperCase()}-${r.int(1,30)}`,direction:dir,from_status:from_s,to_status:to_s,detected_at:r.date(new Date('2026-02-01'),new Date('2026-03-22'))});
+    }return out})}
+
+  get questionnaires(){return this._gen('questionnaires',()=>{
+    const r=new PRNG(1700);const out=[];
+    for(let i=0;i<15;i++){
+      const v=r.pick(VENDOR_NAMES.slice(0,20));
+      const status=r.pick(['sent','in_progress','completed','overdue']);
+      out.push({id:`QST-${String(i+1).padStart(3,'0')}`,vendor:v,status,completion_pct:status==='completed'?100:status==='sent'?0:r.int(10,90),risk_score:r.int(30,95),due_date:r.date(new Date('2026-03-01'),new Date('2026-06-01'))});
+    }return out})}
+
+  get controlResults(){return this._gen('controlResults',()=>{
+    const r=new PRNG(1800);const results={};
+    FRAMEWORKS.forEach(fw=>{
+      const controls=[];
+      for(let i=0;i<fw.controls;i++){
+        const prefix=fw.id==='nist_800_53'?'AC':fw.id==='iso_27001'?'A':fw.id==='soc2'?'CC':fw.id==='hipaa'?'§':fw.id==='pci_dss'?'Req':fw.id.substring(0,3).toUpperCase();
+        const roll=r.next();
+        const status=roll<(fw.score/100*0.8)?'pass':roll<(fw.score/100*0.95)?'partial':'fail';
+        controls.push({id:`${prefix}-${i+1}`,title:`Control ${prefix}-${i+1}`,status,framework:fw.id,framework_name:fw.name});
+      }
+      results[fw.id]=controls;
+    });
+    return results})}
+}
+
+const D=new DataGen();
+
+/* ================================================================
+   NAVIGATION STRUCTURE
+   ================================================================ */
+const NAV=[
+  {section:'Overview',items:[
+    {id:'dashboard',label:'Dashboard',icon:'\u2302'},
+  ]},
+  {section:'Assets',items:[
+    {id:'cloud',label:'Cloud Environments',icon:'\u2601',badge:()=>D.cloud.length},
+    {id:'identity',label:'Identity & Access',icon:'\uD83D\uDD11',badge:()=>D.users.length},
+    {id:'devices',label:'Devices',icon:'\uD83D\uDCBB',badge:()=>D.devices.length},
+    {id:'storage',label:'Storage & Buckets',icon:'\uD83D\uDDC4',badge:()=>D.buckets.length},
+  ]},
+  {section:'Security',items:[
+    {id:'vulns',label:'Vulnerabilities',icon:'\uD83D\uDEE1',badge:()=>D.vulns.filter(v=>v.status==='open').length},
+    {id:'alerts',label:'Security Alerts',icon:'\u26A0',badge:()=>D.alerts.filter(a=>a.status!=='resolved').length},
+    {id:'code',label:'Code Security',icon:'\uD83D\uDD0D',badge:()=>D.codeFindings.length},
+    {id:'incidents',label:'Incidents',icon:'\uD83D\uDEA8',badge:()=>D.incidents.length},
+  ]},
+  {section:'Compliance',items:[
+    {id:'compliance',label:'Frameworks',icon:'\u2611',badge:()=>'14'},
+    {id:'connectors',label:'Connectors',icon:'\uD83D\uDD0C',badge:()=>'82'},
+    {id:'issues',label:'Issues',icon:'\uD83D\uDCCB',badge:()=>D.issues.filter(i=>i.status==='open').length},
+    {id:'poams',label:'POA&Ms',icon:'\uD83D\uDCC5',badge:()=>D.poams.length},
+    {id:'risk-acceptances',label:'Risk Acceptances',icon:'\u2714',badge:()=>D.riskAcceptances.length},
+  ]},
+  {section:'Governance',items:[
+    {id:'remediation',label:'Remediation',icon:'\uD83D\uDD27'},
+    {id:'risk',label:'Risk Analysis',icon:'\uD83D\uDCC8'},
+    {id:'policy',label:'Policy Coverage',icon:'\uD83D\uDCDC'},
+    {id:'drift',label:'Drift Detection',icon:'\uD83D\uDD04',badge:()=>D.driftEvents.length},
+    {id:'posture',label:'Posture History',icon:'\uD83D\uDCC9'},
+    {id:'cadence',label:'Cadence',icon:'\u23F0'},
+    {id:'effectiveness',label:'Effectiveness',icon:'\uD83C\uDFAF'},
+    {id:'audit',label:'Audit Simulation',icon:'\uD83D\uDD0E'},
+  ]},
+  {section:'Organization',items:[
+    {id:'systems',label:'Systems',icon:'\uD83C\uDFE2'},
+    {id:'data-silos',label:'Data Silos',icon:'\uD83D\uDDC3'},
+    {id:'questionnaires',label:'Questionnaires',icon:'\uD83D\uDCDD',badge:()=>D.questionnaires.length},
+    {id:'personnel',label:'Personnel',icon:'\uD83D\uDC65',badge:()=>D.employees.length},
+    {id:'vendors',label:'Vendors',icon:'\uD83C\uDFEA',badge:()=>D.vendors.length},
+  ]},
+  {section:'AI & Pipeline',items:[
+    {id:'ai',label:'AI Reasoning',icon:'\uD83E\uDDE0'},
+    {id:'pipeline',label:'Pipeline Viz',icon:'\u2699'},
+  ]}
+];
+
+/* ================================================================
+   UTILITY FUNCTIONS
+   ================================================================ */
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+const fmtN=n=>Number(n).toLocaleString();
+const fmtDate=d=>{if(!d)return'--';const dt=new Date(d);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+const fmtDateTime=d=>{if(!d)return'--';const dt=new Date(d);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})};
+const sevClass=s=>`badge-sev badge-${s}`;
+const statusClass=s=>`badge-status badge-${s.replace(/\s+/g,'_')}`;
+const scoreColor=s=>s>=85?'var(--green)':s>=70?'var(--yellow)':s>=50?'var(--orange)':'var(--red)';
+const sevColor=s=>s==='critical'?'var(--red)':s==='high'?'var(--orange)':s==='medium'?'var(--yellow)':'var(--blue)';
+
+function copyCmd(el,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=el.querySelector('.copy-btn');
+    if(btn){btn.textContent='Copied!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},1500)}
+  });
+}
+
+function cliBlock(cmds){
+  return `<div class="cli-section"><h4>CLI Commands</h4>${cmds.map(c=>`<div class="cli-cmd" onclick="copyCmd(this,'${c.replace(/'/g,"\\'")}')"><span class="prompt">$</span><span>${c}</span><span class="copy-btn">Copy</span></div>`).join('')}</div>`;
+}
+
+function aiBox(template){
+  const t=typeof template==='number'?AI_TEMPLATES[template%AI_TEMPLATES.length]:template;
+  return `<div class="ai-box"><div class="ai-hdr"><span class="ai-icon">\uD83E\uDDE0</span><span class="ai-title">AI Analysis</span><span class="ai-conf">Confidence: ${t.confidence}%</span></div><div class="ai-body"><strong>Reasoning:</strong><ul>${t.reasoning.map(r=>`<li>${r}</li>`).join('')}</ul><strong>Evidence Sources:</strong><ul>${(t.evidence||[]).map(e=>`<li class="text-muted">${e}</li>`).join('')}</ul></div><div class="ai-rec"><strong>Recommendation:</strong> ${t.recommendation}</div></div>`;
+}
+
+function panelFields(fields){
+  return fields.map(([l,v])=>`<div class="panel-field"><span class="lbl">${l}</span><span class="val">${v}</span></div>`).join('');
+}
+
+function sparkline(values,color){
+  const max=Math.max(...values,1);
+  return `<span class="sparkline">${values.map(v=>`<span class="bar" style="height:${Math.max(2,v/max*24)}px;background:${color||'var(--purple)'}"></span>`).join('')}</span>`;
+}
+
+/* ================================================================
+   PANEL MANAGEMENT
+   ================================================================ */
+function openPanel(title,html){
+  $('#panel-title').textContent=title;
+  $('#panel-body').innerHTML=html;
+  $('#detail-panel').classList.add('open');
+  $('#panel-overlay').classList.add('open');
+}
+function closePanel(){
+  $('#detail-panel').classList.remove('open');
+  $('#panel-overlay').classList.remove('open');
+}
+$('#panel-overlay').addEventListener('click',closePanel);
+$('#panel-close').addEventListener('click',closePanel);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel()});
+
+/* ================================================================
+   NAVIGATION RENDERING & ROUTING
+   ================================================================ */
+let currentView='dashboard';
+const viewCache={};
+
+function renderNav(){
+  const c=$('#nav-container');
+  let html='';
+  NAV.forEach(section=>{
+    html+=`<div class="nav-section">${section.section}</div>`;
+    section.items.forEach(item=>{
+      const badge=item.badge?`<span class="badge">${item.badge()}</span>`:'';
+      html+=`<div class="nav-item${item.id===currentView?' active':''}" data-view="${item.id}"><span class="icon">${item.icon}</span><span>${item.label}</span>${badge}</div>`;
+    });
+  });
+  c.innerHTML=html;
+  c.querySelectorAll('.nav-item').forEach(el=>{
+    el.addEventListener('click',()=>navigateTo(el.dataset.view));
+  });
+}
+
+function navigateTo(viewId,opts){
+  closePanel();
+  currentView=viewId;
+  $$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===viewId));
+  if(!viewCache[viewId]){
+    const div=document.createElement('div');
+    div.className='view';
+    div.id=`view-${viewId}`;
+    $('#main').appendChild(div);
+    viewCache[viewId]=div;
+    renderView(viewId,opts);
+  }else if(opts){
+    renderView(viewId,opts);
+  }
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  viewCache[viewId].classList.add('active');
+  $('#main').scrollTop=0;
+}
+
+/* ================================================================
+   SORTING HELPER
+   ================================================================ */
+function makeSortable(viewId,data,renderFn){
+  const state={col:null,dir:'asc'};
+  return function sort(col){
+    if(state.col===col)state.dir=state.dir==='asc'?'desc':'asc';
+    else{state.col=col;state.dir='asc'}
+    data.sort((a,b)=>{
+      let va=a[col],vb=b[col];
+      if(va instanceof Date)va=va.getTime();
+      if(vb instanceof Date)vb=vb.getTime();
+      if(typeof va==='string')va=va.toLowerCase();
+      if(typeof vb==='string')vb=vb.toLowerCase();
+      if(va<vb)return state.dir==='asc'?-1:1;
+      if(va>vb)return state.dir==='asc'?1:-1;
+      return 0;
+    });
+    renderFn(state.col,state.dir);
+  };
+}
+
+function thClass(col,sortCol,sortDir){
+  if(col===sortCol)return sortDir==='asc'?'sorted-asc':'sorted-desc';
+  return '';
+}
+
+/* ================================================================
+   SEARCH
+   ================================================================ */
+$('#global-search').addEventListener('input',function(){
+  const q=this.value.toLowerCase().trim();
+  const view=viewCache[currentView];
+  if(!view)return;
+  const rows=view.querySelectorAll('tbody tr');
+  rows.forEach(r=>{
+    r.style.display=!q||r.textContent.toLowerCase().includes(q)?'':'none';
+  });
+});
+
+/* ================================================================
+   VIEW RENDERERS
+   ================================================================ */
+function renderView(viewId,opts){
+  const el=viewCache[viewId];
+  const renderers={
+    dashboard:renderDashboard,cloud:renderCloud,identity:renderIdentity,devices:renderDevices,
+    storage:renderStorage,vulns:renderVulns,alerts:renderAlerts,code:renderCode,incidents:renderIncidents,
+    compliance:renderCompliance,connectors:renderConnectors,issues:renderIssues,poams:renderPoams,
+    'risk-acceptances':renderRiskAcceptances,remediation:renderRemediation,risk:renderRisk,
+    policy:renderPolicy,drift:renderDrift,posture:renderPosture,cadence:renderCadence,
+    effectiveness:renderEffectiveness,audit:renderAudit,systems:renderSystems,
+    'data-silos':renderDataSilos,questionnaires:renderQuestionnaires,personnel:renderPersonnel,
+    vendors:renderVendors,ai:renderAI,pipeline:renderPipeline
+  };
+  if(renderers[viewId])renderers[viewId](el,opts);
+}
+
+/* ================================================================
+   DASHBOARD
+   ================================================================ */
+function renderDashboard(el){
+  const openVulns=D.vulns.filter(v=>v.status==='open');
+  const critVulns=openVulns.filter(v=>v.severity==='critical').length;
+  const activeAlerts=D.alerts.filter(a=>a.status!=='resolved').length;
+  const openIssues=D.issues.filter(i=>i.status==='open').length;
+  const overduePOAMs=D.poams.filter(p=>p.status==='overdue').length;
+  const expiringRA=D.riskAcceptances.filter(r=>r.status==='expiring').length;
+  const compDevices=D.devices.filter(d=>d.is_compliant).length;
+
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Dashboard</h1><p>Warlock GRC Platform -- Real-time compliance and security posture</p></div>
+
+    <div class="stats-row">
+      <div class="stat-card" onclick="navigateTo('identity')"><div class="label">Users</div><div class="value">${fmtN(D.users.length)}</div><div class="sub">${D.users.filter(u=>u.is_enrolled_mfa).length} MFA enrolled</div></div>
+      <div class="stat-card" onclick="navigateTo('devices')"><div class="label">Devices</div><div class="value">${fmtN(D.devices.length)}</div><div class="sub">${compDevices} compliant (${Math.round(compDevices/D.devices.length*100)}%)</div></div>
+      <div class="stat-card" onclick="navigateTo('cloud')"><div class="label">Cloud Instances</div><div class="value">${fmtN(D.cloud.length)}</div><div class="sub">${D.cloud.filter(c=>c.state==='running').length} running</div></div>
+      <div class="stat-card" onclick="navigateTo('vulns')"><div class="label">Open Vulns</div><div class="value" style="color:${critVulns>0?'var(--red)':'var(--text-100)'}">${fmtN(openVulns.length)}</div><div class="sub">${critVulns} critical</div></div>
+      <div class="stat-card" onclick="navigateTo('alerts')"><div class="label">Active Alerts</div><div class="value">${fmtN(activeAlerts)}</div><div class="sub">${D.alerts.filter(a=>a.status==='new').length} new</div></div>
+      <div class="stat-card" onclick="navigateTo('issues')"><div class="label">Open Issues</div><div class="value" style="color:var(--orange)">${fmtN(openIssues)}</div><div class="sub">${overduePOAMs} overdue POA&Ms</div></div>
+    </div>
+
+    <div class="section-title">Pipeline Flow</div>
+    <div class="pipeline-flow">
+      <div class="pipeline-stage" onclick="navigateTo('connectors')"><div class="p-num">82</div><div class="p-label">Connectors</div></div>
+      <div class="pipeline-arrow">\u2192</div>
+      <div class="pipeline-stage"><div class="p-num">358</div><div class="p-label">Raw Events</div></div>
+      <div class="pipeline-arrow">\u2192</div>
+      <div class="pipeline-stage" onclick="navigateTo('vulns')"><div class="p-num">5,007</div><div class="p-label">Findings</div></div>
+      <div class="pipeline-arrow">\u2192</div>
+      <div class="pipeline-stage" onclick="navigateTo('compliance')"><div class="p-num">373,852</div><div class="p-label">Control Results</div></div>
+      <div class="pipeline-arrow">\u2192</div>
+      <div class="pipeline-stage" onclick="navigateTo('compliance')"><div class="p-num">14</div><div class="p-label">Frameworks</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-title">Compliance Posture</div>
+        <div style="background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px">
+          ${FRAMEWORKS.map(fw=>`<div style="display:flex;align-items:center;gap:12px;padding:6px 0;cursor:pointer" onclick="navigateTo('compliance',{framework:'${fw.id}'})">
+            <span style="width:120px;font-size:0.82rem;color:var(--text-300)">${fw.name}</span>
+            <div style="flex:1;height:8px;background:var(--bg-700);border-radius:4px;overflow:hidden"><div style="width:${fw.score}%;height:100%;background:${scoreColor(fw.score)};border-radius:4px"></div></div>
+            <span class="mono" style="width:40px;text-align:right;font-size:0.8rem;color:${scoreColor(fw.score)}">${fw.score}%</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="section-title">Governance Summary</div>
+        <div style="background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div class="stat-card" style="border:none;padding:12px" onclick="navigateTo('issues')"><div class="label">Open Issues</div><div class="value" style="font-size:1.3rem">${openIssues}</div></div>
+            <div class="stat-card" style="border:none;padding:12px" onclick="navigateTo('poams')"><div class="label">Overdue POA&Ms</div><div class="value" style="font-size:1.3rem;color:var(--red)">${overduePOAMs}</div></div>
+            <div class="stat-card" style="border:none;padding:12px" onclick="navigateTo('risk-acceptances')"><div class="label">Expiring Acceptances</div><div class="value" style="font-size:1.3rem;color:var(--yellow)">${expiringRA}</div></div>
+            <div class="stat-card" style="border:none;padding:12px" onclick="navigateTo('drift')"><div class="label">Drift Events</div><div class="value" style="font-size:1.3rem">${D.driftEvents.length}</div></div>
+          </div>
+          <div class="section-title">Severity Breakdown</div>
+          ${['critical','high','medium','low'].map(s=>{
+            const cnt=openVulns.filter(v=>v.severity===s).length;
+            const pct=Math.round(cnt/Math.max(openVulns.length,1)*100);
+            return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer" onclick="navigateTo('vulns',{severity:'${s}'})">
+              <span style="width:70px;font-size:0.8rem"><span class="${sevClass(s)}">${s}</span></span>
+              <div style="flex:1;height:6px;background:var(--bg-700);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${sevColor(s)};border-radius:3px"></div></div>
+              <span class="mono text-sm">${cnt}</span></div>`;
+          }).join('')}
+        </div>
+
+        <div class="section-title mt-16">Recent Activity</div>
+        <div class="activity-feed">
+          <div class="activity-item" onclick="navigateTo('vulns')"><div class="a-icon" style="background:rgba(239,68,68,0.15)">&#x1F6E1;</div><div class="a-text">3 new critical vulnerabilities detected</div><div class="a-time">2m ago</div></div>
+          <div class="activity-item" onclick="navigateTo('compliance')"><div class="a-icon" style="background:rgba(34,197,94,0.15)">&#x2611;</div><div class="a-text">ISO 27001 score improved to 84%</div><div class="a-time">15m ago</div></div>
+          <div class="activity-item" onclick="navigateTo('alerts')"><div class="a-icon" style="background:rgba(249,115,22,0.15)">&#x26A0;</div><div class="a-text">Brute force attempt detected on auth-prod-3</div><div class="a-time">32m ago</div></div>
+          <div class="activity-item" onclick="navigateTo('drift')"><div class="a-icon" style="background:rgba(234,179,8,0.15)">&#x1F504;</div><div class="a-text">Drift detected: NIST AC-7 degraded to partial</div><div class="a-time">1h ago</div></div>
+          <div class="activity-item" onclick="navigateTo('connectors')"><div class="a-icon" style="background:rgba(139,92,246,0.15)">&#x1F50C;</div><div class="a-text">Pipeline collection completed: 82/82 connectors</div><div class="a-time">2h ago</div></div>
+          <div class="activity-item" onclick="navigateTo('issues')"><div class="a-icon" style="background:rgba(59,130,246,0.15)">&#x1F4CB;</div><div class="a-text">Issue ISS-0042 remediated by Elena Martinez</div><div class="a-time">3h ago</div></div>
+          <div class="activity-item" onclick="navigateTo('personnel')"><div class="a-icon" style="background:rgba(6,182,212,0.15)">&#x1F465;</div><div class="a-text">12 users completed security awareness training</div><div class="a-time">5h ago</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ================================================================
+   CLOUD ENVIRONMENTS
+   ================================================================ */
+function renderCloud(el,opts){
+  const data=[...D.cloud];
+  let filter=opts?.cloud||'all';
+  let stateFilter=opts?.state||'all';
+
+  const sorter=makeSortable('cloud',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(c=>(filter==='all'||c.cloud===filter)&&(stateFilter==='all'||c.state===stateFilter));
+    const counts={all:data.length,aws:data.filter(c=>c.cloud==='aws').length,azure:data.filter(c=>c.cloud==='azure').length,gcp:data.filter(c=>c.cloud==='gcp').length};
+    const stateCounts={all:data.length,running:data.filter(c=>c.state==='running').length,stopped:data.filter(c=>c.state==='stopped').length,terminated:data.filter(c=>c.state==='terminated').length};
+
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Cloud Environments</h1><p>${fmtN(data.length)} instances across AWS, Azure, and GCP</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Instances</div><div class="value">${fmtN(data.length)}</div></div>
+        <div class="stat-card"><div class="label">Running</div><div class="value text-green">${fmtN(stateCounts.running)}</div></div>
+        <div class="stat-card"><div class="label">Encrypted Volumes</div><div class="value">${fmtN(data.filter(c=>c.encrypted_volumes).length)}</div></div>
+        <div class="stat-card"><div class="label">Public IPs</div><div class="value text-yellow">${fmtN(data.filter(c=>c.public_ip).length)}</div></div>
+      </div>
+      <div class="tab-bar">
+        ${['all','aws','azure','gcp'].map(t=>`<div class="tab${filter===t?' active':''}" onclick="this._cloudFilter='${t}'">${t==='all'?'All':t.toUpperCase()} <span class="text-muted">(${counts[t]})</span></div>`).join('')}
+      </div>
+      <div class="filters">
+        ${['all','running','stopped','terminated'].map(s=>`<span class="pill${stateFilter===s?' active':''}" onclick="this._stateFilter='${s}'">${s==='all'?'All States':s} <span class="count">${stateCounts[s]||0}</span></span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('instance_id',sortCol,sortDir)}" data-col="instance_id">ID</th>
+        <th class="${thClass('name',sortCol,sortDir)}" data-col="name">Name</th>
+        <th class="${thClass('cloud',sortCol,sortDir)}" data-col="cloud">Cloud</th>
+        <th class="${thClass('region',sortCol,sortDir)}" data-col="region">Region</th>
+        <th class="${thClass('instance_type',sortCol,sortDir)}" data-col="instance_type">Type</th>
+        <th class="${thClass('state',sortCol,sortDir)}" data-col="state">State</th>
+        <th class="${thClass('public_ip',sortCol,sortDir)}" data-col="public_ip">Public IP</th>
+        <th>Encrypted</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(c=>`<tr data-id="${c.instance_id}">
+          <td class="mono text-sm">${c.instance_id}</td>
+          <td>${c.name}</td>
+          <td><span class="tag">${c.cloud.toUpperCase()}</span></td>
+          <td class="mono text-sm">${c.region}</td>
+          <td class="mono text-sm">${c.instance_type}</td>
+          <td><span class="${statusClass(c.state)}">${c.state}</span></td>
+          <td class="mono text-sm">${c.public_ip||'--'}</td>
+          <td>${c.encrypted_volumes?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    // Bind events
+    el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',function(){filter=this._cloudFilter;render(sortCol,sortDir)}));
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){stateFilter=this._stateFilter;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const c=data.find(x=>x.instance_id===tr.dataset.id);if(!c)return;
+      openPanel(c.name,`
+        <div class="panel-section"><h3>Instance Details</h3>${panelFields([['Instance ID',c.instance_id],['Name',c.name],['Cloud',c.cloud.toUpperCase()],['Region',c.region],['Type',c.instance_type],['State',`<span class="${statusClass(c.state)}">${c.state}</span>`],['Public IP',c.public_ip||'None'],['Private IP',c.private_ip],['VPC',c.vpc_id],['Encrypted',c.encrypted_volumes?'Yes':'No'],['Launched',fmtDate(c.launched_at)]])}</div>
+        <div class="panel-section"><h3>Security Groups</h3>${c.security_groups.map(sg=>`<span class="tag">${sg}</span>`).join(' ')}</div>
+        <div class="panel-section"><h3>Tags</h3>${panelFields(Object.entries(c.tags))}</div>
+        ${cliBlock([`warlock cloud instance ${c.instance_id}`,`warlock cloud security-groups ${c.vpc_id}`,`warlock findings --resource ${c.instance_id}`])}
+        ${aiBox(8)}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   IDENTITY & ACCESS
+   ================================================================ */
+function renderIdentity(el){
+  const data=[...D.users];
+  let deptFilter='all';
+  const sorter=makeSortable('identity',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(u=>deptFilter==='all'||u.department===deptFilter);
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Identity & Access</h1><p>${fmtN(data.length)} user accounts across the organization</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Users</div><div class="value">${fmtN(data.length)}</div></div>
+        <div class="stat-card"><div class="label">MFA Enrolled</div><div class="value text-green">${fmtN(data.filter(u=>u.is_enrolled_mfa).length)}</div></div>
+        <div class="stat-card"><div class="label">Active</div><div class="value">${fmtN(data.filter(u=>u.status==='active').length)}</div></div>
+        <div class="stat-card"><div class="label">Suspended</div><div class="value text-yellow">${fmtN(data.filter(u=>u.status==='suspended').length)}</div></div>
+      </div>
+      <div class="filters">
+        <span class="pill${deptFilter==='all'?' active':''}" data-dept="all">All Departments</span>
+        ${DEPARTMENTS.map(d=>`<span class="pill${deptFilter===d?' active':''}" data-dept="${d}">${d} <span class="count">${data.filter(u=>u.department===d).length}</span></span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('user_id',sortCol,sortDir)}" data-col="user_id">ID</th>
+        <th class="${thClass('username',sortCol,sortDir)}" data-col="username">Username</th>
+        <th class="${thClass('department',sortCol,sortDir)}" data-col="department">Department</th>
+        <th class="${thClass('role',sortCol,sortDir)}" data-col="role">Role</th>
+        <th>MFA</th>
+        <th class="${thClass('status',sortCol,sortDir)}" data-col="status">Status</th>
+        <th class="${thClass('last_login',sortCol,sortDir)}" data-col="last_login">Last Login</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(u=>`<tr data-id="${u.user_id}">
+          <td class="mono text-sm">${u.user_id}</td>
+          <td>${u.first_name} ${u.last_name}</td>
+          <td>${u.department}</td>
+          <td><span class="tag">${u.role}</span></td>
+          <td>${u.is_enrolled_mfa?`<span class="text-green">${u.mfa_type}</span>`:'<span class="text-red">None</span>'}</td>
+          <td><span class="${statusClass(u.status)}">${u.status}</span></td>
+          <td class="mono text-sm">${fmtDate(u.last_login)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){deptFilter=this.dataset.dept;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const u=data.find(x=>x.user_id===tr.dataset.id);if(!u)return;
+      const userDevices=D.devices.filter(d=>d.user_email===u.email);
+      const userTraining=D.training.filter(t=>t.employee_email===u.email);
+      openPanel(`${u.first_name} ${u.last_name}`,`
+        <div class="panel-section"><h3>User Details</h3>${panelFields([['User ID',u.user_id],['Email',u.email],['Department',u.department],['Role',u.role],['Status',`<span class="${statusClass(u.status)}">${u.status}</span>`],['MFA',u.is_enrolled_mfa?`<span class="text-green">${u.mfa_type}</span>`:'<span class="text-red">Not Enrolled</span>'],['Created',fmtDate(u.created_at)],['Last Login',fmtDate(u.last_login)]])}</div>
+        <div class="panel-section"><h3>Groups</h3>${u.groups.map(g=>`<span class="tag">${g}</span>`).join(' ')}</div>
+        <div class="panel-section"><h3>Devices (${userDevices.length})</h3>${userDevices.length?userDevices.map(d=>`<div style="padding:4px 0;font-size:0.82rem">${d.model} - <span class="${d.is_compliant?'text-green':'text-red'}">${d.is_compliant?'Compliant':'Non-compliant'}</span></div>`).join(''):'<span class="text-muted">No devices</span>'}</div>
+        <div class="panel-section"><h3>Training</h3>${userTraining.length?userTraining.map(t=>`<div style="padding:4px 0;font-size:0.82rem">${t.course_name} - <span class="${statusClass(t.status)}">${t.status}</span></div>`).join(''):'<span class="text-muted">No training records</span>'}</div>
+        ${cliBlock([`warlock personnel ${u.user_id}`,`warlock sources --user ${u.email}`,`warlock findings --user ${u.email}`])}
+        ${!u.is_enrolled_mfa?aiBox(1):''}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   DEVICES
+   ================================================================ */
+function renderDevices(el){
+  const data=[...D.devices];
+  let platFilter='all';let compFilter='all';
+  const sorter=makeSortable('devices',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(d=>(platFilter==='all'||d.platform===platFilter)&&(compFilter==='all'||(compFilter==='compliant'?d.is_compliant:!d.is_compliant)));
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Devices</h1><p>${fmtN(data.length)} managed endpoint devices</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Devices</div><div class="value">${fmtN(data.length)}</div></div>
+        <div class="stat-card"><div class="label">Compliant</div><div class="value text-green">${fmtN(data.filter(d=>d.is_compliant).length)}</div></div>
+        <div class="stat-card"><div class="label">Non-Compliant</div><div class="value text-red">${fmtN(data.filter(d=>!d.is_compliant).length)}</div></div>
+        <div class="stat-card"><div class="label">Encrypted</div><div class="value">${fmtN(data.filter(d=>d.is_encrypted).length)}</div></div>
+      </div>
+      <div class="filters">
+        <span class="pill${platFilter==='all'?' active':''}" data-p="all">All Platforms</span>
+        ${PLATFORMS.map(p=>`<span class="pill${platFilter===p?' active':''}" data-p="${p}">${p} <span class="count">${data.filter(d=>d.platform===p).length}</span></span>`).join('')}
+        <span style="width:1px;height:20px;background:var(--bg-600);margin:0 4px"></span>
+        <span class="pill${compFilter==='all'?' active':''}" data-c="all">All</span>
+        <span class="pill${compFilter==='compliant'?' active':''}" data-c="compliant">Compliant</span>
+        <span class="pill${compFilter==='noncompliant'?' active':''}" data-c="noncompliant">Non-Compliant</span>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('device_id',sortCol,sortDir)}" data-col="device_id">ID</th>
+        <th class="${thClass('model',sortCol,sortDir)}" data-col="model">Model</th>
+        <th class="${thClass('platform',sortCol,sortDir)}" data-col="platform">Platform</th>
+        <th>OS</th>
+        <th>Encrypted</th><th>Firewall</th><th>Screen Lock</th>
+        <th class="${thClass('is_compliant',sortCol,sortDir)}" data-col="is_compliant">Compliant</th>
+        <th class="${thClass('last_seen',sortCol,sortDir)}" data-col="last_seen">Last Seen</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(d=>`<tr data-id="${d.device_id}">
+          <td class="mono text-sm">${d.device_id}</td>
+          <td>${d.model}</td>
+          <td><span class="tag">${d.platform}</span></td>
+          <td class="text-sm">${d.os_version}</td>
+          <td>${d.is_encrypted?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+          <td>${d.firewall_enabled?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+          <td>${d.screen_lock?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+          <td>${d.is_compliant?'<span class="badge-status badge-pass">Compliant</span>':'<span class="badge-status badge-fail">Non-Compliant</span>'}</td>
+          <td class="mono text-sm">${fmtDate(d.last_seen)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill[data-p]').forEach(p=>p.addEventListener('click',function(){platFilter=this.dataset.p;render(sortCol,sortDir)}));
+    el.querySelectorAll('.pill[data-c]').forEach(p=>p.addEventListener('click',function(){compFilter=this.dataset.c;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const d=data.find(x=>x.device_id===tr.dataset.id);if(!d)return;
+      openPanel(d.model,`
+        <div class="panel-section"><h3>Device Details</h3>${panelFields([['Device ID',d.device_id],['Name',d.device_name],['Serial',d.serial_number],['Model',d.model],['Platform',d.platform],['OS Version',d.os_version],['Encrypted',d.is_encrypted?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'],['Firewall',d.firewall_enabled?'<span class="text-green">Enabled</span>':'<span class="text-red">Disabled</span>'],['Screen Lock',d.screen_lock?'<span class="text-green">Enabled</span>':'<span class="text-red">Disabled</span>'],['Compliant',d.is_compliant?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'],['Last Seen',fmtDateTime(d.last_seen)]])}</div>
+        <div class="panel-section"><h3>Assigned User</h3><span class="link" onclick="navigateTo('identity');closePanel()">${d.user_email}</span></div>
+        ${cliBlock([`warlock devices ${d.device_id}`,`warlock findings --device ${d.serial_number}`])}
+        ${!d.is_compliant?aiBox(13):''}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   STORAGE & BUCKETS
+   ================================================================ */
+function renderStorage(el){
+  const data=[...D.buckets];
+  const sorter=makeSortable('storage',data,render);
+  function render(sortCol,sortDir){
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Storage & Buckets</h1><p>${fmtN(data.length)} cloud storage resources</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Buckets</div><div class="value">${fmtN(data.length)}</div></div>
+        <div class="stat-card"><div class="label">Public</div><div class="value text-red">${data.filter(b=>b.is_public).length}</div><div class="sub">Requires immediate review</div></div>
+        <div class="stat-card"><div class="label">Unencrypted</div><div class="value text-yellow">${data.filter(b=>b.encryption==='None').length}</div></div>
+        <div class="stat-card"><div class="label">Total Size</div><div class="value">${fmtN(data.reduce((s,b)=>s+b.size_gb,0))} GB</div></div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('name',sortCol,sortDir)}" data-col="name">Name</th>
+        <th class="${thClass('cloud',sortCol,sortDir)}" data-col="cloud">Cloud</th>
+        <th class="${thClass('region',sortCol,sortDir)}" data-col="region">Region</th>
+        <th class="${thClass('is_public',sortCol,sortDir)}" data-col="is_public">Public</th>
+        <th class="${thClass('encryption',sortCol,sortDir)}" data-col="encryption">Encryption</th>
+        <th>Versioning</th><th>Logging</th>
+        <th class="${thClass('size_gb',sortCol,sortDir)}" data-col="size_gb">Size</th>
+      </tr></thead><tbody>
+        ${data.map(b=>`<tr data-id="${b.bucket_id}" style="${b.is_public?'background:rgba(239,68,68,0.05)':''}">
+          <td class="mono text-sm">${b.name}</td>
+          <td><span class="tag">${b.cloud.toUpperCase()}</span></td>
+          <td class="mono text-sm">${b.region}</td>
+          <td>${b.is_public?'<span class="text-red" style="font-weight:700">PUBLIC</span>':'<span class="text-green">Private</span>'}</td>
+          <td>${b.encryption==='None'?'<span class="text-red">None</span>':`<span class="text-green">${b.encryption}</span>`}</td>
+          <td>${b.versioning?'<span class="text-green">Yes</span>':'<span class="text-muted">No</span>'}</td>
+          <td>${b.logging?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+          <td class="mono text-sm">${fmtN(b.size_gb)} GB</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const b=data.find(x=>x.bucket_id===tr.dataset.id);if(!b)return;
+      const warnings=[];
+      if(b.is_public)warnings.push('Bucket is publicly accessible - immediate action required');
+      if(b.encryption==='None')warnings.push('No encryption configured - data at rest is unprotected');
+      if(!b.versioning)warnings.push('Versioning disabled - no protection against accidental deletion');
+      if(!b.logging)warnings.push('Access logging disabled - no audit trail');
+      openPanel(b.name,`
+        ${warnings.length?`<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:12px;margin-bottom:16px"><strong style="color:var(--red)">Misconfigurations Found:</strong><ul style="margin:8px 0 0 16px;font-size:0.82rem;color:var(--red)">${warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div>`:''}
+        <div class="panel-section"><h3>Bucket Details</h3>${panelFields([['Bucket ID',b.bucket_id],['Name',b.name],['Cloud',b.cloud.toUpperCase()],['Region',b.region],['Public',b.is_public?'<span class="text-red">Yes</span>':'No'],['Encryption',b.encryption],['Versioning',b.versioning?'Yes':'No'],['Logging',b.logging?'Yes':'No'],['Objects',fmtN(b.object_count)],['Size',`${fmtN(b.size_gb)} GB`]])}</div>
+        ${cliBlock([`warlock storage ${b.bucket_id}`,`warlock findings --resource ${b.name}`])}
+        ${warnings.length?aiBox(0):''}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   VULNERABILITIES
+   ================================================================ */
+function renderVulns(el,opts){
+  const data=[...D.vulns];
+  let sevFilter=opts?.severity||'all';
+  const sorter=makeSortable('vulns',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(v=>(sevFilter==='all'||v.severity===sevFilter)&&v.status==='open');
+    const counts={all:data.filter(v=>v.status==='open').length,critical:data.filter(v=>v.severity==='critical'&&v.status==='open').length,high:data.filter(v=>v.severity==='high'&&v.status==='open').length,medium:data.filter(v=>v.severity==='medium'&&v.status==='open').length,low:data.filter(v=>v.severity==='low'&&v.status==='open').length};
+
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Vulnerabilities</h1><p>${fmtN(data.length)} total vulnerabilities, ${fmtN(counts.all)} open</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Critical</div><div class="value" style="color:var(--red)">${counts.critical}</div></div>
+        <div class="stat-card"><div class="label">High</div><div class="value" style="color:var(--orange)">${counts.high}</div></div>
+        <div class="stat-card"><div class="label">Medium</div><div class="value" style="color:var(--yellow)">${counts.medium}</div></div>
+        <div class="stat-card"><div class="label">Low</div><div class="value" style="color:var(--blue)">${counts.low}</div></div>
+      </div>
+      <div class="filters">
+        ${['all','critical','high','medium','low'].map(s=>`<span class="pill${sevFilter===s?' active':''}" data-s="${s}">${s==='all'?'All Open':s} <span class="count">${counts[s]}</span></span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('vuln_id',sortCol,sortDir)}" data-col="vuln_id">ID</th>
+        <th class="${thClass('cve_id',sortCol,sortDir)}" data-col="cve_id">CVE</th>
+        <th class="${thClass('title',sortCol,sortDir)}" data-col="title">Title</th>
+        <th class="${thClass('severity',sortCol,sortDir)}" data-col="severity">Severity</th>
+        <th class="${thClass('cvss_score',sortCol,sortDir)}" data-col="cvss_score">CVSS</th>
+        <th class="${thClass('affected_name',sortCol,sortDir)}" data-col="affected_name">Resource</th>
+        <th class="${thClass('package_name',sortCol,sortDir)}" data-col="package_name">Package</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(v=>`<tr data-id="${v.vuln_id}">
+          <td class="mono text-sm">${v.vuln_id}</td>
+          <td class="mono text-sm">${v.cve_id}</td>
+          <td>${v.title}</td>
+          <td><span class="${sevClass(v.severity)}">${v.severity}</span></td>
+          <td class="mono" style="color:${sevColor(v.severity)}">${v.cvss_score}</td>
+          <td class="link" onclick="event.stopPropagation();navigateTo('cloud')">${v.affected_name}</td>
+          <td class="mono text-sm">${v.package_name}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){sevFilter=this.dataset.s;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const v=data.find(x=>x.vuln_id===tr.dataset.id);if(!v)return;
+      openPanel(v.cve_id,`
+        <div class="panel-section"><h3>Vulnerability Details</h3>${panelFields([['Vuln ID',v.vuln_id],['CVE',v.cve_id],['Title',v.title],['Severity',`<span class="${sevClass(v.severity)}">${v.severity}</span>`],['CVSS',v.cvss_score],['Status',`<span class="${statusClass(v.status)}">${v.status}</span>`],['Resource',`<span class="link" onclick="navigateTo('cloud');closePanel()">${v.affected_resource}</span>`],['Package',v.package_name],['Installed',v.installed_version],['Fixed In',v.fixed_version]])}</div>
+        <div class="panel-section"><h3>Remediation</h3><div style="font-size:0.82rem;color:var(--text-300);line-height:1.5">Update <code>${v.package_name}</code> from version ${v.installed_version} to ${v.fixed_version}. Verify the update does not break application compatibility by running integration tests before deploying to production.</div></div>
+        ${cliBlock([`warlock findings ${v.vuln_id}`,`warlock remediate ${v.vuln_id} -a show`,`warlock control ${v.cve_id} --framework nist_800_53`])}
+        ${aiBox(3)}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   SECURITY ALERTS
+   ================================================================ */
+function renderAlerts(el){
+  const data=[...D.alerts];
+  let sevFilter='all';let statFilter='all';
+  const sorter=makeSortable('alerts',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(a=>(sevFilter==='all'||a.severity===sevFilter)&&(statFilter==='all'||a.status===statFilter));
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Security Alerts</h1><p>${fmtN(data.length)} alerts from security monitoring</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">New</div><div class="value text-purple">${data.filter(a=>a.status==='new').length}</div></div>
+        <div class="stat-card"><div class="label">Investigating</div><div class="value text-yellow">${data.filter(a=>a.status==='investigating').length}</div></div>
+        <div class="stat-card"><div class="label">Resolved</div><div class="value text-green">${data.filter(a=>a.status==='resolved').length}</div></div>
+        <div class="stat-card"><div class="label">Critical</div><div class="value text-red">${data.filter(a=>a.severity==='critical').length}</div></div>
+      </div>
+      <div class="filters">
+        ${['all','critical','high','medium','low'].map(s=>`<span class="pill${sevFilter===s?' active':''}" data-s="${s}">${s==='all'?'All':s}</span>`).join('')}
+        <span style="width:1px;height:20px;background:var(--bg-600);margin:0 4px"></span>
+        ${['all','new','investigating','resolved'].map(s=>`<span class="pill${statFilter===s?' active':''}" data-st="${s}">${s==='all'?'All Status':s}</span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('alert_id',sortCol,sortDir)}" data-col="alert_id">ID</th>
+        <th class="${thClass('title',sortCol,sortDir)}" data-col="title">Title</th>
+        <th class="${thClass('severity',sortCol,sortDir)}" data-col="severity">Severity</th>
+        <th class="${thClass('source',sortCol,sortDir)}" data-col="source">Source</th>
+        <th class="${thClass('technique',sortCol,sortDir)}" data-col="technique">MITRE ATT&CK</th>
+        <th class="${thClass('status',sortCol,sortDir)}" data-col="status">Status</th>
+        <th class="${thClass('detected_at',sortCol,sortDir)}" data-col="detected_at">Detected</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(a=>`<tr data-id="${a.alert_id}">
+          <td class="mono text-sm">${a.alert_id}</td>
+          <td>${a.title}</td>
+          <td><span class="${sevClass(a.severity)}">${a.severity}</span></td>
+          <td><span class="link" onclick="event.stopPropagation();navigateTo('connectors')">${a.source}</span></td>
+          <td class="mono text-sm">${a.technique}</td>
+          <td><span class="${statusClass(a.status)}">${a.status}</span></td>
+          <td class="mono text-sm">${fmtDate(a.detected_at)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill[data-s]').forEach(p=>p.addEventListener('click',function(){sevFilter=this.dataset.s;render(sortCol,sortDir)}));
+    el.querySelectorAll('.pill[data-st]').forEach(p=>p.addEventListener('click',function(){statFilter=this.dataset.st;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const a=data.find(x=>x.alert_id===tr.dataset.id);if(!a)return;
+      openPanel(a.title,`
+        <div class="panel-section"><h3>Alert Details</h3>${panelFields([['Alert ID',a.alert_id],['Title',a.title],['Severity',`<span class="${sevClass(a.severity)}">${a.severity}</span>`],['Source',a.source],['Status',`<span class="${statusClass(a.status)}">${a.status}</span>`],['Technique',a.technique],['Tactic',a.tactic],['Affected Host',`<span class="link" onclick="navigateTo('cloud');closePanel()">${a.affected_host}</span>`],['Detected',fmtDateTime(a.detected_at)]])}</div>
+        <div class="panel-section"><h3>Description</h3><div style="font-size:0.82rem;color:var(--text-300);line-height:1.5">${a.description}</div></div>
+        ${cliBlock([`warlock alerts ${a.alert_id}`,`warlock findings --source ${a.source}`,`warlock incidents --alert ${a.alert_id}`])}
+        ${aiBox(7)}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   CODE SECURITY
+   ================================================================ */
+function renderCode(el){
+  const data=[...D.codeFindings];
+  let sevFilter='all';let langFilter='all';
+  const sorter=makeSortable('code',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(f=>(sevFilter==='all'||f.severity===sevFilter)&&(langFilter==='all'||f.language===langFilter));
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Code Security</h1><p>${fmtN(data.length)} findings across ${[...new Set(data.map(d=>d.repository))].length} repositories</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Findings</div><div class="value">${fmtN(data.length)}</div></div>
+        <div class="stat-card"><div class="label">Open</div><div class="value text-red">${data.filter(f=>f.status==='open').length}</div></div>
+        <div class="stat-card"><div class="label">Fixed</div><div class="value text-green">${data.filter(f=>f.status==='fixed').length}</div></div>
+        <div class="stat-card"><div class="label">Repositories</div><div class="value">${[...new Set(data.map(d=>d.repository))].length}</div></div>
+      </div>
+      <div class="filters">
+        ${['all','critical','high','medium','low'].map(s=>`<span class="pill${sevFilter===s?' active':''}" data-s="${s}">${s==='all'?'All':s}</span>`).join('')}
+        <span style="width:1px;height:20px;background:var(--bg-600);margin:0 4px"></span>
+        ${['all',...LANGUAGES.slice(0,6)].map(l=>`<span class="pill${langFilter===l?' active':''}" data-l="${l}">${l==='all'?'All Languages':l}</span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('finding_id',sortCol,sortDir)}" data-col="finding_id">ID</th>
+        <th class="${thClass('title',sortCol,sortDir)}" data-col="title">Title</th>
+        <th class="${thClass('severity',sortCol,sortDir)}" data-col="severity">Severity</th>
+        <th class="${thClass('repository',sortCol,sortDir)}" data-col="repository">Repository</th>
+        <th class="${thClass('file_path',sortCol,sortDir)}" data-col="file_path">File</th>
+        <th>Line</th>
+        <th class="${thClass('language',sortCol,sortDir)}" data-col="language">Language</th>
+        <th class="${thClass('status',sortCol,sortDir)}" data-col="status">Status</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(f=>`<tr data-id="${f.finding_id}">
+          <td class="mono text-sm">${f.finding_id}</td>
+          <td>${f.title}</td>
+          <td><span class="${sevClass(f.severity)}">${f.severity}</span></td>
+          <td class="mono text-sm">${f.repository}</td>
+          <td class="mono text-sm" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${f.file_path}</td>
+          <td class="mono text-sm">${f.line_number}</td>
+          <td><span class="tag">${f.language}</span></td>
+          <td><span class="${statusClass(f.status)}">${f.status}</span></td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill[data-s]').forEach(p=>p.addEventListener('click',function(){sevFilter=this.dataset.s;render(sortCol,sortDir)}));
+    el.querySelectorAll('.pill[data-l]').forEach(p=>p.addEventListener('click',function(){langFilter=this.dataset.l;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const f=data.find(x=>x.finding_id===tr.dataset.id);if(!f)return;
+      openPanel(f.finding_id,`
+        <div class="panel-section"><h3>Finding Details</h3>${panelFields([['ID',f.finding_id],['Title',f.title],['Severity',`<span class="${sevClass(f.severity)}">${f.severity}</span>`],['Rule',f.rule_id],['Repository',f.repository],['File',f.file_path],['Line',f.line_number],['Language',f.language],['Status',`<span class="${statusClass(f.status)}">${f.status}</span>`]])}</div>
+        ${cliBlock([`warlock findings ${f.finding_id}`,`warlock remediate ${f.finding_id} -a show`])}
+        ${aiBox(14)}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   INCIDENTS
+   ================================================================ */
+function renderIncidents(el){
+  const data=[...D.incidents];
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Incidents</h1><p>${data.length} security incidents tracked</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total</div><div class="value">${data.length}</div></div>
+      <div class="stat-card"><div class="label">Active</div><div class="value text-red">${data.filter(i=>!['resolved','closed'].includes(i.status)).length}</div></div>
+      <div class="stat-card"><div class="label">Resolved</div><div class="value text-green">${data.filter(i=>i.status==='resolved'||i.status==='closed').length}</div></div>
+      <div class="stat-card"><div class="label">Critical</div><div class="value text-red">${data.filter(i=>i.severity==='critical').length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>ID</th><th>Title</th><th>Type</th><th>Severity</th><th>Status</th><th>Affected</th><th>Detected</th><th>Resolved</th>
+    </tr></thead><tbody>
+      ${data.map(inc=>`<tr data-id="${inc.incident_id}">
+        <td class="mono text-sm">${inc.incident_id}</td>
+        <td>${inc.title}</td>
+        <td><span class="tag">${inc.type}</span></td>
+        <td><span class="${sevClass(inc.severity)}">${inc.severity}</span></td>
+        <td><span class="${statusClass(inc.status)}">${inc.status}</span></td>
+        <td class="mono text-sm">${inc.affected_systems.length} systems</td>
+        <td class="mono text-sm">${fmtDate(inc.detected_at)}</td>
+        <td class="mono text-sm">${fmtDate(inc.resolved_at)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+
+  el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+    const inc=data.find(x=>x.incident_id===tr.dataset.id);if(!inc)return;
+    openPanel(inc.title,`
+      <div class="panel-section"><h3>Incident Details</h3>${panelFields([['ID',inc.incident_id],['Type',inc.type],['Severity',`<span class="${sevClass(inc.severity)}">${inc.severity}</span>`],['Status',`<span class="${statusClass(inc.status)}">${inc.status}</span>`],['Detected',fmtDateTime(inc.detected_at)],['Resolved',fmtDateTime(inc.resolved_at)]])}</div>
+      <div class="panel-section"><h3>Affected Systems (${inc.affected_systems.length})</h3>${inc.affected_systems.map(s=>`<div style="padding:3px 0"><span class="link" onclick="navigateTo('cloud');closePanel()">${s}</span></div>`).join('')}</div>
+      ${cliBlock([`warlock incidents ${inc.incident_id}`,`warlock incidents --status ${inc.status}`])}
+      ${aiBox(7)}
+    `);
+  }));
+}
+
+/* ================================================================
+   COMPLIANCE (4-level drill-down)
+   ================================================================ */
+function renderCompliance(el,opts){
+  if(opts?.framework){
+    renderComplianceDetail(el,opts.framework);return;
+  }
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Compliance Frameworks</h1><p>14 frameworks, ${fmtN(FRAMEWORKS.reduce((s,f)=>s+f.controls,0))} total controls</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Frameworks</div><div class="value">14</div></div>
+      <div class="stat-card"><div class="label">Total Controls</div><div class="value">${fmtN(FRAMEWORKS.reduce((s,f)=>s+f.controls,0))}</div></div>
+      <div class="stat-card"><div class="label">Avg Score</div><div class="value">${Math.round(FRAMEWORKS.reduce((s,f)=>s+f.score,0)/FRAMEWORKS.length)}%</div></div>
+      <div class="stat-card"><div class="label">Control Results</div><div class="value">${fmtN(373852)}</div></div>
+    </div>
+    <div class="fw-grid">
+      ${FRAMEWORKS.map(fw=>{
+        const cr=D.controlResults[fw.id]||[];
+        const pass=cr.filter(c=>c.status==='pass').length;
+        const partial=cr.filter(c=>c.status==='partial').length;
+        const fail=cr.filter(c=>c.status==='fail').length;
+        return `<div class="fw-card" onclick="navigateTo('compliance',{framework:'${fw.id}'})">
+          <div class="fw-name">${fw.name}</div>
+          <div class="fw-cat">${fw.category}</div>
+          <div class="fw-score" style="color:${scoreColor(fw.score)}">${fw.score}%</div>
+          <div class="fw-bar"><div class="fw-bar-fill" style="width:${fw.score}%;background:${scoreColor(fw.score)}"></div></div>
+          <div class="fw-stats">
+            <span><span class="dot" style="background:var(--green)"></span>${pass} pass</span>
+            <span><span class="dot" style="background:var(--yellow)"></span>${partial} partial</span>
+            <span><span class="dot" style="background:var(--red)"></span>${fail} fail</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${cliBlock(['warlock coverage','warlock results','warlock results --status non_compliant','warlock framework-diff'])}`;
+}
+
+function renderComplianceDetail(el,fwId){
+  const fw=FRAMEWORKS.find(f=>f.id===fwId);
+  const controls=D.controlResults[fwId]||[];
+  let statusFilter='all';
+
+  function render(){
+    const filtered=controls.filter(c=>statusFilter==='all'||c.status===statusFilter);
+    const pass=controls.filter(c=>c.status==='pass').length;
+    const partial=controls.filter(c=>c.status==='partial').length;
+    const fail=controls.filter(c=>c.status==='fail').length;
+
+    el.innerHTML=`
+      <div class="page-hdr">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="link" onclick="navigateTo('compliance')" style="font-size:1.2rem">\u2190</span>
+          <div><h1>${fw.name}</h1><p>${fw.category} -- ${fmtN(fw.controls)} controls</p></div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Score</div><div class="value" style="color:${scoreColor(fw.score)}">${fw.score}%</div></div>
+        <div class="stat-card"><div class="label">Passing</div><div class="value text-green">${pass}</div></div>
+        <div class="stat-card"><div class="label">Partial</div><div class="value text-yellow">${partial}</div></div>
+        <div class="stat-card"><div class="label">Failing</div><div class="value text-red">${fail}</div></div>
+      </div>
+      <div class="filters">
+        ${[['all','All'],['pass','Passing'],['partial','Partial'],['fail','Failing']].map(([v,l])=>`<span class="pill${statusFilter===v?' active':''}" data-f="${v}">${l} <span class="count">${v==='all'?controls.length:v==='pass'?pass:v==='partial'?partial:fail}</span></span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>Control ID</th><th>Title</th><th>Status</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,200).map(c=>`<tr data-cid="${c.id}">
+          <td class="mono">${c.id}</td>
+          <td>${c.title}</td>
+          <td><span class="${statusClass(c.status)}">${c.status}</span></td>
+        </tr>`).join('')}
+      </tbody></table></div>
+      ${cliBlock([`warlock coverage -f ${fwId}`,`warlock results -f ${fwId}`,`warlock results -f ${fwId} --status non_compliant`,`warlock oscal -f ${fwId}`])}`;
+
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){statusFilter=this.dataset.f;render()}));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const c=controls.find(x=>x.id===tr.dataset.cid);if(!c)return;
+      const relIssues=D.issues.filter(i=>i.framework_id===fwId).slice(0,3);
+      const tIdx=Math.abs(c.id.charCodeAt(c.id.length-1))%AI_TEMPLATES.length;
+      openPanel(`${c.id} - ${fw.name}`,`
+        <div class="panel-section"><h3>Control Details</h3>${panelFields([['Control ID',c.id],['Framework',fw.name],['Status',`<span class="${statusClass(c.status)}">${c.status}</span>`]])}</div>
+        ${c.status!=='pass'?`<div class="panel-section"><h3>Failure Details</h3><div style="font-size:0.82rem;color:var(--text-300);line-height:1.5">This control is currently <strong>${c.status}</strong>. Evidence collection indicates gaps in implementation. See AI analysis below for detailed assessment and remediation guidance.</div></div>`:''}
+        ${c.status!=='pass'&&relIssues.length?`<div class="panel-section"><h3>Related Issues</h3>${relIssues.map(i=>`<div style="padding:4px 0;font-size:0.82rem"><span class="link" onclick="navigateTo('issues');closePanel()">${i.issue_id}</span> - ${i.title} (<span class="${statusClass(i.status)}">${i.status}</span>)</div>`).join('')}</div>`:''}
+        ${cliBlock([`warlock control ${c.id} --framework ${fwId}`,`warlock control ${c.id} --ai`,`warlock findings --control ${c.id}`,`warlock remediate ${c.id} -a show`])}
+        ${aiBox(tIdx)}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   CONNECTORS
+   ================================================================ */
+function renderConnectors(el){
+  const cats=[...new Set(CONNECTORS.map(c=>c.cat))];
+  let catFilter='all';
+  const rng=new PRNG(5000);
+  const connData=CONNECTORS.map((c,i)=>({...c,idx:i,events:rng.int(2,12),health:rng.chance(0.95)?'healthy':'degraded',lastCollection:rng.date(new Date('2026-03-21'),new Date('2026-03-22'))}));
+  const catColors={Cloud:'#3b82f6',IAM:'#8b5cf6','EDR':'#ef4444',SIEM:'#f97316',Scanners:'#eab308',ITSM:'#22c55e',HR:'#06b6d4',GRC:'#a855f7',Network:'#f43f5e',Endpoint:'#14b8a6',Backup:'#6366f1',Email:'#ec4899',Physical:'#84cc16',Collaboration:'#0ea5e9',DevOps:'#f59e0b','CI/CD':'#10b981',Misc:'#71717a'};
+
+  function render(){
+    const filtered=catFilter==='all'?connData:connData.filter(c=>c.cat===catFilter);
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Connectors</h1><p>82 source connectors collecting security and compliance evidence</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Connectors</div><div class="value">82</div></div>
+        <div class="stat-card"><div class="label">Healthy</div><div class="value text-green">${connData.filter(c=>c.health==='healthy').length}</div></div>
+        <div class="stat-card"><div class="label">Categories</div><div class="value">${cats.length}</div></div>
+        <div class="stat-card"><div class="label">Events/Run</div><div class="value">${fmtN(connData.reduce((s,c)=>s+c.events,0))}</div></div>
+      </div>
+      <div class="filters">
+        <span class="pill${catFilter==='all'?' active':''}" data-cat="all">All <span class="count">82</span></span>
+        ${cats.map(c=>`<span class="pill${catFilter===c?' active':''}" data-cat="${c}">${c} <span class="count">${CONNECTORS.filter(x=>x.cat===c).length}</span></span>`).join('')}
+      </div>
+      <div class="conn-grid">
+        ${filtered.map(c=>`<div class="conn-chip" data-idx="${c.idx}">
+          <span class="c-dot" style="background:${catColors[c.cat]||'var(--text-400)'}"></span>
+          <span class="c-name">${c.name}</span>
+          <span class="c-cat">${c.cat}</span>
+        </div>`).join('')}
+      </div>
+      ${cliBlock(['warlock connectors','warlock sources','warlock collect','warlock connectors --health'])}`;
+
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){catFilter=this.dataset.cat;render()}));
+    el.querySelectorAll('.conn-chip').forEach(chip=>chip.addEventListener('click',()=>{
+      const c=connData[parseInt(chip.dataset.idx)];
+      openPanel(c.name,`
+        <div class="panel-section"><h3>Connector Details</h3>${panelFields([['Name',c.name],['Category',c.cat],['Health',c.health==='healthy'?'<span class="text-green">Healthy</span>':'<span class="text-yellow">Degraded</span>'],['Events/Collection',c.events],['Last Collection',fmtDateTime(c.lastCollection)],['Normalizer',`${c.name.toLowerCase().replace(/[^a-z0-9]/g,'_')}_normalizer`],['Source Type',c.cat.toLowerCase()]])}</div>
+        <div class="panel-section"><h3>Event Types</h3>
+          ${['inventory','vulnerability','configuration','access','activity'].slice(0,c.events>5?5:3).map(t=>`<span class="tag">${t}</span>`).join(' ')}
+        </div>
+        ${cliBlock([`warlock connectors ${c.name.toLowerCase().replace(/\\s+/g,'-')}`,`warlock sources --connector ${c.name.toLowerCase().replace(/\\s+/g,'-')}`,`warlock findings --source ${c.name}`])}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   ISSUES
+   ================================================================ */
+function renderIssues(el){
+  const data=[...D.issues];
+  let statusFilter='all';let prioFilter='all';
+  const sorter=makeSortable('issues',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(i=>(statusFilter==='all'||i.status===statusFilter)&&(prioFilter==='all'||i.priority===prioFilter));
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Issues</h1><p>${fmtN(data.length)} compliance issues tracked</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Open</div><div class="value text-purple">${data.filter(i=>i.status==='open').length}</div></div>
+        <div class="stat-card"><div class="label">In Progress</div><div class="value text-yellow">${data.filter(i=>i.status==='in_progress').length}</div></div>
+        <div class="stat-card"><div class="label">Remediated</div><div class="value text-green">${data.filter(i=>i.status==='remediated').length}</div></div>
+        <div class="stat-card"><div class="label">Risk Accepted</div><div class="value">${data.filter(i=>i.status==='risk_accepted').length}</div></div>
+      </div>
+      <div class="filters">
+        ${['all','open','in_progress','remediated','risk_accepted'].map(s=>`<span class="pill${statusFilter===s?' active':''}" data-s="${s}">${s==='all'?'All':s.replace('_',' ')}</span>`).join('')}
+        <span style="width:1px;height:20px;background:var(--bg-600);margin:0 4px"></span>
+        ${['all','critical','high','medium','low'].map(p=>`<span class="pill${prioFilter===p?' active':''}" data-p="${p}">${p==='all'?'All Priorities':p}</span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('issue_id',sortCol,sortDir)}" data-col="issue_id">ID</th>
+        <th class="${thClass('framework',sortCol,sortDir)}" data-col="framework">Framework</th>
+        <th class="${thClass('control_id',sortCol,sortDir)}" data-col="control_id">Control</th>
+        <th class="${thClass('title',sortCol,sortDir)}" data-col="title">Title</th>
+        <th class="${thClass('status',sortCol,sortDir)}" data-col="status">Status</th>
+        <th class="${thClass('priority',sortCol,sortDir)}" data-col="priority">Priority</th>
+        <th class="${thClass('assigned_to',sortCol,sortDir)}" data-col="assigned_to">Assigned To</th>
+        <th class="${thClass('created_at',sortCol,sortDir)}" data-col="created_at">Created</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(i=>`<tr data-id="${i.issue_id}">
+          <td class="mono text-sm">${i.issue_id}</td>
+          <td><span class="link" onclick="event.stopPropagation();navigateTo('compliance',{framework:'${i.framework_id}'})">${i.framework}</span></td>
+          <td class="mono">${i.control_id}</td>
+          <td>${i.title}</td>
+          <td><span class="${statusClass(i.status)}">${i.status.replace('_',' ')}</span></td>
+          <td><span class="${sevClass(i.priority)}">${i.priority}</span></td>
+          <td>${i.assigned_to}</td>
+          <td class="mono text-sm">${fmtDate(i.created_at)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill[data-s]').forEach(p=>p.addEventListener('click',function(){statusFilter=this.dataset.s;render(sortCol,sortDir)}));
+    el.querySelectorAll('.pill[data-p]').forEach(p=>p.addEventListener('click',function(){prioFilter=this.dataset.p;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const i=data.find(x=>x.issue_id===tr.dataset.id);if(!i)return;
+      const relPoams=D.poams.filter(p=>p.framework===i.framework).slice(0,2);
+      const relRA=D.riskAcceptances.filter(r=>r.framework===i.framework).slice(0,1);
+      const tIdx=Math.abs(i.issue_id.charCodeAt(4))%AI_TEMPLATES.length;
+      openPanel(i.issue_id,`
+        <div class="panel-section"><h3>Issue Details</h3>${panelFields([['Issue ID',i.issue_id],['Framework',`<span class="link" onclick="navigateTo('compliance',{framework:'${i.framework_id}'});closePanel()">${i.framework}</span>`],['Control',i.control_id],['Title',i.title],['Status',`<span class="${statusClass(i.status)}">${i.status.replace('_',' ')}</span>`],['Priority',`<span class="${sevClass(i.priority)}">${i.priority}</span>`],['Assigned To',`<span class="link" onclick="navigateTo('personnel');closePanel()">${i.assigned_to}</span>`],['Created',fmtDate(i.created_at)]])}</div>
+        ${relPoams.length?`<div class="panel-section"><h3>Related POA&Ms</h3>${relPoams.map(p=>`<div style="padding:4px 0;font-size:0.82rem"><span class="link" onclick="navigateTo('poams');closePanel()">${p.poam_id}</span> - ${p.weakness.substring(0,60)}... (<span class="${statusClass(p.status)}">${p.status}</span>)</div>`).join('')}</div>`:''}
+        ${relRA.length?`<div class="panel-section"><h3>Risk Acceptances</h3>${relRA.map(r=>`<div style="padding:4px 0;font-size:0.82rem"><span class="link" onclick="navigateTo('risk-acceptances');closePanel()">${r.id}</span> - ${r.control} (<span class="${statusClass(r.status)}">${r.status}</span>)</div>`).join('')}</div>`:''}
+        ${cliBlock([`warlock issues ${i.issue_id}`,`warlock remediate ${i.issue_id} -a show`,`warlock remediate ${i.issue_id} -a assign --user "${i.assigned_to}"`,`warlock remediate ${i.issue_id} -a transition --status in_progress`,`warlock remediate ${i.issue_id} -a accept-risk`,`warlock remediate ${i.issue_id} -a comment --text "Investigation complete"`])}
+        ${aiBox(tIdx)}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   POA&Ms
+   ================================================================ */
+function renderPoams(el){
+  const data=[...D.poams];
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Plans of Action & Milestones</h1><p>${data.length} POA&Ms tracked across frameworks</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total</div><div class="value">${data.length}</div></div>
+      <div class="stat-card"><div class="label">Open</div><div class="value text-purple">${data.filter(p=>p.status==='open').length}</div></div>
+      <div class="stat-card"><div class="label">In Progress</div><div class="value text-yellow">${data.filter(p=>p.status==='in_progress').length}</div></div>
+      <div class="stat-card"><div class="label">Overdue</div><div class="value text-red">${data.filter(p=>p.status==='overdue').length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>ID</th><th>Framework</th><th>Control</th><th>Weakness</th><th>Status</th><th>Due Date</th><th>Delays</th>
+    </tr></thead><tbody>
+      ${data.map(p=>`<tr data-id="${p.poam_id}">
+        <td class="mono text-sm">${p.poam_id}</td>
+        <td>${p.framework}</td>
+        <td class="mono">${p.control}</td>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">${p.weakness}</td>
+        <td><span class="${statusClass(p.status)}">${p.status}</span></td>
+        <td class="mono text-sm">${fmtDate(p.due_date)}</td>
+        <td>${p.delays?`<span class="text-red">${p.delays}</span>`:'0'}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock poams','warlock poams --status overdue','warlock compensating-controls'])}`;
+
+  el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+    const p=data.find(x=>x.poam_id===tr.dataset.id);if(!p)return;
+    openPanel(p.poam_id,`
+      <div class="panel-section"><h3>POA&M Details</h3>${panelFields([['ID',p.poam_id],['Framework',p.framework],['Control',p.control],['Status',`<span class="${statusClass(p.status)}">${p.status}</span>`],['Due Date',fmtDate(p.due_date)],['Delays',p.delays||'None']])}</div>
+      <div class="panel-section"><h3>Weakness</h3><div style="font-size:0.82rem;color:var(--text-300);line-height:1.5">${p.weakness}</div></div>
+      <div class="panel-section"><h3>Milestones</h3>${p.milestones.map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg-700);font-size:0.82rem">
+        <span style="color:${m.done?'var(--green)':'var(--text-400)'};font-size:1rem">${m.done?'\u2713':'\u25CB'}</span>
+        <span style="color:${m.done?'var(--text-200)':'var(--text-400)'}">${m.name}</span>
+        <span class="mono text-muted" style="margin-left:auto">${fmtDate(m.date)}</span>
+      </div>`).join('')}</div>
+      ${cliBlock([`warlock poams ${p.poam_id}`,`warlock remediate ${p.poam_id} -a show`,`warlock remediate ${p.poam_id} -a extend --days 30`])}
+    `);
+  }));
+}
+
+/* ================================================================
+   RISK ACCEPTANCES
+   ================================================================ */
+function renderRiskAcceptances(el){
+  const data=[...D.riskAcceptances];
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Risk Acceptances</h1><p>${data.length} documented risk acceptances</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Active</div><div class="value text-green">${data.filter(r=>r.status==='active').length}</div></div>
+      <div class="stat-card"><div class="label">Expiring</div><div class="value text-yellow">${data.filter(r=>r.status==='expiring').length}</div></div>
+      <div class="stat-card"><div class="label">Expired</div><div class="value text-red">${data.filter(r=>r.status==='expired').length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>ID</th><th>Framework</th><th>Control</th><th>Risk Level</th><th>Status</th><th>Approved By</th><th>Expires</th>
+    </tr></thead><tbody>
+      ${data.map(r=>`<tr data-id="${r.id}">
+        <td class="mono text-sm">${r.id}</td>
+        <td>${r.framework}</td>
+        <td class="mono">${r.control}</td>
+        <td><span class="${sevClass(r.risk_level)}">${r.risk_level}</span></td>
+        <td><span class="${statusClass(r.status)}">${r.status}</span></td>
+        <td>${r.approved_by}</td>
+        <td class="mono text-sm">${fmtDate(r.expires_at)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock risk-acceptances','warlock risk-acceptances --status expiring'])}`;
+
+  el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+    const r=data.find(x=>x.id===tr.dataset.id);if(!r)return;
+    openPanel(r.id,`
+      <div class="panel-section"><h3>Risk Acceptance Details</h3>${panelFields([['ID',r.id],['Framework',r.framework],['Control',r.control],['Risk Level',`<span class="${sevClass(r.risk_level)}">${r.risk_level}</span>`],['Status',`<span class="${statusClass(r.status)}">${r.status}</span>`],['Approved By',r.approved_by],['Approved',fmtDate(r.approved_at)],['Expires',fmtDate(r.expires_at)]])}</div>
+      <div class="panel-section"><h3>Justification</h3><div style="font-size:0.82rem;color:var(--text-300);line-height:1.5">${r.justification}</div></div>
+      ${cliBlock([`warlock risk-acceptances ${r.id}`,`warlock remediate ${r.id} -a extend --days 90`])}
+    `);
+  }));
+}
+
+/* ================================================================
+   REMEDIATION WORKFLOW
+   ================================================================ */
+function renderRemediation(el){
+  const failingControls=[];
+  Object.entries(D.controlResults).forEach(([fwId,controls])=>{
+    controls.filter(c=>c.status==='fail').slice(0,5).forEach(c=>{
+      failingControls.push({...c,fwId});
+    });
+  });
+  const stages=['Broken','Investigate','Remediate','Verify','Closed'];
+  let selected=0;
+  let stageStates=failingControls.map(()=>0);
+
+  function render(){
+    const ctrl=failingControls[selected];
+    const stage=stageStates[selected];
+    const tIdx=selected%AI_TEMPLATES.length;
+    const t=AI_TEMPLATES[tIdx];
+
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Remediation Workflow</h1><p>Interactive remediation of non-compliant controls</p></div>
+      <div class="rem-layout">
+        <div class="rem-list">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--bg-700);font-size:0.75rem;text-transform:uppercase;color:var(--text-400);font-weight:600">Non-Compliant Controls (${failingControls.length})</div>
+          ${failingControls.map((c,i)=>`<div class="rem-list-item${i===selected?' active':''}" data-idx="${i}">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="color:${stageStates[i]>=4?'var(--green)':'var(--red)'}">&#x25CF;</span>
+              <span class="mono text-sm">${c.id}</span>
+            </div>
+            <div class="text-xs text-muted mt-8">${c.framework_name}</div>
+          </div>`).join('')}
+        </div>
+        <div class="rem-center">
+          <h3 style="color:var(--text-100)">${ctrl.id} - ${ctrl.framework_name}</h3>
+          <div class="rem-stages">
+            ${stages.map((s,i)=>`<span class="rem-stage${i===stage?' current':''}${i<stage?' done':''}">${s}</span>${i<stages.length-1?'<span class="rem-arrow">\u2192</span>':''}`).join('')}
+          </div>
+          <div style="padding:16px 0;font-size:0.85rem;color:var(--text-300);line-height:1.6">
+            ${stage===0?'<div style="color:var(--red);font-weight:600;margin-bottom:8px">Control is FAILING</div><p>This control has been identified as non-compliant. Click "Investigate" to begin the remediation workflow.</p>':''}
+            ${stage===1?'<div style="color:var(--yellow);font-weight:600;margin-bottom:8px">Under Investigation</div><p>AI analysis has identified the root cause. Review the analysis panel on the right and proceed to remediation when ready.</p>':''}
+            ${stage===2?`<div style="color:var(--orange);font-weight:600;margin-bottom:8px">Remediation In Progress</div><p>Execute the following commands to remediate:</p>${cliBlock([`warlock remediate ${ctrl.id} -a show`,`warlock control ${ctrl.id} --framework ${ctrl.fwId}`,`warlock remediate ${ctrl.id} -a transition --status remediated`])}`:''}
+            ${stage===3?'<div style="color:var(--cyan);font-weight:600;margin-bottom:8px">Verifying Remediation</div><p>Running verification checks against the control requirements...</p>':''}
+            ${stage>=4?'<div style="color:var(--green);font-weight:600;margin-bottom:8px">Control PASSING</div><p>Remediation verified successfully. Control is now compliant.</p>':''}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            ${stage<4?`<button class="rem-btn ${stage<2?'rem-btn-primary':'rem-btn-success'}" id="rem-advance">${stage===0?'Investigate':stage===1?'Begin Remediation':stage===2?'Mark Remediated':'Verify & Close'}</button>`:'<span class="text-green" style="font-weight:600">Remediation Complete</span>'}
+          </div>
+        </div>
+        <div class="rem-ai">
+          <div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-400);font-weight:600;margin-bottom:12px">AI Reasoning</div>
+          ${aiBox(tIdx)}
+        </div>
+      </div>`;
+
+    el.querySelectorAll('.rem-list-item').forEach(item=>item.addEventListener('click',()=>{selected=parseInt(item.dataset.idx);render()}));
+    const advBtn=el.querySelector('#rem-advance');
+    if(advBtn)advBtn.addEventListener('click',()=>{if(stageStates[selected]<4){stageStates[selected]++;render()}});
+  }
+  render();
+}
+
+/* ================================================================
+   RISK ANALYSIS
+   ================================================================ */
+function renderRisk(el){
+  const rng=new PRNG(2000);
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Risk Analysis</h1><p>FAIR Monte Carlo risk quantification across frameworks</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Frameworks Analyzed</div><div class="value">14</div></div>
+      <div class="stat-card"><div class="label">Risk Scenarios</div><div class="value">42</div></div>
+      <div class="stat-card"><div class="label">Avg. Annual Loss</div><div class="value">$${fmtN(rng.int(500000,2000000))}</div></div>
+      <div class="stat-card"><div class="label">Simulations</div><div class="value">10,000</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Framework</th><th>Scenario</th><th>Likelihood</th><th>Impact (Avg)</th><th>Annual Loss</th><th>Risk Level</th>
+    </tr></thead><tbody>
+      ${FRAMEWORKS.map(fw=>{
+        const likelihood=rng.int(5,40);
+        const impact=rng.int(50000,5000000);
+        const ale=Math.round(likelihood/100*impact);
+        const level=ale>500000?'critical':ale>200000?'high':ale>50000?'medium':'low';
+        return `<tr>
+          <td><span class="link" onclick="navigateTo('compliance',{framework:'${fw.id}'})">${fw.name}</span></td>
+          <td>Data breach via ${rng.pick(['unpatched vuln','credential theft','insider threat','misconfig','supply chain'])}</td>
+          <td class="mono">${likelihood}%</td>
+          <td class="mono">$${fmtN(impact)}</td>
+          <td class="mono" style="color:${sevColor(level)}">$${fmtN(ale)}</td>
+          <td><span class="${sevClass(level)}">${level}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock risk analyze -f nist_800_53','warlock risk precompute','warlock vendors --threshold 70'])}
+    ${aiBox(9)}`;
+}
+
+/* ================================================================
+   POLICY COVERAGE
+   ================================================================ */
+function renderPolicy(el){
+  const rng=new PRNG(2100);
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Policy Coverage</h1><p>OPA/Rego policy mapping to compliance controls</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Policy Files</div><div class="value">670</div></div>
+      <div class="stat-card"><div class="label">Frameworks Covered</div><div class="value">8</div></div>
+      <div class="stat-card"><div class="label">Avg Coverage</div><div class="value">${Math.round(FRAMEWORKS.slice(0,8).reduce((s,f)=>s+f.score,0)/8)}%</div></div>
+      <div class="stat-card"><div class="label">Policy LOC</div><div class="value">25,000+</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Framework</th><th>Policy Files</th><th>Controls Covered</th><th>Coverage %</th><th>Gaps</th>
+    </tr></thead><tbody>
+      ${[{fw:'NIST 800-53',files:286,total:1176},{fw:'ISO 27001',files:186,total:93},{fw:'SOC 2',files:26,total:46},{fw:'UCF',files:24,total:115},{fw:'HIPAA',files:40,total:64},{fw:'CMMC L2',files:50,total:110},{fw:'PCI DSS v4.0',files:24,total:63},{fw:'FedRAMP',files:34,total:26}].map(p=>{
+        const covered=Math.min(p.total,Math.round(p.total*rng.int(70,98)/100));
+        const pct=Math.round(covered/p.total*100);
+        return `<tr>
+          <td>${p.fw}</td>
+          <td class="mono">${p.files}</td>
+          <td class="mono">${covered}/${p.total}</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:var(--bg-700);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${scoreColor(pct)};border-radius:3px"></div></div><span class="mono text-sm" style="color:${scoreColor(pct)}">${pct}%</span></div></td>
+          <td class="mono">${p.total-covered}</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock policy-coverage -f nist_800_53','warlock policy-coverage -f iso_27001','warlock sufficiency'])}`;
+}
+
+/* ================================================================
+   DRIFT DETECTION
+   ================================================================ */
+function renderDrift(el){
+  const data=[...D.driftEvents].sort((a,b)=>new Date(b.detected_at)-new Date(a.detected_at));
+  let dirFilter='all';
+  function render(){
+    const filtered=data.filter(d=>dirFilter==='all'||d.direction===dirFilter);
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Drift Detection</h1><p>${data.length} compliance drift events detected</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Events</div><div class="value">${data.length}</div></div>
+        <div class="stat-card"><div class="label">Degraded</div><div class="value text-red">${data.filter(d=>d.direction==='degraded').length}</div></div>
+        <div class="stat-card"><div class="label">Improved</div><div class="value text-green">${data.filter(d=>d.direction==='improved').length}</div></div>
+      </div>
+      <div class="filters">
+        <span class="pill${dirFilter==='all'?' active':''}" data-d="all">All</span>
+        <span class="pill${dirFilter==='degraded'?' active':''}" data-d="degraded">Degraded</span>
+        <span class="pill${dirFilter==='improved'?' active':''}" data-d="improved">Improved</span>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>ID</th><th>Framework</th><th>Control</th><th>Direction</th><th>From</th><th>To</th><th>Detected</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,80).map(d=>`<tr>
+          <td class="mono text-sm">${d.drift_id}</td>
+          <td>${d.framework}</td>
+          <td class="mono">${d.control}</td>
+          <td style="color:${d.direction==='degraded'?'var(--red)':'var(--green)'}"><strong>${d.direction==='degraded'?'\u2193':'\u2191'} ${d.direction}</strong></td>
+          <td><span class="${statusClass(d.from_status)}">${d.from_status}</span></td>
+          <td><span class="${statusClass(d.to_status)}">${d.to_status}</span></td>
+          <td class="mono text-sm">${fmtDate(d.detected_at)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>
+      ${cliBlock(['warlock drift','warlock drift --direction degraded','warlock posture-history -f nist_800_53'])}`;
+
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){dirFilter=this.dataset.d;render()}));
+  }
+  render();
+}
+
+/* ================================================================
+   POSTURE HISTORY
+   ================================================================ */
+function renderPosture(el){
+  const rng=new PRNG(2200);
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Posture History</h1><p>Control compliance trends over the last 12 weeks</p></div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Framework</th><th>Current</th><th>12-Week Trend</th><th>Slope</th><th>Change</th>
+    </tr></thead><tbody>
+      ${FRAMEWORKS.map(fw=>{
+        const values=[];let v=fw.score-rng.int(0,10);
+        for(let i=0;i<12;i++){v+=rng.int(-3,4);v=Math.max(40,Math.min(100,v));values.push(v)}
+        const change=values[11]-values[0];
+        const slope=change>2?'improving':change<-2?'degrading':'stable';
+        const color=slope==='improving'?'var(--green)':slope==='degrading'?'var(--red)':'var(--text-400)';
+        return `<tr>
+          <td><span class="link" onclick="navigateTo('compliance',{framework:'${fw.id}'})">${fw.name}</span></td>
+          <td class="mono" style="color:${scoreColor(fw.score)}">${fw.score}%</td>
+          <td>${sparkline(values,color)}</td>
+          <td style="color:${color}">${slope==='improving'?'\u2191':slope==='degrading'?'\u2193':'\u2192'} ${slope}</td>
+          <td class="mono" style="color:${color}">${change>0?'+':''}${change}%</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock posture-history -f nist_800_53','warlock posture-history -f iso_27001','warlock drift'])}`;
+}
+
+/* ================================================================
+   CADENCE
+   ================================================================ */
+function renderCadence(el){
+  const rng=new PRNG(2300);
+  const sources=CONNECTORS.slice(0,20).map(c=>({name:c.name,cat:c.cat,frequency:rng.pick(['hourly','daily','weekly']),lastRun:rng.date(new Date('2026-03-20'),new Date('2026-03-22')),freshness:rng.int(0,96)}));
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Evidence Cadence</h1><p>Collection freshness and frequency tracking</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Sources</div><div class="value">82</div></div>
+      <div class="stat-card"><div class="label">Fresh (&lt;24h)</div><div class="value text-green">${sources.filter(s=>s.freshness<24).length}</div></div>
+      <div class="stat-card"><div class="label">Stale (&gt;48h)</div><div class="value text-yellow">${sources.filter(s=>s.freshness>48).length}</div></div>
+      <div class="stat-card"><div class="label">Critical (&gt;72h)</div><div class="value text-red">${sources.filter(s=>s.freshness>72).length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Source</th><th>Category</th><th>Frequency</th><th>Last Run</th><th>Age (hours)</th><th>Status</th>
+    </tr></thead><tbody>
+      ${sources.map(s=>`<tr>
+        <td><span class="link" onclick="navigateTo('connectors')">${s.name}</span></td>
+        <td>${s.cat}</td>
+        <td class="mono text-sm">${s.frequency}</td>
+        <td class="mono text-sm">${fmtDateTime(s.lastRun)}</td>
+        <td class="mono">${s.freshness}h</td>
+        <td>${s.freshness<24?'<span class="badge-status badge-pass">Fresh</span>':s.freshness<48?'<span class="badge-status badge-partial">Aging</span>':s.freshness<72?'<span class="badge-status badge-warning">Stale</span>':'<span class="badge-status badge-fail">Critical</span>'}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock cadence','warlock collect','warlock cadence --stale'])}`;
+}
+
+/* ================================================================
+   EFFECTIVENESS
+   ================================================================ */
+function renderEffectiveness(el){
+  const rng=new PRNG(2400);
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Control Effectiveness</h1><p>Uptime, MTTR, and drift metrics per framework</p></div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Framework</th><th>Uptime %</th><th>MTTR (hours)</th><th>Drift Count</th><th>Effectiveness</th>
+    </tr></thead><tbody>
+      ${FRAMEWORKS.map(fw=>{
+        const uptime=rng.int(85,99);const mttr=rng.int(2,48);const driftCnt=rng.int(0,15);
+        const eff=uptime>95&&mttr<12?'High':uptime>85&&mttr<24?'Medium':'Low';
+        const color=eff==='High'?'var(--green)':eff==='Medium'?'var(--yellow)':'var(--red)';
+        return `<tr>
+          <td><span class="link" onclick="navigateTo('compliance',{framework:'${fw.id}'})">${fw.name}</span></td>
+          <td class="mono" style="color:${uptime>95?'var(--green)':uptime>85?'var(--yellow)':'var(--red)'}">${uptime}%</td>
+          <td class="mono">${mttr}h</td>
+          <td class="mono">${driftCnt}</td>
+          <td style="color:${color};font-weight:600">${eff}</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock effectiveness','warlock effectiveness -f nist_800_53'])}`;
+}
+
+/* ================================================================
+   AUDIT SIMULATION
+   ================================================================ */
+function renderAudit(el){
+  const rng=new PRNG(2500);
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Audit Simulation</h1><p>Projected audit readiness across frameworks</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Audit-Ready Frameworks</div><div class="value text-green">${FRAMEWORKS.filter(f=>f.score>=80).length}</div></div>
+      <div class="stat-card"><div class="label">Needs Work</div><div class="value text-yellow">${FRAMEWORKS.filter(f=>f.score>=65&&f.score<80).length}</div></div>
+      <div class="stat-card"><div class="label">At Risk</div><div class="value text-red">${FRAMEWORKS.filter(f=>f.score<65).length}</div></div>
+      <div class="stat-card"><div class="label">Stale Controls</div><div class="value">${rng.int(40,120)}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Framework</th><th>Score</th><th>Projected Coverage</th><th>Stale Controls</th><th>Overdue Items</th><th>Readiness</th>
+    </tr></thead><tbody>
+      ${FRAMEWORKS.map(fw=>{
+        const stale=rng.int(2,30);const overdue=rng.int(0,8);
+        const readiness=fw.score>=85?'Ready':fw.score>=70?'Partial':'Not Ready';
+        const color=readiness==='Ready'?'var(--green)':readiness==='Partial'?'var(--yellow)':'var(--red)';
+        return `<tr>
+          <td><span class="link" onclick="navigateTo('compliance',{framework:'${fw.id}'})">${fw.name}</span></td>
+          <td class="mono" style="color:${scoreColor(fw.score)}">${fw.score}%</td>
+          <td class="mono">${Math.min(100,fw.score+rng.int(2,8))}%</td>
+          <td class="mono">${stale}</td>
+          <td class="mono" style="color:${overdue>3?'var(--red)':'var(--text-200)'}">${overdue}</td>
+          <td style="color:${color};font-weight:600">${readiness}</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock simulate-audit -f nist_800_53','warlock simulate-audit -f iso_27001','warlock simulate-audit -f soc2'])}
+    ${aiBox(9)}`;
+}
+
+/* ================================================================
+   SYSTEMS
+   ================================================================ */
+function renderSystems(el){
+  const systems=[
+    {name:'Acme Production',env:'production',type:'Web Application',components:45,controls:320,score:82,owner:'Elena Martinez'},
+    {name:'Acme Staging',env:'staging',type:'Web Application',components:45,controls:280,score:78,owner:'Carlos Patel'},
+    {name:'Acme Analytics',env:'production',type:'Data Platform',components:28,controls:195,score:75,owner:'Mei Kim'},
+    {name:'Acme ML Platform',env:'production',type:'AI/ML Infrastructure',components:32,controls:210,score:68,owner:'Raj Singh'}
+  ];
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Systems</h1><p>${systems.length} system profiles with inheritance and dependency tracking</p></div>
+    <div class="stats-row">
+      ${systems.map(s=>`<div class="stat-card" data-sys="${s.name}"><div class="label">${s.name}</div><div class="value" style="color:${scoreColor(s.score)}">${s.score}%</div><div class="sub">${s.components} components</div></div>`).join('')}
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>System</th><th>Environment</th><th>Type</th><th>Components</th><th>Controls</th><th>Score</th><th>Owner</th>
+    </tr></thead><tbody>
+      ${systems.map(s=>`<tr data-sys="${s.name}">
+        <td style="font-weight:600;color:var(--text-100)">${s.name}</td>
+        <td><span class="tag">${s.env}</span></td>
+        <td>${s.type}</td>
+        <td class="mono">${s.components}</td>
+        <td class="mono">${s.controls}</td>
+        <td class="mono" style="color:${scoreColor(s.score)}">${s.score}%</td>
+        <td>${s.owner}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock systems','warlock architecture'])}`;
+
+  el.querySelectorAll('tr[data-sys],div[data-sys]').forEach(row=>row.addEventListener('click',()=>{
+    const s=systems.find(x=>x.name===row.dataset.sys);if(!s)return;
+    openPanel(s.name,`
+      <div class="panel-section"><h3>System Profile</h3>${panelFields([['Name',s.name],['Environment',s.env],['Type',s.type],['Components',s.components],['Controls',s.controls],['Score',`<span style="color:${scoreColor(s.score)}">${s.score}%</span>`],['Owner',s.owner]])}</div>
+      <div class="panel-section"><h3>Dependencies</h3>
+        <div style="font-size:0.82rem;color:var(--text-300)">
+          <div style="padding:4px 0">AWS EC2 (compute)</div>
+          <div style="padding:4px 0">AWS RDS (database)</div>
+          <div style="padding:4px 0">AWS S3 (storage)</div>
+          <div style="padding:4px 0">Okta (authentication)</div>
+          <div style="padding:4px 0">CrowdStrike (endpoint protection)</div>
+        </div>
+      </div>
+      ${cliBlock([`warlock systems "${s.name}"`,`warlock architecture --system "${s.name}"`])}
+    `);
+  }));
+}
+
+/* ================================================================
+   DATA SILOS
+   ================================================================ */
+function renderDataSilos(el){
+  const data=D.dataSilos;
+  const clsColors={restricted:'var(--red)',confidential:'var(--orange)',internal:'var(--yellow)',public:'var(--blue)'};
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Data Silos</h1><p>${data.length} data sources classified and tracked</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Restricted</div><div class="value text-red">${data.filter(d=>d.classification==='restricted').length}</div></div>
+      <div class="stat-card"><div class="label">PII</div><div class="value text-orange">${data.filter(d=>d.pii).length}</div></div>
+      <div class="stat-card"><div class="label">PHI</div><div class="value text-yellow">${data.filter(d=>d.phi).length}</div></div>
+      <div class="stat-card"><div class="label">Unencrypted</div><div class="value text-red">${data.filter(d=>!d.encrypted).length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Name</th><th>Type</th><th>Provider</th><th>Classification</th><th>PII</th><th>PHI</th><th>PCI</th><th>Encrypted</th><th>Logging</th>
+    </tr></thead><tbody>
+      ${data.map(d=>`<tr>
+        <td style="font-weight:500">${d.name}</td>
+        <td><span class="tag">${d.type}</span></td>
+        <td class="text-sm">${d.provider}</td>
+        <td><span style="color:${clsColors[d.classification]};font-weight:600;text-transform:uppercase;font-size:0.75rem">${d.classification}</span></td>
+        <td>${d.pii?'<span class="text-red">Yes</span>':'--'}</td>
+        <td>${d.phi?'<span class="text-red">Yes</span>':'--'}</td>
+        <td>${d.pci?'<span class="text-red">Yes</span>':'--'}</td>
+        <td>${d.encrypted?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+        <td>${d.logging?'<span class="text-green">Yes</span>':'<span class="text-red">No</span>'}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock data-silos','warlock data-silos --classification restricted'])}`;
+}
+
+/* ================================================================
+   QUESTIONNAIRES
+   ================================================================ */
+function renderQuestionnaires(el){
+  const data=D.questionnaires;
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Vendor Questionnaires</h1><p>${data.length} active vendor assessments</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total</div><div class="value">${data.length}</div></div>
+      <div class="stat-card"><div class="label">Completed</div><div class="value text-green">${data.filter(q=>q.status==='completed').length}</div></div>
+      <div class="stat-card"><div class="label">In Progress</div><div class="value text-yellow">${data.filter(q=>q.status==='in_progress').length}</div></div>
+      <div class="stat-card"><div class="label">Overdue</div><div class="value text-red">${data.filter(q=>q.status==='overdue').length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>ID</th><th>Vendor</th><th>Status</th><th>Completion</th><th>Risk Score</th><th>Due Date</th>
+    </tr></thead><tbody>
+      ${data.map(q=>`<tr data-id="${q.id}">
+        <td class="mono text-sm">${q.id}</td>
+        <td><span class="link" onclick="event.stopPropagation();navigateTo('vendors')">${q.vendor}</span></td>
+        <td><span class="${statusClass(q.status)}">${q.status}</span></td>
+        <td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:6px;background:var(--bg-700);border-radius:3px;overflow:hidden"><div style="width:${q.completion_pct}%;height:100%;background:${q.completion_pct===100?'var(--green)':q.completion_pct>50?'var(--yellow)':'var(--red)'};border-radius:3px"></div></div><span class="mono text-sm">${q.completion_pct}%</span></div></td>
+        <td class="mono" style="color:${q.risk_score>=70?'var(--green)':q.risk_score>=50?'var(--yellow)':'var(--red)'}">${q.risk_score}</td>
+        <td class="mono text-sm">${fmtDate(q.due_date)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${cliBlock(['warlock questionnaires','warlock questionnaires --status overdue'])}`;
+
+  el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+    const q=data.find(x=>x.id===tr.dataset.id);if(!q)return;
+    openPanel(q.id,`
+      <div class="panel-section"><h3>Questionnaire Details</h3>${panelFields([['ID',q.id],['Vendor',q.vendor],['Status',`<span class="${statusClass(q.status)}">${q.status}</span>`],['Completion',`${q.completion_pct}%`],['Risk Score',q.risk_score],['Due Date',fmtDate(q.due_date)]])}</div>
+      ${cliBlock([`warlock questionnaires ${q.id}`,`warlock vendors --vendor "${q.vendor}"`])}
+      ${aiBox(10)}
+    `);
+  }));
+}
+
+/* ================================================================
+   PERSONNEL
+   ================================================================ */
+function renderPersonnel(el){
+  const data=[...D.employees];
+  let deptFilter='all';
+  const sorter=makeSortable('personnel',data,render);
+  function render(sortCol,sortDir){
+    const filtered=data.filter(e=>deptFilter==='all'||e.department===deptFilter);
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Personnel</h1><p>${fmtN(data.length)} employees with HR/IdP alignment tracking</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total</div><div class="value">${fmtN(data.length)}</div></div>
+        <div class="stat-card"><div class="label">Active</div><div class="value text-green">${data.filter(e=>e.status==='active').length}</div></div>
+        <div class="stat-card"><div class="label">On Leave</div><div class="value text-yellow">${data.filter(e=>e.status==='leave').length}</div></div>
+        <div class="stat-card"><div class="label">Terminated</div><div class="value text-red">${data.filter(e=>e.status==='terminated').length}</div></div>
+      </div>
+      <div class="filters">
+        <span class="pill${deptFilter==='all'?' active':''}" data-dept="all">All</span>
+        ${DEPARTMENTS.map(d=>`<span class="pill${deptFilter===d?' active':''}" data-dept="${d}">${d}</span>`).join('')}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('employee_id',sortCol,sortDir)}" data-col="employee_id">ID</th>
+        <th class="${thClass('first_name',sortCol,sortDir)}" data-col="first_name">Name</th>
+        <th class="${thClass('department',sortCol,sortDir)}" data-col="department">Department</th>
+        <th class="${thClass('title',sortCol,sortDir)}" data-col="title">Title</th>
+        <th class="${thClass('status',sortCol,sortDir)}" data-col="status">Status</th>
+        <th class="${thClass('location',sortCol,sortDir)}" data-col="location">Location</th>
+        <th class="${thClass('start_date',sortCol,sortDir)}" data-col="start_date">Start Date</th>
+      </tr></thead><tbody>
+        ${filtered.slice(0,100).map(e=>`<tr data-id="${e.employee_id}">
+          <td class="mono text-sm">${e.employee_id}</td>
+          <td>${e.first_name} ${e.last_name}</td>
+          <td>${e.department}</td>
+          <td class="text-sm">${e.title}</td>
+          <td><span class="${statusClass(e.status)}">${e.status}</span></td>
+          <td class="text-sm">${e.location}</td>
+          <td class="mono text-sm">${fmtDate(e.start_date)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+
+    el.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',function(){deptFilter=this.dataset.dept;render(sortCol,sortDir)}));
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const e=data.find(x=>x.employee_id===tr.dataset.id);if(!e)return;
+      const matchUser=D.users.find(u=>u.email===e.email);
+      const empTraining=D.training.filter(t=>t.employee_email===e.email);
+      openPanel(`${e.first_name} ${e.last_name}`,`
+        <div class="panel-section"><h3>Employee Details</h3>${panelFields([['ID',e.employee_id],['Email',e.email],['Department',e.department],['Title',e.title],['Status',`<span class="${statusClass(e.status)}">${e.status}</span>`],['Location',e.location],['Start Date',fmtDate(e.start_date)]])}</div>
+        <div class="panel-section"><h3>IdP Alignment</h3>
+          ${matchUser?`<div style="padding:8px;background:rgba(34,197,94,0.1);border-radius:var(--radius);font-size:0.82rem;color:var(--green)">Matched to IdP account: ${matchUser.username} (${matchUser.status})</div>
+          ${panelFields([['MFA',matchUser.is_enrolled_mfa?`<span class="text-green">${matchUser.mfa_type}</span>`:'<span class="text-red">Not Enrolled</span>'],['IdP Status',`<span class="${statusClass(matchUser.status)}">${matchUser.status}</span>`],['Last Login',fmtDate(matchUser.last_login)]])}`
+          :`<div style="padding:8px;background:rgba(239,68,68,0.1);border-radius:var(--radius);font-size:0.82rem;color:var(--red)">No matching IdP account found</div>`}
+        </div>
+        <div class="panel-section"><h3>Training (${empTraining.length})</h3>${empTraining.length?empTraining.map(t=>`<div style="padding:4px 0;font-size:0.82rem">${t.course_name} - <span class="${statusClass(t.status)}">${t.status}</span></div>`).join(''):'<span class="text-muted">No training records</span>'}</div>
+        ${cliBlock([`warlock personnel ${e.employee_id}`,`warlock personnel --department ${e.department}`])}
+        ${e.status==='terminated'&&matchUser?aiBox(11):''}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   VENDORS
+   ================================================================ */
+function renderVendors(el){
+  const data=[...D.vendors];
+  const sorter=makeSortable('vendors',data,render);
+  function render(sortCol,sortDir){
+    el.innerHTML=`
+      <div class="page-hdr"><h1>Vendor Assessments</h1><p>${data.length} third-party vendors assessed</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Total Vendors</div><div class="value">${data.length}</div></div>
+        <div class="stat-card"><div class="label">Low Risk</div><div class="value text-green">${data.filter(v=>v.risk_score>=85).length}</div></div>
+        <div class="stat-card"><div class="label">High Risk</div><div class="value text-orange">${data.filter(v=>v.risk_score<70&&v.risk_score>=50).length}</div></div>
+        <div class="stat-card"><div class="label">Critical Risk</div><div class="value text-red">${data.filter(v=>v.risk_score<50).length}</div></div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th class="${thClass('vendor_name',sortCol,sortDir)}" data-col="vendor_name">Vendor</th>
+        <th class="${thClass('category',sortCol,sortDir)}" data-col="category">Category</th>
+        <th class="${thClass('risk_score',sortCol,sortDir)}" data-col="risk_score">Risk Score</th>
+        <th class="${thClass('rating',sortCol,sortDir)}" data-col="rating">Rating</th>
+        <th>Certifications</th>
+        <th class="${thClass('sla_compliance',sortCol,sortDir)}" data-col="sla_compliance">SLA %</th>
+        <th class="${thClass('last_assessment',sortCol,sortDir)}" data-col="last_assessment">Last Assessment</th>
+      </tr></thead><tbody>
+        ${data.map(v=>`<tr data-id="${v.vendor_id}">
+          <td style="font-weight:500">${v.vendor_name}</td>
+          <td><span class="tag">${v.category}</span></td>
+          <td class="mono" style="color:${v.risk_score>=85?'var(--green)':v.risk_score>=70?'var(--yellow)':v.risk_score>=50?'var(--orange)':'var(--red)'}">${v.risk_score}</td>
+          <td>${v.rating}</td>
+          <td>${v.certifications.slice(0,2).map(c=>`<span class="tag">${c}</span>`).join(' ')}${v.certifications.length>2?`<span class="text-muted text-xs"> +${v.certifications.length-2}</span>`:''}</td>
+          <td class="mono">${v.sla_compliance}%</td>
+          <td class="mono text-sm">${fmtDate(v.last_assessment)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>
+      ${cliBlock(['warlock vendors','warlock vendors --threshold 70'])}`;
+
+    el.querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>sorter(th.dataset.col)));
+    el.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{
+      const v=data.find(x=>x.vendor_id===tr.dataset.id);if(!v)return;
+      openPanel(v.vendor_name,`
+        <div class="panel-section"><h3>Vendor Details</h3>${panelFields([['ID',v.vendor_id],['Name',v.vendor_name],['Category',v.category],['Risk Score',`<span style="color:${v.risk_score>=70?'var(--green)':'var(--red)'};">${v.risk_score}</span>`],['Rating',v.rating],['SLA Compliance',`${v.sla_compliance}%`],['Last Assessment',fmtDate(v.last_assessment)]])}</div>
+        <div class="panel-section"><h3>Certifications</h3>${v.certifications.map(c=>`<span class="tag">${c}</span>`).join(' ')}</div>
+        ${cliBlock([`warlock vendors "${v.vendor_name}"`,`warlock questionnaires --vendor "${v.vendor_name}"`])}
+        ${v.risk_score<70?aiBox(10):''}
+      `);
+    }));
+  }
+  render();
+}
+
+/* ================================================================
+   AI REASONING
+   ================================================================ */
+function renderAI(el){
+  const scenarios=[
+    {title:'Control Assessment: SC-28 Encryption at Rest',desc:'Analyzing encryption compliance across cloud infrastructure',template:0},
+    {title:'Executive Report: Cross-Framework Posture',desc:'Generating executive summary of compliance posture across 14 frameworks',template:9},
+    {title:'Remediation Guidance: MFA Enforcement',desc:'Step-by-step remediation plan for MFA compliance gaps',template:1}
+  ];
+
+  el.innerHTML=`
+    <div class="page-hdr"><h1>AI Reasoning</h1><p>AI-powered compliance analysis, assessment, and guidance</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Model</div><div class="value" style="font-size:1rem">Gemini 2.0</div></div>
+      <div class="stat-card"><div class="label">Temperature</div><div class="value">0.0</div></div>
+      <div class="stat-card"><div class="label">Confidence Floor</div><div class="value">70%</div></div>
+      <div class="stat-card"><div class="label">Assessments</div><div class="value">5,007</div></div>
+    </div>
+    ${scenarios.map((s,i)=>`
+      <div style="background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px">
+        <h3 style="color:var(--text-100);margin-bottom:4px">${s.title}</h3>
+        <p style="color:var(--text-400);font-size:0.82rem;margin-bottom:16px">${s.desc}</p>
+        ${aiBox(s.template)}
+      </div>
+    `).join('')}
+    ${cliBlock(['warlock ai status','warlock ai assess','warlock ask "What is our encryption posture?"','warlock control SC-28 --ai','warlock ask "Generate executive compliance report"'])}`;
+}
+
+/* ================================================================
+   PIPELINE VIZ
+   ================================================================ */
+function renderPipeline(el){
+  const stages=[
+    {name:'Collect',desc:'82 connectors pull raw events',count:82,icon:'\uD83D\uDD0C',color:'var(--blue)'},
+    {name:'Normalize',desc:'82 normalizers parse to FindingData',count:358,icon:'\u2699',color:'var(--purple)'},
+    {name:'Map',desc:'Findings mapped to framework controls',count:'5,007',icon:'\uD83D\uDDFA',color:'var(--cyan)'},
+    {name:'Assess',desc:'101 assertions evaluate compliance',count:'373,852',icon:'\uD83D\uDD0D',color:'var(--green)'},
+    {name:'Report',desc:'14 frameworks scored and reported',count:14,icon:'\uD83D\uDCCA',color:'var(--yellow)'}
+  ];
+  const rng=new PRNG(3000);
+
+  el.innerHTML=`
+    <div class="page-hdr"><h1>Pipeline Visualization</h1><p>End-to-end data flow with hash-chain integrity verification</p></div>
+    <div style="display:flex;align-items:stretch;gap:0;margin:24px 0;overflow-x:auto">
+      ${stages.map((s,i)=>`
+        <div style="flex:1;min-width:180px;text-align:center;padding:24px 16px;background:var(--bg-800);border:1px solid var(--bg-700);${i===0?'border-radius:var(--radius-lg) 0 0 var(--radius-lg)':''}${i===stages.length-1?'border-radius:0 var(--radius-lg) var(--radius-lg) 0':''}cursor:pointer" onclick="${i===0?`navigateTo('connectors')`:i===4?`navigateTo('compliance')`:''}" class="pipeline-stage-big">
+          <div style="font-size:2rem;margin-bottom:8px">${s.icon}</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--text-100)">${s.name}</div>
+          <div style="font-size:2rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:${s.color};margin:8px 0">${s.count}</div>
+          <div style="font-size:0.75rem;color:var(--text-400)">${s.desc}</div>
+        </div>
+        ${i<stages.length-1?'<div style="display:flex;align-items:center;padding:0 4px;font-size:1.5rem;color:var(--text-400)">\u2192</div>':''}
+      `).join('')}
+    </div>
+    <div class="section-title">Hash Chain Integrity</div>
+    <div style="background:var(--bg-800);border:1px solid var(--bg-700);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="color:var(--green);font-size:1.2rem">\u2713</span>
+        <span style="font-weight:600;color:var(--green)">Hash chain verified -- all pipeline stages intact</span>
+      </div>
+      ${stages.map((s,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg-700);font-size:0.82rem">
+        <span style="color:${s.color}">${s.icon}</span>
+        <span style="width:80px;color:var(--text-200)">${s.name}</span>
+        <span class="mono text-muted" style="flex:1">sha256:${rng.hex(16)}...${rng.hex(8)}</span>
+        <span class="text-green">\u2713</span>
+      </div>`).join('')}
+    </div>
+    ${cliBlock(['warlock init','warlock collect','warlock ingest','warlock results','warlock coverage'])}`;
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+renderNav();
+navigateTo('dashboard');
+</script>
+</body>
+</html>

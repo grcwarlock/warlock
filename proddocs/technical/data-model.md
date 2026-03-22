@@ -92,7 +92,10 @@ Normalized observations. The universal unit of evidence.
 | `confidence` | Float | 0.0-1.0 |
 | `observed_at` | DateTime(tz) | When the observation occurred |
 | `ingested_at` | DateTime(tz) | When stored in Warlock |
+| `pii_detected` | Boolean | True if PII was found and scrubbed during normalization |
 | `sha256` | String(64) | Hash of (type + detail + resource_id + resource_type) |
+
+**PII scrubbing:** All findings pass through `warlock.utils.pii.scrub_finding()` at the normalizer registry level. Emails, names, SSNs, and phone numbers are replaced with deterministic pseudonyms (`person:a1b2c3d4`). Raw payload dumps in the `detail` dict are stripped. The `pii_detected` flag records whether any PII was found — downstream consumers (lake, exports, reports) never see the original values.
 
 **Indexes:** resource_type+resource_id, severity, observed_at, source+provider, observation_type, raw_event_id, system_profile_id
 
@@ -158,12 +161,12 @@ ConnectorRun (1) ---> RawEvent (N)
                   ControlResult (N)
 ```
 
-A single pipeline run with 40 connectors produces approximately:
-- 40 ConnectorRun rows
-- 191 RawEvent rows
-- 547 Finding rows
-- 29,207 ControlMapping rows
-- 29,207 ControlResult rows
+A single pipeline run with 81 connectors produces approximately:
+- 81 ConnectorRun rows
+- 358 RawEvent rows
+- 5,008 Finding rows
+- 373,852 ControlMapping rows
+- 373,852 ControlResult rows
 
 The foreign key chain preserves full lineage: every ControlResult traces back through ControlMapping -> Finding -> RawEvent -> ConnectorRun.
 
@@ -493,4 +496,4 @@ All foreign keys have dedicated indexes (tagged #20 in code comments). Composite
 
 ## Migration Strategy
 
-11 Alembic migrations in `alembic/versions/`. Migrations are tested for reversibility in the QA gate. The demo seed validates the full schema by inserting 40 connectors, 191 raw events, 547 findings, and 29,207 control results.
+13 Alembic migrations in `alembic/versions/`. Migrations are tested for reversibility in the QA gate. The demo seed validates the full schema by inserting 81 connectors, 358 raw events, 5,008 findings, and 373,852 control results.

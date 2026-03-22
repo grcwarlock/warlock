@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Seed a full-stack demo environment with all 40 connectors.
+"""Seed a full-stack demo environment with all 81 connectors.
 
-No real credentials or API keys needed. 40 mock connectors produce realistic
+No real credentials or API keys needed. 81 mock connectors produce realistic
 events from cloud, IAM, EDR, SIEM, scanners, ITSM, code security, DLP, backup,
 physical security, and more. All events flow through the real pipeline
-(collect -> normalize -> map -> assess) exercising every normalizer (41),
-every assertion (25), and every framework (6).
+(collect -> normalize -> map -> assess) exercising every normalizer (82),
+every assertion (101), and every framework (14).
 
 Usage:
     python scripts/demo_seed.py          # seed + run pipeline (~7s)
-    warlock coverage                     # compliance summary across 6 frameworks
-    warlock findings                     # 547+ findings from 40 sources
+    warlock coverage                     # compliance summary across 14 frameworks
+    warlock findings                     # 5,008+ findings from 81 sources
     warlock results --status non_compliant
-    warlock sources                      # 40 connectors + 41 normalizers
+    warlock sources                      # 81 connectors + 82 normalizers
     warlock systems                      # 5 system profiles
-    warlock issues                       # 541 compliance issues
+    warlock issues                       # compliance issues
 """
 
 from __future__ import annotations
@@ -17339,6 +17339,9 @@ def main():
     # queue backend (memory, Redis, Kafka, or SQS). Do not rely on the demo
     # registry for production behaviour -- it is intentionally isolated so that
     # demo seeds can run without any real credentials or external services.
+    # Deterministic seed for reproducible demo data across all phases
+    random.seed(42)
+
     print("=" * 60)
     print("  Warlock Demo Seed")
     print("=" * 60)

@@ -53,8 +53,8 @@ FAILED=$(echo "$SEED_OUTPUT" | grep "Connectors failed" | grep -oE '[0-9]+' | ta
 if [ "${FAILED:-1}" != "0" ]; then
     echo "WARNING: ${FAILED} connectors failed (expected 0)"
 fi
-if [ "${SUCCEEDED:-0}" -lt 40 ]; then
-    echo "WARNING: Only ${SUCCEEDED} connectors succeeded (expected 40+)"
+if [ "${SUCCEEDED:-0}" -lt 81 ]; then
+    echo "WARNING: Only ${SUCCEEDED} connectors succeeded (expected 81)"
 fi
 
 echo "       Seed complete: ${SUCCEEDED:-?} connectors, ${FAILED:-?} failures"

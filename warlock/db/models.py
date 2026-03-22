@@ -150,6 +150,9 @@ class Finding(Base):
     observed_at = Column(DateTime(timezone=True), nullable=False)
     ingested_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
+    # PII
+    pii_detected = Column(Boolean, default=False, nullable=False, server_default="0")
+
     # Integrity
     sha256 = Column(String(64), nullable=False)
 

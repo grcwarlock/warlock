@@ -45,7 +45,7 @@ Expected demo output shows:
 - 81 connectors succeeded
 - 0 connectors failed
 - 358 raw events collected
-- 5,007 findings normalized
+- 5,008 findings normalized
 - 373,852 controls mapped
 
 ---

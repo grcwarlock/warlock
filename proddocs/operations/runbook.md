@@ -234,11 +234,15 @@ The scheduler runs multiple tasks at independent intervals:
 **Cause:** A previous pipeline run is still marked as running in the database.
 
 **Fix:**
+
+The pipeline now auto-recovers stale locks by checking whether the PID in the lock file is still alive. If the holder process is dead, the lock is reclaimed automatically. Manual intervention should no longer be needed.
+
+If you still hit this error:
 ```bash
 # Check for stuck runs
 warlock scheduler status
 
-# If the process that started the run is dead, the lock is stale.
+# Manual fallback: remove the lock file
 # The lock file is at $TMPDIR/warlock_pipeline.lock
 rm -f "${TMPDIR:-/tmp}/warlock_pipeline.lock"
 ```

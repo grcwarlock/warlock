@@ -289,6 +289,8 @@ class Pipeline:
                 )
         else:
             # SQLite: use a file-based lock via fcntl (POSIX only).
+            # Writes the current PID into the lock file so stale locks from
+            # crashed processes can be detected and reclaimed automatically.
             try:
                 import fcntl
 
@@ -298,11 +300,31 @@ class Pipeline:
                     fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except BlockingIOError:
                     lock_file.close()
-                    raise PipelineConcurrencyError(
-                        "Another pipeline run is already in progress "
-                        "(file lock could not be acquired). "
-                        "Wait for the current run to complete."
-                    )
+                    # Check if the holder is still alive by reading its PID.
+                    stale = False
+                    try:
+                        with open(lock_path, "r") as f:
+                            holder_pid = int(f.read().strip())
+                        os.kill(holder_pid, 0)  # signal 0 = existence check
+                    except (ValueError, OSError):
+                        # PID missing, unreadable, or process dead — stale lock.
+                        stale = True
+
+                    if stale:
+                        log.warning(
+                            "Reclaiming stale pipeline lock (holder process is dead)"
+                        )
+                        lock_file = open(lock_path, "w")
+                        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    else:
+                        raise PipelineConcurrencyError(
+                            "Another pipeline run is already in progress "
+                            "(file lock could not be acquired). "
+                            "Wait for the current run to complete."
+                        )
+                # Write our PID so future runs can detect stale locks.
+                lock_file.write(str(os.getpid()))
+                lock_file.flush()
                 # Store the lock file on the instance so it stays open (and
                 # locked) for the duration of the run. The OS releases the
                 # lock when the file object is garbage-collected or closed.

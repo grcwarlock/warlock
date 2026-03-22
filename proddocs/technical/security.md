@@ -365,6 +365,23 @@ result = pipeline.verify_integrity(session, run_id="optional-correlation-id")
 
 Recomputes SHA-256 for all stored `RawEvent` records and compares to stored hashes. Failed records indicate evidence tampering.
 
+## PII Scrubbing at Ingest
+
+**Source:** `warlock/utils/pii.py`
+
+All findings pass through `scrub_finding()` in the normalizer registry before reaching the database, data lake, or any export. This is the primary PII gate — prevention at ingest rather than remediation after storage.
+
+**What it does:**
+
+1. **Removes raw payload dumps** — Keys like `event`, `user`, `issue`, `response` whose values are dicts/lists are stripped from `detail`. These are full API responses that may contain arbitrary PII.
+2. **Pseudonymizes known PII fields** — Fields like `email`, `display_name`, `user_name`, `actor_email` are replaced with deterministic SHA-256 pseudonyms (`person:a1b2c3d4`). Same input always produces the same output, preserving cross-finding correlation without exposing the identity.
+3. **Pattern-scans free text** — Remaining string values in `title`, `resource_name`, and `detail` are checked against regex patterns for emails, SSNs, and phone numbers.
+4. **Sets `pii_detected` flag** — The `Finding.pii_detected` boolean records whether any PII was found and scrubbed. This is the compliance artifact.
+
+**Design:** The scrubber runs at `NormalizerRegistry.normalize()` — the single chokepoint all 82 normalizers flow through. Individual normalizers do not need PII-awareness; the registry handles it.
+
+**Relationship to GDPR workflows:** The PII scrubber prevents PII from entering the system. The GDPR workflows (below) handle data subject rights for PII that exists in identity tables (Personnel, User, TrustAccessRequest) which intentionally store personal data for access management.
+
 ## GDPR Data Subject Rights
 
 **Source:** `warlock/workflows/gdpr.py`

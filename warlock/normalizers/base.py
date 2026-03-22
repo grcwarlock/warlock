@@ -17,6 +17,7 @@ from typing import Any
 from uuid import uuid4
 
 from warlock.connectors.base import RawEventData, SourceType
+from warlock.utils.pii import scrub_finding
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +56,9 @@ class FindingData:
 
     # Time
     observed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # PII
+    pii_detected: bool = False
 
     # Identity
     id: str = field(default_factory=lambda: str(uuid4()))
@@ -128,7 +132,7 @@ class NormalizerRegistry:
         for normalizer in self._normalizers:
             if normalizer.can_handle(raw_event):
                 try:
-                    return normalizer.normalize(raw_event)
+                    findings = normalizer.normalize(raw_event)
                 except Exception:
                     log.exception(
                         "Normalizer %s failed on event %s",
@@ -136,6 +140,19 @@ class NormalizerRegistry:
                         raw_event.id,
                     )
                     return []
+                # PII scrubbing runs outside the normalizer try/except so a
+                # scrub failure doesn't discard the entire event batch.
+                scrubbed: list[FindingData] = []
+                for f in findings:
+                    try:
+                        scrubbed.append(scrub_finding(f))
+                    except Exception:
+                        log.warning(
+                            "PII scrub failed for finding %s — passing through unscrubbed",
+                            f.id,
+                        )
+                        scrubbed.append(f)
+                return scrubbed
         log.warning(
             "No normalizer found for source=%s event_type=%s",
             raw_event.source,

@@ -43,16 +43,16 @@ docker compose down -v && docker compose up demo
 rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/demo_seed.py
 ```
 
-Expected output — verify these exact numbers:
+Expected output — verify these numbers:
 ```
 Connectors succeeded:   81
 Connectors failed:      0
 Raw events collected:   358
-Findings normalized:    5,007
+Findings normalized:    5,005–5,015 (varies slightly due to randomized mock data)
 Controls mapped:        373,852
 ```
 
-If any number changes, you broke something. Stop and fix it.
+If connectors, raw events, or controls mapped change, you broke something. Stop and fix it.
 
 ### Rule 5: Test after EVERY change, not at the end
 
@@ -186,14 +186,14 @@ warlock/
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
   cli/           — Click CLI package (42+ commands, 8 domain modules)
-  db/            — SQLAlchemy models (34) + Alembic migrations (11)
+  db/            — SQLAlchemy models (34) + Alembic migrations (12)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
   lake/          — 24 GRC data lake modules (DuckDB, Parquet, RAG, Iceberg)
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 535 pytest tests (24 files)
+tests/           — 556 pytest tests (25 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
@@ -202,7 +202,7 @@ terraform/       — 12 IaC modules (AWS, Azure, GCP)
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
-  demo_seed.py   — 81 mock connectors, 5,007 findings, 373K+ results
+  demo_seed.py   — 81 mock connectors, 5,008 findings, 373K+ results
   demo_api.sh    — API query helper with auto-auth
   docker-demo.sh — Docker demo entrypoint (migrate + seed + serve)
 ```

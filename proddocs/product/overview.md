@@ -163,7 +163,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 docker compose up demo
 ```
 
-This starts PostgreSQL, Redis, OPA, runs migrations, seeds demo data (81 connectors, 5,007 findings, 373,000+ control results), and serves the API.
+This starts PostgreSQL, Redis, OPA, runs migrations, seeds demo data (81 connectors, 5,008 findings, 373,000+ control results), and serves the API.
 
 **Local Python (development)**:
 ```bash
