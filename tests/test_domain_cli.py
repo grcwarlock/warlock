@@ -57,3 +57,33 @@ class TestPolicyCLI:
         result = runner.invoke(cli, ["policy", "history"])
         assert result.exit_code == 0
         assert "created" in result.output.lower()
+
+
+class TestBriefingCLI:
+    def test_briefing_runs(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["briefing"])
+        assert result.exit_code == 0
+        assert "briefing" in result.output.lower() or "warlock" in result.output.lower()
+
+    def test_briefing_with_framework_filter(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["briefing", "-f", "soc2"])
+        assert result.exit_code == 0
+
+    def test_briefing_with_mode(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["briefing", "--mode", "audit-prep"])
+        assert result.exit_code == 0
+
+
+class TestControlHubCLI:
+    def test_control_hub_runs(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["control-hub", "AC-2", "-f", "nist_800_53"])
+        assert result.exit_code == 0
+
+    def test_control_hub_no_data(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["control-hub", "FAKE-99", "-f", "fake"])
+        assert result.exit_code == 0

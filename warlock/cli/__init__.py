@@ -173,6 +173,8 @@ from warlock.cli import ai_cmd as _ai_cmd  # noqa: F401, E402
 from warlock.cli import export as _export  # noqa: F401, E402
 from warlock.cli import lake as _lake  # noqa: F401, E402
 from warlock.cli import policy_cmd as _policy_cmd  # noqa: F401, E402
+from warlock.cli import briefing_cmd as _briefing_cmd  # noqa: F401, E402
+from warlock.cli import control_cmd as _control_cmd  # noqa: F401, E402
 
 
 if __name__ == "__main__":
