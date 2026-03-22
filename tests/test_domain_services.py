@@ -124,3 +124,55 @@ class TestControlsDomainService:
         from warlock.domains.controls import ControlsDomainService
         svc = ControlsDomainService(db_session)
         assert svc.get_related_to("person", "eve@acme.com") == []
+
+
+def _seed_issue_data(session):
+    now = datetime.now(timezone.utc)
+    poam = POAM(
+        framework="nist_800_53", control_id="AC-2",
+        severity="critical", status="open",
+        weakness_description="Root account access keys active",
+        created_by="admin@acme.com",
+        scheduled_completion=now - timedelta(days=5),
+    )
+    session.add(poam)
+    issue = Issue(
+        framework="soc2", control_id="CC6.1",
+        title="MFA not enforced",
+        status="open", priority="high",
+    )
+    session.add(issue)
+    session.commit()
+    return {"poam": poam, "issue": issue}
+
+
+class TestIssuesDomainService:
+    def test_domain_name(self):
+        from warlock.domains.issues import IssuesDomainService
+        svc = IssuesDomainService.__new__(IssuesDomainService)
+        assert svc.domain_name == "issues"
+
+    def test_get_urgent_items_includes_overdue_poams(self, db_session):
+        from warlock.domains.issues import IssuesDomainService
+        _seed_issue_data(db_session)
+        svc = IssuesDomainService(db_session)
+        items = svc.get_urgent_items(QueryFilters())
+        assert len(items) >= 1
+        overdue = [i for i in items if "overdue" in i.summary.lower() or "AC-2" in i.summary]
+        assert len(overdue) >= 1
+
+    def test_get_related_to_control(self, db_session):
+        from warlock.domains.issues import IssuesDomainService
+        _seed_issue_data(db_session)
+        svc = IssuesDomainService(db_session)
+        related = svc.get_related_to("control", "AC-2")
+        assert len(related) >= 1
+        assert related[0].entity_type in ("poam", "issue")
+
+    def test_get_urgent_items_filters_framework(self, db_session):
+        from warlock.domains.issues import IssuesDomainService
+        _seed_issue_data(db_session)
+        svc = IssuesDomainService(db_session)
+        items = svc.get_urgent_items(QueryFilters(frameworks=["soc2"]))
+        for item in items:
+            assert item.framework == "soc2"
