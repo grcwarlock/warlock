@@ -187,7 +187,7 @@ warlock/
   lake/          — 24 GRC data lake modules (DuckDB, Parquet, RAG, Iceberg)
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 535 pytest tests (23 files)
+tests/           — 535 pytest tests (24 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
