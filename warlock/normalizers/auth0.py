@@ -13,15 +13,15 @@ from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 # Auth0 log event type codes for failed/anomalous events
 # See: https://auth0.com/docs/deploy-monitor/logs/log-event-type-codes
 _FAILED_EVENT_TYPES = {
-    "f",     # Failed login
-    "fp",    # Failed login (incorrect password)
-    "fu",    # Failed login (invalid email/username)
-    "fco",   # Failed by connector
+    "f",  # Failed login
+    "fp",  # Failed login (incorrect password)
+    "fu",  # Failed login (invalid email/username)
+    "fco",  # Failed by connector
     "fcoa",  # Failed cross-origin authentication
     "fens",  # Failed exchange (native social login)
     "feacft",  # Failed exchange (authorization code for access token)
-    "fepft",   # Failed exchange (password for access token)
-    "fsa",   # Failed silent auth
+    "fepft",  # Failed exchange (password for access token)
+    "fsa",  # Failed silent auth
     "fapi",  # Failed API operation
 }
 
@@ -29,9 +29,9 @@ _ANOMALY_EVENT_TYPES = {
     "limit_mu",  # Blocked IP (too many login failures)
     "limit_wc",  # Blocked account
     "limit_ui",  # Too many signups from same IP
-    "cls",       # Code/link sent (rate limit)
-    "ublkdu",    # User block released
-    "w",         # Warning
+    "cls",  # Code/link sent (rate limit)
+    "ublkdu",  # User block released
+    "w",  # Warning
 }
 
 
@@ -81,7 +81,9 @@ class Auth0Normalizer(BaseNormalizer):
             created_at = user.get("created_at", "")
             # MFA enrollment — check multifactor array or guardian enrollments
             multifactor = user.get("multifactor", [])
-            mfa_enrolled = len(multifactor) > 0 if isinstance(multifactor, list) else bool(multifactor)
+            mfa_enrolled = (
+                len(multifactor) > 0 if isinstance(multifactor, list) else bool(multifactor)
+            )
 
             # Inventory
             findings.append(

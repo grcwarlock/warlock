@@ -69,18 +69,23 @@ def apply_scd_type2(
             if compare_fields:
                 fields_to_check = compare_fields
             else:
-                fields_to_check = [f for f in record if f not in scd_meta_fields and f not in key_fields]
+                fields_to_check = [
+                    f for f in record if f not in scd_meta_fields and f not in key_fields
+                ]
 
             changed = any(
-                str(record.get(f, "")) != str(current.get(f, ""))
-                for f in fields_to_check
+                str(record.get(f, "")) != str(current.get(f, "")) for f in fields_to_check
             )
 
             if changed:
                 # Close the current version in result
                 for r in result:
                     r_key = tuple(r.get(f, "") for f in key_fields)
-                    if r_key == key and str(r.get("is_current", "")).lower() in ("true", "1", "yes"):
+                    if r_key == key and str(r.get("is_current", "")).lower() in (
+                        "true",
+                        "1",
+                        "yes",
+                    ):
                         r["valid_to"] = change_date
                         r["is_current"] = "false"
                         break

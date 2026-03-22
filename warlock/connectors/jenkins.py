@@ -98,7 +98,9 @@ class JenkinsConnector(BaseConnector):
         try:
             resp = client.get(
                 f"{base}/api/json",
-                params={"tree": "jobs[name,url,color,lastBuild[number,result,timestamp,duration],healthReport[description,score]]"},
+                params={
+                    "tree": "jobs[name,url,color,lastBuild[number,result,timestamp,duration],healthReport[description,score]]"
+                },
             )
             resp.raise_for_status()
             jobs = resp.json().get("jobs", [])
@@ -112,7 +114,9 @@ class JenkinsConnector(BaseConnector):
         try:
             resp = client.get(
                 f"{base}/computer/api/json",
-                params={"tree": "computer[displayName,offline,temporarilyOffline,idle,numExecutors,monitorData[*]]"},
+                params={
+                    "tree": "computer[displayName,offline,temporarilyOffline,idle,numExecutors,monitorData[*]]"
+                },
             )
             resp.raise_for_status()
             nodes = resp.json().get("computer", [])
@@ -121,7 +125,9 @@ class JenkinsConnector(BaseConnector):
             log.debug("Jenkins nodes collection failed: %s", e)
             result.errors.append(f"jenkins_nodes: {e}")
 
-    def _collect_credentials(self, client: httpx.Client, base: str, result: ConnectorResult) -> None:
+    def _collect_credentials(
+        self, client: httpx.Client, base: str, result: ConnectorResult
+    ) -> None:
         """Collect Jenkins credential store metadata (names/types, not values)."""
         try:
             resp = client.get(
@@ -130,7 +136,9 @@ class JenkinsConnector(BaseConnector):
             )
             resp.raise_for_status()
             credentials = resp.json().get("credentials", [])
-            result.events.append(self._raw_event("jenkins_credentials", {"credentials": credentials}))
+            result.events.append(
+                self._raw_event("jenkins_credentials", {"credentials": credentials})
+            )
         except Exception as e:
             log.debug("Jenkins credentials collection failed: %s", e)
             result.errors.append(f"jenkins_credentials: {e}")

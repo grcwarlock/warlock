@@ -62,18 +62,20 @@ def aggregate_control_statuses(lake_path: str) -> list[dict[str, Any]]:
             row["not_assessed_count"],
             total,
         )
-        aggregates.append({
-            "framework": row["framework"],
-            "control_id": row["control_id"],
-            "aggregate_status": status,
-            "total_assessments": total,
-            "compliant_count": row["compliant_count"],
-            "non_compliant_count": row["non_compliant_count"],
-            "partial_count": row["partial_count"],
-            "not_assessed_count": row["not_assessed_count"],
-            "last_assessed": str(row["last_assessed"] or ""),
-            "computed_at": datetime.now(timezone.utc).isoformat(),
-        })
+        aggregates.append(
+            {
+                "framework": row["framework"],
+                "control_id": row["control_id"],
+                "aggregate_status": status,
+                "total_assessments": total,
+                "compliant_count": row["compliant_count"],
+                "non_compliant_count": row["non_compliant_count"],
+                "partial_count": row["partial_count"],
+                "not_assessed_count": row["not_assessed_count"],
+                "last_assessed": str(row["last_assessed"] or ""),
+                "computed_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     return aggregates
 

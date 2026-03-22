@@ -102,30 +102,28 @@ class KandjiConnector(BaseConnector):
                 params={"limit": "300"},
             )
             resp.raise_for_status()
-            devices = resp.json() if isinstance(resp.json(), list) else resp.json().get("results", [])
+            devices = (
+                resp.json() if isinstance(resp.json(), list) else resp.json().get("results", [])
+            )
             result.events.append(self._raw_event("kandji_devices", {"devices": devices}))
         except Exception as e:
             log.debug("Kandji devices collection failed: %s", e)
             result.errors.append(f"kandji_devices: {e}")
 
-    def _collect_blueprints(
-        self, client: httpx.Client, result: ConnectorResult
-    ) -> None:
+    def _collect_blueprints(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect blueprints (configuration profiles)."""
         try:
             resp = client.get(f"{self._base_url()}/api/v1/blueprints")
             resp.raise_for_status()
-            blueprints = resp.json() if isinstance(resp.json(), list) else resp.json().get("results", [])
-            result.events.append(
-                self._raw_event("kandji_blueprints", {"blueprints": blueprints})
+            blueprints = (
+                resp.json() if isinstance(resp.json(), list) else resp.json().get("results", [])
             )
+            result.events.append(self._raw_event("kandji_blueprints", {"blueprints": blueprints}))
         except Exception as e:
             log.debug("Kandji blueprints collection failed: %s", e)
             result.errors.append(f"kandji_blueprints: {e}")
 
-    def _collect_library_items(
-        self, client: httpx.Client, result: ConnectorResult
-    ) -> None:
+    def _collect_library_items(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect library items (apps, profiles, scripts)."""
         try:
             resp = client.get(
@@ -134,9 +132,7 @@ class KandjiConnector(BaseConnector):
             )
             resp.raise_for_status()
             items = resp.json() if isinstance(resp.json(), list) else resp.json().get("results", [])
-            result.events.append(
-                self._raw_event("kandji_library_items", {"library_items": items})
-            )
+            result.events.append(self._raw_event("kandji_library_items", {"library_items": items}))
         except Exception as e:
             log.debug("Kandji library items collection failed: %s", e)
             result.errors.append(f"kandji_library_items: {e}")

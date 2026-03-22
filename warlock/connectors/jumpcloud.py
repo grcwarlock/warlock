@@ -129,9 +129,16 @@ class JumpCloudConnector(BaseConnector):
     def _collect_auth_logs(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect directory insights auth/login events (last 24h)."""
         try:
-            start_time = datetime.now(timezone.utc).replace(
-                hour=0, minute=0, second=0, microsecond=0,
-            ).isoformat()
+            start_time = (
+                datetime.now(timezone.utc)
+                .replace(
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
+                )
+                .isoformat()
+            )
             resp = client.post(
                 f"{_BASE_URL}/events",
                 json={

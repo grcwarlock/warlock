@@ -46,7 +46,16 @@ class JenkinsNormalizer(BaseNormalizer):
         findings = []
         jobs = raw.raw_data.get("jobs", [])
 
-        security_keywords = {"security", "sast", "dast", "scan", "audit", "compliance", "vuln", "pentest"}
+        security_keywords = {
+            "security",
+            "sast",
+            "dast",
+            "scan",
+            "audit",
+            "compliance",
+            "vuln",
+            "pentest",
+        }
 
         for job in jobs:
             name = job.get("name", "")
@@ -128,7 +137,9 @@ class JenkinsNormalizer(BaseNormalizer):
                         "offline": offline,
                         "temporarily_offline": temporarily_offline,
                         "num_executors": num_executors,
-                        "monitor_data_keys": list(monitor_data.keys()) if isinstance(monitor_data, dict) else [],
+                        "monitor_data_keys": list(monitor_data.keys())
+                        if isinstance(monitor_data, dict)
+                        else [],
                     },
                     resource_id=display_name,
                     resource_type="jenkins_node",
@@ -226,7 +237,9 @@ class JenkinsNormalizer(BaseNormalizer):
                 **self._base(raw),
                 observation_type="inventory",
                 title="Jenkins security configuration",
-                detail={"security_keys": list(security.keys()) if isinstance(security, dict) else []},
+                detail={
+                    "security_keys": list(security.keys()) if isinstance(security, dict) else []
+                },
                 resource_id="jenkins-security",
                 resource_type="jenkins_security_config",
                 resource_name="Jenkins Security",

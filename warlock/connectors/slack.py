@@ -108,7 +108,9 @@ class SlackConnector(BaseConnector):
                 team = data.get("team", {})
                 result.events.append(self._raw_event("slack_workspace", {"team": team}))
             else:
-                result.errors.append(f"slack_workspace: Slack API error — {data.get('error', 'unknown')}")
+                result.errors.append(
+                    f"slack_workspace: Slack API error — {data.get('error', 'unknown')}"
+                )
         except Exception as e:
             log.debug("Slack workspace collection failed: %s", e)
             result.errors.append(f"slack_workspace: {e}")
@@ -126,10 +128,18 @@ class SlackConnector(BaseConnector):
             if data.get("ok"):
                 files = data.get("files", [])
                 # Filter for externally shared files
-                external_files = [f for f in files if f.get("is_external", False) or f.get("is_public", False)]
-                result.events.append(self._raw_event("slack_dlp_events", {"files": external_files, "total_files": len(files)}))
+                external_files = [
+                    f for f in files if f.get("is_external", False) or f.get("is_public", False)
+                ]
+                result.events.append(
+                    self._raw_event(
+                        "slack_dlp_events", {"files": external_files, "total_files": len(files)}
+                    )
+                )
             else:
-                result.errors.append(f"slack_dlp_events: Slack API error — {data.get('error', 'unknown')}")
+                result.errors.append(
+                    f"slack_dlp_events: Slack API error — {data.get('error', 'unknown')}"
+                )
         except Exception as e:
             log.debug("Slack DLP events collection failed: %s", e)
             result.errors.append(f"slack_dlp_events: {e}")
@@ -164,7 +174,9 @@ class SlackConnector(BaseConnector):
                 members = data.get("members", [])
                 result.events.append(self._raw_event("slack_users", {"users": members}))
             else:
-                result.errors.append(f"slack_users: Slack API error — {data.get('error', 'unknown')}")
+                result.errors.append(
+                    f"slack_users: Slack API error — {data.get('error', 'unknown')}"
+                )
         except Exception as e:
             log.debug("Slack users collection failed: %s", e)
             result.errors.append(f"slack_users: {e}")

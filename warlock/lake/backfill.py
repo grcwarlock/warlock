@@ -89,11 +89,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
         offset = 0
         while True:
             batch = (
-                session.query(RawEvent)
-                .order_by(RawEvent.id)
-                .offset(offset)
-                .limit(batch_size)
-                .all()
+                session.query(RawEvent).order_by(RawEvent.id).offset(offset).limit(batch_size).all()
             )
             if not batch:
                 break
@@ -112,11 +108,7 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
         offset = 0
         while True:
             batch = (
-                session.query(Finding)
-                .order_by(Finding.id)
-                .offset(offset)
-                .limit(batch_size)
-                .all()
+                session.query(Finding).order_by(Finding.id).offset(offset).limit(batch_size).all()
             )
             if not batch:
                 break

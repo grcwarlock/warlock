@@ -105,7 +105,10 @@ class TerraformCloudNormalizer(BaseNormalizer):
             # Flag workspaces with drift detected
             if drift_detection and attrs.get("current-run"):
                 run_attrs = attrs.get("current-run", {})
-                if isinstance(run_attrs, dict) and run_attrs.get("status") == "planned_and_finished":
+                if (
+                    isinstance(run_attrs, dict)
+                    and run_attrs.get("status") == "planned_and_finished"
+                ):
                     has_changes = run_attrs.get("has-changes", False)
                     if has_changes:
                         findings.append(
@@ -145,11 +148,7 @@ class TerraformCloudNormalizer(BaseNormalizer):
             message = attrs.get("message", "")
             created_at = attrs.get("created-at", "")
 
-            ws_data = (
-                run.get("relationships", {})
-                .get("workspace", {})
-                .get("data", {})
-            )
+            ws_data = run.get("relationships", {}).get("workspace", {}).get("data", {})
             ws_id = ws_data.get("id", "") if isinstance(ws_data, dict) else ""
 
             # Flag errored runs

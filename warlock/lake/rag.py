@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class RAGDocument:
     """A document in the RAG index."""
+
     id: str
     content: str
     source: str  # e.g., "control_result", "finding", "framework"
@@ -35,6 +36,7 @@ class RAGDocument:
 @dataclass
 class RAGResult:
     """A search result from the RAG index."""
+
     document: RAGDocument
     score: float
 
@@ -107,10 +109,12 @@ class LakeRAG:
         # Return top_k results
         results = []
         for doc_idx, score in scores[:top_k]:
-            results.append(RAGResult(
-                document=self._documents[doc_idx],
-                score=score,
-            ))
+            results.append(
+                RAGResult(
+                    document=self._documents[doc_idx],
+                    score=score,
+                )
+            )
 
         return results
 
@@ -123,6 +127,7 @@ class LakeRAG:
 
         try:
             from warlock.lake.query import LakeQueryEngine
+
             engine = LakeQueryEngine(self._lake_path)
             glob = str(base / "curated" / "control_results" / "**" / "*.parquet")
             results = engine.query(f"""
@@ -137,12 +142,14 @@ class LakeRAG:
                     f"status={r['status']}, severity={r['severity']}, "
                     f"assertion={r.get('assertion_name', 'none')}"
                 )
-                self._documents.append(RAGDocument(
-                    id=f"cr:{r['framework']}:{r['control_id']}",
-                    content=content,
-                    source="control_result",
-                    metadata=r,
-                ))
+                self._documents.append(
+                    RAGDocument(
+                        id=f"cr:{r['framework']}:{r['control_id']}",
+                        content=content,
+                        source="control_result",
+                        metadata=r,
+                    )
+                )
         except Exception:
             log.warning("Failed to index control results for RAG")
 
@@ -154,6 +161,7 @@ class LakeRAG:
 
         try:
             from warlock.lake.query import LakeQueryEngine
+
             engine = LakeQueryEngine(self._lake_path)
             glob = str(base / "enrichment" / "**" / "*.parquet")
             results = engine.query(f"""
@@ -169,12 +177,14 @@ class LakeRAG:
                     f"(severity={r['severity']}, source={r['source']}, "
                     f"type={r.get('observation_type', 'unknown')})"
                 )
-                self._documents.append(RAGDocument(
-                    id=f"finding:{r['id']}",
-                    content=content,
-                    source="finding",
-                    metadata=r,
-                ))
+                self._documents.append(
+                    RAGDocument(
+                        id=f"finding:{r['id']}",
+                        content=content,
+                        source="finding",
+                        metadata=r,
+                    )
+                )
         except Exception:
             log.warning("Failed to index findings for RAG")
 
@@ -186,6 +196,7 @@ class LakeRAG:
 
         try:
             from warlock.lake.query import LakeQueryEngine
+
             engine = LakeQueryEngine(self._lake_path)
             glob = str(base / "curated" / "control_mappings" / "**" / "*.parquet")
             results = engine.query(f"""
@@ -200,12 +211,14 @@ class LakeRAG:
                     f"(family={r.get('control_family', '')}, "
                     f"mapped via {r.get('mapping_method', 'unknown')})"
                 )
-                self._documents.append(RAGDocument(
-                    id=f"mapping:{r['framework']}:{r['control_id']}",
-                    content=content,
-                    source="control_mapping",
-                    metadata=r,
-                ))
+                self._documents.append(
+                    RAGDocument(
+                        id=f"mapping:{r['framework']}:{r['control_id']}",
+                        content=content,
+                        source="control_mapping",
+                        metadata=r,
+                    )
+                )
         except Exception:
             log.warning("Failed to index control mappings for RAG")
 
@@ -238,9 +251,37 @@ class LakeRAG:
 
 def _tokenize(text: str) -> list[str]:
     """Simple word tokenization with lowercasing and filtering."""
-    words = re.findall(r'[a-z0-9_]+', text.lower())
+    words = re.findall(r"[a-z0-9_]+", text.lower())
     # Filter stopwords
-    stopwords = {"the", "a", "an", "is", "are", "was", "were", "in", "on", "at",
-                 "to", "for", "of", "with", "by", "from", "as", "and", "or", "not",
-                 "this", "that", "it", "be", "has", "have", "had", "do", "does"}
+    stopwords = {
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+        "from",
+        "as",
+        "and",
+        "or",
+        "not",
+        "this",
+        "that",
+        "it",
+        "be",
+        "has",
+        "have",
+        "had",
+        "do",
+        "does",
+    }
     return [w for w in words if w not in stopwords and len(w) > 1]

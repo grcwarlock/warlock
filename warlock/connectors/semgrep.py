@@ -95,7 +95,9 @@ class SemgrepConnector(BaseConnector):
             resp = client.get("/deployments")
             resp.raise_for_status()
             deployments = resp.json().get("deployments", [])
-            result.events.append(self._raw_event("semgrep_deployments", {"deployments": deployments}))
+            result.events.append(
+                self._raw_event("semgrep_deployments", {"deployments": deployments})
+            )
         except Exception as e:
             log.debug("Semgrep deployments collection failed: %s", e)
             result.errors.append(f"semgrep_deployments: {e}")

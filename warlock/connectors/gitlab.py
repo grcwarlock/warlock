@@ -139,7 +139,9 @@ class GitLabConnector(BaseConnector):
             )
             resp.raise_for_status()
             vulns = resp.json()
-            result.events.append(self._raw_event("gitlab_vulnerabilities", {"vulnerabilities": vulns}))
+            result.events.append(
+                self._raw_event("gitlab_vulnerabilities", {"vulnerabilities": vulns})
+            )
         except Exception as e:
             log.debug("GitLab vulnerabilities collection failed: %s", e)
             result.errors.append(f"gitlab_vulnerabilities: {e}")

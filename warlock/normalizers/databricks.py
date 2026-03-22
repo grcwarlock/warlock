@@ -57,9 +57,7 @@ class DatabricksNormalizer(BaseNormalizer):
 
             # Check encryption
             aws_attrs = cluster.get("aws_attributes", {})
-            aws_attrs.get("ebs_volume_type", "") != "" or cluster.get(
-                "enable_elastic_disk", False
-            )
+            aws_attrs.get("ebs_volume_type", "") != "" or cluster.get("enable_elastic_disk", False)
             has_encryption = bool(
                 cluster.get("cluster_log_conf", {}).get("s3", {}).get("kms_key", "")
             )
@@ -233,9 +231,16 @@ class DatabricksNormalizer(BaseNormalizer):
         logs = raw.raw_data.get("logs", [])
 
         admin_actions = {
-            "createCluster", "deleteCluster", "changeClusterAcl",
-            "createToken", "revokeToken", "addAdmin", "removeAdmin",
-            "changePermissions", "createSecret", "deleteSecret",
+            "createCluster",
+            "deleteCluster",
+            "changeClusterAcl",
+            "createToken",
+            "revokeToken",
+            "addAdmin",
+            "removeAdmin",
+            "changePermissions",
+            "createSecret",
+            "deleteSecret",
         }
 
         for entry in logs:

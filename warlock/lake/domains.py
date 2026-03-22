@@ -113,6 +113,7 @@ def _write_partitioned_by_framework(
 # Domain 2 — Temporal Facts
 # ---------------------------------------------------------------------------
 
+
 def write_temporal_facts(
     lake_path: str,
     run_id: str,
@@ -136,6 +137,7 @@ def write_temporal_facts(
 # Domain 3 — Risk Facts
 # ---------------------------------------------------------------------------
 
+
 def write_risk_facts(
     lake_path: str,
     run_id: str,
@@ -148,7 +150,9 @@ def write_risk_facts(
     total += _write_partitioned_by_framework(
         lake_path, "risk_simulations", run_id, risk_simulations or []
     )
-    total += _write_table(lake_path, "vulnerability_lifecycle", run_id, vulnerability_lifecycle or [])
+    total += _write_table(
+        lake_path, "vulnerability_lifecycle", run_id, vulnerability_lifecycle or []
+    )
     total += _write_partitioned_by_framework(
         lake_path, "control_effectiveness", run_id, control_effectiveness or []
     )
@@ -158,6 +162,7 @@ def write_risk_facts(
 # ---------------------------------------------------------------------------
 # Domain 4 — Entity Facts (SCD Type 2 dimension tables)
 # ---------------------------------------------------------------------------
+
 
 def write_entity_facts(
     lake_path: str,
@@ -184,6 +189,7 @@ def write_entity_facts(
 # Domain 5 — Governance Facts
 # ---------------------------------------------------------------------------
 
+
 def write_governance_facts(
     lake_path: str,
     run_id: str,
@@ -197,15 +203,9 @@ def write_governance_facts(
 ) -> int:
     """Write governance domain tables to curated zone."""
     total = 0
-    total += _write_partitioned_by_framework(
-        lake_path, "poams", run_id, poams or []
-    )
-    total += _write_partitioned_by_framework(
-        lake_path, "issues", run_id, issues or []
-    )
-    total += _write_partitioned_by_framework(
-        lake_path, "attestations", run_id, attestations or []
-    )
+    total += _write_partitioned_by_framework(lake_path, "poams", run_id, poams or [])
+    total += _write_partitioned_by_framework(lake_path, "issues", run_id, issues or [])
+    total += _write_partitioned_by_framework(lake_path, "attestations", run_id, attestations or [])
     total += _write_table(lake_path, "audit_entries", run_id, audit_entries or [])
     total += _write_table(lake_path, "policy_documents", run_id, policy_documents or [])
     total += _write_table(lake_path, "exceptions", run_id, exceptions or [])
@@ -216,6 +216,7 @@ def write_governance_facts(
 # ---------------------------------------------------------------------------
 # Domain 6 — Evidence Facts
 # ---------------------------------------------------------------------------
+
 
 def write_evidence_facts(
     lake_path: str,
@@ -240,6 +241,7 @@ def write_evidence_facts(
 # Domain 7 — Privacy Facts
 # ---------------------------------------------------------------------------
 
+
 def write_privacy_facts(
     lake_path: str,
     run_id: str,
@@ -252,14 +254,10 @@ def write_privacy_facts(
 ) -> int:
     """Write privacy domain tables to curated zone."""
     total = 0
-    total += _write_table(
-        lake_path, "processing_activities", run_id, processing_activities or []
-    )
+    total += _write_table(lake_path, "processing_activities", run_id, processing_activities or [])
     total += _write_table(lake_path, "dsars", run_id, dsars or [])
     total += _write_table(lake_path, "consent", run_id, consent or [])
-    total += _write_table(
-        lake_path, "cross_border_transfers", run_id, cross_border_transfers or []
-    )
+    total += _write_table(lake_path, "cross_border_transfers", run_id, cross_border_transfers or [])
     total += _write_table(lake_path, "dpias", run_id, dpias or [])
     total += _write_table(lake_path, "breach_register", run_id, breach_register or [])
     return total
@@ -268,6 +266,7 @@ def write_privacy_facts(
 # ---------------------------------------------------------------------------
 # Domain 8 — Incident Facts
 # ---------------------------------------------------------------------------
+
 
 def write_incident_facts(
     lake_path: str,
@@ -290,6 +289,7 @@ def write_incident_facts(
 # Domain 9 — Pipeline Health Facts
 # ---------------------------------------------------------------------------
 
+
 def write_pipeline_health_facts(
     lake_path: str,
     run_id: str,
@@ -308,6 +308,7 @@ def write_pipeline_health_facts(
 # ---------------------------------------------------------------------------
 # Domain 10 — Supply Chain Facts
 # ---------------------------------------------------------------------------
+
 
 def write_supply_chain_facts(
     lake_path: str,

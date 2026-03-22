@@ -157,7 +157,9 @@ class AzureBlobStorage:
             return False
 
 
-def create_storage(backend: str, path: str = "lake", url: str = "", region: str = "") -> ObjectStorage:
+def create_storage(
+    backend: str, path: str = "lake", url: str = "", region: str = ""
+) -> ObjectStorage:
     """Factory for creating storage backends from config."""
     if backend == "local":
         return LocalStorage(path)

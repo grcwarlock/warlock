@@ -107,7 +107,12 @@ class BitSightNormalizer(BaseNormalizer):
         findings = []
         vectors = raw.raw_data.get("risk_vectors", [])
 
-        critical_vectors = {"botnet_infections", "open_ports", "patching_cadence", "spam_propagation"}
+        critical_vectors = {
+            "botnet_infections",
+            "open_ports",
+            "patching_cadence",
+            "spam_propagation",
+        }
 
         for vector in vectors:
             vector_name = vector.get("name", "")
@@ -175,7 +180,12 @@ class BitSightNormalizer(BaseNormalizer):
             last_seen = item.get("last_seen", "")
             details = item.get("details", {})
 
-            sev_map = {"critical": "critical", "severe": "high", "moderate": "medium", "minor": "low"}
+            sev_map = {
+                "critical": "critical",
+                "severe": "high",
+                "moderate": "medium",
+                "minor": "low",
+            }
             severity = sev_map.get(severity_str.lower(), "info")
 
             findings.append(

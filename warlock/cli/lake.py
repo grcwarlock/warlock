@@ -103,7 +103,13 @@ def lake_backfill(path: str | None, batch_size: int) -> None:
     lake_path = path or settings.lake_path
 
     # Ensure lake directories exist
-    for zone in ["raw", "enrichment", "curated/control_results", "curated/control_mappings", "curated/connector_runs"]:
+    for zone in [
+        "raw",
+        "enrichment",
+        "curated/control_results",
+        "curated/control_mappings",
+        "curated/connector_runs",
+    ]:
         (Path(lake_path) / zone).mkdir(parents=True, exist_ok=True)
 
     console.print(f"[cyan]Backfilling OLTP data to lake: {lake_path}[/cyan]")
@@ -176,7 +182,9 @@ def lake_reconcile(path: str | None, threshold: float) -> None:
     if result.passed:
         console.print(f"\n[green]Reconciliation passed (threshold={threshold * 100:.1f}%).[/green]")
     else:
-        console.print(f"\n[red]Reconciliation FAILED — {len(result.drifted)} table(s) exceed threshold.[/red]")
+        console.print(
+            f"\n[red]Reconciliation FAILED — {len(result.drifted)} table(s) exceed threshold.[/red]"
+        )
         raise SystemExit(1)
 
 
@@ -197,7 +205,9 @@ def lake_aggregate(path: str | None) -> None:
         console.print(f"  {table_name}: {count} rows")
 
     if not counts:
-        console.print("[yellow]No data found in lake. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found in lake. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
     else:
         console.print("[green]Aggregation refresh complete.[/green]")
 
@@ -297,7 +307,9 @@ def evidence_list(path: str | None, limit: int) -> None:
     glob = str(base / "curated" / "evidence_artifacts" / "**" / "*.parquet")
 
     if not list(base.glob("curated/evidence_artifacts/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -310,8 +322,12 @@ def evidence_list(path: str | None, limit: int) -> None:
         for col in ["id", "source_connector", "artifact_type", "collected_at"]:
             table.add_column(col, style="cyan" if col == "source_connector" else None)
         for row in result:
-            table.add_row(str(row.get("id", "")), str(row.get("source_connector", "")),
-                          str(row.get("artifact_type", "")), str(row.get("collected_at", "")))
+            table.add_row(
+                str(row.get("id", "")),
+                str(row.get("source_connector", "")),
+                str(row.get("artifact_type", "")),
+                str(row.get("collected_at", "")),
+            )
         console.print(table)
     finally:
         engine.close()
@@ -332,7 +348,9 @@ def evidence_freshness(path: str | None) -> None:
     glob = str(base / "curated" / "evidence_freshness" / "**" / "*.parquet")
 
     if not list(base.glob("curated/evidence_freshness/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -379,7 +397,9 @@ def incidents_list(path: str | None, status: str | None, limit: int) -> None:
     glob = str(base / "curated" / "incidents" / "**" / "*.parquet")
 
     if not list(base.glob("curated/incidents/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -422,7 +442,9 @@ def incidents_events(path: str | None, severity: str | None, limit: int) -> None
     glob = str(base / "curated" / "security_events" / "**" / "*.parquet")
 
     if not list(base.glob("curated/security_events/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -474,7 +496,9 @@ def privacy_dsars(path: str | None, status: str | None) -> None:
     glob = str(base / "curated" / "dsars" / "**" / "*.parquet")
 
     if not list(base.glob("curated/dsars/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -515,7 +539,9 @@ def privacy_processing(path: str | None) -> None:
     glob = str(base / "curated" / "processing_activities" / "**" / "*.parquet")
 
     if not list(base.glob("curated/processing_activities/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -550,7 +576,9 @@ def privacy_transfers(path: str | None) -> None:
     glob = str(base / "curated" / "data_transfers" / "**" / "*.parquet")
 
     if not list(base.glob("curated/data_transfers/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -596,7 +624,9 @@ def supply_chain_sbom(path: str | None, limit: int) -> None:
     glob = str(base / "curated" / "sbom_components" / "**" / "*.parquet")
 
     if not list(base.glob("curated/sbom_components/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -631,7 +661,9 @@ def supply_chain_suppliers(path: str | None) -> None:
     glob = str(base / "curated" / "supplier_assessments" / "**" / "*.parquet")
 
     if not list(base.glob("curated/supplier_assessments/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -666,7 +698,9 @@ def supply_chain_concentration(path: str | None) -> None:
     glob = str(base / "curated" / "concentration_risk" / "**" / "*.parquet")
 
     if not list(base.glob("curated/concentration_risk/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -712,7 +746,9 @@ def analytics_trends(path: str | None, framework: str | None) -> None:
     glob = str(base / "curated" / "agg_framework_posture" / "**" / "*.parquet")
 
     if not list(base.glob("curated/agg_framework_posture/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -754,7 +790,9 @@ def analytics_heatmap(path: str | None, framework: str | None) -> None:
     glob = str(base / "curated" / "agg_control_family_posture" / "**" / "*.parquet")
 
     if not list(base.glob("curated/agg_control_family_posture/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -806,7 +844,9 @@ def health_runs(path: str | None, limit: int) -> None:
     glob = str(base / "curated" / "pipeline_runs" / "**" / "*.parquet")
 
     if not list(base.glob("curated/pipeline_runs/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -841,7 +881,9 @@ def health_freshness(path: str | None) -> None:
     glob = str(base / "curated" / "data_freshness" / "**" / "*.parquet")
 
     if not list(base.glob("curated/data_freshness/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)
@@ -876,7 +918,9 @@ def health_coverage(path: str | None) -> None:
     glob = str(base / "curated" / "coverage_metrics" / "**" / "*.parquet")
 
     if not list(base.glob("curated/coverage_metrics/**/*.parquet")):
-        console.print("[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]")
+        console.print(
+            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
+        )
         return
 
     engine = LakeQueryEngine(lake_path)

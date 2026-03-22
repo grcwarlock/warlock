@@ -60,7 +60,9 @@ class AquaNormalizer(BaseNormalizer):
             malware_count = image.get("malware", 0)
             disallowed = image.get("disallowed", False)
 
-            display_name = f"{registry_name}/{image_name}:{tag}" if registry_name else f"{image_name}:{tag}"
+            display_name = (
+                f"{registry_name}/{image_name}:{tag}" if registry_name else f"{image_name}:{tag}"
+            )
 
             # Inventory
             findings.append(

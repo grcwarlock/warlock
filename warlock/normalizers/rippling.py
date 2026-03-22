@@ -255,8 +255,12 @@ class RipplingNormalizer(BaseNormalizer):
         logs = raw.raw_data.get("logs", [])
 
         suspicious_actions = {
-            "admin_role_change", "permission_escalation", "bulk_delete",
-            "api_key_created", "sso_disabled", "mfa_disabled",
+            "admin_role_change",
+            "permission_escalation",
+            "bulk_delete",
+            "api_key_created",
+            "sso_disabled",
+            "mfa_disabled",
         }
 
         for entry in logs:

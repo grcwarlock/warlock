@@ -49,7 +49,11 @@ class GoogleWorkspaceNormalizer(BaseNormalizer):
         for user in users:
             user_id = user.get("id", "")
             email = user.get("primaryEmail", "")
-            full_name = user.get("name", {}).get("fullName", "") if isinstance(user.get("name"), dict) else ""
+            full_name = (
+                user.get("name", {}).get("fullName", "")
+                if isinstance(user.get("name"), dict)
+                else ""
+            )
             is_admin = user.get("isAdmin", False)
             is_delegated_admin = user.get("isDelegatedAdmin", False)
             is_suspended = user.get("suspended", False)
@@ -176,11 +180,17 @@ class GoogleWorkspaceNormalizer(BaseNormalizer):
 
         for activity in activities:
             activity_id = activity.get("id", {})
-            unique_qualifier = activity_id.get("uniqueQualifier", "") if isinstance(activity_id, dict) else ""
+            unique_qualifier = (
+                activity_id.get("uniqueQualifier", "") if isinstance(activity_id, dict) else ""
+            )
             actor = activity.get("actor", {}) if isinstance(activity.get("actor"), dict) else {}
             actor_email = actor.get("email", "")
             events = activity.get("events", [])
-            time = activity.get("id", {}).get("time", "") if isinstance(activity.get("id"), dict) else ""
+            time = (
+                activity.get("id", {}).get("time", "")
+                if isinstance(activity.get("id"), dict)
+                else ""
+            )
             ip_address = activity.get("ipAddress", "")
 
             for event in events:
@@ -263,12 +273,18 @@ class GoogleWorkspaceNormalizer(BaseNormalizer):
 
         for activity in activities:
             activity_id = activity.get("id", {})
-            unique_qualifier = activity_id.get("uniqueQualifier", "") if isinstance(activity_id, dict) else ""
+            unique_qualifier = (
+                activity_id.get("uniqueQualifier", "") if isinstance(activity_id, dict) else ""
+            )
             actor = activity.get("actor", {}) if isinstance(activity.get("actor"), dict) else {}
             actor_email = actor.get("email", "")
             ip_address = activity.get("ipAddress", "")
             events = activity.get("events", [])
-            time = activity.get("id", {}).get("time", "") if isinstance(activity.get("id"), dict) else ""
+            time = (
+                activity.get("id", {}).get("time", "")
+                if isinstance(activity.get("id"), dict)
+                else ""
+            )
 
             for event in events:
                 event_name = event.get("name", "")

@@ -78,9 +78,11 @@ class ShadowQueryRunner:
             lake_ms = (time.perf_counter() - start) * 1000
             log.warning("Shadow lake query %s failed: %s — using OLTP result", query_name, exc)
             result = ComparisonResult(
-                query_name=query_name, match=False,
+                query_name=query_name,
+                match=False,
                 oltp_count=len(list(oltp_result)) if oltp_result else 0,
-                oltp_ms=oltp_ms, lake_ms=lake_ms,
+                oltp_ms=oltp_ms,
+                lake_ms=lake_ms,
             )
             result.discrepancies.append(f"Lake query failed: {exc}")
             self._results.append(result)
@@ -94,12 +96,16 @@ class ShadowQueryRunner:
         if result.match:
             log.debug(
                 "Shadow OK: %s (OLTP=%.1fms, Lake=%.1fms, %d rows)",
-                query_name, oltp_ms, lake_ms, result.oltp_count,
+                query_name,
+                oltp_ms,
+                lake_ms,
+                result.oltp_count,
             )
         else:
             log.warning(
                 "Shadow MISMATCH: %s — %s",
-                query_name, "; ".join(result.discrepancies[:3]),
+                query_name,
+                "; ".join(result.discrepancies[:3]),
             )
 
         self._results.append(result)

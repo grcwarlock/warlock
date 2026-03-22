@@ -92,7 +92,9 @@ class RipplingConnector(BaseConnector):
             client = self._client()
             resp = client.get(f"{API_BASE}/platform/api/employees")
             resp.raise_for_status()
-            employees = resp.json().get("results", resp.json() if isinstance(resp.json(), list) else [])
+            employees = resp.json().get(
+                "results", resp.json() if isinstance(resp.json(), list) else []
+            )
             result.events.append(self._raw_event("rippling_employees", {"employees": employees}))
         except Exception as e:
             log.debug("Rippling employees collection failed: %s", e)
@@ -104,7 +106,9 @@ class RipplingConnector(BaseConnector):
             client = self._client()
             resp = client.get(f"{API_BASE}/platform/api/devices")
             resp.raise_for_status()
-            devices = resp.json().get("results", resp.json() if isinstance(resp.json(), list) else [])
+            devices = resp.json().get(
+                "results", resp.json() if isinstance(resp.json(), list) else []
+            )
             result.events.append(self._raw_event("rippling_devices", {"devices": devices}))
         except Exception as e:
             log.debug("Rippling devices collection failed: %s", e)

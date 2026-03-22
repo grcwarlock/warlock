@@ -46,7 +46,16 @@ class GitLabCINormalizer(BaseNormalizer):
         findings = []
         pipelines = raw.raw_data.get("pipelines", [])
 
-        security_keywords = {"security", "sast", "dast", "scan", "audit", "compliance", "container_scanning", "dependency_scanning"}
+        security_keywords = {
+            "security",
+            "sast",
+            "dast",
+            "scan",
+            "audit",
+            "compliance",
+            "container_scanning",
+            "dependency_scanning",
+        }
 
         for pipeline in pipelines:
             pipeline_id = str(pipeline.get("id", ""))
@@ -83,7 +92,9 @@ class GitLabCINormalizer(BaseNormalizer):
 
             # Flag failed security pipelines
             ref_lower = ref.lower() if ref else ""
-            is_security_pipeline = any(kw in ref_lower for kw in security_keywords) or source in ("security_orchestration_policy",)
+            is_security_pipeline = any(kw in ref_lower for kw in security_keywords) or source in (
+                "security_orchestration_policy",
+            )
             if is_security_pipeline and status == "failed":
                 findings.append(
                     FindingData(

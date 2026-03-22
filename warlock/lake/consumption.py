@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 # Path 1: GRC Tool Export
 # ---------------------------------------------------------------------------
 
+
 def export_for_grc_tool(
     lake_path: str,
     tool: str = "generic",
@@ -49,7 +50,8 @@ def export_for_grc_tool(
         where = "WHERE cr.framework = ?" if framework else ""
         params = [framework] if framework else []
 
-        result = engine.query(f"""
+        result = engine.query(
+            f"""
             SELECT
                 cr.framework,
                 cr.control_id,
@@ -67,7 +69,9 @@ def export_for_grc_tool(
             GROUP BY cr.framework, cr.control_id, cr.status, cr.severity,
                      cr.assertion_name, cm.mapping_method, cm.confidence
             ORDER BY cr.framework, cr.control_id
-        """, params)
+        """,
+            params,
+        )
 
         # Apply tool-specific field mapping
         if tool == "vanta":
@@ -105,6 +109,7 @@ def _map_drata(row: dict) -> dict:
 # Path 2: BI / Direct Query Interface
 # ---------------------------------------------------------------------------
 
+
 def execute_bi_query(lake_path: str, sql: str, params: list | None = None) -> list[dict]:
     """Execute a raw SQL query against the lake for BI tools.
 
@@ -136,12 +141,14 @@ def get_available_tables(lake_path: str) -> list[dict[str, Any]]:
             rel = str(table_dir.parent.relative_to(base))
             if rel not in [t["path"] for t in tables]:
                 parquet_files = list(table_dir.parent.glob("*.parquet"))
-                tables.append({
-                    "zone": zone,
-                    "path": rel,
-                    "files": len(parquet_files),
-                    "glob": str(base / rel / "*.parquet"),
-                })
+                tables.append(
+                    {
+                        "zone": zone,
+                        "path": rel,
+                        "files": len(parquet_files),
+                        "glob": str(base / rel / "*.parquet"),
+                    }
+                )
 
     return tables
 
@@ -149,6 +156,7 @@ def get_available_tables(lake_path: str) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Path 3: Regulatory Filing
 # ---------------------------------------------------------------------------
+
 
 def generate_regulatory_filing(
     lake_path: str,
@@ -177,10 +185,13 @@ def generate_regulatory_filing(
         incident_glob = str(base / "curated" / "incidents" / "**" / "*.parquet")
         if list(base.glob("curated/incidents/**/*.parquet")):
             if incident_id:
-                results = engine.query(f"""
+                results = engine.query(
+                    f"""
                     SELECT * FROM read_parquet('{incident_glob}', union_by_name=true)
                     WHERE id = ?
-                """, [incident_id])
+                """,
+                    [incident_id],
+                )
                 if results:
                     incident_data = results[0]
 
@@ -194,7 +205,9 @@ def generate_regulatory_filing(
 
         template_fn = templates.get(filing_type)
         if not template_fn:
-            return {"error": f"Unknown filing type: {filing_type}. Available: {list(templates.keys())}"}
+            return {
+                "error": f"Unknown filing type: {filing_type}. Available: {list(templates.keys())}"
+            }
 
         return template_fn(incident_data, now)
     finally:
@@ -272,6 +285,7 @@ def _state_breach_template(incident: dict, now: datetime) -> dict:
 # Path 4: Questionnaire Automation
 # ---------------------------------------------------------------------------
 
+
 def auto_fill_questionnaire(
     lake_path: str,
     questionnaire_type: str = "sig",
@@ -310,32 +324,83 @@ def auto_fill_questionnaire(
 
 def _sig_answers(frameworks: list, pct: float, total: int, risks: list) -> list[dict]:
     return [
-        {"question": "A.1 - Information Security Policy", "answer": f"Yes — assessed across {len(frameworks)} frameworks with {pct}% compliance rate", "confidence": 0.9, "evidence_ref": "lake://curated/control_results"},
-        {"question": "A.2 - Risk Assessment", "answer": f"Continuous — {total} control assessments, top risks: {len(risks)} non-compliant controls identified", "confidence": 0.85, "evidence_ref": "lake://curated/control_results"},
-        {"question": "A.3 - Access Control", "answer": "Monitored via IAM connectors (Okta, AWS IAM, Entra ID)", "confidence": 0.8, "evidence_ref": "lake://enrichment"},
-        {"question": "A.4 - Asset Management", "answer": f"Tracked via {len(frameworks)} framework controls with automated evidence collection", "confidence": 0.75, "evidence_ref": "lake://curated/control_mappings"},
+        {
+            "question": "A.1 - Information Security Policy",
+            "answer": f"Yes — assessed across {len(frameworks)} frameworks with {pct}% compliance rate",
+            "confidence": 0.9,
+            "evidence_ref": "lake://curated/control_results",
+        },
+        {
+            "question": "A.2 - Risk Assessment",
+            "answer": f"Continuous — {total} control assessments, top risks: {len(risks)} non-compliant controls identified",
+            "confidence": 0.85,
+            "evidence_ref": "lake://curated/control_results",
+        },
+        {
+            "question": "A.3 - Access Control",
+            "answer": "Monitored via IAM connectors (Okta, AWS IAM, Entra ID)",
+            "confidence": 0.8,
+            "evidence_ref": "lake://enrichment",
+        },
+        {
+            "question": "A.4 - Asset Management",
+            "answer": f"Tracked via {len(frameworks)} framework controls with automated evidence collection",
+            "confidence": 0.75,
+            "evidence_ref": "lake://curated/control_mappings",
+        },
     ]
 
 
 def _caiq_answers(frameworks: list, pct: float, total: int, risks: list) -> list[dict]:
     return [
-        {"question": "AIS-01 - Application Security", "answer": f"Assessed — {pct}% compliance across applicable controls", "confidence": 0.85, "evidence_ref": "lake://curated/control_results"},
-        {"question": "BCR-01 - Business Continuity Planning", "answer": "Evidence collected via pipeline connectors", "confidence": 0.7, "evidence_ref": "lake://enrichment"},
-        {"question": "CCC-01 - Change Control", "answer": f"Monitored across {len(frameworks)} frameworks", "confidence": 0.8, "evidence_ref": "lake://curated/control_mappings"},
+        {
+            "question": "AIS-01 - Application Security",
+            "answer": f"Assessed — {pct}% compliance across applicable controls",
+            "confidence": 0.85,
+            "evidence_ref": "lake://curated/control_results",
+        },
+        {
+            "question": "BCR-01 - Business Continuity Planning",
+            "answer": "Evidence collected via pipeline connectors",
+            "confidence": 0.7,
+            "evidence_ref": "lake://enrichment",
+        },
+        {
+            "question": "CCC-01 - Change Control",
+            "answer": f"Monitored across {len(frameworks)} frameworks",
+            "confidence": 0.8,
+            "evidence_ref": "lake://curated/control_mappings",
+        },
     ]
 
 
 def _ddq_answers(frameworks: list, pct: float, total: int, risks: list) -> list[dict]:
     return [
-        {"question": "Do you have an information security program?", "answer": f"Yes — {len(frameworks)} compliance frameworks monitored continuously with {total} automated control assessments", "confidence": 0.95, "evidence_ref": "lake://curated/agg_framework_posture"},
-        {"question": "How do you manage vulnerabilities?", "answer": f"Automated scanning via pipeline connectors. {len(risks)} non-compliant controls currently tracked for remediation.", "confidence": 0.85, "evidence_ref": "lake://curated/control_results"},
-        {"question": "Do you have incident response procedures?", "answer": "Yes — incident lifecycle tracked from detection through closure with regulatory notification support", "confidence": 0.7, "evidence_ref": "lake://curated/incidents"},
+        {
+            "question": "Do you have an information security program?",
+            "answer": f"Yes — {len(frameworks)} compliance frameworks monitored continuously with {total} automated control assessments",
+            "confidence": 0.95,
+            "evidence_ref": "lake://curated/agg_framework_posture",
+        },
+        {
+            "question": "How do you manage vulnerabilities?",
+            "answer": f"Automated scanning via pipeline connectors. {len(risks)} non-compliant controls currently tracked for remediation.",
+            "confidence": 0.85,
+            "evidence_ref": "lake://curated/control_results",
+        },
+        {
+            "question": "Do you have incident response procedures?",
+            "answer": "Yes — incident lifecycle tracked from detection through closure with regulatory notification support",
+            "confidence": 0.7,
+            "evidence_ref": "lake://curated/incidents",
+        },
     ]
 
 
 # ---------------------------------------------------------------------------
 # Path 5: Trust Center
 # ---------------------------------------------------------------------------
+
 
 def generate_trust_center_data(lake_path: str) -> dict[str, Any]:
     """Generate data for a customer-facing trust center portal.
@@ -379,8 +444,16 @@ def generate_trust_center_data(lake_path: str) -> dict[str, Any]:
 
     artifacts = [
         {"name": "SOC 2 Type II Report", "available": "soc2" in frameworks, "format": "PDF"},
-        {"name": "ISO 27001 Statement of Applicability", "available": "iso_27001" in frameworks, "format": "PDF"},
-        {"name": "NIST 800-53 SSP", "available": "nist_800_53" in frameworks, "format": "OSCAL/JSON"},
+        {
+            "name": "ISO 27001 Statement of Applicability",
+            "available": "iso_27001" in frameworks,
+            "format": "PDF",
+        },
+        {
+            "name": "NIST 800-53 SSP",
+            "available": "nist_800_53" in frameworks,
+            "format": "OSCAL/JSON",
+        },
         {"name": "Penetration Test Summary", "available": False, "format": "PDF"},
         {"name": "SIG Questionnaire (Pre-filled)", "available": True, "format": "XLSX"},
     ]

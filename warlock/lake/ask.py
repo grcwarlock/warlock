@@ -35,6 +35,7 @@ def query_lake(lake_path: str, question: str) -> dict[str, Any]:
 
 def _query_posture(lake_path: str) -> dict[str, Any]:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         summary = readers.dashboard_framework_summary()
@@ -55,6 +56,7 @@ def _query_posture(lake_path: str) -> dict[str, Any]:
 
 def _query_findings(lake_path: str) -> dict[str, Any]:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         critical = readers.findings_by_severity("critical", limit=100)
@@ -71,6 +73,7 @@ def _query_findings(lake_path: str) -> dict[str, Any]:
 
 def _query_connectors(lake_path: str) -> dict[str, Any]:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         connectors = readers.latest_per_connector()
@@ -87,6 +90,7 @@ def _query_connectors(lake_path: str) -> dict[str, Any]:
 
 def _query_frameworks(lake_path: str) -> dict[str, Any]:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         frameworks = readers.list_frameworks()
@@ -104,6 +108,7 @@ def _query_frameworks(lake_path: str) -> dict[str, Any]:
 
 def _query_general(lake_path: str) -> dict[str, Any]:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         summary = readers.dashboard_framework_summary()

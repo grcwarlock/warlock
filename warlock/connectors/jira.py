@@ -111,7 +111,11 @@ class JiraConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             issues = data.get("issues", [])
-            result.events.append(self._raw_event("jira_security_bugs", {"issues": issues, "total": data.get("total", 0)}))
+            result.events.append(
+                self._raw_event(
+                    "jira_security_bugs", {"issues": issues, "total": data.get("total", 0)}
+                )
+            )
         except Exception as e:
             log.debug("Jira security bugs collection failed: %s", e)
             result.errors.append(f"jira_security_bugs: {e}")
@@ -133,7 +137,12 @@ class JiraConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             issues = data.get("issues", [])
-            result.events.append(self._raw_event("jira_sla_status", {"overdue_issues": issues, "total_overdue": data.get("total", 0)}))
+            result.events.append(
+                self._raw_event(
+                    "jira_sla_status",
+                    {"overdue_issues": issues, "total_overdue": data.get("total", 0)},
+                )
+            )
         except Exception as e:
             log.debug("Jira SLA status collection failed: %s", e)
             result.errors.append(f"jira_sla_status: {e}")
@@ -154,7 +163,11 @@ class JiraConnector(BaseConnector):
             resp.raise_for_status()
             data = resp.json()
             issues = data.get("issues", [])
-            result.events.append(self._raw_event("jira_change_requests", {"issues": issues, "total": data.get("total", 0)}))
+            result.events.append(
+                self._raw_event(
+                    "jira_change_requests", {"issues": issues, "total": data.get("total", 0)}
+                )
+            )
         except Exception as e:
             log.debug("Jira change requests collection failed: %s", e)
             result.errors.append(f"jira_change_requests: {e}")

@@ -53,7 +53,9 @@ class CircleCINormalizer(BaseNormalizer):
             state = pipeline.get("state", "")
             project_slug = pipeline.get("project_slug", "")
             created_at = pipeline.get("created_at", "")
-            trigger = pipeline.get("trigger", {}) if isinstance(pipeline.get("trigger"), dict) else {}
+            trigger = (
+                pipeline.get("trigger", {}) if isinstance(pipeline.get("trigger"), dict) else {}
+            )
             trigger_type = trigger.get("type", "")
             actor = trigger.get("actor", {}) if isinstance(trigger.get("actor"), dict) else {}
             actor_login = actor.get("login", "")
@@ -180,7 +182,9 @@ class CircleCINormalizer(BaseNormalizer):
         for project in projects:
             slug = project.get("slug", project.get("project_slug", ""))
             name = project.get("name", slug)
-            vcs_info = project.get("vcs_info", {}) if isinstance(project.get("vcs_info"), dict) else {}
+            vcs_info = (
+                project.get("vcs_info", {}) if isinstance(project.get("vcs_info"), dict) else {}
+            )
             vcs_url = vcs_info.get("vcs_url", project.get("vcs_url", ""))
             default_branch = vcs_info.get("default_branch", project.get("default_branch", ""))
 

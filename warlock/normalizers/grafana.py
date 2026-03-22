@@ -245,7 +245,9 @@ class GrafanaNormalizer(BaseNormalizer):
                 )
 
             # Flag data sources without authentication
-            tls_skip = json_data.get("tlsSkipVerify", False) if isinstance(json_data, dict) else False
+            tls_skip = (
+                json_data.get("tlsSkipVerify", False) if isinstance(json_data, dict) else False
+            )
             if tls_skip:
                 findings.append(
                     FindingData(

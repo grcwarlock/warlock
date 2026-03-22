@@ -52,8 +52,12 @@ class KandjiNormalizer(BaseNormalizer):
             model = device.get("model", "")
             os_version = device.get("os_version", "")
             platform = device.get("platform", "")
-            filevault_enabled = device.get("filevault_enabled", device.get("is_filevault_enabled", None))
-            firewall_enabled = device.get("firewall_enabled", device.get("is_firewall_enabled", None))
+            filevault_enabled = device.get(
+                "filevault_enabled", device.get("is_filevault_enabled", None)
+            )
+            firewall_enabled = device.get(
+                "firewall_enabled", device.get("is_firewall_enabled", None)
+            )
             blueprint_id = device.get("blueprint_id", "")
             blueprint_name = device.get("blueprint_name", "")
             last_check_in = device.get("last_check_in", device.get("last_seen", ""))
@@ -196,7 +200,11 @@ class KandjiNormalizer(BaseNormalizer):
             bp_id = bp.get("id", bp.get("blueprint_id", ""))
             bp_name = bp.get("name", "")
             enrollment_code = bp.get("enrollment_code", {})
-            is_active = enrollment_code.get("is_active", True) if isinstance(enrollment_code, dict) else True
+            is_active = (
+                enrollment_code.get("is_active", True)
+                if isinstance(enrollment_code, dict)
+                else True
+            )
 
             findings.append(
                 FindingData(

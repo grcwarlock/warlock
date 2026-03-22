@@ -122,7 +122,9 @@ class CircleCIConnector(BaseConnector):
                 except Exception:
                     log.debug("Failed to fetch workflows for pipeline %s", pipeline_id)
 
-            result.events.append(self._raw_event("circleci_workflows", {"workflows": all_workflows}))
+            result.events.append(
+                self._raw_event("circleci_workflows", {"workflows": all_workflows})
+            )
         except Exception as e:
             log.debug("CircleCI workflows collection failed: %s", e)
             result.errors.append(f"circleci_workflows: {e}")
@@ -168,7 +170,10 @@ class CircleCIConnector(BaseConnector):
                     vars_resp = client.get(f"{_API_BASE}/context/{ctx_id}/environment-variable")
                     vars_resp.raise_for_status()
                     env_vars = vars_resp.json().get("items", [])
-                    ctx["_variables"] = [{"variable": v.get("variable", ""), "created_at": v.get("created_at", "")} for v in env_vars]
+                    ctx["_variables"] = [
+                        {"variable": v.get("variable", ""), "created_at": v.get("created_at", "")}
+                        for v in env_vars
+                    ]
                 except Exception:
                     log.debug("Failed to fetch context variables for %s", ctx_id)
                     ctx["_variables"] = []

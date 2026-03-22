@@ -108,7 +108,9 @@ class SemgrepNormalizer(BaseNormalizer):
                     resource_id=finding_id,
                     resource_type="semgrep_finding",
                     resource_name=f"{rule_name}:{repo}",
-                    severity=severity if severity in ("critical", "high", "medium", "low") else "info",
+                    severity=severity
+                    if severity in ("critical", "high", "medium", "low")
+                    else "info",
                 )
             )
 
@@ -180,7 +182,11 @@ class SemgrepNormalizer(BaseNormalizer):
             project_id = str(project.get("id", project.get("name", "")))
             project_name = project.get("name", "")
             last_scan = project.get("latest_scan", {})
-            last_scan_at = last_scan.get("completed_at", last_scan.get("created_at", "")) if isinstance(last_scan, dict) else ""
+            last_scan_at = (
+                last_scan.get("completed_at", last_scan.get("created_at", ""))
+                if isinstance(last_scan, dict)
+                else ""
+            )
 
             # Inventory
             findings.append(

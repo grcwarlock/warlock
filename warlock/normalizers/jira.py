@@ -50,10 +50,16 @@ class JiraNormalizer(BaseNormalizer):
             summary = fields.get("summary", "")
             status_obj = fields.get("status", {}) if isinstance(fields.get("status"), dict) else {}
             status = status_obj.get("name", "")
-            priority_obj = fields.get("priority", {}) if isinstance(fields.get("priority"), dict) else {}
+            priority_obj = (
+                fields.get("priority", {}) if isinstance(fields.get("priority"), dict) else {}
+            )
             priority = priority_obj.get("name", "")
-            assignee_obj = fields.get("assignee", {}) if isinstance(fields.get("assignee"), dict) else {}
-            assignee = assignee_obj.get("displayName", "Unassigned") if assignee_obj else "Unassigned"
+            assignee_obj = (
+                fields.get("assignee", {}) if isinstance(fields.get("assignee"), dict) else {}
+            )
+            assignee = (
+                assignee_obj.get("displayName", "Unassigned") if assignee_obj else "Unassigned"
+            )
             created = fields.get("created", "")
             updated = fields.get("updated", "")
             duedate = fields.get("duedate", "")
@@ -129,10 +135,16 @@ class JiraNormalizer(BaseNormalizer):
             issue_key = issue.get("key", "")
             fields = issue.get("fields", {}) if isinstance(issue.get("fields"), dict) else {}
             summary = fields.get("summary", "")
-            priority_obj = fields.get("priority", {}) if isinstance(fields.get("priority"), dict) else {}
+            priority_obj = (
+                fields.get("priority", {}) if isinstance(fields.get("priority"), dict) else {}
+            )
             priority = priority_obj.get("name", "")
-            assignee_obj = fields.get("assignee", {}) if isinstance(fields.get("assignee"), dict) else {}
-            assignee = assignee_obj.get("displayName", "Unassigned") if assignee_obj else "Unassigned"
+            assignee_obj = (
+                fields.get("assignee", {}) if isinstance(fields.get("assignee"), dict) else {}
+            )
+            assignee = (
+                assignee_obj.get("displayName", "Unassigned") if assignee_obj else "Unassigned"
+            )
             duedate = fields.get("duedate", "")
             created = fields.get("created", "")
 
@@ -172,8 +184,12 @@ class JiraNormalizer(BaseNormalizer):
             summary = fields.get("summary", "")
             status_obj = fields.get("status", {}) if isinstance(fields.get("status"), dict) else {}
             status = status_obj.get("name", "")
-            assignee_obj = fields.get("assignee", {}) if isinstance(fields.get("assignee"), dict) else {}
-            assignee = assignee_obj.get("displayName", "Unassigned") if assignee_obj else "Unassigned"
+            assignee_obj = (
+                fields.get("assignee", {}) if isinstance(fields.get("assignee"), dict) else {}
+            )
+            assignee = (
+                assignee_obj.get("displayName", "Unassigned") if assignee_obj else "Unassigned"
+            )
             created = fields.get("created", "")
             updated = fields.get("updated", "")
             resolution = fields.get("resolution")

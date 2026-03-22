@@ -151,8 +151,14 @@ class SlackNormalizer(BaseNormalizer):
             entry_id = entry.get("id", "")
             action = entry.get("action", "")
             actor = entry.get("actor", {}) if isinstance(entry.get("actor"), dict) else {}
-            actor_email = actor.get("user", {}).get("email", "") if isinstance(actor.get("user"), dict) else ""
-            actor_name = actor.get("user", {}).get("name", "") if isinstance(actor.get("user"), dict) else ""
+            actor_email = (
+                actor.get("user", {}).get("email", "")
+                if isinstance(actor.get("user"), dict)
+                else ""
+            )
+            actor_name = (
+                actor.get("user", {}).get("name", "") if isinstance(actor.get("user"), dict) else ""
+            )
             entity = entry.get("entity", {}) if isinstance(entry.get("entity"), dict) else {}
             entity_type = entity.get("type", "")
             date_create = entry.get("date_create", "")
@@ -221,7 +227,11 @@ class SlackNormalizer(BaseNormalizer):
             user_id = user.get("id", "")
             name = user.get("name", "")
             real_name = user.get("real_name", user.get("profile", {}).get("real_name", ""))
-            email = user.get("profile", {}).get("email", "") if isinstance(user.get("profile"), dict) else ""
+            email = (
+                user.get("profile", {}).get("email", "")
+                if isinstance(user.get("profile"), dict)
+                else ""
+            )
             is_admin = user.get("is_admin", False)
             is_owner = user.get("is_owner", False)
             is_bot = user.get("is_bot", False)
@@ -229,7 +239,11 @@ class SlackNormalizer(BaseNormalizer):
             has_2fa = user.get("has_2fa", False)
             is_restricted = user.get("is_restricted", False)
             is_ultra_restricted = user.get("is_ultra_restricted", False)
-            enterprise_user = user.get("enterprise_user", {}) if isinstance(user.get("enterprise_user"), dict) else {}
+            enterprise_user = (
+                user.get("enterprise_user", {})
+                if isinstance(user.get("enterprise_user"), dict)
+                else {}
+            )
             is_sso = bool(enterprise_user) or user.get("is_app_user", False)
 
             # Skip bots and deleted users for inventory

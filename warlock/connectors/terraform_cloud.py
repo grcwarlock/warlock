@@ -94,9 +94,7 @@ class TerraformCloudConnector(BaseConnector):
 
     # -- Collectors --
 
-    def _collect_workspaces(
-        self, client: httpx.Client, org: str, result: ConnectorResult
-    ) -> None:
+    def _collect_workspaces(self, client: httpx.Client, org: str, result: ConnectorResult) -> None:
         """Collect workspaces with drift status and VCS connection info."""
         try:
             resp = client.get(
@@ -105,16 +103,12 @@ class TerraformCloudConnector(BaseConnector):
             )
             resp.raise_for_status()
             workspaces = resp.json().get("data", [])
-            result.events.append(
-                self._raw_event("tfc_workspaces", {"workspaces": workspaces})
-            )
+            result.events.append(self._raw_event("tfc_workspaces", {"workspaces": workspaces}))
         except Exception as e:
             log.debug("TFC workspaces collection failed: %s", e)
             result.errors.append(f"tfc_workspaces: {e}")
 
-    def _collect_runs(
-        self, client: httpx.Client, org: str, result: ConnectorResult
-    ) -> None:
+    def _collect_runs(self, client: httpx.Client, org: str, result: ConnectorResult) -> None:
         """Collect recent runs (plan/apply history) across workspaces."""
         try:
             resp = client.get(

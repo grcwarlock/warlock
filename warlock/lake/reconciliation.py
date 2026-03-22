@@ -162,7 +162,13 @@ def reconcile(
 
     result = ReconciliationResult(threshold=threshold)
 
-    for table in ["raw_events", "findings", "control_mappings", "control_results", "connector_runs"]:
+    for table in [
+        "raw_events",
+        "findings",
+        "control_mappings",
+        "control_results",
+        "connector_runs",
+    ]:
         result.comparisons.append(
             TableComparison(
                 table=table,
@@ -197,17 +203,21 @@ def sample_hashes(oltp_hashes: dict[str, str], lake_hashes: dict[str, str]) -> l
     for record_id, oltp_hash in oltp_hashes.items():
         lake_hash = lake_hashes.get(record_id)
         if lake_hash is None:
-            mismatches.append({
-                "id": record_id,
-                "oltp_hash": oltp_hash,
-                "lake_hash": None,
-                "reason": "missing_in_lake",
-            })
+            mismatches.append(
+                {
+                    "id": record_id,
+                    "oltp_hash": oltp_hash,
+                    "lake_hash": None,
+                    "reason": "missing_in_lake",
+                }
+            )
         elif oltp_hash != lake_hash:
-            mismatches.append({
-                "id": record_id,
-                "oltp_hash": oltp_hash,
-                "lake_hash": lake_hash,
-                "reason": "hash_mismatch",
-            })
+            mismatches.append(
+                {
+                    "id": record_id,
+                    "oltp_hash": oltp_hash,
+                    "lake_hash": lake_hash,
+                    "reason": "hash_mismatch",
+                }
+            )
     return mismatches

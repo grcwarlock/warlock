@@ -24,7 +24,10 @@ MCP_TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "framework": {"type": "string", "description": "Optional: filter to specific framework (e.g., nist_800_53, soc2)"},
+                "framework": {
+                    "type": "string",
+                    "description": "Optional: filter to specific framework (e.g., nist_800_53, soc2)",
+                },
             },
         },
     },
@@ -39,7 +42,11 @@ MCP_TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "severity": {"type": "string", "enum": ["critical", "high", "medium", "low", "info"], "description": "Severity to filter by"},
+                "severity": {
+                    "type": "string",
+                    "enum": ["critical", "high", "medium", "low", "info"],
+                    "description": "Severity to filter by",
+                },
                 "limit": {"type": "integer", "description": "Max results (default 20)"},
             },
             "required": ["severity"],
@@ -73,7 +80,10 @@ MCP_TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "framework": {"type": "string", "description": "Optional: filter to specific framework"},
+                "framework": {
+                    "type": "string",
+                    "description": "Optional: filter to specific framework",
+                },
             },
         },
     },
@@ -90,7 +100,9 @@ def get_mcp_tools() -> list[dict]:
     return MCP_TOOLS
 
 
-def call_mcp_tool(lake_path: str, tool_name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+def call_mcp_tool(
+    lake_path: str, tool_name: str, arguments: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Execute an MCP tool call against the lake.
 
     Returns a dict with the tool result suitable for MCP response.
@@ -100,7 +112,10 @@ def call_mcp_tool(lake_path: str, tool_name: str, arguments: dict[str, Any] | No
     try:
         handler = _TOOL_HANDLERS.get(tool_name)
         if not handler:
-            return {"error": f"Unknown tool: {tool_name}", "available": [t["name"] for t in MCP_TOOLS]}
+            return {
+                "error": f"Unknown tool: {tool_name}",
+                "available": [t["name"] for t in MCP_TOOLS],
+            }
         return handler(lake_path, args)
     except Exception as exc:
         log.exception("MCP tool %s failed", tool_name)
@@ -109,6 +124,7 @@ def call_mcp_tool(lake_path: str, tool_name: str, arguments: dict[str, Any] | No
 
 def _handle_compliance_posture(lake_path: str, args: dict) -> dict:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         framework = args.get("framework")
@@ -127,6 +143,7 @@ def _handle_compliance_posture(lake_path: str, args: dict) -> dict:
 
 def _handle_framework_list(lake_path: str, args: dict) -> dict:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         frameworks = readers.list_frameworks()
@@ -137,6 +154,7 @@ def _handle_framework_list(lake_path: str, args: dict) -> dict:
 
 def _handle_findings_by_severity(lake_path: str, args: dict) -> dict:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         severity = args.get("severity", "critical")
@@ -149,6 +167,7 @@ def _handle_findings_by_severity(lake_path: str, args: dict) -> dict:
 
 def _handle_non_compliant_risks(lake_path: str, args: dict) -> dict:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         risks = readers.top_non_compliant_risks()
@@ -159,6 +178,7 @@ def _handle_non_compliant_risks(lake_path: str, args: dict) -> dict:
 
 def _handle_connector_status(lake_path: str, args: dict) -> dict:
     from warlock.lake.readers import LakeReaders
+
     readers = LakeReaders(lake_path)
     try:
         connectors = readers.latest_per_connector()
@@ -182,13 +202,16 @@ def _handle_control_details(lake_path: str, args: dict) -> dict:
     cr_glob = str(base / "curated" / "control_results" / "**" / "*.parquet")
 
     try:
-        results = engine.query(f"""
+        results = engine.query(
+            f"""
             SELECT id, status, severity, assertion_name, assertion_passed, assessed_at
             FROM read_parquet('{cr_glob}', union_by_name=true)
             WHERE framework = ? AND control_id = ?
             ORDER BY assessed_at DESC
             LIMIT 50
-        """, [framework, control_id])
+        """,
+            [framework, control_id],
+        )
         return {
             "framework": framework,
             "control_id": control_id,
@@ -213,11 +236,14 @@ def _handle_aggregate_assessment(lake_path: str, args: dict) -> dict:
 
         framework = args.get("framework")
         if framework:
-            results = engine.query(f"""
+            results = engine.query(
+                f"""
                 SELECT * FROM read_parquet('{agg_glob}', union_by_name=true)
                 WHERE framework = ?
                 ORDER BY control_id
-            """, [framework])
+            """,
+                [framework],
+            )
         else:
             results = engine.query(f"""
                 SELECT framework, aggregate_status, COUNT(*) as count
@@ -232,6 +258,7 @@ def _handle_aggregate_assessment(lake_path: str, args: dict) -> dict:
 
 def _handle_lake_overview(lake_path: str, args: dict) -> dict:
     from warlock.lake.ask import query_lake
+
     return query_lake(lake_path, "overview")
 
 

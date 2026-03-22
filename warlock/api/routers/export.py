@@ -243,7 +243,10 @@ def list_questionnaires(
 ):
     repos = get_repos(db)
     rows, total = repos.questionnaires.list_filtered(
-        vendor_name=vendor_name, status=q_status, limit=limit, offset=offset,
+        vendor_name=vendor_name,
+        status=q_status,
+        limit=limit,
+        offset=offset,
     )
     items = [_questionnaire_to_response(q) for q in rows]
     return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)

@@ -23,6 +23,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class ThinStats:
     """Statistics from an OLTP thinning operation."""
+
     control_results_kept: int = 0
     control_results_removed: int = 0
     control_mappings_removed: int = 0
@@ -32,8 +33,12 @@ class ThinStats:
 
     @property
     def total_removed(self) -> int:
-        return (self.control_results_removed + self.control_mappings_removed +
-                self.findings_removed + self.raw_events_removed)
+        return (
+            self.control_results_removed
+            + self.control_mappings_removed
+            + self.findings_removed
+            + self.raw_events_removed
+        )
 
 
 def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
@@ -71,14 +76,11 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
         .subquery()
     )
 
-    latest_ids_query = (
-        session.query(ControlResult.id)
-        .join(
-            subq,
-            (ControlResult.framework == subq.c.framework)
-            & (ControlResult.control_id == subq.c.control_id)
-            & (ControlResult.assessed_at == subq.c.max_assessed),
-        )
+    latest_ids_query = session.query(ControlResult.id).join(
+        subq,
+        (ControlResult.framework == subq.c.framework)
+        & (ControlResult.control_id == subq.c.control_id)
+        & (ControlResult.assessed_at == subq.c.max_assessed),
     )
     latest_ids = {r[0] for r in latest_ids_query.all()}
     stats.control_results_kept = len(latest_ids)
@@ -90,7 +92,8 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
     if dry_run:
         log.info(
             "OLTP thin (dry run): would keep %d, remove %d control results",
-            stats.control_results_kept, stats.control_results_removed,
+            stats.control_results_kept,
+            stats.control_results_removed,
         )
         return stats
 
@@ -101,13 +104,13 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
     # Step 3: Delete historical ControlResults (not in latest set)
     # Get finding_ids and mapping_ids referenced by historical results
     historical_results = (
-        session.query(ControlResult)
-        .filter(~ControlResult.id.in_(latest_ids))
-        .all()
+        session.query(ControlResult).filter(~ControlResult.id.in_(latest_ids)).all()
     )
 
     historical_finding_ids = {r.finding_id for r in historical_results if r.finding_id}
-    historical_mapping_ids = {r.control_mapping_id for r in historical_results if r.control_mapping_id}
+    historical_mapping_ids = {
+        r.control_mapping_id for r in historical_results if r.control_mapping_id
+    }
 
     # Delete historical results
     for r in historical_results:
@@ -115,9 +118,11 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
     session.flush()
 
     # Step 4: Delete orphaned ControlMappings (not referenced by any remaining result)
-    kept_mapping_ids = {r.control_mapping_id for r in
-                        session.query(ControlResult.control_mapping_id).all()
-                        if r.control_mapping_id}
+    kept_mapping_ids = {
+        r.control_mapping_id
+        for r in session.query(ControlResult.control_mapping_id).all()
+        if r.control_mapping_id
+    }
     orphan_mappings = historical_mapping_ids - kept_mapping_ids
     if orphan_mappings:
         deleted = (
@@ -128,9 +133,9 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
         stats.control_mappings_removed = deleted
 
     # Step 5: Delete orphaned Findings (not referenced by any remaining mapping)
-    kept_finding_ids = {r.finding_id for r in
-                        session.query(ControlMapping.finding_id).all()
-                        if r.finding_id}
+    kept_finding_ids = {
+        r.finding_id for r in session.query(ControlMapping.finding_id).all() if r.finding_id
+    }
     orphan_findings = historical_finding_ids - kept_finding_ids
     if orphan_findings:
         deleted = (
@@ -141,9 +146,9 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
         stats.findings_removed = deleted
 
     # Step 6: Delete orphaned RawEvents (not referenced by any remaining finding)
-    kept_raw_ids = {r.raw_event_id for r in
-                    session.query(Finding.raw_event_id).all()
-                    if r.raw_event_id}
+    kept_raw_ids = {
+        r.raw_event_id for r in session.query(Finding.raw_event_id).all() if r.raw_event_id
+    }
     all_raw_ids = {r[0] for r in session.query(RawEvent.id).all()}
     orphan_raws = all_raw_ids - kept_raw_ids
     if orphan_raws:
@@ -157,8 +162,11 @@ def thin_oltp(session: Any, dry_run: bool = True) -> ThinStats:
     session.flush()
     log.info(
         "OLTP thin: kept %d results, removed %d results + %d mappings + %d findings + %d raw events",
-        stats.control_results_kept, stats.control_results_removed,
-        stats.control_mappings_removed, stats.findings_removed, stats.raw_events_removed,
+        stats.control_results_kept,
+        stats.control_results_removed,
+        stats.control_mappings_removed,
+        stats.findings_removed,
+        stats.raw_events_removed,
     )
     return stats
 
@@ -170,6 +178,7 @@ def thin_oltp_safe(session: Any, dry_run: bool = True) -> ThinStats:
     If any hold is active, returns ThinStats with error.
     """
     from warlock.db.models import LegalHold
+
     active_holds = session.query(LegalHold).filter(LegalHold.is_active.is_(True)).count()
     if active_holds > 0:
         stats = ThinStats()
@@ -188,14 +197,11 @@ def current_state_projection(session: Any, framework: str = None) -> list[dict]:
 
     from warlock.db.models import ControlResult
 
-    subq = (
-        session.query(
-            ControlResult.framework,
-            ControlResult.control_id,
-            func.max(ControlResult.assessed_at).label("max_assessed"),
-        )
-        .group_by(ControlResult.framework, ControlResult.control_id)
-    )
+    subq = session.query(
+        ControlResult.framework,
+        ControlResult.control_id,
+        func.max(ControlResult.assessed_at).label("max_assessed"),
+    ).group_by(ControlResult.framework, ControlResult.control_id)
     if framework:
         subq = subq.filter(ControlResult.framework == framework)
     subq = subq.subquery()

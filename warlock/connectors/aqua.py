@@ -125,9 +125,7 @@ class AquaConnector(BaseConnector):
             log.debug("Aqua images collection failed: %s", e)
             result.errors.append(f"aqua_images: {e}")
 
-    def _collect_runtime_policies(
-        self, client: httpx.Client, result: ConnectorResult
-    ) -> None:
+    def _collect_runtime_policies(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect runtime protection policies and enforcement status."""
         try:
             resp = client.get(
@@ -136,16 +134,12 @@ class AquaConnector(BaseConnector):
             )
             resp.raise_for_status()
             policies = resp.json().get("result", resp.json().get("data", []))
-            result.events.append(
-                self._raw_event("aqua_runtime_policies", {"policies": policies})
-            )
+            result.events.append(self._raw_event("aqua_runtime_policies", {"policies": policies}))
         except Exception as e:
             log.debug("Aqua runtime policies collection failed: %s", e)
             result.errors.append(f"aqua_runtime_policies: {e}")
 
-    def _collect_compliance(
-        self, client: httpx.Client, result: ConnectorResult
-    ) -> None:
+    def _collect_compliance(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect CIS benchmark compliance results."""
         try:
             resp = client.get(
@@ -154,9 +148,7 @@ class AquaConnector(BaseConnector):
             )
             resp.raise_for_status()
             benchmarks = resp.json().get("result", resp.json().get("data", []))
-            result.events.append(
-                self._raw_event("aqua_compliance", {"benchmarks": benchmarks})
-            )
+            result.events.append(self._raw_event("aqua_compliance", {"benchmarks": benchmarks}))
         except Exception as e:
             log.debug("Aqua compliance collection failed: %s", e)
             result.errors.append(f"aqua_compliance: {e}")

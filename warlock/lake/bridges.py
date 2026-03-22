@@ -33,7 +33,9 @@ def write_bridge_tables(
     if crosswalks:
         total += _write_bridge(lake_path, "bridge_control_crosswalk", crosswalks, run_id)
     if entity_relationships:
-        total += _write_bridge(lake_path, "bridge_entity_relationship", entity_relationships, run_id)
+        total += _write_bridge(
+            lake_path, "bridge_entity_relationship", entity_relationships, run_id
+        )
     if data_flows:
         total += _write_bridge(lake_path, "fact_data_flow", data_flows, run_id)
     if boundary_memberships:

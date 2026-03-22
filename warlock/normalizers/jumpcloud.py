@@ -53,9 +53,11 @@ class JumpCloudNormalizer(BaseNormalizer):
             state = user.get("state", "")
             suspended = user.get("suspended", False)
             activated = user.get("activated", True)
-            mfa_configured = user.get("mfa", {}).get("configured", False) if isinstance(
-                user.get("mfa"), dict
-            ) else user.get("totp_enabled", False)
+            mfa_configured = (
+                user.get("mfa", {}).get("configured", False)
+                if isinstance(user.get("mfa"), dict)
+                else user.get("totp_enabled", False)
+            )
             account_locked = user.get("account_locked", False)
             password_expired = user.get("password_expired", False)
             created = user.get("created", "")
@@ -285,9 +287,11 @@ class JumpCloudNormalizer(BaseNormalizer):
             event_id = entry.get("id", entry.get("_id", ""))
             event_type = entry.get("event_type", "")
             success = entry.get("success", True)
-            username = entry.get("initiated_by", {}).get("username", "") if isinstance(
-                entry.get("initiated_by"), dict
-            ) else entry.get("username", "")
+            username = (
+                entry.get("initiated_by", {}).get("username", "")
+                if isinstance(entry.get("initiated_by"), dict)
+                else entry.get("username", "")
+            )
             client_ip = entry.get("client_ip", entry.get("src_ip", ""))
             timestamp = entry.get("timestamp", entry.get("created", ""))
             geoip = entry.get("geoip", {})

@@ -37,8 +37,7 @@ class GrafanaConnector(BaseConnector):
         # Accept either token or user/password auth
         has_token = bool(self.get_secret("WLK_GRAFANA_TOKEN"))
         has_basic = bool(
-            self.get_secret("WLK_GRAFANA_USER")
-            and self.get_secret("WLK_GRAFANA_PASSWORD")
+            self.get_secret("WLK_GRAFANA_USER") and self.get_secret("WLK_GRAFANA_PASSWORD")
         )
         if not has_token and not has_basic:
             errors.append(
@@ -116,11 +115,15 @@ class GrafanaConnector(BaseConnector):
         try:
             resp = client.get(f"{self._base_url()}/api/v1/provisioning/alert-rules")
             resp.raise_for_status()
-            alert_rules = resp.json() if isinstance(resp.json(), list) else resp.json().get("data", [])
+            alert_rules = (
+                resp.json() if isinstance(resp.json(), list) else resp.json().get("data", [])
+            )
 
             # Also fetch current alert instances for state
             try:
-                state_resp = client.get(f"{self._base_url()}/api/alertmanager/grafana/api/v2/alerts")
+                state_resp = client.get(
+                    f"{self._base_url()}/api/alertmanager/grafana/api/v2/alerts"
+                )
                 state_resp.raise_for_status()
                 alert_instances = state_resp.json() if isinstance(state_resp.json(), list) else []
             except Exception:
@@ -136,9 +139,7 @@ class GrafanaConnector(BaseConnector):
             log.debug("Grafana alerts collection failed: %s", e)
             result.errors.append(f"grafana_alerts: {e}")
 
-    def _collect_dashboards(
-        self, client: httpx.Client, result: ConnectorResult
-    ) -> None:
+    def _collect_dashboards(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect dashboards with metadata."""
         try:
             resp = client.get(
@@ -147,16 +148,12 @@ class GrafanaConnector(BaseConnector):
             )
             resp.raise_for_status()
             dashboards = resp.json() if isinstance(resp.json(), list) else []
-            result.events.append(
-                self._raw_event("grafana_dashboards", {"dashboards": dashboards})
-            )
+            result.events.append(self._raw_event("grafana_dashboards", {"dashboards": dashboards}))
         except Exception as e:
             log.debug("Grafana dashboards collection failed: %s", e)
             result.errors.append(f"grafana_dashboards: {e}")
 
-    def _collect_datasources(
-        self, client: httpx.Client, result: ConnectorResult
-    ) -> None:
+    def _collect_datasources(self, client: httpx.Client, result: ConnectorResult) -> None:
         """Collect data sources with access configuration."""
         try:
             resp = client.get(f"{self._base_url()}/api/datasources")
@@ -182,15 +179,19 @@ class GrafanaConnector(BaseConnector):
             # Also fetch teams
             teams = []
             try:
-                teams_resp = client.get(f"{self._base_url()}/api/teams/search", params={"perpage": "100"})
+                teams_resp = client.get(
+                    f"{self._base_url()}/api/teams/search", params={"perpage": "100"}
+                )
                 teams_resp.raise_for_status()
-                teams = teams_resp.json().get("teams", []) if isinstance(teams_resp.json(), dict) else []
+                teams = (
+                    teams_resp.json().get("teams", [])
+                    if isinstance(teams_resp.json(), dict)
+                    else []
+                )
             except Exception:
                 pass
 
-            result.events.append(
-                self._raw_event("grafana_users", {"users": users, "teams": teams})
-            )
+            result.events.append(self._raw_event("grafana_users", {"users": users, "teams": teams}))
         except Exception as e:
             log.debug("Grafana users collection failed: %s", e)
             result.errors.append(f"grafana_users: {e}")

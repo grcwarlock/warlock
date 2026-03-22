@@ -739,7 +739,8 @@ class UserRepository(BaseRepository):
     def deactivate_api_keys(self, user_id: str) -> None:
         """Deactivate all active API keys for a user."""
         self.session.query(APIKey).filter(
-            APIKey.user_id == user_id, APIKey.is_active == True  # noqa: E712
+            APIKey.user_id == user_id,
+            APIKey.is_active == True,  # noqa: E712
         ).update({"is_active": False}, synchronize_session="fetch")
 
 
@@ -879,28 +880,15 @@ class ConnectorRunRepository(BaseRepository):
 
     def find_running(self) -> ConnectorRun | None:
         """Return a currently-running connector run, or None."""
-        return (
-            self.session.query(ConnectorRun)
-            .filter(ConnectorRun.status == "running")
-            .first()
-        )
+        return self.session.query(ConnectorRun).filter(ConnectorRun.status == "running").first()
 
     def is_running(self) -> bool:
         """Check if any pipeline run is currently in progress."""
-        return (
-            self.session.query(ConnectorRun)
-            .filter(ConnectorRun.status == "running")
-            .count()
-            > 0
-        )
+        return self.session.query(ConnectorRun).filter(ConnectorRun.status == "running").count() > 0
 
     def latest_run(self) -> ConnectorRun | None:
         """Most recent connector run by started_at."""
-        return (
-            self.session.query(ConnectorRun)
-            .order_by(ConnectorRun.started_at.desc())
-            .first()
-        )
+        return self.session.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).first()
 
     def total_event_count(self) -> int:
         """Sum of event_count across all connector runs."""

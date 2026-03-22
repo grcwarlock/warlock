@@ -50,16 +50,26 @@ class GitGuardianNormalizer(BaseNormalizer):
             detector_name = incident.get("detector", {}).get("name", "")
             if isinstance(incident.get("detector"), str):
                 detector_name = incident.get("detector", "")
-            detector_group = incident.get("detector", {}).get("group_name", "") if isinstance(incident.get("detector"), dict) else ""
+            detector_group = (
+                incident.get("detector", {}).get("group_name", "")
+                if isinstance(incident.get("detector"), dict)
+                else ""
+            )
             status = incident.get("status", incident.get("assignee_email", ""))
             severity = incident.get("severity", "high").lower()
             date_created = incident.get("date", incident.get("created_at", ""))
-            occurrences_count = incident.get("occurrences_count", incident.get("total_occurrences", 0))
+            occurrences_count = incident.get(
+                "occurrences_count", incident.get("total_occurrences", 0)
+            )
             validity = incident.get("validity", "")
             repo_name = ""
             if incident.get("occurrences"):
                 first_occ = incident["occurrences"][0] if incident["occurrences"] else {}
-                repo_name = first_occ.get("source", {}).get("name", "") if isinstance(first_occ.get("source"), dict) else ""
+                repo_name = (
+                    first_occ.get("source", {}).get("name", "")
+                    if isinstance(first_occ.get("source"), dict)
+                    else ""
+                )
 
             # Inventory every incident
             findings.append(
@@ -81,7 +91,9 @@ class GitGuardianNormalizer(BaseNormalizer):
                     resource_id=incident_id,
                     resource_type="gitguardian_incident",
                     resource_name=f"{detector_name}:{incident_id}",
-                    severity=severity if severity in ("critical", "high", "medium", "low") else "high",
+                    severity=severity
+                    if severity in ("critical", "high", "medium", "low")
+                    else "high",
                 )
             )
 

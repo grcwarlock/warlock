@@ -48,7 +48,17 @@ class GitHubActionsNormalizer(BaseNormalizer):
         findings = []
         runs = raw.raw_data.get("runs", [])
 
-        security_keywords = {"security", "sast", "dast", "codeql", "scan", "audit", "compliance", "snyk", "semgrep"}
+        security_keywords = {
+            "security",
+            "sast",
+            "dast",
+            "codeql",
+            "scan",
+            "audit",
+            "compliance",
+            "snyk",
+            "semgrep",
+        }
 
         for run in runs:
             run_id = str(run.get("id", ""))
@@ -56,7 +66,11 @@ class GitHubActionsNormalizer(BaseNormalizer):
             conclusion = run.get("conclusion", "")
             status = run.get("status", "")
             html_url = run.get("html_url", "")
-            repo_name = run.get("repository", {}).get("full_name", "") if isinstance(run.get("repository"), dict) else ""
+            repo_name = (
+                run.get("repository", {}).get("full_name", "")
+                if isinstance(run.get("repository"), dict)
+                else ""
+            )
             head_branch = run.get("head_branch", "")
             run_number = run.get("run_number", "")
 
@@ -182,7 +196,11 @@ class GitHubActionsNormalizer(BaseNormalizer):
             os_name = runner.get("os", "")
             status = runner.get("status", "")
             busy = runner.get("busy", False)
-            labels = [lbl.get("name", "") for lbl in runner.get("labels", [])] if isinstance(runner.get("labels"), list) else []
+            labels = (
+                [lbl.get("name", "") for lbl in runner.get("labels", [])]
+                if isinstance(runner.get("labels"), list)
+                else []
+            )
 
             # Inventory
             findings.append(
@@ -247,7 +265,11 @@ class GitHubActionsNormalizer(BaseNormalizer):
             tool = alert.get("tool", {}) if isinstance(alert.get("tool"), dict) else {}
             tool_name = tool.get("name", "")
             html_url = alert.get("html_url", "")
-            repo_name = alert.get("repository", {}).get("full_name", "") if isinstance(alert.get("repository"), dict) else ""
+            repo_name = (
+                alert.get("repository", {}).get("full_name", "")
+                if isinstance(alert.get("repository"), dict)
+                else ""
+            )
 
             severity = "info"
             if rule_severity in ("critical",):
@@ -262,7 +284,9 @@ class GitHubActionsNormalizer(BaseNormalizer):
             findings.append(
                 FindingData(
                     **self._base(raw),
-                    observation_type="vulnerability" if severity in ("critical", "high") else "alert",
+                    observation_type="vulnerability"
+                    if severity in ("critical", "high")
+                    else "alert",
                     title=f"Code scanning alert: {rule_description or rule_id} ({tool_name})",
                     detail={
                         "alert_number": alert_number,
@@ -273,7 +297,9 @@ class GitHubActionsNormalizer(BaseNormalizer):
                         "tool_name": tool_name,
                         "html_url": html_url,
                         "repository": repo_name,
-                        "issue": f"Code scanning alert from {tool_name}: {rule_description}" if severity in ("critical", "high") else "",
+                        "issue": f"Code scanning alert from {tool_name}: {rule_description}"
+                        if severity in ("critical", "high")
+                        else "",
                     },
                     resource_id=f"{repo_name}:{alert_number}",
                     resource_type="gha_code_scanning_alert",

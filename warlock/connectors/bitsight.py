@@ -106,7 +106,9 @@ class BitSightConnector(BaseConnector):
             resp = client.get(f"{API_BASE}/companies/risk-vectors")
             resp.raise_for_status()
             vectors = resp.json().get("risk_vectors", [])
-            result.events.append(self._raw_event("bitsight_risk_vectors", {"risk_vectors": vectors}))
+            result.events.append(
+                self._raw_event("bitsight_risk_vectors", {"risk_vectors": vectors})
+            )
         except Exception as e:
             log.debug("BitSight risk vectors collection failed: %s", e)
             result.errors.append(f"bitsight_risk_vectors: {e}")

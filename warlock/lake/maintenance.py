@@ -92,9 +92,7 @@ def expire_snapshots(
         removed = 0
 
         for parquet_file in zone_dir.rglob("*.parquet"):
-            file_mtime = datetime.fromtimestamp(
-                parquet_file.stat().st_mtime, tz=timezone.utc
-            )
+            file_mtime = datetime.fromtimestamp(parquet_file.stat().st_mtime, tz=timezone.utc)
             if file_mtime < cutoff:
                 parquet_file.unlink()
                 removed += 1
@@ -158,6 +156,7 @@ def expire_snapshots_safe(session, lake_path: str, **kwargs) -> dict:
     If any hold is active, returns immediately without deleting.
     """
     from warlock.db.models import LegalHold
+
     active_holds = session.query(LegalHold).filter(LegalHold.is_active.is_(True)).count()
     if active_holds > 0:
         log.warning("Snapshot expiry blocked: %d active legal hold(s)", active_holds)

@@ -758,8 +758,11 @@ def list_personnel(
 ):
     repos = get_repos(db)
     rows, total = repos.personnel.list_filtered(
-        department=department, hr_status=hr_status, has_flags=has_flags,
-        limit=limit, offset=offset,
+        department=department,
+        hr_status=hr_status,
+        has_flags=has_flags,
+        limit=limit,
+        offset=offset,
     )
     items = [_personnel_to_response(p) for p in rows]
     return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)

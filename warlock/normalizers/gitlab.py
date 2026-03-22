@@ -129,12 +129,26 @@ class GitLabNormalizer(BaseNormalizer):
             title = vuln.get("title", vuln.get("name", ""))
             severity = vuln.get("severity", "unknown").lower()
             state = vuln.get("state", "")
-            scanner = vuln.get("scanner", {}).get("name", "") if isinstance(vuln.get("scanner"), dict) else ""
-            project_name = vuln.get("project", {}).get("name", "") if isinstance(vuln.get("project"), dict) else ""
+            scanner = (
+                vuln.get("scanner", {}).get("name", "")
+                if isinstance(vuln.get("scanner"), dict)
+                else ""
+            )
+            project_name = (
+                vuln.get("project", {}).get("name", "")
+                if isinstance(vuln.get("project"), dict)
+                else ""
+            )
             report_type = vuln.get("report_type", "")
 
             # Map GitLab severity to warlock severity
-            sev_map = {"critical": "critical", "high": "high", "medium": "medium", "low": "low", "info": "info"}
+            sev_map = {
+                "critical": "critical",
+                "high": "high",
+                "medium": "medium",
+                "low": "low",
+                "info": "info",
+            }
             mapped_severity = sev_map.get(severity, "medium")
 
             if mapped_severity in ("critical", "high"):

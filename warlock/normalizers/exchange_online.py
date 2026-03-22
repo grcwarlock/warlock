@@ -265,7 +265,9 @@ class ExchangeOnlineNormalizer(BaseNormalizer):
             # Flag completed assessments that found threats
             if status == "completed" and category in ("malware", "phish", "spam"):
                 result_info = policy.get("result", {})
-                result_type = result_info.get("resultType", "") if isinstance(result_info, dict) else ""
+                result_type = (
+                    result_info.get("resultType", "") if isinstance(result_info, dict) else ""
+                )
                 if result_type in ("malware", "phish", "spam"):
                     findings.append(
                         FindingData(

@@ -95,9 +95,7 @@ class LakeWriter:
 
         if session is not None:
             try:
-                stats.raw_events_written = self._flush_raw_events(
-                    session, run_id, write_raw_zone
-                )
+                stats.raw_events_written = self._flush_raw_events(session, run_id, write_raw_zone)
             except Exception as exc:
                 msg = f"Failed to write raw zone: {exc}"
                 log.exception(msg)
@@ -181,9 +179,7 @@ class LakeWriter:
         dicts = [model_to_dict(r) for r in records]
         return writer_fn(self._lake_path, run_id, dicts)
 
-    def _flush_curated(
-        self, session: Any, run_id: str, writer_fn: Any
-    ) -> tuple[int, int, int]:
+    def _flush_curated(self, session: Any, run_id: str, writer_fn: Any) -> tuple[int, int, int]:
         """Read control results, mappings, and connector runs from OLTP."""
         from warlock.db.models import ConnectorRun, ControlMapping, ControlResult
 
@@ -219,9 +215,7 @@ class LakeWriter:
             )
             cr_ids = [r[0] for r in connector_run_ids]
             if cr_ids:
-                records = (
-                    session.query(ConnectorRun).filter(ConnectorRun.id.in_(cr_ids)).all()
-                )
+                records = session.query(ConnectorRun).filter(ConnectorRun.id.in_(cr_ids)).all()
                 conn_dicts = [model_to_dict(r) for r in records]
 
         total_cr = 0

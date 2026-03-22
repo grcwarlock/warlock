@@ -92,10 +92,14 @@ class GitHubActionsConnector(BaseConnector):
 
     # -- Collectors --
 
-    def _collect_workflow_runs(self, client: httpx.Client, org: str, result: ConnectorResult) -> None:
+    def _collect_workflow_runs(
+        self, client: httpx.Client, org: str, result: ConnectorResult
+    ) -> None:
         """Collect recent workflow runs across org repos."""
         try:
-            repos_resp = client.get(f"https://api.github.com/orgs/{org}/repos", params={"per_page": "100"})
+            repos_resp = client.get(
+                f"https://api.github.com/orgs/{org}/repos", params={"per_page": "100"}
+            )
             repos_resp.raise_for_status()
             repos = repos_resp.json()
 
@@ -121,7 +125,9 @@ class GitHubActionsConnector(BaseConnector):
     def _collect_secrets(self, client: httpx.Client, org: str, result: ConnectorResult) -> None:
         """Collect org-level Actions secrets metadata (names only, not values)."""
         try:
-            resp = client.get(f"https://api.github.com/orgs/{org}/actions/secrets", params={"per_page": "100"})
+            resp = client.get(
+                f"https://api.github.com/orgs/{org}/actions/secrets", params={"per_page": "100"}
+            )
             resp.raise_for_status()
             secrets = resp.json().get("secrets", [])
             result.events.append(self._raw_event("gha_secrets", {"secrets": secrets}))
@@ -132,7 +138,9 @@ class GitHubActionsConnector(BaseConnector):
     def _collect_runners(self, client: httpx.Client, org: str, result: ConnectorResult) -> None:
         """Collect self-hosted runners and their status."""
         try:
-            resp = client.get(f"https://api.github.com/orgs/{org}/actions/runners", params={"per_page": "100"})
+            resp = client.get(
+                f"https://api.github.com/orgs/{org}/actions/runners", params={"per_page": "100"}
+            )
             resp.raise_for_status()
             runners = resp.json().get("runners", [])
             result.events.append(self._raw_event("gha_runners", {"runners": runners}))
@@ -140,7 +148,9 @@ class GitHubActionsConnector(BaseConnector):
             log.debug("GitHub Actions runners collection failed: %s", e)
             result.errors.append(f"gha_runners: {e}")
 
-    def _collect_code_scanning(self, client: httpx.Client, org: str, result: ConnectorResult) -> None:
+    def _collect_code_scanning(
+        self, client: httpx.Client, org: str, result: ConnectorResult
+    ) -> None:
         """Collect GHAS code scanning alerts across org repos."""
         try:
             resp = client.get(

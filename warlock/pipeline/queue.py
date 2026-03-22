@@ -815,6 +815,7 @@ class NATSBus:
 
         # Async internals managed via a dedicated event loop thread.
         import asyncio
+
         self._loop = asyncio.new_event_loop()
         self._loop_thread = threading.Thread(
             target=self._loop.run_forever, name="nats-loop", daemon=True
@@ -823,6 +824,7 @@ class NATSBus:
 
         # Connect synchronously (block until connected).
         import concurrent.futures  # noqa: F401
+
         future = asyncio.run_coroutine_threadsafe(self._connect(), self._loop)
         future.result(timeout=10)
 
@@ -833,9 +835,7 @@ class NATSBus:
         try:
             await self._js.find_stream_name_by_subject(f"{self._prefix}.>")
         except Exception:
-            await self._js.add_stream(
-                name=self._prefix, subjects=[f"{self._prefix}.>"]
-            )
+            await self._js.add_stream(name=self._prefix, subjects=[f"{self._prefix}.>"])
 
     def _subject(self, event_type: str) -> str:
         return f"{self._prefix}.{event_type}"
@@ -871,9 +871,8 @@ class NATSBus:
         subject = self._subject(event.event_type)
         payload = _event_to_json(event).encode("utf-8")
         import asyncio
-        future = asyncio.run_coroutine_threadsafe(
-            self._js.publish(subject, payload), self._loop
-        )
+
+        future = asyncio.run_coroutine_threadsafe(self._js.publish(subject, payload), self._loop)
         future.result(timeout=5)
 
     def clear(self) -> None:
@@ -884,6 +883,7 @@ class NATSBus:
     def close(self) -> None:
         self._running = False
         import asyncio
+
         try:
             future = asyncio.run_coroutine_threadsafe(self._nc.close(), self._loop)
             future.result(timeout=5)
@@ -897,9 +897,8 @@ class NATSBus:
 
     def _consume_sync(self, subject: str, event_type: str | None) -> None:
         import asyncio
-        future = asyncio.run_coroutine_threadsafe(
-            self._consume(subject, event_type), self._loop
-        )
+
+        future = asyncio.run_coroutine_threadsafe(self._consume(subject, event_type), self._loop)
         try:
             future.result()
         except Exception:
@@ -908,6 +907,7 @@ class NATSBus:
 
     async def _consume(self, subject: str, event_type: str | None) -> None:
         import asyncio
+
         durable = f"{self._config.consumer_group}-{subject.replace('.', '-')}"
         sub = await self._js.subscribe(subject, durable=durable)
         while self._running:
@@ -946,7 +946,9 @@ _BACKEND_MAP: dict[str, type] = {
 }
 
 
-def create_bus(config: QueueConfig | None = None) -> EventBus | RedisStreamBus | KafkaBus | SQSBus | NATSBus:
+def create_bus(
+    config: QueueConfig | None = None,
+) -> EventBus | RedisStreamBus | KafkaBus | SQSBus | NATSBus:
     """Create an EventBus from a QueueConfig.
 
     Returns an InMemoryBus if *config* is ``None`` or if the required

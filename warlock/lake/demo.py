@@ -21,9 +21,7 @@ def init_lake(lake_path: str) -> None:
     log.info("Lake initialized at %s", lake_path)
 
 
-def write_sample_parquet(
-    lake_path: str, table_name: str, data: dict[str, list[Any]]
-) -> None:
+def write_sample_parquet(lake_path: str, table_name: str, data: dict[str, list[Any]]) -> None:
     """Write a dict of columns as a Parquet file to the curated zone."""
     import pyarrow as pa
     import pyarrow.parquet as pq

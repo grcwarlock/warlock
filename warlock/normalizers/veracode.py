@@ -50,7 +50,11 @@ class VeracodeNormalizer(BaseNormalizer):
             app_guid = app.get("guid", "")
             profile = app.get("profile", {})
             app_name = profile.get("name", "")
-            business_unit = profile.get("business_unit", {}).get("name", "") if isinstance(profile.get("business_unit"), dict) else ""
+            business_unit = (
+                profile.get("business_unit", {}).get("name", "")
+                if isinstance(profile.get("business_unit"), dict)
+                else ""
+            )
             policy_compliance = app.get("policy_compliance_status", "")
             last_scan = app.get("last_completed_scan_date", "")
 
@@ -88,7 +92,11 @@ class VeracodeNormalizer(BaseNormalizer):
             severity_num = f.get("finding_details", {}).get("severity", f.get("severity", 0))
             cwe_id = f.get("finding_details", {}).get("cwe", {}).get("id", "")
             cwe_name = f.get("finding_details", {}).get("cwe", {}).get("name", "")
-            category = f.get("finding_category", {}).get("name", "") if isinstance(f.get("finding_category"), dict) else ""
+            category = (
+                f.get("finding_category", {}).get("name", "")
+                if isinstance(f.get("finding_category"), dict)
+                else ""
+            )
             status = f.get("finding_status", {}).get("status", f.get("status", ""))
             resolution = f.get("finding_status", {}).get("resolution", "")
             resolution_status = f.get("finding_status", {}).get("resolution_status", "")
@@ -98,7 +106,9 @@ class VeracodeNormalizer(BaseNormalizer):
 
             # Map Veracode severity (0-5) to standard
             severity_map = {0: "info", 1: "info", 2: "low", 3: "medium", 4: "high", 5: "critical"}
-            severity = severity_map.get(severity_num, "info") if isinstance(severity_num, int) else "info"
+            severity = (
+                severity_map.get(severity_num, "info") if isinstance(severity_num, int) else "info"
+            )
 
             # Inventory every finding
             findings.append(
@@ -190,7 +200,12 @@ class VeracodeNormalizer(BaseNormalizer):
             )
 
             # Flag policy-violating applications
-            if compliance_status and compliance_status.upper() not in ("PASS", "PASSED", "COMPLIANT", "CONDITIONAL_PASS"):
+            if compliance_status and compliance_status.upper() not in (
+                "PASS",
+                "PASSED",
+                "COMPLIANT",
+                "CONDITIONAL_PASS",
+            ):
                 findings.append(
                     FindingData(
                         **self._base(raw),
@@ -251,9 +266,17 @@ class VeracodeNormalizer(BaseNormalizer):
                 lib_name = library.get("name", "") if isinstance(library, dict) else ""
                 lib_version = library.get("version", "") if isinstance(library, dict) else ""
                 vulnerability = issue.get("vulnerability", {})
-                vuln_id = vulnerability.get("cve", vulnerability.get("id", "")) if isinstance(vulnerability, dict) else ""
-                severity_score = vulnerability.get("cvss_score", 0) if isinstance(vulnerability, dict) else 0
-                vuln_title = vulnerability.get("title", "") if isinstance(vulnerability, dict) else ""
+                vuln_id = (
+                    vulnerability.get("cve", vulnerability.get("id", ""))
+                    if isinstance(vulnerability, dict)
+                    else ""
+                )
+                severity_score = (
+                    vulnerability.get("cvss_score", 0) if isinstance(vulnerability, dict) else 0
+                )
+                vuln_title = (
+                    vulnerability.get("title", "") if isinstance(vulnerability, dict) else ""
+                )
 
                 # Map CVSS to severity
                 if isinstance(severity_score, (int, float)):

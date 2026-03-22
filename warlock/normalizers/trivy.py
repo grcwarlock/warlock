@@ -80,7 +80,9 @@ class TrivyNormalizer(BaseNormalizer):
                         resource_id=vuln_id,
                         resource_type="container_vulnerability",
                         resource_name=f"{pkg_name}@{installed}",
-                        severity=severity if severity in ("critical", "high", "medium", "low") else "info",
+                        severity=severity
+                        if severity in ("critical", "high", "medium", "low")
+                        else "info",
                     )
                 )
 
@@ -118,7 +120,9 @@ class TrivyNormalizer(BaseNormalizer):
 
         for result_block in results:
             target = result_block.get("Target", result_block.get("target", ""))
-            misconfigs = result_block.get("Misconfigurations", result_block.get("misconfigurations", []))
+            misconfigs = result_block.get(
+                "Misconfigurations", result_block.get("misconfigurations", [])
+            )
 
             if not misconfigs:
                 continue
@@ -150,7 +154,9 @@ class TrivyNormalizer(BaseNormalizer):
                         resource_id=mc_id,
                         resource_type="iac_misconfiguration",
                         resource_name=f"{mc_id}:{target}",
-                        severity=severity if severity in ("critical", "high", "medium", "low") else "info",
+                        severity=severity
+                        if severity in ("critical", "high", "medium", "low")
+                        else "info",
                     )
                 )
 

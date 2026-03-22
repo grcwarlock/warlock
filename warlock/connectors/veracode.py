@@ -76,9 +76,7 @@ class VeracodeConnector(BaseConnector):
         api_key = self.get_secret("WLK_VERACODE_API_KEY")
 
         # Veracode HMAC signing
-        nonce = hashlib.sha256(
-            datetime.now(timezone.utc).isoformat().encode()
-        ).hexdigest()[:32]
+        nonce = hashlib.sha256(datetime.now(timezone.utc).isoformat().encode()).hexdigest()[:32]
         timestamp = str(int(datetime.now(timezone.utc).timestamp() * 1000))
 
         signing_data = f"id={api_id}&host=api.veracode.com&url=/appsec/v2/&method=GET"
@@ -89,10 +87,7 @@ class VeracodeConnector(BaseConnector):
         ).hexdigest()
 
         auth_header = (
-            f"VERACODE-HMAC-SHA-256 id={api_id},"
-            f"ts={timestamp},"
-            f"nonce={nonce},"
-            f"sig={signature}"
+            f"VERACODE-HMAC-SHA-256 id={api_id},ts={timestamp},nonce={nonce},sig={signature}"
         )
 
         return httpx.Client(
@@ -161,16 +156,20 @@ class VeracodeConnector(BaseConnector):
             policy_results = []
             for app in apps:
                 profile = app.get("profile", {})
-                policy_results.append({
-                    "app_guid": app.get("guid", ""),
-                    "app_name": profile.get("name", ""),
-                    "policy_name": profile.get("policies", [{}])[0].get("name", "")
-                    if profile.get("policies")
-                    else "",
-                    "policy_compliance_status": app.get("policy_compliance_status", ""),
-                    "last_completed_scan_date": app.get("last_completed_scan_date", ""),
-                })
-            result.events.append(self._raw_event("veracode_policy", {"policy_results": policy_results}))
+                policy_results.append(
+                    {
+                        "app_guid": app.get("guid", ""),
+                        "app_name": profile.get("name", ""),
+                        "policy_name": profile.get("policies", [{}])[0].get("name", "")
+                        if profile.get("policies")
+                        else "",
+                        "policy_compliance_status": app.get("policy_compliance_status", ""),
+                        "last_completed_scan_date": app.get("last_completed_scan_date", ""),
+                    }
+                )
+            result.events.append(
+                self._raw_event("veracode_policy", {"policy_results": policy_results})
+            )
         except Exception as e:
             log.debug("Veracode policy collection failed: %s", e)
             result.errors.append(f"veracode_policy: {e}")
@@ -198,11 +197,13 @@ class VeracodeConnector(BaseConnector):
                     issues_resp.raise_for_status()
                     issues_body = issues_resp.json()
                     issues = issues_body.get("_embedded", {}).get("issues", [])
-                    sca_results.append({
-                        "workspace_id": ws_id,
-                        "workspace_name": ws_name,
-                        "issues": issues,
-                    })
+                    sca_results.append(
+                        {
+                            "workspace_id": ws_id,
+                            "workspace_name": ws_name,
+                            "issues": issues,
+                        }
+                    )
                 except Exception:
                     log.debug("Veracode SCA issues for workspace %s failed", ws_id)
 

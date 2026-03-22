@@ -124,7 +124,10 @@ class Auth0Connector(BaseConnector):
     # -- Collectors --
 
     def _collect_users(
-        self, client: httpx.Client, domain: str, result: ConnectorResult,
+        self,
+        client: httpx.Client,
+        domain: str,
+        result: ConnectorResult,
     ) -> None:
         """Collect Auth0 users with MFA enrollment and blocked status."""
         try:
@@ -141,7 +144,10 @@ class Auth0Connector(BaseConnector):
             result.errors.append(f"auth0_users: {e}")
 
     def _collect_connections(
-        self, client: httpx.Client, domain: str, result: ConnectorResult,
+        self,
+        client: httpx.Client,
+        domain: str,
+        result: ConnectorResult,
     ) -> None:
         """Collect Auth0 connections (identity providers)."""
         try:
@@ -161,7 +167,10 @@ class Auth0Connector(BaseConnector):
             result.errors.append(f"auth0_connections: {e}")
 
     def _collect_rules(
-        self, client: httpx.Client, domain: str, result: ConnectorResult,
+        self,
+        client: httpx.Client,
+        domain: str,
+        result: ConnectorResult,
     ) -> None:
         """Collect Auth0 rules and actions."""
         try:
@@ -181,9 +190,14 @@ class Auth0Connector(BaseConnector):
                 )
                 actions_resp.raise_for_status()
                 actions_body = actions_resp.json()
-                actions = actions_body.get("actions", actions_body) if isinstance(
-                    actions_body, dict,
-                ) else actions_body
+                actions = (
+                    actions_body.get("actions", actions_body)
+                    if isinstance(
+                        actions_body,
+                        dict,
+                    )
+                    else actions_body
+                )
             except Exception as e:
                 log.debug("Auth0 actions collection failed: %s", e)
 
@@ -195,7 +209,10 @@ class Auth0Connector(BaseConnector):
             result.errors.append(f"auth0_rules: {e}")
 
     def _collect_logs(
-        self, client: httpx.Client, domain: str, result: ConnectorResult,
+        self,
+        client: httpx.Client,
+        domain: str,
+        result: ConnectorResult,
     ) -> None:
         """Collect Auth0 log events (failed logins, anomalies)."""
         try:

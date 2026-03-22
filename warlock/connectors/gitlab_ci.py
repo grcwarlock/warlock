@@ -94,7 +94,9 @@ class GitLabCIConnector(BaseConnector):
     def _collect_pipelines(self, client: httpx.Client, base: str, result: ConnectorResult) -> None:
         """Collect recent pipelines across accessible projects."""
         try:
-            projects_resp = client.get(f"{base}/projects", params={"membership": "true", "per_page": "50"})
+            projects_resp = client.get(
+                f"{base}/projects", params={"membership": "true", "per_page": "50"}
+            )
             projects_resp.raise_for_status()
             projects = projects_resp.json()
 
@@ -115,7 +117,9 @@ class GitLabCIConnector(BaseConnector):
                 except Exception:
                     log.debug("Failed to fetch pipelines for project %s", project_id)
 
-            result.events.append(self._raw_event("gitlab_ci_pipelines", {"pipelines": all_pipelines}))
+            result.events.append(
+                self._raw_event("gitlab_ci_pipelines", {"pipelines": all_pipelines})
+            )
         except Exception as e:
             log.debug("GitLab CI pipelines collection failed: %s", e)
             result.errors.append(f"gitlab_ci_pipelines: {e}")
@@ -123,7 +127,9 @@ class GitLabCIConnector(BaseConnector):
     def _collect_jobs(self, client: httpx.Client, base: str, result: ConnectorResult) -> None:
         """Collect recent failed jobs across accessible projects."""
         try:
-            projects_resp = client.get(f"{base}/projects", params={"membership": "true", "per_page": "50"})
+            projects_resp = client.get(
+                f"{base}/projects", params={"membership": "true", "per_page": "50"}
+            )
             projects_resp.raise_for_status()
             projects = projects_resp.json()
 
@@ -152,7 +158,9 @@ class GitLabCIConnector(BaseConnector):
     def _collect_variables(self, client: httpx.Client, base: str, result: ConnectorResult) -> None:
         """Collect CI/CD variables metadata (names only, not values)."""
         try:
-            projects_resp = client.get(f"{base}/projects", params={"membership": "true", "per_page": "50"})
+            projects_resp = client.get(
+                f"{base}/projects", params={"membership": "true", "per_page": "50"}
+            )
             projects_resp.raise_for_status()
             projects = projects_resp.json()
 
@@ -172,7 +180,9 @@ class GitLabCIConnector(BaseConnector):
                 except Exception:
                     log.debug("Failed to fetch variables for project %s", project_id)
 
-            result.events.append(self._raw_event("gitlab_ci_variables", {"variables": all_variables}))
+            result.events.append(
+                self._raw_event("gitlab_ci_variables", {"variables": all_variables})
+            )
         except Exception as e:
             log.debug("GitLab CI variables collection failed: %s", e)
             result.errors.append(f"gitlab_ci_variables: {e}")
@@ -180,7 +190,9 @@ class GitLabCIConnector(BaseConnector):
     def _collect_registry(self, client: httpx.Client, base: str, result: ConnectorResult) -> None:
         """Collect container registry repositories and tags."""
         try:
-            projects_resp = client.get(f"{base}/projects", params={"membership": "true", "per_page": "50"})
+            projects_resp = client.get(
+                f"{base}/projects", params={"membership": "true", "per_page": "50"}
+            )
             projects_resp.raise_for_status()
             projects = projects_resp.json()
 
