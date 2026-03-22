@@ -135,3 +135,106 @@ class TestDomainRegistry:
         items = reg.get_briefing()
         assert items[0].priority_score == 95.0
         assert items[1].priority_score == 10.0
+
+
+class TestDomainEventBus:
+    def test_publish_and_subscribe(self):
+        from warlock.domains.base import DomainEvent
+        from warlock.domains.bus import DomainEventBus
+        received = []
+        bus = DomainEventBus()
+        bus.subscribe("issue.completed", lambda e: received.append(e))
+        evt = DomainEvent(
+            event_type="issue.completed", domain="issues",
+            entity_type="issue", entity_id="1", actor="test",
+        )
+        bus.publish(evt)
+        assert len(received) == 1
+        assert received[0].entity_id == "1"
+
+    def test_handler_returns_cascade_events(self):
+        from warlock.domains.base import DomainEvent
+        from warlock.domains.bus import DomainEventBus
+        cascade_log = []
+
+        def handler(event):
+            cascade_log.append(event.event_type)
+            if event.event_type == "issue.completed":
+                return [DomainEvent(
+                    event_type="control.reassessed", domain="assessment",
+                    entity_type="control", entity_id="AC-2", actor="system",
+                    correlation_id=event.correlation_id,
+                )]
+            return []
+
+        bus = DomainEventBus()
+        bus.subscribe("issue.completed", handler)
+        bus.subscribe("control.reassessed", lambda e: cascade_log.append(e.event_type))
+        evt = DomainEvent(
+            event_type="issue.completed", domain="issues",
+            entity_type="issue", entity_id="1", actor="test",
+        )
+        bus.publish(evt)
+        assert "issue.completed" in cascade_log
+        assert "control.reassessed" in cascade_log
+
+    def test_cascade_max_depth_prevents_infinite_loop(self):
+        from warlock.domains.base import DomainEvent
+        from warlock.domains.bus import DomainEventBus
+        call_count = 0
+
+        def looping_handler(event):
+            nonlocal call_count
+            call_count += 1
+            return [DomainEvent(
+                event_type="loop.event", domain="test",
+                entity_type="x", entity_id="1", actor="test",
+                correlation_id=event.correlation_id,
+            )]
+
+        bus = DomainEventBus(max_cascade_depth=5)
+        bus.subscribe("loop.event", looping_handler)
+        bus.publish(DomainEvent(
+            event_type="loop.event", domain="test",
+            entity_type="x", entity_id="1", actor="test",
+        ))
+        assert call_count == 5
+
+    def test_cascade_deduplication(self):
+        from warlock.domains.base import DomainEvent
+        from warlock.domains.bus import DomainEventBus
+        call_count = 0
+
+        def counting_handler(event):
+            nonlocal call_count
+            call_count += 1
+            return []
+
+        bus = DomainEventBus()
+        bus.subscribe("test.event", counting_handler)
+        corr_id = "same-correlation"
+        evt1 = DomainEvent(
+            event_type="test.event", domain="a",
+            entity_type="x", entity_id="1", actor="test",
+            correlation_id=corr_id,
+        )
+        evt2 = DomainEvent(
+            event_type="test.event", domain="b",
+            entity_type="x", entity_id="1", actor="test",
+            correlation_id=corr_id,
+        )
+        bus.publish(evt1)
+        bus.publish_cascade(evt2, corr_id, depth=1)
+        assert call_count == 1
+
+    def test_wildcard_subscription(self):
+        from warlock.domains.base import DomainEvent
+        from warlock.domains.bus import DomainEventBus
+        received = []
+        bus = DomainEventBus()
+        bus.subscribe_all(lambda e: received.append(e.event_type))
+        bus.publish(DomainEvent(event_type="a.happened", domain="a",
+                                entity_type="x", entity_id="1", actor="test"))
+        bus.publish(DomainEvent(event_type="b.happened", domain="b",
+                                entity_type="x", entity_id="2", actor="test"))
+        assert len(received) == 2
