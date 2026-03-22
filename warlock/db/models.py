@@ -1395,3 +1395,78 @@ class Embedding(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (Index("idx_embedding_entity", "entity_type", "entity_id", unique=True),)
+
+
+# ---------------------------------------------------------------------------
+# Domain Architecture: Policy, Asset, Vendor models
+# ---------------------------------------------------------------------------
+
+
+class Policy(Base):
+    __tablename__ = "policies"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    policy_type = Column(String(50), nullable=False, index=True)
+    scope = Column(JSONType, nullable=False, default=dict)
+    rules = Column(JSONType, nullable=False)
+    priority = Column(Integer, default=0)
+    enabled = Column(Boolean, default=True)
+    created_by = Column(String(200), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    effective_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    description = Column(Text, default="")
+
+    __table_args__ = (
+        Index("ix_policies_type_enabled", "policy_type", "enabled"),
+    )
+
+
+class PolicyHistory(Base):
+    __tablename__ = "policy_history"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    policy_id = Column(
+        String(36), ForeignKey("policies.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    action = Column(String(20), nullable=False)
+    old_rules = Column(JSONType, nullable=True)
+    new_rules = Column(JSONType, nullable=False)
+    actor = Column(String(200), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    policy = relationship("Policy", backref="history")
+
+
+class Asset(Base):
+    __tablename__ = "assets"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    resource_id = Column(String(500), nullable=False, unique=True, index=True)
+    resource_type = Column(String(100), nullable=False, index=True)
+    resource_name = Column(String(500), nullable=True)
+    system_id = Column(
+        String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"), nullable=True
+    )
+    owner = Column(String(200), nullable=True)
+    classification = Column(String(20), nullable=True)
+    criticality = Column(Integer, nullable=True)
+    status = Column(String(20), default="active")
+    first_seen = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    last_seen = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    metadata_ = Column("metadata", JSONType, default=dict)
+
+    system = relationship("SystemProfile", backref="assets")
+
+
+class Vendor(Base):
+    __tablename__ = "vendors"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(200), nullable=False, unique=True, index=True)
+    tier = Column(String(20), nullable=True)
+    risk_score = Column(Float, nullable=True)
+    contract_expires = Column(DateTime(timezone=True), nullable=True)
+    last_assessment = Column(DateTime(timezone=True), nullable=True)
+    assessment_cadence_days = Column(Integer, nullable=True)
+    metadata_ = Column("metadata", JSONType, default=dict)
