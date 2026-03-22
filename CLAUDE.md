@@ -76,7 +76,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (81 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, and AI service import.
+The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (81 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (13 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -167,6 +167,12 @@ When you change the left column, you MUST update every file in the right column.
 | CLI command (`warlock/cli.py`) | `.github/workflows/ci.yml` CLI smoke test list, README.md, DEMO.md, CONTRIBUTING.md |
 | CI workflows (`.github/workflows/`) | Verify command/group names match actual CLI, test locally before pushing — CI failures block all PRs |
 | Docker (`Dockerfile`, `docker-compose.yml`) | Rebuild image (`docker compose build demo`), verify `docker compose up demo` succeeds |
+| Connector/normalizer/framework count changes | Update `proddocs/features/connectors.md`, `proddocs/product/frameworks.md`, `proddocs/product/overview.md` counts |
+| API route changes | Update `proddocs/api/reference.md` endpoint list |
+| CLI command changes | Update `proddocs/api/cli-reference.md` command list |
+| DB model changes | Update `proddocs/technical/data-model.md` schema tables |
+| Lake changes | Update `proddocs/technical/data-lake.md` |
+| Security changes | Update `proddocs/technical/security.md` |
 
 ---
 

@@ -638,6 +638,72 @@ else
 fi
 
 # ==========================================================================
+# SECTION 8: Production Documentation
+# ==========================================================================
+
+section_start "Production Docs Completeness"
+REQUIRED_PRODDOCS=(
+    "proddocs/README.md"
+    "proddocs/technical/architecture.md"
+    "proddocs/technical/data-model.md"
+    "proddocs/technical/data-lake.md"
+    "proddocs/technical/security.md"
+    "proddocs/product/overview.md"
+    "proddocs/product/frameworks.md"
+    "proddocs/features/connectors.md"
+    "proddocs/features/assessment-engine.md"
+    "proddocs/api/reference.md"
+    "proddocs/api/cli-reference.md"
+    "proddocs/operations/deployment.md"
+    "proddocs/operations/runbook.md"
+)
+MISSING_DOCS=0
+for doc in "${REQUIRED_PRODDOCS[@]}"; do
+    if [[ ! -f "$doc" ]]; then
+        echo "  MISSING: $doc"
+        MISSING_DOCS=$((MISSING_DOCS + 1))
+    fi
+done
+if [[ "$MISSING_DOCS" -gt 0 ]]; then
+    echo "  $MISSING_DOCS required production doc(s) missing"
+    section_fail
+else
+    echo "  All 13 production docs present"
+    section_pass
+fi
+
+section_start "Production Docs Accuracy"
+# Verify key numbers in proddocs match reality
+ACTUAL_CONNECTORS=$(ls warlock/connectors/*.py | grep -v __init__ | grep -v base | wc -l | tr -d ' ')
+ACTUAL_NORMALIZERS=$(ls warlock/normalizers/*.py | grep -v __init__ | grep -v base | wc -l | tr -d ' ')
+ACTUAL_FRAMEWORKS=$(ls warlock/frameworks/*.yaml 2>/dev/null | wc -l | tr -d ' ')
+DOC_ERRORS=0
+
+# Check connector count in connectors.md
+if [[ -f "proddocs/features/connectors.md" ]]; then
+    if ! grep -q "$ACTUAL_CONNECTORS" proddocs/features/connectors.md; then
+        echo "  STALE: proddocs/features/connectors.md doesn't mention $ACTUAL_CONNECTORS connectors"
+        DOC_ERRORS=$((DOC_ERRORS + 1))
+    fi
+fi
+
+# Check framework count in frameworks.md
+if [[ -f "proddocs/product/frameworks.md" ]]; then
+    if ! grep -q "14" proddocs/product/frameworks.md; then
+        echo "  STALE: proddocs/product/frameworks.md doesn't mention 14 frameworks"
+        DOC_ERRORS=$((DOC_ERRORS + 1))
+    fi
+fi
+
+if [[ "$DOC_ERRORS" -gt 0 ]]; then
+    echo "  $DOC_ERRORS accuracy issue(s) found in production docs"
+    section_fail
+else
+    echo "  Production doc counts match codebase"
+    section_pass
+fi
+
+# ==========================================================================
 # SUMMARY
 # ==========================================================================
 
