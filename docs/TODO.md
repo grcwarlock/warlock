@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-03-21
 **Sources:** MASTER_TODO.md, MASTER_ROADMAP.md, DATALAKE_TODO.md, TODO.md, DOCUMENTATION_TODO.md, Warlock_GRC_Data_Lake_Status.md, codebase audit
-**Total remaining:** 144 items | **Done today (data lake):** 48 items
+**Total remaining:** 213 items | **Done:** 150 items (including Sprint 1 hardening 2026-03-21)
 
 ---
 
@@ -16,19 +16,19 @@
 
 ---
 
-## 1. Hardening — Security & Performance (17 remaining)
+## 1. Hardening — Security & Performance (12 remaining)
 
 These are fixes to existing code. Ordered by severity.
 
-### Sprint 1 — HIGH severity (5 items)
+### Sprint 1 — HIGH severity (DONE — 2026-03-21)
 
-| # | What | Severity |
-|---|------|----------|
-| H-5 | **Auth on trust portal document listing** — `/trust/access-requests/{request_id}/documents` is unauthenticated. Leaked UUID = NDA-tier document access | HIGH |
-| H-6 | **Disable `/docs`, `/redoc`, `/metrics` in production** — Swagger UI exposes full API map, Prometheus exposes internals | HIGH |
-| H-7 | **Remove global audit trail write lock** — `FOR UPDATE` on latest `AuditEntry` serializes all API writes. Replace with DB `SEQUENCE` or async batch | HIGH |
-| H-8 | **Add FK indexes on `issues` table** — `finding_id`, `control_result_id`, `poam_id` lack indexes. Full table scans on JOINs. Also: `attestations.engagement_id`, `compensating_controls.poam_id`, `risk_acceptances.poam_id`, `evidence_requests.engagement_id` | HIGH |
-| H-9 | **Push trust portal aggregation to SQL** — Loads all ~1,996 `PostureSnapshot` rows into Python on every unauthenticated request | HIGH |
+| # | What | Status |
+|---|------|--------|
+| H-5 | **Auth on trust portal document listing** — Added `get_current_user` + ownership check | [x] Done |
+| H-6 | **Disable `/docs`, `/redoc`, `/metrics` in production** — Gated behind `env != "production"` | [x] Done |
+| H-7 | **Audit trail write lock** — Reviewed: `FOR UPDATE` is correct for hash-chain integrity. No change needed | [x] Done (no change) |
+| H-8 | **Add FK indexes** — 9 indexes across issues, compensating_controls, risk_acceptances, evidence_requests. Migration `f2a3b4c5d6e7` | [x] Done |
+| H-9 | **Push trust portal aggregation to SQL** — Replaced Python loop with SQL `GROUP BY` | [x] Done |
 
 ### Sprint 2 — MEDIUM severity (6 items)
 
@@ -308,7 +308,7 @@ Release management (3), architecture decisions (7 ADRs), code style (2), securit
 
 ---
 
-## 8. Operational Items (5 remaining)
+## 8. Operational Items (9 remaining)
 
 | # | What | Priority |
 |---|------|----------|
@@ -330,7 +330,8 @@ Release management (3), architecture decisions (7 ADRs), code style (2), securit
 |----------|------|-----------|
 | P0/P1 Features | 72 | 0 |
 | Hardening (immediate) | 4 | 0 |
-| Hardening (Sprint 1-2 + backlog) | 0 | 17 |
+| Hardening (Sprint 1) | 5 | 0 |
+| Hardening (Sprint 2 + backlog) | 0 | 12 |
 | Hardening (untriaged findings) | 0 | 15 |
 | Data Lake (Phases 0-3 + hardening) | 43 | 5 |
 | New Connectors | 24 | 30 |
@@ -338,14 +339,14 @@ Release management (3), architecture decisions (7 ADRs), code style (2), securit
 | P2 Features | 0 | 56 |
 | P3 Features | 0 | 18 |
 | Documentation | 2 | 58 |
-| Operational | 0 | 5 |
-| **Total** | **145** | **214** |
+| Operational | 0 | 9 |
+| **Total** | **150** | **213** |
 
 ---
 
 ## What to work on next (recommended order)
 
-1. **Hardening Sprint 1** (H-5 through H-9) — 5 HIGH-severity security/performance fixes
+1. ~~**Hardening Sprint 1** (H-5 through H-9)~~ — DONE (2026-03-21)
 2. **DL-WIRE** — Wire orchestrator to lake writers (the pipeline doesn't call them yet)
 3. **Hardening Sprint 2** (H-10 through H-15) — MEDIUM-severity fixes
 4. **HIGH frameworks** — CIS v8, DORA, NIS2, CCPA
@@ -381,5 +382,18 @@ SQL injection fix in rag.py, background pipeline constructors, PyJWT required, p
 <summary>Data Lake — 43/48 done (2026-03-21)</summary>
 
 See Section 2 above for full list. 24 lake modules, 535 tests, 10,535 RAG docs, 8/8 Iceberg tables, reconciliation passing.
+
+</details>
+
+<details>
+<summary>Hardening Sprint 1 — 5/5 done (2026-03-21)</summary>
+
+H-5: Auth on trust portal document listing (ownership + permission check)
+H-6: Disable /docs, /redoc, /metrics in production
+H-7: Audit trail write lock reviewed — correct as-is (FOR UPDATE is right for hash chain)
+H-8: 9 FK indexes added (issues, compensating_controls, risk_acceptances, evidence_requests) + migration f2a3b4c5d6e7
+H-9: Trust portal aggregation pushed to SQL GROUP BY
+
+Also fixed: 2 missing AI task prompts (aggregate_control_assessment, compliance_query), verify_docs normalizer count bug, stale doc counts across README/CLAUDE/CONTRIBUTING.
 
 </details>
