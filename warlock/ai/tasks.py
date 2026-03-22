@@ -476,6 +476,48 @@ _FOLLOW_UP_USER = (
     "Using the context below, answer the user's follow-up question.\n\n" + _EVIDENCE_WRAPPER
 )
 
+_AGGREGATE_CONTROL_ASSESSMENT_SYSTEM = """\
+You are a compliance analytics expert. Given a set of individual control \
+assessment results across multiple findings, produce an aggregate assessment \
+for the control. Consider the distribution of compliant, non-compliant, and \
+partial findings, the severity of non-compliant findings, and any compensating \
+controls or risk acceptances in effect.
+
+Do not speculate about data not provided in the evidence.
+
+Respond ONLY with a JSON object (no markdown fences, no commentary):
+{
+  "aggregate_status": "compliant" | "non_compliant" | "partial",
+  "confidence": <float 0.0-1.0>,
+  "summary": "<1-3 sentence summary of the aggregate posture>",
+  "finding_breakdown": {"compliant": <int>, "non_compliant": <int>, "partial": <int>},
+  "key_risks": ["<list of most significant risk factors>"]
+}\
+"""
+
+_AGGREGATE_CONTROL_ASSESSMENT_USER = (
+    "Aggregate the following individual assessment results into an overall "
+    "control compliance posture.\n\n" + _EVIDENCE_WRAPPER
+)
+
+_COMPLIANCE_QUERY_SYSTEM = """\
+You are a GRC knowledge assistant. Given the user's natural-language question \
+about their compliance posture, relevant control results, findings, and \
+framework requirements, provide a clear and accurate answer grounded in the \
+evidence provided.
+
+Do not speculate about data not provided in the evidence. If the evidence is \
+insufficient to answer the question, say so explicitly.
+
+Respond in plain text (no JSON, no markdown fences). Be concise and \
+actionable.\
+"""
+
+_COMPLIANCE_QUERY_USER = (
+    "Answer the following compliance question using the evidence below.\n\n"
+    "Question: {query}\n\n" + _EVIDENCE_WRAPPER
+)
+
 
 # ---------------------------------------------------------------------------
 # Prompt registry
@@ -570,6 +612,18 @@ TASK_PROMPTS: dict[AITask, TaskPrompt] = {
         system=_FOLLOW_UP_SYSTEM,
         user_template=_FOLLOW_UP_USER,
         max_tokens=1024,
+        response_format="text",
+    ),
+    AITask.AGGREGATE_CONTROL_ASSESSMENT: TaskPrompt(
+        system=_AGGREGATE_CONTROL_ASSESSMENT_SYSTEM,
+        user_template=_AGGREGATE_CONTROL_ASSESSMENT_USER,
+        max_tokens=1024,
+        response_format="json",
+    ),
+    AITask.COMPLIANCE_QUERY: TaskPrompt(
+        system=_COMPLIANCE_QUERY_SYSTEM,
+        user_template=_COMPLIANCE_QUERY_USER,
+        max_tokens=2048,
         response_format="text",
     ),
 }

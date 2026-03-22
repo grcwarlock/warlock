@@ -22,7 +22,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_current_user, get_db, require_permission
@@ -137,41 +137,34 @@ async def trust_status(db: Session = Depends(get_db)):
 
     Returns: frameworks, overall posture score, last assessment date.
     """
-    # Get latest posture snapshots per framework
+    # H-9: Aggregate posture snapshots in SQL, not Python
     latest_date = db.query(func.max(PostureSnapshot.snapshot_date)).scalar()
 
     frameworks: list[FrameworkStatus] = []
     overall_scores: list[float] = []
 
     if latest_date:
-        snapshots = (
-            db.query(PostureSnapshot).filter(PostureSnapshot.snapshot_date == latest_date).all()
+        rows = (
+            db.query(
+                PostureSnapshot.framework,
+                func.avg(PostureSnapshot.posture_score).label("avg_score"),
+                func.count().label("total"),
+                func.sum(
+                    case(
+                        (PostureSnapshot.status == "compliant", 1),
+                        else_=0,
+                    )
+                ).label("compliant"),
+            )
+            .filter(PostureSnapshot.snapshot_date == latest_date)
+            .group_by(PostureSnapshot.framework)
+            .order_by(PostureSnapshot.framework)
+            .all()
         )
 
-        # Aggregate by framework
-        fw_data: dict[str, dict[str, Any]] = {}
-        for snap in snapshots:
-            fw = snap.framework
-            if fw not in fw_data:
-                fw_data[fw] = {
-                    "scores": [],
-                    "total": 0,
-                    "compliant": 0,
-                    "non_compliant": 0,
-                    "partial": 0,
-                }
-            fw_data[fw]["scores"].append(snap.posture_score)
-            fw_data[fw]["total"] += 1
-            if snap.status == "compliant":
-                fw_data[fw]["compliant"] += 1
-            elif snap.status == "non_compliant":
-                fw_data[fw]["non_compliant"] += 1
-            elif snap.status == "partial":
-                fw_data[fw]["partial"] += 1
-
-        for fw, data in sorted(fw_data.items()):
-            avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0
-            compliance_rate = (data["compliant"] / data["total"] * 100) if data["total"] else 0
+        for row in rows:
+            avg_score = float(row.avg_score) if row.avg_score else 0.0
+            compliance_rate = (row.compliant / row.total * 100) if row.total else 0
             overall_scores.append(avg_score)
 
             # Bin scores for public consumption — no exact counts
@@ -190,9 +183,9 @@ async def trust_status(db: Session = Depends(get_db)):
 
             frameworks.append(
                 FrameworkStatus(
-                    framework=fw,
+                    framework=row.framework,
                     posture_rating=rating,
-                    total_controls=_bin_control_count(data["total"]),
+                    total_controls=_bin_control_count(row.total),
                     compliance_rate_band=band,
                 )
             )
@@ -679,8 +672,12 @@ async def serve_trust_document(
 async def list_documents_for_access_request(
     request_id: str,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """After NDA approval, list the documents accessible under this access request.
+
+    Requires authentication. The caller must be the requester or have manage_users
+    permission.
 
     Returns documents whose classification_tier is 'public' or 'nda' if the
     request is approved, 'public' only if still pending/denied.
@@ -688,6 +685,12 @@ async def list_documents_for_access_request(
     req = db.query(TrustAccessRequest).filter(TrustAccessRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Access request not found.")
+
+    # H-5: Verify caller owns this access request or has elevated permissions
+    is_owner = req.contact_email == current_user.user.email
+    has_manage = "manage_users" in current_user.effective_permissions
+    if not is_owner and not has_manage:
+        raise HTTPException(status_code=403, detail="Not authorized for this access request.")
 
     if req.status == "approved":
         allowed_tiers = ["public", "nda"]

@@ -112,9 +112,7 @@ def get_actual_counts() -> dict[str, int]:
 
     counts["connectors"] = _count_py_modules(ROOT / "warlock" / "connectors")
 
-    counts["normalizers"] = _count_py_modules(
-        ROOT / "warlock" / "normalizers", exclude=("__init__.py",)
-    )
+    counts["normalizers"] = _count_py_modules(ROOT / "warlock" / "normalizers")
 
     fw_dir = ROOT / "warlock" / "frameworks"
     counts["frameworks"] = len(

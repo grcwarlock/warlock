@@ -253,9 +253,9 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
 - **API** (`warlock/api/`) — FastAPI REST endpoints (139 routes), ABAC-scoped access control
-- **CLI** (`warlock/cli.py`) — Click CLI (40 commands) for pipeline, monitoring, export, workflows
+- **CLI** (`warlock/cli.py`) — Click CLI (42+ commands) for pipeline, monitoring, export, workflows
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
-- **Database** (`warlock/db/`) — SQLAlchemy ORM, 36 models, 11 Alembic migrations
+- **Database** (`warlock/db/`) — SQLAlchemy ORM, 36 models, 12 Alembic migrations
 - **Frameworks** (`warlock/frameworks/`) — 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
 - **OPA** (`policies/`) — 670 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports

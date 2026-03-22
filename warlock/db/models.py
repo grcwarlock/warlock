@@ -571,6 +571,8 @@ class CompensatingControl(Base):
     __table_args__ = (
         Index("idx_cc_control", "original_framework", "original_control_id"),
         Index("idx_cc_status", "status"),
+        Index("idx_cc_poam_id", "poam_id"),
+        Index("idx_cc_system_profile_id", "system_profile_id"),
     )
 
 
@@ -615,6 +617,8 @@ class RiskAcceptance(Base):
         Index("idx_ra_control", "framework", "control_id"),
         Index("idx_ra_status", "status"),
         Index("idx_ra_expiry", "expiry_date"),
+        Index("idx_ra_poam_id", "poam_id"),
+        Index("idx_ra_system_profile_id", "system_profile_id"),
     )
 
 
@@ -681,6 +685,9 @@ class Issue(Base):
         Index("idx_issue_framework", "framework", "control_id"),
         Index("idx_issue_assigned", "assigned_to"),
         Index("idx_issue_due", "due_date"),
+        Index("idx_issue_finding_id", "finding_id"),
+        Index("idx_issue_control_result_id", "control_result_id"),
+        Index("idx_issue_poam_id", "poam_id"),
     )
 
 
@@ -1353,6 +1360,11 @@ class EvidenceRequest(Base):
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_evidence_req_engagement_id", "engagement_id"),
+        Index("idx_evidence_req_auditor_id", "auditor_id"),
+    )
 
 
 # ---------------------------------------------------------------------------

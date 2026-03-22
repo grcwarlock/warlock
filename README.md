@@ -303,7 +303,7 @@ warlock/
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
 │   ├── models.py         # 36 SQLAlchemy models
-│   ├── migrations/       # Alembic migrations (11 revisions)
+│   ├── migrations/       # Alembic migrations (12 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
 │   └── engine.py         # Session management
@@ -342,7 +342,7 @@ warlock/
 
 ## Database
 
-36 tables across 11 Alembic migrations:
+36 tables across 12 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency

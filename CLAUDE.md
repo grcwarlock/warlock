@@ -222,7 +222,7 @@ Two GitHub Actions workflows run on every push/PR:
 
 ### `.github/workflows/ci.yml` — Python CI
 - **Triggers:** push to main, all PRs
-- **Jobs:** lint (ruff), test (pytest 295 tests), build (Docker image)
+- **Jobs:** lint (ruff), test (pytest 535 tests), build (Docker image)
 - If lint fails (like the 128 F401 errors on 2026-03-19), the whole pipeline is red. Run `ruff check warlock/` locally first.
 
 ### `.github/workflows/compliance-gate.yaml` — Compliance CI

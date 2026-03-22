@@ -29,13 +29,17 @@ log = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
     """Build and return the configured FastAPI application."""
+    from warlock.config import get_settings as _get_app_settings
+
+    _app_settings = _get_app_settings()
+    _is_production = _app_settings.env == "production"
 
     application = FastAPI(
         title="Warlock GRC API",
         version=_VERSION,
         description="Compliance telemetry pipeline REST API",
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=None if _is_production else "/docs",
+        redoc_url=None if _is_production else "/redoc",
     )
 
     # ------------------------------------------------------------------
@@ -121,16 +125,19 @@ def create_app() -> FastAPI:
             return await call_next(request)
 
     # ------------------------------------------------------------------
-    # Prometheus /metrics endpoint (#7)
+    # Prometheus /metrics endpoint (#7) — disabled in production
     # ------------------------------------------------------------------
-    try:
-        from prometheus_client import make_asgi_app  # noqa: F401
+    if not _is_production:
+        try:
+            from prometheus_client import make_asgi_app  # noqa: F401
 
-        _metrics_app = make_asgi_app()
-        application.mount("/metrics", _metrics_app)
-        log.info("Prometheus /metrics endpoint mounted")
-    except ImportError:
-        pass  # prometheus_client not installed — /metrics endpoint unavailable
+            _metrics_app = make_asgi_app()
+            application.mount("/metrics", _metrics_app)
+            log.info("Prometheus /metrics endpoint mounted")
+        except ImportError:
+            pass  # prometheus_client not installed — /metrics endpoint unavailable
+    else:
+        log.info("Prometheus /metrics disabled in production (env=production)")
 
     # ------------------------------------------------------------------
     # Mount domain routers
