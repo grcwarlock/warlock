@@ -317,6 +317,10 @@ Release management (3), architecture decisions (7 ADRs), code style (2), securit
 | O-3 | **docs/architecture-diagram.html** — Visual architecture (have Figma version now) | LOW |
 | O-4 | **Celery integration** — Alternative task queue option. Redis/Kafka/SQS exist, no Celery | LOW |
 | O-5 | **nltk CVE remediation** — CVE-2026-33230 and CVE-2026-33231. Pin or isolate RAG module | MEDIUM |
+| O-6 | **Connector vendor accuracy pass** — Verify each connector/normalizer against actual vendor API docs. Fix field names, response shapes, pagination patterns. Priority: connectors you plan to connect to real instances first | HIGH (pre-production) |
+| O-7 | **Schema registry for event_types** — Catalog what event_types each connector produces and what fields each normalizer expects. Makes gaps visible, enables automated compatibility checks in CI | MEDIUM |
+| O-8 | **Smarter fallback normalizer** — Enhance generic normalizer to extract findings from unknown event_types using heuristics (look for severity/status/resource fields in JSON). Prevents silent data loss when connectors produce unhandled event_types | MEDIUM |
+| O-9 | **Demo data vendor accuracy** — Update demo_data.py generators to match actual vendor API response schemas so demo data is indistinguishable from real telemetry | LOW (after O-6) |
 
 ---
 
