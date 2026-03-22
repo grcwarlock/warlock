@@ -131,6 +131,18 @@ Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.m
 | `warlock architecture` | Live architecture diagram (terminal) |
 | `warlock architecture --format svg` | Export architecture as SVG (requires d2) |
 
+### Domain Commands (Cross-Domain Views)
+
+| Command | Description |
+|---|---|
+| `warlock briefing` | Daily priority view — what needs attention across all domains |
+| `warlock briefing -f soc2 --mode audit-prep` | Scoped to framework, with operational mode |
+| `warlock control-hub CC6.1 -f soc2` | Cross-domain view of a control: status, issues, evidence |
+| `warlock policy set sla --severity critical --remediation-days 14` | Push an SLA policy |
+| `warlock policy set retention --framework pci_dss --days 2555` | Push a retention policy |
+| `warlock policy list` | List active policies |
+| `warlock policy history` | Policy change audit trail |
+
 ### Export & Risk
 
 | Command | Description |
@@ -337,12 +349,13 @@ warlock/
 │   ├── crosswalks.yaml   # 1,843 crosswalk edges
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
-└── cli.py                # Click CLI package (42+ commands, 8 domain modules)
+├── domains/          # 8 domain service modules (registry, event bus, policy engine)
+└── cli.py                # Click CLI package (45+ commands, 11 domain modules)
 ```
 
 ## Database
 
-36 tables across 12 Alembic migrations:
+40 tables across 12 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency
@@ -351,6 +364,7 @@ warlock/
 **Identity:** User, APIKey, ExternalAuditor, AuditorEngagementAssignment, EvidenceRequest
 **Assets:** SystemProfile, Personnel, DataSilo, LegalHold, TrustAccessRequest, TrustDocument
 **Configuration:** QuestionnaireTemplate, Questionnaire, RiskAnalysis, PolicyOverride
+**Domain Architecture:** Policy, PolicyHistory, Asset, Vendor
 
 ## Tech Stack
 

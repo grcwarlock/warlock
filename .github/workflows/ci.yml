@@ -240,6 +240,8 @@ jobs:
             "effectiveness"
             "framework-diff"
             "architecture"
+            "briefing"
+            "control-hub"
           )
 
           FAILED=0
@@ -253,7 +255,7 @@ jobs:
           done
 
           # Test CLI groups
-          for grp in "ai" "retention" "risk" "scheduler"; do
+          for grp in "ai" "retention" "risk" "scheduler" "policy"; do
             if warlock "$grp" --help > /dev/null 2>&1; then
               echo "  warlock $grp --help: OK"
             else

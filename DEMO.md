@@ -78,13 +78,18 @@ make demo
 ```bash
 source .venv/bin/activate       # if using local Python
 
+warlock briefing                       # daily priority view (cross-domain)
+warlock briefing -f soc2               # scoped to SOC 2
 warlock coverage                       # compliance summary
 warlock findings                       # all findings
 warlock results --status non_compliant # non-compliant results
+warlock control-hub CC6.1 -f soc2      # cross-domain control view
 warlock poams                          # POA&M tracking
 warlock drift                          # compliance drift
 warlock systems                        # system profiles
 warlock vendors                        # vendor risk
+warlock policy set sla --severity critical --remediation-days 14  # push policy
+warlock policy list                    # active policies
 warlock retention report               # data retention
 warlock lake status                    # data lake zone sizes
 warlock lake query "SOC 2 readiness"   # natural language query
