@@ -18225,7 +18225,7 @@ class DemoCircleCIConnector(BaseConnector):
 def _seed_audit_trail(session) -> int:
     """Populate the hash-chained audit trail with representative entries."""
     from warlock.db.audit import AuditTrail
-    from warlock.db.models import Finding, ControlResult, RawEvent
+    from warlock.db.models import Finding, ControlResult
 
     trail = AuditTrail(session)
     count = 0

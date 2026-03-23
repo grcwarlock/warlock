@@ -13,7 +13,6 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from rich.markup import escape
 
 from warlock.cli import cli, console, _error, _get_actor
 
