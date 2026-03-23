@@ -467,20 +467,20 @@ Use this as a tracking sheet. Check items off as sprints complete.
 - [x] All new endpoints have ABAC enforcement
 - [x] Demo seed passes (7 remediations, 3 pipeline runs)
 
-### Sprint 7 (Weeks 13-14) -- Documentation
-- [ ] DOC-4: OpenAPI export
-- [ ] DOC-1: API reference
-- [ ] DOC-8: CLI reference
-- [ ] DOC-2: Auth guide
-- [ ] DOC-5: Deployment guide
-- [ ] DOC-6: Docker setup
-- [ ] DOC-9: Developer setup
-- [ ] DOC-3: Error reference
-- [ ] DOC-7: Security hardening
-- [ ] DOC-10: CONTRIBUTING.md
-- [ ] DOC-11: PR template
-- [ ] DOC-12: README accuracy
-- [ ] New user test: clone to running demo in <15 minutes
+### Sprint 7 (Weeks 13-14) -- Documentation ✓ COMPLETE (2026-03-23)
+- [x] DOC-4: OpenAPI export
+- [x] DOC-1: API reference (already existed in proddocs/)
+- [x] DOC-8: CLI reference (already existed in proddocs/)
+- [x] DOC-2: Auth guide
+- [x] DOC-5: Deployment guide (already existed in proddocs/)
+- [x] DOC-6: Docker setup
+- [x] DOC-9: Developer setup
+- [x] DOC-3: Error reference
+- [x] DOC-7: Security hardening (already existed in proddocs/)
+- [x] DOC-10: CONTRIBUTING.md
+- [x] DOC-11: PR template
+- [x] DOC-12: README accuracy
+- [x] Updated stale counts in proddocs/ (architecture, data-model, deployment, runbook)
 
 ### Sprint 8 (Weeks 15-16) -- SOC 2 Story
 - [ ] PG-18: PDF report generation

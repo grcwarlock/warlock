@@ -1,7 +1,7 @@
 # Warlock Backlog
 
 **Last updated:** 2026-03-23
-**Total:** 367 done / 481 total (76%)
+**Total:** 375 done / 481 total (78%)
 
 ---
 
@@ -493,14 +493,14 @@ These were written as part of the proddocs initiative and live in `proddocs/`.
 
 ### 10.2 P0 — Still needed
 
-- [ ] DOC-2: API_AUTH_GUIDE.md (JWT + RBAC + ABAC) — M | P0
-- [ ] DOC-3: API_ERRORS.md (error code reference) — M | P0
-- [ ] DOC-4: OpenAPI schema export — S | P0
-- [ ] DOC-6: DOCKER_SETUP.md (standalone step-by-step) — M | P0
-- [ ] DOC-9: DEVELOPER_SETUP.md — M | P0
-- [ ] DOC-10: CONTRIBUTING.md update — S | P0
-- [ ] DOC-11: PR template — S | P0
-- [ ] DOC-12: README accuracy fixes — S | P0
+- [x] DOC-2: API_AUTH_GUIDE.md (JWT + RBAC + ABAC) — M | P0
+- [x] DOC-3: API_ERRORS.md (error code reference) — M | P0
+- [x] DOC-4: OpenAPI schema export — S | P0
+- [x] DOC-6: DOCKER_SETUP.md (standalone step-by-step) — M | P0
+- [x] DOC-9: DEVELOPER_SETUP.md — M | P0
+- [x] DOC-10: CONTRIBUTING.md update — S | P0
+- [x] DOC-11: PR template — S | P0
+- [x] DOC-12: README accuracy fixes — S | P0
 
 ### 10.3 P1 — High-value enablers (26 docs)
 

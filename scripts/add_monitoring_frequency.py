@@ -7,7 +7,6 @@ Frequencies based on NIST 800-53A Table D-2 and FedRAMP ConMon guidance:
 - Low-volatility controls (policy, physical, planning): quarterly/annual
 """
 
-import sys
 from pathlib import Path
 
 import yaml

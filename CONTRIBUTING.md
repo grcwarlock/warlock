@@ -74,19 +74,23 @@ Expected demo output shows:
 
 ### Linting
 
-We use **[ruff](https://github.com/astral-sh/ruff)** for Python linting and formatting.
+We use **[ruff](https://github.com/astral-sh/ruff)** for Python linting and formatting. No black, no flake8.
 
 Before committing, run:
 
 ```bash
-.venv/bin/ruff check warlock/ --fix
+ruff check warlock/ --fix     # auto-fix safe lint errors
+ruff format warlock/          # apply formatting
 ```
 
-Commit if no errors remain:
+Verify clean:
 
 ```bash
-.venv/bin/ruff check warlock/
+ruff check warlock/           # must report 0 errors
+ruff format --check warlock/  # must report 0 reformatted
 ```
+
+Configuration is in `pyproject.toml` (target: Python 3.12, line length: 100).
 
 This checks for:
 - Unused imports (F401, F841)
@@ -124,7 +128,7 @@ All pull requests must pass the full test suite:
 ```
 
 Expected output (as of this date):
-- 295 tests across 10 files
+- 657 tests across 32 files
 - 0 failures
 - 0 errors
 - All green
@@ -162,11 +166,46 @@ def test_connector_retries_on_transient_error(mock_aws):
 
 ---
 
-## Pre-Commit Checklist
+## Pre-Push QA Gate
 
-Before pushing, verify these are complete:
+Before pushing, run the automated QA gate. It covers lint, tests, demo seed, CLI smoke tests, OPA policies, Terraform validation, OSCAL checks, secrets scanning, documentation accuracy, and more.
+
+```bash
+# Full QA gate (required before push)
+./scripts/qa.sh
+
+# Quick check during development (lint + tests only, ~30s)
+./scripts/qa.sh --quick
+```
+
+Or via Make:
+
+```bash
+make qa          # full gate
+make qa-quick    # lint + test only
+make verify-docs # documentation accuracy check only
+```
+
+ALL checks must pass. If any fail, fix before committing.
+
+### Pre-commit hook (recommended)
+
+Set up a pre-commit hook to run quick QA automatically:
+
+```bash
+cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+./scripts/qa.sh --quick
+EOF
+chmod +x .git/hooks/pre-commit
+```
+
+### Manual checklist
+
+If the QA gate passes, verify these are also complete:
 
 - [ ] Linting passes: `ruff check warlock/`
+- [ ] Formatting passes: `ruff format --check warlock/`
 - [ ] All tests pass: `pytest tests/ -q`
 - [ ] No new test files skipped or marked `@pytest.mark.skip`
 - [ ] Docstrings added for new public functions
@@ -182,13 +221,17 @@ When you modify a file, check this table — related files may need updates:
 
 | If you change... | You MUST also update... |
 |---|---|
-| Connector (`warlock/connectors/`) | matching normalizer, demo_seed.py, README.md framework connector list |
+| Connector (`warlock/connectors/`) | config.py, matching normalizer, demo_seed.py, README.md, `proddocs/features/connectors.md` |
 | Normalizer (`warlock/normalizers/`) | `__init__.py` if new, re-run demo seed, verify with matching connector |
-| DB model (`warlock/db/`) | Create an Alembic migration, update API routes, verify demo seed |
-| Config setting (`warlock/config.py`) | `.env.example`, README.md if user-facing, update DEPLOYMENT_GUIDE.md |
-| API route (`warlock/api/`) | Add input validation, verify ABAC scoping, check auth decorator |
+| DB model (`warlock/db/`) | Alembic migration, API routes, CLI commands, demo seed, `proddocs/technical/data-model.md` |
+| Config setting (`warlock/config.py`) | `.env.example`, README.md if user-facing |
+| API route (`warlock/api/`) | ABAC enforcement, input validation, auth decorator, `proddocs/api/reference.md` |
+| CLI command (`warlock/cli/`) | README.md, `proddocs/api/cli-reference.md` |
 | OPA policies (`policies/`) | Run `opa check policies/ && opa test policies/` |
-| Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader completes |
+| Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader completes, `proddocs/product/frameworks.md` |
+| Connector/normalizer/framework count changes | Update counts in `proddocs/features/connectors.md`, `proddocs/product/frameworks.md`, `proddocs/product/overview.md` |
+
+For the full dependency chain table, see [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -238,8 +281,8 @@ Closes #123 (if applicable)
 Warlock's architecture is **pipeline-first**: evidence flows through four immutable stages with SHA-256 integrity hashing at every step.
 
 ```
-Stage 1: Connectors (82)    → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (82)   → FindingData          → transform to universal findings format
+Stage 1: Connectors (165)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (165)  → FindingData          → transform to universal findings format
 Stage 3: Control Mapper     → ControlMappingData   → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4) → ControlResultData  → deterministic assertions + optional AI reasoning
 ```
@@ -252,11 +295,11 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
-- **API** (`warlock/api/`) — FastAPI REST endpoints (139 routes), ABAC-scoped access control
-- **CLI** (`warlock/cli.py`) — Click CLI (45+ commands) for pipeline, monitoring, export, workflows, domain views
+- **API** (`warlock/api/`) — FastAPI REST endpoints (163 routes), ABAC-scoped access control
+- **CLI** (`warlock/cli/`) — Click CLI (637 commands across 65 modules)
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
-- **Database** (`warlock/db/`) — SQLAlchemy ORM, 40 models, 12 Alembic migrations
+- **Database** (`warlock/db/`) — SQLAlchemy ORM, 42 models, 12 Alembic migrations
 - **Frameworks** (`warlock/frameworks/`) — 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
 - **OPA** (`policies/`) — 670 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports

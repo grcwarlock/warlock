@@ -37,7 +37,7 @@ The gate runs these checks in order. All must pass.
 | Check | What It Does |
 |-------|-------------|
 | Pytest Suite | `pytest tests/ --tb=short -q` -- all tests must pass |
-| Test Count Baseline | Must collect >= 295 tests (prevents accidental test deletion) |
+| Test Count Baseline | Must collect >= 657 tests (prevents accidental test deletion) |
 
 **Section 3: Integration**
 

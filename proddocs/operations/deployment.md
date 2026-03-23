@@ -325,7 +325,7 @@ make clean       # Stop docker, remove DB
 
 ## Database Migrations
 
-Warlock uses Alembic for database migrations. The project has 11 migration files.
+Warlock uses Alembic for database migrations. The project has 12 migration files.
 
 ### Run Migrations
 
@@ -413,7 +413,7 @@ docker build --build-arg EXTRAS="monitoring" -t warlock .
 
 ## Connector Configuration
 
-Warlock supports 58 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
+Warlock supports 165 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
 
 Example connector configuration:
 

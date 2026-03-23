@@ -7,7 +7,7 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 | Document | Description |
 |----------|-------------|
 | [Architecture](technical/architecture.md) | System architecture — 4-stage pipeline, storage, security model |
-| [Data Model](technical/data-model.md) | 36-table schema, relationships, JSON columns, pipeline data flow |
+| [Data Model](technical/data-model.md) | 42-table schema, relationships, JSON columns, pipeline data flow |
 | [Data Lake](technical/data-lake.md) | GRC Data Lake — 3 zones, 10 domains, DuckDB, Iceberg, RAG |
 | [Security](technical/security.md) | Auth (JWT/API keys/MFA), ABAC, OPA, audit trail, GDPR |
 
@@ -29,12 +29,14 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](api/reference.md) | 160 REST endpoints across 10 domain groups |
-| [CLI Reference](api/cli-reference.md) | 40+ commands across 8 groups |
+| [API Reference](api/reference.md) | 163 REST endpoints across 13 router files |
+| [CLI Reference](api/cli-reference.md) | 637 commands across 65 modules |
 
 ## Operations
 
 | Document | Description |
 |----------|-------------|
 | [Deployment](operations/deployment.md) | Docker, local dev, environment variables, production config |
+| [Docker Setup](operations/docker-setup.md) | Docker prerequisites, services, build, health checks, troubleshooting |
+| [Developer Setup](operations/developer-setup.md) | Local Python setup, testing, linting, QA gate, project structure |
 | [Runbook](operations/runbook.md) | QA gate, pipeline ops, troubleshooting, monitoring |

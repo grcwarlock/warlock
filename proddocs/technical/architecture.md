@@ -249,7 +249,7 @@ The in-process bus is the default for development. Production deployments can sw
 
 ### OLTP Database (PostgreSQL / SQLite)
 
-36 SQLAlchemy models across 8 domains. PostgreSQL for production; SQLite for development and testing. JSON columns use `JSONB` on PostgreSQL (GIN-indexable) and plain `JSON` on SQLite.
+42 SQLAlchemy models across 8 domains. PostgreSQL for production; SQLite for development and testing. JSON columns use `JSONB` on PostgreSQL (GIN-indexable) and plain `JSON` on SQLite.
 
 See [Data Model Reference](data-model.md) for complete schema documentation.
 
@@ -350,7 +350,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## REST API
 
-157 routes across 9 domain routers in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
+163 routes across 13 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
 
 ## Key Design Patterns
 

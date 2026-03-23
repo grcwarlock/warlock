@@ -94,7 +94,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
-## CLI (539+ commands across 79 groups)
+## CLI (637 commands across 65 modules)
 
 Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
@@ -306,7 +306,7 @@ warlock/
 │   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
-│   ├── models.py         # 36 SQLAlchemy models
+│   ├── models.py         # 42 SQLAlchemy models
 │   ├── migrations/       # Alembic migrations (12 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
@@ -342,12 +342,12 @@ warlock/
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
 ├── domains/          # 8 domain service modules (registry, event bus, policy engine)
-└── cli.py                # Click CLI package (45+ commands, 11 domain modules)
+└── cli/              # Click CLI package (637 commands, 65 modules)
 ```
 
 ## Database
 
-40 tables across 12 Alembic migrations:
+42 tables across 12 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency
@@ -357,6 +357,8 @@ warlock/
 **Assets:** SystemProfile, Personnel, DataSilo, LegalHold, TrustAccessRequest, TrustDocument
 **Configuration:** QuestionnaireTemplate, Questionnaire, RiskAnalysis, PolicyOverride
 **Domain Architecture:** Policy, PolicyHistory, Asset, Vendor
+**Operational:** Alert, Remediation, PipelineRun
+**Search:** Embedding
 
 ## Tech Stack
 

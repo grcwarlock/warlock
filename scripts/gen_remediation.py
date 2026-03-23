@@ -4212,7 +4212,7 @@ for enh_num, summ in IA2_ENH.items():
         "remediation_steps": [
             f"Implement {summ.lower()} controls"
             if "withdrawn" not in summ.lower()
-            else f"This enhancement has been withdrawn",
+            else "This enhancement has been withdrawn",
             "Configure MFA policies in identity provider"
             if "withdrawn" not in summ.lower()
             else "Verify base control IA-2 is implemented",
@@ -6523,7 +6523,6 @@ for ctrl_id in sorted_controls:
 print(f"Final control count: {len(output['controls'])}")
 
 # Write YAML
-import io
 
 
 class QuotedStr(str):
