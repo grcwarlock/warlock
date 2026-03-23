@@ -175,6 +175,37 @@ from warlock.cli import lake as _lake  # noqa: F401, E402
 from warlock.cli import policy_cmd as _policy_cmd  # noqa: F401, E402
 from warlock.cli import briefing_cmd as _briefing_cmd  # noqa: F401, E402
 from warlock.cli import control_cmd as _control_cmd  # noqa: F401, E402
+# Phase 2 — Workflow CLI modules
+from warlock.cli import incidents_cmd as _incidents_cmd  # noqa: F401, E402
+from warlock.cli import evidence_cmd as _evidence_cmd  # noqa: F401, E402
+from warlock.cli import attestations_cmd as _attestations_cmd  # noqa: F401, E402
+from warlock.cli import privacy_cmd as _privacy_cmd  # noqa: F401, E402
+from warlock.cli import access_review_cmd as _access_review_cmd  # noqa: F401, E402
+from warlock.cli import change_mgmt_cmd as _change_mgmt_cmd  # noqa: F401, E402
+from warlock.cli import exceptions_cmd as _exceptions_cmd  # noqa: F401, E402
+from warlock.cli import calendar_cmd as _calendar_cmd  # noqa: F401, E402
+from warlock.cli import audit_engagement_cmd as _audit_engagement_cmd  # noqa: F401, E402
+from warlock.cli import control_tests_cmd as _control_tests_cmd  # noqa: F401, E402
+from warlock.cli import training_cmd as _training_cmd  # noqa: F401, E402
+from warlock.cli import bcp_cmd as _bcp_cmd  # noqa: F401, E402
+# Phase 3 — CLI expansion modules
+from warlock.cli import connectors_cmd as _connectors_cmd  # noqa: F401, E402
+from warlock.cli import assertions_cmd as _assertions_cmd  # noqa: F401, E402
+from warlock.cli import findings_cmd as _findings_cmd  # noqa: F401, E402
+from warlock.cli import frameworks_cmd as _frameworks_cmd  # noqa: F401, E402
+from warlock.cli import policies_opa_cmd as _policies_opa_cmd  # noqa: F401, E402
+from warlock.cli import audit_trail_cmd as _audit_trail_cmd  # noqa: F401, E402
+from warlock.cli import users_cmd as _users_cmd  # noqa: F401, E402
+from warlock.cli import reports_cmd as _reports_cmd  # noqa: F401, E402
+from warlock.cli import vendors_cmd as _vendors_cmd  # noqa: F401, E402
+from warlock.cli import integrations_cmd as _integrations_cmd  # noqa: F401, E402
+from warlock.cli import oscal_cmd as _oscal_cmd  # noqa: F401, E402
+from warlock.cli import pipeline_ext_cmd as _pipeline_ext_cmd  # noqa: F401, E402
+from warlock.cli import vulns_cmd as _vulns_cmd  # noqa: F401, E402
+from warlock.cli import conmon_cmd as _conmon_cmd  # noqa: F401, E402
+from warlock.cli import sod_cmd as _sod_cmd  # noqa: F401, E402
+from warlock.cli import poam_cmd as _poam_cmd  # noqa: F401, E402
+from warlock.cli import terraform_cmd as _terraform_cmd  # noqa: F401, E402
 
 
 if __name__ == "__main__":
