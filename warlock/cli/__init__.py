@@ -223,6 +223,12 @@ from warlock.cli import privacy_workflow_cmd as _privacy_workflow_cmd  # noqa: F
 from warlock.cli import audit_workflow_cmd as _audit_workflow_cmd  # noqa: F401, E402
 from warlock.cli import risk_workflow_cmd as _risk_workflow_cmd  # noqa: F401, E402
 from warlock.cli import ops_workflow_cmd as _ops_workflow_cmd  # noqa: F401, E402
+from warlock.cli import system_workflow_cmd as _system_workflow_cmd  # noqa: F401, E402
+from warlock.cli import change_workflow_cmd as _change_workflow_cmd  # noqa: F401, E402
+from warlock.cli import training_workflow_cmd as _training_workflow_cmd  # noqa: F401, E402
+from warlock.cli import exception_workflow_cmd as _exception_workflow_cmd  # noqa: F401, E402
+from warlock.cli import conmon_workflow_cmd as _conmon_workflow_cmd  # noqa: F401, E402
+from warlock.cli import evidence_workflow_cmd as _evidence_workflow_cmd  # noqa: F401, E402
 
 
 if __name__ == "__main__":

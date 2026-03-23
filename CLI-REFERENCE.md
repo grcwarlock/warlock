@@ -1,6 +1,11 @@
 # Warlock CLI Reference
 
-**499 commands** across **79 top-level groups** covering the full GRC lifecycle.
+**539 commands** across **101 top-level groups** covering the full GRC lifecycle.
+
+Includes interactive workflows: investigate, triage, daily, morning, weekly,
+monthly-review, audit-prep, incident-response, privacy-ops, vendor-review,
+risk-review, audit-workflow, change-review, training-drive, exception-review,
+conmon-monthly, evidence-sprint, onboard-system, system-review.
 
 Generated from `warlock --help` on 2026-03-22.
 
@@ -78,6 +83,7 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock audit engagement show` — Show details of an audit engagement.
 - `warlock audit engagement status` — Show progress summary for an engagement (control coverage, open items).
 - `warlock audit findings-import` — Import findings from a CSV file into an engagement.
+- `warlock audit-prep` — Interactive audit preparation checklist for FRAMEWORK.
 ### warlock audit-trail
 
 - `warlock audit-trail export` — Export audit trail entries to JSON or CSV.
@@ -91,6 +97,12 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock audit-trail timeline` — Show timeline of audit events for a specific entity.
 - `warlock audit-trail user-activity` — Show activity summary per actor.
 - `warlock audit-trail verify` — Verify hash chain integrity for a sequence range.
+### warlock audit-workflow
+
+- `warlock audit-workflow evidence-sprint` — Guided evidence collection sprint: triage controls and batch-create evidence requests.
+- `warlock audit-workflow prepare` — Guided audit preparation: posture, evidence, POA&Ms, attestations, readiness score.
+- `warlock audit-workflow respond` — Respond to auditor evidence requests for an engagement.
+- `warlock audit-workflow simulate` — Project audit posture at a future date based on POA&M milestones and evidence expiry.
 ### warlock automation
 
 - `warlock automation auto-issue` — Auto-create issues from findings that have no linked issue.
@@ -142,6 +154,8 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock calendar list` — List compliance calendar items.
 - `warlock calendar next` — Show everything due within the next N days across all GRC domains.
 - `warlock calendar overdue` — Show all overdue items across every GRC domain.
+- `warlock change-review` — Interactive Change Advisory Board (CAB) session.
+- `warlock change-submit` — Guided change request submission workflow.
 ### warlock changes
 
 - `warlock changes approve` — Approve a change request.
@@ -178,6 +192,7 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock conmon monthly-report` — Generate a ConMon monthly report for submission.
 - `warlock conmon significant-change` — Record a significant change for ConMon review.
 - `warlock conmon status` — Show current continuous monitoring status across frameworks.
+- `warlock conmon-monthly` — Full monthly Continuous Monitoring (ConMon) workflow.
 ### warlock connectors
 
 - `warlock connectors collect` — Run a single connector's collect() method.
@@ -232,6 +247,7 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock correlate timeline-correlation` — Correlated timeline of findings, incidents, and change events.
 - `warlock correlate trace` — Full trace: finding -> controls -> results -> evidence -> audit trail.
 - `warlock coverage` — Show compliance coverage summary.
+- `warlock daily` — Daily GRC practitioner morning summary and workflow launcher.
 ### warlock dashboard
 
 ### warlock dashboard alerts
@@ -279,6 +295,9 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock evidence stats` — Show evidence statistics by framework and status.
 - `warlock evidence timeline` — Show assessment history for a control over time.
 - `warlock evidence verify` — Verify the hash chain integrity for an evidence record.
+- `warlock evidence-collection` — Interactive evidence collection: fulfill pending evidence requests.
+- `warlock evidence-sprint` — Guided evidence collection sprint for a framework.
+- `warlock exception-review` — Review policy exceptions (risk acceptances) expiring within N days.
 ### warlock exceptions
 
 - `warlock exceptions create` — Create a new policy exception.
@@ -330,6 +349,12 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock frameworks list` — List all available compliance frameworks.
 - `warlock frameworks show` — Show details for a specific framework.
 - `warlock frameworks stats` — Aggregate statistics across all frameworks.
+### warlock incident-response
+
+- `warlock incident-response drill` — Tabletop exercise — simulated incident response drill.
+- `warlock incident-response manage` — Incident lifecycle management loop.
+- `warlock incident-response new` — Guided incident creation workflow.
+- `warlock incident-response postmortem` — Guided post-mortem documentation workflow.
 ### warlock incidents
 
 - `warlock incidents add-event` — Append a manual event to an incident's audit trail.
@@ -360,6 +385,12 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock integrations notifications test` — Send a test notification to verify a channel is working.
 - `warlock integrations status` — Show health status of all configured integrations.
 - `warlock integrations test` — Send a test event to verify an integration is working.
+### warlock investigate
+
+- `warlock investigate control` — Deep investigation of a specific control by CONTROL_ID (e.g.
+- `warlock investigate finding` — Deep investigation of a specific finding by FINDING_ID (or prefix).
+- `warlock investigate framework` — Interactive compliance investigation for a specific FRAMEWORK_NAME.
+- `warlock investigate source` — Interactive investigation of all non-compliant findings for SOURCE_NAME.
 - `warlock issues` — List and manage compliance issues.
 - `warlock issues-auto-create` — Auto-create issues from non-compliant control results.
 ### warlock lake
@@ -428,6 +459,9 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock lake-analytics trends findings` — Show finding volume trends over time.
 - `warlock lake-analytics trends risk` — Show risk score trends (severity distribution over time).
 - `warlock lake-analytics volume` — Show data volume trends grouped by a chosen dimension.
+- `warlock monthly-review` — Monthly GRC review: KRI evaluation, ConMon, vendors, training, attestations.
+- `warlock morning` — Morning operations review: overnight summary and attention items.
+- `warlock onboard-system` — Guided system authorization (ATO) onboarding workflow.
 ### warlock oscal
 
 - `warlock oscal assessment-results` — Export OSCAL assessment results for a framework.
@@ -515,9 +549,16 @@ Generated from `warlock --help` on 2026-03-22.
 
 - `warlock privacy transfers list` — List recorded data transfers.
 - `warlock privacy transfers validate` — Validate that all recorded transfers have an accepted mechanism.
+### warlock privacy-ops
+
+- `warlock privacy-ops breach-response` — Guided data breach notification workflow.
+- `warlock privacy-ops data-map-review` — Interactive data map review workflow.
+- `warlock privacy-ops dsar-intake` — Guided Data Subject Access Request intake and processing workflow.
+- `warlock privacy-ops impact-assessment` — Guided Data Protection Impact Assessment (DPIA) for a system.
 - `warlock questionnaires` — List vendor questionnaires.
 - `warlock questionnaires-seed` — Seed default questionnaire templates (SIG Lite, DDQ).
 - `warlock remediate` — Show remediation guidance and take action on issues/POA&Ms.
+- `warlock remediate-guided` — Guided remediation workflow for a finding ID or control ID.
 ### warlock reports
 
 - `warlock reports attestation-summary` — Summarise attestation status across all controls.
@@ -576,6 +617,12 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock risk-engine treatment list` — Show treatment plans for a given risk (RISK_ID prefix or full UUID).
 - `warlock risk-engine treatment update` — Update the status of a treatment plan (prefix or full UUIDs).
 - `warlock risk-engine trend` — Show risk trend over time (findings per day for the past N days).
+### warlock risk-review
+
+- `warlock risk-review acceptance` — Guided risk acceptance workflow for a finding.
+- `warlock risk-review assess` — Guided risk assessment session: review top risks and new critical/high findings.
+- `warlock risk-review board-report` — Generate a board-level risk report interactively.
+- `warlock risk-review quarterly` — Quarterly risk review: reassess risk ratings, update heatmap, generate report.
 ### warlock scheduler
 
 - `warlock scheduler start` — Start the pipeline scheduler.
@@ -588,6 +635,7 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock sod matrix` — Display the role-permission matrix showing access rights per role.
 - `warlock sources` — List all registered connector types and normalizer types.
 - `warlock sufficiency` — Show evidence sufficiency scores per control.
+- `warlock system-review` — Interactive system security review.
 - `warlock systems` — List active system profiles.
 - `warlock systems-create` — Create a new system profile.
 ### warlock terraform
@@ -606,6 +654,8 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock training overdue` — List personnel with overdue training.
 - `warlock training report` — Generate a full training compliance report.
 - `warlock training status` — Show training completion rates, optionally by department or role.
+- `warlock training-drive` — Training campaign management: completion rates, overdue personnel, escalations.
+- `warlock triage` — Interactive finding triage -- work through unreviewed findings by severity.
 ### warlock users
 
 - `warlock users audit-log` — Show the audit trail for a user.
@@ -644,6 +694,12 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock vendor-mgmt show` — Show detailed information for a vendor.
 - `warlock vendor-mgmt sla` — View or update SLA terms for a vendor.
 - `warlock vendor-mgmt soc2-review` — Record or display SOC 2 report review for a vendor.
+### warlock vendor-review
+
+- `warlock vendor-review assess` — Guided vendor risk assessment workflow.
+- `warlock vendor-review offboard` — Guided vendor offboarding workflow.
+- `warlock vendor-review onboard` — Guided vendor onboarding workflow.
+- `warlock vendor-review reassess` — Batch vendor reassessment workflow.
 - `warlock vendors` — Score and monitor vendor risk.
 ### warlock vulns
 
@@ -655,3 +711,4 @@ Generated from `warlock --help` on 2026-03-22.
 - `warlock vulns report` — Generate a vulnerability management report.
 - `warlock vulns sla-breach` — List vulnerabilities that have breached their SLA thresholds.
 - `warlock vulns trends` — Show vulnerability discovery trends over the last N days.
+- `warlock weekly` — Weekly operations summary: week-over-week metrics, connector health, deadlines.
