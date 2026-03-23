@@ -109,10 +109,12 @@ def _collect_event_types(controls: dict[str, dict[str, Any]]) -> set[str]:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("frameworks")
-def frameworks_grp() -> None:
+@cli.group("frameworks", invoke_without_command=True)
+@click.pass_context
+def frameworks_grp(ctx: click.Context) -> None:
     """Explore compliance frameworks, controls, and crosswalks."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -794,10 +796,12 @@ def frameworks_inheritance(framework_id: str, provider: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@frameworks_grp.group("baselines")
-def baselines_grp() -> None:
+@frameworks_grp.group("baselines", invoke_without_command=True)
+@click.pass_context
+def baselines_grp(ctx: click.Context) -> None:
     """Manage NIST control baselines (Low / Moderate / High)."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @baselines_grp.command("list")
@@ -916,10 +920,12 @@ def baselines_apply(framework_id: str, level: str, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
-@frameworks_grp.group("inherited")
-def inherited_grp() -> None:
+@frameworks_grp.group("inherited", invoke_without_command=True)
+@click.pass_context
+def inherited_grp(ctx: click.Context) -> None:
     """View inherited controls from cloud providers."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @inherited_grp.command("list")

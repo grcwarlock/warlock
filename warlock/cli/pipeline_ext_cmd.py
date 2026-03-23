@@ -25,9 +25,12 @@ from warlock.cli import cli, console, _error
 # ---------------------------------------------------------------------------
 
 
-@cli.group("pipeline")
-def pipeline_group() -> None:
+@cli.group("pipeline", invoke_without_command=True)
+@click.pass_context
+def pipeline_group(ctx: click.Context) -> None:
     """Pipeline run management: status, history, verification, replay, and scheduling."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -333,9 +336,12 @@ def pipeline_errors(limit: int, connector: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pipeline_group.group("schedule")
-def schedule_group() -> None:
+@pipeline_group.group("schedule", invoke_without_command=True)
+@click.pass_context
+def schedule_group(ctx: click.Context) -> None:
     """Manage the pipeline scheduler interval and view schedule details."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @schedule_group.command("show")

@@ -167,9 +167,12 @@ def _format_timeline(issue) -> None:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("incident-response")
-def incident_response() -> None:
+@cli.group("incident-response", invoke_without_command=True)
+@click.pass_context
+def incident_response(ctx: click.Context) -> None:
     """Interactive incident response workflows (new, manage, postmortem, drill)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

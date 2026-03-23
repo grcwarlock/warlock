@@ -24,9 +24,12 @@ from warlock.utils import ensure_aware
 # ---------------------------------------------------------------------------
 
 
-@cli.group("lake-analytics")
-def lake_analytics() -> None:
+@cli.group("lake-analytics", invoke_without_command=True)
+@click.pass_context
+def lake_analytics(ctx: click.Context) -> None:
     """Analytical queries and insights over the GRC data lake."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -34,14 +37,20 @@ def lake_analytics() -> None:
 # ---------------------------------------------------------------------------
 
 
-@lake_analytics.group("anomaly")
-def anomaly() -> None:
+@lake_analytics.group("anomaly", invoke_without_command=True)
+@click.pass_context
+def anomaly(ctx: click.Context) -> None:
     """Anomaly detection in finding and event patterns."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
-@lake_analytics.group("trends")
-def trends() -> None:
+@lake_analytics.group("trends", invoke_without_command=True)
+@click.pass_context
+def trends(ctx: click.Context) -> None:
     """Time-series trend analysis across findings, controls, and connectors."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

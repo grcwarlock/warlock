@@ -146,9 +146,12 @@ def _write_audit_entry(session, action: str, entity_type: str, entity_id: str, e
 # ---------------------------------------------------------------------------
 
 
-@cli.group("privacy-ops")
-def privacy_ops() -> None:
+@cli.group("privacy-ops", invoke_without_command=True)
+@click.pass_context
+def privacy_ops(ctx: click.Context) -> None:
     """Interactive privacy compliance workflows (DSAR, breach, data map, DPIA)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

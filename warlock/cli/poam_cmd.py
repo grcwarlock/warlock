@@ -45,9 +45,12 @@ _VALID_STATUSES = ["draft", "open", "in_progress", "completed", "verified", "clo
 # ---------------------------------------------------------------------------
 
 
-@cli.group("poam")
-def poam_group() -> None:
+@cli.group("poam", invoke_without_command=True)
+@click.pass_context
+def poam_group(ctx: click.Context) -> None:
     """POA&M lifecycle management: create, list, show, close, milestones, deviations."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

@@ -19,9 +19,12 @@ from warlock.cli import cli, console, _error
 # ---------------------------------------------------------------------------
 
 
-@cli.group("users")
-def users() -> None:
+@cli.group("users", invoke_without_command=True)
+@click.pass_context
+def users(ctx: click.Context) -> None:
     """User lifecycle management (list, create, update, deactivate, audit)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -555,9 +558,12 @@ def users_audit_log(user_id: str, limit: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-@users.group("roles")
-def roles() -> None:
+@users.group("roles", invoke_without_command=True)
+@click.pass_context
+def roles(ctx: click.Context) -> None:
     """Manage platform roles."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @roles.command("list")
@@ -643,9 +649,12 @@ def roles_create(role_name: str, description: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-@users.group("scopes")
-def scopes() -> None:
+@users.group("scopes", invoke_without_command=True)
+@click.pass_context
+def scopes(ctx: click.Context) -> None:
     """Manage user scope restrictions (frameworks, sources, control families)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @scopes.command("list")

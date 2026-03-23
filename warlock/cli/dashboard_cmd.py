@@ -24,9 +24,12 @@ from warlock.utils import ensure_aware
 # ---------------------------------------------------------------------------
 
 
-@cli.group("dashboard")
-def dashboard() -> None:
+@cli.group("dashboard", invoke_without_command=True)
+@click.pass_context
+def dashboard(ctx: click.Context) -> None:
     """Live dashboards and Key Risk Indicator (KRI) management."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -34,14 +37,20 @@ def dashboard() -> None:
 # ---------------------------------------------------------------------------
 
 
-@dashboard.group("kri")
-def kri() -> None:
+@dashboard.group("kri", invoke_without_command=True)
+@click.pass_context
+def kri(ctx: click.Context) -> None:
     """Key Risk Indicator management and threshold configuration."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
-@dashboard.group("alerts")
-def alerts() -> None:
+@dashboard.group("alerts", invoke_without_command=True)
+@click.pass_context
+def alerts(ctx: click.Context) -> None:
     """Alert management: list, acknowledge, configure, and review history."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

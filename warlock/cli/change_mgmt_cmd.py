@@ -48,9 +48,12 @@ def _make_hash(payload: str) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-@cli.group("changes")
-def changes() -> None:
+@cli.group("changes", invoke_without_command=True)
+@click.pass_context
+def changes(ctx: click.Context) -> None:
     """Manage change requests and the change management lifecycle."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @changes.command("create")

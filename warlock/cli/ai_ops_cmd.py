@@ -27,9 +27,12 @@ from warlock.cli import _check_ai_available, _parse_ai_response, cli, console, _
 # ---------------------------------------------------------------------------
 
 
-@cli.group("ai-ops")
-def ai_ops() -> None:
+@cli.group("ai-ops", invoke_without_command=True)
+@click.pass_context
+def ai_ops(ctx: click.Context) -> None:
     """AI-powered GRC analysis: explain, predict, prioritize, draft."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

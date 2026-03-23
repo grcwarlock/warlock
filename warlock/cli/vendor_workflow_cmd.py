@@ -113,9 +113,12 @@ def _write_audit_entry(session, action: str, entity_id: str, extra: dict) -> Non
 # ---------------------------------------------------------------------------
 
 
-@cli.group("vendor-review")
-def vendor_review() -> None:
+@cli.group("vendor-review", invoke_without_command=True)
+@click.pass_context
+def vendor_review(ctx: click.Context) -> None:
     """Interactive vendor management workflows (assess, onboard, offboard)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

@@ -17,9 +17,12 @@ from rich.markup import escape
 from warlock.cli import cli, console, _error
 
 
-@cli.group("correlate")
-def correlate() -> None:
+@cli.group("correlate", invoke_without_command=True)
+@click.pass_context
+def correlate(ctx: click.Context) -> None:
     """Cross-domain correlation: trace findings, controls, evidence, and audit entries."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

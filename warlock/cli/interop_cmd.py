@@ -26,9 +26,12 @@ from warlock.cli import cli, console, _error, _get_actor
 # ---------------------------------------------------------------------------
 
 
-@cli.group("link")
-def link() -> None:
+@cli.group("link", invoke_without_command=True)
+@click.pass_context
+def link(ctx: click.Context) -> None:
     """Cross-domain interoperability commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

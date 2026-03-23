@@ -22,9 +22,12 @@ from warlock.cli import cli, console, _error
 # ---------------------------------------------------------------------------
 
 
-@cli.group("vendor-mgmt")
-def vendor_mgmt() -> None:
+@cli.group("vendor-mgmt", invoke_without_command=True)
+@click.pass_context
+def vendor_mgmt(ctx: click.Context) -> None:
     """Vendor lifecycle management (create, assess, risk-score, offboard)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

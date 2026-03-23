@@ -299,9 +299,12 @@ def _show_remediation_steps(
 # ---------------------------------------------------------------------------
 
 
-@cli.group("investigate")
-def investigate() -> None:
+@cli.group("investigate", invoke_without_command=True)
+@click.pass_context
+def investigate(ctx: click.Context) -> None:
     """Interactive investigation workflows -- drill into findings, controls, and compliance."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @investigate.command("source")

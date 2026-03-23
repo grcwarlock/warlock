@@ -29,9 +29,12 @@ from warlock.utils import ensure_aware
 # ---------------------------------------------------------------------------
 
 
-@cli.group("audit-workflow")
-def audit_workflow() -> None:
+@cli.group("audit-workflow", invoke_without_command=True)
+@click.pass_context
+def audit_workflow(ctx: click.Context) -> None:
     """Guided audit management workflows for practitioners."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

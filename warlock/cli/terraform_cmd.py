@@ -82,9 +82,12 @@ def _terraform_available() -> bool:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("terraform")
-def terraform_group() -> None:
+@cli.group("terraform", invoke_without_command=True)
+@click.pass_context
+def terraform_group(ctx: click.Context) -> None:
     """Terraform IaC management: module browsing, validation, drift detection, compliance."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -92,9 +95,12 @@ def terraform_group() -> None:
 # ---------------------------------------------------------------------------
 
 
-@terraform_group.group("modules")
-def modules_group() -> None:
+@terraform_group.group("modules", invoke_without_command=True)
+@click.pass_context
+def modules_group(ctx: click.Context) -> None:
     """Browse Terraform modules."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @modules_group.command("list")

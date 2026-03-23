@@ -89,9 +89,12 @@ def _find_json_files(directory: Path, pattern: str = "*.json") -> list[Path]:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("oscal")
-def oscal_group() -> None:
+@cli.group("oscal", invoke_without_command=True)
+@click.pass_context
+def oscal_group(ctx: click.Context) -> None:
     """Browse and validate OSCAL packages (catalogs, profiles, SSP, POA&M, assessment results)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -99,9 +102,12 @@ def oscal_group() -> None:
 # ---------------------------------------------------------------------------
 
 
-@oscal_group.group("catalogs")
-def catalogs_group() -> None:
+@oscal_group.group("catalogs", invoke_without_command=True)
+@click.pass_context
+def catalogs_group(ctx: click.Context) -> None:
     """Browse OSCAL catalog packages."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @catalogs_group.command("list")
@@ -216,9 +222,12 @@ def catalogs_show(framework: str, limit: int, family: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@oscal_group.group("profiles")
-def profiles_group() -> None:
+@oscal_group.group("profiles", invoke_without_command=True)
+@click.pass_context
+def profiles_group(ctx: click.Context) -> None:
     """Browse OSCAL profile packages."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @profiles_group.command("list")

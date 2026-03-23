@@ -10,10 +10,12 @@ from rich.markup import escape
 from warlock.cli import cli, console
 
 
-@cli.group()
-def policy():
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def policy(ctx: click.Context):
     """Push and manage operational policies."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @policy.command("set")

@@ -27,9 +27,12 @@ from warlock.cli import cli, console, _error, _get_actor
 # ---------------------------------------------------------------------------
 
 
-@cli.group("risk-review")
-def risk_review() -> None:
+@cli.group("risk-review", invoke_without_command=True)
+@click.pass_context
+def risk_review(ctx: click.Context) -> None:
     """Interactive risk management review workflows."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

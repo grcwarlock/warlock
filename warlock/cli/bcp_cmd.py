@@ -24,10 +24,12 @@ from rich.table import Table
 from warlock.cli import cli, console, _error, _get_actor
 
 
-@cli.group("bcp")
-def bcp() -> None:
+@cli.group("bcp", invoke_without_command=True)
+@click.pass_context
+def bcp(ctx: click.Context) -> None:
     """Business continuity planning and disaster recovery testing."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -250,10 +252,12 @@ def bia(system: str | None, output_format: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-@bcp.group("dr-test")
-def dr_test() -> None:
+@bcp.group("dr-test", invoke_without_command=True)
+@click.pass_context
+def dr_test(ctx: click.Context) -> None:
     """Disaster recovery test scheduling and execution."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

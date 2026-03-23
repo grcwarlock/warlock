@@ -27,9 +27,12 @@ def _utcnow() -> datetime:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("automation")
-def automation() -> None:
+@cli.group("automation", invoke_without_command=True)
+@click.pass_context
+def automation(ctx: click.Context) -> None:
     """Workflow automation: pipeline runs, evidence refresh, auto-issue/POA&M, housekeeping."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -511,9 +514,12 @@ def cleanup(older_than_days: int, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
-@automation.group("rules")
-def automation_rules() -> None:
+@automation.group("rules", invoke_without_command=True)
+@click.pass_context
+def automation_rules(ctx: click.Context) -> None:
     """Automation rule management: list, create, delete, test."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @automation_rules.command("list")
@@ -803,9 +809,12 @@ def rules_test(rule_id: str, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
-@automation.group("schedules")
-def automation_schedules() -> None:
+@automation.group("schedules", invoke_without_command=True)
+@click.pass_context
+def automation_schedules(ctx: click.Context) -> None:
     """Schedule management: list and configure automation schedules."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @automation_schedules.command("list")
@@ -866,9 +875,12 @@ def schedules_list() -> None:
 # ---------------------------------------------------------------------------
 
 
-@automation.group("webhook")
-def automation_webhook() -> None:
+@automation.group("webhook", invoke_without_command=True)
+@click.pass_context
+def automation_webhook(ctx: click.Context) -> None:
     """Webhook trigger management: create, list, delete, test."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @automation_webhook.command("create")

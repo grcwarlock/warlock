@@ -343,9 +343,12 @@ def _format_due(due: datetime) -> str:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("calendar")
-def calendar() -> None:
+@cli.group("calendar", invoke_without_command=True)
+@click.pass_context
+def calendar(ctx: click.Context) -> None:
     """Compliance calendar — deadlines, audits, renewals, and reviews."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @calendar.command("list")

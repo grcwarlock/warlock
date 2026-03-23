@@ -21,9 +21,12 @@ def _safe_lake_path(path: str) -> str:
     return path
 
 
-@cli.group()
-def lake() -> None:
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def lake(ctx: click.Context) -> None:
     """Data lake management commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @lake.command("init")
@@ -310,9 +313,12 @@ def lake_assess(path: str | None, framework: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@lake.group()
-def evidence() -> None:
+@lake.group(invoke_without_command=True)
+@click.pass_context
+def evidence(ctx: click.Context) -> None:
     """Evidence management commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @evidence.command("list")
@@ -399,9 +405,12 @@ def evidence_freshness(path: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@lake.group()
-def incidents() -> None:
+@lake.group(invoke_without_command=True)
+@click.pass_context
+def incidents(ctx: click.Context) -> None:
     """Incident management commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @incidents.command("list")
@@ -499,9 +508,12 @@ def incidents_events(path: str | None, severity: str | None, limit: int) -> None
 # ---------------------------------------------------------------------------
 
 
-@lake.group()
-def privacy() -> None:
+@lake.group(invoke_without_command=True)
+@click.pass_context
+def privacy(ctx: click.Context) -> None:
     """Privacy management commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @privacy.command("dsars")
@@ -627,9 +639,12 @@ def privacy_transfers(path: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@lake.group()
-def supply_chain() -> None:
+@lake.group(invoke_without_command=True)
+@click.pass_context
+def supply_chain(ctx: click.Context) -> None:
     """Supply chain risk commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @supply_chain.command("sbom")
@@ -749,9 +764,12 @@ def supply_chain_concentration(path: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@lake.group()
-def analytics() -> None:
+@lake.group(invoke_without_command=True)
+@click.pass_context
+def analytics(ctx: click.Context) -> None:
     """Analytics and trend commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @analytics.command("trends")
@@ -849,9 +867,12 @@ def analytics_heatmap(path: str | None, framework: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@lake.group()
-def health() -> None:
+@lake.group(invoke_without_command=True)
+@click.pass_context
+def health(ctx: click.Context) -> None:
     """Pipeline health commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @health.command("runs")

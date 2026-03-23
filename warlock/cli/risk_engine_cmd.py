@@ -121,9 +121,12 @@ def _load_records(session, entity_type: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("risk-engine")
-def risk_engine() -> None:
+@cli.group("risk-engine", invoke_without_command=True)
+@click.pass_context
+def risk_engine(ctx: click.Context) -> None:
     """Risk quantification engine: FAIR analysis, Monte Carlo, register, appetite, treatment."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -647,9 +650,12 @@ def exposure(framework: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@risk_engine.group("register")
-def register() -> None:
+@risk_engine.group("register", invoke_without_command=True)
+@click.pass_context
+def register(ctx: click.Context) -> None:
     """Risk register management: list, add, show, update."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @register.command("list")
@@ -839,9 +845,12 @@ def register_update(
 # ---------------------------------------------------------------------------
 
 
-@risk_engine.group("appetite")
-def appetite() -> None:
+@risk_engine.group("appetite", invoke_without_command=True)
+@click.pass_context
+def appetite(ctx: click.Context) -> None:
     """Risk appetite management: list, set, check."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @appetite.command("list")
@@ -966,9 +975,12 @@ def appetite_check() -> None:
 # ---------------------------------------------------------------------------
 
 
-@risk_engine.group("treatment")
-def treatment() -> None:
+@risk_engine.group("treatment", invoke_without_command=True)
+@click.pass_context
+def treatment(ctx: click.Context) -> None:
     """Risk treatment plan management: list, add, update."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @treatment.command("list")

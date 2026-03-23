@@ -18,9 +18,12 @@ from rich.table import Table
 from warlock.cli import cli, console, _error, _get_actor
 
 
-@cli.group("bulk")
-def bulk() -> None:
+@cli.group("bulk", invoke_without_command=True)
+@click.pass_context
+def bulk(ctx: click.Context) -> None:
     """Bulk operations: suppress, assign, close, tag, export, deduplicate, and more."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

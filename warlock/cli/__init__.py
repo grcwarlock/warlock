@@ -151,7 +151,7 @@ def _print_stats(stats) -> None:
             console.print(f"  [dim]... and {len(stats.errors) - 10} more[/dim]")
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress non-essential output (for scripting)")
 @click.option(
@@ -167,6 +167,8 @@ def cli(ctx: click.Context, verbose: bool, quiet: bool, global_format: str | Non
     ctx.ensure_object(dict)
     ctx.obj["quiet"] = quiet
     ctx.obj["global_format"] = global_format
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
     level = logging.DEBUG if verbose else logging.WARNING if quiet else logging.INFO
     logging.basicConfig(
         level=level,

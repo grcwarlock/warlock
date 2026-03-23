@@ -62,10 +62,12 @@ def _opa_available() -> bool:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("policies")
-def policies_grp() -> None:
+@cli.group("policies", invoke_without_command=True)
+@click.pass_context
+def policies_grp(ctx: click.Context) -> None:
     """Inspect and manage OPA/Rego compliance policies."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -642,10 +644,12 @@ def policies_export(policy_ref: str, output: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-@policies_grp.group("lifecycle")
-def lifecycle_grp() -> None:
+@policies_grp.group("lifecycle", invoke_without_command=True)
+@click.pass_context
+def lifecycle_grp(ctx: click.Context) -> None:
     """Manage Policy DB records (push via 'warlock policy set')."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @lifecycle_grp.command("list")

@@ -15,10 +15,12 @@ from rich.table import Table
 from warlock.cli import cli, console, _error, _get_actor
 
 
-@cli.group("audit")
-def audit_grp() -> None:
+@cli.group("audit", invoke_without_command=True)
+@click.pass_context
+def audit_grp(ctx: click.Context) -> None:
     """Manage audit engagements, findings, and corrective actions."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -26,10 +28,12 @@ def audit_grp() -> None:
 # ---------------------------------------------------------------------------
 
 
-@audit_grp.group("engagement")
-def engagement_grp() -> None:
+@audit_grp.group("engagement", invoke_without_command=True)
+@click.pass_context
+def engagement_grp(ctx: click.Context) -> None:
     """Create and manage audit engagement periods."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @engagement_grp.command("create")

@@ -151,9 +151,12 @@ def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
     _print_stats(stats)
 
 
-@cli.group()
-def scheduler() -> None:
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def scheduler(ctx: click.Context) -> None:
     """Pipeline scheduler for continuous monitoring."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @scheduler.command("start")

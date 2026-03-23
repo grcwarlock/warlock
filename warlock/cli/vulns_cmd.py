@@ -35,9 +35,12 @@ _SEVERITY_STYLES: dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 
-@cli.group("vulns")
-def vulns() -> None:
+@cli.group("vulns", invoke_without_command=True)
+@click.pass_context
+def vulns(ctx: click.Context) -> None:
     """Vulnerability management: dashboard, SLA tracking, trends, and reporting."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

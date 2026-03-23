@@ -104,9 +104,12 @@ def _write_audit_entry(session, action: str, entity_type: str, entity_id: str, e
 # ---------------------------------------------------------------------------
 
 
-@cli.group("lifecycle")
-def lifecycle() -> None:
+@cli.group("lifecycle", invoke_without_command=True)
+@click.pass_context
+def lifecycle(ctx: click.Context) -> None:
     """End-to-end lifecycle workflows for GRC practitioners."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

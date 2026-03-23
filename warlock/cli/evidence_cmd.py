@@ -23,9 +23,12 @@ from warlock.utils import ensure_aware
 # ---------------------------------------------------------------------------
 
 
-@cli.group("evidence")
-def evidence() -> None:
+@cli.group("evidence", invoke_without_command=True)
+@click.pass_context
+def evidence(ctx: click.Context) -> None:
     """Evidence collection, verification, and auditor request management."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -778,9 +781,12 @@ def evidence_timeline(control_id: str, days: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-@evidence.group("requests")
-def evidence_requests() -> None:
+@evidence.group("requests", invoke_without_command=True)
+@click.pass_context
+def evidence_requests(ctx: click.Context) -> None:
     """Manage auditor evidence requests."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

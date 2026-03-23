@@ -36,9 +36,12 @@ from warlock.cli import cli, console, _error, _get_actor
 # ---------------------------------------------------------------------------
 
 
-@cli.group("privacy")
-def privacy() -> None:
+@cli.group("privacy", invoke_without_command=True)
+@click.pass_context
+def privacy(ctx: click.Context) -> None:
     """GDPR and privacy compliance commands."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -192,9 +195,12 @@ def _load_breach_records(session) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-@privacy.group("dsar")
-def dsar() -> None:
+@privacy.group("dsar", invoke_without_command=True)
+@click.pass_context
+def dsar(ctx: click.Context) -> None:
     """Data Subject Access Request (DSAR) management."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @dsar.command("create")
@@ -498,9 +504,12 @@ def dsar_overdue() -> None:
 # ---------------------------------------------------------------------------
 
 
-@privacy.group("breach")
-def breach() -> None:
+@privacy.group("breach", invoke_without_command=True)
+@click.pass_context
+def breach(ctx: click.Context) -> None:
     """Personal data breach management."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @breach.command("list")
@@ -818,9 +827,12 @@ def breach_status(breach_id: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-@privacy.group("transfers")
-def transfers() -> None:
+@privacy.group("transfers", invoke_without_command=True)
+@click.pass_context
+def transfers(ctx: click.Context) -> None:
     """Cross-border data transfer records."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @transfers.command("list")

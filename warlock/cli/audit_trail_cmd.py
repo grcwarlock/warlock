@@ -58,10 +58,12 @@ def _format_dt(dt: datetime | None) -> str:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("audit-trail")
-def audit_trail_grp() -> None:
+@cli.group("audit-trail", invoke_without_command=True)
+@click.pass_context
+def audit_trail_grp(ctx: click.Context) -> None:
     """Inspect and verify the immutable audit trail."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

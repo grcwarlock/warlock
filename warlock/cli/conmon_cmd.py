@@ -20,9 +20,12 @@ from warlock.cli import cli, console, _error, _get_actor
 # ---------------------------------------------------------------------------
 
 
-@cli.group("conmon")
-def conmon() -> None:
+@cli.group("conmon", invoke_without_command=True)
+@click.pass_context
+def conmon(ctx: click.Context) -> None:
     """Continuous monitoring (ConMon): status, reporting, deviations, and checklists."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

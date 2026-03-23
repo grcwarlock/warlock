@@ -55,9 +55,12 @@ _VALID_SEVERITIES = ["critical", "high", "medium", "low"]
 # ---------------------------------------------------------------------------
 
 
-@cli.group("incidents")
-def incidents() -> None:
+@cli.group("incidents", invoke_without_command=True)
+@click.pass_context
+def incidents(ctx: click.Context) -> None:
     """Incident lifecycle management (create, track, resolve, report)."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

@@ -18,9 +18,12 @@ from warlock.utils import ensure_aware
 # ---------------------------------------------------------------------------
 
 
-@cli.group("reports")
-def reports() -> None:
+@cli.group("reports", invoke_without_command=True)
+@click.pass_context
+def reports(ctx: click.Context) -> None:
     """Generate and schedule compliance, risk, and board-level reports."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -986,9 +989,12 @@ def reports_attestation_summary(framework: str | None, output: str | None) -> No
 # ---------------------------------------------------------------------------
 
 
-@reports.group("templates")
-def templates() -> None:
+@reports.group("templates", invoke_without_command=True)
+@click.pass_context
+def templates(ctx: click.Context) -> None:
     """Manage report templates."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @templates.command("list")

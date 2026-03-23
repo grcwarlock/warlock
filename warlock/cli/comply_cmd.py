@@ -66,9 +66,12 @@ def _count_by_status(results: list) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 
-@cli.group("comply")
-def comply() -> None:
+@cli.group("comply", invoke_without_command=True)
+@click.pass_context
+def comply(ctx: click.Context) -> None:
     """Compliance automation: gap analysis, audit prep, readiness, executive reporting."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

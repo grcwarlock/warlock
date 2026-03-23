@@ -19,10 +19,12 @@ from rich.table import Table
 from warlock.cli import cli, console, _error, _get_actor
 
 
-@cli.group("control-tests")
-def control_tests() -> None:
+@cli.group("control-tests", invoke_without_command=True)
+@click.pass_context
+def control_tests(ctx: click.Context) -> None:
     """Schedule, execute, and track control test results."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------

@@ -70,9 +70,12 @@ def _compute_progress(extra: dict) -> tuple[int, int]:
     return len(certs), extra.get("total_users", len(certs))
 
 
-@cli.group("access-review")
-def access_review() -> None:
+@cli.group("access-review", invoke_without_command=True)
+@click.pass_context
+def access_review(ctx: click.Context) -> None:
     """Manage periodic access review campaigns."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @access_review.command("create")

@@ -47,9 +47,12 @@ _NOTIFICATION_CHANNELS = [
 # ---------------------------------------------------------------------------
 
 
-@cli.group("integrations")
-def integrations() -> None:
+@cli.group("integrations", invoke_without_command=True)
+@click.pass_context
+def integrations(ctx: click.Context) -> None:
     """Manage external integrations and notification channels."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
@@ -257,9 +260,12 @@ def integrations_status() -> None:
 # ---------------------------------------------------------------------------
 
 
-@integrations.group("notifications")
-def notifications() -> None:
+@integrations.group("notifications", invoke_without_command=True)
+@click.pass_context
+def notifications(ctx: click.Context) -> None:
     """Manage notification channels and alerting rules."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 # ---------------------------------------------------------------------------
