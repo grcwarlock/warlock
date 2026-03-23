@@ -206,6 +206,15 @@ from warlock.cli import conmon_cmd as _conmon_cmd  # noqa: F401, E402
 from warlock.cli import sod_cmd as _sod_cmd  # noqa: F401, E402
 from warlock.cli import poam_cmd as _poam_cmd  # noqa: F401, E402
 from warlock.cli import terraform_cmd as _terraform_cmd  # noqa: F401, E402
+# Phase 3+ — Analytics, correlation, AI, automation
+from warlock.cli import correlate_cmd as _correlate_cmd  # noqa: F401, E402
+from warlock.cli import bulk_cmd as _bulk_cmd  # noqa: F401, E402
+from warlock.cli import risk_engine_cmd as _risk_engine_cmd  # noqa: F401, E402
+from warlock.cli import comply_cmd as _comply_cmd  # noqa: F401, E402
+from warlock.cli import lake_analytics_cmd as _lake_analytics_cmd  # noqa: F401, E402
+from warlock.cli import dashboard_cmd as _dashboard_cmd  # noqa: F401, E402
+from warlock.cli import ai_ops_cmd as _ai_ops_cmd  # noqa: F401, E402
+from warlock.cli import automation_cmd as _automation_cmd  # noqa: F401, E402
 
 
 if __name__ == "__main__":

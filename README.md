@@ -5,8 +5,8 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (82 sources)  → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (82 parsers) → FindingData       → transform to universal findings
+Stage 1: Connectors (165 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (165 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
@@ -33,27 +33,42 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (82)
+## Connectors (165)
 
-**Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
-**EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos
-**IAM:** Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault, JumpCloud, Auth0
-**Scanners:** Tenable, Qualys, Wiz
-**CSPM:** Prisma Cloud
-**SIEM:** Sentinel, Splunk, Elastic
-**Network Security:** Palo Alto Networks, Fortinet FortiGate, Zscaler
-**HRIS:** Workday, BambooHR, Gusto, Rippling | **ITSM:** ServiceNow | **Training:** KnowBe4
-**Code Security:** Snyk, GitHub Advanced Security, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode
-**DLP:** Microsoft Purview, Netskope | **Backup:** Veeam | **MDM:** Microsoft Intune, Jamf, Kandji
+**Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare, Linode/Akamai, Hetzner, Spot.io
+**EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos, Tanium
+**IAM:** Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault, JumpCloud, Auth0, Ping Identity, OneLogin
+**Scanners:** Tenable, Qualys, Wiz, Rapid7 InsightVM, CrowdStrike Spotlight, Vulcan Cyber, Nessus
+**CSPM:** Prisma Cloud, Orca Security, Lacework, Ermetic
+**SIEM:** Sentinel, Splunk, Elastic, Sumo Logic, LogRhythm
+**Network Security:** Palo Alto Networks, Fortinet FortiGate, Zscaler, Cisco Umbrella, Tailscale, Twingate, Banyan Security, Barracuda, F5 BIG-IP, Wallarm
+**HRIS:** Workday, BambooHR, Gusto, Rippling, ADP, UKG, SAP SuccessFactors, Paylocity
+**ITSM:** ServiceNow, ServiceNow GRC, ServiceNow CMDB, PagerDuty, Opsgenie, ManageEngine
+**Training:** KnowBe4
+**Code Security:** Snyk, Snyk Container, GitHub Advanced Security, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode, FOSSA, Socket.dev, Chainguard, Syft/Grype
+**DLP:** Microsoft Purview, Netskope, Nightfall AI, Code42 Incydr, Varonis, Rubrik Security Cloud
+**Backup:** Veeam, AWS Backup, Commvault, Rubrik, Cohesity, Druva
+**MDM:** Microsoft Intune, Jamf, Kandji, VMware Workspace ONE, Microsoft WSUS/SCCM, Ivanti Patch, Automox, Fleet
 **MFA / Password:** Duo Security, 1Password, Bitwarden
-**Collaboration:** Slack, Google Workspace | **DevOps:** GitLab, Jira
-**Observability:** Datadog, New Relic, Grafana | **Cloud Threat:** AWS GuardDuty
-**Email Security:** Proofpoint, Abnormal Security, Exchange Online
-**GRC:** Confluence, OneTrust | **Physical:** Verkada
-**Third-Party Risk:** SecurityScorecard, BitSight | **Container:** Kubernetes, Aqua Security
-**Infrastructure:** Terraform Cloud | **AI/ML:** MLflow, SageMaker, Databricks
+**Collaboration:** Slack, Google Workspace, Salesforce, Microsoft Teams Compliance, Zoom, Smarsh
+**DevOps:** GitLab, Jira, Ansible/AWX
+**Observability:** Datadog, New Relic, Grafana, Kubecost, Infracost
+**Cloud Threat:** AWS GuardDuty
+**Email Security:** Proofpoint, Abnormal Security, Exchange Online, Mimecast
+**GRC:** Confluence, OneTrust, Drata, Vanta, Archer, Secureframe
+**Privacy:** TrustArc, Cookiebot, Osano
+**Physical:** Verkada
+**Third-Party Risk:** SecurityScorecard, BitSight
+**Container:** Kubernetes, Aqua Security
+**Infrastructure:** Terraform Cloud
+**AI/ML:** MLflow, SageMaker, Databricks, Weights & Biases, Vertex AI
 **CI/CD:** Jenkins, GitHub Actions, GitLab CI, CircleCI
-**Scanner:** Nessus (standalone)
+**Secrets Management:** AWS Secrets Manager, Azure Key Vault, GCP Secret Manager
+**Certificate Management:** Venafi, AWS ACM, DigiCert CertCentral
+**Asset Discovery:** Axonius, runZero
+**API Security:** Salt Security, Noname Security, 42Crunch
+**Data Governance:** BigID
+**Pentest Platforms:** Cobalt, HackerOne, PlexTrac
 **Ingest:** Webhook (generic)
 
 ## Quick Start (Docker — recommended)
@@ -79,100 +94,77 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
-## CLI Commands
+## CLI (499 commands across 79 groups)
 
-### Pipeline & Monitoring
+Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
-| Command | Description |
-|---|---|
-| `warlock collect` | Run the full pipeline: collect -> normalize -> map -> assess |
-| `warlock collect -s aws` | Limit collection to specific source(s) |
-| `warlock cadence` | Check monitoring cadence — are controls assessed on schedule? |
-| `warlock cadence -f nist_800_53 --stale-only` | Show only stale controls |
-| `warlock sufficiency -f soc2 --below 60` | Evidence sufficiency gaps |
-| `warlock posture-history -f nist_800_53` | Posture score trends with trend arrows |
-| `warlock effectiveness -f nist_800_53` | Control effectiveness (uptime %, MTTR, drift count) |
+### Highlights
 
-### Compliance Results
+| Domain | Group | Commands | Description |
+|---|---|---|---|
+| **Pipeline** | `warlock collect`, `pipeline`, `automation` | 25 | Collect, normalize, map, assess, schedule, replay |
+| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health check all 165 connectors |
+| **Findings** | `warlock findings`, `vulns` | 23 | List, search, suppress, export, aging, SLA, trends |
+| **Compliance** | `warlock comply`, `frameworks`, `assertions` | 47 | Auto-map, gap analysis, readiness scores, maturity model |
+| **Incidents** | `warlock incidents` | 11 | Create, triage, timeline, post-mortem, MTTR metrics |
+| **Evidence** | `warlock evidence` | 17 | Attach, verify hash chain, package for auditors, freshness |
+| **Risk** | `warlock risk`, `risk-engine` | 22 | FAIR quantification, Monte Carlo, risk register, appetite |
+| **Privacy** | `warlock privacy` | 17 | DSAR lifecycle, breach notification, ROPA, data maps |
+| **Governance** | `warlock poams`, `poam`, `changes`, `exceptions` | 20 | POA&M milestones, change management, policy exceptions |
+| **Attestations** | `warlock attestations` | 8 | Create, sign, expiry tracking, audit report |
+| **Audit** | `warlock audit`, `audit-trail` | 18 | Engagement management, hash chain verification, tamper detection |
+| **Users** | `warlock users`, `sod` | 17 | RBAC, roles, scopes, segregation of duties analysis |
+| **Vendors** | `warlock vendor-mgmt` | 16 | TPRM lifecycle, concentration risk, SOC 2 review, offboarding |
+| **Reports** | `warlock reports` | 16 | Executive, board, KRI, KPI, ConMon, SLA, audit-readiness |
+| **Dashboard** | `warlock dashboard` | 15 | Live terminal dashboard, KRI engine, posture, alerts |
+| **Correlation** | `warlock correlate` | 15 | Trace findings to controls, blast radius, gap analysis |
+| **Bulk Ops** | `warlock bulk` | 12 | Suppress, assign, close, deduplicate, reprocess at scale |
+| **AI-Powered** | `warlock ai-ops` | 18 | Explain, root-cause, predict, draft POA&Ms, classify |
+| **Lake Analytics** | `warlock lake-analytics` | 20 | SQL query, anomaly detection, trends, lineage, data quality |
+| **OSCAL** | `warlock oscal` | 8 | Catalogs, profiles, SSP, assessment results, POA&M export |
+| **Policies** | `warlock policies`, `policy` | 19 | OPA Rego management, lifecycle, review-due, coverage |
+| **Other** | `calendar`, `training`, `bcp`, `conmon`, `terraform`, `integrations` | 32 | Cross-domain calendar, BCP/DR, continuous monitoring |
 
-| Command | Description |
-|---|---|
-| `warlock results` | Control results from the last pipeline run |
-| `warlock results -f nist_800_53 --status non_compliant` | Filter by framework/status |
-| `warlock coverage` | Compliance coverage summary by framework |
-| `warlock findings` | Normalized findings |
-| `warlock drift` | Compliance drift events with correlated changes |
-| `warlock simulate-audit -f soc2 --date 2026-09-01` | Project audit readiness at a future date |
+### Quick Examples
 
-### Remediation Workflows
+```bash
+# Pipeline
+warlock collect                              # full pipeline run
+warlock connectors test-all                  # health check all connectors
+warlock pipeline status                      # recent run status
 
-| Command | Description |
-|---|---|
-| `warlock poams` | List Plans of Action & Milestones |
-| `warlock poams --overdue` | Show overdue POA&Ms |
-| `warlock remediate <id>` | Show full remediation plan (manual steps + CLI actions) |
-| `warlock remediate <id> -a transition --to in_progress` | Change issue/POA&M status |
-| `warlock remediate <id> -a assign --to user@acme.com` | Assign to someone |
-| `warlock compensating-controls` | List compensating controls |
-| `warlock risk-acceptances` | List risk acceptances |
-| `warlock risk-acceptances --expiring-soon 30` | Expiring within 30 days |
-| `warlock issues` | Compliance issues |
-| `warlock issues-auto-create` | Auto-create issues from non-compliant results |
+# Compliance
+warlock comply readiness-score nist_800_53   # 0-100 score with breakdown
+warlock comply quick-wins --limit 10         # lowest-effort fixes
+warlock frameworks gaps soc2                 # controls with no evidence
 
-### Enterprise & Governance
+# Incidents & findings
+warlock incidents create --severity critical --title "Data breach detected"
+warlock findings aging --severity critical   # how old are critical findings?
+warlock vulns sla-breach                     # vulns past SLA deadline
 
-| Command | Description |
-|---|---|
-| `warlock systems` | System profiles (authorization boundaries) |
-| `warlock inheritance --system <id-or-acronym>` | Control inheritance map for a system |
-| `warlock dependencies` | Cross-system dependency graph |
-| `warlock personnel --flagged` | Personnel with compliance flags |
-| `warlock framework-diff --old v5.yaml --new v6.yaml` | Compare framework versions |
-| `warlock architecture` | Live architecture diagram (terminal) |
-| `warlock architecture --format svg` | Export architecture as SVG (requires d2) |
+# Evidence & audit
+warlock evidence freshness --threshold-days 30
+warlock audit-trail tamper-detect            # scan for hash chain breaks
+warlock evidence package soc2 --output /tmp  # auditor evidence bundle
 
-### Domain Commands (Cross-Domain Views)
+# Risk & AI
+warlock risk-engine simulate --iterations 10000
+warlock ai-ops explain-finding <id> --ai     # AI explanation + remediation
+warlock comply executive-brief --format md   # one-page brief
 
-| Command | Description |
-|---|---|
-| `warlock briefing` | Daily priority view — what needs attention across all domains |
-| `warlock briefing -f soc2 --mode audit-prep` | Scoped to framework, with operational mode |
-| `warlock control-hub CC6.1 -f soc2` | Cross-domain view of a control: status, issues, evidence |
-| `warlock policy set sla --severity critical --remediation-days 14` | Push an SLA policy |
-| `warlock policy set retention --framework pci_dss --days 2555` | Push a retention policy |
-| `warlock policy list` | List active policies |
-| `warlock policy history` | Policy change audit trail |
+# Bulk operations
+warlock bulk suppress --source nessus --severity info --reason "scanner noise"
+warlock bulk link-findings-to-issues --auto  # auto-create issues for critical findings
 
-### Export & Risk
+# Dashboard
+warlock dashboard live --refresh 30          # real-time terminal dashboard
+warlock dashboard kri evaluate               # red/amber/green KRI status
 
-| Command | Description |
-|---|---|
-| `warlock oscal` | OSCAL JSON export (AR, SSP, POA&M) |
-| `warlock oscal --format ssp -f nist_800_53 --ai` | AI-generated SSP narratives |
-| `warlock risk -f nist_800_53` | FAIR Monte Carlo risk quantification |
-| `warlock vendors` | Vendor risk scores |
-| `warlock export binder --engagement <id>` | Audit evidence binder (ZIP) |
-
-### Operations
-
-| Command | Description |
-|---|---|
-| `warlock scheduler start` | Start continuous pipeline scheduler |
-| `warlock scheduler status` | Show scheduler status (multi-schedule) |
-| `warlock retention report` | Retention report (record ages, purgeable counts) |
-| `warlock retention purge --execute` | Purge expired records (respects legal holds) |
-
-### Data Lake
-
-| Command | Description |
-|---|---|
-| `warlock lake status` | Lake zone file counts and sizes |
-| `warlock lake backfill` | Backfill historical OLTP data to lake |
-| `warlock lake reconcile` | Compare OLTP vs lake row counts + hashes |
-| `warlock lake query "question"` | Natural language compliance query |
-| `warlock lake assess` | Batch AI assessment over curated zone |
-| `warlock lake compact` | Compact small Parquet files |
-| `warlock ask "are we SOC 2 ready?"` | Conversational compliance from terminal |
+# Cross-domain correlation
+warlock correlate trace <finding_id>         # full provenance trace
+warlock correlate blast-radius <finding_id>  # impact analysis
+```
 
 ## REST API
 
