@@ -48,6 +48,13 @@ class SchedulerStatusResponse(BaseModel):
     last_error: str | None
 
 
+class HashChainVerifyResponse(BaseModel):
+    total: int
+    verified: int
+    broken_at_sequence: int | None = None
+    verified_at: str
+
+
 class SchedulerStartRequest(BaseModel):
     interval_minutes: int = 60
 
@@ -157,6 +164,51 @@ def pipeline_status(
             "control_results": result_count,
         },
     }
+
+
+@router.get("/pipeline/verify-chain", response_model=HashChainVerifyResponse)
+def verify_hash_chain(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Verify the audit trail hash chain integrity.
+
+    Queries AuditEntry records ordered by sequence and verifies each
+    entry's previous_hash matches the prior entry's entry_hash. Returns
+    the total entries checked, how many verified, and where the chain
+    broke (if at all).
+    """
+    from datetime import datetime, timezone
+
+    repos = get_repos(db)
+    entries = repos.audit_entries.all_by_sequence()
+
+    total = len(entries)
+    verified = 0
+    broken_at: int | None = None
+
+    for i, entry in enumerate(entries):
+        if i == 0:
+            # Genesis entry — previous_hash should be "genesis"
+            if entry.previous_hash == "genesis":
+                verified += 1
+            else:
+                broken_at = entry.sequence
+                break
+        else:
+            prev = entries[i - 1]
+            if entry.previous_hash == prev.entry_hash:
+                verified += 1
+            else:
+                broken_at = entry.sequence
+                break
+
+    return HashChainVerifyResponse(
+        total=total,
+        verified=verified,
+        broken_at_sequence=broken_at,
+        verified_at=datetime.now(timezone.utc).isoformat(),
+    )
 
 
 # =========================================================================

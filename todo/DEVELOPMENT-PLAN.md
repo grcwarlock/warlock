@@ -451,21 +451,21 @@ Use this as a tracking sheet. Check items off as sprints complete.
 - [ ] 15+ total connectors working against real APIs
 - [ ] Demo seed passes
 
-### Sprint 5 (Weeks 9-10) -- Alerts + AI
-- [ ] PG-1: Alert model + CLI + API
-- [ ] PG-2: Alert rules engine (5+ built-in rules)
-- [ ] PG-6: AI structured output
-- [ ] Demo seed generates alerts
-- [ ] Demo seed passes
+### Sprint 5 (Weeks 9-10) -- Alerts + AI ✓ COMPLETE (2026-03-23)
+- [x] PG-1: Alert model + CLI + API
+- [x] PG-2: Alert rules engine (5 built-in rules)
+- [x] PG-6: AI structured output
+- [x] Demo seed generates alerts (12 alerts)
+- [x] Demo seed passes
 
-### Sprint 6 (Weeks 11-12) -- Remediation + Status
-- [ ] PG-7: Remediation workflow (5-stage state machine)
-- [ ] PG-8: Pipeline status API
+### Sprint 6 (Weeks 11-12) -- Remediation + Status ✓ COMPLETE (2026-03-23)
+- [x] PG-7: Remediation workflow (5-stage state machine)
+- [x] PG-8: Pipeline status API + PipelineRun model
 - [ ] PG-9: Per-connector status API
-- [ ] PG-11: Hash chain verification endpoint
+- [x] PG-11: Hash chain verification endpoint
 - [ ] PG-22: Slack notification integration
-- [ ] All new endpoints have ABAC enforcement
-- [ ] Demo seed passes
+- [x] All new endpoints have ABAC enforcement
+- [x] Demo seed passes (7 remediations, 3 pipeline runs)
 
 ### Sprint 7 (Weeks 13-14) -- Documentation
 - [ ] DOC-4: OpenAPI export

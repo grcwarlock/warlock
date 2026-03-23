@@ -1525,6 +1525,10 @@ class AuditEntryRepository(BaseRepository):
         """Total number of audit entries."""
         return self.session.query(func.count(AuditEntry.id)).scalar() or 0
 
+    def all_by_sequence(self) -> list[AuditEntry]:
+        """Return all audit entries ordered by sequence ascending (for chain verification)."""
+        return self.session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).all()
+
 
 # ---------------------------------------------------------------------------
 # Legal Hold Repository

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -34,15 +34,16 @@ TIMEOUT = 60.0
 @dataclass
 class AIReasoningResult:
     status: str  # compliant, non_compliant, partial, not_assessed
-    assessment: str  # narrative explanation
     confidence: float  # 0.0 – 1.0
     model: str
-    prompt_hash: str = ""
-    context_factors: list[str] = None  # what context influenced the assessment
 
-    def __post_init__(self):
-        if self.context_factors is None:
-            self.context_factors = []
+    # PG-6: Structured output fields
+    reasoning: list[str] = field(default_factory=list)  # ordered reasoning steps
+    evidence: list[str] = field(default_factory=list)  # specific evidence cited
+    assessment: str = ""  # summary narrative (kept for backwards compat)
+
+    prompt_hash: str = ""
+    context_factors: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -72,8 +73,10 @@ drifted is different from one that has been non-compliant for months.
 Respond ONLY with a JSON object (no markdown fences, no commentary):
 {
   "status": "compliant" | "non_compliant" | "partial",
-  "assessment": "<1-3 sentence narrative referencing the relevant context>",
   "confidence": <float 0.0-1.0>,
+  "reasoning": ["<ordered list of reasoning steps you used to reach your conclusion>"],
+  "evidence": ["<specific pieces of evidence from the finding/context that support your assessment>"],
+  "summary": "<1-3 sentence narrative referencing the relevant context>",
   "recommended_action": "<short remediation suggestion or empty string>",
   "context_factors": ["<list of context factors that influenced the assessment>"]
 }\
@@ -180,9 +183,9 @@ def _parse_response(text: str, model: str) -> AIReasoningResult:
         log.warning("AI response was not valid JSON: %.200s", text)
         return AIReasoningResult(
             status="not_assessed",
-            assessment=f"AI returned unparseable response: {text[:200]}",
             confidence=0.0,
             model=model,
+            assessment=f"AI returned unparseable response: {text[:200]}",
         )
 
     status = data.get("status", "not_assessed")
@@ -192,7 +195,17 @@ def _parse_response(text: str, model: str) -> AIReasoningResult:
     confidence = float(data.get("confidence", 0.0))
     confidence = max(0.0, min(1.0, confidence))
 
-    assessment = data.get("assessment", "")
+    # PG-6: Extract structured reasoning and evidence
+    reasoning = data.get("reasoning", [])
+    if not isinstance(reasoning, list):
+        reasoning = []
+
+    evidence = data.get("evidence", [])
+    if not isinstance(evidence, list):
+        evidence = []
+
+    # Use "summary" (new prompt key) with fallback to "assessment" (legacy)
+    assessment = data.get("summary", "") or data.get("assessment", "")
     action = data.get("recommended_action", "")
     if action:
         assessment = f"{assessment} Recommended: {action}"
@@ -203,9 +216,11 @@ def _parse_response(text: str, model: str) -> AIReasoningResult:
 
     return AIReasoningResult(
         status=status,
-        assessment=assessment,
         confidence=confidence,
         model=model,
+        reasoning=reasoning,
+        evidence=evidence,
+        assessment=assessment,
         context_factors=context_factors,
     )
 

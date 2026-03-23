@@ -234,6 +234,10 @@ from warlock.cli import exception_workflow_cmd as _exception_workflow_cmd  # noq
 from warlock.cli import conmon_workflow_cmd as _conmon_workflow_cmd  # noqa: F401, E402
 from warlock.cli import evidence_workflow_cmd as _evidence_workflow_cmd  # noqa: F401, E402
 
+# Phase 4 — Alerts & Remediation
+from warlock.cli import alerts_cmd as _alerts_cmd  # noqa: F401, E402
+from warlock.cli import remediation_cmd as _remediation_cmd  # noqa: F401, E402
+
 
 if __name__ == "__main__":
     cli()

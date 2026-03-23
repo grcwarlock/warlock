@@ -18527,6 +18527,309 @@ def _seed_vendors(session) -> int:
     return added
 
 
+def _seed_alerts(session) -> int:
+    """Create sample alerts across severities and categories."""
+    from warlock.db.models import Alert
+
+    now = NOW
+    alerts_data = [
+        {
+            "title": "Control drift: NIST 800-53 AC-2 regressed to non_compliant",
+            "description": "AC-2 was compliant last week, now failing after IAM policy change.",
+            "severity": "high",
+            "category": "control_drift",
+            "framework": "nist_800_53",
+            "control_id": "AC-2",
+            "status": "open",
+            "rule_name": "control_previously_passing_now_failing",
+        },
+        {
+            "title": "Critical finding: Root account MFA disabled",
+            "description": "AWS root account does not have MFA enabled.",
+            "severity": "critical",
+            "category": "new_finding",
+            "status": "open",
+            "rule_name": "critical_finding_detected",
+        },
+        {
+            "title": "Connector failure: tenable_io",
+            "description": "Tenable.io connector returned HTTP 503 during scan import.",
+            "severity": "high",
+            "category": "connector_failure",
+            "connector_name": "tenable_io",
+            "status": "acknowledged",
+            "rule_name": "connector_health_failure",
+        },
+        {
+            "title": "High non-compliance: HIPAA at 62%",
+            "description": "HIPAA framework has 40/64 controls non-compliant.",
+            "severity": "high",
+            "category": "threshold_breach",
+            "framework": "hipaa",
+            "status": "open",
+            "rule_name": "high_non_compliance_rate",
+        },
+        {
+            "title": "Stale connector: crowdstrike_falcon",
+            "description": "CrowdStrike Falcon connector last ran 36 hours ago.",
+            "severity": "medium",
+            "category": "policy_violation",
+            "connector_name": "crowdstrike_falcon",
+            "status": "open",
+            "rule_name": "stale_connector",
+        },
+        {
+            "title": "Critical finding: S3 bucket publicly accessible",
+            "description": "Bucket acme-prod-data has public read access enabled.",
+            "severity": "critical",
+            "category": "new_finding",
+            "status": "resolved",
+            "rule_name": "critical_finding_detected",
+        },
+        {
+            "title": "Control drift: SOC 2 CC6.1 regressed",
+            "description": "Logical access control CC6.1 failing after firewall rule change.",
+            "severity": "high",
+            "category": "control_drift",
+            "framework": "soc2",
+            "control_id": "CC6.1",
+            "status": "open",
+            "rule_name": "control_previously_passing_now_failing",
+        },
+        {
+            "title": "Connector failure: okta_system_log",
+            "description": "Okta system log connector timed out after 60s.",
+            "severity": "medium",
+            "category": "connector_failure",
+            "connector_name": "okta_system_log",
+            "status": "dismissed",
+            "rule_name": "connector_health_failure",
+        },
+        {
+            "title": "High non-compliance: PCI DSS at 55%",
+            "description": "PCI DSS v4.0 has 35/63 controls non-compliant.",
+            "severity": "high",
+            "category": "threshold_breach",
+            "framework": "pci_dss",
+            "status": "open",
+            "rule_name": "high_non_compliance_rate",
+        },
+        {
+            "title": "Critical finding: Unencrypted RDS instance",
+            "description": "RDS instance prod-db-01 does not have encryption at rest.",
+            "severity": "critical",
+            "category": "new_finding",
+            "status": "acknowledged",
+            "rule_name": "critical_finding_detected",
+        },
+        {
+            "title": "Stale connector: qualys_vmdr",
+            "description": "Qualys VMDR connector last ran 48 hours ago.",
+            "severity": "medium",
+            "category": "policy_violation",
+            "connector_name": "qualys_vmdr",
+            "status": "open",
+            "rule_name": "stale_connector",
+        },
+        {
+            "title": "Control drift: ISO 27001 A.9.2.3 regressed",
+            "description": "Privileged access management control now non_compliant.",
+            "severity": "high",
+            "category": "control_drift",
+            "framework": "iso_27001",
+            "control_id": "A.9.2.3",
+            "status": "open",
+            "rule_name": "control_previously_passing_now_failing",
+        },
+    ]
+
+    import uuid
+
+    added = 0
+    for data in alerts_data:
+        alert = Alert(
+            id=str(uuid.uuid4()),
+            title=data["title"],
+            description=data.get("description"),
+            severity=data["severity"],
+            category=data["category"],
+            framework=data.get("framework"),
+            control_id=data.get("control_id"),
+            connector_name=data.get("connector_name"),
+            status=data["status"],
+            rule_name=data.get("rule_name"),
+            rule_metadata={"seeded": True},
+            triggered_at=now - timedelta(hours=random.randint(1, 72)),
+            created_at=now - timedelta(hours=random.randint(1, 72)),
+        )
+        if data["status"] == "acknowledged":
+            alert.acknowledged_by = "security-analyst@acme.com"
+            alert.acknowledged_at = now - timedelta(hours=random.randint(0, 12))
+        elif data["status"] == "resolved":
+            alert.resolved_by = "security-lead@acme.com"
+            alert.resolved_at = now - timedelta(hours=random.randint(0, 6))
+            alert.resolution_notes = "Remediated and verified."
+        elif data["status"] == "dismissed":
+            alert.resolved_by = "security-analyst@acme.com"
+            alert.resolved_at = now - timedelta(hours=random.randint(0, 6))
+            alert.resolution_notes = "False positive -- transient API error."
+        session.add(alert)
+        added += 1
+
+    session.commit()
+    return added
+
+
+def _seed_remediations(session) -> int:
+    """Create sample remediations in various lifecycle stages."""
+    from warlock.db.models import Remediation
+
+    now = NOW
+    remediations_data = [
+        {
+            "title": "Enable MFA on AWS root account",
+            "description": "Root account MFA must be enabled per NIST AC-2.",
+            "framework": "nist_800_53",
+            "control_id": "AC-2",
+            "status": "open",
+        },
+        {
+            "title": "Encrypt RDS instance prod-db-01",
+            "description": "Enable encryption at rest for production database.",
+            "framework": "pci_dss",
+            "control_id": "3.4.1",
+            "status": "assigned",
+            "assigned_to": "dba-team@acme.com",
+        },
+        {
+            "title": "Restrict S3 bucket acme-prod-data",
+            "description": "Remove public read ACL and enable bucket policy.",
+            "framework": "soc2",
+            "control_id": "CC6.1",
+            "status": "in_progress",
+            "assigned_to": "cloud-ops@acme.com",
+        },
+        {
+            "title": "Update CrowdStrike Falcon connector credentials",
+            "description": "API token expired, causing connector failures.",
+            "status": "verification",
+            "assigned_to": "secops@acme.com",
+        },
+        {
+            "title": "Patch CVE-2025-1234 on web servers",
+            "description": "Critical OpenSSL vulnerability requires patching.",
+            "framework": "nist_800_53",
+            "control_id": "SI-2",
+            "status": "closed",
+            "assigned_to": "infra-team@acme.com",
+        },
+        {
+            "title": "Implement privileged access review workflow",
+            "description": "Quarterly PAM review required by ISO 27001 A.9.2.3.",
+            "framework": "iso_27001",
+            "control_id": "A.9.2.3",
+            "status": "in_progress",
+            "assigned_to": "iam-team@acme.com",
+        },
+        {
+            "title": "Fix HIPAA audit log retention policy",
+            "description": "Audit logs must be retained for 6 years per HIPAA.",
+            "framework": "hipaa",
+            "control_id": "164.312(b)",
+            "status": "assigned",
+            "assigned_to": "compliance@acme.com",
+        },
+    ]
+
+    import uuid
+
+    added = 0
+    for data in remediations_data:
+        rem = Remediation(
+            id=str(uuid.uuid4()),
+            title=data["title"],
+            description=data.get("description"),
+            framework=data.get("framework"),
+            control_id=data.get("control_id"),
+            status=data["status"],
+            created_by="demo-seed@warlock",
+            created_at=now - timedelta(days=random.randint(1, 14)),
+            updated_at=now - timedelta(hours=random.randint(0, 48)),
+        )
+        if data.get("assigned_to"):
+            rem.assigned_to = data["assigned_to"]
+            rem.assigned_by = "security-lead@acme.com"
+            rem.assigned_at = now - timedelta(days=random.randint(0, 7))
+        if data["status"] == "closed":
+            rem.closed_at = now - timedelta(hours=random.randint(1, 24))
+            rem.verified_by = "audit-lead@acme.com"
+            rem.verified_at = now - timedelta(hours=random.randint(1, 24))
+            rem.verification_notes = "Verified via scan rescan and manual check."
+        if data["status"] == "verification":
+            rem.verified_by = None  # awaiting verification
+        session.add(rem)
+        added += 1
+
+    session.commit()
+    return added
+
+
+def _seed_pipeline_runs(session) -> int:
+    """Create sample PipelineRun records."""
+    from warlock.db.models import PipelineRun
+
+    import uuid
+
+    now = NOW
+    runs = [
+        PipelineRun(
+            id=str(uuid.uuid4()),
+            status="completed",
+            connectors_succeeded=165,
+            connectors_failed=0,
+            raw_events_collected=589,
+            findings_normalized=5475,
+            controls_mapped=373852,
+            started_at=now - timedelta(hours=2),
+            completed_at=now - timedelta(hours=2) + timedelta(seconds=7),
+            duration_seconds=7.0,
+            triggered_by="scheduler",
+        ),
+        PipelineRun(
+            id=str(uuid.uuid4()),
+            status="completed",
+            connectors_succeeded=165,
+            connectors_failed=0,
+            raw_events_collected=589,
+            findings_normalized=5472,
+            controls_mapped=373840,
+            started_at=now - timedelta(days=1),
+            completed_at=now - timedelta(days=1) + timedelta(seconds=8),
+            duration_seconds=8.0,
+            triggered_by="demo-seed@warlock",
+        ),
+        PipelineRun(
+            id=str(uuid.uuid4()),
+            status="failed",
+            connectors_succeeded=160,
+            connectors_failed=5,
+            raw_events_collected=550,
+            findings_normalized=0,
+            controls_mapped=0,
+            errors=["Timeout on tenable_io", "Auth failure on okta", "Rate limit on crowdstrike"],
+            started_at=now - timedelta(days=3),
+            completed_at=now - timedelta(days=3) + timedelta(seconds=120),
+            duration_seconds=120.0,
+            triggered_by="ci-pipeline@acme.com",
+        ),
+    ]
+
+    for run in runs:
+        session.add(run)
+    session.commit()
+    return len(runs)
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -18544,11 +18847,11 @@ def main():
     print("=" * 60)
 
     # 1. Init DB
-    print("\n[1/20] Initializing database...")
+    print("\n[1/31] Initializing database...")
     init_db()
 
     # 2. Build pipeline with real framework configs + assertions
-    print("[2/20] Loading frameworks, assertions, and normalizers...")
+    print("[2/31] Loading frameworks, assertions, and normalizers...")
     bus = EventBus()
 
     # Register lake writer if enabled (WLK_LAKE_ENABLED=true)
@@ -19120,7 +19423,7 @@ def main():
 
     # 3. Run pipeline
     ai_label = " + AI reasoning" if ai_reasoner else ""
-    print(f"[3/20] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
+    print(f"[3/31] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
     with get_session() as session:
         stats = pipeline.run(session)
 
@@ -19135,7 +19438,7 @@ def main():
             )
 
     # 4. Print results
-    print("[4/20] Done with pipeline!\n")
+    print("[4/31] Done with pipeline!\n")
     print("-" * 60)
     print(f"  Raw events collected:   {stats.raw_events_collected}")
     print(f"  Findings normalized:    {stats.findings_normalized}")
@@ -19182,22 +19485,22 @@ def main():
         n_vendors = _seed_vendors(session)
         print(f"       Vendors created: {n_vendors}")
 
-    print("[5/20] Seeding system profiles...")
+    print("[5/31] Seeding system profiles...")
     with get_session() as session:
         n = seed_systems(session)
         print(f"       Created {n} system profiles")
 
-    print("[6/20] Syncing personnel from HR + IdP + training...")
+    print("[6/31] Syncing personnel from HR + IdP + training...")
     with get_session() as session:
         p = seed_personnel(session)
         print(f"       Personnel: {p['total']} records synced")
 
-    print("[7/20] Seeding questionnaire templates and instances...")
+    print("[7/31] Seeding questionnaire templates and instances...")
     with get_session() as session:
         q = seed_questionnaires(session)
         print(f"       Templates: {q['templates']}, Questionnaires: {len(q['questionnaires'])}")
 
-    print("[8/20] Seeding data silos, legal holds, and issues...")
+    print("[8/31] Seeding data silos, legal holds, and issues...")
     with get_session() as session:
         ds = seed_data_silos(session)
         print(
@@ -19210,53 +19513,53 @@ def main():
 
     # --- Phase 2: POA&Ms, compensating controls, risk acceptances ---
 
-    print("[9/20] Seeding POA&Ms...")
+    print("[9/31] Seeding POA&Ms...")
     with get_session() as session:
         n_poams = seed_phase2_poams(session)
         print(f"       POA&Ms: {n_poams}")
 
-    print("[10/20] Seeding compensating controls...")
+    print("[10/31] Seeding compensating controls...")
     with get_session() as session:
         n_cc = seed_phase2_compensating_controls(session)
         print(f"       Compensating controls: {n_cc}")
 
-    print("[11/20] Seeding risk acceptances...")
+    print("[11/31] Seeding risk acceptances...")
     with get_session() as session:
         n_ra = seed_phase2_risk_acceptances(session)
         print(f"       Risk acceptances: {n_ra}")
 
     # --- Phase 3: Inheritance and dependencies ---
 
-    print("[12/20] Seeding control inheritance records...")
+    print("[12/31] Seeding control inheritance records...")
     with get_session() as session:
         n_ci = seed_phase3_inheritance(session)
         print(f"       Control inheritances: {n_ci}")
 
-    print("[13/20] Seeding system dependencies...")
+    print("[13/31] Seeding system dependencies...")
     with get_session() as session:
         n_sd = seed_phase3_dependencies(session)
         print(f"       System dependencies: {n_sd}")
 
     # --- Phase 4: Change events, posture snapshots, drift ---
 
-    print("[14/20] Seeding change events...")
+    print("[14/31] Seeding change events...")
     with get_session() as session:
         n_ce = seed_phase4_change_events(session)
         print(f"       Change events: {n_ce}")
 
-    print("[15/20] Seeding posture snapshots (30 days)...")
+    print("[15/31] Seeding posture snapshots (30 days)...")
     with get_session() as session:
         n_ps = seed_phase4_posture_snapshots(session)
         print(f"       Posture snapshots: {n_ps}")
 
-    print("[16/20] Seeding compliance drift records...")
+    print("[16/31] Seeding compliance drift records...")
     with get_session() as session:
         n_drift = seed_phase4_drift(session)
         print(f"       Compliance drifts: {n_drift}")
 
     # --- Phase 5: Auditor engagement, policy overrides ---
 
-    print("[17/20] Seeding auditor engagement and evidence requests...")
+    print("[17/31] Seeding auditor engagement and evidence requests...")
     with get_session() as session:
         ae = seed_phase5_auditor_engagement(session)
         print(
@@ -19264,64 +19567,81 @@ def main():
             f"Evidence requests: {ae['evidence_requests']}, Attestations: {ae['attestations']}"
         )
 
-    print("[18/20] Seeding policy overrides...")
+    print("[18/31] Seeding policy overrides...")
     with get_session() as session:
         n_po = seed_phase5_policy_overrides(session)
         print(f"       Policy overrides: {n_po}")
 
     # --- Expand personnel ---
 
-    print("[19/20] Expanding personnel to 50 users...")
+    print("[19/31] Expanding personnel to 50 users...")
     with get_session() as session:
         total_personnel = seed_50_personnel(session)
         print(f"       Total personnel: {total_personnel}")
 
     # --- Post-pipeline data enrichment ---
 
-    print("[20/28] Assigning findings to system profiles...")
+    print("[20/31] Assigning findings to system profiles...")
     with get_session() as session:
         assigned = _assign_findings_to_systems(session)
         print(f"       Findings assigned: {assigned}")
 
-    print("[21/28] Backfilling monitoring_frequency on control mappings...")
+    print("[21/31] Backfilling monitoring_frequency on control mappings...")
     with get_session() as session:
         backfilled = _backfill_monitoring_frequency(session)
         print(f"       Mappings updated: {backfilled}")
 
-    print("[22/28] Creating demo user accounts...")
+    print("[22/31] Creating demo user accounts...")
     with get_session() as session:
         users_created = _create_demo_users(session)
         print(f"       Users created: {users_created}")
 
     # --- GAP-9/GAP-10: Aged findings for SLA breach / aging demos ---
 
-    print("[23/28] Aging ~50 findings (7-90 days) for SLA demos...")
+    print("[23/31] Aging ~50 findings (7-90 days) for SLA demos...")
     with get_session() as session:
         n_aged = _age_findings(session)
         print(f"       Findings aged: {n_aged}")
 
     # --- GAP-5: Attestations ---
 
-    print("[24/28] Seeding attestation records...")
+    print("[24/31] Seeding attestation records...")
     with get_session() as session:
         n_attest = _seed_attestations(session)
         print(f"       Attestations: {n_attest}")
 
     # --- GAP-12: Vendors with varied risk scores ---
 
-    print("[25/28] Seeding vendor records...")
+    print("[25/31] Seeding vendor records...")
     with get_session() as session:
         n_vendors = _seed_vendors(session)
         print(f"       Vendors: {n_vendors}")
 
+    # --- PG-2: Alerts, remediations, pipeline runs ---
+
+    print("[26/31] Seeding sample alerts...")
+    with get_session() as session:
+        n_alerts = _seed_alerts(session)
+        print(f"       Alerts: {n_alerts}")
+
+    print("[27/31] Seeding sample remediations...")
+    with get_session() as session:
+        n_remediations = _seed_remediations(session)
+        print(f"       Remediations: {n_remediations}")
+
+    print("[28/31] Seeding pipeline run history...")
+    with get_session() as session:
+        n_pipeline_runs = _seed_pipeline_runs(session)
+        print(f"       Pipeline runs: {n_pipeline_runs}")
+
     # --- GAP-2: Audit trail (hash-chained) ---
 
-    print("[26/28] Populating audit trail (hash-chained)...")
+    print("[29/31] Populating audit trail (hash-chained)...")
     with get_session() as session:
         n_audit = _seed_audit_trail(session)
         print(f"       Audit entries: {n_audit}")
 
-    print("[27/28] Verifying audit chain integrity...")
+    print("[30/31] Verifying audit chain integrity...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -19334,7 +19654,7 @@ def main():
             for e in errors[:3]:
                 print(f"         - {e}")
 
-    print("[28/28] Seed complete!\n")
+    print("[31/31] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")
@@ -19368,6 +19688,13 @@ def main():
     print("  warlock effectiveness              # control effectiveness")
     print("  warlock simulate-audit             # simulate audit readiness")
     print("  warlock framework-diff             # cross-framework delta")
+    print()
+    print("  --- Alerts & Remediation ---")
+    print("  warlock alerts                     # alert summary")
+    print("  warlock alerts list                # list all alerts")
+    print("  warlock alerts evaluate            # run alert rules engine")
+    print("  warlock remediate                  # remediation summary")
+    print("  warlock remediate list             # list remediations")
     print("=" * 60)
 
 

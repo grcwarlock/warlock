@@ -1,7 +1,7 @@
 # Warlock Backlog
 
 **Last updated:** 2026-03-23
-**Total:** 361 done / 481 total (75%)
+**Total:** 367 done / 481 total (76%)
 
 ---
 
@@ -267,20 +267,20 @@ Check to see if all connector tiers are complete and wired into the demo and dat
 
 ### 5.1 Missing models (P0 — makes the demo real)
 
-- [ ] PG-1: Alert model + CLI + API (severity, MITRE ATT&CK, finding linkage) — XL | P0
-- [ ] PG-2: Alert rules engine (Finding patterns → Alert triggers) — L | P0
+- [x] PG-1: Alert model + CLI + API (severity, MITRE ATT&CK, finding linkage) — XL | P0
+- [x] PG-2: Alert rules engine (Finding patterns → Alert triggers) — L | P0
 - [ ] PG-3: CloudResource model + warlock cloud CLI — L | P1
 - [ ] PG-4: Device model + warlock devices CLI (unified endpoint view) — L | P1
 - [ ] PG-5: StorageBucket model + warlock storage CLI — M | P1
-- [ ] PG-6: AI reasoning structured output ({confidence, reasoning[], evidence[]}) — M | P0
-- [ ] PG-7: Remediation workflow API (5-stage state machine) — L | P0
+- [x] PG-6: AI reasoning structured output ({confidence, reasoning[], evidence[]}) — M | P0
+- [x] PG-7: Remediation workflow API (5-stage state machine) — L | P0
 
 ### 5.2 Pipeline & API enhancements
 
-- [ ] PG-8: Real-time pipeline status API (GET /pipeline/status) — M | P1
+- [x] PG-8: Real-time pipeline status API (GET /pipeline/status) — M | P1
 - [ ] PG-9: Per-connector collection status API — M | P1
 - [ ] PG-10: WebSocket for live pipeline progress — L | P2
-- [ ] PG-11: Hash chain verification endpoint (GET /pipeline/verify-chain) — S | P1
+- [x] PG-11: Hash chain verification endpoint (GET /pipeline/verify-chain) — S | P1
 - [ ] PG-12: Audit simulation date picker + structured AI output — M | P2
 - [ ] PG-13: Cross-view deep linking (URL-based entity navigation) — M | P2
 - [ ] PG-14a: `warlock investigate <provider>` CLI — show non-compliant controls by provider (e.g. `warlock investigate aws`), pick one, show failing resources + remediation steps (static KB + optional AI) — M | P1

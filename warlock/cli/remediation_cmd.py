@@ -1,0 +1,336 @@
+"""Remediation tracking commands.
+
+5-stage state machine: open -> assigned -> in_progress -> verification -> closed.
+Follows the same CLI patterns as incidents_cmd.py.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+import click
+from rich.markup import escape
+from rich.table import Table
+
+from warlock.cli import cli, console, _error, _get_actor
+
+
+# ---------------------------------------------------------------------------
+# State machine
+# ---------------------------------------------------------------------------
+
+_VALID_STATUSES = ["open", "assigned", "in_progress", "verification", "closed"]
+
+_TRANSITIONS: dict[str, list[str]] = {
+    "open": ["assigned"],
+    "assigned": ["in_progress", "open"],
+    "in_progress": ["verification", "assigned"],
+    "verification": ["closed", "in_progress"],
+    "closed": [],
+}
+
+_STATUS_STYLES: dict[str, str] = {
+    "open": "yellow",
+    "assigned": "cyan",
+    "in_progress": "blue",
+    "verification": "magenta",
+    "closed": "green",
+}
+
+_SEVERITY_STYLES: dict[str, str] = {
+    "critical": "red bold",
+    "high": "red",
+    "medium": "yellow",
+    "low": "dim",
+}
+
+
+# ---------------------------------------------------------------------------
+# Group
+# ---------------------------------------------------------------------------
+
+
+@cli.group("remediate", invoke_without_command=True)
+@click.pass_context
+def remediate(ctx: click.Context) -> None:
+    """Remediation lifecycle management (create, assign, track, close)."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    # Default: show open remediations summary
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    with get_session() as session:
+        all_rem = session.query(Remediation).all()
+
+    if not all_rem:
+        console.print("[dim]No remediations found.[/dim]")
+        return
+
+    counts: dict[str, int] = {}
+    for r in all_rem:
+        counts[r.status] = counts.get(r.status, 0) + 1
+
+    table = Table(title=f"Remediations ({len(all_rem)})")
+    table.add_column("Status")
+    table.add_column("Count", justify="right")
+    for st in _VALID_STATUSES:
+        count = counts.get(st, 0)
+        if count > 0:
+            style = _STATUS_STYLES.get(st, "")
+            table.add_row(f"[{style}]{st}[/]", str(count))
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# list
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("list")
+@click.option(
+    "--status",
+    default=None,
+    type=click.Choice(_VALID_STATUSES + [""]),
+    help="Filter by status",
+)
+@click.option("--assigned-to", default=None, help="Filter by assignee")
+@click.option("--limit", "-n", default=50, help="Max results")
+def remediate_list(status: str | None, assigned_to: str | None, limit: int) -> None:
+    """List remediations with optional filters."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    with get_session() as session:
+        q = session.query(Remediation)
+        if status:
+            q = q.filter(Remediation.status == status)
+        if assigned_to:
+            q = q.filter(Remediation.assigned_to == assigned_to)
+        rows = q.order_by(Remediation.created_at.desc()).limit(limit).all()
+
+    if not rows:
+        console.print("[dim]No remediations found.[/dim]")
+        return
+
+    table = Table(title=f"Remediations ({len(rows)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Title", max_width=45)
+    table.add_column("Status")
+    table.add_column("Assigned", style="dim")
+    table.add_column("Framework", style="dim")
+    table.add_column("Control", style="dim")
+    table.add_column("Created", style="dim")
+
+    for r in rows:
+        st_style = _STATUS_STYLES.get(r.status, "")
+        created = r.created_at.strftime("%Y-%m-%d") if r.created_at else "\u2014"
+        table.add_row(
+            r.id[:8],
+            escape(r.title[:45] if r.title else "\u2014"),
+            f"[{st_style}]{r.status}[/]",
+            escape(r.assigned_to or "\u2014"),
+            escape(r.framework or "\u2014"),
+            escape(r.control_id or "\u2014"),
+            created,
+        )
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# create
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("create")
+@click.option("--title", "-t", required=True, help="Remediation title")
+@click.option("--finding-id", default=None, help="Finding ID to link")
+@click.option("--framework", "-f", default=None, help="Framework name")
+@click.option("--control-id", "-c", default=None, help="Control ID")
+@click.option("--description", "-d", default=None, help="Description")
+def remediate_create(
+    title: str,
+    finding_id: str | None,
+    framework: str | None,
+    control_id: str | None,
+    description: str | None,
+) -> None:
+    """Create a new remediation."""
+    import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        rem = Remediation(
+            id=str(uuid.uuid4()),
+            title=title,
+            description=description,
+            finding_id=finding_id,
+            framework=framework,
+            control_id=control_id,
+            status="open",
+            created_by=actor,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(rem)
+        session.commit()
+
+        console.print(
+            f"[green]Remediation created:[/green] [cyan]{rem.id[:8]}[/cyan] \u2014 {escape(title)}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# assign
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("assign")
+@click.argument("remediation_id")
+@click.option("--to", "assignee", required=True, help="User to assign to")
+def remediate_assign(remediation_id: str, assignee: str) -> None:
+    """Assign a remediation to a user."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        rem = session.query(Remediation).filter(Remediation.id.startswith(remediation_id)).first()
+        if not rem:
+            _error(f"Remediation not found: {remediation_id}")
+
+        if "assigned" not in _TRANSITIONS.get(rem.status, []):
+            _error(
+                f"Cannot assign remediation in status '{rem.status}'. "
+                f"Valid transitions: {_TRANSITIONS.get(rem.status, [])}"
+            )
+
+        rem.status = "assigned"
+        rem.assigned_to = assignee
+        rem.assigned_by = actor
+        rem.assigned_at = now
+        rem.updated_at = now
+        session.commit()
+
+    console.print(f"[green]Remediation {remediation_id[:8]} assigned[/green] to {escape(assignee)}")
+
+
+# ---------------------------------------------------------------------------
+# start
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("start")
+@click.argument("remediation_id")
+def remediate_start(remediation_id: str) -> None:
+    """Start work on a remediation (assigned -> in_progress)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        rem = session.query(Remediation).filter(Remediation.id.startswith(remediation_id)).first()
+        if not rem:
+            _error(f"Remediation not found: {remediation_id}")
+
+        if "in_progress" not in _TRANSITIONS.get(rem.status, []):
+            _error(
+                f"Cannot start remediation in status '{rem.status}'. "
+                f"Valid transitions: {_TRANSITIONS.get(rem.status, [])}"
+            )
+
+        rem.status = "in_progress"
+        rem.updated_at = now
+        session.commit()
+
+    console.print(f"[green]Remediation {remediation_id[:8]} started[/green] (in_progress)")
+
+
+# ---------------------------------------------------------------------------
+# verify
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("verify")
+@click.argument("remediation_id")
+def remediate_verify(remediation_id: str) -> None:
+    """Submit a remediation for verification (in_progress -> verification)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        rem = session.query(Remediation).filter(Remediation.id.startswith(remediation_id)).first()
+        if not rem:
+            _error(f"Remediation not found: {remediation_id}")
+
+        if "verification" not in _TRANSITIONS.get(rem.status, []):
+            _error(
+                f"Cannot verify remediation in status '{rem.status}'. "
+                f"Valid transitions: {_TRANSITIONS.get(rem.status, [])}"
+            )
+
+        rem.status = "verification"
+        rem.updated_at = now
+        session.commit()
+
+    console.print(f"[green]Remediation {remediation_id[:8]} submitted for verification[/green]")
+
+
+# ---------------------------------------------------------------------------
+# close
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("close")
+@click.argument("remediation_id")
+@click.option("--notes", default=None, help="Verification/closure notes")
+def remediate_close(remediation_id: str, notes: str | None) -> None:
+    """Close a remediation after verification."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Remediation
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        rem = session.query(Remediation).filter(Remediation.id.startswith(remediation_id)).first()
+        if not rem:
+            _error(f"Remediation not found: {remediation_id}")
+
+        if "closed" not in _TRANSITIONS.get(rem.status, []):
+            _error(
+                f"Cannot close remediation in status '{rem.status}'. "
+                f"Valid transitions: {_TRANSITIONS.get(rem.status, [])}"
+            )
+
+        rem.status = "closed"
+        rem.closed_at = now
+        rem.verified_by = actor
+        rem.verified_at = now
+        if notes:
+            rem.verification_notes = notes
+        rem.updated_at = now
+        session.commit()
+
+    console.print(f"[green]Remediation {remediation_id[:8]} closed[/green]")
+    if notes:
+        console.print(f"  Notes: {escape(notes)}")
