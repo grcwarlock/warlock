@@ -409,15 +409,15 @@ These items are explicitly deferred. They are important but not required for fir
 
 Use this as a tracking sheet. Check items off as sprints complete.
 
-### Sprint 1 (Weeks 1-2) -- P0 Security
-- [ ] H-12: AI session scoping
-- [ ] H-22: GDPR HMAC secret
-- [ ] H-29: Password hash migration
-- [ ] H-35: UniqueConstraint on ControlResult/PostureSnapshot
-- [ ] H-36: AuditEntry sequence type
-- [ ] H-30: Per-connector transactions
-- [ ] Demo seed passes with exact expected numbers
-- [ ] QA gate passes
+### Sprint 1 (Weeks 1-2) -- P0 Security ✓ COMPLETE (2026-03-23)
+- [x] H-12: AI session scoping
+- [x] H-22: GDPR HMAC secret
+- [x] H-29: Password hash migration
+- [x] H-35: UniqueConstraint on ControlResult/PostureSnapshot
+- [x] H-36: AuditEntry sequence type
+- [x] H-30: Per-connector transactions
+- [x] Demo seed passes with exact expected numbers
+- [x] QA gate passes
 
 ### Sprint 2 (Weeks 3-4) -- Stability
 - [ ] H-10: Test infrastructure + CLI coverage
