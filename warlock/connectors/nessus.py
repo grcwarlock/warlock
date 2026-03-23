@@ -46,6 +46,7 @@ class NessusConnector(BaseConnector):
             resp = client.get(f"{self._base_url()}/server/status")
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

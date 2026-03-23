@@ -17,6 +17,7 @@ from typing import Any
 import httpx
 
 from warlock.ai.sanitize import hash_prompt as _hash_prompt
+from warlock.ai.sanitize import sanitize_field as _shared_sanitize_field
 
 from warlock.mappers.control_mapper import ControlMappingData
 from warlock.normalizers.base import FindingData
@@ -147,21 +148,14 @@ def _build_user_prompt(
     )
 
 
-_CONTROL_CHAR_RE = __import__("re").compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
-
-_MAX_FIELD_LEN = 2000
-
-
 def _sanitize_field(value: Any) -> Any:
-    """Strip control characters and truncate string fields for prompt safety."""
-    if isinstance(value, str):
-        cleaned = _CONTROL_CHAR_RE.sub("", value)
-        return cleaned[:_MAX_FIELD_LEN]
-    if isinstance(value, dict):
-        return {k: _sanitize_field(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_sanitize_field(v) for v in value]
-    return value
+    """Strip control characters, evidence tags, and truncate for prompt safety.
+
+    Delegates to the shared ``sanitize_field`` in ``warlock.ai.sanitize``
+    which also strips ``<evidence>``/``</evidence>`` tags to prevent
+    injection via user-supplied data.
+    """
+    return _shared_sanitize_field(value)
 
 
 # ---------------------------------------------------------------------------
@@ -270,10 +264,13 @@ class AnthropicReasoner(AIReasoner):
             result = _parse_response(text, self.model)
             result.prompt_hash = prompt_hash
             return result
-        except Exception as e:
+        except Exception:
             log.exception("Anthropic API call failed")
             return AIReasoningResult(
-                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+                status="not_assessed",
+                assessment="AI assessment unavailable",
+                confidence=0.0,
+                model=self.model,
             )
 
 
@@ -309,10 +306,13 @@ class OpenAIReasoner(AIReasoner):
             result = _parse_response(text, self.model)
             result.prompt_hash = prompt_hash
             return result
-        except Exception as e:
+        except Exception:
             log.exception("OpenAI API call failed")
             return AIReasoningResult(
-                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+                status="not_assessed",
+                assessment="AI assessment unavailable",
+                confidence=0.0,
+                model=self.model,
             )
 
 
@@ -343,10 +343,13 @@ class GeminiReasoner(AIReasoner):
             result = _parse_response(text, self.model)
             result.prompt_hash = prompt_hash
             return result
-        except Exception as e:
+        except Exception:
             log.exception("Gemini API call failed")
             return AIReasoningResult(
-                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+                status="not_assessed",
+                assessment="AI assessment unavailable",
+                confidence=0.0,
+                model=self.model,
             )
 
 
@@ -384,10 +387,13 @@ class OllamaReasoner(AIReasoner):
             result = _parse_response(text, self.model)
             result.prompt_hash = prompt_hash
             return result
-        except Exception as e:
+        except Exception:
             log.exception("Ollama API call failed")
             return AIReasoningResult(
-                status="not_assessed", assessment=f"AI error: {e}", confidence=0.0, model=self.model
+                status="not_assessed",
+                assessment="AI assessment unavailable",
+                confidence=0.0,
+                model=self.model,
             )
 
 

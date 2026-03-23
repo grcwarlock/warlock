@@ -47,6 +47,7 @@ class ArcherConnector(BaseConnector):
             token = self._get_session_token()
             return bool(token)
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

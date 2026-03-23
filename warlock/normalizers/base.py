@@ -110,8 +110,12 @@ class BaseNormalizer(ABC):
 class NormalizerRegistry:
     """Finds the right normalizer for a given raw event."""
 
+    _MAX_FAILURES: int = 100
+
     def __init__(self) -> None:
         self._normalizers: list[BaseNormalizer] = []
+        self._failure_count: int = 0
+        self._failures: list[dict[str, Any]] = []
 
     def register(self, normalizer: BaseNormalizer) -> None:
         self._normalizers.append(normalizer)
@@ -119,6 +123,21 @@ class NormalizerRegistry:
     def list_normalizers(self) -> list[BaseNormalizer]:
         """Return the list of registered normalizers (public API)."""
         return list(self._normalizers)
+
+    @property
+    def failure_count(self) -> int:
+        """Total number of normalization failures since last reset."""
+        return self._failure_count
+
+    @property
+    def failures(self) -> list[dict[str, Any]]:
+        """Last 100 failure records (event_id, error, normalizer)."""
+        return list(self._failures)
+
+    def reset_failures(self) -> None:
+        """Clear the failure counter and history."""
+        self._failure_count = 0
+        self._failures.clear()
 
     def normalize(self, raw_event: RawEventData) -> list[FindingData]:
         if raw_event.raw_data is None:
@@ -133,12 +152,22 @@ class NormalizerRegistry:
             if normalizer.can_handle(raw_event):
                 try:
                     findings = normalizer.normalize(raw_event)
-                except Exception:
+                except Exception as exc:
                     log.exception(
                         "Normalizer %s failed on event %s",
                         type(normalizer).__name__,
                         raw_event.id,
                     )
+                    self._failure_count += 1
+                    self._failures.append(
+                        {
+                            "event_id": raw_event.id,
+                            "normalizer": type(normalizer).__name__,
+                            "error": str(exc),
+                        }
+                    )
+                    if len(self._failures) > self._MAX_FAILURES:
+                        self._failures = self._failures[-self._MAX_FAILURES :]
                     return []
                 # PII scrubbing runs outside the normalizer try/except so a
                 # scrub failure doesn't discard the entire event batch.

@@ -48,6 +48,7 @@ class ZscalerConnector(BaseConnector):
                 return True
             return False
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

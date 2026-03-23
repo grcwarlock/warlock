@@ -568,7 +568,7 @@ def generate_backup_codes(count: int = 10) -> tuple[list[str], list[str]]:
     C-3 fix: codes are hashed with PBKDF2-SHA256 (600k iterations)
     instead of plain SHA-256.
     """
-    codes = [secrets.token_hex(4) for _ in range(count)]
+    codes = [secrets.token_hex(8) for _ in range(count)]
     hashed = [_hash_backup_code(c) for c in codes]
     return codes, hashed
 

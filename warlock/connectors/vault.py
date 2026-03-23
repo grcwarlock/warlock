@@ -67,6 +67,7 @@ class VaultConnector(BaseConnector):
             # 501 (not initialized), 503 (sealed) — all are "reachable"
             return resp.status_code in (200, 429, 472, 473)
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

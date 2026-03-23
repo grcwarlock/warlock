@@ -54,6 +54,7 @@ class SpotioConnector(BaseConnector):
             )
             return resp.status_code in (200, 403)  # 403 = auth ok, scope issue
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

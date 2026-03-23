@@ -49,6 +49,7 @@ class DuoConnector(BaseConnector):
             resp = self._signed_request("GET", "/admin/v1/info/summary", api_host)
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

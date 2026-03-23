@@ -48,8 +48,8 @@ def get_engine():
                 connect_args["prepared_statement_cache_size"] = 0
             else:
                 pool_kwargs = {
-                    "pool_size": 5,
-                    "max_overflow": 10,
+                    "pool_size": 10,
+                    "max_overflow": 20,
                     "pool_recycle": 3600,
                     "pool_timeout": 30,
                 }
@@ -99,8 +99,8 @@ def get_read_engine():
                     connect_args["prepared_statement_cache_size"] = 0
                 else:
                     pool_kwargs = {
-                        "pool_size": 5,
-                        "max_overflow": 10,
+                        "pool_size": 10,
+                        "max_overflow": 20,
                         "pool_recycle": 3600,
                         "pool_timeout": 30,
                     }

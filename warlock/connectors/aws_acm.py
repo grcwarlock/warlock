@@ -53,6 +53,7 @@ class AwsAcmConnector(BaseConnector):
             data = self._list_certificates(max_items=1)
             return isinstance(data, list)
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

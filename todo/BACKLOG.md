@@ -30,12 +30,12 @@ Every item follows this format:
 
 ### 1.2 Sprint 2 — MEDIUM severity
 
-- [ ] H-10: Create tests/conftest.py and tests/test_cli.py (DB setup duplicated 8x, 43 commands untested) — L | P1
-- [ ] H-11: Unify prompt sanitization paths (legacy path misses </evidence> tags) — M | P1
+- [x] H-10: Create tests/conftest.py and tests/test_cli.py (DB setup duplicated 8x, 43 commands untested) — L | P1
+- [x] H-11: Unify prompt sanitization paths (legacy path misses </evidence> tags) — M | P1
 - [x] H-12: Scope AI conversation sessions to user (any user can read/delete others') — M | P0
-- [ ] H-13: Increase backup code entropy to 64 bits (NIST SP 800-63B) — S | P1
-- [ ] H-14: Add CHECK constraints on status/enum columns (zero across 34 models) — M | P1
-- [ ] H-15: Add MemoryCache eviction (rate limiter creates unbounded keys) — S | P1
+- [x] H-13: Increase backup code entropy to 64 bits (NIST SP 800-63B) — S | P1
+- [x] H-14: Add CHECK constraints on status/enum columns (zero across 34 models) — M | P1
+- [x] H-15: Add MemoryCache eviction (rate limiter creates unbounded keys) — S | P1
 
 ### 1.3 Backlog — Quality
 
@@ -49,15 +49,15 @@ Every item follows this format:
 ### 1.4 Untriaged findings (2026-03-21 review)
 
 - [x] H-22: GDPR anonymization uses hardcoded HMAC secret (workflows/gdpr.py:62) — S | P0
-- [ ] H-23: AI error messages leak internal exception details (assessors/ai_reasoning.py:273-391) — S | P1
+- [x] H-23: AI error messages leak internal exception details (assessors/ai_reasoning.py:273-391) — S | P1
 - [ ] H-24: In-memory rate limiter ineffective with multiple workers (api/middleware.py:39-106) — M | P1
-- [ ] H-25: Swallowed except Exception: pass in connectors hides data loss — M | P1
-- [ ] H-26: NormalizerRegistry catches exceptions, failure counter never fires — S | P1
+- [x] H-25: Swallowed except Exception: pass in connectors hides data loss — M | P1
+- [x] H-26: NormalizerRegistry catches exceptions, failure counter never fires — S | P1
 - [ ] H-27: POA&M _CLOSED_STATUSES includes verified but state machine says intermediate — S | P1
 - [ ] H-28: __import__() used as inline import in production paths — S | P2
 - [x] H-29: Legacy SHA-256 password hashes accepted with no forced migration — M | P1
 - [x] H-30: Pipeline runs all connectors in one transaction (~59K inserts hold write locks) — L | P1
-- [ ] H-31: Connection pool (5+10=15) too small for production with audit middleware — S | P1
+- [x] H-31: Connection pool (5+10=15) too small for production with audit middleware — S | P1
 - [ ] H-32: Test ordering dependency in test_integration_e2e.py — S | P2
 - [ ] H-33: Tautological assertions in tests (len(x) >= 0, assert True) — S | P2
 - [ ] H-34: 38/82 normalizers, 93/101 assertions, 8/16 workflows have zero behavioral tests — XL | P1

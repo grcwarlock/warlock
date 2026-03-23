@@ -419,18 +419,18 @@ Use this as a tracking sheet. Check items off as sprints complete.
 - [x] Demo seed passes with exact expected numbers
 - [x] QA gate passes
 
-### Sprint 2 (Weeks 3-4) -- Stability
-- [ ] H-10: Test infrastructure + CLI coverage
-- [ ] H-11: Prompt sanitization
-- [ ] H-13: Backup code entropy
-- [ ] H-14: CHECK constraints
-- [ ] H-15: MemoryCache eviction
-- [ ] H-23: AI error message leakage
-- [ ] H-25: Connector exception handling
-- [ ] H-26: Normalizer failure counter
-- [ ] H-31: Connection pool sizing
-- [ ] Demo seed passes
-- [ ] QA gate passes
+### Sprint 2 (Weeks 3-4) -- Stability ✓ COMPLETE (2026-03-23)
+- [x] H-10: Test infrastructure + CLI coverage
+- [x] H-11: Prompt sanitization
+- [x] H-13: Backup code entropy
+- [x] H-14: CHECK constraints
+- [x] H-15: MemoryCache eviction
+- [x] H-23: AI error message leakage
+- [x] H-25: Connector exception handling
+- [x] H-26: Normalizer failure counter
+- [x] H-31: Connection pool sizing
+- [x] Demo seed passes
+- [x] QA gate passes
 
 ### Sprint 3 (Weeks 5-6) -- First 5 Real Connectors
 - [ ] AWS connector validated against real API

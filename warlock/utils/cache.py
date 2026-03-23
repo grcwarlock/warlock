@@ -32,11 +32,35 @@ class CacheBackend:
 
 
 class MemoryCache(CacheBackend):
-    """Thread-safe in-memory cache with TTL eviction."""
+    """Thread-safe in-memory cache with TTL eviction and bounded size."""
 
-    def __init__(self) -> None:
+    _CLEANUP_INTERVAL: int = 100  # run cleanup every N writes
+
+    def __init__(self, max_size: int = 10_000) -> None:
         self._store: dict[str, tuple[Any, float]] = {}  # key -> (value, expires_at)
         self._lock = threading.Lock()
+        self._max_size = max_size
+        self._write_count: int = 0
+
+    def _cleanup(self) -> None:
+        """Remove all expired entries. Must be called with ``_lock`` held."""
+        now = time.time()
+        expired = [k for k, (_, exp) in self._store.items() if now > exp]
+        for k in expired:
+            del self._store[k]
+
+    def _maybe_evict(self) -> None:
+        """Evict entries when store exceeds *max_size*. Must hold ``_lock``."""
+        self._write_count += 1
+        if len(self._store) <= self._max_size and (self._write_count % self._CLEANUP_INTERVAL != 0):
+            return
+        self._cleanup()
+        # If still over budget after removing expired, drop oldest entries.
+        if len(self._store) > self._max_size:
+            overflow = len(self._store) - self._max_size
+            oldest_keys = sorted(self._store, key=lambda k: self._store[k][1])[:overflow]
+            for k in oldest_keys:
+                del self._store[k]
 
     def get(self, key: str) -> Any | None:
         with self._lock:
@@ -52,6 +76,7 @@ class MemoryCache(CacheBackend):
     def set(self, key: str, value: Any, ttl: int = 300) -> None:
         with self._lock:
             self._store[key] = (value, time.time() + ttl)
+            self._maybe_evict()
 
     def delete(self, key: str) -> None:
         with self._lock:
@@ -62,10 +87,11 @@ class MemoryCache(CacheBackend):
             entry = self._store.get(key)
             if entry is None or time.time() > entry[1]:
                 self._store[key] = (1, time.time() + ttl)
-                return 1
-            count = entry[0] + 1
-            self._store[key] = (count, entry[1])
-            return count
+            else:
+                count = entry[0] + 1
+                self._store[key] = (count, entry[1])
+            self._maybe_evict()
+            return self._store[key][0]
 
 
 class RedisCache(CacheBackend):

@@ -47,6 +47,7 @@ class TerraformCloudConnector(BaseConnector):
             resp = client.get(f"{_BASE_URL}/organizations/{org}")
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

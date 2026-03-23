@@ -43,6 +43,7 @@ class GuardDutyConnector(BaseConnector):
             client.get_detector(DetectorId=detector_id)
             return True
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

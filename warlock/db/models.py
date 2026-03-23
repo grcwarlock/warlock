@@ -15,6 +15,7 @@ from uuid import uuid4
 
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -73,6 +74,13 @@ class ConnectorRun(Base):
     duration_seconds = Column(Float)
 
     raw_events = relationship("RawEvent", back_populates="connector_run")
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('running','success','partial','error')",
+            name="ck_connector_runs_status",
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +169,10 @@ class Finding(Base):
     control_mappings = relationship("ControlMapping", back_populates="finding")
 
     __table_args__ = (
+        CheckConstraint(
+            "severity IN ('critical','high','medium','low','info')",
+            name="ck_findings_severity",
+        ),
         Index("idx_finding_resource", "resource_type", "resource_id"),
         Index("idx_finding_severity", "severity"),
         Index("idx_finding_observed", "observed_at"),
@@ -254,6 +266,15 @@ class ControlResult(Base):
     control_mapping = relationship("ControlMapping", back_populates="control_results")
 
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('compliant','non_compliant','partial','not_assessed',"
+            "'not_applicable','risk_accepted','inherited_compliant','inherited_at_risk')",
+            name="ck_control_results_status",
+        ),
+        CheckConstraint(
+            "severity IN ('critical','high','medium','low','info')",
+            name="ck_control_results_severity",
+        ),
         Index("idx_result_control", "framework", "control_id"),
         Index("idx_result_status", "status"),
         Index("idx_result_assessed", "assessed_at"),
@@ -541,6 +562,10 @@ class POAM(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('draft','open','in_progress','completed','verified','closed')",
+            name="ck_poams_status",
+        ),
         Index("idx_poam_framework", "framework", "control_id"),
         Index("idx_poam_status", "status"),
         Index("idx_poam_completion", "scheduled_completion"),
@@ -586,6 +611,10 @@ class CompensatingControl(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('proposed','approved','active','expired','revoked')",
+            name="ck_compensating_controls_status",
+        ),
         Index("idx_cc_control", "original_framework", "original_control_id"),
         Index("idx_cc_status", "status"),
         Index("idx_cc_poam_id", "poam_id"),
@@ -631,6 +660,10 @@ class RiskAcceptance(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('requested','reviewed','approved','active','expired','revoked')",
+            name="ck_risk_acceptances_status",
+        ),
         Index("idx_ra_control", "framework", "control_id"),
         Index("idx_ra_status", "status"),
         Index("idx_ra_expiry", "expiry_date"),
@@ -697,6 +730,10 @@ class Issue(Base):
     created_by = Column(String(255))
 
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('open','assigned','in_progress','remediated','verified','closed','risk_accepted')",
+            name="ck_issues_status",
+        ),
         Index("idx_issue_status", "status"),
         Index("idx_issue_priority", "priority"),
         Index("idx_issue_framework", "framework", "control_id"),
@@ -765,6 +802,10 @@ class Attestation(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('draft','submitted','reviewed','approved','rejected')",
+            name="ck_attestations_status",
+        ),
         Index("idx_attest_engagement", "engagement_id"),
         Index("idx_attest_framework", "framework", "control_id"),
         Index("idx_attest_status", "status"),

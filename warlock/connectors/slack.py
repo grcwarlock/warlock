@@ -42,6 +42,7 @@ class SlackConnector(BaseConnector):
             resp = client.post("https://slack.com/api/auth.test")
             return resp.status_code == 200 and resp.json().get("ok", False)
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

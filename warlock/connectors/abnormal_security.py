@@ -44,6 +44,7 @@ class AbnormalSecurityConnector(BaseConnector):
             resp = client.get(f"{BASE_URL}/threats", params={"pageSize": 1})
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

@@ -47,6 +47,7 @@ class AzureConnector(BaseConnector):
             list(client.resource_groups.list())
             return True
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

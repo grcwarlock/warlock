@@ -45,6 +45,7 @@ class NetskopeConnector(BaseConnector):
             resp = client.get(f"{tenant_url}/api/v2/events/data/alert", params={"limit": 1})
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

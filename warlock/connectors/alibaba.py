@@ -112,6 +112,7 @@ class AlibabaConnector(BaseConnector):
             resp = httpx.get("https://ram.aliyuncs.com", params=params, timeout=15)
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

@@ -47,6 +47,7 @@ class AwsSecretsConnector(BaseConnector):
             secrets = self._list_secrets(max_results=1)
             return isinstance(secrets, list)
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

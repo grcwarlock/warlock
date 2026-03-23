@@ -53,6 +53,7 @@ class SentinelConnector(BaseConnector):
             resp = httpx.get(url, headers=self._auth_headers(token), timeout=30)
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

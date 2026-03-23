@@ -42,6 +42,7 @@ class SageMakerConnector(BaseConnector):
             client.list_models(MaxResults=1)
             return True
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:

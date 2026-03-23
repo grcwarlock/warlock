@@ -48,6 +48,7 @@ class NewRelicConnector(BaseConnector):
             resp = client.post(NERDGRAPH_URL, json={"query": query})
             return resp.status_code == 200
         except Exception:
+            log.warning("Health check failed for %s", self.name, exc_info=True)
             return False
 
     def collect(self) -> ConnectorResult:
