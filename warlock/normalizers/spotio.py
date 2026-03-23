@@ -31,8 +31,6 @@ class SpotioNormalizer(BaseNormalizer):
             "source": "spotio",
             "source_type": SourceType.CLOUD,
             "provider": "spotio",
-            "account_id": "",
-            "region": "",
             "observed_at": raw.observed_at,
         }
 

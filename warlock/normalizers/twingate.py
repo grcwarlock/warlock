@@ -55,7 +55,11 @@ class TwingateNormalizer(BaseNormalizer):
                         "name": name,
                         "address": resource.get("address", {}),
                         "protocols": resource.get("protocols", {}),
-                        "groups": resource.get("groups", {}).get("edges", []),
+                        "groups": (
+                            resource["groups"].get("edges", [])
+                            if isinstance(resource.get("groups"), dict)
+                            else resource.get("groups", [])
+                        ),
                         "is_active": resource.get("isActive", True),
                     },
                     resource_id=resource_id,

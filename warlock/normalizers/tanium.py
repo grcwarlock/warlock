@@ -64,7 +64,7 @@ class TaniumNormalizer(BaseNormalizer):
                     detail={
                         "endpoint_id": endpoint_id,
                         "name": name,
-                        "os": endpoint.get("os", {}).get("name", endpoint.get("operatingSystem", "")),
+                        "os": (endpoint.get("os") or {}).get("name", "") if isinstance(endpoint.get("os"), dict) else endpoint.get("os", endpoint.get("operatingSystem", "")),
                         "ip_addresses": endpoint.get("ipAddresses", []),
                         "is_encrypted": endpoint.get("isEncrypted", False),
                         "compliance_state": endpoint.get("complianceState", ""),

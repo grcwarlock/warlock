@@ -45,10 +45,10 @@ rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/d
 
 Expected output — verify these numbers:
 ```
-Connectors succeeded:   81
+Connectors succeeded:   165
 Connectors failed:      0
-Raw events collected:   358
-Findings normalized:    5,005–5,015 (varies slightly due to randomized mock data)
+Raw events collected:   589
+Findings normalized:    5,470–5,480 (varies slightly due to randomized mock data)
 Controls mapped:        373,852
 ```
 
@@ -180,8 +180,8 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 82 source connectors
-  normalizers/   — 82 parsers (raw → FindingData)
+  connectors/    — 165 source connectors
+  normalizers/   — 165 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
   api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)

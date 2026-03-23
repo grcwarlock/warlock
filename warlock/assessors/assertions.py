@@ -2192,7 +2192,9 @@ def least_privilege_enforced(detail: dict, raw_data: dict) -> tuple[bool, list[s
 
     # GCP IAM
     role = detail.get("role") or ""
-    if role:
+    if isinstance(role, dict):
+        role = role.get("name", "") or str(role)
+    if role and isinstance(role, str):
         if "admin" in role.lower() or role.endswith("/owner") or role == "roles/editor":
             member = (
                 detail.get("member") or detail.get("members", ["unknown"])[0]

@@ -33,8 +33,6 @@ class HetznerNormalizer(BaseNormalizer):
             "source": "hetzner",
             "source_type": SourceType.CLOUD,
             "provider": "hetzner",
-            "account_id": "",
-            "region": "",
             "observed_at": raw.observed_at,
         }
 

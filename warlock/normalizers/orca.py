@@ -38,8 +38,6 @@ class OrcaNormalizer(BaseNormalizer):
             "source": "orca",
             "source_type": SourceType.CSPM,
             "provider": "orca",
-            "account_id": "",
-            "region": "",
             "observed_at": raw.observed_at,
         }
 

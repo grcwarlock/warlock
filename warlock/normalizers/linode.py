@@ -32,8 +32,6 @@ class LinodeNormalizer(BaseNormalizer):
             "source": "linode",
             "source_type": SourceType.CLOUD,
             "provider": "linode",
-            "account_id": "",
-            "region": "",
             "observed_at": raw.observed_at,
         }
 
