@@ -22,7 +22,7 @@ This document covers every supported framework, how frameworks relate through cr
 | NIST CSF 2.0 | 101 | 6 | -- | -- | -- |
 | EU AI Act | 33 | 4 | -- | -- | -- |
 | SEC Cyber | 20 | 4 | -- | -- | -- |
-| **Total** | **1,996** | | **636** | **11 packages** | **1,843 edges** |
+| **Total** | **1,996** | | **670** | **17 packages** | **1,843 edges** |
 
 ## Framework Details
 

@@ -567,4 +567,4 @@ All foreign keys have dedicated indexes (tagged #20 in code comments). Composite
 
 ## Migration Strategy
 
-13 Alembic migrations in `alembic/versions/`. Migrations are tested for reversibility in the QA gate. The demo seed validates the full schema by inserting 165 connectors, 589 raw events, ~5,475 findings, and 373,852 control results.
+16 Alembic migrations in `alembic/versions/`. Migrations are tested for reversibility in the QA gate. The demo seed validates the full schema by inserting 165 connectors, 589 raw events, ~5,475 findings, and 373,852 control results.

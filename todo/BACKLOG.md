@@ -337,7 +337,7 @@ Built as part of the domain architecture initiative. All items complete.
 
 ## 7. CLI Expansion (DONE — 2026-03-22)
 
-CLI grew from 42+ commands to **539+ commands** across 63 modules. All items complete.
+CLI grew from 42+ commands to **556 leaf commands** across 68 modules. All items complete.
 
 <details>
 <summary>Click to expand completed items</summary>
@@ -468,7 +468,7 @@ CLI grew from 42+ commands to **539+ commands** across 63 modules. All items com
 
 ## 10. Documentation
 
-### 10.1 Production Docs — DONE (13 documents)
+### 10.1 Production Docs — DONE (18 documents)
 
 These were written as part of the proddocs initiative and live in `proddocs/`.
 
@@ -583,14 +583,14 @@ Completed plans (deleted): data-lake-phase-0 through phase-3, data-lake-hardenin
 **Current codebase stats:**
 - 165 connectors + 165 normalizers
 - 14 frameworks (1,996 controls)
-- 539+ CLI commands (63 modules)
-- 602 tests (29 files)
-- 40 DB models, 30 migrations
-- 24 lake modules, 8 domain services
+- 556 CLI leaf commands (68 modules)
+- 509 tests (32 files)
+- 42 DB models, 16 migrations
+- 23 lake modules, 7 domain services
 - 670 OPA/Rego policies
 - 17 OSCAL JSON packages
 - 36 Terraform files (AWS, Azure, GCP)
-- 25 assessor modules (101 assertions)
-- 13 production docs
+- 24 assessor modules (101 assertions)
+- 18 production docs
 
 **Next up:** P0 items (14 remaining) — hardening security fixes (H-12, H-22), alert model (PG-1/2), AI structured output (PG-6), remediation workflow (PG-7), remaining P0 docs, vendor accuracy pass (OPS-6).

@@ -36,7 +36,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
          |                                       |
     +----v----+                          +-------v--------+
     | REST API|                          | Webhooks/Slack |
-    | 157 rts |                          | PagerDuty/Jira |
+    | 152 rts |                          | PagerDuty/Jira |
     +---------+                          +----------------+
 ```
 
@@ -255,7 +255,7 @@ See [Data Model Reference](data-model.md) for complete schema documentation.
 
 ### GRC Data Lake (Parquet + DuckDB)
 
-24 modules in `warlock/lake/`. Three zones: raw (immutable events), enrichment (normalized findings), curated (10 domain fact tables). DuckDB runs in-process for analytical queries. Parquet files are partitioned by source/date or framework/date.
+23 modules in `warlock/lake/`. Three zones: raw (immutable events), enrichment (normalized findings), curated (10 domain fact tables). DuckDB runs in-process for analytical queries. Parquet files are partitioned by source/date or framework/date.
 
 See [Data Lake Architecture](data-lake.md) for complete lake documentation.
 
@@ -335,7 +335,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## CLI
 
-40 Click commands across 8 domain modules in `warlock/cli/`:
+556 leaf commands across 68 modules in `warlock/cli/`:
 
 | Domain | Key Commands |
 |---|---|
@@ -350,7 +350,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## REST API
 
-163 routes across 13 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
+152 routes across 13 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
 
 ## Key Design Patterns
 

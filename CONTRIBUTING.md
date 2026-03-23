@@ -128,7 +128,7 @@ All pull requests must pass the full test suite:
 ```
 
 Expected output (as of this date):
-- 657 tests across 32 files
+- 509 tests across 32 files
 - 0 failures
 - 0 errors
 - All green
@@ -295,11 +295,11 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
-- **API** (`warlock/api/`) — FastAPI REST endpoints (163 routes), ABAC-scoped access control
-- **CLI** (`warlock/cli/`) — Click CLI (637 commands across 65 modules)
+- **API** (`warlock/api/`) — FastAPI REST endpoints (152 routes), ABAC-scoped access control
+- **CLI** (`warlock/cli/`) — Click CLI (556 leaf commands across 68 modules)
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
-- **Database** (`warlock/db/`) — SQLAlchemy ORM, 42 models, 12 Alembic migrations
+- **Database** (`warlock/db/`) — SQLAlchemy ORM, 42 models, 16 Alembic migrations
 - **Frameworks** (`warlock/frameworks/`) — 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
 - **OPA** (`policies/`) — 670 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports

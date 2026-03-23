@@ -94,7 +94,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
-## CLI (637 commands across 65 modules)
+## CLI (556 leaf commands across 68 modules)
 
 Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
@@ -292,7 +292,7 @@ warlock/
 │   ├── queue.py          # Redis/Kafka/SQS backends
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
-├── lake/                 # GRC Data Lake (24 modules)
+├── lake/                 # GRC Data Lake (23 modules)
 │   ├── writer.py         # Event-sourced Parquet writer
 │   ├── readers.py        # DuckDB analytical queries with ABAC
 │   ├── zones.py          # Raw/enrichment/curated zone writers
@@ -307,7 +307,7 @@ warlock/
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
 │   ├── models.py         # 42 SQLAlchemy models
-│   ├── migrations/       # Alembic migrations (12 revisions)
+│   ├── migrations/       # Alembic migrations (16 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
 │   └── engine.py         # Session management
@@ -341,13 +341,13 @@ warlock/
 │   ├── crosswalks.yaml   # 1,843 crosswalk edges
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
-├── domains/          # 8 domain service modules (registry, event bus, policy engine)
-└── cli/              # Click CLI package (637 commands, 65 modules)
+├── domains/          # 7 domain service modules (registry, event bus, policy engine)
+└── cli/              # Click CLI package (556 leaf commands, 68 modules)
 ```
 
 ## Database
 
-42 tables across 12 Alembic migrations:
+42 tables across 16 Alembic migrations:
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency

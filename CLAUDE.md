@@ -48,7 +48,7 @@ Expected output — verify these numbers:
 Connectors succeeded:   165
 Connectors failed:      0
 Raw events collected:   589
-Findings normalized:    5,470–5,480 (varies slightly due to randomized mock data)
+Findings normalized:    5,470–5,485 (varies slightly due to randomized mock data)
 Controls mapped:        373,852
 ```
 
@@ -76,7 +76,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (165 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (13 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
+The script verifies: lint, format, imports, pytest (509+ baseline), demo seed (165 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (18 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -184,17 +184,17 @@ warlock/
   normalizers/   — 165 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
-  api/           — FastAPI REST API (157 routes, ABAC-scoped, 9 domain routers)
-  cli/           — Click CLI package (45+ commands, 11 domain modules)
-  db/            — SQLAlchemy models (38) + Alembic migrations (12)
+  api/           — FastAPI REST API (152 routes, ABAC-scoped, 9 domain routers)
+  cli/           — Click CLI package (556 leaf commands, 68 modules)
+  db/            — SQLAlchemy models (42) + Alembic migrations (16)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
-  lake/          — 24 GRC data lake modules (DuckDB, Parquet, RAG, Iceberg)
-  domains/       — 8 domain service modules (registry, event bus, policy engine, controls, issues, evidence)
+  lake/          — 23 GRC data lake modules (DuckDB, Parquet, RAG, Iceberg)
+  domains/       — 7 domain service modules (registry, event bus, policy engine, controls, issues, evidence)
   frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 606 pytest tests (29 files)
+tests/           — 509 pytest tests (32 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
 frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
@@ -223,7 +223,7 @@ Two GitHub Actions workflows run on every push/PR:
 
 ### `.github/workflows/ci.yml` — Python CI
 - **Triggers:** push to main, all PRs
-- **Jobs:** lint (ruff), test (pytest 535 tests), build (Docker image)
+- **Jobs:** lint (ruff), test (pytest 509 tests), build (Docker image)
 - If lint fails (like the 128 F401 errors on 2026-03-19), the whole pipeline is red. Run `ruff check warlock/` locally first.
 
 ### `.github/workflows/compliance-gate.yaml` — Compliance CI

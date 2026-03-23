@@ -144,9 +144,9 @@ Warlock is a Python 3.12+ application with these core components:
 
 | Component | Technology | Purpose |
 |---|---|---|
-| API | FastAPI + Uvicorn | 157 REST endpoints, ABAC-scoped |
-| CLI | Click + Rich | 42+ commands across 8 domain modules |
-| Database | SQLAlchemy 2.0 + Alembic | 36 models, 11 migrations |
+| API | FastAPI + Uvicorn | 152 REST endpoints, ABAC-scoped |
+| CLI | Click + Rich | 556 leaf commands across 68 modules |
+| Database | SQLAlchemy 2.0 + Alembic | 42 models, 16 migrations |
 | Data Lake | DuckDB + PyArrow + Parquet | Analytical queries over compliance data |
 | Queue | Redis / Kafka / SQS (pluggable) | Pipeline job distribution |
 | AI | Anthropic / OpenAI / Gemini / Ollama | Tier 2 reasoning + narrative generation |

@@ -37,7 +37,7 @@ The gate runs these checks in order. All must pass.
 | Check | What It Does |
 |-------|-------------|
 | Pytest Suite | `pytest tests/ --tb=short -q` -- all tests must pass |
-| Test Count Baseline | Must collect >= 657 tests (prevents accidental test deletion) |
+| Test Count Baseline | Must collect >= 509 tests (prevents accidental test deletion) |
 
 **Section 3: Integration**
 
@@ -118,11 +118,11 @@ The seed registers mock connectors that produce realistic events, then runs the 
 
 | Metric | Expected Value |
 |--------|---------------|
-| Connectors succeeded | 40 |
+| Connectors succeeded | 165 |
 | Connectors failed | 0 |
-| Raw events collected | 191 |
-| Findings normalized | 547 |
-| Controls mapped | 29,207 |
+| Raw events collected | 589 |
+| Findings normalized | ~5,475 |
+| Controls mapped | 373,852 |
 
 Additionally, the seed creates:
 
@@ -536,7 +536,7 @@ warlock retention purge --execute
 
 - Run the full QA gate: `./scripts/qa.sh`
 - Run the demo seed on a clean database
-- Verify all 40+ connectors succeed with 0 failures
+- Verify all 165 connectors succeed with 0 failures
 - Check that documented counts match reality: `make verify-docs`
 
 ---

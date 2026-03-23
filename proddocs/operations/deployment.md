@@ -325,7 +325,7 @@ make clean       # Stop docker, remove DB
 
 ## Database Migrations
 
-Warlock uses Alembic for database migrations. The project has 12 migration files.
+Warlock uses Alembic for database migrations. The project has 16 migration files.
 
 ### Run Migrations
 
