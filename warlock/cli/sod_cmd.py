@@ -12,7 +12,7 @@ from collections import defaultdict
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import cli, console
 
 
 # ---------------------------------------------------------------------------

@@ -586,7 +586,7 @@ def evidence_gaps(framework: str | None) -> None:
 
     console.print(table)
     console.print(
-        f"\n[dim]Attach evidence with: warlock evidence attach <control_id> --file <path> --description '...'[/dim]"
+        "\n[dim]Attach evidence with: warlock evidence attach <control_id> --file <path> --description '...'[/dim]"
     )
 
 
@@ -605,7 +605,6 @@ def evidence_export(framework: str | None, fmt: str) -> None:
     import io
     import tarfile
     import zipfile
-    from pathlib import Path
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult

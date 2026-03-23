@@ -13,7 +13,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import cli, console, _error
 
 
 # ---------------------------------------------------------------------------
@@ -508,7 +508,7 @@ def vendor_concentration() -> None:
     no_assessment = sum(1 for v in vendors if v.risk_score is None)
     total = len(vendors)
 
-    console.print(f"\n[bold]Vendor Concentration Analysis[/bold]")
+    console.print("\n[bold]Vendor Concentration Analysis[/bold]")
     console.print(f"  Total vendors:      {total}")
     console.print(f"  High-risk (< 40):  {high_risk}")
     console.print(f"  No assessment:      {no_assessment}")

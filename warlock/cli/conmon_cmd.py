@@ -38,7 +38,7 @@ def conmon_status(framework: str | None, system: str | None) -> None:
     from sqlalchemy import func
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, PostureSnapshot, SystemProfile
+    from warlock.db.models import ControlResult, SystemProfile
 
     init_db()
     with get_session() as session:
@@ -126,7 +126,6 @@ def conmon_status(framework: str | None, system: str | None) -> None:
 )
 def conmon_monthly_report(framework: str | None, output: str | None, month: str | None) -> None:
     """Generate a ConMon monthly report for submission."""
-    from sqlalchemy import func
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ConnectorRun, ControlResult, Finding, Issue, POAM
@@ -284,7 +283,7 @@ def conmon_deviation(
             target.assertion_findings = findings
             session.commit()
 
-    console.print(f"[green]Deviation recorded:[/green]")
+    console.print("[green]Deviation recorded:[/green]")
     console.print(f"  Framework: {framework}")
     console.print(f"  Control:   {control}")
     console.print(f"  Type:      {deviation_type}")
@@ -367,7 +366,7 @@ def conmon_significant_change(
         session.add(audit)
         session.commit()
 
-    console.print(f"[green]Significant change recorded:[/green]")
+    console.print("[green]Significant change recorded:[/green]")
     console.print(f"  Title:      {title}")
     console.print(f"  By:         {actor_name}")
     console.print(f"  Frameworks: {', '.join(affected_frameworks) or 'all'}")
@@ -404,7 +403,7 @@ def conmon_checklist(framework: str | None) -> None:
         total_results = q.count()
         results_ok = total_results > 0
 
-        open_issues = session.query(Issue).filter(
+        session.query(Issue).filter(
             Issue.status.notin_(["closed", "verified"])
         ).count()
         open_poams = session.query(POAM).filter(

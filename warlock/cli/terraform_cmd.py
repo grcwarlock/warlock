@@ -172,7 +172,7 @@ def modules_show(module: str, cloud: str | None) -> None:
                 console.print(f"  [dim]{line}[/dim]")
                 shown += 1
                 if shown >= 20:
-                    remaining = len([l for l in lines if l.strip() and not l.strip().startswith("#")]) - 20
+                    remaining = len([ln for ln in lines if ln.strip() and not ln.strip().startswith("#")]) - 20
                     if remaining > 0:
                         console.print(f"  [dim]... ({remaining} more lines)[/dim]")
                     break

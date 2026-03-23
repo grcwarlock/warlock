@@ -172,7 +172,7 @@ def privacy_dsar_intake() -> None:
     the DSAR audit record, and optionally assigns it.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, DataSilo
+    from warlock.db.models import DataSilo
 
     init_db()
 
@@ -435,7 +435,7 @@ def privacy_breach_response() -> None:
 
             # Generate breach notification report
             report_lines = [
-                f"# Data Breach Notification Report",
+                "# Data Breach Notification Report",
                 f"\n**Date:** {_utcnow().strftime('%Y-%m-%d')}  "
                 f"**Breach ID:** {breach_id[:8]}",
                 "\n## Breach Summary\n",
@@ -768,7 +768,7 @@ def privacy_impact_assessment(system: str) -> None:
             # Generate DPIA report
             now_str = _utcnow().strftime("%Y-%m-%d")
             report_lines = [
-                f"# Data Protection Impact Assessment (DPIA)",
+                "# Data Protection Impact Assessment (DPIA)",
                 f"\n**System:** {system}  |  **Date:** {now_str}",
                 f"**Conducted by:** {_get_actor()}",
                 "\n## Assessment\n",

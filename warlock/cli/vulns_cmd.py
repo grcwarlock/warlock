@@ -53,7 +53,7 @@ def vulns_dashboard(source: str | None, framework: str | None) -> None:
     from sqlalchemy import func
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding
+    from warlock.db.models import Finding
 
     init_db()
     with get_session() as session:
@@ -451,7 +451,6 @@ def vulns_remediation_rate(days: int, source: str | None) -> None:
 
     Computes: # findings observed in the window vs # with associated compliant control results.
     """
-    from sqlalchemy import func
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Finding

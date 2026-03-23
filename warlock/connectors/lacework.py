@@ -106,7 +106,7 @@ class LaceworkConnector(BaseConnector):
         import httpx
 
         api_key = self.get_secret("LACEWORK_API_KEY")
-        api_secret = self.get_secret("LACEWORK_API_SECRET")
+        self.get_secret("LACEWORK_API_SECRET")
         account = self.config.settings.get("account", "")
         base_url = f"https://{account}"
 

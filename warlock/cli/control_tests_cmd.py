@@ -535,7 +535,7 @@ def gaps(framework: str | None, output_format: str) -> None:
     set on the control mapping.  'Never tested' means no ControlResult exists.
     Controls with no frequency set are excluded from past-due detection.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timezone
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, ControlResult
 

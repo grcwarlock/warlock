@@ -228,7 +228,7 @@ def verify_chain(limit: int) -> None:
             f"{entry.sequence}:{entry.previous_hash}:{entry.action}:"
             f"{entry.entity_type}:{entry.entity_id}:{entry.actor}"
         )
-        expected_hash = hashlib.sha256(payload.encode()).hexdigest()
+        hashlib.sha256(payload.encode()).hexdigest()
 
         if entry.previous_hash != prev_hash:
             broken.append((entry.sequence, f"previous_hash mismatch at seq {entry.sequence}"))
@@ -386,7 +386,7 @@ def schedule_set(interval: int) -> None:
 
     from warlock.pipeline.scheduler import get_scheduler
 
-    sched = get_scheduler(interval_minutes=interval)
+    get_scheduler(interval_minutes=interval)
     console.print(f"[green]Scheduler interval set to {interval} minute(s).[/green]")
     console.print(
         "[dim]Note: this affects the next scheduler instance. Restart 'warlock scheduler start' "

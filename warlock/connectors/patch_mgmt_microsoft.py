@@ -119,7 +119,6 @@ class MicrosoftPatchMgmtConnector(BaseConnector):
 
     def _paginate(self, client: object, endpoint: str, params: dict) -> list:
         """Follow Microsoft Graph OData nextLink pagination."""
-        import httpx
 
         all_items: list = []
         current_url: str | None = endpoint

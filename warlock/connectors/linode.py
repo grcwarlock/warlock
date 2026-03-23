@@ -111,7 +111,6 @@ class LinodeConnector(BaseConnector):
 
     def _paginate(self, client: object, endpoint: str) -> list:
         """Follow Linode cursor-based pagination."""
-        import httpx
 
         all_items: list = []
         page = 1

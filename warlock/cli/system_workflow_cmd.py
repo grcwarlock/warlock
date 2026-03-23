@@ -443,7 +443,7 @@ def system_review(system_id: str) -> None:
                 )
                 if personnel:
                     console.print(
-                        f"\n[bold]Active Personnel (sample):[/bold] "
+                        "\n[bold]Active Personnel (sample):[/bold] "
                         + ", ".join(p.full_name for p in personnel[:5])
                     )
 

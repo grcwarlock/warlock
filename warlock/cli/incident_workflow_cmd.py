@@ -18,7 +18,6 @@ from datetime import datetime, timezone
 import click
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
-from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
 
@@ -147,7 +146,6 @@ def _resolve_incident(session, incident_id: str):
 
 def _format_timeline(issue) -> None:
     """Print a Rich timeline for the issue."""
-    meta = issue.tags or []
     created = issue.created_at.strftime("%Y-%m-%d %H:%M UTC") if issue.created_at else "unknown"
     console.print(f"\n[bold]Timeline for incident {issue.id[:8]}[/bold]")
     console.print(f"  Created:   {created}")
@@ -306,7 +304,7 @@ def incident_manage(incident_id: str) -> None:
     an interactive action menu. Loops until you choose quit.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, Issue, IssueComment
+    from warlock.db.models import Finding, IssueComment
 
     init_db()
 
@@ -665,7 +663,7 @@ def incident_drill() -> None:
             hit = sum(1 for kw in good_indicators if kw in response_lower)
             score = min(10, 3 + hit * 2)
             scores.append(score)
-            console.print(f"  [dim]Response recorded.[/dim]")
+            console.print("  [dim]Response recorded.[/dim]")
 
         # Score the overall response
         avg_score = sum(scores) / len(scores) if scores else 0
@@ -711,8 +709,8 @@ def incident_drill() -> None:
 
         report += [
             "\n## Scoring Summary\n",
-            f"| Criterion | Score |",
-            f"|---|---|",
+            "| Criterion | Score |",
+            "|---|---|",
         ]
         for (crit_name, _), cs in zip(_SCORING_CRITERIA, crit_scores):
             report.append(f"| {crit_name} | {cs}/10 |")

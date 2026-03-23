@@ -10,7 +10,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import cli, console, _error
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ def users_list(role: str | None, active_only: bool, limit: int) -> None:
 def users_show(user_id: str) -> None:
     """Show details for a specific user."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import APIKey, AuditEntry, User
+    from warlock.db.models import APIKey, User
 
     init_db()
     with get_session() as session:

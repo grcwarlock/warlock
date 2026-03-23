@@ -114,7 +114,6 @@ class PagerDutyConnector(BaseConnector):
 
     def _paginate(self, client: object, endpoint: str, params: dict, event_type: str) -> list:
         """Follow PagerDuty offset-based pagination."""
-        import httpx
 
         all_items: list = []
         offset = 0

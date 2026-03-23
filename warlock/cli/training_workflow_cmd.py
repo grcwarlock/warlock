@@ -11,7 +11,7 @@ import hashlib
 import json
 import uuid
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import click
 from rich.panel import Panel
@@ -283,25 +283,25 @@ def training_drive(department: str | None) -> None:
                     # Generate markdown report
                     now_str = _utcnow().strftime("%Y-%m-%d %H:%M UTC")
                     lines = [
-                        f"# Training Compliance Report",
-                        f"",
+                        "# Training Compliance Report",
+                        "",
                         f"Generated: {now_str}",
                         f"Actor: {actor}",
-                        f"",
-                        f"## Summary",
-                        f"",
-                        f"| Metric | Value |",
-                        f"|--------|-------|",
+                        "",
+                        "## Summary",
+                        "",
+                        "| Metric | Value |",
+                        "|--------|-------|",
                         f"| Total personnel | {total} |",
                         f"| Current | {len(current)} |",
                         f"| Overdue | {len(overdue)} |",
                         f"| Not enrolled | {len(not_enrolled)} |",
                         f"| Completion rate | {completion_rate:.1f}% |",
-                        f"",
-                        f"## Department Breakdown",
-                        f"",
-                        f"| Department | Total | Current | Overdue | Rate |",
-                        f"|------------|-------|---------|---------|------|",
+                        "",
+                        "## Department Breakdown",
+                        "",
+                        "| Department | Total | Current | Overdue | Rate |",
+                        "|------------|-------|---------|---------|------|",
                     ]
                     for dept, counts in sorted(dept_stats.items()):
                         rate = (
@@ -314,11 +314,11 @@ def training_drive(department: str | None) -> None:
                             f"{counts['overdue']} | {rate:.1f}% |"
                         )
                     lines += [
-                        f"",
-                        f"## Overdue Personnel",
-                        f"",
-                        f"| Name | Email | Department | Manager | Last Training |",
-                        f"|------|-------|------------|---------|---------------|",
+                        "",
+                        "## Overdue Personnel",
+                        "",
+                        "| Name | Email | Department | Manager | Last Training |",
+                        "|------|-------|------------|---------|---------------|",
                     ]
                     for p in overdue:
                         last_t = (

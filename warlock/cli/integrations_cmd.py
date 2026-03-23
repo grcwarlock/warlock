@@ -87,7 +87,7 @@ def integrations_list() -> None:
 
     if not configured:
         console.print("[dim]No integrations configured. Use 'integrations configure'.[/dim]")
-        console.print(f"\n[bold]Available integration types:[/bold]")
+        console.print("\n[bold]Available integration types:[/bold]")
         for t in _INTEGRATION_TYPES:
             console.print(f"  {t}")
         return

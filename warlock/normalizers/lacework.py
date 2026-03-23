@@ -56,7 +56,7 @@ class LaceworkNormalizer(BaseNormalizer):
             raw_severity = str(alert.get("severity", "Medium")).lower()
             severity = _LACEWORK_SEVERITY_MAP.get(raw_severity, "medium")
             alert_type = alert.get("alertType", alert.get("type", "unknown"))
-            title = alert.get("startTime", "")
+            alert.get("startTime", "")
 
             findings.append(
                 FindingData(

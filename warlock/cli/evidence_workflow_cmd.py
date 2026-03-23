@@ -357,7 +357,6 @@ def evidence_collection(framework: str | None, assignee: str | None) -> None:
 
     init_db()
     actor = _get_actor()
-    effective_assignee = assignee or actor
 
     try:
         with get_session() as session:
@@ -404,7 +403,7 @@ def evidence_collection(framework: str | None, assignee: str | None) -> None:
                         due_str = eng.period_end.strftime("%Y-%m-%d")
                         days_left = (eng.period_end - _utcnow()).days
                         if days_left < 0:
-                            due_str += f" [red](OVERDUE)[/red]"
+                            due_str += " [red](OVERDUE)[/red]"
                         elif days_left <= 3:
                             due_str += f" [yellow]({days_left}d left)[/yellow]"
                         else:
@@ -443,7 +442,7 @@ def evidence_collection(framework: str | None, assignee: str | None) -> None:
                             continue
                         file_path = file_input.strip()
                         if not os.path.isfile(file_path):
-                            console.print(f"[red]File still not found. Skipping.[/red]")
+                            console.print("[red]File still not found. Skipping.[/red]")
                             continue
                     else:
                         continue

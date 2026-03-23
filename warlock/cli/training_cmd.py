@@ -13,7 +13,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import cli, console
 
 
 @cli.group("training")

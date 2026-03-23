@@ -9,7 +9,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import cli, console
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ def reports_executive(framework: str | None, out_format: str) -> None:
         return
 
     score_color = "green" if score >= 80 else ("yellow" if score >= 60 else "red")
-    console.print(f"\n[bold]Executive Compliance Summary[/bold]")
+    console.print("\n[bold]Executive Compliance Summary[/bold]")
     console.print(f"  Framework:      {framework or 'all'}")
     console.print(f"  Posture Score:  [{score_color}]{score:.1f}%[/]")
     console.print(f"  Total Controls: {total}")
@@ -314,7 +314,7 @@ def reports_audit_readiness(framework: str) -> None:
     from datetime import datetime, timedelta, timezone
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding, Issue
+    from warlock.db.models import ControlResult, Issue
 
     init_db()
     stale_cutoff = datetime.now(timezone.utc) - timedelta(days=90)
@@ -495,7 +495,7 @@ def reports_history(limit: int) -> None:
 def reports_board(framework: str | None) -> None:
     """Generate board-level GRC summary (high-level risk and posture metrics)."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Issue, POAM, RiskAnalysis
+    from warlock.db.models import ControlResult, Issue, POAM
 
     init_db()
     with get_session() as session:
@@ -521,7 +521,7 @@ def reports_board(framework: str | None) -> None:
     score = (compliant / total * 100) if total else 0.0
     score_color = "green" if score >= 80 else ("yellow" if score >= 60 else "red")
 
-    console.print(f"\n[bold]Board GRC Summary[/bold]")
+    console.print("\n[bold]Board GRC Summary[/bold]")
     console.print(f"  Overall Posture:    [{score_color}]{score:.1f}%[/]")
     console.print(f"  Controls Assessed:  {total}")
     console.print(f"  Open Issues:        {open_issues}")
@@ -663,7 +663,7 @@ def reports_conmon(framework: str | None) -> None:
     compliant = sum(1 for r in results if r.status == "compliant")
     score = (compliant / total * 100) if total else 0.0
 
-    console.print(f"\n[bold]ConMon Status Report[/bold]")
+    console.print("\n[bold]ConMon Status Report[/bold]")
     console.print(f"  Framework:          {framework or 'all'}")
     console.print(f"  Posture Score:      {score:.1f}%")
     console.print(f"  Connector runs 24h: {recent_runs} ({failed_runs} failed)")

@@ -49,8 +49,8 @@ def control_hub(control_id, framework):
             status_str = f" ({item.status})" if item.status else ""
             console.print(f"  {item.summary}{severity_str}{status_str}")
 
-    console.print(f"\n[dim]Actions:[/dim]")
-    console.print(f"  warlock remediate <issue-id>")
+    console.print("\n[dim]Actions:[/dim]")
+    console.print("  warlock remediate <issue-id>")
     console.print(f"  warlock evidence refresh --control {control_id}")
     if framework:
         console.print(f"  warlock risk analyze -f {framework}")

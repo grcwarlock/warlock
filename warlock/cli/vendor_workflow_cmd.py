@@ -12,7 +12,7 @@ third-party vendor risk:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import click
 from rich.panel import Panel
@@ -140,7 +140,7 @@ def vendor_assess(vendor_name_or_id: str) -> None:
     in an interactive loop.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, Issue, Vendor
+    from warlock.db.models import Finding, Issue
 
     init_db()
 
@@ -157,7 +157,6 @@ def vendor_assess(vendor_name_or_id: str) -> None:
 
 def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N803
     """Interactive assessment loop (separated for testability)."""
-    from warlock.db.models import Vendor
 
     while True:
         console.print()
@@ -632,7 +631,7 @@ def vendor_offboard(vendor_name_or_id: str) -> None:
     offboarding in the audit trail.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Issue, Vendor
+    from warlock.db.models import Issue
 
     init_db()
 

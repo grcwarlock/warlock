@@ -10,7 +10,6 @@ Phase 3 and should be imported after export.py to take precedence.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import click

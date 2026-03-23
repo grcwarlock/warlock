@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 import click
 from rich.panel import Panel
-from rich.prompt import Confirm, Prompt
+from rich.prompt import Confirm
 from rich.table import Table
 
 from warlock.cli import _get_actor, cli, console
@@ -105,7 +105,6 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
         Personnel,
         POAM,
         PostureSnapshot,
-        RiskAcceptance,
     )
 
     init_db()
@@ -269,7 +268,7 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
                         if Confirm.ask("Mark this item as addressed?", default=False):
                             item["ok"] = True
                             complete_count += 1
-                            console.print(f"[green]Marked as addressed.[/green]")
+                            console.print("[green]Marked as addressed.[/green]")
 
             # ---------------------------------------------------------------
             # Generate markdown report
@@ -281,39 +280,39 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
 
             report_lines = [
                 f"# {month_label} Continuous Monitoring Report",
-                f"",
+                "",
                 f"**Generated:** {now_str}",
                 f"**Author:** {actor}",
                 f"**Report ID:** {report_id}",
                 f"**Status:** {status_label} ({final_complete}/{len(checklist)} items, {overall_pct:.0f}%)",
-                f"",
-                f"---",
-                f"",
-                f"## Checklist",
-                f"",
+                "",
+                "---",
+                "",
+                "## Checklist",
+                "",
             ]
             for item in checklist:
                 check = "x" if item["ok"] else " "
                 report_lines.append(f"- [{check}] {item['label']}")
                 report_lines.append(f"  - *{item['detail']}*")
             report_lines += [
-                f"",
-                f"---",
-                f"",
-                f"## Statistics",
-                f"",
-                f"| Metric | Value |",
-                f"|--------|-------|",
+                "",
+                "---",
+                "",
+                "## Statistics",
+                "",
+                "| Metric | Value |",
+                "|--------|-------|",
                 f"| Connector runs (30d) | {scan_runs} |",
                 f"| Overdue POA&Ms | {len(overdue_poams)} |",
                 f"| Change events (30d) | {changes} |",
                 f"| Open critical/high alerts | {len(open_critical)} |",
                 f"| Overdue training | {training_overdue} |",
                 f"| Recent posture snapshots | {recent_snapshots} |",
-                f"",
-                f"---",
-                f"",
-                f"*Warlock GRC Platform — warlock conmon-monthly*",
+                "",
+                "---",
+                "",
+                "*Warlock GRC Platform — warlock conmon-monthly*",
             ]
             report_md = "\n".join(report_lines)
 

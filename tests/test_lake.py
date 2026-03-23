@@ -61,8 +61,8 @@ class TestLocalStorage:
 
 class TestDuckDBQuery:
     def test_query_parquet_file(self, tmp_path):
-        import pyarrow as pa
-        import pyarrow.parquet as pq
+        pa = pytest.importorskip("pyarrow")
+        pq = pytest.importorskip("pyarrow.parquet")
         from warlock.lake.query import LakeQueryEngine
 
         # Create a sample parquet file
@@ -83,8 +83,8 @@ class TestDuckDBQuery:
         assert result[0]["total"] == 15
 
     def test_query_returns_dicts(self, tmp_path):
-        import pyarrow as pa
-        import pyarrow.parquet as pq
+        pa = pytest.importorskip("pyarrow")
+        pq = pytest.importorskip("pyarrow.parquet")
         from warlock.lake.query import LakeQueryEngine
 
         table = pa.table({"id": ["a", "b"], "value": [1, 2]})
@@ -101,6 +101,7 @@ class TestDuckDBQuery:
 
 class TestSchemaGenerator:
     def test_generates_schema_for_control_result(self):
+        pytest.importorskip("pyiceberg")
         from warlock.lake.schema import generate_iceberg_schema
         from warlock.db.models import ControlResult
         schema = generate_iceberg_schema(ControlResult)
@@ -111,6 +112,7 @@ class TestSchemaGenerator:
         assert "assessed_at" in field_names
 
     def test_generates_schema_for_finding(self):
+        pytest.importorskip("pyiceberg")
         from warlock.lake.schema import generate_iceberg_schema
         from warlock.db.models import Finding
         schema = generate_iceberg_schema(Finding)
@@ -120,6 +122,7 @@ class TestSchemaGenerator:
         assert "observed_at" in field_names
 
     def test_maps_sqlalchemy_types_correctly(self):
+        pytest.importorskip("pyiceberg")
         from warlock.lake.schema import generate_iceberg_schema
         from warlock.db.models import ControlResult
         schema = generate_iceberg_schema(ControlResult)
@@ -129,11 +132,13 @@ class TestSchemaGenerator:
 
 class TestIcebergCatalog:
     def test_sqlite_catalog_creates_db(self, tmp_path):
+        pytest.importorskip("pyiceberg")
         from warlock.lake.catalog import create_catalog
         catalog = create_catalog("sqlite", str(tmp_path / "catalog.db"))
         assert catalog is not None
 
     def test_catalog_factory_validates_type(self):
+        pytest.importorskip("pyiceberg")
         from warlock.lake.catalog import create_catalog
         with pytest.raises(ValueError, match="Unknown catalog type"):
             create_catalog("invalid", "")
@@ -158,6 +163,7 @@ class TestLakeDemo:
         assert (tmp_path / "lake" / "curated").exists()
 
     def test_write_sample_parquet(self, tmp_path):
+        pytest.importorskip("pyarrow")
         from warlock.lake.demo import write_sample_parquet
         lake_path = str(tmp_path / "lake")
         write_sample_parquet(lake_path, "test_table", {"id": ["a"], "value": [1]})

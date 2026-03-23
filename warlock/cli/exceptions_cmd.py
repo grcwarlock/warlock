@@ -255,7 +255,7 @@ def exceptions_create(
 def exceptions_show(exception_id: str) -> None:
     """Show full details for a policy exception."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, PolicyOverride
+    from warlock.db.models import PolicyOverride
 
     init_db()
     with get_session() as session:

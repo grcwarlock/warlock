@@ -107,7 +107,6 @@ class ServiceNowGRCConnector(BaseConnector):
 
     def _paginate(self, client: object, url: str, params: dict) -> list:
         """Paginate ServiceNow Table API using offset/limit."""
-        import httpx
 
         all_items: list = []
         limit = int(params.get("sysparm_limit", 200))
