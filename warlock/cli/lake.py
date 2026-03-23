@@ -37,6 +37,10 @@ def lake_init(path: str | None) -> None:
     console.print(f"[green]Lake initialized at {lake_path}[/green]")
     for zone in zones:
         console.print(f"  {zone}")
+    console.print(
+        "\n[dim]Next: run [bold]warlock lake backfill[/bold] to populate the lake "
+        "from existing pipeline data.[/dim]"
+    )
 
 
 @lake.command("status")

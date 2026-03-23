@@ -40,6 +40,7 @@ from warlock.connectors.base import (
 )
 from warlock.db.engine import get_session, init_db
 from warlock.db.models import (
+    Attestation,
     AuditEngagement,
     AuditorEngagementAssignment,
     ChangeEvent,
@@ -60,6 +61,7 @@ from warlock.db.models import (
     RiskAcceptance,
     SystemDependency,
     SystemProfile,
+    Vendor,
 )
 from warlock.normalizers.aws import AWSNormalizer
 from warlock.normalizers.base import NormalizerRegistry
@@ -11029,8 +11031,39 @@ def seed_data_silos(session):
         if silo.name not in existing_names:
             session.add(silo)
             added += 1
+    session.flush()
+
+    # Enrich auto-discovered silos that have placeholder values (GAP-11)
+    classifications = ["confidential", "internal", "public", "restricted"]
+    classification_weights = [0.3, 0.4, 0.1, 0.2]
+    unknown_silos = (
+        session.query(DataSilo)
+        .filter(
+            (DataSilo.data_classification == "unknown") | (DataSilo.encrypted_at_rest.is_(None))
+        )
+        .all()
+    )
+    for silo in unknown_silos:
+        if silo.data_classification == "unknown":
+            silo.data_classification = random.choices(
+                classifications, weights=classification_weights, k=1
+            )[0]
+        if silo.encrypted_at_rest is None:
+            silo.encrypted_at_rest = random.random() < 0.80
+        if silo.encrypted_in_transit is None:
+            silo.encrypted_in_transit = random.random() < 0.85
+        if silo.access_logging_enabled is None:
+            silo.access_logging_enabled = random.random() < 0.70
+        if silo.contains_pii is None or not silo.contains_pii:
+            silo.contains_pii = random.random() < 0.30
+        if silo.contains_phi is None or not silo.contains_phi:
+            silo.contains_phi = random.random() < 0.10
+        if silo.contains_pci is None or not silo.contains_pci:
+            silo.contains_pci = random.random() < 0.15
+
     session.commit()
-    return {"discovered": result.get("created", 0), "direct": added}
+    enriched = len(unknown_silos)
+    return {"discovered": result.get("created", 0), "direct": added, "enriched": enriched}
 
 
 def seed_legal_holds(session):
@@ -12829,8 +12862,99 @@ def seed_phase5_auditor_engagement(session) -> int:
 
     for er in evidence_requests:
         session.add(er)
+    session.flush()
+
+    # --- Attestations (GAP-5) ---
+    attestations = [
+        Attestation(
+            engagement_id=engagement.id,
+            framework="soc2",
+            control_id="CC6.1",
+            status="approved",
+            statement="Management asserts that logical access to production systems containing customer data is restricted to authorized personnel through role-based access controls, multi-factor authentication, and quarterly access reviews.",
+            evidence_references=[
+                {
+                    "finding_id": "iam-cred-report-001",
+                    "description": "AWS IAM credential report showing MFA enrollment",
+                },
+                {
+                    "finding_id": "okta-access-review-q4",
+                    "description": "Quarterly access review completion evidence",
+                },
+            ],
+            prepared_by="eve.nakamura@acme.com",
+            prepared_at=NOW - timedelta(days=30),
+            submitted_by="eve.nakamura@acme.com",
+            submitted_at=NOW - timedelta(days=28),
+            reviewed_by="hassan.ali@acme.com",
+            reviewed_at=NOW - timedelta(days=21),
+            review_notes="Evidence is comprehensive. IAM report confirms 97% MFA coverage. Access review shows timely revocation of terminated accounts.",
+            approved_by="sarah.chen@deloitte.com",
+            approved_at=NOW - timedelta(days=14),
+        ),
+        Attestation(
+            engagement_id=engagement.id,
+            framework="iso_27001",
+            control_id="A.9.1",
+            status="submitted",
+            statement="Management asserts that an access control policy has been established, documented, and reviewed in accordance with business and information security requirements.",
+            evidence_references=[
+                {
+                    "finding_id": "policy-access-control-v3",
+                    "description": "Access Control Policy v3.2 (approved 2025-11-01)",
+                },
+            ],
+            prepared_by="bob.martinez@acme.com",
+            prepared_at=NOW - timedelta(days=10),
+            submitted_by="bob.martinez@acme.com",
+            submitted_at=NOW - timedelta(days=7),
+        ),
+        Attestation(
+            engagement_id=nist_engagement.id,
+            framework="nist_800_53",
+            control_id="AC-2",
+            status="draft",
+            statement="Management asserts that information system accounts are managed through automated provisioning and deprovisioning workflows integrated with the HR system, with periodic access reviews conducted quarterly.",
+            evidence_references=[],
+            prepared_by="frank.torres@acme.com",
+            prepared_at=NOW - timedelta(days=3),
+        ),
+        Attestation(
+            engagement_id=nist_engagement.id,
+            framework="nist_800_53",
+            control_id="RA-5",
+            status="approved",
+            statement="Management asserts that vulnerability scanning is performed on all production hosts and containers on a weekly cadence, with critical findings remediated within 72 hours per the vulnerability management SLA.",
+            evidence_references=[
+                {
+                    "finding_id": "crowdstrike-vuln-scan-weekly",
+                    "description": "CrowdStrike Spotlight weekly scan results",
+                },
+                {
+                    "finding_id": "trivy-container-scan",
+                    "description": "Trivy container image scan report",
+                },
+            ],
+            prepared_by="eve.nakamura@acme.com",
+            prepared_at=NOW - timedelta(days=20),
+            submitted_by="eve.nakamura@acme.com",
+            submitted_at=NOW - timedelta(days=18),
+            reviewed_by="hassan.ali@acme.com",
+            reviewed_at=NOW - timedelta(days=12),
+            review_notes="Scan cadence verified. Remediation SLAs met for 94% of critical findings in audit period.",
+            approved_by="marcus.johnson@ey.com",
+            approved_at=NOW - timedelta(days=8),
+        ),
+    ]
+    for att in attestations:
+        session.add(att)
     session.commit()
-    return {"auditors": 2, "engagements": 2, "evidence_requests": len(evidence_requests)}
+    return {
+        "auditors": 2,
+        "engagements": 2,
+        "evidence_requests": len(evidence_requests),
+        "attestations": len(attestations),
+    }
 
 
 def seed_phase5_policy_overrides(session) -> int:
@@ -12897,6 +13021,36 @@ allow if {
 
     for o in overrides:
         session.add(o)
+    session.flush()
+
+    # Create matching audit entries so `warlock exceptions list` shows policy/approver
+    from warlock.db.audit import AuditTrail
+
+    trail = AuditTrail(session)
+    policy_names = [
+        "grc.overrides.break_glass",
+        "grc.overrides.auditor_scope",
+        "grc.overrides.poam_approval",
+    ]
+    approvers = [
+        "eve.nakamura@acme.com",
+        "hassan.ali@acme.com",
+        "eve.nakamura@acme.com",
+    ]
+    for o, policy, approver in zip(overrides, policy_names, approvers):
+        trail.record(
+            action="policy_exception",
+            entity_type="exception",
+            entity_id=o.id,
+            actor=o.created_by,
+            metadata={
+                "policy": policy,
+                "approver": approver,
+                "justification": o.description,
+                "expiry": "2026-06-30T00:00:00+00:00",
+            },
+        )
+
     session.commit()
     return len(overrides)
 
@@ -13147,6 +13301,105 @@ def seed_50_personnel(session) -> int:
         session.add(p)
     session.commit()
     return session.query(Personnel).count()
+
+
+# ---------------------------------------------------------------------------
+# Post-pipeline enrichment helpers
+# ---------------------------------------------------------------------------
+
+
+def _age_some_findings(session) -> int:
+    """Set older observed_at dates on a subset of findings for SLA breach demo.
+
+    Picks 50 random findings and sets their observed_at to 7-90 days ago,
+    creating a realistic age distribution for SLA/overdue dashboards.
+    """
+    all_ids = [row[0] for row in session.query(Finding.id).all()]
+    if not all_ids:
+        return 0
+
+    sample_size = min(50, len(all_ids))
+    sampled_ids = random.sample(all_ids, sample_size)
+
+    aged = 0
+    for fid in sampled_ids:
+        finding = session.query(Finding).get(fid)
+        if finding:
+            days_ago = random.randint(7, 90)
+            finding.observed_at = NOW - timedelta(days=days_ago)
+            aged += 1
+
+    session.commit()
+    return aged
+
+
+def _seed_vendors(session) -> int:
+    """Create Vendor records with varied risk scores from mock data.
+
+    Uses the rich vendor_assessments data to populate the vendors table
+    with realistic score distribution (most between 40-75).
+    """
+    _ensure_rich_data()
+    vendor_data = RICH_DATA.get("vendor_assessments", [])
+
+    # Also add the 5 hand-crafted SSC vendors from the connector
+    hardcoded_vendors = [
+        {"name": "Stripe", "tier": "1", "score": 92.0, "cadence": 90},
+        {"name": "Datadog", "tier": "1", "score": 88.0, "cadence": 90},
+        {"name": "Acme Staffing Co", "tier": "3", "score": 58.0, "cadence": 365},
+        {"name": "CloudBackup Pro", "tier": "2", "score": 45.0, "cadence": 180},
+        {"name": "QuickDocs", "tier": "2", "score": 72.0, "cadence": 180},
+    ]
+
+    existing_names = {row[0] for row in session.query(Vendor.name).all()}
+    created = 0
+
+    # Insert hardcoded vendors first
+    for hv in hardcoded_vendors:
+        if hv["name"] not in existing_names:
+            session.add(
+                Vendor(
+                    name=hv["name"],
+                    tier=hv["tier"],
+                    risk_score=hv["score"],
+                    last_assessment=NOW - timedelta(days=random.randint(5, 45)),
+                    assessment_cadence_days=hv["cadence"],
+                    contract_expires=NOW + timedelta(days=random.randint(60, 400)),
+                    metadata_={"source": "securityscorecard"},
+                )
+            )
+            existing_names.add(hv["name"])
+            created += 1
+
+    # Insert rich data vendors with their varied scores (20-100 range)
+    tier_map = {"A": "1", "B": "1", "C": "2", "D": "3", "F": "3"}
+    cadence_map = {"1": 90, "2": 180, "3": 365}
+
+    for v in vendor_data:
+        name = v["vendor_name"]
+        if name in existing_names:
+            continue
+        tier = tier_map.get(v.get("rating", "C"), "2")
+        session.add(
+            Vendor(
+                name=name,
+                tier=tier,
+                risk_score=float(v["risk_score"]),
+                last_assessment=NOW - timedelta(days=random.randint(5, 90)),
+                assessment_cadence_days=cadence_map.get(tier, 180),
+                contract_expires=NOW + timedelta(days=random.randint(30, 500)),
+                metadata_={
+                    "source": "securityscorecard",
+                    "category": v.get("category", ""),
+                    "certifications": v.get("certifications", []),
+                },
+            )
+        )
+        existing_names.add(name)
+        created += 1
+
+    session.commit()
+    return created
 
 
 # ---------------------------------------------------------------------------
@@ -18591,6 +18844,16 @@ def main():
             for status, count in sorted(statuses):
                 print(f"    {status:20s}  {count}")
 
+    print("[4b/20] Aging 50 findings for SLA breach demo...")
+    with get_session() as session:
+        n_aged = _age_some_findings(session)
+        print(f"       Findings aged: {n_aged}")
+
+    print("[4c/20] Seeding vendor records...")
+    with get_session() as session:
+        n_vendors = _seed_vendors(session)
+        print(f"       Vendors created: {n_vendors}")
+
     print("[5/20] Seeding system profiles...")
     with get_session() as session:
         n = seed_systems(session)
@@ -18609,7 +18872,9 @@ def main():
     print("[8/20] Seeding data silos, legal holds, and issues...")
     with get_session() as session:
         ds = seed_data_silos(session)
-        print(f"       Data silos: {ds['discovered']} discovered + {ds['direct']} direct")
+        print(
+            f"       Data silos: {ds['discovered']} discovered + {ds['direct']} direct ({ds['enriched']} enriched)"
+        )
         lh = seed_legal_holds(session)
         print(f"       Legal holds: {lh}")
         issues = seed_issues(session)
@@ -18667,7 +18932,8 @@ def main():
     with get_session() as session:
         ae = seed_phase5_auditor_engagement(session)
         print(
-            f"       Auditors: {ae['auditors']}, Engagements: {ae['engagements']}, Evidence requests: {ae['evidence_requests']}"
+            f"       Auditors: {ae['auditors']}, Engagements: {ae['engagements']}, "
+            f"Evidence requests: {ae['evidence_requests']}, Attestations: {ae['attestations']}"
         )
 
     print("[18/20] Seeding policy overrides...")

@@ -252,9 +252,12 @@ def personnel_sync() -> None:
             )
 
 
-@cli.group()
-def retention() -> None:
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def retention(ctx: click.Context) -> None:
     """Data retention policies and legal holds."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(retention_report)
 
 
 @retention.command("report")

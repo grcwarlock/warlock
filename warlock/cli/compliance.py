@@ -19,7 +19,7 @@ from warlock.cli import cli, console, _error, _check_ai_available, _parse_ai_res
     help="Filter by status",
 )
 @click.option("--system", default=None, help="Filter by system profile name or ID")
-@click.option("--limit", "-n", default=50, help="Max results")
+@click.option("--limit", "-n", default=50, type=click.IntRange(min=1), help="Max results")
 def results(framework: str | None, status: str | None, system: str | None, limit: int) -> None:
     """Query control results from the last pipeline run."""
     from warlock.db.engine import get_session
@@ -131,7 +131,8 @@ def coverage(framework: str | None, use_ai: bool | None) -> None:
     for fw, counts in sorted(data.items()):
         total = sum(counts.values())
         compliant = counts.get("compliant", 0)
-        rate = (compliant / total * 100) if total else 0
+        assessed = total - counts.get("not_assessed", 0)
+        rate = (compliant / assessed * 100) if assessed else 0
         rate_style = "green" if rate >= 80 else "yellow" if rate >= 50 else "red"
         table.add_row(
             fw,

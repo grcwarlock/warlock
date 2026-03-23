@@ -760,6 +760,64 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             else ("[yellow]WARN[/yellow]" if overdue_poams <= 5 else "[red]ALERT[/red]"),
         )
 
+        # Additional KRIs: MTTR, evidence freshness, vendor risk, training
+        open_issues = (
+            session.query(Issue)
+            .filter(Issue.status.notin_(["closed", "verified", "risk_accepted"]))
+            .count()
+        )
+        kri_table.add_row(
+            "Open issues",
+            str(open_issues),
+            "< 25",
+            "[green]OK[/green]"
+            if open_issues < 25
+            else ("[yellow]WARN[/yellow]" if open_issues < 50 else "[red]ALERT[/red]"),
+        )
+
+        from warlock.db.models import Personnel
+
+        total_personnel = session.query(Personnel).count()
+        trained = session.query(Personnel).filter(Personnel.training_status == "current").count()
+        training_pct = (trained / total_personnel * 100) if total_personnel else 0
+        kri_table.add_row(
+            "Training compliance",
+            f"{training_pct:.0f}%",
+            ">= 90%",
+            "[green]OK[/green]"
+            if training_pct >= 90
+            else ("[yellow]WARN[/yellow]" if training_pct >= 70 else "[red]ALERT[/red]"),
+        )
+
+        from warlock.db.models import Vendor
+
+        high_risk_vendors = session.query(Vendor).filter(Vendor.risk_score >= 70).count()
+        kri_table.add_row(
+            "High-risk vendors",
+            str(high_risk_vendors),
+            "< 3",
+            "[green]OK[/green]"
+            if high_risk_vendors < 3
+            else ("[yellow]WARN[/yellow]" if high_risk_vendors < 5 else "[red]ALERT[/red]"),
+        )
+
+        failed_connectors = (
+            session.query(ConnectorRun)
+            .filter(
+                ConnectorRun.started_at >= this_month_start,
+                ConnectorRun.status == "error",
+            )
+            .count()
+        )
+        kri_table.add_row(
+            "Failed connectors (30d)",
+            str(failed_connectors),
+            "0",
+            "[green]OK[/green]"
+            if failed_connectors == 0
+            else ("[yellow]WARN[/yellow]" if failed_connectors <= 3 else "[red]ALERT[/red]"),
+        )
+
         console.print(kri_table)
 
         # ---------------------------------------------------------------

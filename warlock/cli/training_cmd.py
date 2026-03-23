@@ -16,10 +16,12 @@ from rich.table import Table
 from warlock.cli import cli, console
 
 
-@cli.group("training")
-def training() -> None:
+@cli.group("training", invoke_without_command=True)
+@click.pass_context
+def training(ctx: click.Context) -> None:
     """Track security awareness training completion and campaigns."""
-    pass
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(training_status)
 
 
 # ---------------------------------------------------------------------------

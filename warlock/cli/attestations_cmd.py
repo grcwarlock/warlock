@@ -15,9 +15,12 @@ from rich.table import Table
 from warlock.cli import cli, console, _error, _get_actor
 
 
-@cli.group("attestations")
-def attestations() -> None:
+@cli.group("attestations", invoke_without_command=True)
+@click.pass_context
+def attestations(ctx: click.Context) -> None:
     """Manage control attestations and sign-offs."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(attestations_list)
 
 
 # ---------------------------------------------------------------------------

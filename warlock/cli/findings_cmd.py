@@ -21,9 +21,12 @@ from warlock.cli import cli, console, _error, _get_actor
 # ---------------------------------------------------------------------------
 
 
-@cli.group("findings")
-def findings() -> None:
+@cli.group("findings", invoke_without_command=True)
+@click.pass_context
+def findings(ctx: click.Context) -> None:
     """Query and manage normalized findings."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(findings_list)
 
 
 # ---------------------------------------------------------------------------

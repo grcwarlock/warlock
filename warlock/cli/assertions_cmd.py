@@ -20,9 +20,12 @@ from warlock.cli import cli, console, _error
 # ---------------------------------------------------------------------------
 
 
-@cli.group("assertions")
-def assertions() -> None:
+@cli.group("assertions", invoke_without_command=True)
+@click.pass_context
+def assertions(ctx: click.Context) -> None:
     """Inspect and run the compliance assertion engine."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(assertions_list)
 
 
 # ---------------------------------------------------------------------------

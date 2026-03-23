@@ -77,9 +77,12 @@ def _derive_status(meta: dict) -> str:
     return stored
 
 
-@cli.group("exceptions")
-def exceptions() -> None:
+@cli.group("exceptions", invoke_without_command=True)
+@click.pass_context
+def exceptions(ctx: click.Context) -> None:
     """Manage policy exceptions and compensating controls."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(exceptions_list)
 
 
 @exceptions.command("list")

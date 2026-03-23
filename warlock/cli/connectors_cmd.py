@@ -21,9 +21,12 @@ from warlock.cli import cli, console, _error
 # ---------------------------------------------------------------------------
 
 
-@cli.group("connectors")
-def connectors() -> None:
+@cli.group("connectors", invoke_without_command=True)
+@click.pass_context
+def connectors(ctx: click.Context) -> None:
     """Manage and operate source connectors."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(connectors_list)
 
 
 # ---------------------------------------------------------------------------

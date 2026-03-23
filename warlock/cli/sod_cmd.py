@@ -42,9 +42,12 @@ _ROLE_PERMISSIONS: dict[str, list[str]] = {
 # ---------------------------------------------------------------------------
 
 
-@cli.group("sod")
-def sod() -> None:
+@cli.group("sod", invoke_without_command=True)
+@click.pass_context
+def sod(ctx: click.Context) -> None:
     """Segregation of Duties (SoD): role conflict analysis and matrix."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(sod_analyze)
 
 
 # ---------------------------------------------------------------------------
