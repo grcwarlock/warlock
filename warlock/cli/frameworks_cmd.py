@@ -66,7 +66,10 @@ def _iter_all_frameworks() -> list[dict[str, Any]]:
     """Return parsed data for all non-crosswalk framework YAMLs."""
     results: list[dict[str, Any]] = []
     for yaml_file in sorted(_FRAMEWORKS_DIR.glob("*.yaml")):
-        if yaml_file.stem.startswith("crosswalk") or yaml_file.stem in ("diff",):
+        if yaml_file.stem.startswith("crosswalk") or yaml_file.stem in (
+            "diff",
+            "soc2_points_of_focus",
+        ):
             continue
         try:
             data = yaml.safe_load(yaml_file.read_text()) or {}

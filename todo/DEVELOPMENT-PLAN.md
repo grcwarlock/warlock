@@ -482,14 +482,14 @@ Use this as a tracking sheet. Check items off as sprints complete.
 - [x] DOC-12: README accuracy
 - [x] Updated stale counts in proddocs/ (architecture, data-model, deployment, runbook)
 
-### Sprint 8 (Weeks 15-16) -- SOC 2 Story ✓ COMPLETE (2026-03-23)
+### Sprint 8 (Weeks 15-16) -- SOC 2 Story — MOSTLY COMPLETE (2026-03-23)
 - [x] PG-18: PDF report generation (WeasyPrint, cover page, TOC, page numbers)
 - [x] PG-19: Executive summary template (posture score, framework scores, top risks, trend)
 - [x] F-27: SOC 2 points of focus (109 across 32 controls, 8 TSC families)
 - [x] F-28: Attestation workflow (submit/review/approve/reject + batch prepare)
-- [ ] OPS-1: Framework event_type wiring
+- [x] OPS-1: Framework event_type wiring (already wired in YAMLs)
 - [ ] End-to-end SOC 2 demo walkthrough documented
-- [ ] Demo seed passes
+- [ ] Demo seed passes (blocked by CLI-BUG-008: control-hub crashes on Attestation.owner)
 
 ### Sprint 9 (Weeks 17-18) -- Beta 1
 - [ ] Beta customer 1 deployed

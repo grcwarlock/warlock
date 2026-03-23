@@ -210,7 +210,8 @@ def dsar() -> None:
     required=True,
     help="Response deadline in YYYY-MM-DD format",
 )
-def dsar_create(subject: str, request_type: str, deadline: str) -> None:
+@click.option("--breach-id", "breach_id", default=None, help="Related breach ID")
+def dsar_create(subject: str, request_type: str, deadline: str, breach_id: str | None) -> None:
     """Create a new DSAR record."""
     from warlock.db.engine import get_session, init_db
 
@@ -224,6 +225,15 @@ def dsar_create(subject: str, request_type: str, deadline: str) -> None:
     actor = _get_actor()
     entity_id = str(uuid4())
 
+    extra: dict = {
+        "subject": subject,
+        "type": request_type,
+        "status": "open",
+        "deadline": dl.isoformat(),
+    }
+    if breach_id:
+        extra["breach_id"] = breach_id
+
     with get_session() as session:
         _write_audit_entry(
             session,
@@ -231,12 +241,7 @@ def dsar_create(subject: str, request_type: str, deadline: str) -> None:
             entity_id=entity_id,
             action="dsar_created",
             actor=actor,
-            extra={
-                "subject": subject,
-                "type": request_type,
-                "status": "open",
-                "deadline": dl.isoformat(),
-            },
+            extra=extra,
         )
         session.commit()
 
@@ -563,7 +568,8 @@ def breach_list(severity: str | None, limit: int, fmt: str) -> None:
 @click.option(
     "--discovery-date", "discovery_date", required=True, help="Date discovered YYYY-MM-DD"
 )
-def breach_create(title: str, severity: str, discovery_date: str) -> None:
+@click.option("--incident-id", "incident_id", default=None, help="Related incident ID")
+def breach_create(title: str, severity: str, discovery_date: str, incident_id: str | None) -> None:
     """Record a new personal data breach."""
     from warlock.db.engine import get_session, init_db
 
@@ -577,6 +583,15 @@ def breach_create(title: str, severity: str, discovery_date: str) -> None:
     actor = _get_actor()
     entity_id = str(uuid4())
 
+    extra: dict = {
+        "title": title,
+        "severity": severity,
+        "discovery_date": dd.isoformat(),
+        "notification_status": "pending",
+    }
+    if incident_id:
+        extra["incident_id"] = incident_id
+
     with get_session() as session:
         _write_audit_entry(
             session,
@@ -584,12 +599,7 @@ def breach_create(title: str, severity: str, discovery_date: str) -> None:
             entity_id=entity_id,
             action="breach_created",
             actor=actor,
-            extra={
-                "title": title,
-                "severity": severity,
-                "discovery_date": dd.isoformat(),
-                "notification_status": "pending",
-            },
+            extra=extra,
         )
         session.commit()
 

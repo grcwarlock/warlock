@@ -954,3 +954,65 @@ def findings_sla(window: str, severity: str | None) -> None:
                 sty = _severity_style(sev)
                 label = f"[{sty}]{sev}[/{sty}]" if sty else sev
                 console.print(f"  {label}: {cnt}")
+
+
+# ---------------------------------------------------------------------------
+# create-issue
+# ---------------------------------------------------------------------------
+
+
+@findings.command("create-issue")
+@click.argument("finding_id")
+@click.option(
+    "--priority", "-p", default="high", type=click.Choice(["critical", "high", "medium", "low"])
+)
+@click.option("--title", "-t", default=None, help="Issue title (defaults to finding title)")
+def findings_create_issue(finding_id: str, priority: str, title: str | None) -> None:
+    """Create an incident/issue from a finding.
+
+    \b
+    FINDING_ID: finding UUID or prefix (from 'warlock findings list').
+
+    Links the new issue to the source finding via control_id and tags.
+    """
+    import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Finding, Issue
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
+        if not finding:
+            _error(f"Finding not found: {finding_id}")
+
+        issue_title = (
+            title
+            or f"[{finding.severity}] {finding.title or finding.observation_type or 'Finding'}"
+        )
+
+        issue = Issue(
+            id=str(uuid.uuid4()),
+            title=issue_title[:255],
+            description=f"Auto-created from finding {finding.id[:8]}.\n\n"
+            f"Provider: {finding.provider}\n"
+            f"Source: {finding.source}\n"
+            f"Resource: {finding.resource_id or '—'}",
+            priority=priority,
+            status="open",
+            control_id=finding.control_id,
+            created_by=actor,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(issue)
+        session.commit()
+
+    console.print(
+        f"[green]Issue created:[/green] [cyan]{issue.id[:8]}[/cyan] "
+        f"— {issue_title[:60]}\n"
+        f"[dim]Linked to finding {finding.id[:8]} (control: {finding.control_id or 'none'})[/dim]"
+    )

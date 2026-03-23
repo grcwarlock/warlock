@@ -373,6 +373,7 @@ def vendor_reassess_due() -> None:
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Vendor
+    from warlock.utils import ensure_aware
 
     init_db()
     now = datetime.now(timezone.utc)
@@ -386,7 +387,7 @@ def vendor_reassess_due() -> None:
         if v.last_assessment is None:
             due.append(v)
         else:
-            next_due = v.last_assessment + timedelta(days=cadence)
+            next_due = ensure_aware(v.last_assessment) + timedelta(days=cadence)
             if next_due <= now:
                 due.append(v)
 
@@ -425,6 +426,7 @@ def vendor_contracts(expiring_within: int) -> None:
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Vendor
+    from warlock.utils import ensure_aware
 
     init_db()
     cutoff = datetime.now(timezone.utc) + timedelta(days=expiring_within)
@@ -450,13 +452,13 @@ def vendor_contracts(expiring_within: int) -> None:
 
     now = datetime.now(timezone.utc)
     for v in vendors:
-        days_left = (v.contract_expires - now).days
+        days_left = (ensure_aware(v.contract_expires) - now).days
         color = "red" if days_left <= 14 else ("yellow" if days_left <= 30 else "white")
         table.add_row(
             v.id[:8],
             v.name,
             v.tier or "\u2014",
-            v.contract_expires.strftime("%Y-%m-%d"),
+            ensure_aware(v.contract_expires).strftime("%Y-%m-%d"),
             f"[{color}]{days_left}[/]",
         )
 

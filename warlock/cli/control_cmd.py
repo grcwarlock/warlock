@@ -76,7 +76,7 @@ def control_hub(control_id, framework, fmt):
             {"id": p.id[:8], "status": p.status, "due": str(p.scheduled_completion)} for p in poams
         ]
         hub_data["attestations"] = [
-            {"id": a.id[:8], "status": a.status, "owner": a.owner} for a in attestations
+            {"id": a.id[:8], "status": a.status, "prepared_by": a.prepared_by} for a in attestations
         ]
         hub_data["issues"] = [
             {"id": i.id[:8], "title": i.title, "status": i.status} for i in issues
@@ -122,7 +122,7 @@ def control_hub(control_id, framework, fmt):
         for a in attestations:
             style = "green" if a.status == "approved" else "yellow"
             console.print(
-                f"  [{style}]{a.id[:8]}[/{style}] — {a.status} (owner: {a.owner or 'unassigned'})"
+                f"  [{style}]{a.id[:8]}[/{style}] — {a.status} (prepared by: {a.prepared_by or 'unassigned'})"
             )
 
     # Issues

@@ -521,19 +521,25 @@ def deduplicate(source: str | None, dry_run: bool) -> None:
 
 @bulk.command("link-findings-to-issues")
 @click.option(
-    "--auto",
-    is_flag=True,
-    default=False,
-    help="Auto-create issues for unlinked critical/high findings",
+    "--severity",
+    default="critical,high",
+    show_default=True,
+    help="Comma-separated severities to link (e.g. critical,high,medium)",
 )
-@click.option("--dry-run", is_flag=True, default=False, help="Preview without persisting")
-def link_findings_to_issues(auto: bool, dry_run: bool) -> None:
-    """Auto-create issues from unlinked critical/high findings.
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without creating issues")
+def link_findings_to_issues(severity: str, dry_run: bool) -> None:
+    """Create Issues for findings that have no linked Issue record.
+
+    Queries findings at the requested severity levels and creates an Issue for
+    each one that is not already referenced by an existing Issue (via
+    finding_id).  Use --dry-run to preview what would be created without
+    writing anything to the database.
 
     \b
     Examples:
         warlock bulk link-findings-to-issues --dry-run
-        warlock bulk link-findings-to-issues --auto
+        warlock bulk link-findings-to-issues --severity critical,high,medium
+        warlock bulk link-findings-to-issues --severity critical
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, Finding, Issue
@@ -542,87 +548,91 @@ def link_findings_to_issues(auto: bool, dry_run: bool) -> None:
     init_db()
     actor = _get_actor()
 
+    severities = [s.strip().lower() for s in severity.split(",") if s.strip()]
+    if not severities:
+        _error("--severity must not be empty")
+        return
+
     with get_session() as session:
-        # Find critical/high findings with no linked issue
-        linked_finding_ids = set(
-            r.finding_id
-            for r in session.query(Issue.finding_id).filter(Issue.finding_id.isnot(None)).all()
-        )
+        # Collect finding IDs that are already referenced by an Issue
+        linked_finding_ids: set[str] = {
+            row.finding_id
+            for row in session.query(Issue.finding_id).filter(Issue.finding_id.isnot(None)).all()
+        }
+
         unlinked = (
             session.query(Finding)
             .filter(
-                Finding.severity.in_(["critical", "high"]),
+                Finding.severity.in_(severities),
                 ~Finding.id.in_(linked_finding_ids),
             )
+            .order_by(Finding.severity, Finding.created_at)
             .all()
         )
 
         if not unlinked:
-            console.print("[green]No unlinked critical/high findings.[/green]")
+            console.print(
+                f"[green]All {'/'.join(severities)} findings already have linked issues.[/green]"
+            )
             return
 
-        console.print(f"Found [bold]{len(unlinked)}[/bold] unlinked critical/high finding(s).")
-
-        if not (auto or dry_run):
-            console.print("[dim]Pass --auto to create issues, or --dry-run to preview.[/dim]")
-            return
-
-        # Show preview table
-        table = Table(title=f"{'[DRY RUN] ' if dry_run else ''}Issues to create")
+        # Preview table
+        table = Table(title=f"{'[DRY RUN] ' if dry_run else ''}Issues to create ({len(unlinked)})")
         table.add_column("Finding ID", style="dim", max_width=8)
         table.add_column("Title", max_width=50)
         table.add_column("Severity")
         table.add_column("Source", style="cyan")
+        table.add_column("Control", style="dim", max_width=20)
 
-        created_count = 0
         for f in unlinked[:25]:
             sty = _severity_style(f.severity)
-            table.add_row(f.id[:8], (f.title or "")[:50], f"[{sty}]{f.severity}[/]", f.source)
-            if not dry_run and auto:
-                # Look up control mapping for framework/control_id context
-                mapping = (
-                    session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).first()
-                )
-                new_issue = Issue(
-                    title=f"[Auto] {(f.title or '')[:200]}",
-                    description=f"Auto-created from finding {f.id} (source: {f.source})",
-                    finding_id=f.id,
-                    framework=mapping.framework if mapping else None,
-                    control_id=mapping.control_id if mapping else None,
-                    priority=f.severity if f.severity in ("critical", "high") else "medium",
-                    status="open",
-                    source="pipeline",
-                    created_by=actor,
-                )
-                session.add(new_issue)
-                created_count += 1
+            mapping = (
+                session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).first()
+            )
+            control_label = f"{mapping.framework}/{mapping.control_id}" if mapping else "\u2014"
+            table.add_row(
+                f.id[:8],
+                (f.title or "")[:50],
+                f"[{sty}]{f.severity}[/]",
+                f.source or "\u2014",
+                control_label[:20],
+            )
 
         if len(unlinked) > 25:
-            console.print(f"[dim]... and {len(unlinked) - 25} more[/dim]")
+            console.print(f"[dim]... and {len(unlinked) - 25} more not shown[/dim]")
         console.print(table)
 
-        if not dry_run and auto:
-            # Handle findings beyond the preview window
-            for f in unlinked[25:]:
-                mapping = (
-                    session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).first()
-                )
-                new_issue = Issue(
-                    title=f"[Auto] {(f.title or '')[:200]}",
-                    description=f"Auto-created from finding {f.id} (source: {f.source})",
-                    finding_id=f.id,
-                    framework=mapping.framework if mapping else None,
-                    control_id=mapping.control_id if mapping else None,
-                    priority=f.severity if f.severity in ("critical", "high") else "medium",
-                    status="open",
-                    source="pipeline",
-                    created_by=actor,
-                )
-                session.add(new_issue)
-                created_count += 1
-            session.commit()
+        if dry_run:
+            _done(len(unlinked), "create issues for unlinked findings", dry_run=True)
+            return
 
-    _done(len(unlinked), "create issues for unlinked findings", dry_run)
+        if not click.confirm(f"Create {len(unlinked)} issue(s)?"):
+            return
+
+        created_count = 0
+        for f in unlinked:
+            mapping = (
+                session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).first()
+            )
+            new_issue = Issue(
+                title=f"[Auto] {(f.title or 'Unlinked finding')[:200]}",
+                description=(f"Auto-created from finding {f.id} (source: {f.source or 'unknown'})"),
+                finding_id=f.id,
+                framework=mapping.framework if mapping else None,
+                control_id=mapping.control_id if mapping else None,
+                priority=f.severity
+                if f.severity in ("critical", "high", "medium", "low")
+                else "medium",
+                status="open",
+                source="pipeline",
+                created_by=actor,
+            )
+            session.add(new_issue)
+            created_count += 1
+
+        session.commit()
+
+    _done(created_count, "create issues for unlinked findings", dry_run=False)
 
 
 # ---------------------------------------------------------------------------
@@ -1164,14 +1174,17 @@ def import_findings(filepath: str, fmt: str, source: str, provider: str, dry_run
     init_db()
 
     # Parse input file
-    with open(filepath) as fh:
-        if fmt == "json":
-            records = json.load(fh)
-            if not isinstance(records, list):
-                _error("JSON file must contain an array of finding objects.")
-        else:
-            reader = csv.DictReader(fh)
-            records = list(reader)
+    try:
+        with open(filepath) as fh:
+            if fmt == "json":
+                records = json.load(fh)
+                if not isinstance(records, list):
+                    _error("JSON file must contain an array of finding objects.")
+            else:
+                reader = csv.DictReader(fh)
+                records = list(reader)
+    except (json.JSONDecodeError, OSError) as exc:
+        _error(f"Failed to parse {filepath}: {exc}")
 
     if not records:
         console.print("[dim]No records found in file.[/dim]")

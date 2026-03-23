@@ -248,11 +248,11 @@ def _collect_vendor_deadlines(session) -> list[dict]:
 
 def _collect_training_deadlines(session) -> list[dict]:
     """Return calendar items from training due dates."""
-    from warlock.db.models import PersonnelRecord
+    from warlock.db.models import Personnel
 
     items = []
     try:
-        records = session.query(PersonnelRecord).all()
+        records = session.query(Personnel).all()
         for p in records:
             training = p.training_status or {}
             if isinstance(training, dict):

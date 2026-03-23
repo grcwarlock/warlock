@@ -30,13 +30,23 @@ _SEVERITY_STYLES: dict[str, str] = {
 
 _STATUS_STYLES: dict[str, str] = {
     "open": "yellow",
-    "investigating": "cyan",
-    "contained": "blue",
-    "resolved": "green",
+    "assigned": "cyan",
+    "in_progress": "blue",
+    "remediated": "green",
+    "verified": "green bold",
     "closed": "dim",
+    "risk_accepted": "magenta",
 }
 
-_VALID_STATUSES = ["open", "investigating", "contained", "resolved", "closed"]
+_VALID_STATUSES = [
+    "open",
+    "assigned",
+    "in_progress",
+    "remediated",
+    "verified",
+    "closed",
+    "risk_accepted",
+]
 _VALID_SEVERITIES = ["critical", "high", "medium", "low"]
 
 

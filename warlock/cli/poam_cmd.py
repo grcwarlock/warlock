@@ -69,6 +69,7 @@ def poam_group() -> None:
     type=click.Choice(["critical", "high", "moderate", "low"]),
     help="Severity level",
 )
+@click.option("--finding-id", "finding_id", default=None, help="Related finding ID")
 def poam_create(
     control: str,
     framework: str,
@@ -77,6 +78,7 @@ def poam_create(
     due_date: str,
     assigned_to: str | None,
     severity: str,
+    finding_id: str | None,
 ) -> None:
     """Create a new POA&M entry."""
     import hashlib
@@ -110,6 +112,7 @@ def poam_create(
             delay_justifications=[],
             created_at=now,
             updated_at=now,
+            finding_id=finding_id,
         )
         session.add(poam)
 
@@ -173,8 +176,6 @@ def poam_list(
     fmt: str,
 ) -> None:
     """List POA&M entries with optional filters."""
-    import json as _json
-
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import POAM
 
@@ -215,7 +216,7 @@ def poam_list(
             }
             for p in rows
         ]
-        console.print(_json.dumps(out, indent=2, default=str))
+        console.print_json(data=out)
         return
 
     table = Table(title=f"POA&Ms ({len(rows)})")

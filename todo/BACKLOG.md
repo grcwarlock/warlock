@@ -1,7 +1,7 @@
 # Warlock Backlog
 
-**Last updated:** 2026-03-23
-**Total:** 380 done / 481 total (79%)
+**Last updated:** 2026-03-23 (reconciled with CLI test results + development plan)
+**Total:** 199 done / 311 total (64%) — excludes capability-gaps.md items
 
 ---
 
@@ -20,7 +20,7 @@ Every item follows this format:
 
 ## 1. Hardening — Security & Performance
 
-### 1.1 Sprint 1 (DONE — 2026-03-21)
+### 1.1 Sprint 1 — P0 security (DONE — 2026-03-23)
 
 - [x] H-5: Auth on trust portal document listing — S | P0
 - [x] H-6: Disable /docs, /redoc, /metrics in production — S | P0
@@ -28,7 +28,7 @@ Every item follows this format:
 - [x] H-8: Add 9 FK indexes (migration f2a3b4c5d6e7) — M | P0
 - [x] H-9: Push trust portal aggregation to SQL GROUP BY — S | P0
 
-### 1.2 Sprint 2 — MEDIUM severity
+### 1.2 Sprint 2 — Stability (DONE — 2026-03-23)
 
 - [x] H-10: Create tests/conftest.py and tests/test_cli.py (DB setup duplicated 8x, 43 commands untested) — L | P1
 - [x] H-11: Unify prompt sanitization paths (legacy path misses </evidence> tags) — M | P1
@@ -46,7 +46,7 @@ Every item follows this format:
 - [ ] H-20: Extract normalizer _base() into generic base class (40+ duplicate patterns) — L | P2
 - [ ] H-21: Resolve duplicate Alembic env.py (alembic/ vs warlock/db/migrations/) — S | P2
 
-### 1.4 Untriaged findings (2026-03-21 review)
+### 1.4 Triaged findings (2026-03-21 review — Sprint 1 security items DONE)
 
 - [x] H-22: GDPR anonymization uses hardcoded HMAC secret (workflows/gdpr.py:62) — S | P0
 - [x] H-23: AI error messages leak internal exception details (assessors/ai_reasoning.py:273-391) — S | P1
@@ -265,22 +265,22 @@ Check to see if all connector tiers are complete and wired into the demo and dat
 
 ## 5. Product Features — Demo to Production
 
-### 5.1 Missing models (P0 — makes the demo real)
+### 5.1 Core models
 
-- [x] PG-1: Alert model + CLI + API (severity, MITRE ATT&CK, finding linkage) — XL | P0
-- [x] PG-2: Alert rules engine (Finding patterns → Alert triggers) — L | P0
+- [x] PG-1: Alert model + CLI + API (severity, MITRE ATT&CK, finding linkage) — XL | P0 ✓ Sprint 5
+- [x] PG-2: Alert rules engine (Finding patterns → Alert triggers) — L | P0 ✓ Sprint 5
 - [ ] PG-3: CloudResource model + warlock cloud CLI — L | P1
 - [ ] PG-4: Device model + warlock devices CLI (unified endpoint view) — L | P1
 - [ ] PG-5: StorageBucket model + warlock storage CLI — M | P1
-- [x] PG-6: AI reasoning structured output ({confidence, reasoning[], evidence[]}) — M | P0
-- [x] PG-7: Remediation workflow API (5-stage state machine) — L | P0
+- [x] PG-6: AI reasoning structured output ({confidence, reasoning[], evidence[]}) — M | P0 ✓ Sprint 5
+- [x] PG-7: Remediation workflow API (5-stage state machine) — L | P0 ✓ Sprint 6
 
 ### 5.2 Pipeline & API enhancements
 
-- [x] PG-8: Real-time pipeline status API (GET /pipeline/status) — M | P1
+- [x] PG-8: Real-time pipeline status API (GET /pipeline/status) — M | P1 ✓ Sprint 6
 - [ ] PG-9: Per-connector collection status API — M | P1
 - [ ] PG-10: WebSocket for live pipeline progress — L | P2
-- [x] PG-11: Hash chain verification endpoint (GET /pipeline/verify-chain) — S | P1
+- [x] PG-11: Hash chain verification endpoint (GET /pipeline/verify-chain) — S | P1 ✓ Sprint 6
 - [ ] PG-12: Audit simulation date picker + structured AI output — M | P2
 - [ ] PG-13: Cross-view deep linking (URL-based entity navigation) — M | P2
 - [ ] PG-14a: `warlock investigate <provider>` CLI — show non-compliant controls by provider (e.g. `warlock investigate aws`), pick one, show failing resources + remediation steps (static KB + optional AI) — M | P1
@@ -294,11 +294,11 @@ Check to see if all connector tiers are complete and wired into the demo and dat
 
 ### 5.4 Export & reporting
 
-- [x] PG-18: PDF report generation (ReportLab or WeasyPrint) — L | P2
-- [x] PG-19: Executive summary template — M | P2
+- [x] PG-18: PDF report generation (WeasyPrint, cover page, TOC, page numbers) — L | P1 ✓ Sprint 8
+- [x] PG-19: Executive summary template (posture score, top risks, trend) — M | P1 ✓ Sprint 8
 - [ ] PG-20: Embeddable compliance widget (iframe HTML) — M | P3
 - [ ] PG-21: SVG compliance badges for README — S | P3
-- [ ] PG-22: Slack/Teams notification integration — M | P2
+- [ ] PG-22: Slack/Teams notification integration — M | P1
 
 ### 5.5 Web frontend
 
@@ -491,16 +491,16 @@ These were written as part of the proddocs initiative and live in `proddocs/`.
 
 </details>
 
-### 10.2 P0 — Still needed
+### 10.2 P0 — DONE (Sprint 7, 2026-03-23)
 
-- [x] DOC-2: API_AUTH_GUIDE.md (JWT + RBAC + ABAC) — M | P0
-- [x] DOC-3: API_ERRORS.md (error code reference) — M | P0
-- [x] DOC-4: OpenAPI schema export — S | P0
-- [x] DOC-6: DOCKER_SETUP.md (standalone step-by-step) — M | P0
-- [x] DOC-9: DEVELOPER_SETUP.md — M | P0
-- [x] DOC-10: CONTRIBUTING.md update — S | P0
-- [x] DOC-11: PR template — S | P0
-- [x] DOC-12: README accuracy fixes — S | P0
+- [x] DOC-2: API_AUTH_GUIDE.md (JWT + RBAC + ABAC) — M | P0 ✓
+- [x] DOC-3: API_ERRORS.md (error code reference) — M | P0 ✓
+- [x] DOC-4: OpenAPI schema export — S | P0 ✓
+- [x] DOC-6: DOCKER_SETUP.md (standalone step-by-step) — M | P0 ✓
+- [x] DOC-9: DEVELOPER_SETUP.md — M | P0 ✓
+- [x] DOC-10: CONTRIBUTING.md update — S | P0 ✓
+- [x] DOC-11: PR template — S | P0 ✓
+- [x] DOC-12: README accuracy fixes — S | P0 ✓
 
 ### 10.3 P1 — High-value enablers (26 docs)
 
@@ -522,19 +522,59 @@ These were written as part of the proddocs initiative and live in `proddocs/`.
 
 ## 11. Operational
 
-- [x] OPS-1: Wire FedRAMP/HIPAA/CMMC/GDPR checks to event_types in YAMLs — M | P1 (already wired)
+- [x] OPS-1: Wire FedRAMP/HIPAA/CMMC/GDPR checks to event_types in YAMLs — M | P1 ✓
 - [ ] OPS-2: demo_exports/ — pre-generated sample packages — S | P2
 - [ ] OPS-3: docs/architecture-diagram.html — visual architecture — S | P2
 - [ ] OPS-4: Celery integration (alternative task queue) — M | P3
-- [x] OPS-5: nltk CVE remediation (CVE-2026-33230, CVE-2026-33231) — S | P1 (N/A — nltk not in codebase)
+- [x] OPS-5: nltk CVE remediation — S | P1 (N/A — nltk not in codebase) ✓
 - [ ] OPS-6: Connector vendor accuracy pass (verify 165 connectors against real API docs) — XL | P0
-- [x] OPS-7: Schema registry for event_types — M | P1
+- [x] OPS-7: Schema registry for event_types — M | P1 ✓ Sprint 3
 - [ ] OPS-8: Smarter fallback normalizer (heuristics for unknown event_types) — M | P2
 - [ ] OPS-9: Demo data vendor accuracy (match real API response schemas) — L | P2
 
 ---
 
-## 12. Capability Gaps (NEW — 2026-03-22)
+## 12. CLI Bugs (NEW — 2026-03-23 comprehensive test)
+
+Found during 170-command CLI test against live demo seed. See `warlock-issues.md` for full details.
+
+### 12.1 Crashes — CRITICAL/HIGH
+
+- [ ] CLI-BUG-004: `vendor-mgmt reassess-due` datetime naive/aware crash — S | P0
+- [ ] CLI-BUG-005: `vendor-mgmt contracts` datetime naive/aware crash — S | P0
+- [ ] CLI-BUG-007: `poam list --format json` invalid JSON output — S | P0
+- [ ] CLI-BUG-008: `control-hub --format json` AttributeError on Attestation.owner — S | P0
+- [ ] CLI-BUG-009: `incidents update` status enum mismatch blocks incident lifecycle — S | P0
+- [ ] CLI-BUG-010: `calendar export --format ics` ImportError PersonnelRecord — S | P0
+- [ ] CLI-BUG-011: `link training-access` ImportError TrainingRecord — S | P0
+- [ ] CLI-BUG-012: `bulk import-findings --dry-run` crashes on empty file — S | P1
+
+### 12.2 Missing commands
+
+- [ ] MC-001: `correlate top-risk` — referenced but doesn't exist — S | P2
+- [ ] MC-002: `comply gap-analysis` alias for `correlate gap-analysis` — S | P2
+
+### 12.3 CLI inconsistencies
+
+- [ ] CI-001: Framework arg: positional vs `-f` flag inconsistency across commands — M | P1
+- [ ] CI-002: Vendor tier naming inconsistency (numeric vs word) — S | P2
+- [ ] CI-005: `soc2_points_of_focus` ghost framework in list (0 controls) — S | P1
+
+### 12.4 Cross-flow gaps (missing domain linkages)
+
+- [ ] XF-001: `findings create-issue` command — most basic GRC workflow missing — M | P0
+- [ ] XF-002: `privacy breach create --incident-id` flag — S | P1
+- [ ] XF-003: `privacy dsar create --breach-id` flag — S | P1
+- [ ] XF-004: `poam create --finding-id` flag — S | P1
+- [ ] XF-005: `bulk link-findings-to-issues` — advertised in `bulk stats` but doesn't exist — M | P1
+- [ ] XF-006: POA&M closure doesn't trigger control re-assessment — M | P2
+- [ ] XF-007: Incident lifecycle doesn't affect control posture — M | P2
+- [ ] XF-008: `control-hub` doesn't show linked incidents — S | P2
+- [ ] XF-009: Privacy breach cascade automation — L | P2
+
+---
+
+## 13. Capability Gaps (2026-03-22)
 
 Detailed in `capability-gaps.md`. 762 total capabilities identified, ~540 implemented, ~222 remaining across 20 domains. Key domains with gaps:
 
@@ -550,14 +590,13 @@ See `todo/capability-gaps.md` for full itemized list.
 
 ---
 
-## 13. Implementation Plans (reference)
+## 14. Implementation Plans (reference)
 
 Completed plans (deleted): data-lake-phase-0 through phase-3, data-lake-hardening, demo-seed, domain-architecture.
 
 | Plan | Status | File |
 |------|--------|------|
 | Full Codebase Audit | Not started | plan-codebase-audit.md |
-| Domain Architecture Phase 1 | Complete | (deleted) |
 
 ---
 
@@ -565,20 +604,21 @@ Completed plans (deleted): data-lake-phase-0 through phase-3, data-lake-hardenin
 
 | Category | Done | Open | P0 | P1 | P2 | P3 |
 |----------|------|------|----|----|----|----|
-| Hardening | 5 | 27 | 2 | 17 | 8 | 0 |
-| Data Lake | 48 | 0 | 0 | 0 | 0 | 0 |
-| Connectors | 86 | 0 | 0 | 0 | 0 | 0 |
-| Frameworks | 0 | 10 | 0 | 4 | 4 | 2 |
-| Product Gaps | 0 | 29 | 3 | 6 | 18 | 2 |
-| Domain Architecture | 11 | 0 | 0 | 0 | 0 | 0 |
-| CLI Expansion | 4 | 0 | 0 | 0 | 0 | 0 |
-| P2 Features | 0 | 58 | 0 | 0 | 58 | 0 |
-| P3 Features | 0 | 18 | 0 | 0 | 0 | 18 |
-| Documentation | 13 | 52 | 8 | 25 | 20 | 0 |
-| Operational | 0 | 9 | 1 | 4 | 3 | 1 |
-| **Total** | **167** | **203** | **14** | **56** | **111** | **23** |
+| Hardening (§1) | 18 | 9 | 0 | 2 | 7 | 0 |
+| Data Lake (§2) | 48 | 0 | 0 | 0 | 0 | 0 |
+| Connectors (§3) | 86 | 0 | 0 | 0 | 0 | 0 |
+| Frameworks (§4) | 0 | 10 | 0 | 4 | 4 | 2 |
+| Product Gaps (§5) | 8 | 21 | 0 | 5 | 12 | 2 |
+| Domain Architecture (§6) | 11 | 0 | 0 | 0 | 0 | 0 |
+| CLI Expansion (§7) | 4 | 0 | 0 | 0 | 0 | 0 |
+| P2 Features (§8) | 2 | 56 | 0 | 0 | 56 | 0 |
+| P3 Features (§9) | 0 | 18 | 0 | 0 | 0 | 18 |
+| Documentation (§10) | 21 | 45 | 0 | 25 | 20 | 0 |
+| Operational (§11) | 3 | 6 | 1 | 0 | 4 | 1 |
+| CLI Bugs (§12) | 0 | 22 | 8 | 6 | 6 | 0 |
+| **Total** | **201** | **187** | **9** | **42** | **109** | **23** |
 
-**Progress: 167 done + ~176 from capability-gaps.md (222 detailed, partially overlapping with above) = massive codebase. 71%+ of original backlog complete.**
+**Progress: 201 done / 388 total (52%) — plus ~222 capability-gap items in separate tracker.**
 
 **Current codebase stats:**
 - 165 connectors + 165 normalizers
@@ -593,4 +633,24 @@ Completed plans (deleted): data-lake-phase-0 through phase-3, data-lake-hardenin
 - 24 assessor modules (101 assertions)
 - 18 production docs
 
-**Next up:** P0 items (14 remaining) — hardening security fixes (H-12, H-22), alert model (PG-1/2), AI structured output (PG-6), remediation workflow (PG-7), remaining P0 docs, vendor accuracy pass (OPS-6).
+---
+
+## What's Next — Prioritized
+
+### Immediate (before any user touches the product)
+
+**CLI bug sweep (~2 hours).** 7 crash bugs (CLI-BUG-004/005/007/008/009/010/011) and 1 missing core command (XF-001). These block the Finding → Issue → POA&M → Closure workflow, the vendor management flow, and JSON export. All are small fixes (ensure_aware, correct model names, enum alignment).
+
+### Before beta (Sprints 3-4 scope)
+
+1. **OPS-6: Real connector validation** — the single biggest v1.0 risk. 15+ connectors need real API credentials. Start with AWS, Okta, GitHub, CrowdStrike, Jira.
+2. **PG-9: Per-connector collection status API** — needed to debug real connector issues.
+3. **PG-22: Slack notification integration** — alert delivery for production use.
+4. **CI-001: Framework arg standardization** — UX consistency across CLI.
+5. **XF-002/003/004/005: Cross-domain linking flags** — tie findings → issues → POA&Ms → breaches.
+6. **CI-005: Hide or fix `soc2_points_of_focus` ghost framework.**
+7. **End-to-end SOC 2 demo walkthrough documentation.**
+
+### Post-v1.0
+
+Everything else: new frameworks (FW-1–10), web frontend (PG-23–29), P2/P3 features (F-1–76), remaining documentation (DOC-13–57), capability gaps, async migration (H-16).

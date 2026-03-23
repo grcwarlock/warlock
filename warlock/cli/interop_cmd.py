@@ -535,101 +535,55 @@ def training_access(user_id: str) -> None:
     the user's current access should be restricted.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Personnel, TrainingRecord
+    from warlock.db.models import Personnel
 
     init_db()
-    now = _utcnow()
 
     with get_session() as session:
         user = session.query(Personnel).filter(Personnel.id.startswith(user_id)).first()
         if not user:
             _error(f"User (personnel) not found: {user_id}")
 
-        records = (
-            session.query(TrainingRecord)
-            .filter(TrainingRecord.personnel_id == user.id)
-            .order_by(TrainingRecord.due_date.asc())
-            .all()
-        )
-
-    if not records:
-        console.print(
-            f"[yellow]No training records found for {user.name or user.id[:8]}.[/yellow]\n"
-            "[yellow]Recommendation: schedule required training and trigger access review.[/yellow]"
-        )
-        return
-
-    completed = [r for r in records if r.status == "completed"]
-    overdue = [r for r in records if r.status != "completed" and r.due_date and r.due_date < now]
-    pending = [
-        r for r in records if r.status != "completed" and (not r.due_date or r.due_date >= now)
-    ]
+        # Training data is inline on Personnel, not a separate table
+        training_status = user.training_status or "not_enrolled"
+        completions = user.training_completions or []
+        last_training = user.last_training_date
 
     console.print(
         Panel(
-            f"User:       [bold]{user.name or '\u2014'}[/bold] ({user.id[:8]})\n"
-            f"Email:      {getattr(user, 'email', '\u2014') or '\u2014'}\n"
-            f"Role:       {getattr(user, 'role', '\u2014') or '\u2014'}\n\n"
-            f"Completed:  [green]{len(completed)}[/green]\n"
-            f"Pending:    [yellow]{len(pending)}[/yellow]\n"
-            f"Overdue:    [red bold]{len(overdue)}[/red bold]",
+            f"User:       [bold]{user.full_name or '\u2014'}[/bold] ({user.id[:8]})\n"
+            f"Email:      {user.email or '\u2014'}\n"
+            f"Department: {user.department or '\u2014'}\n\n"
+            f"Training Status:  [{'green' if training_status == 'current' else 'red' if training_status == 'overdue' else 'yellow'}]{training_status}[/]\n"
+            f"Last Training:    {last_training.strftime('%Y-%m-%d') if last_training else 'never'}\n"
+            f"Completions:      [green]{len(completions)}[/green]",
             title="[bold cyan]Training Status[/bold cyan]",
             border_style="cyan",
         )
     )
 
-    if overdue:
-        table = Table(title="[red]Overdue Training[/red]", border_style="red")
-        table.add_column("Record ID", style="dim", max_width=8)
-        table.add_column("Course / Topic", max_width=45)
-        table.add_column("Due Date", style="red")
-        table.add_column("Days Overdue", style="red bold", justify="right")
+    if completions:
+        from rich.table import Table as RichTable
 
-        for r in overdue:
-            days_over = (now - r.due_date).days if r.due_date else 0
-            table.add_row(
-                r.id[:8],
-                (
-                    getattr(r, "course_name", None)
-                    or getattr(r, "title", None)
-                    or r.training_type
-                    or "\u2014"
-                )[:45],
-                _fmt_dt(r.due_date),
-                str(days_over),
-            )
+        table = RichTable(title="Training Completions")
+        table.add_column("Campaign", max_width=45)
+        table.add_column("Completed", style="green")
+        for c in completions[-10:]:  # show last 10
+            campaign = c.get("campaign", "\u2014") if isinstance(c, dict) else str(c)
+            completed = c.get("completed_date", "\u2014") if isinstance(c, dict) else "\u2014"
+            table.add_row(campaign, str(completed))
         console.print(table)
 
+    if training_status == "overdue":
         console.print(
-            "\n[red bold]Access review recommended.[/red bold] "
-            f"User has [bold]{len(overdue)}[/bold] overdue training item(s).\n"
-            "Consider restricting access until training is completed.\n"
-            f"  [dim]warlock access-review create --user {user.id[:8]} "
-            f'--reason "Overdue training ({len(overdue)} items)"[/dim]'
+            "\n[red bold]\u26a0 Training overdue![/red bold]\n"
+            "[yellow]Recommendation: restrict access until training is completed. "
+            "Run 'warlock access-review list' to check current access.[/yellow]"
         )
-
-    if pending:
-        p_table = Table(title="Pending Training", border_style="yellow")
-        p_table.add_column("Record ID", style="dim", max_width=8)
-        p_table.add_column("Course / Topic", max_width=45)
-        p_table.add_column("Due Date", style="yellow")
-        p_table.add_column("Status")
-
-        for r in pending:
-            p_table.add_row(
-                r.id[:8],
-                (
-                    getattr(r, "course_name", None)
-                    or getattr(r, "title", None)
-                    or r.training_type
-                    or "\u2014"
-                )[:45],
-                _fmt_dt(r.due_date),
-                r.status or "\u2014",
-            )
-        console.print(p_table)
-
-    if not overdue:
+    elif training_status == "not_enrolled":
         console.print(
-            "[green]All required training is current.[/green] No access review trigger needed."
+            "\n[yellow]\u26a0 Not enrolled in training.[/yellow]\n"
+            "[yellow]Recommendation: enroll in required security awareness training.[/yellow]"
         )
+    else:
+        console.print("\n[green]\u2713 Training is current. No access restrictions needed.[/green]")
