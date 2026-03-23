@@ -32,7 +32,6 @@ def results(framework: str | None, status: str | None, system: str | None, limit
         if status:
             q = q.filter(ControlResult.status == status)
         if system:
-            # Resolve system name/ID to framework list, then filter results
             sp = (
                 session.query(SystemProfile)
                 .filter(

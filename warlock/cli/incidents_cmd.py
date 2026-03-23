@@ -13,6 +13,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
+from rich.markup import escape
+
 from warlock.cli import cli, console, _error, _get_actor
 
 
@@ -215,7 +217,7 @@ def incidents_list(
             f"[{sev_style}]{i.priority}[/]",
             f"[{st_style}]{i.status}[/]",
             escape(classification),
-            i.assigned_to or "\u2014",
+            escape(i.assigned_to or "\u2014"),
             created,
         )
 
@@ -253,7 +255,7 @@ def incidents_show(incident_id: str) -> None:
                 f"ID: {issue.id}  |  Severity: [{sev_style}]{issue.priority}[/]  |  "
                 f"Status: [{st_style}]{issue.status}[/]\n"
                 f"Classification: {escape(classification)}  |  "
-                f"Assigned: {issue.assigned_to or '[dim]unassigned[/dim]'}\n"
+                f"Assigned: {escape(issue.assigned_to or 'unassigned')}\n"
                 f"Created: {issue.created_at}  |  Updated: {issue.updated_at}",
                 title="[bold red]Incident[/bold red]",
                 border_style="red",

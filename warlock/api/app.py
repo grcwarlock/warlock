@@ -121,8 +121,8 @@ def create_app() -> FastAPI:
             path = request.url.path
             if (
                 path.startswith("/trust")
+                or path in ("/health", "/healthz", "/readyz")
                 or path.endswith("/health")
-                or path in ("/healthz", "/readyz")
             ):
                 return await call_next(request)
             # OPA evaluation happens via dependency injection, not middleware

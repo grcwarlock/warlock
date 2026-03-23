@@ -58,6 +58,7 @@ from warlock.db.models import (
     POAM,
     PolicyOverride,
     PostureSnapshot,
+    RawEvent,
     RiskAcceptance,
     SystemDependency,
     SystemProfile,
@@ -10906,6 +10907,7 @@ def seed_data_silos(session):
 
     manager = DataSiloManager()
     result = manager.discover_from_findings(session)
+    # GAP-11: Data silos with varied encryption, logging, classification, PII/PHI/PCI
     direct_silos = [
         DataSilo(
             name="acme-prod-data",
@@ -10914,7 +10916,9 @@ def seed_data_silos(session):
             location="arn:aws:s3:::acme-prod-data",
             data_classification="confidential",
             contains_pii=True,
-            encrypted_at_rest=True,
+            contains_phi=False,
+            contains_pci=False,
+            encrypted_at_rest=True,  # AES-256 (SSE-KMS)
             encrypted_in_transit=True,
             access_logging_enabled=True,
             backup_enabled=True,
@@ -10922,6 +10926,12 @@ def seed_data_silos(session):
             owner="Frank Torres",
             team="Engineering",
             applicable_frameworks=["soc2", "iso_27001"],
+            scan_findings=[
+                {"field_name": "users.email", "data_type": "pii_email", "confidence": 0.99},
+            ],
+            sensitive_field_count=3,
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=3),
         ),
         DataSilo(
             name="acme-public-assets",
@@ -10930,13 +10940,17 @@ def seed_data_silos(session):
             location="arn:aws:s3:::acme-public-assets",
             data_classification="public",
             contains_pii=False,
-            encrypted_at_rest=False,
+            contains_phi=False,
+            contains_pci=False,
+            encrypted_at_rest=False,  # No encryption — public assets
             encrypted_in_transit=True,
             access_logging_enabled=False,
             backup_enabled=False,
             owner="Bob Martinez",
             team="DevOps",
             applicable_frameworks=[],
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=14),
         ),
         DataSilo(
             name="acme-logs",
@@ -10945,7 +10959,9 @@ def seed_data_silos(session):
             location="arn:aws:s3:::acme-logs",
             data_classification="internal",
             contains_pii=False,
-            encrypted_at_rest=True,
+            contains_phi=False,
+            contains_pci=False,
+            encrypted_at_rest=True,  # SSE-S3 (default encryption)
             encrypted_in_transit=True,
             access_logging_enabled=True,
             backup_enabled=True,
@@ -10953,6 +10969,8 @@ def seed_data_silos(session):
             owner="Bob Martinez",
             team="DevOps",
             applicable_frameworks=["nist_800_53"],
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=7),
         ),
         DataSilo(
             name="prod-customers",
@@ -10962,7 +10980,8 @@ def seed_data_silos(session):
             data_classification="restricted",
             contains_pii=True,
             contains_pci=True,
-            encrypted_at_rest=True,
+            contains_phi=False,
+            encrypted_at_rest=True,  # AES-256 (RDS encryption)
             encrypted_in_transit=True,
             access_logging_enabled=True,
             backup_enabled=True,
@@ -10970,6 +10989,13 @@ def seed_data_silos(session):
             owner="Frank Torres",
             team="Engineering",
             applicable_frameworks=["pci_dss", "soc2", "iso_27001"],
+            scan_findings=[
+                {"field_name": "customers.ssn", "data_type": "pii_ssn", "confidence": 0.97},
+                {"field_name": "customers.card_last4", "data_type": "pci", "confidence": 0.95},
+            ],
+            sensitive_field_count=8,
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=1),
         ),
         DataSilo(
             name="analytics-warehouse",
@@ -10979,13 +11005,21 @@ def seed_data_silos(session):
             data_classification="confidential",
             contains_pii=True,
             contains_phi=True,
-            encrypted_at_rest=True,
+            contains_pci=False,
+            encrypted_at_rest=True,  # AES-256 (Redshift encryption)
             encrypted_in_transit=True,
-            access_logging_enabled=False,
-            backup_enabled=False,
+            access_logging_enabled=False,  # Gap: logging not enabled
+            backup_enabled=False,  # Gap: no backups
             owner="Carol Park",
             team="Finance",
             applicable_frameworks=["hipaa", "soc2"],
+            scan_findings=[
+                {"field_name": "claims.diagnosis_code", "data_type": "phi", "confidence": 0.93},
+                {"field_name": "claims.patient_name", "data_type": "phi", "confidence": 0.98},
+            ],
+            sensitive_field_count=12,
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=5),
         ),
         DataSilo(
             name="eng-wiki",
@@ -10994,13 +11028,16 @@ def seed_data_silos(session):
             location="https://acme.sharepoint.com/sites/engineering",
             data_classification="internal",
             contains_pii=False,
-            encrypted_at_rest=False,
+            contains_phi=False,
+            contains_pci=False,
+            encrypted_at_rest=False,  # No server-side encryption
             encrypted_in_transit=True,
             access_logging_enabled=True,
             backup_enabled=True,
             owner="Frank Torres",
             team="Engineering",
             applicable_frameworks=["iso_27001"],
+            scan_status="not_scanned",
         ),
         DataSilo(
             name="acme-app",
@@ -11009,6 +11046,9 @@ def seed_data_silos(session):
             location="https://github.com/acme-corp/acme-app",
             data_classification="confidential",
             contains_credentials=True,
+            contains_pii=False,
+            contains_phi=False,
+            contains_pci=False,
             encrypted_at_rest=True,
             encrypted_in_transit=True,
             access_logging_enabled=True,
@@ -11023,6 +11063,56 @@ def seed_data_silos(session):
             sensitive_field_count=2,
             scan_status="completed",
             last_scan_date=NOW - timedelta(days=7),
+        ),
+        DataSilo(
+            name="hr-records-lake",
+            silo_type="s3_bucket",
+            provider="aws",
+            location="arn:aws:s3:::acme-hr-records",
+            data_classification="restricted",
+            contains_pii=True,
+            contains_phi=True,
+            contains_pci=False,
+            encrypted_at_rest=True,  # AES-256 (SSE-KMS with CMK)
+            encrypted_in_transit=True,
+            access_logging_enabled=True,
+            backup_enabled=True,
+            retention_days=2555,
+            owner="Carol Park",
+            team="HR",
+            applicable_frameworks=["hipaa", "gdpr", "soc2"],
+            scan_findings=[
+                {"field_name": "employees.ssn", "data_type": "pii_ssn", "confidence": 0.99},
+                {"field_name": "benefits.medical_plan", "data_type": "phi", "confidence": 0.91},
+            ],
+            sensitive_field_count=15,
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=2),
+        ),
+        DataSilo(
+            name="dev-staging-db",
+            silo_type="rds_database",
+            provider="aws",
+            location="arn:aws:rds:us-west-2:912345678012:db/dev-staging",
+            data_classification="internal",
+            contains_pii=True,
+            contains_phi=False,
+            contains_pci=False,
+            encrypted_at_rest=False,  # Gap: dev DB not encrypted
+            encrypted_in_transit=False,  # Gap: no TLS on dev
+            access_logging_enabled=False,
+            backup_enabled=False,
+            owner="Frank Torres",
+            team="Engineering",
+            applicable_frameworks=["soc2"],
+            remediation_status="in_progress",
+            remediation_notes="PII found in staging DB copied from prod. Masking in progress.",
+            scan_findings=[
+                {"field_name": "users.email", "data_type": "pii_email", "confidence": 0.96},
+            ],
+            sensitive_field_count=4,
+            scan_status="completed",
+            last_scan_date=NOW - timedelta(days=1),
         ),
     ]
     existing_names = {row[0] for row in session.query(DataSilo.name).all()}
@@ -18140,63 +18230,301 @@ def _seed_audit_trail(session) -> int:
     trail = AuditTrail(session)
     count = 0
 
-    # Record a sample of pipeline events to populate the chain
+    # evidence_collected for 5 RawEvents
     raw_events = session.query(RawEvent).limit(5).all()
-    for ev in raw_events:
+    for re in raw_events:
         trail.record(
             action="evidence_collected",
-            entity_type="raw_event",
-            entity_id=ev.id,
+            entity_type="RawEvent",
+            entity_id=re.id,
             actor="pipeline",
-            evidence_sha256=ev.sha256 or "",
+            evidence_sha256=re.sha256,
+            metadata={"source": re.source, "event_type": re.event_type},
         )
         count += 1
 
+    # finding_created for 10 Findings
     findings = session.query(Finding).limit(10).all()
     for f in findings:
         trail.record(
             action="finding_created",
-            entity_type="finding",
+            entity_type="Finding",
             entity_id=f.id,
             actor="pipeline",
-            evidence_sha256=f.sha256 or "",
+            evidence_sha256=f.sha256,
+            metadata={"title": f.title[:80], "severity": f.severity, "source": f.source},
         )
         count += 1
 
+    # control_assessed for 10 ControlResults (no hash field on ControlResult)
     results = session.query(ControlResult).limit(10).all()
-    for r in results:
+    for cr in results:
         trail.record(
             action="control_assessed",
-            entity_type="control_result",
-            entity_id=r.id,
-            actor="assertion_engine",
+            entity_type="ControlResult",
+            entity_id=cr.id,
+            actor="pipeline",
+            metadata={
+                "framework": cr.framework,
+                "control_id": cr.control_id,
+                "status": cr.status,
+            },
         )
         count += 1
 
-    # Add some user actions
+    # 3 user actions
     trail.record(
         action="user_login",
-        entity_type="user",
-        entity_id="demo-admin",
-        actor="demo-admin@warlock.dev",
+        entity_type="User",
+        entity_id="admin@acme.com",
+        actor="admin@acme.com",
+        metadata={"ip": "10.0.1.42", "user_agent": "Mozilla/5.0"},
     )
+    count += 1
+
     trail.record(
         action="report_exported",
-        entity_type="export",
-        entity_id="soc2-q4-2025",
-        actor="demo-admin@warlock.dev",
-        metadata={"format": "oscal", "framework": "soc2"},
+        entity_type="Report",
+        entity_id="soc2-type2-2026-q1",
+        actor="eve.nakamura@acme.com",
+        metadata={"format": "pdf", "framework": "soc2", "pages": 47},
     )
+    count += 1
+
     trail.record(
         action="issue_created",
-        entity_type="issue",
-        entity_id="demo-issue-001",
-        actor="demo-admin@warlock.dev",
+        entity_type="Issue",
+        entity_id="ISS-MANUAL-001",
+        actor="hassan.ali@acme.com",
+        metadata={
+            "title": "Elevated privileges not revoked after incident",
+            "severity": "high",
+        },
     )
-    count += 3
+    count += 1
 
     session.commit()
     return count
+
+
+# ---------------------------------------------------------------------------
+# GAP-5: Attestations
+# ---------------------------------------------------------------------------
+
+
+def _seed_attestations(session) -> int:
+    """Create 4 attestation records spanning different workflows and frameworks."""
+    engagement = session.query(AuditEngagement).first()
+    engagement_id = engagement.id if engagement else None
+
+    attestations = [
+        Attestation(
+            engagement_id=engagement_id,
+            framework="soc2",
+            control_id="CC6.1",
+            status="approved",
+            statement="Management asserts that logical access to production systems "
+            "is restricted to authorized personnel via MFA-enforced IAM policies.",
+            evidence_references=[
+                {"finding_id": "okta-mfa-001", "description": "Okta MFA enrollment report"},
+                {"finding_id": "aws-iam-002", "description": "IAM credential report"},
+            ],
+            prepared_by="eve.nakamura@acme.com",
+            prepared_at=NOW - timedelta(days=14),
+            submitted_by="eve.nakamura@acme.com",
+            submitted_at=NOW - timedelta(days=12),
+            reviewed_by="sarah.chen@deloitte.com",
+            reviewed_at=NOW - timedelta(days=8),
+            review_notes="Evidence is complete and consistent with control objective.",
+            approved_by="sarah.chen@deloitte.com",
+            approved_at=NOW - timedelta(days=7),
+        ),
+        Attestation(
+            engagement_id=engagement_id,
+            framework="soc2",
+            control_id="CC7.2",
+            status="submitted",
+            statement="Management asserts that endpoint detection and response agents "
+            "are deployed on all corporate endpoints with prevention mode enabled.",
+            evidence_references=[
+                {"finding_id": "cs-edr-001", "description": "CrowdStrike deployment report"},
+            ],
+            prepared_by="frank.torres@acme.com",
+            prepared_at=NOW - timedelta(days=5),
+            submitted_by="frank.torres@acme.com",
+            submitted_at=NOW - timedelta(days=3),
+        ),
+        Attestation(
+            engagement_id=engagement_id,
+            framework="nist_800_53",
+            control_id=None,
+            status="draft",
+            statement="Management asserts that the organization has implemented "
+            "a comprehensive risk management framework aligned with NIST 800-53 Rev 5 "
+            "Moderate baseline across all information systems.",
+            evidence_references=[],
+            prepared_by="hassan.ali@acme.com",
+            prepared_at=NOW - timedelta(days=2),
+        ),
+        Attestation(
+            engagement_id=engagement_id,
+            framework="iso_27001",
+            control_id="A.8.1",
+            status="rejected",
+            statement="Management asserts that all information assets are inventoried "
+            "and classified according to the data classification policy.",
+            evidence_references=[
+                {"finding_id": "silo-scan-001", "description": "Data silo discovery report"},
+            ],
+            prepared_by="carol.park@acme.com",
+            prepared_at=NOW - timedelta(days=20),
+            submitted_by="carol.park@acme.com",
+            submitted_at=NOW - timedelta(days=18),
+            reviewed_by="sarah.chen@deloitte.com",
+            reviewed_at=NOW - timedelta(days=15),
+            review_notes="Asset inventory does not include shadow IT resources discovered in cloud scan.",
+            rejected_by="sarah.chen@deloitte.com",
+            rejected_at=NOW - timedelta(days=15),
+            rejection_reason="Incomplete coverage: 12 unclassified S3 buckets found by automated scan.",
+        ),
+    ]
+
+    for a in attestations:
+        session.add(a)
+    session.commit()
+    return len(attestations)
+
+
+# ---------------------------------------------------------------------------
+# GAP-9/GAP-10: Age ~50 findings for SLA breach / aging demos
+# ---------------------------------------------------------------------------
+
+
+def _age_findings(session) -> int:
+    """Backdate ~50 findings across 7-90 days ago for SLA/aging demos."""
+    findings = session.query(Finding).limit(50).all()
+    if not findings:
+        return 0
+
+    aged = 0
+    age_buckets = [
+        (7, 14),  # 10 findings: 1-2 weeks old
+        (15, 30),  # 15 findings: 2-4 weeks old
+        (31, 60),  # 15 findings: 1-2 months old
+        (61, 90),  # 10 findings: 2-3 months old
+    ]
+    bucket_sizes = [10, 15, 15, 10]
+    idx = 0
+    for bucket_idx, (lo, hi) in enumerate(age_buckets):
+        for _ in range(bucket_sizes[bucket_idx]):
+            if idx >= len(findings):
+                break
+            days_ago = random.randint(lo, hi)
+            old_ts = NOW - timedelta(days=days_ago, hours=random.randint(0, 23))
+            findings[idx].created_at = old_ts
+            findings[idx].observed_at = old_ts
+            idx += 1
+            aged += 1
+
+    session.commit()
+    return aged
+
+
+# ---------------------------------------------------------------------------
+# GAP-12: Seed vendors with varied risk scores
+# ---------------------------------------------------------------------------
+
+
+def _seed_vendors(session) -> int:
+    """Create Vendor records with varied risk scores (30-90 range)."""
+    existing = {row[0] for row in session.query(Vendor.name).all()}
+    vendors = [
+        Vendor(
+            name="Stripe",
+            tier="critical",
+            risk_score=32.0,
+            contract_expires=NOW + timedelta(days=365),
+            last_assessment=NOW - timedelta(days=30),
+            assessment_cadence_days=90,
+            metadata_={"industry": "Financial Services", "ssc_grade": "A"},
+        ),
+        Vendor(
+            name="Datadog",
+            tier="critical",
+            risk_score=38.0,
+            contract_expires=NOW + timedelta(days=200),
+            last_assessment=NOW - timedelta(days=45),
+            assessment_cadence_days=90,
+            metadata_={"industry": "Technology", "ssc_grade": "A"},
+        ),
+        Vendor(
+            name="CloudBackup Pro",
+            tier="high",
+            risk_score=82.0,
+            contract_expires=NOW + timedelta(days=60),
+            last_assessment=NOW - timedelta(days=120),
+            assessment_cadence_days=90,
+            metadata_={"industry": "Technology", "ssc_grade": "F", "overdue_assessment": True},
+        ),
+        Vendor(
+            name="Acme Staffing Co",
+            tier="medium",
+            risk_score=67.0,
+            contract_expires=NOW + timedelta(days=180),
+            last_assessment=NOW - timedelta(days=60),
+            assessment_cadence_days=180,
+            metadata_={"industry": "Staffing", "ssc_grade": "D"},
+        ),
+        Vendor(
+            name="QuickDocs",
+            tier="low",
+            risk_score=53.0,
+            contract_expires=NOW + timedelta(days=400),
+            last_assessment=NOW - timedelta(days=90),
+            assessment_cadence_days=365,
+            metadata_={"industry": "SaaS", "ssc_grade": "C"},
+        ),
+        Vendor(
+            name="SecureAuth Corp",
+            tier="critical",
+            risk_score=30.0,
+            contract_expires=NOW + timedelta(days=300),
+            last_assessment=NOW - timedelta(days=15),
+            assessment_cadence_days=90,
+            metadata_={"industry": "Cybersecurity", "ssc_grade": "A"},
+        ),
+        Vendor(
+            name="LegacySoft Inc",
+            tier="high",
+            risk_score=89.0,
+            contract_expires=NOW + timedelta(days=30),
+            last_assessment=NOW - timedelta(days=200),
+            assessment_cadence_days=90,
+            metadata_={
+                "industry": "Enterprise Software",
+                "ssc_grade": "F",
+                "overdue_assessment": True,
+                "eol_product": True,
+            },
+        ),
+        Vendor(
+            name="GlobalPayments Ltd",
+            tier="critical",
+            risk_score=45.0,
+            contract_expires=NOW + timedelta(days=540),
+            last_assessment=NOW - timedelta(days=25),
+            assessment_cadence_days=90,
+            metadata_={"industry": "Financial Services", "ssc_grade": "B", "pci_compliant": True},
+        ),
+    ]
+
+    added = 0
+    for v in vendors:
+        if v.name not in existing:
+            session.add(v)
+            added += 1
+    session.commit()
+    return added
 
 
 def main():
@@ -18950,27 +19278,63 @@ def main():
 
     # --- Post-pipeline data enrichment ---
 
-    print("[20/23] Assigning findings to system profiles...")
+    print("[20/28] Assigning findings to system profiles...")
     with get_session() as session:
         assigned = _assign_findings_to_systems(session)
         print(f"       Findings assigned: {assigned}")
 
-    print("[21/23] Backfilling monitoring_frequency on control mappings...")
+    print("[21/28] Backfilling monitoring_frequency on control mappings...")
     with get_session() as session:
         backfilled = _backfill_monitoring_frequency(session)
         print(f"       Mappings updated: {backfilled}")
 
-    print("[22/23] Creating demo user accounts...")
+    print("[22/28] Creating demo user accounts...")
     with get_session() as session:
         users_created = _create_demo_users(session)
         print(f"       Users created: {users_created}")
 
-    print("[23/24] Populating audit trail (hash-chained)...")
+    # --- GAP-9/GAP-10: Aged findings for SLA breach / aging demos ---
+
+    print("[23/28] Aging ~50 findings (7-90 days) for SLA demos...")
+    with get_session() as session:
+        n_aged = _age_findings(session)
+        print(f"       Findings aged: {n_aged}")
+
+    # --- GAP-5: Attestations ---
+
+    print("[24/28] Seeding attestation records...")
+    with get_session() as session:
+        n_attest = _seed_attestations(session)
+        print(f"       Attestations: {n_attest}")
+
+    # --- GAP-12: Vendors with varied risk scores ---
+
+    print("[25/28] Seeding vendor records...")
+    with get_session() as session:
+        n_vendors = _seed_vendors(session)
+        print(f"       Vendors: {n_vendors}")
+
+    # --- GAP-2: Audit trail (hash-chained) ---
+
+    print("[26/28] Populating audit trail (hash-chained)...")
     with get_session() as session:
         n_audit = _seed_audit_trail(session)
         print(f"       Audit entries: {n_audit}")
 
-    print("[24/24] Seed complete!\n")
+    print("[27/28] Verifying audit chain integrity...")
+    with get_session() as session:
+        from warlock.db.audit import AuditTrail
+
+        trail = AuditTrail(session)
+        valid, errors = trail.verify_chain()
+        if valid:
+            print("       Chain integrity: VERIFIED")
+        else:
+            print(f"       Chain integrity: BROKEN ({len(errors)} errors)")
+            for e in errors[:3]:
+                print(f"         - {e}")
+
+    print("[28/28] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")

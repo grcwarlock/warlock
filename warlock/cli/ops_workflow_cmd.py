@@ -616,6 +616,7 @@ def monthly_review(framework: str | None, output: str | None) -> None:
         Finding,
         Issue,
         POAM,
+        Personnel,
         Vendor,
     )
 
@@ -760,37 +761,46 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             else ("[yellow]WARN[/yellow]" if overdue_poams <= 5 else "[red]ALERT[/red]"),
         )
 
-        # Additional KRIs: MTTR, evidence freshness, vendor risk, training
-        open_issues = (
+        # -- Open issues count
+        open_issues_kri = (
             session.query(Issue)
-            .filter(Issue.status.notin_(["closed", "verified", "risk_accepted"]))
+            .filter(Issue.status.notin_(["closed", "resolved", "cancelled"]))
             .count()
         )
         kri_table.add_row(
             "Open issues",
-            str(open_issues),
+            str(open_issues_kri),
             "< 25",
             "[green]OK[/green]"
-            if open_issues < 25
-            else ("[yellow]WARN[/yellow]" if open_issues < 50 else "[red]ALERT[/red]"),
+            if open_issues_kri < 25
+            else ("[yellow]WARN[/yellow]" if open_issues_kri < 50 else "[red]ALERT[/red]"),
         )
 
-        from warlock.db.models import Personnel
-
-        total_personnel = session.query(Personnel).count()
-        trained = session.query(Personnel).filter(Personnel.training_status == "current").count()
-        training_pct = (trained / total_personnel * 100) if total_personnel else 0
+        # -- Training compliance %
+        total_personnel = (
+            session.query(Personnel)
+            .filter(Personnel.is_active == True)  # noqa: E712
+            .count()
+        )
+        trained_personnel = (
+            session.query(Personnel)
+            .filter(
+                Personnel.is_active == True,  # noqa: E712
+                Personnel.training_status == "current",
+            )
+            .count()
+        )
+        training_pct = trained_personnel / total_personnel * 100 if total_personnel else 0.0
         kri_table.add_row(
             "Training compliance",
-            f"{training_pct:.0f}%",
+            f"{training_pct:.1f}%",
             ">= 90%",
             "[green]OK[/green]"
             if training_pct >= 90
-            else ("[yellow]WARN[/yellow]" if training_pct >= 70 else "[red]ALERT[/red]"),
+            else ("[yellow]WARN[/yellow]" if training_pct >= 75 else "[red]ALERT[/red]"),
         )
 
-        from warlock.db.models import Vendor
-
+        # -- High-risk vendors count (risk_score >= 70)
         high_risk_vendors = session.query(Vendor).filter(Vendor.risk_score >= 70).count()
         kri_table.add_row(
             "High-risk vendors",
@@ -801,7 +811,8 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             else ("[yellow]WARN[/yellow]" if high_risk_vendors < 5 else "[red]ALERT[/red]"),
         )
 
-        failed_connectors = (
+        # -- Failed connectors in last 30 days
+        failed_connectors_30d = (
             session.query(ConnectorRun)
             .filter(
                 ConnectorRun.started_at >= this_month_start,
@@ -811,11 +822,11 @@ def monthly_review(framework: str | None, output: str | None) -> None:
         )
         kri_table.add_row(
             "Failed connectors (30d)",
-            str(failed_connectors),
+            str(failed_connectors_30d),
             "0",
             "[green]OK[/green]"
-            if failed_connectors == 0
-            else ("[yellow]WARN[/yellow]" if failed_connectors <= 3 else "[red]ALERT[/red]"),
+            if failed_connectors_30d == 0
+            else ("[yellow]WARN[/yellow]" if failed_connectors_30d <= 3 else "[red]ALERT[/red]"),
         )
 
         console.print(kri_table)
@@ -984,6 +995,10 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             "|-----|-------|--------|",
             f"| Critical findings (30d) | {crit_findings_month} | {'OK' if crit_findings_month < 5 else 'ALERT'} |",
             f"| Overdue POA&Ms | {overdue_poams} | {'OK' if overdue_poams == 0 else 'ALERT'} |",
+            f"| Open issues | {open_issues_kri} | {'OK' if open_issues_kri < 25 else 'ALERT'} |",
+            f"| Training compliance | {training_pct:.1f}% | {'OK' if training_pct >= 90 else 'ALERT'} |",
+            f"| High-risk vendors | {high_risk_vendors} | {'OK' if high_risk_vendors < 3 else 'ALERT'} |",
+            f"| Failed connectors (30d) | {failed_connectors_30d} | {'OK' if failed_connectors_30d == 0 else 'ALERT'} |",
         ]
         if all_results:
             report_lines.append(
