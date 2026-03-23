@@ -11,6 +11,7 @@ import json as _json
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -839,7 +840,7 @@ def requests_list(status: str | None, limit: int) -> None:
             r.id[:8],
             r.framework or "\u2014",
             r.control_id or "\u2014",
-            (r.description or "")[:40],
+            escape((r.description or "")[:40]),
             f"[{st_style}]{r.status}[/]",
             r.fulfilled_by or "\u2014",
             created,
@@ -1165,7 +1166,7 @@ def requests_overdue() -> None:
             r.id[:8],
             r.framework or "\u2014",
             r.control_id or "\u2014",
-            (r.description or "")[:40],
+            escape((r.description or "")[:40]),
             f"[{st_style}]{r.status}[/]",
             str(days_overdue),
         )

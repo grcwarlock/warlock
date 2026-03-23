@@ -22,6 +22,8 @@ from warlock.db.models import (
 )
 from datetime import timedelta
 
+from warlock.utils import ensure_aware
+
 log = logging.getLogger(__name__)
 
 
@@ -218,13 +220,8 @@ class PostureAggregator:
         freshness_hours: float | None = None
         oldest_hours: float | None = None
         if assessed_times:
-            newest = max(assessed_times)
-            oldest = min(assessed_times)
-            # Ensure timezone-aware comparison
-            if newest.tzinfo is None:
-                newest = newest.replace(tzinfo=timezone.utc)
-            if oldest.tzinfo is None:
-                oldest = oldest.replace(tzinfo=timezone.utc)
+            newest = ensure_aware(max(assessed_times))
+            oldest = ensure_aware(min(assessed_times))
             freshness_hours = round((now - newest).total_seconds() / 3600, 2)
             oldest_hours = round((now - oldest).total_seconds() / 3600, 2)
 
@@ -324,12 +321,8 @@ class PostureAggregator:
             freshness_hours = None
             oldest_hours = None
             if assessed_times:
-                newest = max(assessed_times)
-                oldest = min(assessed_times)
-                if newest.tzinfo is None:
-                    newest = newest.replace(tzinfo=timezone.utc)
-                if oldest.tzinfo is None:
-                    oldest = oldest.replace(tzinfo=timezone.utc)
+                newest = ensure_aware(max(assessed_times))
+                oldest = ensure_aware(min(assessed_times))
                 freshness_hours = round((now - newest).total_seconds() / 3600, 2)
                 oldest_hours = round((now - oldest).total_seconds() / 3600, 2)
 
@@ -502,9 +495,7 @@ class EvidenceSufficiencyScorer:
         freshness_score = 0.0
         if assessed_times:
             now = datetime.now(timezone.utc)
-            newest = max(assessed_times)
-            if newest.tzinfo is None:
-                newest = newest.replace(tzinfo=timezone.utc)
+            newest = ensure_aware(max(assessed_times))
             hours_since = (now - newest).total_seconds() / 3600
 
             if hours_since <= 24:
@@ -815,16 +806,12 @@ class PostureTimeSeriesQuery:
         if len(points) < 2:
             return 0.0
 
-        base_time = points[0].date
-        if base_time.tzinfo is None:
-            base_time = base_time.replace(tzinfo=timezone.utc)
+        base_time = ensure_aware(points[0].date)
 
         xs: list[float] = []
         ys: list[float] = []
         for p in points:
-            t = p.date
-            if t.tzinfo is None:
-                t = t.replace(tzinfo=timezone.utc)
+            t = ensure_aware(p.date)
             day_offset = (t - base_time).total_seconds() / 86400.0
             xs.append(day_offset)
             ys.append(p.posture_score)

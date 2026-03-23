@@ -8,6 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import Finding, Personnel
+from warlock.utils import ensure_aware
 
 
 class PersonnelManager:
@@ -320,9 +321,7 @@ class PersonnelManager:
             if person.last_access_review is None and person.hr_status == "active":
                 flags.append("no_access_review")
             elif person.last_access_review:
-                lar = person.last_access_review
-                if lar.tzinfo is None:
-                    lar = lar.replace(tzinfo=timezone.utc)
+                lar = ensure_aware(person.last_access_review)
                 if lar < review_threshold:
                     flags.append("no_access_review")
 

@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -572,7 +573,7 @@ def privacy_data_map_review() -> None:
                     f"\n  [yellow]Missing retention policy:[/yellow] {len(no_retention)} PII/PHI silo(s)"
                 )
                 for s in no_retention[:5]:
-                    console.print(f"    - {s.name} ({s.silo_type})")
+                    console.print(f"    - {escape(s.name or '')} ({s.silo_type})")
                 if len(no_retention) > 5:
                     console.print(f"    ... and {len(no_retention) - 5} more")
                 gaps_found = True
@@ -587,7 +588,7 @@ def privacy_data_map_review() -> None:
                     f"\n  [red]Not encrypted at rest:[/red] {len(no_encryption)} PII/PHI silo(s)"
                 )
                 for s in no_encryption[:5]:
-                    console.print(f"    - {s.name} ({s.silo_type})")
+                    console.print(f"    - {escape(s.name or '')} ({s.silo_type})")
                 gaps_found = True
 
             unknown_class = [

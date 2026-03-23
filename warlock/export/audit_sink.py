@@ -62,6 +62,8 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from warlock.utils import ensure_aware
+
 log = logging.getLogger(__name__)
 
 
@@ -109,11 +111,7 @@ class AuditEntry:
             entity_type=row.entity_type,
             entity_id=row.entity_id,
             actor=row.actor,
-            created_at=(
-                row.created_at
-                if row.created_at.tzinfo is not None
-                else row.created_at.replace(tzinfo=timezone.utc)
-            ),
+            created_at=ensure_aware(row.created_at),
             evidence_sha256=row.evidence_sha256,
             extra=row.extra or {},
         )

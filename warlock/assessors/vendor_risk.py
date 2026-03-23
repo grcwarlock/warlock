@@ -14,6 +14,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from warlock.utils import ensure_aware
+
 from warlock.db.models import (
     ControlResult,
     Finding,
@@ -195,9 +197,7 @@ class VendorRiskEngine:
             return 0.0
 
         now = datetime.now(timezone.utc)
-        last = vendor.last_assessment_date
-        if last.tzinfo is None:
-            last = last.replace(tzinfo=timezone.utc)
+        last = ensure_aware(vendor.last_assessment_date)
 
         days_since = (now - last).total_seconds() / 86400
         expected = vendor.assessment_frequency_days

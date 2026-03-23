@@ -12,6 +12,8 @@ import click
 from rich.panel import Panel
 from rich.table import Table
 
+from rich.markup import escape
+
 from warlock.cli import cli, console, _error
 
 
@@ -77,7 +79,7 @@ def finding_to_incident(finding_id: str) -> None:
         sty = _severity_style(i.priority)
         table.add_row(
             i.id[:8],
-            (i.title or "")[:50],
+            escape((i.title or "")[:50]),
             i.status,
             f"[{sty}]{i.priority}[/]",
             i.assigned_to or "\u2014",
@@ -126,7 +128,7 @@ def incident_to_findings(incident_id: str) -> None:
         sty = _severity_style(f.severity)
         table.add_row(
             f.id[:8],
-            (f.title or "")[:50],
+            escape((f.title or "")[:50]),
             f.source,
             f"[{sty}]{f.severity}[/]",
             _fmt_dt(f.observed_at),
@@ -224,7 +226,7 @@ def control_to_findings(control_id: str, framework: str | None, limit: int) -> N
         sty = _severity_style(f.severity)
         table.add_row(
             f.id[:8],
-            (f.title or "")[:45],
+            escape((f.title or "")[:45]),
             f.source,
             f"[{sty}]{f.severity}[/]",
             m.framework,
@@ -333,7 +335,7 @@ def trace(finding_id: str) -> None:
     sev_sty = _severity_style(finding.severity)
     console.print(
         Panel(
-            f"[bold]{finding.title}[/bold]\n"
+            f"[bold]{escape(finding.title or '')}[/bold]\n"
             f"ID: {finding.id[:8]}  |  Source: {finding.source} / {finding.provider}\n"
             f"Severity: [{sev_sty}]{finding.severity}[/]  |  "
             f"Observed: {_fmt_dt(finding.observed_at)}\n"
@@ -434,7 +436,7 @@ def impact_analysis(control_id: str, framework: str | None) -> None:
             sty = _severity_style(i.priority)
             console.print(
                 f"  [dim]{i.id[:8]}[/dim]  [{sty}]{i.priority}[/]  "
-                f"{(i.title or '')[:60]}  status={i.status}"
+                f"{escape((i.title or '')[:60])}  status={i.status}"
             )
 
 
@@ -517,7 +519,7 @@ def blast_radius(finding_id: str) -> None:
     sev_sty = _severity_style(finding.severity)
     console.print(
         Panel(
-            f"Finding: [bold]{(finding.title or '')[:70]}[/bold]\n"
+            f"Finding: [bold]{escape((finding.title or '')[:70])}[/bold]\n"
             f"ID: {finding.id[:8]}  Severity: [{sev_sty}]{finding.severity}[/]\n\n"
             f"Controls affected:  [bold]{len(control_ids)}[/bold]\n"
             f"Frameworks:         [bold]{len(frameworks)}[/bold]  "
@@ -600,7 +602,7 @@ def common_findings(framework: str | None, min_frameworks: int, limit: int) -> N
         sty = _severity_style(f.severity)
         table.add_row(
             f.id[:8],
-            (f.title or "")[:45],
+            escape((f.title or "")[:45]),
             f.source,
             f"[{sty}]{f.severity}[/]",
             str(fw_counts[row.finding_id]),
@@ -647,7 +649,7 @@ def orphan_findings(limit: int) -> None:
         sty = _severity_style(f.severity)
         table.add_row(
             f.id[:8],
-            (f.title or "")[:50],
+            escape((f.title or "")[:50]),
             f.source,
             f"[{sty}]{f.severity}[/]",
             _fmt_dt(f.observed_at),
@@ -910,10 +912,12 @@ def timeline_correlation(days: int, limit: int) -> None:
     events: list[tuple[datetime, str, str, str]] = []
     for f in findings:
         events.append(
-            (f.observed_at, "finding", f.severity, f"[{f.source}] {(f.title or '')[:60]}")
+            (f.observed_at, "finding", f.severity, f"[{f.source}] {escape((f.title or '')[:60])}")
         )
     for i in issues:
-        events.append((i.created_at, "issue", i.priority, f"[{i.status}] {(i.title or '')[:60]}"))
+        events.append(
+            (i.created_at, "issue", i.priority, f"[{i.status}] {escape((i.title or '')[:60])}")
+        )
     for c in changes:
         events.append((c.occurred_at, "change", "info", f"[{c.source}] {(c.action or '')[:60]}"))
 

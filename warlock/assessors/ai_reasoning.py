@@ -540,6 +540,8 @@ def build_compliance_context(
     from datetime import timedelta, timezone
     from datetime import datetime
 
+    from warlock.utils import ensure_aware
+
     ctx = ComplianceContext()
     now = datetime.now(timezone.utc)
 
@@ -665,8 +667,7 @@ def build_compliance_context(
             "quarterly": 2160,
             "annual": 8760,
         }.get(frequency, 720)
-        if latest_evidence.tzinfo is None:
-            latest_evidence = latest_evidence.replace(tzinfo=timezone.utc)
+        latest_evidence = ensure_aware(latest_evidence)
         hours_since = (now - latest_evidence).total_seconds() / 3600
         ctx.cadence_status = {
             "required_frequency": frequency,

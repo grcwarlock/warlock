@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import re as _re
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException
 from pydantic import BaseModel
+
+from warlock.utils import ensure_aware
 
 
 class PaginatedResponse(BaseModel):
@@ -29,8 +31,7 @@ class MessageResponse(BaseModel):
 def _dt_str(dt: datetime | None) -> str | None:
     if dt is None:
         return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = ensure_aware(dt)
     return dt.isoformat()
 
 

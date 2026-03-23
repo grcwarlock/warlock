@@ -14,6 +14,7 @@ from warlock.api.auth import (
     decode_access_token,
     PERMISSIONS,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +106,7 @@ def get_current_user(
             token_iat = payload.get("iat", 0)
             valid_after = user.token_valid_after
             if valid_after.tzinfo is None:
-                valid_after = valid_after.replace(tzinfo=__import__("datetime").timezone.utc)
+                valid_after = ensure_aware(valid_after)
             if token_iat < valid_after.timestamp():
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

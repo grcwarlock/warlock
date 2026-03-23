@@ -12,6 +12,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -1033,7 +1034,7 @@ def remediate(
         table.add_column("Title", max_width=50)
 
         for i in issues[:25]:
-            table.add_row(i.id[:8], i.control_id or "—", i.status, (i.title or "")[:50])
+            table.add_row(i.id[:8], i.control_id or "—", i.status, escape((i.title or "")[:50]))
         if len(issues) > 25:
             console.print(f"[dim]... and {len(issues) - 25} more[/dim]")
         console.print(table)

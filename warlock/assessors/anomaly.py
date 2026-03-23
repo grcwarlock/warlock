@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from warlock.db.models import ConnectorRun, ControlResult, Finding
 from warlock.normalizers.base import FindingData
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -542,9 +543,7 @@ class StatisticalAnomalyDetector:
         """Extract numeric features from a FindingData for anomaly scoring."""
         severity_map = {"critical": 1.0, "high": 0.8, "medium": 0.5, "low": 0.2, "info": 0.0}
         now = datetime.now(timezone.utc)
-        observed = finding.observed_at
-        if observed.tzinfo is None:
-            observed = observed.replace(tzinfo=timezone.utc)
+        observed = ensure_aware(finding.observed_at)
         delta = (now - observed).total_seconds()
         days_since = max(delta / 86400.0, 0.0)
 
@@ -808,9 +807,7 @@ class AnomalyEngine:
                         resource_count += len(v)
                     elif isinstance(v, dict):
                         resource_count += len(v)
-                observed = f.observed_at or datetime.now(timezone.utc)
-                if observed.tzinfo is None:
-                    observed = observed.replace(tzinfo=timezone.utc)
+                observed = ensure_aware(f.observed_at) or datetime.now(timezone.utc)
                 delta = (datetime.now(timezone.utc) - observed).total_seconds()
                 finding_features.append(
                     {

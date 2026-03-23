@@ -25,6 +25,7 @@ from warlock.db.models import (
     ControlResult,
     Finding,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -41,8 +42,7 @@ def _utcnow() -> datetime:
 def _iso(dt: datetime | None) -> str:
     if dt is None:
         return ""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = ensure_aware(dt)
     return dt.isoformat()
 
 
@@ -206,10 +206,8 @@ class AuditorWorkflow:
         Queries all findings and results for this control in the period,
         builds EvidenceArtifacts, and computes gaps.
         """
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
+        start = ensure_aware(start)
+        end = ensure_aware(end)
 
         # Fetch results for this control in the period
         results: list[ControlResult] = (
@@ -311,10 +309,8 @@ class AuditorWorkflow:
         start = eng.period_start
         end = eng.period_end
 
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
+        start = ensure_aware(start)
+        end = ensure_aware(end)
 
         # Determine in-scope controls
         if eng.in_scope_controls:
@@ -529,10 +525,8 @@ class AuditorWorkflow:
 
         Convenience method for ad-hoc evidence packaging.
         """
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
+        start = ensure_aware(start)
+        end = ensure_aware(end)
 
         # All controls in the framework
         rows = (

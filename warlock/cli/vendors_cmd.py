@@ -11,6 +11,7 @@ offboard, and SLA tracking.
 from __future__ import annotations
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error
@@ -73,7 +74,7 @@ def vendor_list(tier: str | None, limit: int) -> None:
         )
         table.add_row(
             v.id[:8],
-            v.name,
+            escape(v.name or ""),
             v.tier or "\u2014",
             f"[{score_color}]{score}[/]" if score_color else score,
             last_a,
@@ -105,7 +106,7 @@ def vendor_show(vendor_id: str) -> None:
         if not v:
             _error(f"Vendor not found: {vendor_id}")
 
-    console.print(f"\n[bold]Vendor:[/bold] {v.name}")
+    console.print(f"\n[bold]Vendor:[/bold] {escape(v.name or '')}")
     console.print(f"  ID:                {v.id}")
     console.print(f"  Tier:              {v.tier or '\u2014'}")
     console.print(
@@ -194,7 +195,9 @@ def vendor_assess(vendor_id: str, score: float, notes: str | None) -> None:
             v.metadata_ = meta
         session.commit()
 
-    console.print(f"[green]Assessment recorded for '{v.name}': score={score:.0f}[/green]")
+    console.print(
+        f"[green]Assessment recorded for '{escape(v.name or '')}': score={score:.0f}[/green]"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -222,12 +225,12 @@ def vendor_questionnaire(vendor_id: str, action: str) -> None:
             _error(f"Vendor not found: {vendor_id}")
 
     if action == "send":
-        console.print(f"[green]Questionnaire sent to vendor '{v.name}'.[/green]")
+        console.print(f"[green]Questionnaire sent to vendor '{escape(v.name or '')}'.[/green]")
         console.print("[dim]Configure WLK_SMTP_HOST for actual email delivery.[/dim]")
     elif action == "status":
         meta = v.metadata_ or {}
         status = meta.get("questionnaire_status", "not_sent")
-        console.print(f"Questionnaire status for '{v.name}': {status}")
+        console.print(f"Questionnaire status for '{escape(v.name or '')}': {status}")
     elif action == "review":
         meta = v.metadata_ or {}
         responses = meta.get("questionnaire_responses", {})
@@ -266,7 +269,7 @@ def vendor_risk_score(vendor_id: str) -> None:
     color = "green" if score >= 70 else ("yellow" if score >= 40 else "red")
     level = "Low" if score >= 70 else ("Medium" if score >= 40 else "High")
 
-    console.print(f"\n[bold]Risk Score: {v.name}[/bold]")
+    console.print(f"\n[bold]Risk Score: {escape(v.name or '')}[/bold]")
     console.print(f"  Score:          [{color}]{score:.0f}/100[/]")
     console.print(f"  Risk Level:     [{color}]{level}[/]")
     console.print(f"  Tier:           {v.tier or '\u2014'}")
@@ -302,12 +305,12 @@ def vendor_history(vendor_id: str, limit: int) -> None:
             .all()
         )
 
-    console.print(f"\n[bold]History for '{v.name}':[/bold]")
+    console.print(f"\n[bold]History for '{escape(v.name or '')}':[/bold]")
     if not entries:
         console.print("[dim]No audit entries found.[/dim]")
         return
 
-    table = Table(title=f"Vendor History: {v.name}")
+    table = Table(title=f"Vendor History: {escape(v.name or '')}")
     table.add_column("When", style="dim")
     table.add_column("Action")
     table.add_column("Actor", style="dim")
@@ -405,7 +408,11 @@ def vendor_reassess_due() -> None:
     for v in due:
         last = v.last_assessment.strftime("%Y-%m-%d") if v.last_assessment else "[red]never[/red]"
         table.add_row(
-            v.id[:8], v.name, v.tier or "\u2014", last, str(v.assessment_cadence_days or 365)
+            v.id[:8],
+            escape(v.name or ""),
+            v.tier or "\u2014",
+            last,
+            str(v.assessment_cadence_days or 365),
         )
 
     console.print(table)
@@ -456,7 +463,7 @@ def vendor_contracts(expiring_within: int) -> None:
         color = "red" if days_left <= 14 else ("yellow" if days_left <= 30 else "white")
         table.add_row(
             v.id[:8],
-            v.name,
+            escape(v.name or ""),
             v.tier or "\u2014",
             ensure_aware(v.contract_expires).strftime("%Y-%m-%d"),
             f"[{color}]{days_left}[/]",
@@ -577,10 +584,10 @@ def vendor_soc2_review(vendor_id: str, report_date: str | None, opinion: str | N
                 meta["soc2_opinion"] = opinion
             v.metadata_ = meta
             session.commit()
-            console.print(f"[green]SOC 2 review recorded for '{v.name}'.[/green]")
+            console.print(f"[green]SOC 2 review recorded for '{escape(v.name or '')}'.[/green]")
         else:
             meta = v.metadata_ or {}
-            console.print(f"\n[bold]SOC 2 Review: {v.name}[/bold]")
+            console.print(f"\n[bold]SOC 2 Review: {escape(v.name or '')}[/bold]")
             console.print(f"  Report Date: {meta.get('soc2_report_date', '\u2014')}")
             console.print(f"  Opinion:     {meta.get('soc2_opinion', '\u2014')}")
 
@@ -606,7 +613,7 @@ def vendor_fourth_party(vendor_id: str) -> None:
     meta = v.metadata_ or {}
     subprocessors = meta.get("subprocessors", [])
 
-    console.print(f"\n[bold]Fourth-Party Dependencies: {v.name}[/bold]")
+    console.print(f"\n[bold]Fourth-Party Dependencies: {escape(v.name or '')}[/bold]")
     if not subprocessors:
         console.print(
             "[dim]No sub-processor data recorded. Update vendor metadata to track fourth parties.[/dim]"
@@ -651,7 +658,7 @@ def vendor_offboard(vendor_id: str, reason: str) -> None:
         v.metadata_ = meta
         session.commit()
 
-    console.print(f"[yellow]Vendor '{v.name}' offboarded.[/yellow]")
+    console.print(f"[yellow]Vendor '{escape(v.name or '')}' offboarded.[/yellow]")
     console.print(f"  Reason: {reason}")
 
 
@@ -766,9 +773,9 @@ def vendor_sla(vendor_id: str, set_uptime: float | None, set_response: int | Non
                 meta["sla_response_hours"] = set_response
             v.metadata_ = meta
             session.commit()
-            console.print(f"[green]SLA terms updated for '{v.name}'.[/green]")
+            console.print(f"[green]SLA terms updated for '{escape(v.name or '')}'.[/green]")
         else:
             meta = v.metadata_ or {}
-            console.print(f"\n[bold]SLA Terms: {v.name}[/bold]")
+            console.print(f"\n[bold]SLA Terms: {escape(v.name or '')}[/bold]")
             console.print(f"  Uptime SLA:       {meta.get('sla_uptime_pct', '\u2014')}%")
             console.print(f"  Response SLA:     {meta.get('sla_response_hours', '\u2014')}h")

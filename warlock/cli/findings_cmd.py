@@ -11,6 +11,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -72,7 +73,7 @@ def _interactive_findings_loop(rows: list) -> None:
             if 0 <= idx < len(rows):
                 r = rows[idx]
                 console.print(
-                    f"\n[bold cyan]{r.title}[/bold cyan]\n"
+                    f"\n[bold cyan]{escape(r.title or '')}[/bold cyan]\n"
                     f"  ID:        {r.id}\n"
                     f"  Severity:  {r.severity}\n"
                     f"  Source:    {r.source}/{r.provider}\n"
@@ -223,7 +224,7 @@ def findings_list(
             r.id[:8],
             f"[{sty}]{r.severity}[/{sty}]" if sty else r.severity,
             r.observation_type,
-            r.title[:50],
+            escape(r.title[:50] if r.title else ""),
             f"{r.source}/{r.provider}",
             str(r.observed_at)[:19] if r.observed_at else "\u2014",
         )
@@ -260,7 +261,7 @@ def findings_show(finding_id: str) -> None:
     from rich.panel import Panel
 
     body = (
-        f"[bold]{row.title}[/bold]\n\n"
+        f"[bold]{escape(row.title or '')}[/bold]\n\n"
         f"ID:               {row.id}\n"
         f"Severity:         {row.severity}\n"
         f"Observation Type: {row.observation_type}\n"
@@ -319,7 +320,7 @@ def findings_search(query: str, limit: int) -> None:
         table.add_row(
             r.id[:8],
             f"[{sty}]{r.severity}[/{sty}]" if sty else r.severity,
-            r.title[:60],
+            escape(r.title[:60] if r.title else ""),
             f"{r.source}/{r.provider}",
         )
 
@@ -883,7 +884,9 @@ def findings_aging(severity: str | None, source_type: str | None) -> None:
             if obs.tzinfo is None:
                 obs = obs.replace(tzinfo=timezone.utc)
             age = (now - obs).days
-            console.print(f"  [dim]{r.id[:8]}[/dim]  {age} days  {r.title[:60]}")
+            console.print(
+                f"  [dim]{r.id[:8]}[/dim]  {age} days  {escape(r.title[:60] if r.title else '')}"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -1013,6 +1016,6 @@ def findings_create_issue(finding_id: str, priority: str, title: str | None) -> 
 
     console.print(
         f"[green]Issue created:[/green] [cyan]{issue.id[:8]}[/cyan] "
-        f"— {issue_title[:60]}\n"
+        f"— {escape(issue_title[:60])}\n"
         f"[dim]Linked to finding {finding.id[:8]} (control: {finding.control_id or 'none'})[/dim]"
     )

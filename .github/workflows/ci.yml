@@ -116,9 +116,23 @@ jobs:
           python scripts/demo_seed.py 2>&1 | tee /tmp/demo_output.txt
           # Verify key metrics from demo output
           if grep -q "Connectors failed:.*0" /tmp/demo_output.txt; then
-            echo "PASS: demo seed (0 connector failures)"
+            echo "PASS: zero connector failures"
           else
             echo "FAIL: demo seed had connector failures"
+            exit 1
+          fi
+          if grep -q "Connectors succeeded:.*165" /tmp/demo_output.txt; then
+            echo "PASS: 165 connectors succeeded"
+          else
+            echo "FAIL: expected 165 connectors succeeded"
+            grep "Connectors succeeded" /tmp/demo_output.txt || true
+            exit 1
+          fi
+          if grep -q "Raw events collected:.*589" /tmp/demo_output.txt; then
+            echo "PASS: 589 raw events collected"
+          else
+            echo "FAIL: expected 589 raw events"
+            grep "Raw events" /tmp/demo_output.txt || true
             exit 1
           fi
 
@@ -317,7 +331,7 @@ jobs:
           python-version: "3.12"
           cache: 'pip'
       - run: pip install pip-audit
-      - run: pip-audit --requirement <(pip freeze) || true
+      - run: pip-audit --requirement <(pip freeze) --desc
 
   build:
     runs-on: ubuntu-latest

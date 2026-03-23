@@ -26,6 +26,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from warlock.db.models import User, APIKey
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -354,8 +355,7 @@ def authenticate_user(session: Session, email: str, password: str) -> User | dic
     # Check lockout
     if user.locked_until:
         now = datetime.now(timezone.utc)
-        if user.locked_until.tzinfo is None:
-            user.locked_until = user.locked_until.replace(tzinfo=timezone.utc)
+        user.locked_until = ensure_aware(user.locked_until)
         if now < user.locked_until:
             log.warning(
                 "Login attempt on locked account: %s (locked until %s)", email, user.locked_until
@@ -427,8 +427,7 @@ def authenticate_api_key(session: Session, raw_key: str) -> tuple[User | None, A
         api_key.key_hash = key_hash
     expires = api_key.expires_at
     if expires:
-        if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=timezone.utc)
+        expires = ensure_aware(expires)
         if expires < datetime.now(timezone.utc):
             return None, None
     user = session.query(User).filter(User.id == api_key.user_id).first()

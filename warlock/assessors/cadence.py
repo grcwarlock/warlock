@@ -14,6 +14,7 @@ from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import ControlMapping, ControlResult
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -86,8 +87,7 @@ class CadenceChecker:
                 staleness_ratio=float("inf"),
             )
 
-        if latest.tzinfo is None:
-            latest = latest.replace(tzinfo=timezone.utc)
+        latest = ensure_aware(latest)
 
         hours_since = (now - latest).total_seconds() / 3600
         staleness_ratio = hours_since / required_hours if required_hours > 0 else 0.0
@@ -157,8 +157,7 @@ class CadenceChecker:
                 )
                 continue
 
-            if latest.tzinfo is None:
-                latest = latest.replace(tzinfo=timezone.utc)
+            latest = ensure_aware(latest)
             hours_since = (now - latest).total_seconds() / 3600
             staleness_ratio = hours_since / required_hours if required_hours > 0 else 0.0
 

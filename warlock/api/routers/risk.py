@@ -257,10 +257,11 @@ def run_audit_simulation(
         raise HTTPException(status_code=403, detail="Access denied for this framework")
 
     from warlock.assessors.simulation import AuditSimulator
-    from datetime import datetime as dt, timezone as tz
+    from datetime import datetime as dt
+    from warlock.utils import ensure_aware
 
     sim = AuditSimulator()
-    target = dt.fromisoformat(req.target_date).replace(tzinfo=tz.utc)
+    target = ensure_aware(dt.fromisoformat(req.target_date))
     result = sim.simulate(db, req.framework, target, system_id=req.system_id)
     return {
         "projected_coverage": result.projected_coverage,

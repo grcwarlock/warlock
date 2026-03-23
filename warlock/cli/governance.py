@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import (
@@ -97,7 +98,7 @@ def issues(
             i.id[:8],
             i.framework or "",
             i.control_id or "",
-            i.title[:50],
+            escape(i.title[:50]),
             f"[{status_style}]{i.status}[/]",
             f"[{priority_style}]{i.priority}[/]",
             i.assigned_to or "",
@@ -179,7 +180,9 @@ def issues_auto_create(framework: str | None, actor: str | None) -> None:
 
     console.print(f"[green]Created {len(created)} issue(s):[/green]")
     for issue in created:
-        console.print(f"  [cyan]{issue.id[:8]}[/cyan] [{issue.priority}] {issue.title[:70]}")
+        console.print(
+            f"  [cyan]{issue.id[:8]}[/cyan] [{issue.priority}] {escape(issue.title[:70])}"
+        )
 
 
 @cli.command("poams")
@@ -231,7 +234,7 @@ def poams_list(framework: str | None, status: str | None, overdue: bool, limit: 
             f"[{status_style}]{p.status}[/{status_style}]",
             due,
             str(p.delay_count or 0),
-            (p.weakness_description or "")[:40],
+            escape((p.weakness_description or "")[:40]),
         )
 
     console.print(table)
@@ -271,7 +274,7 @@ def compensating_list(framework: str | None, status: str | None) -> None:
             c.id[:8],
             c.original_framework,
             c.original_control_id,
-            (c.title or "")[:30],
+            escape((c.title or "")[:30]),
             c.status,
             eff,
             exp,
@@ -636,7 +639,7 @@ def _show_remediation_for_issue(session, issue) -> None:
     console.print()
     console.print(
         Panel(
-            f"[bold]{issue.title}[/bold]\n\n"
+            f"[bold]{escape(issue.title or '')}[/bold]\n\n"
             f"ID: {issue.id[:8]}  |  Framework: {issue.framework}  |  Control: {issue.control_id}\n"
             f"Status: [yellow]{issue.status}[/yellow]  |  Priority: {issue.priority}  |  "
             f"Assigned: {issue.assigned_to or '[dim]unassigned[/dim]'}",
@@ -647,7 +650,7 @@ def _show_remediation_for_issue(session, issue) -> None:
 
     # Description
     if issue.description:
-        console.print(f"\n[bold]What's wrong:[/bold]\n{issue.description}")
+        console.print(f"\n[bold]What's wrong:[/bold]\n{escape(issue.description)}")
 
     # Get the control result for remediation data
     result = None
@@ -723,7 +726,9 @@ def _show_remediation_for_issue(session, issue) -> None:
         if related_poam:
             console.print(f"  POA&M: {related_poam.id[:8]} ({related_poam.status})")
         if related_cc:
-            console.print(f"  Compensating control: {related_cc.title} ({related_cc.status})")
+            console.print(
+                f"  Compensating control: {escape(related_cc.title or '')} ({related_cc.status})"
+            )
         if related_ra:
             console.print(
                 f"  Risk acceptance: {related_ra.id[:8]} ({related_ra.status}, expires {related_ra.expiry_date})"
@@ -741,7 +746,7 @@ def _show_remediation_for_poam(session, poam) -> None:
     console.print()
     console.print(
         Panel(
-            f"[bold]{poam.weakness_description}[/bold]\n\n"
+            f"[bold]{escape(poam.weakness_description or '')}[/bold]\n\n"
             f"ID: {poam.id[:8]}  |  Framework: {poam.framework}  |  Control: {poam.control_id}\n"
             f"Status: [yellow]{poam.status}[/yellow]  |  Severity: {poam.severity}  |  "
             f"Due: {poam.scheduled_completion or '[dim]no deadline[/dim]'}  |  Delays: {poam.delay_count}",
@@ -805,7 +810,9 @@ def _show_remediation_for_poam(session, poam) -> None:
     cc = session.query(CompensatingControl).filter(CompensatingControl.poam_id == poam.id).first()
     if cc:
         console.print("\n[bold]Compensating control:[/bold]")
-        console.print(f"  {cc.title} ({cc.status}, effectiveness: {cc.effectiveness_score}%)")
+        console.print(
+            f"  {escape(cc.title or '')} ({cc.status}, effectiveness: {cc.effectiveness_score}%)"
+        )
 
     # Risk acceptance
     ra = session.query(RiskAcceptance).filter(RiskAcceptance.poam_id == poam.id).first()

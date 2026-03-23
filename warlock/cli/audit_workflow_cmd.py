@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -855,7 +856,7 @@ def audit_respond(engagement_id: str, interactive: bool) -> None:
                 f"Control: [bold]{req.control_id or '—'}[/bold]   "
                 f"Status: {req.status}"
             )
-            console.print(f"  Description: {req.description}")
+            console.print(f"  Description: {escape(req.description or '')}")
 
             # Check if evidence already exists in the system
             existing_evidence: list[ControlResult] = []

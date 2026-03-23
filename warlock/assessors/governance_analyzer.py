@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from warlock.assessors.rag import TFIDFEmbedder
 from warlock.db.models import Finding
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -523,7 +524,10 @@ class GovernanceAnalyzer:
                     # Use the best (most recently modified) match
                     best = max(
                         matching,
-                        key=lambda s: s.last_modified or datetime.min.replace(tzinfo=timezone.utc),
+                        key=lambda s: (
+                            ensure_aware(s.last_modified)
+                            or datetime.min.replace(tzinfo=timezone.utc)
+                        ),
                     )
                     if not best.is_stale:
                         current += 1
@@ -579,7 +583,9 @@ class GovernanceAnalyzer:
 
                 best = max(
                     matching,
-                    key=lambda s: s.last_modified or datetime.min.replace(tzinfo=timezone.utc),
+                    key=lambda s: (
+                        ensure_aware(s.last_modified) or datetime.min.replace(tzinfo=timezone.utc)
+                    ),
                 )
 
                 if best.is_stale:

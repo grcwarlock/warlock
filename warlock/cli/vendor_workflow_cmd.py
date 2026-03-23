@@ -15,6 +15,7 @@ import uuid
 from datetime import datetime, timezone
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -165,7 +166,7 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
 
         console.print(
             Panel(
-                f"[bold]{vendor.name}[/bold]\n\n"
+                f"[bold]{escape(vendor.name or '')}[/bold]\n\n"
                 f"ID: {vendor.id[:8]}  |  "
                 f"Category: {meta.get('category', 'unknown')}  |  "
                 f"Risk Tier: [{tier_style}]{vendor.tier or 'unset'}[/{tier_style}]\n"
@@ -271,7 +272,9 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
             vendor.metadata_ = meta_new
             session.commit()
             _write_audit_entry(session, "vendor_questionnaire_sent", vendor.id, {})
-            console.print(f"[green]Questionnaire marked as sent for {vendor.name}.[/green]")
+            console.print(
+                f"[green]Questionnaire marked as sent for {escape(vendor.name or '')}.[/green]"
+            )
 
         elif choice == "r":
             soc2_status = Prompt.ask(
@@ -433,14 +436,16 @@ def vendor_onboard() -> None:
         console.print(
             Panel(
                 f"[bold green]Vendor onboarded successfully.[/bold green]\n\n"
-                f"ID: {vendor.id[:8]}  |  Name: {vendor.name}  |  "
+                f"ID: {vendor.id[:8]}  |  Name: {escape(vendor.name or '')}  |  "
                 f"Tier: {tier}  |  Category: {category}\n"
                 f"Questionnaire: {'sent' if send_questionnaire else 'skipped'}  |  "
                 f"SOC 2: {'requested' if request_soc2 else 'skipped'}",
                 border_style="green",
             )
         )
-        console.print(f"\n[dim]Next: warlock vendor-review assess '{vendor.name}'[/dim]")
+        console.print(
+            f"\n[dim]Next: warlock vendor-review assess '{escape(vendor.name or '')}'[/dim]"
+        )
 
     except (KeyboardInterrupt, EOFError):
         console.print("\n[dim]Onboarding cancelled.[/dim]")
@@ -613,7 +618,7 @@ def vendor_offboard(vendor_name_or_id: str) -> None:
             meta = vendor.metadata_ or {}
             if meta.get("offboarded_at"):
                 console.print(
-                    f"[yellow]Warning: '{vendor.name}' was already offboarded on "
+                    f"[yellow]Warning: '{escape(vendor.name or '')}' was already offboarded on "
                     f"{meta['offboarded_at']}.[/yellow]"
                 )
                 if not Confirm.ask("Continue anyway?", default=False, console=console):
@@ -621,7 +626,7 @@ def vendor_offboard(vendor_name_or_id: str) -> None:
 
             console.print(
                 Panel(
-                    f"[bold]{vendor.name}[/bold]\n\n"
+                    f"[bold]{escape(vendor.name or '')}[/bold]\n\n"
                     f"Tier: {vendor.tier or '—'}  |  "
                     f"Contract expires: "
                     f"{vendor.contract_expires.strftime('%Y-%m-%d') if vendor.contract_expires else '—'}  |  "
@@ -706,7 +711,7 @@ def vendor_offboard(vendor_name_or_id: str) -> None:
 
             console.print(
                 Panel(
-                    f"[bold green]{vendor.name} has been offboarded.[/bold green]\n\n"
+                    f"[bold green]{escape(vendor.name or '')} has been offboarded.[/bold green]\n\n"
                     + "\n".join(
                         f"  {'[green]done[/green]' if v else '[red]incomplete[/red]'}  {k}"
                         for k, v in checklist_results.items()

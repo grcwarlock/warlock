@@ -17,6 +17,8 @@ import click
 from rich.panel import Panel
 from rich.table import Table
 
+from rich.markup import escape
+
 from warlock.cli import _check_ai_available, _parse_ai_response, cli, console, _error
 
 
@@ -402,7 +404,9 @@ def suggest_remediation(finding_id: str, use_ai: bool) -> None:
         )
         mapped_controls = [{"framework": m.framework, "control_id": m.control_id} for m in mappings]
 
-    console.print(f"[bold]{row.title}[/bold]  [{row.severity}]  {row.source}/{row.provider}")
+    console.print(
+        f"[bold]{escape(row.title or '')}[/bold]  [{row.severity}]  {row.source}/{row.provider}"
+    )
     if mapped_controls:
         console.print(
             "[dim]Mapped controls: "
@@ -592,7 +596,7 @@ def draft_poam(finding_id: str, use_ai: bool) -> None:
             session.query(ControlMapping).filter(ControlMapping.finding_id == row.id).limit(5).all()
         )
 
-    console.print(f"[bold]Draft POA&M for Finding:[/bold] {row.title}")
+    console.print(f"[bold]Draft POA&M for Finding:[/bold] {escape(row.title or '')}")
     console.print(f"  Severity: {row.severity} | Source: {row.source}/{row.provider}")
 
     if not _check_ai_available(use_ai):
@@ -650,7 +654,7 @@ def draft_exception(finding_id: str, use_ai: bool) -> None:
         if not row:
             _error(f"Finding '{finding_id}' not found.")
 
-    console.print(f"[bold]Draft Exception for:[/bold] {row.title}")
+    console.print(f"[bold]Draft Exception for:[/bold] {escape(row.title or '')}")
     console.print(f"  Severity: {row.severity} | Source: {row.source}/{row.provider}")
 
     if not _check_ai_available(use_ai):
@@ -1302,7 +1306,13 @@ def batch_classify(
     table.add_column("Title", max_width=50)
     table.add_column("Source")
     for r in rows:
-        table.add_row(r.id[:8], r.observation_type, r.severity, r.title[:50], r.source)
+        table.add_row(
+            r.id[:8],
+            r.observation_type,
+            r.severity,
+            escape(r.title[:50] if r.title else ""),
+            r.source,
+        )
     console.print(table)
 
     if not _check_ai_available(use_ai):

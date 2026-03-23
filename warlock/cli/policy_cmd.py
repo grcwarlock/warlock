@@ -5,6 +5,8 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
+from rich.markup import escape
+
 from warlock.cli import cli, console
 
 
@@ -182,7 +184,7 @@ def policy_show(control, framework):
         console.print(f"[bold]{p.policy_type}[/bold] (priority: {p.priority})")
         console.print(f"  Scope: {p.scope or 'global'}")
         console.print(f"  Rules: {p.rules}")
-        console.print(f"  By: {p.created_by}  |  {p.description or ''}")
+        console.print(f"  By: {p.created_by}  |  {escape(p.description or '')}")
         console.print()
 
 

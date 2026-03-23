@@ -18,6 +18,7 @@ persistence and a notice is shown.
 from __future__ import annotations
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -692,7 +693,7 @@ def dr_report(output_format: str) -> None:
         if untested:
             console.print("\n## Untested Systems\n")
             for sp in untested:
-                console.print(f"- {sp.name} [{sp.overall_impact or 'unknown'}]")
+                console.print(f"- {escape(sp.name or '')} [{sp.overall_impact or 'unknown'}]")
         return
 
     # Table mode
@@ -728,7 +729,7 @@ def dr_report(output_format: str) -> None:
                 str(r["rto_actual_minutes"]) if r["rto_actual_minutes"] is not None else "\u2014"
             )
             table.add_row(
-                r["system_name"][:30],
+                escape(r["system_name"][:30]),
                 f"[{impact_style}]{r['overall_impact']}[/]",
                 f"[{result_style}]{r['test_result']}[/]",
                 rto_str,
@@ -741,4 +742,6 @@ def dr_report(output_format: str) -> None:
         console.print(f"\n[yellow]Systems with no DR tests ({total_untested}):[/yellow]")
         for sp in untested:
             style = _impact_style(sp.overall_impact)
-            console.print(f"  [{style}]{sp.name}[/] ([dim]{sp.overall_impact or 'unknown'}[/dim])")
+            console.print(
+                f"  [{style}]{escape(sp.name or '')}[/] ([dim]{sp.overall_impact or 'unknown'}[/dim])"
+            )

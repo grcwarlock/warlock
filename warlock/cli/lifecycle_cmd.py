@@ -20,6 +20,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -792,7 +793,7 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                 console.print()
                 console.print(
                     Panel(
-                        f"[bold]{vendor.name}[/bold]\n\n"
+                        f"[bold]{escape(vendor.name or '')}[/bold]\n\n"
                         f"ID: {vendor.id[:8]}   "
                         f"Tier: [{tier_color}]{vendor.tier or 'unset'}[/{tier_color}]   "
                         f"Risk Score: {vendor.risk_score or 0:.1f}/100\n"
@@ -910,7 +911,9 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                         vendor.id,
                         {},
                     )
-                    console.print(f"  [green]Questionnaire sent to {vendor.name}.[/green]")
+                    console.print(
+                        f"  [green]Questionnaire sent to {escape(vendor.name or '')}.[/green]"
+                    )
 
                 elif choice == "c":
                     date_str = Prompt.ask("New contract expiry (YYYY-MM-DD)")
@@ -944,7 +947,9 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                         vendor.id,
                         {"offboarded_by": _get_actor()},
                     )
-                    console.print(f"  [green]{vendor.name} has been offboarded.[/green]")
+                    console.print(
+                        f"  [green]{escape(vendor.name or '')} has been offboarded.[/green]"
+                    )
                     break
 
         except (KeyboardInterrupt, EOFError):
@@ -1660,7 +1665,7 @@ def policy_lifecycle(interactive: bool) -> None:
                             continue
                         for p in expired_policies[:3]:
                             console.print(f"\n  Policy: {p.policy_type} ({p.id[:8]})")
-                            console.print(f"  Description: {(p.description or '')[:80]}")
+                            console.print(f"  Description: {escape((p.description or '')[:80])}")
                             renew = Confirm.ask("  Renew for 365 days?", default=True)
                             if renew:
                                 p.expires_at = now + timedelta(days=365)

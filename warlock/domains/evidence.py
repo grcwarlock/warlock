@@ -15,6 +15,7 @@ from warlock.domains.base import (
     RelatedItem,
     UrgentItem,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -47,8 +48,7 @@ class EvidenceDomainService:
         items = []
         now = datetime.now(timezone.utc)
         for fw, ctrl, last in q.limit(filters.limit).all():
-            if last and last.tzinfo is None:
-                last = last.replace(tzinfo=timezone.utc)
+            last = ensure_aware(last)
             days_ago = (now - last).days if last else 999
             items.append(
                 UrgentItem(
@@ -85,8 +85,7 @@ class EvidenceDomainService:
             return []
 
         now = datetime.now(timezone.utc)
-        if latest and latest.tzinfo is None:
-            latest = latest.replace(tzinfo=timezone.utc)
+        latest = ensure_aware(latest)
         days_ago = (now - latest).days if latest else None
         stale = days_ago is not None and days_ago > self._stale_days
         freshness = "stale" if stale else "current" if days_ago is not None else "unknown"

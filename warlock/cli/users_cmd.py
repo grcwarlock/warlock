@@ -8,6 +8,7 @@ scope/permission control.
 from __future__ import annotations
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error
@@ -92,8 +93,8 @@ def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> Non
         last = u.last_login.strftime("%Y-%m-%d") if u.last_login else "\u2014"
         table.add_row(
             u.id[:8],
-            u.email,
-            u.name,
+            escape(u.email or ""),
+            escape(u.name or ""),
             f"[{role_style.get(u.role, '')}]{u.role}[/]",
             "[green]on[/green]" if u.mfa_enabled else "[dim]off[/dim]",
             "[green]yes[/green]" if u.is_active else "[red]no[/red]",
@@ -228,7 +229,7 @@ def users_show(user_id: str) -> None:
 
         api_keys = session.query(APIKey).filter(APIKey.user_id == u.id).all()
 
-    console.print(f"\n[bold]User:[/bold] {u.name} ({u.email})")
+    console.print(f"\n[bold]User:[/bold] {escape(u.name or '')} ({escape(u.email or '')})")
     console.print(f"  ID:        {u.id}")
     console.print(f"  Role:      {u.role}")
     console.print(f"  Active:    {'yes' if u.is_active else 'no'}")
@@ -248,7 +249,7 @@ def users_show(user_id: str) -> None:
         for k in api_keys:
             exp = k.expires_at.strftime("%Y-%m-%d") if k.expires_at else "no expiry"
             state = "[green]active[/green]" if k.is_active else "[red]revoked[/red]"
-            console.print(f"  {k.id[:8]}  {k.name:30s} {state}  expires: {exp}")
+            console.print(f"  {k.id[:8]}  {escape(k.name or ''):30s} {state}  expires: {exp}")
 
 
 # ---------------------------------------------------------------------------
@@ -536,7 +537,7 @@ def users_audit_log(user_id: str, limit: int) -> None:
         console.print(f"[dim]No audit entries for {u.email}.[/dim]")
         return
 
-    table = Table(title=f"Audit Log: {u.email}")
+    table = Table(title=f"Audit Log: {escape(u.email or '')}")
     table.add_column("Seq", justify="right", style="dim")
     table.add_column("When", style="dim")
     table.add_column("Action")
@@ -614,8 +615,8 @@ def roles_show(role_name: str) -> None:
     for u in rows:
         table.add_row(
             u.id[:8],
-            u.email,
-            u.name,
+            escape(u.email or ""),
+            escape(u.name or ""),
             "[green]on[/green]" if u.mfa_enabled else "[dim]off[/dim]",
         )
     console.print(table)

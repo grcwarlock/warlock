@@ -8,6 +8,8 @@ and is bound to relevant NIST 800-53 controls.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+
+from warlock.utils import ensure_aware
 from typing import Any
 
 from warlock.assessors.engine import engine
@@ -35,8 +37,7 @@ def _days_since(date_str: str | None) -> int | None:
     for fmt in ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S%z"):
         try:
             dt = datetime.strptime(date_str, fmt)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+            dt = ensure_aware(dt)
             return (datetime.now(timezone.utc) - dt).days
         except (ValueError, TypeError):
             continue

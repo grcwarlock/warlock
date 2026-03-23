@@ -7,6 +7,7 @@ import os
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 console = Console()
@@ -14,7 +15,7 @@ console = Console()
 
 def _error(msg: str) -> None:
     """Print error to stderr and exit with code 1."""
-    console.print(f"[red]{msg}[/red]")
+    console.print(f"[red]{escape(msg)}[/red]")
     raise SystemExit(1)
 
 
@@ -78,9 +79,9 @@ def _ai_repl(svc, session_id: str, ctx, entity_label: str) -> None:
         result = svc.converse(session_id=session_id, message=user_input, context=ctx)
         if result.ai_used:
             response_text = _parse_ai_response(result.value)
-            console.print(f"AI: {response_text}\n")
+            console.print(f"AI: {escape(response_text)}\n")
         else:
-            console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
+            console.print(f"[yellow]AI unavailable: {escape(str(result.fallback_reason))}[/yellow]")
             break
 
 
@@ -101,8 +102,8 @@ def _resolve_system_id(session, value: str) -> str:
     matches = session.query(SystemProfile).filter(SystemProfile.acronym.ilike(value)).all()
     if len(matches) > 1:
         console.print(
-            f"[yellow]Warning: ambiguous system match for '{value}'. "
-            f"Matches: {', '.join(m.id[:8] + ' (' + (m.name or '') + ')' for m in matches)}. "
+            f"[yellow]Warning: ambiguous system match for '{escape(value)}'. "
+            f"Matches: {', '.join(m.id[:8] + ' (' + escape(m.name or '') + ')' for m in matches)}. "
             f"Using first match.[/yellow]"
         )
         return matches[0].id
@@ -113,8 +114,8 @@ def _resolve_system_id(session, value: str) -> str:
     matches = session.query(SystemProfile).filter(SystemProfile.id.startswith(value)).all()
     if len(matches) > 1:
         console.print(
-            f"[yellow]Warning: ambiguous system match for '{value}'. "
-            f"Matches: {', '.join(m.id[:8] + ' (' + (m.name or '') + ')' for m in matches)}. "
+            f"[yellow]Warning: ambiguous system match for '{escape(value)}'. "
+            f"Matches: {', '.join(m.id[:8] + ' (' + escape(m.name or '') + ')' for m in matches)}. "
             f"Using first match.[/yellow]"
         )
         return matches[0].id
@@ -145,7 +146,7 @@ def _print_stats(stats) -> None:
     if stats.errors:
         console.print(f"\n[yellow]Errors ({len(stats.errors)}):[/yellow]")
         for err in stats.errors[:10]:
-            console.print(f"  [dim]\u2022 {err}[/dim]")
+            console.print(f"  [dim]\u2022 {escape(str(err))}[/dim]")
         if len(stats.errors) > 10:
             console.print(f"  [dim]... and {len(stats.errors) - 10} more[/dim]")
 

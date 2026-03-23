@@ -14,6 +14,7 @@ from warlock.domains.base import (
     RelatedItem,
     UrgentItem,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -42,8 +43,7 @@ class IssuesDomainService:
             score = _SEV_SCORE.get(poam.severity, 10)
             overdue_label = ""
             sc = poam.scheduled_completion
-            if sc is not None and sc.tzinfo is None:
-                sc = sc.replace(tzinfo=timezone.utc)
+            sc = ensure_aware(sc)
             if sc and sc < now:
                 days_overdue = (now - sc).days
                 score += min(days_overdue * 5, 100)

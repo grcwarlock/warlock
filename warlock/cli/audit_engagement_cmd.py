@@ -9,6 +9,7 @@ Groups:
 from __future__ import annotations
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -309,7 +310,7 @@ def engagement_status(engagement_id: str) -> None:
             session.query(AuditComment).filter(AuditComment.engagement_id == eng.id).count()
         )
 
-    console.print(f"\n[bold cyan]Engagement Status: {eng.name}[/bold cyan]")
+    console.print(f"\n[bold cyan]Engagement Status: {escape(eng.name or '')}[/bold cyan]")
     console.print(f"  Framework: {eng.framework}  |  Status: {eng.status}")
     console.print(f"  Period: {str(eng.period_start)[:10]} to {str(eng.period_end)[:10]}")
 

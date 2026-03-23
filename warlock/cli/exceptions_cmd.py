@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -277,10 +278,10 @@ def exceptions_show(exception_id: str) -> None:
     effective_status = _derive_status(meta) if meta else ("active" if ov.is_active else "expired")
 
     console.print(f"\n[bold]Policy Exception[/bold] [cyan]{ov.id[:8]}[/cyan]")
-    console.print(f"  Name:        {ov.name}")
+    console.print(f"  Name:        {escape(ov.name or '')}")
     console.print(f"  Status:      {effective_status}")
-    console.print(f"  Policy:      {meta.get('policy', '')}")
-    console.print(f"  Justification: {meta.get('justification', ov.description or '')}")
+    console.print(f"  Policy:      {escape(str(meta.get('policy', '')))}")
+    console.print(f"  Justification: {escape(meta.get('justification', ov.description or ''))}")
     console.print(f"  Approver:    {meta.get('approver', '')}")
     expiry = meta.get("expiry", "\u2014")
     if expiry and expiry != "\u2014":

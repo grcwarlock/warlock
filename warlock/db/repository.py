@@ -1525,9 +1525,11 @@ class AuditEntryRepository(BaseRepository):
         """Total number of audit entries."""
         return self.session.query(func.count(AuditEntry.id)).scalar() or 0
 
-    def all_by_sequence(self) -> list[AuditEntry]:
-        """Return all audit entries ordered by sequence ascending (for chain verification)."""
-        return self.session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).all()
+    def all_by_sequence(self, batch_size: int = 500):
+        """Stream audit entries by sequence for memory-efficient verification."""
+        return (
+            self.session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).yield_per(batch_size)
+        )
 
 
 # ---------------------------------------------------------------------------

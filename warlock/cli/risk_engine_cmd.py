@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 import click
 from rich.table import Table
 
+from rich.markup import escape
+
 from warlock.cli import cli, console, _error, _get_actor
 
 
@@ -178,7 +180,7 @@ def quantify(finding_id: str, method: str) -> None:
         }
 
         console.print(f"\n[bold]Risk Quantification \u2014 {finding.id[:8]}[/bold]")
-        console.print(f"  Title:    {finding.title[:70]}")
+        console.print(f"  Title:    {escape(finding.title[:70] if finding.title else '')}")
         console.print(f"  Severity: [{_severity_style(severity)}]{severity}[/]")
         console.print(f"  Source:   {finding.source} / {finding.provider}")
         console.print(f"  Method:   {method.upper()}")

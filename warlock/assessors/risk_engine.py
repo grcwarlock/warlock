@@ -29,6 +29,7 @@ from warlock.assessors.posture import ControlPosture, PostureAggregator
 from warlock.db.models import (
     RiskAnalysis,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -1159,8 +1160,7 @@ class RiskEngine:
         oldest = session.query(sa_func.min(RiskAnalysis.created_at)).scalar()
         if oldest is not None:
             # Ensure timezone-aware before subtraction
-            if oldest.tzinfo is None:
-                oldest = oldest.replace(tzinfo=timezone.utc)
+            oldest = ensure_aware(oldest)
             age_hours: float | None = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600.0
         else:
             age_hours = None

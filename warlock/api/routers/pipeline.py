@@ -181,14 +181,13 @@ def verify_hash_chain(
     from datetime import datetime, timezone
 
     repos = get_repos(db)
-    entries = repos.audit_entries.all_by_sequence()
-
-    total = len(entries)
+    total = repos.audit_entries.total_count()
     verified = 0
     broken_at: int | None = None
+    prev_entry_hash: str | None = None
 
-    for i, entry in enumerate(entries):
-        if i == 0:
+    for entry in repos.audit_entries.all_by_sequence():
+        if prev_entry_hash is None:
             # Genesis entry — previous_hash should be "genesis"
             if entry.previous_hash == "genesis":
                 verified += 1
@@ -196,12 +195,12 @@ def verify_hash_chain(
                 broken_at = entry.sequence
                 break
         else:
-            prev = entries[i - 1]
-            if entry.previous_hash == prev.entry_hash:
+            if entry.previous_hash == prev_entry_hash:
                 verified += 1
             else:
                 broken_at = entry.sequence
                 break
+        prev_entry_hash = entry.entry_hash
 
     return HashChainVerifyResponse(
         total=total,

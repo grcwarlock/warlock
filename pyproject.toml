@@ -42,6 +42,7 @@ gcp = [
     "google-cloud-compute>=1.18",
 ]
 ai = []  # codebase uses raw httpx; no SDK deps needed
+analytics = ["numpy>=2.0", "pandas>=2.0"]
 monitoring = ["prometheus-client>=0.20"]
 lake = ["duckdb>=1.1", "pyarrow>=17.0", "pyiceberg[pyarrow]>=0.7", "nats-py>=2.7"]
 pdf = ["weasyprint>=62.0"]

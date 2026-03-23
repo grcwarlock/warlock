@@ -5,6 +5,7 @@ questionnaires, questionnaires-seed."""
 from __future__ import annotations
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console
@@ -124,7 +125,7 @@ def systems_create(
         sp = mgr.create(session, name=name, description=description, **kwargs)
 
     console.print(f"[green]System profile created: {sp.id}[/green]")
-    console.print(f"  Name:   {sp.name}")
+    console.print(f"  Name:   {escape(sp.name or '')}")
     console.print(f"  Impact: {sp.overall_impact}")
     if sp.frameworks:
         console.print(f"  Frameworks: {', '.join(sp.frameworks)}")
@@ -445,13 +446,13 @@ def data_silos_discover() -> None:
             if not s.access_logging_enabled:
                 issues.append("no logging")
             console.print(
-                f"  [dim]\u2022 {s.name} ({s.silo_type}) \u2014 {', '.join(issues)}[/dim]"
+                f"  [dim]\u2022 {escape(s.name or '')} ({s.silo_type}) \u2014 {', '.join(issues)}[/dim]"
             )
 
     if unclassified:
         console.print(f"\n[yellow]Unclassified silos ({len(unclassified)}):[/yellow]")
         for s in unclassified[:10]:
-            console.print(f"  [dim]\u2022 {s.name} ({s.silo_type})[/dim]")
+            console.print(f"  [dim]\u2022 {escape(s.name or '')} ({s.silo_type})[/dim]")
 
 
 @cli.command("questionnaires")

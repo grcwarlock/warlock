@@ -20,6 +20,7 @@ from warlock.db.models import (
     Finding,
     PostureSnapshot,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -144,9 +145,7 @@ class DriftDetector:
         Returns:
             List of correlated ChangeEvent rows, ordered by temporal proximity.
         """
-        detected_at = drift.detected_at
-        if detected_at and detected_at.tzinfo is None:
-            detected_at = detected_at.replace(tzinfo=timezone.utc)
+        detected_at = ensure_aware(drift.detected_at)
 
         window = timedelta(hours=window_hours)
         start = detected_at - window
@@ -177,12 +176,7 @@ class DriftDetector:
         # Sort by temporal proximity in Python (avoids SQLite-specific func.julianday)
         events.sort(
             key=lambda e: abs(
-                (
-                    e.occurred_at.replace(tzinfo=timezone.utc)
-                    if e.occurred_at.tzinfo is None
-                    else e.occurred_at
-                )
-                - detected_at
+                (ensure_aware(e.occurred_at) or e.occurred_at) - detected_at
             ).total_seconds()
         )
 

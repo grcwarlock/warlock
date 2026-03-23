@@ -23,6 +23,7 @@ from uuid import UUID, uuid4, uuid5
 from sqlalchemy.orm import Session
 
 from warlock.db.models import ControlResult, Finding
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -171,8 +172,7 @@ def _iso(dt: datetime | None) -> str:
     """Datetime to ISO-8601 string, falling back to now."""
     if dt is None:
         return datetime.now(timezone.utc).isoformat()
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = ensure_aware(dt)
     return dt.isoformat()
 
 

@@ -12,6 +12,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor, _print_stats
@@ -283,7 +284,7 @@ def auto_issue(
     table.add_column("Title", max_width=55)
     table.add_column("Source")
     for r in candidates[:20]:
-        table.add_row(r.id[:8], r.severity, r.title[:55], r.source)
+        table.add_row(r.id[:8], r.severity, escape(r.title[:55] if r.title else ""), r.source)
     if len(candidates) > 20:
         console.print(f"[dim]... and {len(candidates) - 20} more[/dim]")
     console.print(table)

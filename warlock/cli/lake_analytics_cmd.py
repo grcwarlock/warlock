@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error
@@ -465,7 +466,7 @@ def lake_lineage(finding_id: str) -> None:
         t_finding.add_column("Field", style="dim")
         t_finding.add_column("Value")
         t_finding.add_row("ID", finding.id)
-        t_finding.add_row("Title", finding.title or "—")
+        t_finding.add_row("Title", escape(finding.title or "—"))
         t_finding.add_row("Severity", finding.severity)
         t_finding.add_row("Source", f"{finding.source} / {finding.provider}")
         t_finding.add_row(

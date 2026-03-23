@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime, timezone
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
@@ -316,7 +317,7 @@ def incident_manage(incident_id: str) -> None:
                 console.print()
                 console.print(
                     Panel(
-                        f"[bold]{issue.title}[/bold]\n\n"
+                        f"[bold]{escape(issue.title or '')}[/bold]\n\n"
                         f"ID: {issue.id[:8]}  |  "
                         f"Severity: [{sev_style}]{issue.priority}[/{sev_style}]  |  "
                         f"Status: [{status_style}]{issue.status}[/{status_style}]\n"
@@ -329,7 +330,7 @@ def incident_manage(incident_id: str) -> None:
                 )
 
                 if issue.description:
-                    console.print(f"\n[dim]{issue.description}[/dim]")
+                    console.print(f"\n[dim]{escape(issue.description)}[/dim]")
 
                 _format_timeline(issue)
 
@@ -337,7 +338,9 @@ def incident_manage(incident_id: str) -> None:
                 if issue.finding_id:
                     f = session.query(Finding).filter(Finding.id == issue.finding_id).first()
                     if f:
-                        console.print(f"\nLinked finding: {f.id[:8]} — {(f.title or '')[:60]}")
+                        console.print(
+                            f"\nLinked finding: {f.id[:8]} — {escape((f.title or '')[:60])}"
+                        )
 
                 # Recent comments
                 recent_comments = (
@@ -351,7 +354,9 @@ def incident_manage(incident_id: str) -> None:
                     console.print("\n[bold]Recent events:[/bold]")
                     for c in reversed(recent_comments):
                         ts = c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "—"
-                        console.print(f"  [{ts}] {c.author}: {c.content[:80]}")
+                        console.print(
+                            f"  [{ts}] {c.author}: {escape(c.content[:80] if c.content else '')}"
+                        )
 
                 console.print()
                 choice = Prompt.ask(

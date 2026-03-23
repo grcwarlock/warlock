@@ -760,42 +760,60 @@ class QuestionnaireManager:
     def _build_evidence_corpus(self, session: Session) -> dict[str, Any]:
         """Build a reusable evidence corpus from ControlResult + Finding tables.
 
+        Streams rows with ``yield_per()`` to avoid loading 373K+ control
+        results and thousands of findings into a single Python list.  The
+        keyword indexes store lightweight dicts instead of full ORM objects
+        to reduce memory pressure further.
+
         Returns:
             {
-              "results": list[ControlResult],
-              "findings": list[Finding],
               "compliant_controls": set[str],   # "framework control_id"
               "non_compliant_controls": set[str],
-              "finding_index": {word: [Finding, ...]},
-              "result_index": {word: [ControlResult, ...]},
+              "finding_index": {word: [dict, ...]},
+              "result_index": {word: [dict, ...]},
             }
         """
-        results: list[ControlResult] = session.query(ControlResult).all()
-        findings: list[Finding] = session.query(Finding).all()
-
         compliant: set[str] = set()
         non_compliant: set[str] = set()
-        result_index: dict[str, list[ControlResult]] = {}
+        result_index: dict[str, list[dict[str, Any]]] = {}
 
-        for r in results:
+        result_stream = session.query(
+            ControlResult.id,
+            ControlResult.framework,
+            ControlResult.control_id,
+            ControlResult.status,
+            ControlResult.assertion_name,
+            ControlResult.assertion_passed,
+            ControlResult.remediation_summary,
+        ).yield_per(1000)
+        for r in result_stream:
             key = f"{r.framework} {r.control_id}"
             if r.status == "compliant":
                 compliant.add(key)
             elif r.status == "non_compliant":
                 non_compliant.add(key)
 
-            # Index by words from assertion_name
+            row_dict = {
+                "id": r.id,
+                "framework": r.framework,
+                "control_id": r.control_id,
+                "assertion_passed": r.assertion_passed,
+                "assertion_name": r.assertion_name,
+                "remediation_summary": r.remediation_summary,
+            }
             for word in self._tokenize(r.assertion_name or ""):
-                result_index.setdefault(word, []).append(r)
+                result_index.setdefault(word, []).append(row_dict)
 
-        finding_index: dict[str, list[Finding]] = {}
-        for f in findings:
+        finding_index: dict[str, list[dict[str, Any]]] = {}
+        finding_stream = session.query(
+            Finding.id, Finding.title, Finding.source, Finding.severity
+        ).yield_per(1000)
+        for f in finding_stream:
+            row_dict = {"id": f.id, "title": f.title}
             for word in self._tokenize(f.title or ""):
-                finding_index.setdefault(word, []).append(f)
+                finding_index.setdefault(word, []).append(row_dict)
 
         return {
-            "results": results,
-            "findings": findings,
             "compliant_controls": compliant,
             "non_compliant_controls": non_compliant,
             "result_index": result_index,
@@ -848,21 +866,31 @@ class QuestionnaireManager:
 
         for word in question_words:
             for r in result_index.get(word, []):
-                if r.id not in seen_result_ids:
-                    seen_result_ids.add(r.id)
-                    key = f"{r.framework} {r.control_id}"
-                    if r.assertion_passed is True:
+                rid = r["id"] if isinstance(r, dict) else r.id
+                if rid not in seen_result_ids:
+                    seen_result_ids.add(rid)
+                    fw = r["framework"] if isinstance(r, dict) else r.framework
+                    cid = r["control_id"] if isinstance(r, dict) else r.control_id
+                    passed = r["assertion_passed"] if isinstance(r, dict) else r.assertion_passed
+                    aname = r["assertion_name"] if isinstance(r, dict) else r.assertion_name
+                    rsum = (
+                        r["remediation_summary"] if isinstance(r, dict) else r.remediation_summary
+                    )
+                    key = f"{fw} {cid}"
+                    if passed is True:
                         matched_compliant.append(key)
-                        if r.assertion_name:
-                            evidence_snippets.append(r.assertion_name)
-                    elif r.assertion_passed is False:
+                        if aname:
+                            evidence_snippets.append(aname)
+                    elif passed is False:
                         matched_non_compliant.append(key)
-                        if r.remediation_summary:
-                            remediation_snippets.append(r.remediation_summary[:120])
+                        if rsum:
+                            remediation_snippets.append(rsum[:120])
             for f in finding_index.get(word, []):
-                if f.id not in seen_finding_ids:
-                    seen_finding_ids.add(f.id)
-                    evidence_snippets.append(f.title[:100])
+                fid = f["id"] if isinstance(f, dict) else f.id
+                if fid not in seen_finding_ids:
+                    seen_finding_ids.add(fid)
+                    ftitle = f["title"] if isinstance(f, dict) else f.title
+                    evidence_snippets.append(ftitle[:100])
 
         return {
             "matched_compliant": matched_compliant,

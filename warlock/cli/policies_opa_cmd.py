@@ -28,6 +28,7 @@ import sys
 from typing import Any
 
 import click
+from rich.markup import escape
 from rich.table import Table
 from rich.syntax import Syntax
 
@@ -725,7 +726,7 @@ def lifecycle_review_due(days: int) -> None:
 
     for p in rows:
         expires = p.expires_at.strftime("%Y-%m-%d") if p.expires_at else "\u2014"
-        table.add_row(p.id[:8], p.policy_type, expires, (p.description or "")[:60])
+        table.add_row(p.id[:8], p.policy_type, expires, escape((p.description or "")[:60]))
 
     console.print(table)
 

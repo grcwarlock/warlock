@@ -35,6 +35,7 @@ from warlock.db.models import (
     TrustAccessRequest,
     TrustDocument,
 )
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -203,9 +204,7 @@ async def trust_status(db: Session = Depends(get_db)):
     last_result = db.query(ControlResult).order_by(ControlResult.assessed_at.desc()).first()
     last_assessment = None
     if last_result and last_result.assessed_at:
-        dt = last_result.assessed_at
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+        dt = ensure_aware(last_result.assessed_at)
         last_assessment = dt.isoformat()
 
     # Bin overall score for public view
@@ -240,14 +239,10 @@ async def certifications(db: Session = Depends(get_db)):
         period_start = None
         period_end = None
         if eng.period_start:
-            dt = eng.period_start
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+            dt = ensure_aware(eng.period_start)
             period_start = dt.isoformat()
         if eng.period_end:
-            dt = eng.period_end
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+            dt = ensure_aware(eng.period_end)
             period_end = dt.isoformat()
 
         results.append(
@@ -284,8 +279,7 @@ async def security_updates(db: Session = Depends(get_db)):
     for eng in recent_engagements:
         completed_dt = eng.completed_at or eng.created_at
         if completed_dt:
-            if completed_dt.tzinfo is None:
-                completed_dt = completed_dt.replace(tzinfo=timezone.utc)
+            completed_dt = ensure_aware(completed_dt)
             updates.append(
                 SecurityUpdateResponse(
                     date=completed_dt.isoformat(),
@@ -432,9 +426,7 @@ class TrustDocumentDownloadResponse(BaseModel):
 
 
 def _doc_to_response(doc: TrustDocument) -> TrustDocumentResponse:
-    dt = doc.uploaded_at
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = ensure_aware(doc.uploaded_at)
     return TrustDocumentResponse(
         id=doc.id,
         title=doc.title,

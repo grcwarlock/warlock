@@ -20,6 +20,7 @@ from warlock.db.models import (
     ControlResult,
 )
 from warlock.assessors.posture import PostureAggregator
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -40,8 +41,7 @@ def _get_engagement(session: Session, engagement_id: str) -> AuditEngagement:
 def _iso(dt: datetime | None) -> str:
     if dt is None:
         return ""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = ensure_aware(dt)
     return dt.isoformat()
 
 

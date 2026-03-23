@@ -14,6 +14,7 @@ from warlock.api.deps import get_db, require_permission, apply_framework_scope, 
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str, _escape_like, _parse_dt
 from warlock.db.models import User
 from warlock.db.repository import get_repos
+from warlock.utils import ensure_aware
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -1005,9 +1006,7 @@ def dashboard_summary(
 
     recent_drift = []
     for d in drift_rows:
-        dt = d.detected_at
-        if dt and dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+        dt = ensure_aware(d.detected_at)
         recent_drift.append(
             {
                 "framework": d.framework,
@@ -1035,12 +1034,8 @@ def dashboard_summary(
 
     connectors = []
     for run in connector_runs:
-        started = run.started_at
-        if started and started.tzinfo is None:
-            started = started.replace(tzinfo=timezone.utc)
-        completed = run.completed_at
-        if completed and completed.tzinfo is None:
-            completed = completed.replace(tzinfo=timezone.utc)
+        started = ensure_aware(run.started_at)
+        completed = ensure_aware(run.completed_at)
         connectors.append(
             {
                 "provider": run.provider,
@@ -1059,8 +1054,7 @@ def dashboard_summary(
     last_assessed = repos.control_results.last_assessed_at()
     last_assessment = None
     if last_assessed:
-        if last_assessed.tzinfo is None:
-            last_assessed = last_assessed.replace(tzinfo=timezone.utc)
+        last_assessed = ensure_aware(last_assessed)
         last_assessment = last_assessed.isoformat()
 
     # -----------------------------------------------------------------

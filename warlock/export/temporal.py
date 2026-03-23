@@ -23,6 +23,7 @@ from warlock.db.models import (
     ControlResult,
     Finding,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -74,8 +75,7 @@ def _iso(dt: datetime | None) -> str:
     """Datetime to ISO-8601 string."""
     if dt is None:
         return ""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = ensure_aware(dt)
     return dt.isoformat()
 
 
@@ -148,10 +148,8 @@ class TemporalPackager:
             EvidencePackage with all evidence organized by control.
         """
         # Ensure timezone awareness
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
+        start = ensure_aware(start)
+        end = ensure_aware(end)
 
         # Query all ControlResults in period for this framework
         results_query = session.query(ControlResult).filter(
@@ -204,9 +202,7 @@ class TemporalPackager:
         for m in mappings:
             f = findings_map.get(m.finding_id)
             if f and f.observed_at:
-                obs = f.observed_at
-                if obs.tzinfo is None:
-                    obs = obs.replace(tzinfo=timezone.utc)
+                obs = ensure_aware(f.observed_at)
                 if start <= obs <= end:
                     findings_by_control.setdefault(m.control_id, []).append(f)
 
@@ -270,16 +266,10 @@ class TemporalPackager:
             timestamps: list[datetime] = []
             for f in unique_findings:
                 if f.observed_at:
-                    ts = f.observed_at
-                    if ts.tzinfo is None:
-                        ts = ts.replace(tzinfo=timezone.utc)
-                    timestamps.append(ts)
+                    timestamps.append(ensure_aware(f.observed_at))
             for r in ctrl_results:
                 if r.assessed_at:
-                    ts = r.assessed_at
-                    if ts.tzinfo is None:
-                        ts = ts.replace(tzinfo=timezone.utc)
-                    timestamps.append(ts)
+                    timestamps.append(ensure_aware(r.assessed_at))
 
             earliest = min(timestamps) if timestamps else None
             latest = max(timestamps) if timestamps else None

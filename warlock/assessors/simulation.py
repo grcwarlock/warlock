@@ -23,6 +23,7 @@ from warlock.db.models import (
     PostureSnapshot,
     RiskAcceptance,
 )
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 
@@ -72,8 +73,7 @@ class AuditSimulator:
         Returns:
             AuditSimulationResult with projected state.
         """
-        if target_date.tzinfo is None:
-            target_date = target_date.replace(tzinfo=timezone.utc)
+        target_date = ensure_aware(target_date)
 
         result = AuditSimulationResult(
             framework=framework,

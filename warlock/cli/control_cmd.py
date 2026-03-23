@@ -5,6 +5,8 @@ from __future__ import annotations
 import click
 from rich.panel import Panel
 
+from rich.markup import escape
+
 from warlock.cli import cli, console
 
 
@@ -130,7 +132,9 @@ def control_hub(control_id, framework, fmt):
         console.print(f"\n[bold cyan]Issues ({len(issues)})[/bold cyan]")
         for i in issues:
             style = "red" if i.status in ("open",) else "dim"
-            console.print(f"  [{style}]{i.id[:8]}[/{style}] — {i.title[:50]} ({i.status})")
+            console.print(
+                f"  [{style}]{i.id[:8]}[/{style}] — {escape((i.title or '')[:50])} ({i.status})"
+            )
 
     # Evidence requests
     if evidence_requests:

@@ -25,6 +25,7 @@ from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -1045,7 +1046,9 @@ def impact_assess(system: str) -> None:
     risk_flags: list[str] = []
 
     for s in rows:
-        console.print(f"[cyan]{s.name}[/cyan] ({s.silo_type} / {s.provider or 'unknown provider'})")
+        console.print(
+            f"[cyan]{escape(s.name or '')}[/cyan] ({s.silo_type} / {s.provider or 'unknown provider'})"
+        )
         console.print(f"  Classification: {s.data_classification}")
 
         flags = []
