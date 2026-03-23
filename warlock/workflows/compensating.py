@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from warlock.db.audit import AuditTrail
 from warlock.db.models import CompensatingControl
 from warlock.utils import ensure_aware
 
@@ -40,9 +41,28 @@ class CompensatingControlManager:
                     f"Missing required field for compensating control: {required_field}"
                 )
 
+        status = kwargs.get("status")
+        if status and status != "proposed":
+            raise ValueError(
+                f"New compensating controls must start in 'proposed' status, "
+                f"not '{status}'. Use approve() to activate."
+            )
+
         cc = CompensatingControl(**kwargs)
         session.add(cc)
         session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="compensating_control_created",
+            entity_type="compensating_control",
+            entity_id=str(cc.id),
+            actor="system",
+            metadata={
+                "framework": cc.original_framework,
+                "control_id": cc.original_control_id,
+            },
+        )
 
         log.info(
             "Created compensating control %s for %s/%s: %s",
@@ -51,6 +71,18 @@ class CompensatingControlManager:
             cc.original_control_id,
             cc.title,
         )
+        return cc
+
+    def approve(self, session: Session, cc_id: str, approved_by: str) -> CompensatingControl:
+        """Approve a compensating control. Must be in 'proposed' status."""
+        cc = session.query(CompensatingControl).filter_by(id=cc_id).first()
+        if not cc:
+            raise ValueError(f"Compensating control not found: {cc_id}")
+        if cc.status != "proposed":
+            raise ValueError(f"Cannot approve from status '{cc.status}' — must be 'proposed'")
+        cc.status = "approved"
+        cc.approved_by = approved_by
+        session.flush()
         return cc
 
     def check_for_control(

@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from warlock.db.audit import AuditTrail
 from warlock.db.models import (
     ControlMapping,
     ControlResult,
@@ -114,13 +115,20 @@ class RetentionManager:
         return False
 
     def _cutoff_date(self, frameworks: list[str] | None = None) -> datetime:
-        """Calculate the cutoff date for purging based on framework retention."""
+        """Calculate the cutoff date for purging based on framework retention.
+
+        Raises ValueError if no frameworks are specified, because using the
+        shortest retention period across all frameworks could delete records
+        that must be retained longer (e.g. HIPAA 6-year requirement vs SOC 2
+        1-year).  Callers must specify frameworks explicitly.
+        """
         if frameworks:
             days = self.get_retention_days(frameworks)
         else:
-            # Use the shortest retention when no framework specified
-            days = (
-                min(FRAMEWORK_RETENTION.values()) if FRAMEWORK_RETENTION else DEFAULT_RETENTION_DAYS
+            raise ValueError(
+                "Framework must be specified for purge operations. "
+                "Cross-framework purge with shortest retention period could "
+                "violate HIPAA 6-year requirement. Specify frameworks explicitly."
             )
         return datetime.now(timezone.utc) - timedelta(days=days)
 
@@ -137,7 +145,7 @@ class RetentionManager:
             return {"raw_events": 0, "findings": 0, "control_results": 0, "total": 0}
 
         frameworks = [framework] if framework else list(FRAMEWORK_RETENTION.keys())
-        cutoff = ensure_aware(self._cutoff_date(frameworks if framework else None))
+        cutoff = ensure_aware(self._cutoff_date(frameworks))
 
         raw_count = (
             session.query(func.count(RawEvent.id)).filter(RawEvent.ingested_at < cutoff).scalar()
@@ -212,7 +220,7 @@ class RetentionManager:
                 "dry_run": dry_run,
             }
 
-        frameworks = [framework] if framework else None
+        frameworks = [framework] if framework else list(FRAMEWORK_RETENTION.keys())
         cutoff = ensure_aware(self._cutoff_date(frameworks))
 
         # Count what would be purged
@@ -265,6 +273,23 @@ class RetentionManager:
             synchronize_session=False
         )
         session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="retention_purge",
+            entity_type="retention",
+            entity_id=cutoff.isoformat(),
+            actor="system",
+            metadata={
+                "records_purged": total,
+                "dry_run": False,
+                "framework": framework,
+                "raw_events": raw_count,
+                "findings": findings_count,
+                "control_results": results_count,
+                "control_mappings": mappings_count,
+            },
+        )
 
         log.info(
             "Purged %d records (raw=%d, findings=%d, results=%d, mappings=%d) before %s",

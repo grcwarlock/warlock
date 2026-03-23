@@ -377,16 +377,20 @@ class TestPhase2Integration:
 
         mgr = CompensatingControlManager()
 
-        # Create compensating control for non-compliant AC-6
-        mgr.create(
+        # Create compensating control for non-compliant AC-6 (starts as proposed)
+        cc = mgr.create(
             session,
             original_framework="nist_800_53",
             original_control_id="AC-6",
             title="Quarterly privileged access review",
             description="Team leads review privileged accounts quarterly",
-            status="active",
             effectiveness_score=75.0,
         )
+        session.flush()
+
+        # Approve it through the proper workflow, then activate
+        mgr.approve(session, str(cc.id), approved_by="ao@example.com")
+        cc.status = "active"
         session.flush()
 
         # Verify it can be found
@@ -403,7 +407,7 @@ class TestPhase2Integration:
 
         mgr = RiskAcceptanceManager()
 
-        mgr.create(
+        ra = mgr.create(
             session,
             framework="nist_800_53",
             control_id="IA-2",
@@ -411,10 +415,16 @@ class TestPhase2Integration:
             risk_level="moderate",
             residual_risk_level="low",
             requested_by="user@example.com",
-            approved_by="ao@example.com",
             expiry_date=NOW + timedelta(days=180),
-            status="active",
+            status="requested",
         )
+        session.flush()
+
+        # Move through approval chain: requested -> reviewed -> approved
+        ra.status = "reviewed"
+        session.flush()
+        mgr.approve(session, str(ra.id), approved_by="ao@example.com")
+        ra.status = "active"
         session.flush()
 
         # Verify active acceptance

@@ -16,6 +16,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from warlock.db.audit import AuditTrail
 from warlock.db.models import (
     CompensatingControl,
     Issue,
@@ -93,6 +94,17 @@ class GDPRManager:
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "data": {},
         }
+
+        # Audit the export request — use anonymized ID, never the real email
+        anon_id = _anonymize_value("email", email)
+        audit = AuditTrail(session)
+        audit.record(
+            action="gdpr_export",
+            entity_type="data_subject",
+            entity_id=anon_id,
+            actor="system",
+            metadata={"request_type": "article_15_access"},
+        )
 
         # Personnel records
         personnel = session.query(Personnel).filter(Personnel.email == email).first()
@@ -378,5 +390,23 @@ class GDPRManager:
             return result
 
         session.flush()
+
+        # Compute anonymized entity_id — never log the real email
+        anon_id = _anonymize_value("email", email)
+        tables_affected = len(result["affected"])
+        fields_anonymized = sum(v if isinstance(v, int) else 1 for v in result["affected"].values())
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="gdpr_erasure",
+            entity_type="data_subject",
+            entity_id=anon_id,
+            actor=erased_by,
+            metadata={
+                "tables_affected": tables_affected,
+                "fields_anonymized": fields_anonymized,
+            },
+        )
+
         log.info("GDPR erasure complete for %s: %s", email, result["affected"])
         return result

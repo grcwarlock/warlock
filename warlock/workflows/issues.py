@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from warlock.db.audit import AuditTrail
 from warlock.db.models import (
     ControlResult,
     Finding,
@@ -85,6 +86,20 @@ class IssueManager:
         session.add(issue)
         session.flush()
 
+        audit = AuditTrail(session)
+        audit.record(
+            action="issue_created",
+            entity_type="issue",
+            entity_id=str(issue.id),
+            actor=created_by,
+            metadata={
+                "framework": result.framework,
+                "control_id": result.control_id,
+                "source": "pipeline",
+                "finding_id": finding_id,
+            },
+        )
+
         self.add_comment(
             session,
             issue.id,
@@ -123,6 +138,20 @@ class IssueManager:
         )
         session.add(issue)
         session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="issue_created",
+            entity_type="issue",
+            entity_id=str(issue.id),
+            actor=created_by,
+            metadata={
+                "framework": framework,
+                "control_id": control_id,
+                "source": "manual",
+            },
+        )
+
         return issue
 
     def transition(
@@ -163,6 +192,18 @@ class IssueManager:
         elif new_status == "open" and old_status == "closed":
             # Reopening — clear closed timestamp
             issue.closed_at = None
+
+        audit = AuditTrail(session)
+        audit.record(
+            action=f"issue_transition_{new_status}",
+            entity_type="issue",
+            entity_id=str(issue.id),
+            actor=actor,
+            metadata={
+                "old_status": old_status,
+                "new_status": new_status,
+            },
+        )
 
         self.add_comment(
             session,

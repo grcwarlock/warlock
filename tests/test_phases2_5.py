@@ -202,8 +202,10 @@ class TestCompensatingControls:
             original_control_id="AC-2",
             title="Manual review process",
             description="Weekly manual access review by team leads",
-            status="active",
         )
+        seeded.flush()
+        mgr.approve(seeded, str(cc.id), approved_by="ao@example.com")
+        cc.status = "active"
         seeded.flush()
 
         found = mgr.check_for_control(seeded, "nist_800_53", "AC-2")
@@ -223,21 +225,22 @@ class TestCompensatingControls:
 
         mgr = CompensatingControlManager()
 
-        mgr.create(
+        cc1 = mgr.create(
             seeded,
             original_framework="nist_800_53",
             original_control_id="AC-2",
             title="CC1",
             description="Desc",
-            status="active",
         )
+        seeded.flush()
+        mgr.approve(seeded, str(cc1.id), approved_by="ao@example.com")
+        cc1.status = "active"
         mgr.create(
             seeded,
             original_framework="soc2",
             original_control_id="CC6.1",
             title="CC2",
             description="Desc",
-            status="proposed",
         )
         seeded.flush()
 
@@ -267,8 +270,13 @@ class TestRiskAcceptance:
             risk_level="moderate",
             requested_by="user@test.com",
             expiry_date=datetime.now(timezone.utc) + timedelta(days=180),
-            status="active",
+            status="requested",
         )
+        seeded.flush()
+        ra.status = "reviewed"
+        seeded.flush()
+        mgr.approve(seeded, str(ra.id), approved_by="ao@example.com")
+        ra.status = "active"
         seeded.flush()
 
         found = mgr.check_for_control(seeded, "nist_800_53", "AC-2")

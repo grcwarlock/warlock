@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from warlock.db.audit import AuditTrail
 from warlock.db.models import POAM, ControlResult, Finding
 from warlock.utils import ensure_aware
 
@@ -101,6 +102,21 @@ class POAMManager:
         session.add(poam)
         session.flush()
 
+        audit = AuditTrail(session)
+        audit.record(
+            action="poam_auto_created",
+            entity_type="poam",
+            entity_id=str(poam.id),
+            actor="system",
+            metadata={
+                "framework": poam.framework,
+                "control_id": poam.control_id,
+                "severity": poam.severity,
+                "control_result_id": str(control_result.id),
+                "status": "draft",
+            },
+        )
+
         log.info(
             "Auto-created POA&M %s for %s/%s (severity=%s)",
             poam.id,
@@ -163,6 +179,21 @@ class POAMManager:
         poam.updated_by = approved_by
 
         session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="poam_extended",
+            entity_type="poam",
+            entity_id=str(poam.id),
+            actor=approved_by,
+            metadata={
+                "justification": justification,
+                "new_scheduled_completion": new_date.isoformat(),
+                "delay_count": poam.delay_count,
+                "approved_by": approved_by,
+            },
+        )
+
         log.info(
             "Extended POA&M %s to %s (delay #%d, approved by %s)",
             poam_id,
@@ -205,6 +236,16 @@ class POAMManager:
             if new_status == "risk_accepted":
                 poam.actual_completion = datetime.now(timezone.utc)
             session.flush()
+
+            audit = AuditTrail(session)
+            audit.record(
+                action=f"poam_transition_{new_status}",
+                entity_type="poam",
+                entity_id=str(poam.id),
+                actor=actor or "system",
+                metadata={"old_status": old_status, "new_status": new_status},
+            )
+
             log.info(
                 "POA&M %s transitioned %s -> %s by %s",
                 poam_id,
@@ -228,6 +269,15 @@ class POAMManager:
         if new_status == "completed":
             poam.actual_completion = now
         session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action=f"poam_transition_{new_status}",
+            entity_type="poam",
+            entity_id=str(poam.id),
+            actor=actor or "system",
+            metadata={"old_status": old_status, "new_status": new_status},
+        )
 
         log.info(
             "POA&M %s transitioned %s -> %s by %s",

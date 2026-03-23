@@ -12,6 +12,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from warlock.db.audit import AuditTrail
 from warlock.db.models import ControlResult, RiskAcceptance
 from warlock.utils import ensure_aware
 
@@ -44,9 +45,29 @@ class RiskAcceptanceManager:
         Returns:
             Newly created RiskAcceptance.
         """
+        status = kwargs.get("status")
+        if status and status not in ("requested", "reviewed"):
+            raise ValueError(
+                f"New risk acceptances must start in 'requested' or 'reviewed' status, "
+                f"not '{status}'. Use approve() for status transitions."
+            )
+
         ra = RiskAcceptance(**kwargs)
         session.add(ra)
         session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="risk_acceptance_created",
+            entity_type="risk_acceptance",
+            entity_id=str(ra.id),
+            actor=kwargs.get("requested_by", "system"),
+            metadata={
+                "framework": ra.framework,
+                "control_id": ra.control_id,
+                "status": ra.status,
+            },
+        )
 
         log.info(
             "Created risk acceptance %s for %s/%s (risk=%s, requested_by=%s)",
@@ -56,6 +77,18 @@ class RiskAcceptanceManager:
             ra.risk_level,
             ra.requested_by,
         )
+        return ra
+
+    def approve(self, session: Session, ra_id: str, approved_by: str) -> RiskAcceptance:
+        """Approve a risk acceptance. Must be in 'reviewed' status."""
+        ra = session.query(RiskAcceptance).filter_by(id=ra_id).first()
+        if not ra:
+            raise ValueError(f"Risk acceptance not found: {ra_id}")
+        if ra.status != "reviewed":
+            raise ValueError(f"Cannot approve from status '{ra.status}' — must be 'reviewed'")
+        ra.status = "approved"
+        ra.approved_by = approved_by
+        session.flush()
         return ra
 
     def check_for_control(
