@@ -58,6 +58,8 @@ class IssueManager:
         finding_id: str,
         control_result_id: str,
         created_by: str = "pipeline",
+        *,
+        skip_audit: bool = False,
     ) -> Issue:
         """Create an issue from a specific finding and control result."""
         finding = session.query(Finding).filter(Finding.id == finding_id).first()
@@ -86,19 +88,20 @@ class IssueManager:
         session.add(issue)
         session.flush()
 
-        audit = AuditTrail(session)
-        audit.record(
-            action="issue_created",
-            entity_type="issue",
-            entity_id=str(issue.id),
-            actor=created_by,
-            metadata={
-                "framework": result.framework,
-                "control_id": result.control_id,
-                "source": "pipeline",
-                "finding_id": finding_id,
-            },
-        )
+        if not skip_audit:
+            audit = AuditTrail(session)
+            audit.record(
+                action="issue_created",
+                entity_type="issue",
+                entity_id=str(issue.id),
+                actor=created_by,
+                metadata={
+                    "framework": result.framework,
+                    "control_id": result.control_id,
+                    "source": "pipeline",
+                    "finding_id": finding_id,
+                },
+            )
 
         self.add_comment(
             session,
@@ -378,11 +381,23 @@ class IssueManager:
                     finding_id=result.finding_id,
                     control_result_id=result.id,
                     created_by="pipeline",
+                    skip_audit=True,  # Batch: record one summary entry below
                 )
                 created.append(issue)
             except ValueError:
                 # Finding may not exist; skip
                 continue
+
+        # Record a single batch audit entry instead of per-issue entries
+        if created:
+            audit = AuditTrail(session)
+            audit.record(
+                action="issues_auto_created",
+                entity_type="issue",
+                entity_id="batch",
+                actor="pipeline",
+                metadata={"count": len(created), "framework": framework or "all"},
+            )
 
         return created
 
