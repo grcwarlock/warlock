@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db, require_permission
 from warlock.api.routers.schemas import MessageResponse, PaginatedResponse
-from warlock.db.models import ControlResult, Finding, Issue, User
+from warlock.db.models import User
+from warlock.db.repository import get_repos
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -294,12 +295,13 @@ def ai_converse(
         raise HTTPException(status_code=503, detail="AI service is not configured or disabled.")
 
     # Build entity context from the database
+    repos = get_repos(db)
     entity_data: dict[str, Any] = {}
     related_controls: list[dict[str, Any]] = []
     related_findings: list[dict[str, Any]] = []
 
     if body.entity_type == "finding":
-        row = db.query(Finding).filter(Finding.id == body.entity_id).first()
+        row = repos.findings.get(body.entity_id)
         if row:
             entity_data = {
                 "id": row.id,
@@ -312,7 +314,7 @@ def ai_converse(
                 "resource_id": row.resource_id,
             }
     elif body.entity_type == "issue":
-        row = db.query(Issue).filter(Issue.id == body.entity_id).first()
+        row = repos.issues.get(body.entity_id)
         if row:
             entity_data = {
                 "id": row.id,
@@ -324,7 +326,7 @@ def ai_converse(
                 "description": row.description,
             }
     elif body.entity_type == "control_result":
-        row = db.query(ControlResult).filter(ControlResult.id == body.entity_id).first()
+        row = repos.control_results.get(body.entity_id)
         if row:
             entity_data = {
                 "id": row.id,

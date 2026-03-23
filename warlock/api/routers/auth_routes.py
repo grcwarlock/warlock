@@ -20,6 +20,7 @@ from warlock.api.auth import (
 from warlock.api.deps import get_db, require_permission
 from warlock.api.routers.schemas import MessageResponse, _dt_str
 from warlock.db.models import APIKey, User
+from warlock.db.repository import get_repos
 
 router = APIRouter()
 
@@ -153,7 +154,8 @@ def mfa_verify(body: MFAVerifyRequest, db: Session = Depends(get_db)):
     if not verify_mfa_login(user_id, body.code, db):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
     # MFA verified — issue tokens
-    user = db.query(User).filter(User.id == user_id).first()
+    repos = get_repos(db)
+    user = repos.users.get(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     access_token = create_access_token({"sub": user.id})
@@ -188,7 +190,8 @@ def register(
     current_user: User = Depends(require_permission("manage_users")),
 ):
     # Check if email already exists
-    existing = db.query(User).filter(User.email == body.email).first()
+    repos = get_repos(db)
+    existing = repos.users.by_email(body.email)
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
     user = create_user(db, body.email, body.name, body.password, body.role)

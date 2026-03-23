@@ -26,7 +26,6 @@ from warlock.db.models import (
     ControlResult,
     Finding,
     Issue,
-    IssueComment,
     User,
 )
 from warlock.db.repository import get_repos
@@ -513,15 +512,11 @@ def get_issue(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    repos = get_repos(db)
+    issue = repos.issues.get(issue_id)
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
-    comments = (
-        db.query(IssueComment)
-        .filter(IssueComment.issue_id == issue_id)
-        .order_by(IssueComment.created_at.asc())
-        .all()
-    )
+    comments = repos.issues.comments_for_issue(issue_id)
     return IssueDetailResponse(
         issue=_issue_to_response(issue),
         comments=[
@@ -545,7 +540,8 @@ def update_issue(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
-    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    repos = get_repos(db)
+    issue = repos.issues.get(issue_id)
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
     if body.title is not None:
@@ -734,7 +730,8 @@ def get_attestation(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    att = db.query(Attestation).filter(Attestation.id == attestation_id).first()
+    repos = get_repos(db)
+    att = repos.attestations.get(attestation_id)
     if not att:
         raise HTTPException(status_code=404, detail="Attestation not found")
     return _attestation_to_response(att)
@@ -763,7 +760,8 @@ def review_attestation(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
-    attest = db.query(Attestation).filter(Attestation.id == attestation_id).first()
+    repos = get_repos(db)
+    attest = repos.attestations.get(attestation_id)
     if not attest:
         raise HTTPException(status_code=404, detail="Attestation not found")
     if attest.prepared_by and attest.prepared_by == current_user.email:
@@ -787,7 +785,8 @@ def approve_attestation(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
-    attest = db.query(Attestation).filter(Attestation.id == attestation_id).first()
+    repos = get_repos(db)
+    attest = repos.attestations.get(attestation_id)
     if not attest:
         raise HTTPException(status_code=404, detail="Attestation not found")
     if attest.prepared_by and attest.prepared_by == current_user.email:
@@ -880,7 +879,8 @@ def get_engagement(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    eng = db.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
+    repos = get_repos(db)
+    eng = repos.engagements.get(engagement_id)
     if not eng:
         raise HTTPException(status_code=404, detail="Engagement not found")
     return _engagement_to_response(eng)
@@ -893,7 +893,8 @@ def update_engagement(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("write")),
 ):
-    eng = db.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
+    repos = get_repos(db)
+    eng = repos.engagements.get(engagement_id)
     if not eng:
         raise HTTPException(status_code=404, detail="Engagement not found")
     if body.name is not None:
@@ -920,7 +921,8 @@ def delete_engagement(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("delete")),
 ):
-    eng = db.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
+    repos = get_repos(db)
+    eng = repos.engagements.get(engagement_id)
     if not eng:
         raise HTTPException(status_code=404, detail="Engagement not found")
     eng.status = "archived"
@@ -935,7 +937,8 @@ def engagement_evidence(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
-    eng = db.query(AuditEngagement).filter(AuditEngagement.id == engagement_id).first()
+    repos = get_repos(db)
+    eng = repos.engagements.get(engagement_id)
     if not eng:
         raise HTTPException(status_code=404, detail="Engagement not found")
 

@@ -65,26 +65,26 @@ def _run_pipeline_background(run_id: str, source: list[str] | None = None):
     """
     try:
         from warlock.db.engine import get_session
-        from warlock.connectors.base import registry as connector_registry
-        from warlock.normalizers.base import NormalizerRegistry
-        from warlock.mappers.control_mapper import ControlMapper
-        from warlock.assessors.engine import Assessor
         from warlock.pipeline.bus import EventBus
-        from warlock.pipeline.orchestrator import Pipeline
+        from warlock.pipeline.loader import build_pipeline, register_lake_writer
 
         bus = EventBus()
-        normalizers = NormalizerRegistry()
-        mapper = ControlMapper()
-        assessor = Assessor()
-        pipeline = Pipeline(
-            connectors=connector_registry,
-            normalizers=normalizers,
-            mapper=mapper,
-            assessor=assessor,
-            bus=bus,
-        )
+        lake_writer = register_lake_writer(bus)
+        pipeline = build_pipeline(bus, sources=source)
+
         with get_session() as session:
-            pipeline.run(session)
+            stats = pipeline.run(session)
+
+        # Flush lake writer if enabled
+        if lake_writer is not None:
+            with get_session() as lake_session:
+                lake_stats = lake_writer.flush(stats.run_id, lake_session)
+                log.info(
+                    "Lake write: %d raw, %d findings, %d results",
+                    lake_stats.raw_events_written,
+                    lake_stats.findings_written,
+                    lake_stats.control_results_written,
+                )
     except Exception:
         log.exception("Background pipeline run failed (run_id=%s)", run_id)
 
