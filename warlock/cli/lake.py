@@ -6,7 +6,7 @@ from pathlib import Path
 
 import click
 
-from warlock.cli import cli, console
+from warlock.cli import cli, console, _error
 
 
 @cli.group()
@@ -99,6 +99,14 @@ def lake_status(path: str | None) -> None:
 @click.option("--batch-size", default=10000, help="Rows per batch")
 def lake_backfill(path: str | None, batch_size: int) -> None:
     """Backfill historical OLTP data to the lake."""
+    try:
+        import pyarrow  # noqa: F401
+    except ImportError:
+        _error(
+            "pyarrow is required for lake operations but not installed.\n"
+            "Install it with: pip install 'warlock[lake]'  or  pip install pyarrow"
+        )
+
     from warlock.config import get_settings
     from warlock.db.engine import get_session
     from warlock.lake.backfill import backfill

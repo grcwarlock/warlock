@@ -465,3 +465,272 @@ def validate_file(file: str) -> None:
         f"\n[green]File parses cleanly:[/green] {path.name} ({path.stat().st_size // 1024} KB)"
     )
     console.print("[green]Validation passed.[/green]")
+
+
+# ---------------------------------------------------------------------------
+# component-definition (EI-001)
+# ---------------------------------------------------------------------------
+
+
+@oscal_group.command("component-definition")
+@click.argument("framework")
+@click.option("--output", "-o", default=None, help="Output file path")
+@click.option(
+    "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata"
+)
+@click.option(
+    "--component-type",
+    default="software",
+    type=click.Choice(["software", "service", "policy", "process"]),
+    help="Component type for the definition",
+)
+def component_definition(
+    framework: str, output: str | None, system_name: str, component_type: str
+) -> None:
+    """Export an OSCAL component definition for shared/inherited controls.
+
+    FRAMEWORK: Framework slug (e.g. nist_800_53, soc2, fedramp)
+
+    Generates an OSCAL component-definition document that describes the
+    system's implemented controls, suitable for sharing with downstream
+    consumers or leveraging organizations.
+    """
+    import uuid as _uuid
+    from datetime import datetime, timezone
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+
+    with get_session() as session:
+        results = (
+            session.query(ControlResult)
+            .filter(ControlResult.framework == framework)
+            .order_by(ControlResult.control_id)
+            .all()
+        )
+
+    if not results:
+        _error(f"No control results found for framework '{framework}'.")
+
+    # Deduplicate: keep latest per control_id
+    latest: dict[str, object] = {}
+    for r in results:
+        if r.control_id not in latest or (r.assessed_at and r.assessed_at > latest[r.control_id].assessed_at):
+            latest[r.control_id] = r
+
+    now = datetime.now(timezone.utc)
+    comp_uuid = str(_uuid.uuid4())
+
+    implemented_reqs = []
+    for ctrl_id, r in sorted(latest.items()):
+        impl_status = "implemented" if r.status == "compliant" else (
+            "partial" if r.status == "partial" else "planned"
+        )
+        implemented_reqs.append({
+            "control-id": ctrl_id,
+            "uuid": str(_uuid.uuid4()),
+            "description": r.remediation_summary or f"Control {ctrl_id} — status: {r.status}",
+            "props": [
+                {"name": "implementation-status", "value": impl_status},
+            ],
+        })
+
+    doc = {
+        "component-definition": {
+            "uuid": str(_uuid.uuid4()),
+            "metadata": {
+                "title": f"{system_name} Component Definition — {framework}",
+                "version": "1.0.0",
+                "oscal-version": "1.1.2",
+                "last-modified": now.isoformat(),
+            },
+            "components": [
+                {
+                    "uuid": comp_uuid,
+                    "type": component_type,
+                    "title": system_name,
+                    "description": f"Component definition for {system_name} ({framework})",
+                    "control-implementations": [
+                        {
+                            "uuid": str(_uuid.uuid4()),
+                            "source": f"#{framework}",
+                            "description": f"Controls implemented for {framework}",
+                            "implemented-requirements": implemented_reqs,
+                        }
+                    ],
+                }
+            ],
+        }
+    }
+
+    dest = output
+    if not dest:
+        from warlock.export.paths import export_path
+
+        dest = str(export_path("comp-def", framework=framework))
+
+    with open(dest, "w") as fh:
+        json.dump(doc, fh, indent=2)
+
+    console.print(
+        f"[green]OSCAL component definition written to {dest}[/green] "
+        f"({len(implemented_reqs)} control(s))"
+    )
+
+
+# ---------------------------------------------------------------------------
+# audit-package (EI-002)
+# ---------------------------------------------------------------------------
+
+
+@oscal_group.command("audit-package")
+@click.option("--framework", "-f", required=True, help="Framework slug (e.g. soc2, nist_800_53)")
+@click.option(
+    "--output", "-o", required=True, type=click.Path(), help="Output directory for the package"
+)
+@click.option(
+    "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata"
+)
+def audit_package(framework: str, output: str, system_name: str) -> None:
+    """Export a complete audit package for a framework.
+
+    Creates a directory containing all OSCAL artifacts an auditor needs:
+    - assessment-results.json
+    - ssp.json (System Security Plan)
+    - poam.json (Plan of Action & Milestones)
+    - component-definition.json
+    - manifest.json (index of all files)
+    """
+    from datetime import datetime, timezone
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.oscal import OscalExporter
+
+    init_db()
+    out_dir = Path(output)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    exporter = OscalExporter()
+    now = datetime.now(timezone.utc)
+    files_written: list[dict[str, str]] = []
+
+    # 1. Assessment Results
+    with get_session() as session:
+        ar_data = exporter.export_assessment_results(
+            session, framework=framework, system_name=system_name
+        )
+    ar_path = out_dir / "assessment-results.json"
+    exporter.to_file(ar_data, str(ar_path))
+    files_written.append({"file": "assessment-results.json", "type": "assessment-results"})
+    console.print("  [green]\u2713[/green] assessment-results.json")
+
+    # 2. SSP
+    with get_session() as session:
+        ssp_data = exporter.export_ssp(
+            session,
+            framework=framework,
+            system_name=system_name,
+            description=f"{system_name} System Security Plan",
+            narrator=None,
+        )
+    ssp_path = out_dir / "ssp.json"
+    exporter.to_file(ssp_data, str(ssp_path))
+    files_written.append({"file": "ssp.json", "type": "system-security-plan"})
+    console.print("  [green]\u2713[/green] ssp.json")
+
+    # 3. POA&M
+    with get_session() as session:
+        poam_data = exporter.export_poam(
+            session, framework=framework, system_name=system_name, narrator=None
+        )
+    poam_path = out_dir / "poam.json"
+    exporter.to_file(poam_data, str(poam_path))
+    files_written.append({"file": "poam.json", "type": "plan-of-action-and-milestones"})
+    console.print("  [green]\u2713[/green] poam.json")
+
+    # 4. Component Definition (invoke via code, not subprocess)
+    from warlock.db.models import ControlResult
+
+    with get_session() as session:
+        results = (
+            session.query(ControlResult)
+            .filter(ControlResult.framework == framework)
+            .order_by(ControlResult.control_id)
+            .all()
+        )
+
+    if results:
+        import uuid as _uuid
+
+        latest: dict[str, object] = {}
+        for r in results:
+            if r.control_id not in latest or (
+                r.assessed_at and r.assessed_at > latest[r.control_id].assessed_at
+            ):
+                latest[r.control_id] = r
+
+        implemented_reqs = []
+        for ctrl_id, r in sorted(latest.items()):
+            impl_status = "implemented" if r.status == "compliant" else (
+                "partial" if r.status == "partial" else "planned"
+            )
+            implemented_reqs.append({
+                "control-id": ctrl_id,
+                "uuid": str(_uuid.uuid4()),
+                "description": r.remediation_summary or f"Control {ctrl_id} — status: {r.status}",
+                "props": [{"name": "implementation-status", "value": impl_status}],
+            })
+
+        comp_doc = {
+            "component-definition": {
+                "uuid": str(_uuid.uuid4()),
+                "metadata": {
+                    "title": f"{system_name} Component Definition — {framework}",
+                    "version": "1.0.0",
+                    "oscal-version": "1.1.2",
+                    "last-modified": now.isoformat(),
+                },
+                "components": [
+                    {
+                        "uuid": str(_uuid.uuid4()),
+                        "type": "software",
+                        "title": system_name,
+                        "description": f"Component definition for {system_name} ({framework})",
+                        "control-implementations": [
+                            {
+                                "uuid": str(_uuid.uuid4()),
+                                "source": f"#{framework}",
+                                "description": f"Controls implemented for {framework}",
+                                "implemented-requirements": implemented_reqs,
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+        comp_path = out_dir / "component-definition.json"
+        with open(comp_path, "w") as fh:
+            json.dump(comp_doc, fh, indent=2)
+        files_written.append({"file": "component-definition.json", "type": "component-definition"})
+        console.print("  [green]\u2713[/green] component-definition.json")
+
+    # 5. Manifest
+    manifest = {
+        "audit-package": {
+            "framework": framework,
+            "system_name": system_name,
+            "generated_at": now.isoformat(),
+            "files": files_written,
+        }
+    }
+    manifest_path = out_dir / "manifest.json"
+    with open(manifest_path, "w") as fh:
+        json.dump(manifest, fh, indent=2)
+    console.print("  [green]\u2713[/green] manifest.json")
+
+    console.print(
+        f"\n[green]Audit package for {framework} written to {out_dir}/ "
+        f"({len(files_written) + 1} files)[/green]"
+    )

@@ -174,7 +174,14 @@ def ask(question: str) -> None:
 
     settings = get_settings()
     if not settings.lake_enabled:
-        console.print("[yellow]Lake not enabled. Set WLK_LAKE_ENABLED=true.[/yellow]")
+        console.print(
+            "[yellow]Lake not enabled.[/yellow]\n\n"
+            "To enable the data lake:\n"
+            "  1. Set WLK_LAKE_ENABLED=true in your environment\n"
+            "  2. Install lake dependencies: pip install 'warlock[lake]' (requires pyarrow, duckdb)\n"
+            "  3. Initialize the lake: warlock lake init\n"
+            "  4. Backfill data: warlock lake backfill"
+        )
         return
 
     result = query_lake(settings.lake_path, question)

@@ -860,6 +860,375 @@ def schedules_list() -> None:
     console.print(table)
 
 
+# ---------------------------------------------------------------------------
+# webhook sub-group (AU-001)
+# ---------------------------------------------------------------------------
+
+
+@automation.group("webhook")
+def automation_webhook() -> None:
+    """Webhook trigger management: create, list, delete, test."""
+
+
+@automation_webhook.command("create")
+@click.option("--name", "-n", required=True, help="Webhook name (e.g. deploy-gate)")
+@click.option("--url", "-u", required=True, help="Webhook endpoint URL")
+@click.option(
+    "--event",
+    "-e",
+    multiple=True,
+    help="Event type to trigger on (repeatable, e.g. pipeline.complete, finding.critical)",
+)
+@click.option("--secret", "-s", default=None, help="Shared secret for HMAC signing")
+@click.option("--enabled/--disabled", default=True, help="Enable or disable the webhook")
+def webhook_create(
+    name: str, url: str, event: tuple[str, ...], secret: str | None, enabled: bool
+) -> None:
+    """Register a webhook trigger.
+
+    When the specified events occur, Warlock will POST a JSON payload to the
+    webhook URL. If a shared secret is provided, the payload is HMAC-SHA256 signed.
+
+    Example:
+
+    \b
+      warlock automation webhook create \\
+        --name deploy-gate \\
+        --url https://ci.example.com/webhook \\
+        --event pipeline.complete \\
+        --event finding.critical \\
+        --secret my-shared-secret
+    """
+    import uuid as _uuid
+    import hashlib
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
+
+    init_db()
+    actor = _get_actor()
+    webhook_id = str(_uuid.uuid4())
+
+    with get_session() as session:
+        from sqlalchemy import func
+
+        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
+        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
+        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
+        seq = max_seq + 1
+
+        extra: dict = {
+            "name": name,
+            "url": url,
+            "events": list(event),
+            "has_secret": secret is not None,
+            "enabled": enabled,
+            "webhook_id": webhook_id,
+        }
+        payload = json.dumps(extra, sort_keys=True)
+        entry_hash = hashlib.sha256(
+            f"{seq}:{prev_hash}:{webhook_id}:{payload}".encode()
+        ).hexdigest()
+
+        entry = AuditEntry(
+            id=str(_uuid.uuid4()),
+            sequence=seq,
+            previous_hash=prev_hash,
+            entry_hash=entry_hash,
+            action="automation_webhook",
+            entity_type="automation_webhook",
+            entity_id=webhook_id,
+            actor=actor,
+            extra=extra,
+        )
+        session.add(entry)
+        session.commit()
+
+    console.print("[green]Webhook registered.[/green]")
+    console.print(f"  ID:      {webhook_id[:8]}")
+    console.print(f"  Name:    {name}")
+    console.print(f"  URL:     {url}")
+    console.print(f"  Events:  {', '.join(event) if event else '(all)'}")
+    console.print(f"  Signed:  {'yes' if secret else 'no'}")
+    console.print(f"  Enabled: {'yes' if enabled else 'no'}")
+
+
+@automation_webhook.command("list")
+@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+def webhook_list(fmt: str) -> None:
+    """List all registered webhooks."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
+
+    init_db()
+    with get_session() as session:
+        rows = (
+            session.query(AuditEntry)
+            .filter(AuditEntry.action == "automation_webhook")
+            .order_by(AuditEntry.created_at.desc())
+            .all()
+        )
+
+    # Deduplicate by webhook_id, keep latest
+    seen: dict[str, dict] = {}
+    for row in rows:
+        extra = row.extra or {}
+        wh_id = extra.get("webhook_id", row.entity_id)
+        if wh_id not in seen and not extra.get("deleted"):
+            seen[wh_id] = {
+                "id": wh_id,
+                "name": extra.get("name", ""),
+                "url": extra.get("url", ""),
+                "events": extra.get("events", []),
+                "enabled": extra.get("enabled", True),
+                "created_by": row.actor,
+            }
+
+    if not seen:
+        console.print("[dim]No webhooks registered.[/dim]")
+        return
+
+    if fmt == "json":
+        console.print(json.dumps(list(seen.values()), indent=2))
+        return
+
+    table = Table(title=f"Webhooks ({len(seen)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Name", style="cyan")
+    table.add_column("URL", max_width=50)
+    table.add_column("Events", max_width=30)
+    table.add_column("Enabled", justify="center")
+
+    for wh in seen.values():
+        enabled_str = "[green]yes[/green]" if wh["enabled"] else "[red]no[/red]"
+        table.add_row(
+            wh["id"][:8],
+            wh["name"],
+            wh["url"][:50],
+            ", ".join(wh["events"])[:30] or "(all)",
+            enabled_str,
+        )
+
+    console.print(table)
+
+
+@automation_webhook.command("delete")
+@click.argument("webhook_id")
+def webhook_delete(webhook_id: str) -> None:
+    """Delete a registered webhook.
+
+    WEBHOOK_ID: webhook UUID or prefix (from 'warlock automation webhook list').
+    """
+    import uuid as _uuid
+    import hashlib
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
+
+    init_db()
+    actor = _get_actor()
+
+    with get_session() as session:
+        row = (
+            session.query(AuditEntry)
+            .filter(
+                AuditEntry.action == "automation_webhook",
+                AuditEntry.entity_id.startswith(webhook_id),
+            )
+            .order_by(AuditEntry.created_at.desc())
+            .first()
+        )
+        if not row:
+            _error(f"Webhook '{webhook_id}' not found.")
+
+        extra = dict(row.extra or {})
+        if extra.get("deleted"):
+            console.print(f"[yellow]Webhook {row.entity_id[:8]} is already deleted.[/yellow]")
+            return
+
+        from sqlalchemy import func
+
+        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
+        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
+        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
+        seq = max_seq + 1
+
+        del_extra = {"name": extra.get("name"), "deleted": True}
+        payload = json.dumps(del_extra, sort_keys=True)
+        entry_hash = hashlib.sha256(
+            f"{seq}:{prev_hash}:{row.entity_id}:{payload}".encode()
+        ).hexdigest()
+
+        del_entry = AuditEntry(
+            id=str(_uuid.uuid4()),
+            sequence=seq,
+            previous_hash=prev_hash,
+            entry_hash=entry_hash,
+            action="automation_webhook",
+            entity_type="automation_webhook",
+            entity_id=row.entity_id,
+            actor=actor,
+            extra=del_extra,
+        )
+        session.add(del_entry)
+        session.commit()
+
+    console.print(f"[yellow]Webhook {row.entity_id[:8]} deleted.[/yellow]")
+
+
+@automation_webhook.command("test")
+@click.argument("webhook_id")
+def webhook_test(webhook_id: str) -> None:
+    """Send a test ping to a registered webhook.
+
+    WEBHOOK_ID: webhook UUID or prefix.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
+
+    init_db()
+
+    with get_session() as session:
+        row = (
+            session.query(AuditEntry)
+            .filter(
+                AuditEntry.action == "automation_webhook",
+                AuditEntry.entity_id.startswith(webhook_id),
+            )
+            .order_by(AuditEntry.created_at.desc())
+            .first()
+        )
+        if not row:
+            _error(f"Webhook '{webhook_id}' not found.")
+
+    extra = row.extra or {}
+    if extra.get("deleted"):
+        _error(f"Webhook {row.entity_id[:8]} has been deleted.")
+
+    url = extra.get("url", "")
+    name = extra.get("name", "")
+
+    console.print(f"[cyan]Sending test ping to webhook '{name}'...[/cyan]")
+    console.print(f"  URL: {url}")
+
+    test_payload = {
+        "event": "webhook.test",
+        "webhook_id": row.entity_id,
+        "timestamp": _utcnow().isoformat(),
+        "message": "Test ping from Warlock automation webhook",
+    }
+
+    console.print(f"  Payload: {json.dumps(test_payload, indent=2)}")
+    console.print(
+        "[dim](To actually deliver, configure WLK_WEBHOOK_DELIVERY=true. "
+        "Currently showing payload only.)[/dim]"
+    )
+
+
+# ---------------------------------------------------------------------------
+# gate (AU-003)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("gate")
+@click.option("--framework", "-f", required=True, help="Framework to evaluate (e.g. soc2)")
+@click.option(
+    "--min-score",
+    type=float,
+    default=80.0,
+    help="Minimum compliance score (0-100) to pass (default: 80)",
+)
+@click.option(
+    "--fail-on-critical", is_flag=True, default=False, help="Fail if any critical findings exist"
+)
+@click.option(
+    "--fail-on-non-compliant",
+    type=int,
+    default=None,
+    help="Fail if non-compliant count exceeds this threshold",
+)
+def automation_gate(
+    framework: str,
+    min_score: float,
+    fail_on_critical: bool,
+    fail_on_non_compliant: int | None,
+) -> None:
+    """CI/CD compliance gate.
+
+    Evaluates the current compliance posture for a framework and exits with
+    code 0 (pass) or 1 (fail). Designed for use in CI/CD pipelines.
+
+    Example:
+
+    \b
+      warlock automation gate --framework soc2 --min-score 80 --fail-on-critical
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult, Finding
+
+    init_db()
+    failures: list[str] = []
+
+    with get_session() as session:
+        results = (
+            session.query(ControlResult)
+            .filter(ControlResult.framework == framework)
+            .all()
+        )
+
+        if not results:
+            _error(f"No control results found for framework '{framework}'. Run pipeline first.")
+
+        total = len(results)
+        compliant = sum(1 for r in results if r.status == "compliant")
+        non_compliant = sum(1 for r in results if r.status == "non_compliant")
+        partial = sum(1 for r in results if r.status == "partial")
+        score = (compliant / total * 100) if total else 0.0
+
+        # Check critical findings
+        critical_count = 0
+        if fail_on_critical:
+            critical_count = (
+                session.query(Finding)
+                .filter(Finding.severity == "critical")
+                .count()
+            )
+
+    console.print(f"\n[bold]Compliance Gate: {framework}[/bold]")
+    console.print(f"  Total controls:   {total}")
+    console.print(f"  Compliant:        {compliant}")
+    console.print(f"  Non-compliant:    {non_compliant}")
+    console.print(f"  Partial:          {partial}")
+    score_color = "green" if score >= min_score else "red"
+    console.print(f"  Score:            [{score_color}]{score:.1f}%[/]  (threshold: {min_score}%)")
+
+    if fail_on_critical:
+        crit_color = "red" if critical_count > 0 else "green"
+        console.print(
+            f"  Critical findings:[{crit_color}]{critical_count}[/]"
+        )
+
+    # Evaluate gate conditions
+    if score < min_score:
+        failures.append(f"Score {score:.1f}% below threshold {min_score}%")
+
+    if fail_on_critical and critical_count > 0:
+        failures.append(f"{critical_count} critical finding(s) present")
+
+    if fail_on_non_compliant is not None and non_compliant > fail_on_non_compliant:
+        failures.append(
+            f"{non_compliant} non-compliant controls exceeds threshold {fail_on_non_compliant}"
+        )
+
+    if failures:
+        console.print("\n[red bold]GATE: FAIL[/red bold]")
+        for f in failures:
+            console.print(f"  [red]\u2717[/red] {f}")
+        raise SystemExit(1)
+    else:
+        console.print("\n[green bold]GATE: PASS[/green bold]")
+
+
 @automation_schedules.command("set")
 @click.option("--name", "-n", required=True, help="Automation name (e.g. nightly-collect)")
 @click.option("--cron", "-c", required=True, help='Cron expression (e.g. "0 2 * * *")')

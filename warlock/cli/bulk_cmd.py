@@ -109,6 +109,8 @@ def suppress(source: str, severities: tuple[str, ...], reason: str, dry_run: boo
         console.print(table)
 
         if not dry_run:
+            if not click.confirm(f"This will affect {len(findings)} records. Continue?"):
+                return
             # Tag findings with suppression metadata in their detail JSON
             for f in findings:
                 detail = dict(f.detail or {})
@@ -308,6 +310,8 @@ def close(
             f"[bold]{len(issues)}[/bold] issue(s) would be moved to status=[cyan]{status}[/cyan]."
         )
         if not dry_run:
+            if not click.confirm(f"This will affect {len(issues)} records. Continue?"):
+                return
             now = datetime.now(timezone.utc)
             for i in issues:
                 i.status = status
@@ -965,3 +969,362 @@ def stats(source: str | None) -> None:
     table.add_row("orphan findings", str(orphan_count), "findings with no control mapping")
 
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# remediate (BK-001)
+# ---------------------------------------------------------------------------
+
+
+@bulk.command("remediate")
+@click.option("--framework", "-f", required=True, help="Framework to target")
+@click.option("--control-family", default=None, help="Limit to a control family (e.g. AC, AU)")
+@click.option("--action", required=True, type=click.Choice(["transition"]), help="Action type")
+@click.option("--to", "to_status", required=True, help="Target status for issues")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without persisting")
+def remediate(
+    framework: str, control_family: str | None, action: str, to_status: str, dry_run: bool
+) -> None:
+    """Bulk transition issues matching framework/control-family to a new status.
+
+    \b
+    Examples:
+        warlock bulk remediate --framework nist_800_53 --control-family AC --action transition --to remediated --dry-run
+        warlock bulk remediate --framework soc2 --action transition --to closed
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Issue
+
+    _dry_banner(dry_run)
+    init_db()
+
+    with get_session() as session:
+        q = session.query(Issue).filter(
+            Issue.framework == framework,
+            Issue.status.notin_(["closed", "verified"]),
+        )
+        if control_family:
+            q = q.filter(Issue.control_id.startswith(control_family))
+        issues = q.all()
+
+        if not issues:
+            console.print(
+                f"[dim]No open issues for framework={framework!r} "
+                f"family={control_family or 'any'}.[/dim]"
+            )
+            return
+
+        table = Table(
+            title=f"{'[DRY RUN] ' if dry_run else ''}Remediate {len(issues)} issue(s) → {to_status!r}"
+        )
+        table.add_column("Issue ID", style="dim", max_width=8)
+        table.add_column("Control", style="cyan")
+        table.add_column("Current Status")
+        table.add_column("Title", max_width=50)
+
+        for i in issues[:25]:
+            table.add_row(i.id[:8], i.control_id or "—", i.status, (i.title or "")[:50])
+        if len(issues) > 25:
+            console.print(f"[dim]... and {len(issues) - 25} more[/dim]")
+        console.print(table)
+
+        if not dry_run:
+            if not click.confirm(f"This will affect {len(issues)} records. Continue?"):
+                return
+            now = datetime.now(timezone.utc)
+            for i in issues:
+                i.status = to_status
+                i.verification_notes = (
+                    (i.verification_notes or "")
+                    + f"\n[bulk remediate] transitioned to {to_status} at {now.isoformat()}"
+                )
+            session.commit()
+
+    _done(len(issues), f"remediate (→ {to_status})", dry_run)
+
+
+# ---------------------------------------------------------------------------
+# attest (BK-002)
+# ---------------------------------------------------------------------------
+
+
+@bulk.command("attest")
+@click.option("--framework", "-f", required=True, help="Framework to attest for")
+@click.option("--controls", required=True, help="Comma-separated control IDs")
+@click.option("--owner", required=True, help="Attestation owner (email or name)")
+@click.option("--statement", required=True, help="Attestation statement")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without persisting")
+def attest(framework: str, controls: str, owner: str, statement: str, dry_run: bool) -> None:
+    """Create attestations for multiple controls at once.
+
+    \b
+    Examples:
+        warlock bulk attest --framework soc2 --controls CC6.1,CC6.2 --owner alice@co.com --statement "Verified"
+        warlock bulk attest --framework nist_800_53 --controls AC-2,AC-3 --owner bob@co.com --statement "Annual review" --dry-run
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    _dry_banner(dry_run)
+    init_db()
+
+    control_ids = [c.strip() for c in controls.split(",") if c.strip()]
+    if not control_ids:
+        _error("No control IDs provided.")
+
+    with get_session() as session:
+        results = (
+            session.query(ControlResult)
+            .filter(
+                ControlResult.framework == framework,
+                ControlResult.control_id.in_(control_ids),
+            )
+            .all()
+        )
+
+        if not results:
+            console.print(
+                f"[dim]No control results found for framework={framework!r} "
+                f"controls={control_ids}.[/dim]"
+            )
+            return
+
+        table = Table(
+            title=f"{'[DRY RUN] ' if dry_run else ''}Attest {len(results)} control result(s)"
+        )
+        table.add_column("Control ID", style="cyan")
+        table.add_column("Status")
+        table.add_column("Owner", style="dim")
+
+        seen: set[str] = set()
+        for r in results:
+            if r.control_id not in seen:
+                table.add_row(r.control_id, r.status, owner)
+                seen.add(r.control_id)
+        console.print(table)
+
+        if not dry_run:
+            now = datetime.now(timezone.utc)
+            for r in results:
+                detail = dict(r.detail or {}) if hasattr(r, "detail") and r.detail else {}
+                attestations = list(detail.get("attestations") or [])
+                attestations.append(
+                    {
+                        "owner": owner,
+                        "statement": statement,
+                        "attested_at": now.isoformat(),
+                        "framework": framework,
+                    }
+                )
+                detail["attestations"] = attestations
+                r.detail = detail
+            session.commit()
+
+    _done(len(results), f"attest for {framework!r}", dry_run)
+
+
+# ---------------------------------------------------------------------------
+# import-findings (BK-003)
+# ---------------------------------------------------------------------------
+
+
+@bulk.command("import-findings")
+@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Path to input file")
+@click.option(
+    "--format",
+    "fmt",
+    default="json",
+    type=click.Choice(["json", "csv"]),
+    help="Input file format",
+)
+@click.option("--source", required=True, help="Source identifier (e.g. external-scanner)")
+@click.option("--provider", required=True, help="Provider identifier (e.g. qualys)")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without persisting")
+def import_findings(filepath: str, fmt: str, source: str, provider: str, dry_run: bool) -> None:
+    """Import findings from a JSON or CSV file.
+
+    \b
+    JSON format: array of objects with keys: title, severity, observation_type,
+    resource_id, resource_type, region, detail.
+
+    CSV format: header row with same keys, one finding per row.
+
+    \b
+    Examples:
+        warlock bulk import-findings --file findings.json --source ext-scan --provider qualys --dry-run
+        warlock bulk import-findings --file findings.csv --format csv --source manual --provider internal
+    """
+    import hashlib
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Finding
+
+    _dry_banner(dry_run)
+    init_db()
+
+    # Parse input file
+    with open(filepath) as fh:
+        if fmt == "json":
+            records = json.load(fh)
+            if not isinstance(records, list):
+                _error("JSON file must contain an array of finding objects.")
+        else:
+            reader = csv.DictReader(fh)
+            records = list(reader)
+
+    if not records:
+        console.print("[dim]No records found in file.[/dim]")
+        return
+
+    console.print(f"Parsed [bold]{len(records)}[/bold] record(s) from {filepath}.")
+
+    table = Table(title=f"{'[DRY RUN] ' if dry_run else ''}Import preview (up to 10)")
+    table.add_column("Title", max_width=50)
+    table.add_column("Severity")
+    table.add_column("Resource ID", style="dim")
+
+    for rec in records[:10]:
+        table.add_row(
+            (rec.get("title") or "")[:50],
+            rec.get("severity", "info"),
+            (rec.get("resource_id") or "")[:30],
+        )
+    if len(records) > 10:
+        console.print(f"[dim]... and {len(records) - 10} more[/dim]")
+    console.print(table)
+
+    if not dry_run:
+        if not click.confirm(f"This will import {len(records)} findings. Continue?"):
+            return
+        now = datetime.now(timezone.utc)
+        with get_session() as session:
+            created = 0
+            for rec in records:
+                title = rec.get("title", "Imported finding")
+                severity = rec.get("severity", "info")
+                obs_type = rec.get("observation_type", "finding")
+                detail = rec.get("detail", {})
+                if isinstance(detail, str):
+                    try:
+                        detail = json.loads(detail)
+                    except (json.JSONDecodeError, ValueError):
+                        detail = {"raw": detail}
+
+                sha_input = f"{source}:{provider}:{title}:{rec.get('resource_id', '')}".encode()
+                sha256 = hashlib.sha256(sha_input).hexdigest()
+
+                finding = Finding(
+                    observation_type=obs_type,
+                    title=title,
+                    detail=detail if isinstance(detail, dict) else {},
+                    resource_id=rec.get("resource_id"),
+                    resource_type=rec.get("resource_type"),
+                    resource_name=rec.get("resource_name"),
+                    account_id=rec.get("account_id"),
+                    region=rec.get("region"),
+                    source=source,
+                    source_type="import",
+                    provider=provider,
+                    severity=severity,
+                    confidence=float(rec.get("confidence", 1.0)),
+                    observed_at=now,
+                    sha256=sha256,
+                )
+                session.add(finding)
+                created += 1
+            session.commit()
+        console.print(f"[green]Imported {created} finding(s).[/green]")
+    else:
+        _done(len(records), "import findings", dry_run)
+
+
+# ---------------------------------------------------------------------------
+# override-results (BK-004)
+# ---------------------------------------------------------------------------
+
+
+@bulk.command("override-results")
+@click.option("--framework", "-f", required=True, help="Framework to target")
+@click.option("--controls", required=True, help="Comma-separated control IDs")
+@click.option(
+    "--status",
+    required=True,
+    type=click.Choice(["compliant", "non_compliant", "partial"]),
+    help="Override status",
+)
+@click.option("--evidence", required=True, help="Evidence description for the override")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without persisting")
+def override_results(
+    framework: str, controls: str, status: str, evidence: str, dry_run: bool
+) -> None:
+    """Bulk override control result statuses with evidence.
+
+    \b
+    Examples:
+        warlock bulk override-results --framework soc2 --controls CC6.1,CC6.2 --status compliant --evidence "Pen test passed"
+        warlock bulk override-results --framework nist_800_53 --controls AC-2 --status partial --evidence "MFA partial rollout" --dry-run
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    _dry_banner(dry_run)
+    init_db()
+    actor = _get_actor()
+
+    control_ids = [c.strip() for c in controls.split(",") if c.strip()]
+    if not control_ids:
+        _error("No control IDs provided.")
+
+    with get_session() as session:
+        results = (
+            session.query(ControlResult)
+            .filter(
+                ControlResult.framework == framework,
+                ControlResult.control_id.in_(control_ids),
+            )
+            .all()
+        )
+
+        if not results:
+            console.print(
+                f"[dim]No control results for framework={framework!r} "
+                f"controls={control_ids}.[/dim]"
+            )
+            return
+
+        table = Table(
+            title=f"{'[DRY RUN] ' if dry_run else ''}Override {len(results)} result(s) → {status}"
+        )
+        table.add_column("Control ID", style="cyan")
+        table.add_column("Current Status")
+        table.add_column("New Status", style="bold")
+
+        for r in results[:25]:
+            table.add_row(r.control_id, r.status, status)
+        if len(results) > 25:
+            console.print(f"[dim]... and {len(results) - 25} more[/dim]")
+        console.print(table)
+
+        if not dry_run:
+            if not click.confirm(f"This will affect {len(results)} records. Continue?"):
+                return
+            now = datetime.now(timezone.utc)
+            for r in results:
+                old_status = r.status
+                r.status = status
+                detail = dict(r.detail or {}) if hasattr(r, "detail") and r.detail else {}
+                overrides = list(detail.get("overrides") or [])
+                overrides.append(
+                    {
+                        "from_status": old_status,
+                        "to_status": status,
+                        "evidence": evidence,
+                        "actor": actor,
+                        "overridden_at": now.isoformat(),
+                    }
+                )
+                detail["overrides"] = overrides
+                r.detail = detail
+            session.commit()
+
+    _done(len(results), f"override results (→ {status})", dry_run)

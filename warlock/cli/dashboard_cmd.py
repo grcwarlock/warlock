@@ -16,6 +16,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console, _error
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -239,7 +240,8 @@ def dashboard_live(refresh_seconds: int) -> None:
 
 @dashboard.command("posture")
 @click.option("--framework", "-f", default=None, multiple=True, help="Filter by framework")
-def dashboard_posture(framework: tuple[str, ...]) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def dashboard_posture(framework: tuple[str, ...], output: str | None) -> None:
     """Current compliance posture summary across all or selected frameworks."""
     from warlock.db.engine import get_session, init_db
 
@@ -260,9 +262,45 @@ def dashboard_posture(framework: tuple[str, ...]) -> None:
 
     overall_total = sum(p["total"] for p in posture.values())
     overall_compliant = sum(p["compliant"] for p in posture.values())
+    overall_not_assessed = sum(p["not_assessed"] for p in posture.values())
+    overall_assessed = overall_total - overall_not_assessed
+
+    # Assessed compliance: of controls that have been assessed, how many are compliant
+    assessed_rate = (overall_compliant / overall_assessed * 100) if overall_assessed else 0.0
+    # Overall compliance: of all controls including not_assessed
     overall_rate = (overall_compliant / overall_total * 100) if overall_total else 0.0
-    color = "green" if overall_rate >= 80 else "yellow" if overall_rate >= 60 else "red"
-    console.print(f"\nOverall pass rate: [{color}]{overall_rate:.1f}%[/{color}]")
+    # Assessment coverage: percentage of controls with assessments
+    coverage_rate = (overall_assessed / overall_total * 100) if overall_total else 0.0
+
+    a_color = "green" if assessed_rate >= 80 else "yellow" if assessed_rate >= 60 else "red"
+    o_color = "green" if overall_rate >= 80 else "yellow" if overall_rate >= 60 else "red"
+    c_color = "green" if coverage_rate >= 90 else "yellow" if coverage_rate >= 70 else "red"
+
+    console.print(
+        f"\nAssessed Compliance:  [{a_color}]{assessed_rate:.1f}%[/{a_color}]"
+        f"  (of controls that have been assessed)"
+    )
+    console.print(
+        f"Overall Compliance:   [{o_color}]{overall_rate:.1f}%[/{o_color}]"
+        f"  (of all controls including not_assessed)"
+    )
+    console.print(
+        f"Assessment Coverage:  [{c_color}]{coverage_rate:.1f}%[/{c_color}]"
+        f"  (percentage of controls with assessments)"
+    )
+
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(table)
+        file_console.print(f"\nAssessed Compliance:  {assessed_rate:.1f}%  (of controls that have been assessed)")
+        file_console.print(f"Overall Compliance:   {overall_rate:.1f}%  (of all controls including not_assessed)")
+        file_console.print(f"Assessment Coverage:  {coverage_rate:.1f}%  (percentage of controls with assessments)")
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -271,7 +309,8 @@ def dashboard_posture(framework: tuple[str, ...]) -> None:
 
 
 @dashboard.command("executive")
-def dashboard_executive() -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def dashboard_executive(output: str | None) -> None:
     """Board-level summary: overall score, top risks, trending items, and open actions."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding, POAM, Issue
@@ -336,6 +375,20 @@ def dashboard_executive() -> None:
     console.print()
     table = _build_posture_table(posture, title="Framework Compliance")
     console.print(table)
+
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print("\nExecutive Compliance Summary")
+        file_console.print(f"As of: {_utcnow().strftime('%Y-%m-%d %H:%M UTC')}\n")
+        file_console.print(summary)
+        file_console.print()
+        file_console.print(table)
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -480,7 +533,7 @@ def dashboard_operations() -> None:
     summary.add_row("Connector runs (24h)", f"{total_runs:,}")
     summary.add_row("Failed runs", f"[{health_color}]{error_runs:,}[/{health_color}]")
     if latest_raw:
-        delta = _utcnow() - latest_raw
+        delta = _utcnow() - ensure_aware(latest_raw)
         freshness = f"{delta.total_seconds() / 3600:.1f}h ago"
         fresh_color = (
             "green"
@@ -699,7 +752,7 @@ def _evaluate_kri(name: str, kri_def: dict[str, Any]) -> float:
             latest = session.query(func.max(RawEvent.ingested_at)).scalar()
             if not latest:
                 return 9999.0
-            delta = now - latest
+            delta = now - ensure_aware(latest)
             return delta.total_seconds() / 3600
 
     return 0.0

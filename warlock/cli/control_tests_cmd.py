@@ -26,6 +26,117 @@ def control_tests() -> None:
 
 
 # ---------------------------------------------------------------------------
+# import
+# ---------------------------------------------------------------------------
+
+
+@control_tests.command("import")
+@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path")
+@click.option(
+    "--format", "fmt", default="json", type=click.Choice(["json", "csv"]), help="File format"
+)
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without importing")
+def control_tests_import(filepath: str, fmt: str, dry_run: bool) -> None:
+    """Import control test results from a JSON or CSV file.
+
+    Expected JSON structure: {"results": [{"control_id": "...", "framework": "...", "result": "pass|fail|partial", ...}]}
+    Expected CSV columns: control_id, framework, result, evidence (optional), tester (optional)
+    """
+    import csv
+    import json
+
+    from rich.table import Table as RTable
+
+    records: list[dict] = []
+    if fmt == "json":
+        with open(filepath) as fh:
+            data = json.load(fh)
+        records = data.get("results", data) if isinstance(data, dict) else data
+    else:
+        with open(filepath, newline="") as fh:
+            reader = csv.DictReader(fh)
+            records = list(reader)
+
+    if not records:
+        console.print("[dim]No records found in file.[/dim]")
+        return
+
+    console.print(f"[bold]{len(records)}[/bold] test result(s) found in {filepath}.")
+
+    table = RTable(title="Control Test Import Preview")
+    table.add_column("Control ID", style="cyan")
+    table.add_column("Framework")
+    table.add_column("Result")
+    table.add_column("Tester", style="dim")
+
+    for r in records[:20]:
+        table.add_row(
+            r.get("control_id", "?"),
+            r.get("framework", "?"),
+            r.get("result", "?"),
+            r.get("tester", "")[:30],
+        )
+    if len(records) > 20:
+        console.print(f"[dim]... and {len(records) - 20} more[/dim]")
+    console.print(table)
+
+    if dry_run:
+        console.print(
+            f"\n[dim](dry-run) Would import {len(records)} test result(s). "
+            f"Pass without --dry-run to execute.[/dim]"
+        )
+        return
+
+    from datetime import datetime, timezone
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    status_map = {"pass": "compliant", "fail": "non_compliant", "partial": "partial"}
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+    imported = 0
+    skipped = 0
+
+    with get_session() as session:
+        for r in records:
+            control_id = r.get("control_id", "").strip()
+            framework = r.get("framework", "").strip()
+            result = r.get("result", "").strip().lower()
+            if not control_id or not framework or result not in status_map:
+                skipped += 1
+                continue
+
+            cr = (
+                session.query(ControlResult)
+                .filter(
+                    ControlResult.control_id == control_id,
+                    ControlResult.framework == framework,
+                )
+                .order_by(ControlResult.assessed_at.desc())
+                .first()
+            )
+            if not cr:
+                skipped += 1
+                continue
+
+            cr.status = status_map[result]
+            cr.examined_at = now
+            cr.examined_by = r.get("tester", actor)
+            evidence = r.get("evidence", "")
+            if evidence:
+                existing = cr.remediation_summary or ""
+                cr.remediation_summary = (
+                    f"{existing}\n[Import {now.date()}] Evidence: {evidence}".strip()
+                )
+            imported += 1
+        session.commit()
+
+    console.print(f"[green]Imported {imported} test result(s), skipped {skipped}.[/green]")
+
+
+# ---------------------------------------------------------------------------
 # schedule
 # ---------------------------------------------------------------------------
 

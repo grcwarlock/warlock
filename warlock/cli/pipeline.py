@@ -37,9 +37,10 @@ def collect(source: tuple[str, ...]) -> None:
         lambda e: logging.getLogger("bus").debug("%s -> %s", e.event_type, e.payload_id[:8])
     )
 
-    # Run
-    with get_session() as session:
-        stats = pipeline.run(session)
+    # Run with progress indicator
+    with console.status("[bold cyan]Running pipeline (collect → normalize → map → assess)...[/bold cyan]"):
+        with get_session() as session:
+            stats = pipeline.run(session)
 
     # Flush lake writer if enabled
     if lake_writer is not None:

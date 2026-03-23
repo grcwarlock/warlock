@@ -37,7 +37,8 @@ def reports() -> None:
     type=click.Choice(["table", "json"]),
     help="Output format",
 )
-def reports_executive(framework: str | None, out_format: str) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_executive(framework: str | None, out_format: str, output: str | None) -> None:
     """Generate executive compliance posture summary."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Finding, Issue
@@ -77,7 +78,13 @@ def reports_executive(framework: str | None, out_format: str) -> None:
             "open_issues": open_issues,
             "total_findings": total_findings,
         }
-        console.print(json.dumps(data, indent=2))
+        content = json.dumps(data, indent=2)
+        if output:
+            with open(output, "w") as f:
+                f.write(content)
+            console.print(f"[green]Report written to {output}[/green]")
+        else:
+            console.print(content)
         return
 
     score_color = "green" if score >= 80 else ("yellow" if score >= 60 else "red")
@@ -90,6 +97,24 @@ def reports_executive(framework: str | None, out_format: str) -> None:
     console.print(f"  Partial:        [yellow]{partial}[/yellow]")
     console.print(f"  Open Issues:    {open_issues}")
     console.print(f"  Total Findings: {total_findings}")
+
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print("\nExecutive Compliance Summary")
+        file_console.print(f"  Framework:      {framework or 'all'}")
+        file_console.print(f"  Posture Score:  {score:.1f}%")
+        file_console.print(f"  Total Controls: {total}")
+        file_console.print(f"  Compliant:      {compliant}")
+        file_console.print(f"  Non-Compliant:  {non_compliant}")
+        file_console.print(f"  Partial:        {partial}")
+        file_console.print(f"  Open Issues:    {open_issues}")
+        file_console.print(f"  Total Findings: {total_findings}")
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +204,8 @@ def reports_executive_export(framework: str | None, output: str) -> None:
 @reports.command("compliance")
 @click.option("--framework", "-f", required=True, help="Framework to report on")
 @click.option("--limit", "-n", default=50, help="Max control rows")
-def reports_compliance(framework: str, limit: int) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_compliance(framework: str, limit: int, output: str | None) -> None:
     """Detailed per-control compliance status for a framework."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
@@ -225,6 +251,16 @@ def reports_compliance(framework: str, limit: int) -> None:
         )
 
     console.print(table)
+
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(table)
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -580,7 +616,8 @@ def reports_history(limit: int) -> None:
 
 @reports.command("board")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def reports_board(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_board(framework: str | None, output: str | None) -> None:
     """Generate board-level GRC summary (high-level risk and posture metrics)."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Issue, POAM
@@ -618,6 +655,21 @@ def reports_board(framework: str | None) -> None:
     )
     console.print(f"  POA&Ms Tracked:     {overdue_poams}")
 
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print("\nBoard GRC Summary")
+        file_console.print(f"  Overall Posture:    {score:.1f}%")
+        file_console.print(f"  Controls Assessed:  {total}")
+        file_console.print(f"  Open Issues:        {open_issues}")
+        file_console.print(f"  Critical Issues:    {critical}")
+        file_console.print(f"  POA&Ms Tracked:     {overdue_poams}")
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
+
 
 # ---------------------------------------------------------------------------
 # reports kri
@@ -626,7 +678,8 @@ def reports_board(framework: str | None) -> None:
 
 @reports.command("kri")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def reports_kri(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_kri(framework: str | None, output: str | None) -> None:
     """Display Key Risk Indicators."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Issue
@@ -669,6 +722,16 @@ def reports_kri(framework: str | None) -> None:
 
     console.print(table)
 
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(table)
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
+
 
 # ---------------------------------------------------------------------------
 # reports kpi
@@ -677,7 +740,8 @@ def reports_kri(framework: str | None) -> None:
 
 @reports.command("kpi")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def reports_kpi(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_kpi(framework: str | None, output: str | None) -> None:
     """Display Key Performance Indicators for the compliance program."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Issue
@@ -709,6 +773,16 @@ def reports_kpi(framework: str | None) -> None:
 
     console.print(table)
 
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(table)
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
+
 
 # ---------------------------------------------------------------------------
 # reports conmon
@@ -717,7 +791,8 @@ def reports_kpi(framework: str | None) -> None:
 
 @reports.command("conmon")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def reports_conmon(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_conmon(framework: str | None, output: str | None) -> None:
     """Continuous monitoring status report (FedRAMP ConMon style)."""
     from datetime import datetime, timedelta, timezone
 
@@ -758,6 +833,20 @@ def reports_conmon(framework: str | None) -> None:
     console.print(f"  Connector runs 24h: {recent_runs} ({failed_runs} failed)")
     console.print(f"  Posture snapshots:  {snapshots_30d} (last 30d)")
 
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print("\nConMon Status Report")
+        file_console.print(f"  Framework:          {framework or 'all'}")
+        file_console.print(f"  Posture Score:      {score:.1f}%")
+        file_console.print(f"  Connector runs 24h: {recent_runs} ({failed_runs} failed)")
+        file_console.print(f"  Posture snapshots:  {snapshots_30d} (last 30d)")
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
+
 
 # ---------------------------------------------------------------------------
 # reports sla
@@ -766,7 +855,8 @@ def reports_conmon(framework: str | None) -> None:
 
 @reports.command("sla")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def reports_sla(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_sla(framework: str | None, output: str | None) -> None:
     """Show SLA compliance for issue resolution times."""
     from datetime import datetime, timezone
 
@@ -816,6 +906,16 @@ def reports_sla(framework: str | None) -> None:
 
     console.print(table)
 
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(table)
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
+
 
 # ---------------------------------------------------------------------------
 # reports attestation-summary
@@ -824,7 +924,8 @@ def reports_sla(framework: str | None) -> None:
 
 @reports.command("attestation-summary")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def reports_attestation_summary(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def reports_attestation_summary(framework: str | None, output: str | None) -> None:
     """Summarise attestation status across all controls."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
@@ -852,6 +953,22 @@ def reports_attestation_summary(framework: str | None) -> None:
     )
     console.print(f"  AI-assessed:            {ai_assessed} ({ai_assessed / total * 100:.0f}%)")
     console.print(f"  Auditor-examined:       {examined} ({examined / total * 100:.0f}%)")
+
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(f"\nAttestation Summary (framework: {framework or 'all'})")
+        file_console.print(f"  Total controls:         {total}")
+        file_console.print(
+            f"  Assertion-assessed:     {assertion_assessed} ({assertion_assessed / total * 100:.0f}%)"
+        )
+        file_console.print(f"  AI-assessed:            {ai_assessed} ({ai_assessed / total * 100:.0f}%)")
+        file_console.print(f"  Auditor-examined:       {examined} ({examined / total * 100:.0f}%)")
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
 
 
 # ---------------------------------------------------------------------------

@@ -243,11 +243,42 @@ def frameworks_controls(framework_id: str, family: str | None, limit: int, fmt: 
 # ---------------------------------------------------------------------------
 
 
+def _load_crosswalk_mappings(fw_a: str, fw_b: str) -> list[dict[str, Any]]:
+    """Load crosswalk mappings between two frameworks from all crosswalk YAML files."""
+    crosswalk_files = list(_FRAMEWORKS_DIR.glob("crosswalk*.yaml"))
+    mappings: list[dict[str, Any]] = []
+    for cw_file in crosswalk_files:
+        try:
+            data = yaml.safe_load(cw_file.read_text()) or {}
+        except Exception:
+            continue
+        entries = data.get("crosswalks", data.get("mappings", []))
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            src_fw = entry.get("source_framework", "")
+            tgt_fw = entry.get("target_framework", "")
+            src_ctrl = entry.get("source_control_id", "") or entry.get("source_control", "")
+            tgt_ctrl = entry.get("target_control_id", "") or entry.get("target_control", "")
+            # Match in either direction
+            if (src_fw == fw_a and tgt_fw == fw_b) or (src_fw == fw_b and tgt_fw == fw_a):
+                mappings.append(
+                    {
+                        "source_framework": src_fw,
+                        "source_control": src_ctrl,
+                        "target_framework": tgt_fw,
+                        "target_control": tgt_ctrl,
+                        "confidence": entry.get("confidence", 0.0),
+                    }
+                )
+    return mappings
+
+
 @frameworks_grp.command("compare")
 @click.argument("framework_a")
 @click.argument("framework_b")
 def frameworks_compare(framework_a: str, framework_b: str) -> None:
-    """Compare two frameworks: shared families, control overlap, unique controls."""
+    """Compare two frameworks: shared families, control overlap, crosswalk mappings."""
     data_a = _load_framework_yaml(framework_a)
     data_b = _load_framework_yaml(framework_b)
 
@@ -263,7 +294,7 @@ def frameworks_compare(framework_a: str, framework_b: str) -> None:
     console.print(f"\n[bold]Comparing {label_a} vs {label_b}[/bold]")
     console.print(f"  {label_a} controls:  {len(ctrls_a)}")
     console.print(f"  {label_b} controls:  {len(ctrls_b)}")
-    console.print(f"  Shared:              {len(shared)}")
+    console.print(f"  Shared (exact ID):   {len(shared)}")
     console.print(f"  Only in {label_a}:   {len(only_a)}")
     console.print(f"  Only in {label_b}:   {len(only_b)}")
 
@@ -279,6 +310,38 @@ def frameworks_compare(framework_a: str, framework_b: str) -> None:
         console.print("\n[bold]Shared control IDs (sample, up to 20):[/bold]")
         for c in sorted(shared)[:20]:
             console.print(f"  {c}")
+
+    # Crosswalk-based shared controls
+    crosswalk_mappings = _load_crosswalk_mappings(framework_a, framework_b)
+    if crosswalk_mappings:
+        # Collect unique pairs of mapped controls
+        mapped_pairs: list[tuple[str, str]] = []
+        mapped_a: set[str] = set()
+        mapped_b: set[str] = set()
+        for m in crosswalk_mappings:
+            if m["source_framework"] == framework_a:
+                ctrl_a, ctrl_b = m["source_control"], m["target_control"]
+            else:
+                ctrl_a, ctrl_b = m["target_control"], m["source_control"]
+            if ctrl_a in ctrls_a and ctrl_b in ctrls_b:
+                mapped_pairs.append((ctrl_a, ctrl_b))
+                mapped_a.add(ctrl_a)
+                mapped_b.add(ctrl_b)
+
+        console.print(
+            f"\n[bold]Crosswalk mappings ({len(mapped_pairs)} links, "
+            f"{len(mapped_a)} {label_a} controls \u2192 {len(mapped_b)} {label_b} controls):[/bold]"
+        )
+        table = Table()
+        table.add_column(f"{label_a} Control", style="cyan")
+        table.add_column(f"{label_b} Control", style="cyan")
+        for a_ctrl, b_ctrl in sorted(mapped_pairs)[:30]:
+            table.add_row(a_ctrl, b_ctrl)
+        if len(mapped_pairs) > 30:
+            console.print(f"[dim]... and {len(mapped_pairs) - 30} more mappings[/dim]")
+        console.print(table)
+    else:
+        console.print("\n[dim]No crosswalk mappings found between these frameworks.[/dim]")
 
 
 # ---------------------------------------------------------------------------
@@ -330,10 +393,10 @@ def frameworks_crosswalk(source_framework: str, target: str | None, limit: int) 
     for m in rows:
         table.add_row(
             m.get("source_framework", ""),
-            m.get("source_control_id", ""),
+            m.get("source_control_id", "") or m.get("source_control", ""),
             m.get("target_framework", ""),
-            m.get("target_control_id", ""),
-            m.get("mapping_method", ""),
+            m.get("target_control_id", "") or m.get("target_control", ""),
+            m.get("mapping_method", "") or m.get("method", ""),
         )
 
     console.print(table)
@@ -914,3 +977,69 @@ def inherited_show(provider: str, inherit_type: str, limit: int) -> None:
     if len(ctrl_list) > limit:
         console.print(f"[dim](Showing {limit} of {len(ctrl_list)})[/dim]")
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# frameworks import
+# ---------------------------------------------------------------------------
+
+
+@frameworks_grp.command("import")
+@click.option(
+    "--file", "filepath", required=True, type=click.Path(exists=True), help="Path to framework YAML"
+)
+@click.option("--validate/--no-validate", default=True, help="Validate structure before importing")
+def frameworks_import(filepath: str, validate: bool) -> None:
+    """Import a custom framework YAML into the frameworks directory.
+
+    Validates the YAML structure (v2 dict-based format with control_families)
+    and copies it into the warlock/frameworks/ directory.
+    """
+    import shutil
+
+    src = pathlib.Path(filepath)
+
+    # Load and optionally validate
+    try:
+        with open(src) as fh:
+            data = yaml.safe_load(fh) or {}
+    except yaml.YAMLError as exc:
+        _error(f"Invalid YAML: {exc}")
+
+    fw_id = data.get("framework_id")
+    if not fw_id:
+        _error("Framework YAML must have a 'framework_id' key at the top level.")
+
+    if validate:
+        families = data.get("control_families", {})
+        if not isinstance(families, dict):
+            _error(
+                "Framework YAML must have 'control_families' as a dict (v2 format). "
+                "Got: " + type(families).__name__
+            )
+        if not families:
+            _error("Framework YAML has no control families defined.")
+
+        total_controls = 0
+        for fam_id, fam_data in families.items():
+            if not isinstance(fam_data, dict):
+                _error(f"Family '{fam_id}' must be a dict, got {type(fam_data).__name__}")
+            controls = fam_data.get("controls", {})
+            if not isinstance(controls, dict):
+                _error(
+                    f"Family '{fam_id}' controls must be a dict, got {type(controls).__name__}"
+                )
+            total_controls += len(controls)
+
+        console.print(f"[green]Validation passed:[/green] {fw_id}")
+        console.print(f"  Families: {len(families)}")
+        console.print(f"  Controls: {total_controls}")
+
+    dest = _FRAMEWORKS_DIR / f"{fw_id}.yaml"
+    if dest.exists():
+        console.print(
+            f"[yellow]Warning: overwriting existing framework YAML at {dest.name}[/yellow]"
+        )
+
+    shutil.copy2(src, dest)
+    console.print(f"[green]Framework '{fw_id}' imported to {dest}[/green]")

@@ -60,6 +60,7 @@ def _fmt_actor(value: str | None) -> str:
     help="Filter by status",
 )
 @click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--limit", "-n", default=50, help="Max results")
 @click.option(
     "--format",
     "output_format",
@@ -70,6 +71,7 @@ def _fmt_actor(value: str | None) -> str:
 def attestations_list(
     status: str | None,
     framework: str | None,
+    limit: int,
     output_format: str,
 ) -> None:
     """List attestations, optionally filtered by status or framework."""
@@ -85,7 +87,7 @@ def attestations_list(
         if framework:
             q = q.filter(Attestation.framework == framework)
         q = q.order_by(Attestation.created_at.desc())
-        rows = q.all()
+        rows = q.limit(limit).all()
 
     if not rows:
         console.print("[dim]No attestations found.[/dim]")

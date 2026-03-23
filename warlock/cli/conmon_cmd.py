@@ -33,7 +33,10 @@ def conmon() -> None:
 @conmon.command("status")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--system", "-s", default=None, help="Filter by system profile ID or acronym")
-def conmon_status(framework: str | None, system: str | None) -> None:
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def conmon_status(framework: str | None, system: str | None, fmt: str) -> None:
     """Show current continuous monitoring status across frameworks."""
     from sqlalchemy import func
 
@@ -76,6 +79,29 @@ def conmon_status(framework: str | None, system: str | None) -> None:
     for row in rows:
         fw_stats.setdefault(row.framework, {})
         fw_stats[row.framework][row.status] = row.cnt
+
+    if fmt == "json":
+        import json as _json
+        data = []
+        for fw in sorted(fw_stats.keys()):
+            stats = fw_stats[fw]
+            compliant = stats.get("compliant", 0) + stats.get("inherited_compliant", 0)
+            non_compliant = stats.get("non_compliant", 0)
+            partial = stats.get("partial", 0)
+            not_assessed = stats.get("not_assessed", 0) + stats.get("not_applicable", 0)
+            total = sum(stats.values())
+            score = (compliant / total * 100) if total > 0 else 0.0
+            data.append({
+                "framework": fw,
+                "compliant": compliant,
+                "non_compliant": non_compliant,
+                "partial": partial,
+                "not_assessed": not_assessed,
+                "total": total,
+                "score_pct": round(score, 1),
+            })
+        console.print(_json.dumps(data, indent=2))
+        return
 
     table = Table(title="Continuous Monitoring Status")
     table.add_column("Framework", style="cyan")

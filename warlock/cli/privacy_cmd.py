@@ -497,6 +497,53 @@ def breach() -> None:
     """Personal data breach management."""
 
 
+@breach.command("list")
+@click.option("--severity", "-s", type=click.Choice(list(_BREACH_SEVERITIES)), default=None, help="Filter by severity")
+@click.option("--limit", "-n", default=50, help="Max results")
+@click.option("--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format")
+def breach_list(severity: str | None, limit: int, fmt: str) -> None:
+    """List all recorded personal data breaches."""
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+
+    with get_session() as session:
+        records = _load_breach_records(session)
+
+    if severity:
+        records = [r for r in records if r.get("severity") == severity]
+    records = records[:limit]
+
+    if not records:
+        console.print("[dim]No breach records found.[/dim]")
+        return
+
+    if fmt == "json":
+        console.print_json(data=records)
+        return
+
+    _sev_styles = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "dim"}
+
+    table = Table(title=f"Personal Data Breaches ({len(records)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Title", max_width=40)
+    table.add_column("Severity")
+    table.add_column("Discovered")
+    table.add_column("Created By", style="dim")
+
+    for r in records:
+        sty = _sev_styles.get(r.get("severity", ""), "")
+        table.add_row(
+            r["id"][:8],
+            r.get("title", "\u2014"),
+            f"[{sty}]{r.get('severity', '\u2014')}[/{sty}]",
+            _fmt_date(r.get("discovery_date")),
+            r.get("actor", "\u2014"),
+        )
+
+    console.print(table)
+
+
 @breach.command("create")
 @click.option("--title", required=True, help="Brief title describing the breach")
 @click.option(

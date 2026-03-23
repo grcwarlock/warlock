@@ -20,6 +20,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +172,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         fresh_results: list[ControlResult] = []
         stale_results: list[ControlResult] = []
         for r in all_results:
-            if r.assessed_at and r.assessed_at < stale_cutoff:
+            if r.assessed_at and ensure_aware(r.assessed_at) < stale_cutoff:
                 stale_results.append(r)
             else:
                 fresh_results.append(r)
@@ -228,7 +229,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         )
 
         overdue_poams = [
-            p for p in open_poams if p.scheduled_completion and p.scheduled_completion < now
+            p for p in open_poams if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
         ]
 
         if not open_poams:
@@ -654,7 +655,7 @@ def audit_simulate(framework: str, sim_date_str: str, interactive: bool) -> None
         projected: dict[str, str] = {}
         for r in all_results:
             # If evidence expires before the sim date, flag as not_assessed
-            if r.assessed_at and r.assessed_at < evidence_cutoff:
+            if r.assessed_at and ensure_aware(r.assessed_at) < evidence_cutoff:
                 projected[r.control_id] = "not_assessed (evidence expired)"
             elif r.control_id in completed_control_ids and r.status == "non_compliant":
                 projected[r.control_id] = "compliant (POA&M due by date)"

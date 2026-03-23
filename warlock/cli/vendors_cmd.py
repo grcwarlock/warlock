@@ -658,6 +658,87 @@ def vendor_offboard(vendor_id: str, reason: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@vendor_mgmt.command("import")
+@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path")
+@click.option(
+    "--format", "fmt", default="json", type=click.Choice(["json", "csv"]), help="File format"
+)
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without importing")
+def vendor_import(filepath: str, fmt: str, dry_run: bool) -> None:
+    """Import vendor records from a JSON or CSV file.
+
+    Expected JSON structure: {"vendors": [{"name": "...", "tier": "...", ...}, ...]}
+    Expected CSV columns: name, tier, assessment_cadence_days (optional extra columns ignored)
+    """
+    import csv
+    import json as _json
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Vendor
+
+    records: list[dict] = []
+    if fmt == "json":
+        with open(filepath) as fh:
+            data = _json.load(fh)
+        records = data.get("vendors", data) if isinstance(data, dict) else data
+    else:
+        with open(filepath, newline="") as fh:
+            reader = csv.DictReader(fh)
+            records = list(reader)
+
+    if not records:
+        console.print("[dim]No records found in file.[/dim]")
+        return
+
+    console.print(f"[bold]{len(records)}[/bold] vendor record(s) found in {filepath}.")
+
+    table = Table(title="Vendor Import Preview")
+    table.add_column("Name", style="cyan")
+    table.add_column("Tier")
+    table.add_column("Cadence (days)", justify="right")
+
+    for r in records[:20]:
+        table.add_row(
+            r.get("name", "?"),
+            str(r.get("tier", "3")),
+            str(r.get("assessment_cadence_days", "365")),
+        )
+    if len(records) > 20:
+        console.print(f"[dim]... and {len(records) - 20} more[/dim]")
+    console.print(table)
+
+    if dry_run:
+        console.print(
+            f"\n[dim](dry-run) Would import {len(records)} vendor(s). "
+            f"Pass without --dry-run to execute.[/dim]"
+        )
+        return
+
+    init_db()
+    created = 0
+    skipped = 0
+    with get_session() as session:
+        for r in records:
+            name = r.get("name", "").strip()
+            if not name:
+                skipped += 1
+                continue
+            existing = session.query(Vendor).filter(Vendor.name == name).first()
+            if existing:
+                skipped += 1
+                continue
+            v = Vendor(
+                name=name,
+                tier=str(r.get("tier", "3")),
+                assessment_cadence_days=int(r.get("assessment_cadence_days", 365)),
+            )
+            session.add(v)
+            created += 1
+        session.commit()
+
+    console.print(f"[green]Imported {created} vendor(s), skipped {skipped}.[/green]")
+
+
 @vendor_mgmt.command("sla")
 @click.argument("vendor_id")
 @click.option("--set-uptime", type=float, default=None, help="Set contracted uptime SLA (%)")

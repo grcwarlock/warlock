@@ -48,6 +48,85 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _interactive_findings_loop(rows: list) -> None:
+    """Interactive browsing loop: select a finding by number to view details or act on it."""
+    while True:
+        console.print(
+            "\n[bold]Interactive mode:[/bold] Enter a row number to view details, "
+            "'s <num>' to suppress, 'a <num>' to annotate, or 'q' to quit."
+        )
+        try:
+            raw = click.prompt("Action", default="q")
+        except (EOFError, KeyboardInterrupt):
+            break
+
+        raw = raw.strip()
+        if raw.lower() == "q":
+            break
+
+        parts = raw.split(maxsplit=1)
+        action = parts[0].lower()
+
+        if action.isdigit():
+            idx = int(action) - 1
+            if 0 <= idx < len(rows):
+                r = rows[idx]
+                console.print(
+                    f"\n[bold cyan]{r.title}[/bold cyan]\n"
+                    f"  ID:        {r.id}\n"
+                    f"  Severity:  {r.severity}\n"
+                    f"  Source:    {r.source}/{r.provider}\n"
+                    f"  Resource:  {r.resource_type or '\u2014'} \u2014 {r.resource_id or '\u2014'}\n"
+                    f"  Observed:  {r.observed_at}\n"
+                    f"  Detail:    {json.dumps(r.detail or {}, default=str)[:200]}"
+                )
+            else:
+                console.print(f"[red]Invalid row number. Enter 1-{len(rows)}.[/red]")
+        elif action == "s" and len(parts) > 1 and parts[1].isdigit():
+            idx = int(parts[1]) - 1
+            if 0 <= idx < len(rows):
+                reason = click.prompt("Suppression reason")
+                from warlock.db.engine import get_session
+                r = rows[idx]
+                with get_session() as session:
+                    from warlock.db.models import Finding
+                    finding = session.query(Finding).filter(Finding.id == r.id).first()
+                    if finding:
+                        detail = dict(finding.detail or {})
+                        detail["_suppressed"] = True
+                        detail["_suppression_reason"] = reason
+                        detail["_suppressed_at"] = _utcnow().isoformat()
+                        detail["_suppressed_by"] = _get_actor()
+                        finding.detail = detail
+                        session.commit()
+                        console.print(f"[yellow]Finding {r.id[:8]} suppressed.[/yellow]")
+            else:
+                console.print(f"[red]Invalid row number. Enter 1-{len(rows)}.[/red]")
+        elif action == "a" and len(parts) > 1 and parts[1].isdigit():
+            idx = int(parts[1]) - 1
+            if 0 <= idx < len(rows):
+                note = click.prompt("Annotation")
+                from warlock.db.engine import get_session
+                r = rows[idx]
+                with get_session() as session:
+                    from warlock.db.models import Finding
+                    finding = session.query(Finding).filter(Finding.id == r.id).first()
+                    if finding:
+                        detail = dict(finding.detail or {})
+                        annotations = list(detail.get("_annotations", []))
+                        annotations.append(
+                            {"note": note, "actor": _get_actor(), "timestamp": _utcnow().isoformat()}
+                        )
+                        detail["_annotations"] = annotations
+                        finding.detail = detail
+                        session.commit()
+                        console.print(f"[green]Annotation added to {r.id[:8]}.[/green]")
+            else:
+                console.print(f"[red]Invalid row number. Enter 1-{len(rows)}.[/red]")
+        else:
+            console.print("[dim]Unknown action. Use a number, 's <num>', 'a <num>', or 'q'.[/dim]")
+
+
 # ---------------------------------------------------------------------------
 # list
 # ---------------------------------------------------------------------------
@@ -62,6 +141,7 @@ def _utcnow() -> datetime:
 @click.option("--suppressed/--no-suppressed", default=False, help="Include suppressed findings")
 @click.option("--limit", "-n", default=50, help="Max results")
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--interactive", "-i", is_flag=True, default=False, help="Interactive mode: browse and act on findings")
 def findings_list(
     severity: str | None,
     source: str | None,
@@ -71,6 +151,7 @@ def findings_list(
     suppressed: bool,
     limit: int,
     fmt: str,
+    interactive: bool,
 ) -> None:
     """List normalized findings."""
     from warlock.db.engine import get_session, init_db
@@ -113,6 +194,7 @@ def findings_list(
         return
 
     table = Table(title=f"Findings ({len(rows)})")
+    table.add_column("#", style="dim", justify="right")
     table.add_column("ID", style="dim", max_width=8)
     table.add_column("Severity")
     table.add_column("Type")
@@ -120,9 +202,10 @@ def findings_list(
     table.add_column("Source")
     table.add_column("Observed At")
 
-    for r in rows:
+    for idx, r in enumerate(rows, 1):
         sty = _severity_style(r.severity)
         table.add_row(
+            str(idx) if interactive else "",
             r.id[:8],
             f"[{sty}]{r.severity}[/{sty}]" if sty else r.severity,
             r.observation_type,
@@ -132,6 +215,9 @@ def findings_list(
         )
 
     console.print(table)
+
+    if interactive:
+        _interactive_findings_loop(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +235,10 @@ def findings_show(finding_id: str) -> None:
     init_db()
     with get_session() as session:
         row = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
+        if not row:
+            # Try matching with LIKE %prefix% for cases where prefix doesn't
+            # align to the start (e.g. UUID with/without dashes)
+            row = session.query(Finding).filter(Finding.id.like(f"%{finding_id}%")).first()
 
     if not row:
         _error(f"Finding '{finding_id}' not found.")

@@ -32,7 +32,10 @@ def users() -> None:
 @click.option("--role", "-r", default=None, help="Filter by role (admin, auditor, owner, viewer)")
 @click.option("--active/--all", "active_only", default=True, help="Show only active users")
 @click.option("--limit", "-n", default=50, help="Max results")
-def users_list(role: str | None, active_only: bool, limit: int) -> None:
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> None:
     """List platform users."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import User
@@ -49,6 +52,23 @@ def users_list(role: str | None, active_only: bool, limit: int) -> None:
 
     if not rows:
         console.print("[dim]No users found.[/dim]")
+        return
+
+    if fmt == "json":
+        import json as _json
+        data = [
+            {
+                "id": u.id,
+                "email": u.email,
+                "name": u.name,
+                "role": u.role,
+                "mfa_enabled": u.mfa_enabled,
+                "is_active": u.is_active,
+                "last_login": u.last_login.isoformat() if u.last_login else None,
+            }
+            for u in rows
+        ]
+        console.print(_json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Users ({len(rows)})")
@@ -80,6 +100,105 @@ def users_list(role: str | None, active_only: bool, limit: int) -> None:
         )
 
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# users import
+# ---------------------------------------------------------------------------
+
+
+@users.command("import")
+@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path")
+@click.option(
+    "--format", "fmt", default="json", type=click.Choice(["json", "csv"]), help="File format"
+)
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without importing")
+def users_import(filepath: str, fmt: str, dry_run: bool) -> None:
+    """Import users from a JSON or CSV file.
+
+    Expected JSON structure: {"users": [{"email": "...", "name": "...", "role": "viewer", "password": "..."}, ...]}
+    Expected CSV columns: email, name, role, password
+    Duplicate emails are skipped. Passwords are SHA-256 hashed on import.
+    """
+    import csv
+    import json as _json
+
+    records: list[dict] = []
+    if fmt == "json":
+        with open(filepath) as fh:
+            data = _json.load(fh)
+        records = data.get("users", data) if isinstance(data, dict) else data
+    else:
+        with open(filepath, newline="") as fh:
+            reader = csv.DictReader(fh)
+            records = list(reader)
+
+    if not records:
+        console.print("[dim]No records found in file.[/dim]")
+        return
+
+    console.print(f"[bold]{len(records)}[/bold] user record(s) found in {filepath}.")
+
+    table = Table(title="User Import Preview")
+    table.add_column("Email", style="cyan")
+    table.add_column("Name")
+    table.add_column("Role")
+
+    valid_roles = {"admin", "auditor", "owner", "viewer"}
+    for r in records[:20]:
+        role = r.get("role", "viewer")
+        table.add_row(r.get("email", "?"), r.get("name", "?"), role)
+    if len(records) > 20:
+        console.print(f"[dim]... and {len(records) - 20} more[/dim]")
+    console.print(table)
+
+    if dry_run:
+        console.print(
+            f"\n[dim](dry-run) Would import {len(records)} user(s). "
+            f"Pass without --dry-run to execute.[/dim]"
+        )
+        return
+
+    import hashlib
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import User
+
+    init_db()
+    created = 0
+    skipped = 0
+
+    with get_session() as session:
+        for r in records:
+            email = r.get("email", "").strip()
+            name = r.get("name", "").strip()
+            role = r.get("role", "viewer").strip()
+            password = r.get("password", "changeme").strip()
+
+            if not email or not name:
+                skipped += 1
+                continue
+            if role not in valid_roles:
+                role = "viewer"
+
+            existing = session.query(User).filter(User.email == email).first()
+            if existing:
+                skipped += 1
+                continue
+
+            pw_hash = hashlib.sha256(password.encode()).hexdigest()
+            user = User(
+                email=email,
+                name=name,
+                hashed_password=pw_hash,
+                role=role,
+                is_active=True,
+            )
+            session.add(user)
+            created += 1
+        session.commit()
+
+    console.print(f"[green]Imported {created} user(s), skipped {skipped}.[/green]")
 
 
 # ---------------------------------------------------------------------------

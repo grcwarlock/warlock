@@ -18,6 +18,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -263,7 +264,7 @@ def audit_prep(framework: str) -> None:
 
     # Evidence freshness: how many results are older than 30 days
     cutoff = datetime.now(timezone.utc) - timedelta(days=30)
-    stale = sum(1 for r in results if r.assessed_at < cutoff)
+    stale = sum(1 for r in results if not r.assessed_at or ensure_aware(r.assessed_at) < cutoff)
 
     approved_attestations = sum(1 for a in attestations if a.status == "approved")
 
@@ -319,9 +320,14 @@ def audit_prep(framework: str) -> None:
 
 
 @comply.command("readiness-score")
-@click.argument("framework")
-def readiness_score(framework: str) -> None:
+@click.argument("framework", required=False, default=None)
+@click.option("--framework", "-f", "framework_opt", default=None, help="Framework (alternative to positional arg)")
+def readiness_score(framework: str | None, framework_opt: str | None) -> None:
     """Compute a 0-100 readiness score with breakdown for a framework."""
+    framework = framework or framework_opt
+    if not framework:
+        raise click.UsageError("Missing framework. Usage: readiness-score <framework> or readiness-score -f <framework>")
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Attestation, ControlResult, POAM
 
@@ -355,7 +361,7 @@ def readiness_score(framework: str) -> None:
     coverage_pct = ((total - not_assessed) / total * 100) if total else 0.0
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=30)
-    stale = sum(1 for r in results if r.assessed_at < cutoff)
+    stale = sum(1 for r in results if not r.assessed_at or ensure_aware(r.assessed_at) < cutoff)
     freshness_pct = ((total - stale) / total * 100) if total else 0.0
 
     poam_penalty = min(open_poams * 5.0, 30.0)  # up to -30 pts
@@ -634,7 +640,8 @@ def control_effectiveness(framework: str | None) -> None:
 
 @comply.command("benchmark")
 @click.option("--framework", "-f", default=None, help="Focus on a specific framework")
-def benchmark(framework: str | None) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def benchmark(framework: str | None, output: str | None) -> None:
     """Compare compliance posture across all active frameworks."""
     from warlock.db.engine import get_session, init_db
 
@@ -675,6 +682,16 @@ def benchmark(framework: str | None) -> None:
         table.add_row(fw, str(s["total"]), str(s["compliant"]), f"[{style}]{rate:.0f}%[/]", bar)
 
     console.print(table)
+
+    if output:
+        from io import StringIO
+        from rich.console import Console as RichConsole
+        buf = StringIO()
+        file_console = RichConsole(file=buf, width=120)
+        file_console.print(table)
+        with open(output, "w") as f:
+            f.write(buf.getvalue())
+        console.print(f"[green]Report written to {output}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -1103,7 +1120,8 @@ def schedule_audit(framework: str | None) -> None:
     show_default=True,
     help="Output format",
 )
-def executive_brief(framework: str | None, output_format: str) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def executive_brief(framework: str | None, output_format: str, output: str | None) -> None:
     """Generate a one-page executive compliance brief."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Attestation, POAM
@@ -1164,7 +1182,13 @@ def executive_brief(framework: str | None, output_format: str) -> None:
             "open_poams": open_poams,
             "approved_attestations": approved_atts,
         }
-        console.print_json(json.dumps(brief, default=str))
+        content = json.dumps(brief, indent=2, default=str)
+        if output:
+            with open(output, "w") as f:
+                f.write(content)
+            console.print(f"[green]Report written to {output}[/green]")
+        else:
+            console.print_json(json.dumps(brief, default=str))
         return
 
     # Markdown
@@ -1221,4 +1245,10 @@ def executive_brief(framework: str | None, output_format: str) -> None:
         f"4. Run `warlock comply audit-prep {framework or '<framework>'}` for audit checklist.",
     ]
 
-    console.print("\n".join(lines))
+    content = "\n".join(lines)
+    console.print(content)
+
+    if output:
+        with open(output, "w") as f:
+            f.write(content)
+        console.print(f"[green]Report written to {output}[/green]")

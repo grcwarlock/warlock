@@ -14,6 +14,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +85,7 @@ def evidence_list(
                 "assessor": r.assessor,
                 "assessed_at": r.assessed_at.isoformat() if r.assessed_at else None,
                 "evidence_ids": r.evidence_ids or [],
-                "stale": r.assessed_at < threshold if r.assessed_at else True,
+                "stale": ensure_aware(r.assessed_at) < threshold if r.assessed_at else True,
             }
             for r in rows
         ]
@@ -110,7 +111,7 @@ def evidence_list(
         }.get(r.status, "")
         assessed = r.assessed_at.strftime("%Y-%m-%d") if r.assessed_at else "\u2014"
         ev_count = len(r.evidence_ids or [])
-        is_stale = r.assessed_at < threshold if r.assessed_at else True
+        is_stale = ensure_aware(r.assessed_at) < threshold if r.assessed_at else True
         freshness = "[dim]stale[/dim]" if is_stale else "[green]fresh[/green]"
 
         table.add_row(
@@ -496,8 +497,8 @@ def evidence_freshness(framework: str | None, threshold_days: int) -> None:
         console.print("[dim]No evidence records found.[/dim]")
         return
 
-    stale = [r for r in rows if not r.assessed_at or r.assessed_at < threshold]
-    fresh = [r for r in rows if r.assessed_at and r.assessed_at >= threshold]
+    stale = [r for r in rows if not r.assessed_at or ensure_aware(r.assessed_at) < threshold]
+    fresh = [r for r in rows if r.assessed_at and ensure_aware(r.assessed_at) >= threshold]
 
     console.print(
         f"[bold]Freshness Report[/bold] (threshold: {threshold_days} days)\n"
@@ -693,7 +694,7 @@ def evidence_stats(framework: str | None) -> None:
         compliant = sum(1 for r in results if r.status == "compliant")
         non_compliant = sum(1 for r in results if r.status == "non_compliant")
         partial = sum(1 for r in results if r.status == "partial")
-        fresh = sum(1 for r in results if r.assessed_at and r.assessed_at >= threshold)
+        fresh = sum(1 for r in results if r.assessed_at and ensure_aware(r.assessed_at) >= threshold)
         with_ev = sum(1 for r in results if r.evidence_ids)
         table.add_row(
             fw,

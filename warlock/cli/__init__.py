@@ -152,9 +152,21 @@ def _print_stats(stats) -> None:
 
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging")
-def cli(verbose: bool) -> None:
+@click.option("--quiet", "-q", is_flag=True, help="Suppress non-essential output (for scripting)")
+@click.option(
+    "--output-format",
+    "global_format",
+    type=click.Choice(["table", "json"]),
+    default=None,
+    help="Override output format for all commands",
+)
+@click.pass_context
+def cli(ctx: click.Context, verbose: bool, quiet: bool, global_format: str | None) -> None:
     """Warlock -- compliance telemetry pipeline."""
-    level = logging.DEBUG if verbose else logging.INFO
+    ctx.ensure_object(dict)
+    ctx.obj["quiet"] = quiet
+    ctx.obj["global_format"] = global_format
+    level = logging.DEBUG if verbose else logging.WARNING if quiet else logging.INFO
     logging.basicConfig(
         level=level,
         format="%(asctime)s %(levelname)-8s %(name)s -- %(message)s",
@@ -233,10 +245,77 @@ from warlock.cli import training_workflow_cmd as _training_workflow_cmd  # noqa:
 from warlock.cli import exception_workflow_cmd as _exception_workflow_cmd  # noqa: F401, E402
 from warlock.cli import conmon_workflow_cmd as _conmon_workflow_cmd  # noqa: F401, E402
 from warlock.cli import evidence_workflow_cmd as _evidence_workflow_cmd  # noqa: F401, E402
+from warlock.cli import lifecycle_cmd as _lifecycle_cmd  # noqa: F401, E402
 
 # Phase 4 — Alerts & Remediation
 from warlock.cli import alerts_cmd as _alerts_cmd  # noqa: F401, E402
 from warlock.cli import remediation_cmd as _remediation_cmd  # noqa: F401, E402
+
+# Phase 5 — Interoperability & AI-assisted
+from warlock.cli import interop_cmd as _interop_cmd  # noqa: F401, E402
+from warlock.cli import ai_assist_cmd as _ai_assist_cmd  # noqa: F401, E402
+
+
+# ---------------------------------------------------------------------------
+# UX-005: Conceptual help topics
+# ---------------------------------------------------------------------------
+_HELP_TOPICS = {
+    "audit-prep": (
+        "Audit Preparation Workflow\n"
+        "  1. warlock comply readiness-score <framework>    — Check readiness\n"
+        "  2. warlock correlate gap-analysis <framework>    — Identify gaps\n"
+        "  3. warlock evidence-sprint                       — Plan evidence collection\n"
+        "  4. warlock audit-prep                            — Pre-audit checklist\n"
+        "  5. warlock audit engagement create               — Create engagement\n"
+        "  6. warlock oscal ssp -f <framework>              — Generate SSP\n"
+        "  7. warlock oscal assessment-results               — Export assessment"
+    ),
+    "first-run": (
+        "Getting Started\n"
+        "  1. warlock pipeline init                          — Initialize database\n"
+        "  2. warlock collect                                — Run all connectors\n"
+        "  3. warlock dashboard posture                      — View compliance posture\n"
+        "  4. warlock morning                                — Morning operations review\n"
+        "  5. warlock triage                                 — Triage new findings"
+    ),
+    "fedramp": (
+        "FedRAMP Workflow\n"
+        "  1. warlock onboard-system                         — Register system\n"
+        "  2. warlock comply readiness-score fedramp          — Check readiness\n"
+        "  3. warlock conmon-monthly -f fedramp              — Monthly ConMon\n"
+        "  4. warlock oscal ssp -f fedramp                   — Generate SSP\n"
+        "  5. warlock oscal assessment-results -f fedramp    — Assessment results"
+    ),
+    "soc2": (
+        "SOC 2 Workflow\n"
+        "  1. warlock comply readiness-score soc2            — Check readiness\n"
+        "  2. warlock simulate-audit -f soc2                 — Simulate audit\n"
+        "  3. warlock evidence freshness -f soc2             — Check evidence\n"
+        "  4. warlock reports executive -f soc2              — Executive summary\n"
+        "  5. warlock oscal ssp -f soc2                     — Generate SSP"
+    ),
+}
+
+
+@cli.command("help-topic")
+@click.argument("topic", required=False, default=None)
+def help_topic(topic: str | None) -> None:
+    """Show workflow guides for common GRC tasks."""
+    if not topic:
+        console.print("[bold]Available help topics:[/bold]\n")
+        for name, content in _HELP_TOPICS.items():
+            first_line = content.split("\n")[0]
+            console.print(f"  [cyan]{name:20s}[/cyan] — {first_line}")
+        console.print("\n[dim]Usage: warlock help-topic <topic>[/dim]")
+        return
+
+    content = _HELP_TOPICS.get(topic)
+    if not content:
+        console.print(f"[yellow]Unknown topic '{topic}'. Available: {', '.join(_HELP_TOPICS.keys())}[/yellow]")
+        return
+
+    from rich.panel import Panel
+    console.print(Panel(content, title=f"[bold]{topic}[/bold]", border_style="cyan"))
 
 
 if __name__ == "__main__":

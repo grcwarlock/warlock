@@ -184,6 +184,97 @@ def _collect_exception_deadlines(session) -> list[dict]:
     return items
 
 
+def _collect_vendor_deadlines(session) -> list[dict]:
+    """Return calendar items from vendor reassessment due dates and contract renewals."""
+    from warlock.db.models import AuditEntry
+
+    items = []
+    # Vendor reassessment and contract dates stored as audit entries
+    rows = (
+        session.query(AuditEntry)
+        .filter(
+            AuditEntry.entity_type == "vendor",
+            AuditEntry.action.in_(["vendor_created", "vendor_assessed", "vendor_contract_updated"]),
+        )
+        .order_by(AuditEntry.created_at.desc())
+        .all()
+    )
+    seen: set[str] = set()
+    for r in rows:
+        if r.entity_id in seen:
+            continue
+        seen.add(r.entity_id)
+        extra = r.extra or {}
+        # Check for reassessment due date
+        reassess = extra.get("next_reassessment") or extra.get("reassessment_due")
+        if reassess:
+            try:
+                due = datetime.fromisoformat(reassess)
+                if due.tzinfo is None:
+                    due = due.replace(tzinfo=timezone.utc)
+                items.append({
+                    "source": "vendor",
+                    "id": r.entity_id[:8],
+                    "title": f"Vendor reassessment due: {extra.get('name', r.entity_id[:8])}",
+                    "type": "review",
+                    "due_date": due,
+                    "detail": f"vendor={extra.get('name', '')}",
+                })
+            except ValueError:
+                pass
+        # Check for contract expiry
+        contract_exp = extra.get("contract_expiry") or extra.get("contract_end")
+        if contract_exp:
+            try:
+                due = datetime.fromisoformat(contract_exp)
+                if due.tzinfo is None:
+                    due = due.replace(tzinfo=timezone.utc)
+                items.append({
+                    "source": "vendor",
+                    "id": r.entity_id[:8],
+                    "title": f"Vendor contract expiry: {extra.get('name', r.entity_id[:8])}",
+                    "type": "renewal",
+                    "due_date": due,
+                    "detail": f"vendor={extra.get('name', '')}",
+                })
+            except ValueError:
+                pass
+    return items
+
+
+def _collect_training_deadlines(session) -> list[dict]:
+    """Return calendar items from training due dates."""
+    from warlock.db.models import PersonnelRecord
+
+    items = []
+    try:
+        records = session.query(PersonnelRecord).all()
+        for p in records:
+            training = p.training_status or {}
+            if isinstance(training, dict):
+                for course, info in training.items():
+                    if isinstance(info, dict):
+                        due = info.get("due_date") or info.get("expiry")
+                        if due:
+                            try:
+                                due_dt = datetime.fromisoformat(due) if isinstance(due, str) else due
+                                if due_dt.tzinfo is None:
+                                    due_dt = due_dt.replace(tzinfo=timezone.utc)
+                                items.append({
+                                    "source": "training",
+                                    "id": p.id[:8],
+                                    "title": f"Training due: {course} ({p.name or p.id[:8]})",
+                                    "type": "deadline",
+                                    "due_date": due_dt,
+                                    "detail": f"employee={p.name or ''} course={course}",
+                                })
+                            except (ValueError, TypeError):
+                                pass
+    except Exception:
+        pass  # PersonnelRecord may not have training_status in all schemas
+    return items
+
+
 def _collect_calendar_items(session) -> list[dict]:
     """Return stored calendar items from AuditEntry."""
     from warlock.db.models import AuditEntry
@@ -229,6 +320,8 @@ def _all_domain_items(session) -> list[dict]:
     items.extend(_collect_evidence_request_deadlines(session))
     items.extend(_collect_attestation_deadlines(session))
     items.extend(_collect_exception_deadlines(session))
+    items.extend(_collect_vendor_deadlines(session))
+    items.extend(_collect_training_deadlines(session))
     items.extend(_collect_calendar_items(session))
     return items
 
@@ -478,7 +571,8 @@ def calendar_next(days: int) -> None:
     type=click.Choice(["ics", "csv"]),
     help="Export format (ics or csv)",
 )
-def calendar_export(fmt: str) -> None:
+@click.option("--output", "-o", default=None, help="Write output to file instead of terminal")
+def calendar_export(fmt: str, output: str | None) -> None:
     """Export the compliance calendar in ICS or CSV format."""
     from warlock.db.engine import get_session, init_db
 
@@ -505,7 +599,13 @@ def calendar_export(fmt: str) -> None:
                     "detail": i.get("detail", ""),
                 }
             )
-        console.print(buf.getvalue())
+        content = buf.getvalue()
+        if output:
+            with open(output, "w") as f:
+                f.write(content)
+            console.print(f"[green]Calendar exported to {output}[/green]")
+        else:
+            console.print(content)
         return
 
     # ICS format
@@ -532,4 +632,10 @@ def calendar_export(fmt: str) -> None:
             "END:VEVENT",
         ]
     lines.append("END:VCALENDAR")
-    console.print("\n".join(lines))
+    content = "\n".join(lines)
+    if output:
+        with open(output, "w") as f:
+            f.write(content)
+        console.print(f"[green]Calendar exported to {output}[/green]")
+    else:
+        console.print(content)

@@ -1,4 +1,4 @@
-"""POA&M detail commands: milestones, milestone-update, deviation.
+"""POA&M commands: create, list, show, close, milestones, milestone-update, deviation.
 
 NOTE: governance.py has a flat ``warlock poams`` (plural) command that lists
 POA&Ms. This module registers a ``warlock poam`` (singular) *group* with
@@ -11,9 +11,33 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
+
+
+# ---------------------------------------------------------------------------
+# Style maps
+# ---------------------------------------------------------------------------
+
+_SEV_STYLES: dict[str, str] = {
+    "critical": "red bold",
+    "high": "red",
+    "moderate": "yellow",
+    "low": "dim",
+}
+
+_ST_STYLES: dict[str, str] = {
+    "draft": "dim",
+    "open": "yellow",
+    "in_progress": "cyan",
+    "completed": "green",
+    "verified": "green bold",
+    "closed": "dim",
+}
+
+_VALID_STATUSES = ["draft", "open", "in_progress", "completed", "verified", "closed"]
 
 
 # ---------------------------------------------------------------------------
@@ -23,7 +47,367 @@ from warlock.cli import cli, console, _error, _get_actor
 
 @cli.group("poam")
 def poam_group() -> None:
-    """POA&M detail management: milestones, updates, and deviations."""
+    """POA&M lifecycle management: create, list, show, close, milestones, deviations."""
+
+
+# ---------------------------------------------------------------------------
+# create
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("create")
+@click.option("--control", "-c", required=True, help="Control ID")
+@click.option("--framework", "-f", required=True, help="Framework")
+@click.option("--weakness", "-w", required=True, help="Weakness description")
+@click.option("--remediation", "-r", required=True, help="Remediation plan")
+@click.option("--due-date", required=True, help="Scheduled completion YYYY-MM-DD")
+@click.option("--assigned-to", default=None, help="Assignee")
+@click.option(
+    "--severity",
+    "-s",
+    default="moderate",
+    type=click.Choice(["critical", "high", "moderate", "low"]),
+    help="Severity level",
+)
+def poam_create(
+    control: str,
+    framework: str,
+    weakness: str,
+    remediation: str,
+    due_date: str,
+    assigned_to: str | None,
+    severity: str,
+) -> None:
+    """Create a new POA&M entry."""
+    import hashlib
+    import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry, POAM
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    try:
+        scheduled = datetime.strptime(due_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    except ValueError:
+        _error(f"Invalid --due-date format: {due_date}. Use YYYY-MM-DD.")
+
+    with get_session() as session:
+        poam = POAM(
+            id=str(uuid.uuid4()),
+            framework=framework,
+            control_id=control,
+            weakness_description=weakness,
+            severity=severity,
+            status="open",
+            resources_required=remediation,
+            scheduled_completion=scheduled,
+            created_by=actor,
+            updated_by=assigned_to or actor,
+            milestones=[],
+            delay_justifications=[],
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(poam)
+
+        # Audit entry
+        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
+        prev_hash = last.entry_hash if last else "genesis"
+        seq = (last.sequence + 1) if last else 1
+        payload = f"{seq}:{prev_hash}:poam_created:{poam.id}:{actor}"
+        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+
+        audit = AuditEntry(
+            id=str(uuid.uuid4()),
+            sequence=seq,
+            previous_hash=prev_hash,
+            entry_hash=entry_hash,
+            action="poam_created",
+            entity_type="poam",
+            entity_id=poam.id,
+            actor=actor,
+            extra={
+                "framework": framework,
+                "control_id": control,
+                "severity": severity,
+                "weakness": weakness[:200],
+            },
+            created_at=now,
+        )
+        session.add(audit)
+        session.commit()
+
+        console.print(
+            f"[green]POA&M created:[/green] [cyan]{poam.id[:8]}[/cyan] "
+            f"{escape(framework)}/{escape(control)} — due {due_date}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# list
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("list")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option(
+    "--status",
+    "-s",
+    default=None,
+    type=click.Choice(_VALID_STATUSES + [""]),
+    help="Filter by status",
+)
+@click.option("--overdue", is_flag=True, help="Show only overdue POA&Ms")
+@click.option("--limit", "-n", default=50, help="Max results")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def poam_list(
+    framework: str | None,
+    status: str | None,
+    overdue: bool,
+    limit: int,
+    fmt: str,
+) -> None:
+    """List POA&M entries with optional filters."""
+    import json as _json
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import POAM
+
+    init_db()
+    with get_session() as session:
+        q = session.query(POAM)
+        if framework:
+            q = q.filter(POAM.framework == framework)
+        if status:
+            q = q.filter(POAM.status == status)
+        else:
+            q = q.filter(POAM.status.notin_(["closed", "verified"]))
+        if overdue:
+            now = datetime.now(timezone.utc)
+            q = q.filter(
+                POAM.scheduled_completion < now,
+                POAM.status.notin_(["completed", "verified", "closed"]),
+            )
+        rows = q.order_by(POAM.scheduled_completion.asc()).limit(limit).all()
+
+    if not rows:
+        console.print("[dim]No POA&Ms found.[/dim]")
+        return
+
+    if fmt == "json":
+        out = [
+            {
+                "id": p.id,
+                "framework": p.framework,
+                "control_id": p.control_id,
+                "weakness": (p.weakness_description or "")[:80],
+                "severity": p.severity,
+                "status": p.status,
+                "scheduled_completion": (
+                    p.scheduled_completion.strftime("%Y-%m-%d")
+                    if p.scheduled_completion
+                    else None
+                ),
+                "created_by": p.created_by,
+            }
+            for p in rows
+        ]
+        console.print(_json.dumps(out, indent=2, default=str))
+        return
+
+    table = Table(title=f"POA&Ms ({len(rows)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Weakness", max_width=40)
+    table.add_column("Severity")
+    table.add_column("Status")
+    table.add_column("Due", style="dim")
+
+    now = datetime.now(timezone.utc)
+    for p in rows:
+        sev_style = _SEV_STYLES.get(p.severity, "")
+        st_style = _ST_STYLES.get(p.status, "")
+        due_str = (
+            p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "\u2014"
+        )
+        overdue_flag = ""
+        if (
+            p.scheduled_completion
+            and p.scheduled_completion < now
+            and p.status not in ("completed", "verified", "closed")
+        ):
+            overdue_flag = " [red]OVERDUE[/red]"
+        table.add_row(
+            p.id[:8],
+            escape(p.framework or ""),
+            escape(p.control_id or ""),
+            escape((p.weakness_description or "")[:40]),
+            f"[{sev_style}]{p.severity}[/]",
+            f"[{st_style}]{p.status}[/]",
+            f"{due_str}{overdue_flag}",
+        )
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# show
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("show")
+@click.argument("poam_id")
+def poam_show(poam_id: str) -> None:
+    """Show full detail for a POA&M entry."""
+    from rich.panel import Panel
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import POAM
+
+    init_db()
+    with get_session() as session:
+        poam = session.query(POAM).filter(POAM.id.startswith(poam_id)).first()
+        if not poam:
+            _error(f"POA&M not found: {poam_id}")
+
+        sev_style = _SEV_STYLES.get(poam.severity, "")
+        st_style = _ST_STYLES.get(poam.status, "")
+        due_str = (
+            poam.scheduled_completion.strftime("%Y-%m-%d")
+            if poam.scheduled_completion
+            else "\u2014"
+        )
+        actual_str = (
+            poam.actual_completion.strftime("%Y-%m-%d") if poam.actual_completion else "\u2014"
+        )
+
+        console.print()
+        console.print(
+            Panel(
+                f"[bold]{escape(poam.framework)}/{escape(poam.control_id)}[/bold]\n\n"
+                f"ID: {poam.id}\n"
+                f"Severity: [{sev_style}]{poam.severity}[/]  |  "
+                f"Status: [{st_style}]{poam.status}[/]  |  "
+                f"Risk Level: {poam.risk_level or 'n/a'}\n"
+                f"Scheduled: {due_str}  |  Actual: {actual_str}\n"
+                f"Created by: {escape(poam.created_by or 'n/a')}  |  "
+                f"Approved by: {escape(poam.approved_by or 'n/a')}",
+                title="[bold cyan]POA&M[/bold cyan]",
+                border_style="cyan",
+            )
+        )
+
+        console.print(
+            f"\n[bold]Weakness:[/bold]\n{escape(poam.weakness_description or 'n/a')}"
+        )
+
+        if poam.resources_required:
+            console.print(
+                f"\n[bold]Remediation Plan:[/bold]\n{escape(poam.resources_required)}"
+            )
+
+        if poam.vendor_dependency:
+            console.print(
+                f"\n[bold]Vendor Dependency:[/bold] {escape(poam.vendor_dependency)}"
+            )
+
+        milestones = list(poam.milestones or [])
+        if milestones:
+            console.print(f"\n[bold]Milestones ({len(milestones)}):[/bold]")
+            for i, ms in enumerate(milestones, 1):
+                ms_status = ms.get("status", "pending")
+                console.print(
+                    f"  {i}. {escape(ms.get('description', 'n/a'))} "
+                    f"— {ms_status} (due: {ms.get('due_date', 'n/a')})"
+                )
+
+        deviations = list(poam.delay_justifications or [])
+        if deviations:
+            console.print(f"\n[bold]Deviations/Justifications ({len(deviations)}):[/bold]")
+            for d in deviations:
+                console.print(
+                    f"  - [{d.get('deviation_type', d.get('type', 'n/a'))}] "
+                    f"{escape(d.get('reason', d.get('justification', 'n/a')))}"
+                )
+
+        console.print(
+            f"\n[dim]Delay count: {poam.delay_count or 0}  |  "
+            f"Finding: {poam.finding_id or 'n/a'}  |  "
+            f"Control result: {poam.control_result_id or 'n/a'}[/dim]"
+        )
+        console.print()
+
+
+# ---------------------------------------------------------------------------
+# close
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("close")
+@click.argument("poam_id")
+@click.option("--note", "-n", default="Completed", help="Completion note")
+def poam_close(poam_id: str, note: str) -> None:
+    """Mark a POA&M as completed and closed."""
+    import hashlib
+    import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry, POAM
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        poam = session.query(POAM).filter(POAM.id.startswith(poam_id)).first()
+        if not poam:
+            _error(f"POA&M not found: {poam_id}")
+
+        old_status = poam.status
+        poam.status = "completed"
+        poam.actual_completion = now
+        poam.updated_by = actor
+        poam.updated_at = now
+
+        # Audit entry
+        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
+        prev_hash = last.entry_hash if last else "genesis"
+        seq = (last.sequence + 1) if last else 1
+        payload = f"{seq}:{prev_hash}:poam_closed:{poam.id}:{actor}"
+        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+
+        audit = AuditEntry(
+            id=str(uuid.uuid4()),
+            sequence=seq,
+            previous_hash=prev_hash,
+            entry_hash=entry_hash,
+            action="poam_closed",
+            entity_type="poam",
+            entity_id=poam.id,
+            actor=actor,
+            extra={
+                "old_status": old_status,
+                "new_status": "completed",
+                "note": note,
+                "framework": poam.framework,
+                "control_id": poam.control_id,
+            },
+            created_at=now,
+        )
+        session.add(audit)
+        session.commit()
+
+    console.print(
+        f"[green]POA&M {poam_id[:8]} closed:[/green] "
+        f"{old_status} \u2192 completed"
+    )
+    console.print(f"  Note: {escape(note)}")
 
 
 # ---------------------------------------------------------------------------
@@ -33,7 +417,10 @@ def poam_group() -> None:
 
 @poam_group.command("milestones")
 @click.argument("poam_id")
-def poam_milestones(poam_id: str) -> None:
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def poam_milestones(poam_id: str, fmt: str) -> None:
     """Show all milestones for a POA&M.
 
     POAM_ID: POA&M ID or prefix (from 'warlock poams').
@@ -71,11 +458,20 @@ def poam_milestones(poam_id: str) -> None:
     console.print(f"Scheduled completion: {poam_display['scheduled_completion']}\n")
 
     if not milestones:
+        if fmt == "json":
+            import json as _json
+            console.print(_json.dumps({"poam": poam_display, "milestones": []}, indent=2))
+            return
         console.print("[dim]No milestones defined for this POA&M.[/dim]")
         console.print(
             f"[dim]Use 'warlock poam milestone-update {poam_id} <milestone_id>' "
             f"to add or update milestones.[/dim]"
         )
+        return
+
+    if fmt == "json":
+        import json as _json
+        console.print(_json.dumps({"poam": poam_display, "milestones": milestones}, indent=2, default=str))
         return
 
     table = Table(title=f"Milestones ({len(milestones)})")

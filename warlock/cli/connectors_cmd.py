@@ -300,7 +300,10 @@ def connectors_disable(name: str) -> None:
 
 @connectors.command("status")
 @click.option("--limit", "-n", default=20, help="Number of recent runs to show")
-def connectors_status(limit: int) -> None:
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def connectors_status(limit: int, fmt: str) -> None:
     """Show recent run status for all connectors."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ConnectorRun
@@ -313,6 +316,21 @@ def connectors_status(limit: int) -> None:
 
     if not rows:
         console.print("[dim]No connector runs found.[/dim]")
+        return
+
+    if fmt == "json":
+        data = [
+            {
+                "name": run.connector_name,
+                "status": run.status,
+                "event_count": run.event_count or 0,
+                "error_count": run.error_count or 0,
+                "duration_seconds": run.duration_seconds,
+                "started_at": str(run.started_at)[:19] if run.started_at else None,
+            }
+            for run in rows
+        ]
+        console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title="Recent Connector Runs")
