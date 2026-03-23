@@ -141,8 +141,9 @@ jobs:
         run: |
           CONFTEST_VERSION="0.57.0"
           # Download conftest and verify via checksums file from the release
-          wget -q "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" -O /tmp/conftest.tar.gz
-          wget -q "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/checksums.txt" -O /tmp/conftest_checksums.txt
+          # --tries=3 guards against transient GitHub CDN failures
+          wget -q --tries=3 --waitretry=5 "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" -O /tmp/conftest.tar.gz
+          wget -q --tries=3 --waitretry=5 "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/checksums.txt" -O /tmp/conftest_checksums.txt
           cd /tmp && grep "conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" conftest_checksums.txt | sha256sum -c - || {
             echo "::error::Conftest checksum verification failed!"
             exit 1
