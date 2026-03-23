@@ -19,6 +19,7 @@ def _uuid() -> str:
 @dataclass
 class QueryFilters:
     """Filters for cross-domain queries. None means 'all'."""
+
     frameworks: list[str] | None = None
     systems: list[str] | None = None
     owner: str | None = None
@@ -31,6 +32,7 @@ class QueryFilters:
 @dataclass
 class RelatedItem:
     """Cross-domain data projection. Returned by get_related_to()."""
+
     domain: str
     entity_type: str
     entity_id: str
@@ -44,6 +46,7 @@ class RelatedItem:
 @dataclass
 class UrgentItem:
     """Item needing attention. Returned by get_urgent_items()."""
+
     domain: str
     entity_type: str
     entity_id: str
@@ -59,6 +62,7 @@ class UrgentItem:
 @dataclass
 class DomainEvent:
     """Event emitted by a domain action. Carries cascade context."""
+
     event_type: str
     domain: str
     entity_type: str
@@ -72,6 +76,7 @@ class DomainEvent:
 @dataclass
 class PolicyScope:
     """Scoping for policy applicability. None fields match everything."""
+
     frameworks: list[str] | None = None
     systems: list[str] | None = None
     severity: list[str] | None = None

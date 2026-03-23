@@ -15,11 +15,24 @@ def policy():
 
 
 @policy.command("set")
-@click.argument("policy_type", type=click.Choice([
-    "sla", "retention", "classification", "risk-appetite",
-    "escalation", "auto-assign", "auto-create", "cadence",
-    "confidence", "evidence-requirement", "pii",
-]))
+@click.argument(
+    "policy_type",
+    type=click.Choice(
+        [
+            "sla",
+            "retention",
+            "classification",
+            "risk-appetite",
+            "escalation",
+            "auto-assign",
+            "auto-create",
+            "cadence",
+            "confidence",
+            "evidence-requirement",
+            "pii",
+        ]
+    ),
+)
 @click.option("--framework", "-f", default=None, help="Scope to framework")
 @click.option("--severity", default=None, help="Scope to severity level")
 @click.option("--remediation-days", type=int, default=None, help="SLA: days to remediate")
@@ -34,9 +47,23 @@ def policy():
 @click.option("--reason", default="", help="Description / reason for this policy")
 @click.option("--actor", default=None, help="Actor identity (default: cli@warlock)")
 @click.option("--dry-run", is_flag=True, help="Show what would change without executing")
-def policy_set(policy_type, framework, severity, remediation_days, escalate_after,
-               days, owner, frequency, floor, max_ale, max_var95, priority, reason,
-               actor, dry_run):
+def policy_set(
+    policy_type,
+    framework,
+    severity,
+    remediation_days,
+    escalate_after,
+    days,
+    owner,
+    frequency,
+    floor,
+    max_ale,
+    max_var95,
+    priority,
+    reason,
+    actor,
+    dry_run,
+):
     """Push a policy to the system."""
     import os
     from warlock.db.engine import get_session
@@ -74,7 +101,9 @@ def policy_set(policy_type, framework, severity, remediation_days, escalate_afte
             rules["max_var95"] = max_var95
 
     if not rules:
-        console.print("[red]No rules specified. Use --help to see options for this policy type.[/red]")
+        console.print(
+            "[red]No rules specified. Use --help to see options for this policy type.[/red]"
+        )
         raise SystemExit(1)
 
     if dry_run:
@@ -87,8 +116,11 @@ def policy_set(policy_type, framework, severity, remediation_days, escalate_afte
         engine = PolicyEngine(session)
         p = engine.set_policy(
             policy_type=policy_type.replace("-", "_"),
-            scope=scope, rules=rules, actor=actor,
-            priority=priority, description=reason,
+            scope=scope,
+            rules=rules,
+            actor=actor,
+            priority=priority,
+            description=reason,
         )
         console.print(f"[green]Policy created:[/green] {policy_type} (id: {p.id[:8]})")
         console.print(f"  Scope: {scope or 'global'}")
@@ -128,8 +160,7 @@ def policy_list(policy_type, framework):
         rules_str = str(p.rules)
         if len(rules_str) > 40:
             rules_str = rules_str[:37] + "..."
-        table.add_row(p.id[:8], p.policy_type, scope_str, rules_str,
-                      str(p.priority), p.created_by)
+        table.add_row(p.id[:8], p.policy_type, scope_str, rules_str, str(p.priority), p.created_by)
     console.print(table)
 
 
@@ -172,13 +203,15 @@ def policy_history(policy_type, limit):
             q = q.filter(Policy.policy_type == policy_type.replace("-", "_"))
         db_rows = q.order_by(PolicyHistory.timestamp.desc()).limit(limit).all()
         for h in db_rows:
-            rows_data.append({
-                "timestamp": str(h.timestamp)[:19] if h.timestamp else "",
-                "action": h.action,
-                "policy_type": h.policy.policy_type if h.policy else "",
-                "actor": h.actor,
-                "new_rules": str(h.new_rules)[:50],
-            })
+            rows_data.append(
+                {
+                    "timestamp": str(h.timestamp)[:19] if h.timestamp else "",
+                    "action": h.action,
+                    "policy_type": h.policy.policy_type if h.policy else "",
+                    "actor": h.actor,
+                    "new_rules": str(h.new_rules)[:50],
+                }
+            )
 
     if not rows_data:
         console.print("[dim]No policy history.[/dim]")
@@ -192,6 +225,7 @@ def policy_history(policy_type, limit):
     table.add_column("Rules")
 
     for row in rows_data:
-        table.add_row(row["timestamp"], row["action"], row["policy_type"],
-                      row["actor"], row["new_rules"])
+        table.add_row(
+            row["timestamp"], row["action"], row["policy_type"], row["actor"], row["new_rules"]
+        )
     console.print(table)

@@ -128,9 +128,7 @@ def access_review_create(scope: str, reviewer: str, deadline: str) -> None:
         session.add(entry)
         session.commit()
 
-    console.print(
-        f"[green]Access review campaign created:[/green] [cyan]{campaign_id[:8]}[/cyan]"
-    )
+    console.print(f"[green]Access review campaign created:[/green] [cyan]{campaign_id[:8]}[/cyan]")
     console.print(f"  Scope:    {scope}")
     console.print(f"  Reviewer: {reviewer}")
     console.print(f"  Deadline: {deadline}")
@@ -429,9 +427,7 @@ def access_review_report(campaign_id: str, fmt: str) -> None:
     console.print(f"**Deadline:** {dl}  ")
     console.print(f"**Progress:** {certified}/{total} users reviewed\n")
     revoke_count = sum(1 for c in certs if c.get("decision") == "revoke")
-    console.print(
-        f"**Decisions:** {certified - revoke_count} appropriate, {revoke_count} revoke\n"
-    )
+    console.print(f"**Decisions:** {certified - revoke_count} appropriate, {revoke_count} revoke\n")
     if revocations:
         console.print("## Revocations\n")
         for rv in revocations:

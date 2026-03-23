@@ -47,9 +47,7 @@ def conmon_status(framework: str | None, system: str | None) -> None:
         if system:
             sp = (
                 session.query(SystemProfile)
-                .filter(
-                    (SystemProfile.id == system) | (SystemProfile.acronym.ilike(system))
-                )
+                .filter((SystemProfile.id == system) | (SystemProfile.acronym.ilike(system)))
                 .first()
             )
             if sp:
@@ -153,20 +151,20 @@ def conmon_monthly_report(framework: str | None, output: str | None, month: str 
         compliant = q.filter(ControlResult.status.in_(["compliant", "inherited_compliant"])).count()
         non_compliant = q.filter(ControlResult.status == "non_compliant").count()
 
-        open_issues = session.query(Issue).filter(
-            Issue.status.notin_(["closed", "verified"])
-        ).count()
-        open_poams = session.query(POAM).filter(
-            POAM.status.notin_(["completed", "verified", "closed"])
-        ).count()
+        open_issues = (
+            session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
+        )
+        open_poams = (
+            session.query(POAM)
+            .filter(POAM.status.notin_(["completed", "verified", "closed"]))
+            .count()
+        )
 
-        connector_runs = session.query(ConnectorRun).filter(
-            ConnectorRun.started_at >= report_month
-        ).count()
+        connector_runs = (
+            session.query(ConnectorRun).filter(ConnectorRun.started_at >= report_month).count()
+        )
 
-        new_findings = session.query(Finding).filter(
-            Finding.observed_at >= report_month
-        ).count()
+        new_findings = session.query(Finding).filter(Finding.observed_at >= report_month).count()
 
     score = (compliant / total_results * 100) if total_results > 0 else 0.0
 
@@ -216,10 +214,15 @@ def conmon_monthly_report(framework: str | None, output: str | None, month: str 
 @conmon.command("deviation")
 @click.option("--framework", "-f", required=True, help="Framework")
 @click.option("--control", "-c", required=True, help="Control ID")
-@click.option("--type", "deviation_type", required=True,
-              type=click.Choice(["false-positive", "vendor-dependency", "operational-requirement",
-                                 "risk-accepted"]),
-              help="Deviation type")
+@click.option(
+    "--type",
+    "deviation_type",
+    required=True,
+    type=click.Choice(
+        ["false-positive", "vendor-dependency", "operational-requirement", "risk-accepted"]
+    ),
+    help="Deviation type",
+)
 @click.option("--reason", "-r", required=True, help="Justification for the deviation")
 @click.option(
     "--actor",
@@ -273,13 +276,15 @@ def conmon_deviation(
 
         if target:
             findings = list(target.assertion_findings or [])
-            findings.append({
-                "type": "conmon_deviation",
-                "deviation_type": deviation_type,
-                "reason": reason,
-                "recorded_by": actor_name,
-                "recorded_at": now.isoformat(),
-            })
+            findings.append(
+                {
+                    "type": "conmon_deviation",
+                    "deviation_type": deviation_type,
+                    "reason": reason,
+                    "recorded_by": actor_name,
+                    "recorded_at": now.isoformat(),
+                }
+            )
             target.assertion_findings = findings
             session.commit()
 
@@ -334,11 +339,7 @@ def conmon_significant_change(
     init_db()
     with get_session() as session:
         # Store as an audit entry
-        last_entry = (
-            session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.desc())
-            .first()
-        )
+        last_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
         seq = (last_entry.sequence + 1) if last_entry else 1
         prev_hash = last_entry.entry_hash if last_entry else "genesis"
 
@@ -403,12 +404,12 @@ def conmon_checklist(framework: str | None) -> None:
         total_results = q.count()
         results_ok = total_results > 0
 
-        session.query(Issue).filter(
-            Issue.status.notin_(["closed", "verified"])
-        ).count()
-        open_poams = session.query(POAM).filter(
-            POAM.status.notin_(["completed", "verified", "closed"])
-        ).count()
+        session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
+        open_poams = (
+            session.query(POAM)
+            .filter(POAM.status.notin_(["completed", "verified", "closed"]))
+            .count()
+        )
 
     def _status(ok: bool) -> str:
         return "[green]DONE[/green]" if ok else "[red]TODO[/red]"

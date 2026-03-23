@@ -66,7 +66,9 @@ class DigiCertNormalizer(BaseNormalizer):
             order_id = str(order.get("id", ""))
             status = order.get("status", "unknown")
             product = order.get("product", {})
-            product_name = product.get("name", "unknown") if isinstance(product, dict) else str(product)
+            product_name = (
+                product.get("name", "unknown") if isinstance(product, dict) else str(product)
+            )
             cert = order.get("certificate", {}) or {}
             cn = cert.get("common_name", "unknown")
             valid_till = cert.get("valid_till", "")
@@ -121,7 +123,9 @@ class DigiCertNormalizer(BaseNormalizer):
             status = cert.get("status", "unknown")
             valid_till = cert.get("valid_till", cert.get("expires_at", ""))
             issuer_org = cert.get("org", {})
-            org_name = issuer_org.get("name", "") if isinstance(issuer_org, dict) else str(issuer_org)
+            org_name = (
+                issuer_org.get("name", "") if isinstance(issuer_org, dict) else str(issuer_org)
+            )
             sans = cert.get("dns_names", [])
 
             days = _days_until_expiry(valid_till)

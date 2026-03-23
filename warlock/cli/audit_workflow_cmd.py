@@ -125,9 +125,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         console.print("\n[bold cyan]1. Compliance Posture[/bold cyan]")
 
         all_results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework == framework).all()
         )
         total = len(all_results)
 
@@ -142,9 +140,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         for r in all_results:
             by_status[r.status] = by_status.get(r.status, 0) + 1
 
-        compliant_count = by_status.get("compliant", 0) + by_status.get(
-            "inherited_compliant", 0
-        )
+        compliant_count = by_status.get("compliant", 0) + by_status.get("inherited_compliant", 0)
         compliant_pct = (compliant_count / total * 100) if total else 0.0
         posture_score = min(compliant_pct, 100.0)
         score_parts.append(("Compliance posture", posture_score, 100.0))
@@ -180,9 +176,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
             else:
                 fresh_results.append(r)
 
-        freshness_pct = (
-            (len(fresh_results) / total * 100) if total else 100.0
-        )
+        freshness_pct = (len(fresh_results) / total * 100) if total else 100.0
         score_parts.append(("Evidence freshness", freshness_pct, 100.0))
 
         console.print(
@@ -212,10 +206,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
                     f"  Trigger re-collection to refresh {len(stale_results)} stale control(s)?",
                     default=False,
                 ):
-                    console.print(
-                        "  [dim]Run: warlock collect --framework "
-                        f"{framework}[/dim]"
-                    )
+                    console.print(f"  [dim]Run: warlock collect --framework {framework}[/dim]")
                     console.print(
                         "  [dim](Re-collection queued. Run 'warlock collect' to execute.)[/dim]"
                     )
@@ -237,9 +228,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         )
 
         overdue_poams = [
-            p
-            for p in open_poams
-            if p.scheduled_completion and p.scheduled_completion < now
+            p for p in open_poams if p.scheduled_completion and p.scheduled_completion < now
         ]
 
         if not open_poams:
@@ -299,11 +288,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         # -------------------------------------------------------------------
         console.print("\n[bold cyan]4. Attestation Coverage[/bold cyan]")
 
-        attestations = (
-            session.query(Attestation)
-            .filter(Attestation.framework == framework)
-            .all()
-        )
+        attestations = session.query(Attestation).filter(Attestation.framework == framework).all()
 
         approved_attests = [a for a in attestations if a.status == "approved"]
         pending_attests = [
@@ -311,15 +296,12 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         ]
         rejected_attests = [a for a in attestations if a.status == "rejected"]
 
-        attest_pct = (
-            (len(approved_attests) / len(attestations) * 100) if attestations else 0.0
-        )
+        attest_pct = (len(approved_attests) / len(attestations) * 100) if attestations else 0.0
         score_parts.append(("Attestation coverage", attest_pct, 100.0))
 
         if not attestations:
             console.print(
-                "  [yellow]No attestations found.[/yellow] "
-                "Run: warlock attestations create"
+                "  [yellow]No attestations found.[/yellow] Run: warlock attestations create"
             )
         else:
             console.print(
@@ -335,8 +317,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
                     default=False,
                 ):
                     console.print(
-                        f"  [dim]Run: warlock attestations create "
-                        f"--framework {framework}[/dim]"
+                        f"  [dim]Run: warlock attestations create --framework {framework}[/dim]"
                     )
             except (KeyboardInterrupt, EOFError):
                 console.print("\n[dim]Skipped.[/dim]")
@@ -380,9 +361,7 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         if not pending_reqs:
             console.print("  [green]No pending evidence requests.[/green]")
         else:
-            console.print(
-                f"  [yellow]{len(pending_reqs)} pending evidence request(s)[/yellow]"
-            )
+            console.print(f"  [yellow]{len(pending_reqs)} pending evidence request(s)[/yellow]")
             er_table = Table(show_lines=False)
             er_table.add_column("ID", max_width=8)
             er_table.add_column("Control")
@@ -510,9 +489,7 @@ def evidence_sprint(
         )
 
         # Find active engagement for batching
-        eng_q = session.query(AuditEngagement).filter(
-            AuditEngagement.status == "active"
-        )
+        eng_q = session.query(AuditEngagement).filter(AuditEngagement.status == "active")
         if framework:
             eng_q = eng_q.filter(AuditEngagement.framework == framework)
         engagement = eng_q.first()
@@ -591,7 +568,8 @@ def evidence_sprint(
                     f"--assign-to <email>[/dim]"
                 )
                 + (
-                    "\n[dim]Engagement: " + (engagement.name if engagement else "none found")
+                    "\n[dim]Engagement: "
+                    + (engagement.name if engagement else "none found")
                     + "[/dim]"
                 ),
                 style="green",
@@ -627,9 +605,7 @@ def audit_simulate(framework: str, sim_date_str: str, interactive: bool) -> None
     from warlock.db.models import ControlResult, POAM
 
     try:
-        sim_date = datetime.strptime(sim_date_str, "%Y-%m-%d").replace(
-            tzinfo=timezone.utc
-        )
+        sim_date = datetime.strptime(sim_date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
     except ValueError:
         _error("Invalid date format. Use YYYY-MM-DD.")
 
@@ -649,9 +625,7 @@ def audit_simulate(framework: str, sim_date_str: str, interactive: bool) -> None
 
     with get_session() as session:
         all_results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework == framework).all()
         )
 
         if not all_results:
@@ -758,16 +732,18 @@ def audit_simulate(framework: str, sim_date_str: str, interactive: bool) -> None
                 console.print(f"    {fam} ({len(families[fam])} control(s))")
 
             try:
-                chosen = Prompt.ask(
-                    "\n  Drill into control family (e.g. AC, CC6, or press Enter to skip)",
-                    default="",
-                ).strip().upper()
+                chosen = (
+                    Prompt.ask(
+                        "\n  Drill into control family (e.g. AC, CC6, or press Enter to skip)",
+                        default="",
+                    )
+                    .strip()
+                    .upper()
+                )
                 if chosen:
                     matches = [r for r in high_risk if r.control_id.startswith(chosen)]
                     if matches:
-                        console.print(
-                            f"\n  [bold]{chosen} family — {len(matches)} gap(s):[/bold]"
-                        )
+                        console.print(f"\n  [bold]{chosen} family — {len(matches)} gap(s):[/bold]")
                         detail_table = Table(show_lines=True)
                         detail_table.add_column("Control")
                         detail_table.add_column("Status")
@@ -778,9 +754,7 @@ def audit_simulate(framework: str, sim_date_str: str, interactive: bool) -> None
                                 r.control_id,
                                 r.status,
                                 r.severity,
-                                r.assessed_at.strftime("%Y-%m-%d")
-                                if r.assessed_at
-                                else "—",
+                                r.assessed_at.strftime("%Y-%m-%d") if r.assessed_at else "—",
                             )
                         console.print(detail_table)
                     else:
@@ -933,7 +907,9 @@ def audit_respond(engagement_id: str, interactive: bool) -> None:
                     except Exception as exc:
                         console.print(f"  [red]Failed to update request: {exc}[/red]")
                 else:
-                    console.print("  [yellow]No existing evidence found. Upload a file instead.[/yellow]")
+                    console.print(
+                        "  [yellow]No existing evidence found. Upload a file instead.[/yellow]"
+                    )
 
             elif choice == "u":
                 try:
@@ -941,9 +917,8 @@ def audit_respond(engagement_id: str, interactive: bool) -> None:
                     notes = Prompt.ask("  Notes (optional)", default="").strip()
                     req.status = "in_progress"
                     req.fulfilled_by = _get_actor()
-                    req.fulfillment_notes = (
-                        f"File upload: {file_path}"
-                        + (f" — {notes}" if notes else "")
+                    req.fulfillment_notes = f"File upload: {file_path}" + (
+                        f" — {notes}" if notes else ""
                     )
                     session.commit()
                     console.print(

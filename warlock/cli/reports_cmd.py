@@ -48,7 +48,9 @@ def reports_executive(framework: str | None, out_format: str) -> None:
             q = q.filter(ControlResult.framework == framework)
         results = q.all()
 
-        open_issues = session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
+        open_issues = (
+            session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
+        )
         total_findings = session.query(Finding).count()
 
     if not results:
@@ -170,7 +172,9 @@ def reports_trend(framework: str | None, days: int) -> None:
         snapshots = q.order_by(PostureSnapshot.snapshot_date.desc()).limit(100).all()
 
     if not snapshots:
-        console.print("[dim]No posture snapshots in the requested window. Run 'warlock cadence'.[/dim]")
+        console.print(
+            "[dim]No posture snapshots in the requested window. Run 'warlock cadence'.[/dim]"
+        )
         return
 
     # Group by date and compute average score
@@ -210,12 +214,16 @@ def reports_risk(framework: str | None, limit: int) -> None:
 
     init_db()
     with get_session() as session:
-        iq = session.query(Issue).filter(Issue.status.notin_(["closed", "verified", "risk_accepted"]))
+        iq = session.query(Issue).filter(
+            Issue.status.notin_(["closed", "verified", "risk_accepted"])
+        )
         if framework:
             iq = iq.filter(Issue.framework == framework)
         issues = iq.order_by(Issue.created_at.desc()).limit(limit).all()
 
-        pq = session.query(POAM).filter(POAM.status.notin_(["completed", "cancelled", "risk_accepted"]))
+        pq = session.query(POAM).filter(
+            POAM.status.notin_(["completed", "cancelled", "risk_accepted"])
+        )
         if framework:
             pq = pq.filter(POAM.framework == framework)
         poams = pq.order_by(POAM.scheduled_completion).limit(limit).all()
@@ -233,7 +241,13 @@ def reports_risk(framework: str | None, limit: int) -> None:
         p_styles = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "dim"}
         for i in issues:
             sty = p_styles.get(i.priority, "")
-            table.add_row(i.id[:8], i.framework or "", i.control_id or "", f"[{sty}]{i.priority}[/]", i.title[:40])
+            table.add_row(
+                i.id[:8],
+                i.framework or "",
+                i.control_id or "",
+                f"[{sty}]{i.priority}[/]",
+                i.title[:40],
+            )
         console.print(table)
 
     if poams:
@@ -245,7 +259,9 @@ def reports_risk(framework: str | None, limit: int) -> None:
         table2.add_column("Due")
 
         for p in poams:
-            due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "\u2014"
+            due = (
+                p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "\u2014"
+            )
             table2.add_row(p.id[:8], p.framework, p.control_id, p.severity, due)
         console.print(table2)
 
@@ -268,10 +284,7 @@ def reports_connector_health(limit: int) -> None:
     init_db()
     with get_session() as session:
         runs = (
-            session.query(ConnectorRun)
-            .order_by(ConnectorRun.started_at.desc())
-            .limit(limit)
-            .all()
+            session.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).limit(limit).all()
         )
 
     if not runs:
@@ -320,11 +333,7 @@ def reports_audit_readiness(framework: str) -> None:
     stale_cutoff = datetime.now(timezone.utc) - timedelta(days=90)
 
     with get_session() as session:
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
         open_issues = (
             session.query(Issue)
             .filter(Issue.framework == framework, Issue.status.notin_(["closed", "verified"]))
@@ -356,8 +365,12 @@ def reports_audit_readiness(framework: str) -> None:
     console.print(f"  Total Controls: {total}")
     console.print(f"  Compliant:      {compliant}")
     console.print(f"  Not Assessed:   {not_assessed}")
-    console.print(f"  Open Issues:    {'[red]' + str(open_issues) + '[/red]' if open_issues else '[green]0[/green]'}")
-    console.print(f"  Stale Results:  {'[yellow]' + str(stale) + '[/yellow]' if stale else '[green]0[/green]'}")
+    console.print(
+        f"  Open Issues:    {'[red]' + str(open_issues) + '[/red]' if open_issues else '[green]0[/green]'}"
+    )
+    console.print(
+        f"  Stale Results:  {'[yellow]' + str(stale) + '[/yellow]' if stale else '[green]0[/green]'}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -385,11 +398,7 @@ def reports_generate(framework: str, report_type: str, output: str | None) -> No
 
     init_db()
     with get_session() as session:
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
         open_issues = (
             session.query(Issue)
             .filter(Issue.framework == framework, Issue.status.notin_(["closed", "verified"]))
@@ -410,8 +419,7 @@ def reports_generate(framework: str, report_type: str, output: str | None) -> No
         "non_compliant": total - compliant,
         "open_issues": len(open_issues),
         "issues": [
-            {"id": i.id[:8], "title": i.title, "priority": i.priority}
-            for i in open_issues[:20]
+            {"id": i.id[:8], "title": i.title, "priority": i.priority} for i in open_issues[:20]
         ],
     }
 
@@ -504,16 +512,16 @@ def reports_board(framework: str | None) -> None:
             q = q.filter(ControlResult.framework == framework)
         results = q.all()
 
-        open_issues = session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
+        open_issues = (
+            session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
+        )
         critical = (
             session.query(Issue)
             .filter(Issue.priority == "critical", Issue.status.notin_(["closed", "verified"]))
             .count()
         )
         overdue_poams = (
-            session.query(POAM)
-            .filter(POAM.status.notin_(["completed", "cancelled"]))
-            .count()
+            session.query(POAM).filter(POAM.status.notin_(["completed", "cancelled"])).count()
         )
 
     total = len(results)
@@ -525,7 +533,9 @@ def reports_board(framework: str | None) -> None:
     console.print(f"  Overall Posture:    [{score_color}]{score:.1f}%[/]")
     console.print(f"  Controls Assessed:  {total}")
     console.print(f"  Open Issues:        {open_issues}")
-    console.print(f"  Critical Issues:    {'[red bold]' + str(critical) + '[/red bold]' if critical else '[green]0[/green]'}")
+    console.print(
+        f"  Critical Issues:    {'[red bold]' + str(critical) + '[/red bold]' if critical else '[green]0[/green]'}"
+    )
     console.print(f"  POA&Ms Tracked:     {overdue_poams}")
 
 
@@ -565,7 +575,12 @@ def reports_kri(framework: str | None) -> None:
     table.add_column("Status")
 
     kris = [
-        ("Non-compliant controls (%)", f"{pct_non_compliant:.1f}%", "< 20%", pct_non_compliant < 20),
+        (
+            "Non-compliant controls (%)",
+            f"{pct_non_compliant:.1f}%",
+            "< 20%",
+            pct_non_compliant < 20,
+        ),
         ("Critical open issues", str(critical_issues), "= 0", critical_issues == 0),
     ]
     for kri_name, value, threshold, ok in kris:
@@ -594,11 +609,7 @@ def reports_kpi(framework: str | None) -> None:
             q = q.filter(ControlResult.framework == framework)
         results = q.all()
 
-        resolved = (
-            session.query(Issue)
-            .filter(Issue.status.in_(["closed", "verified"]))
-            .count()
-        )
+        resolved = session.query(Issue).filter(Issue.status.in_(["closed", "verified"])).count()
         total_issues = session.query(Issue).count()
 
     total = len(results)
@@ -639,9 +650,7 @@ def reports_conmon(framework: str | None) -> None:
 
     with get_session() as session:
         recent_runs = (
-            session.query(ConnectorRun)
-            .filter(ConnectorRun.started_at >= cutoff_24h)
-            .count()
+            session.query(ConnectorRun).filter(ConnectorRun.started_at >= cutoff_24h).count()
         )
         failed_runs = (
             session.query(ConnectorRun)
@@ -758,7 +767,9 @@ def reports_attestation_summary(framework: str | None) -> None:
     total = len(results)
     console.print(f"\n[bold]Attestation Summary[/bold] (framework: {framework or 'all'})")
     console.print(f"  Total controls:         {total}")
-    console.print(f"  Assertion-assessed:     {assertion_assessed} ({assertion_assessed / total * 100:.0f}%)")
+    console.print(
+        f"  Assertion-assessed:     {assertion_assessed} ({assertion_assessed / total * 100:.0f}%)"
+    )
     console.print(f"  AI-assessed:            {ai_assessed} ({ai_assessed / total * 100:.0f}%)")
     console.print(f"  Auditor-examined:       {examined} ({examined / total * 100:.0f}%)")
 

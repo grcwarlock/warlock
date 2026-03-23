@@ -70,7 +70,9 @@ class FossaConnector(BaseConnector):
         token = self.get_secret("FOSSA_API_KEY")
         base_url = self.config.settings.get("base_url", FOSSA_BASE_URL)
         headers = self._headers(token)
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for endpoint, event_type in FOSSA_ENDPOINTS:
@@ -78,7 +80,11 @@ class FossaConnector(BaseConnector):
                     resp = client.get(endpoint)
                     resp.raise_for_status()
                     body = resp.json()
-                    items = body if isinstance(body, list) else body.get("projects", body.get("issues", body.get("dependencies", [])))
+                    items = (
+                        body
+                        if isinstance(body, list)
+                        else body.get("projects", body.get("issues", body.get("dependencies", [])))
+                    )
                     result.events.append(
                         RawEventData(
                             source="fossa",

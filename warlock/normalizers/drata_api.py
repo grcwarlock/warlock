@@ -62,7 +62,9 @@ class DrataApiNormalizer(BaseNormalizer):
                         "status": status,
                         "description": control.get("description", ""),
                         "framework": control.get("framework", ""),
-                        "owner": control.get("owner", {}).get("name", "") if isinstance(control.get("owner"), dict) else "",
+                        "owner": control.get("owner", {}).get("name", "")
+                        if isinstance(control.get("owner"), dict)
+                        else "",
                     },
                     resource_id=control_id,
                     resource_type="drata_api_control",

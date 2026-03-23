@@ -92,7 +92,9 @@ def _render_heatmap(risks: list[dict[str, Any]]) -> None:
         table.add_row(*row)
 
     console.print(table)
-    console.print("[dim]  Rows = Likelihood (5=Almost Certain → 1=Rare), Cols = Impact (1=Negligible → 5=Catastrophic)[/dim]")
+    console.print(
+        "[dim]  Rows = Likelihood (5=Almost Certain → 1=Rare), Cols = Impact (1=Negligible → 5=Catastrophic)[/dim]"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -102,13 +104,16 @@ def _render_heatmap(risks: list[dict[str, Any]]) -> None:
 
 @risk_review.command("assess")
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
-@click.option("--severity", "-s", default="high", type=click.Choice(["critical", "high", "medium"]),
-              help="Minimum finding severity to assess (default: high)")
+@click.option(
+    "--severity",
+    "-s",
+    default="high",
+    type=click.Choice(["critical", "high", "medium"]),
+    help="Minimum finding severity to assess (default: high)",
+)
 @click.option("--limit", "-n", default=20, help="Max new findings to review")
 @click.option("--interactive/--no-interactive", default=True)
-def risk_assess(
-    framework: str | None, severity: str, limit: int, interactive: bool
-) -> None:
+def risk_assess(framework: str | None, severity: str, limit: int, interactive: bool) -> None:
     """Guided risk assessment session: review top risks and new critical/high findings.
 
     For each new finding, prompts for likelihood, impact, and treatment.
@@ -142,9 +147,7 @@ def risk_assess(
     with get_session() as session:
         # Current top risks from risk register
         console.print("\n[bold cyan]Current Top Risks (Risk Acceptances)[/bold cyan]")
-        q = session.query(RiskAcceptance).filter(
-            RiskAcceptance.status.in_(["approved", "active"])
-        )
+        q = session.query(RiskAcceptance).filter(RiskAcceptance.status.in_(["approved", "active"]))
         if framework:
             q = q.filter(RiskAcceptance.framework == framework)
         top_risks = q.order_by(RiskAcceptance.risk_level.asc()).limit(10).all()
@@ -178,9 +181,7 @@ def risk_assess(
             f"(severity >= {severity})[/bold cyan]"
         )
 
-        sev_filter_values = [
-            s for s, idx in severity_order.items() if idx <= min_sev_idx
-        ]
+        sev_filter_values = [s for s, idx in severity_order.items() if idx <= min_sev_idx]
 
         fq = session.query(Finding).filter(
             Finding.ingested_at >= last_week,
@@ -216,9 +217,7 @@ def risk_assess(
                 console.print(f"  Blast radius: affects {control_count} control mapping(s)")
 
             if not interactive:
-                assessed_risks.append(
-                    {"finding_id": finding.id, "likelihood": 3, "impact": 3}
-                )
+                assessed_risks.append({"finding_id": finding.id, "likelihood": 3, "impact": 3})
                 continue
 
             try:
@@ -232,9 +231,7 @@ def risk_assess(
 
             score = _risk_score(likelihood, impact)
             level, level_color = _risk_level(score)
-            console.print(
-                f"  Risk score: [{level_color}]{score}/25 — {level}[/{level_color}]"
-            )
+            console.print(f"  Risk score: [{level_color}]{score}/25 — {level}[/{level_color}]")
 
             try:
                 treatment = Prompt.ask(
@@ -298,11 +295,11 @@ def risk_assess(
 
 @risk_review.command("board-report")
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
-@click.option("--output", "-o", default=None, help="Save report to file (default: print to console)")
+@click.option(
+    "--output", "-o", default=None, help="Save report to file (default: print to console)"
+)
 @click.option("--interactive/--no-interactive", default=True)
-def risk_board_report(
-    framework: str | None, output: str | None, interactive: bool
-) -> None:
+def risk_board_report(framework: str | None, output: str | None, interactive: bool) -> None:
     """Generate a board-level risk report interactively.
 
     Shows top risks, appetite status, and trends. Prompts for commentary
@@ -320,8 +317,7 @@ def risk_board_report(
 
     console.print(
         Panel(
-            "[bold]Board Risk Report Generator[/bold]\n"
-            f"Framework filter: {framework or 'all'}.",
+            f"[bold]Board Risk Report Generator[/bold]\nFramework filter: {framework or 'all'}.",
             style="cyan",
         )
     )
@@ -351,24 +347,18 @@ def risk_board_report(
 
         # Open issues as risk signal
         open_issues = (
-            session.query(Issue)
-            .filter(Issue.status.notin_(["closed", "verified"]))
-            .count()
+            session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
         )
 
         # Compliance posture (if framework specified)
         compliant_pct: float | None = None
         if framework:
             all_results = (
-                session.query(ControlResult)
-                .filter(ControlResult.framework == framework)
-                .all()
+                session.query(ControlResult).filter(ControlResult.framework == framework).all()
             )
             if all_results:
                 compliant = sum(
-                    1
-                    for r in all_results
-                    if r.status in ("compliant", "inherited_compliant")
+                    1 for r in all_results if r.status in ("compliant", "inherited_compliant")
                 )
                 compliant_pct = compliant / len(all_results) * 100
 
@@ -415,7 +405,9 @@ def risk_board_report(
 
             if interactive:
                 try:
-                    include = Confirm.ask(f"\n  Include risk #{idx} ({label}) in board report?", default=True)
+                    include = Confirm.ask(
+                        f"\n  Include risk #{idx} ({label}) in board report?", default=True
+                    )
                 except (KeyboardInterrupt, EOFError):
                     console.print("\n[dim]Cancelled.[/dim]")
                     break
@@ -444,9 +436,7 @@ def risk_board_report(
                     "risk_description": ra.risk_description or "—",
                     "status": ra.status,
                     "approved_by": ra.approved_by or "—",
-                    "expiry_date": ra.expiry_date.strftime("%Y-%m-%d")
-                    if ra.expiry_date
-                    else "N/A",
+                    "expiry_date": ra.expiry_date.strftime("%Y-%m-%d") if ra.expiry_date else "N/A",
                     "commentary": commentary,
                 }
             )
@@ -466,9 +456,7 @@ def risk_board_report(
             f"- **{open_issues}** open compliance issues",
         ]
         if compliant_pct is not None:
-            report_lines.append(
-                f"- **{compliant_pct:.1f}%** of {framework} controls are compliant"
-            )
+            report_lines.append(f"- **{compliant_pct:.1f}%** of {framework} controls are compliant")
 
         report_lines += ["", "## Risk Register", ""]
         for r in included_risks:
@@ -544,11 +532,7 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
     init_db()
 
     with get_session() as session:
-        finding = (
-            session.query(Finding)
-            .filter(Finding.id.startswith(finding_id))
-            .first()
-        )
+        finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
         if not finding:
             _error(
                 f"Finding not found: {finding_id}. "
@@ -569,22 +553,17 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
 
         # Blast radius
         mappings = (
-            session.query(ControlMapping)
-            .filter(ControlMapping.finding_id == finding.id)
-            .all()
+            session.query(ControlMapping).filter(ControlMapping.finding_id == finding.id).all()
         )
         if mappings:
             console.print(
                 f"  Blast radius: affects [bold]{len(mappings)}[/bold] control mapping(s) "
-                "across "
-                + ", ".join({m.framework for m in mappings})
+                "across " + ", ".join({m.framework for m in mappings})
             )
 
         # Affected controls
         affected_results = (
-            session.query(ControlResult)
-            .filter(ControlResult.finding_id == finding.id)
-            .all()
+            session.query(ControlResult).filter(ControlResult.finding_id == finding.id).all()
         )
         if affected_results:
             ctrl_table = Table(title="Affected Controls", show_lines=False)
@@ -609,9 +588,7 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
         # Gather inputs
         if interactive:
             try:
-                justification = Prompt.ask(
-                    "\n  Justification for accepting this risk"
-                ).strip()
+                justification = Prompt.ask("\n  Justification for accepting this risk").strip()
                 if not justification:
                     _error("Justification is required for risk acceptance.")
 
@@ -622,9 +599,7 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
 
                 expiry_str = Prompt.ask(
                     "  Acceptance expiry date (YYYY-MM-DD)",
-                    default=(
-                        (_utcnow() + timedelta(days=365)).strftime("%Y-%m-%d")
-                    ),
+                    default=((_utcnow() + timedelta(days=365)).strftime("%Y-%m-%d")),
                 ).strip()
             except (KeyboardInterrupt, EOFError):
                 console.print("\n[dim]Risk acceptance cancelled.[/dim]")
@@ -635,9 +610,7 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
             expiry_str = (_utcnow() + timedelta(days=365)).strftime("%Y-%m-%d")
 
         try:
-            expiry_dt = datetime.strptime(expiry_str, "%Y-%m-%d").replace(
-                tzinfo=timezone.utc
-            )
+            expiry_dt = datetime.strptime(expiry_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         except ValueError:
             _error("Invalid date format. Use YYYY-MM-DD.")
 
@@ -679,8 +652,7 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
                 session.flush()
                 created_count += 1
                 console.print(
-                    f"  [green]Created risk acceptance {ra.id[:8]} "
-                    f"for {fw}/{ctrl_id}[/green]"
+                    f"  [green]Created risk acceptance {ra.id[:8]} for {fw}/{ctrl_id}[/green]"
                 )
             except Exception as exc:
                 console.print(f"  [red]Failed to create acceptance for {fw}/{ctrl_id}: {exc}[/red]")
@@ -713,9 +685,7 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
 @click.option("--output", "-o", default=None, help="Save quarterly report to file")
 @click.option("--interactive/--no-interactive", default=True)
-def risk_quarterly(
-    framework: str | None, output: str | None, interactive: bool
-) -> None:
+def risk_quarterly(framework: str | None, output: str | None, interactive: bool) -> None:
     """Quarterly risk review: reassess risk ratings, update heatmap, generate report.
 
     \b
@@ -752,9 +722,7 @@ def risk_quarterly(
         all_risks = q.all()
 
         due_for_review = [
-            ra
-            for ra in all_risks
-            if ra.reviewed_at is None or ra.reviewed_at < quarter_start
+            ra for ra in all_risks if ra.reviewed_at is None or ra.reviewed_at < quarter_start
         ]
 
         console.print(
@@ -777,9 +745,7 @@ def risk_quarterly(
                 f"[bold]{ra.framework}/{ra.control_id}[/bold]   "
                 f"Last review: {last_review}"
             )
-            console.print(
-                f"  Description: {(ra.risk_description or '')[:100]}"
-            )
+            console.print(f"  Description: {(ra.risk_description or '')[:100]}")
 
             # Show any new findings for this control
             recent_findings = (

@@ -65,7 +65,9 @@ class CrowdStrikeSpotlightNormalizer(BaseNormalizer):
             platform = host_info.get("platform", "") if isinstance(host_info, dict) else ""
 
             app = vuln.get("app", {})
-            product_name = app.get("product_name_version", "") if isinstance(app, dict) else str(app)
+            product_name = (
+                app.get("product_name_version", "") if isinstance(app, dict) else str(app)
+            )
 
             status = vuln.get("status", "open")
 
@@ -86,7 +88,9 @@ class CrowdStrikeSpotlightNormalizer(BaseNormalizer):
                         "product": product_name,
                         "created_at": vuln.get("created_timestamp", ""),
                         "updated_at": vuln.get("updated_timestamp", ""),
-                        "remediation_ids": vuln.get("remediation", {}).get("ids", []) if isinstance(vuln.get("remediation"), dict) else [],
+                        "remediation_ids": vuln.get("remediation", {}).get("ids", [])
+                        if isinstance(vuln.get("remediation"), dict)
+                        else [],
                     },
                     resource_id=aid or vuln_id,
                     resource_type="crowdstrike_host",
@@ -102,9 +106,15 @@ class CrowdStrikeSpotlightNormalizer(BaseNormalizer):
         # The remediations query endpoint returns IDs; the combined endpoint has full details.
         # Treat each remediation ID as an inventory item.
         for remediation_id in raw.raw_data.get("response", []):
-            rid = str(remediation_id) if not isinstance(remediation_id, dict) else str(remediation_id.get("id", ""))
+            rid = (
+                str(remediation_id)
+                if not isinstance(remediation_id, dict)
+                else str(remediation_id.get("id", ""))
+            )
             action = remediation_id.get("action", "") if isinstance(remediation_id, dict) else ""
-            vendor_url = remediation_id.get("vendor_url", "") if isinstance(remediation_id, dict) else ""
+            vendor_url = (
+                remediation_id.get("vendor_url", "") if isinstance(remediation_id, dict) else ""
+            )
 
             findings.append(
                 FindingData(

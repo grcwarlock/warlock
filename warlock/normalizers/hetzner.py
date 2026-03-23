@@ -58,7 +58,9 @@ class HetznerNormalizer(BaseNormalizer):
                         "name": name,
                         "status": status,
                         "server_type": (server.get("server_type") or {}).get("name", ""),
-                        "datacenter": datacenter.get("name", "") if isinstance(datacenter, dict) else "",
+                        "datacenter": datacenter.get("name", "")
+                        if isinstance(datacenter, dict)
+                        else "",
                         "created": server.get("created", ""),
                     },
                     resource_id=server_id,

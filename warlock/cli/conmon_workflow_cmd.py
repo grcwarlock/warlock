@@ -39,15 +39,11 @@ def _write_audit_entry(
     """Append a hash-chained audit entry for the ConMon workflow."""
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -200,7 +196,9 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
                 {
                     "label": "POA&M updates current",
                     "ok": poam_ok,
-                    "detail": f"{len(overdue_poams)} overdue POA&M(s)" if not poam_ok else "All POA&Ms on schedule",
+                    "detail": f"{len(overdue_poams)} overdue POA&M(s)"
+                    if not poam_ok
+                    else "All POA&Ms on schedule",
                     "action": "warlock poam list",
                 },
                 {
@@ -212,19 +210,25 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
                 {
                     "label": "Security alerts reviewed",
                     "ok": alerts_ok,
-                    "detail": f"{len(open_critical)} unreviewed critical/high alert(s)" if not alerts_ok else "No unreviewed critical/high alerts",
+                    "detail": f"{len(open_critical)} unreviewed critical/high alert(s)"
+                    if not alerts_ok
+                    else "No unreviewed critical/high alerts",
                     "action": "warlock morning",
                 },
                 {
                     "label": "Training compliance verified",
                     "ok": training_ok,
-                    "detail": f"{training_overdue} overdue personnel" if not training_ok else "All active personnel current",
+                    "detail": f"{training_overdue} overdue personnel"
+                    if not training_ok
+                    else "All active personnel current",
                     "action": "warlock training-drive",
                 },
                 {
                     "label": "Evidence freshness verified",
                     "ok": evidence_ok,
-                    "detail": f"{recent_snapshots} posture snapshot(s) in last 7 days" if evidence_ok else "No recent posture snapshots",
+                    "detail": f"{recent_snapshots} posture snapshot(s) in last 7 days"
+                    if evidence_ok
+                    else "No recent posture snapshots",
                     "action": "warlock conmon run",
                 },
             ]
@@ -256,9 +260,7 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
             if incomplete:
                 console.print()
                 for item in incomplete:
-                    if Confirm.ask(
-                        f"Address '[bold]{item['label']}[/bold]' now?", default=False
-                    ):
+                    if Confirm.ask(f"Address '[bold]{item['label']}[/bold]' now?", default=False):
                         console.print(
                             f"[yellow]Suggested command:[/yellow] [bold]{item['action']}[/bold]"
                         )

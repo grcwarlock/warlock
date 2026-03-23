@@ -176,9 +176,7 @@ def audit_trail_show(entry_ref: str) -> None:
 
         # Try as UUID prefix
         if entry is None:
-            entry = (
-                session.query(AuditEntry).filter(AuditEntry.id.startswith(entry_ref)).first()
-            )
+            entry = session.query(AuditEntry).filter(AuditEntry.id.startswith(entry_ref)).first()
 
         if entry is None:
             _error(f"Audit entry '{entry_ref}' not found.")
@@ -285,8 +283,12 @@ def audit_trail_verify(from_seq: int, to_seq: int | None, verbose: bool) -> None
 
 @audit_trail_grp.command("search")
 @click.argument("query")
-@click.option("--field", type=click.Choice(["actor", "action", "entity_id", "entity_type", "all"]),
-              default="all", help="Field to search")
+@click.option(
+    "--field",
+    type=click.Choice(["actor", "action", "entity_id", "entity_type", "all"]),
+    default="all",
+    help="Field to search",
+)
 @click.option("--limit", "-n", default=50, help="Max results")
 def audit_trail_search(query: str, field: str, limit: int) -> None:
     """Search audit entries by text."""
@@ -397,12 +399,10 @@ def audit_trail_stats() -> None:
     init_db()
     with get_session() as session:
         total = session.query(AuditEntry).count()
-        max_seq_row = session.query(AuditEntry.sequence).order_by(
-            AuditEntry.sequence.desc()
-        ).first()
-        min_seq_row = session.query(AuditEntry.sequence).order_by(
-            AuditEntry.sequence.asc()
-        ).first()
+        max_seq_row = (
+            session.query(AuditEntry.sequence).order_by(AuditEntry.sequence.desc()).first()
+        )
+        min_seq_row = session.query(AuditEntry.sequence).order_by(AuditEntry.sequence.asc()).first()
 
         # By action
         action_counts = (
@@ -500,14 +500,12 @@ def audit_trail_export(
         ]
         text = json.dumps(data, indent=2, default=str)
     else:
-        lines = [
-            "sequence,action,entity_type,entity_id,actor,entry_hash,created_at"
-        ]
+        lines = ["sequence,action,entity_type,entity_id,actor,entry_hash,created_at"]
         for e in rows:
             created = e.created_at.isoformat() if e.created_at else ""
             lines.append(
-                f'{e.sequence},{e.action},{e.entity_type},{e.entity_id},'
-                f'{e.actor},{e.entry_hash},{created}'
+                f"{e.sequence},{e.action},{e.entity_type},{e.entity_id},"
+                f"{e.actor},{e.entry_hash},{created}"
             )
         text = "\n".join(lines)
 
@@ -550,9 +548,7 @@ def audit_trail_integrity_report(sample_size: int | None) -> None:
         entries = sorted(random.sample(entries, sample_size), key=lambda e: e.sequence)
         console.print(f"[dim](Sampling {sample_size} of {len(entries)} total entries)[/dim]")
 
-    console.print(
-        f"[cyan]Running integrity report on {len(entries)} entries...[/cyan]"
-    )
+    console.print(f"[cyan]Running integrity report on {len(entries)} entries...[/cyan]")
 
     chain_breaks: list[int] = []
     hash_mismatches: list[int] = []
@@ -605,9 +601,7 @@ def audit_trail_integrity_report(sample_size: int | None) -> None:
 
 
 @audit_trail_grp.command("tamper-detect")
-@click.option(
-    "--stop-on-first", is_flag=True, help="Stop at the first detected break"
-)
+@click.option("--stop-on-first", is_flag=True, help="Stop at the first detected break")
 def audit_trail_tamper_detect(stop_on_first: bool) -> None:
     """Scan hash chain for any tamper evidence (breaks or mismatches)."""
     from warlock.db.engine import get_session, init_db
@@ -615,9 +609,7 @@ def audit_trail_tamper_detect(stop_on_first: bool) -> None:
 
     init_db()
     with get_session() as session:
-        entries = (
-            session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).all()
-        )
+        entries = session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).all()
 
     if not entries:
         console.print("[dim]No audit entries to scan.[/dim]")
@@ -655,9 +647,7 @@ def audit_trail_tamper_detect(stop_on_first: bool) -> None:
         prev_hash = entry.entry_hash
 
     if not findings:
-        console.print(
-            f"[green]No tamper evidence detected in {len(entries):,} entries.[/green]"
-        )
+        console.print(f"[green]No tamper evidence detected in {len(entries):,} entries.[/green]")
         return
 
     console.print(f"\n[red bold]TAMPER EVIDENCE DETECTED ({len(findings)} finding(s)):[/red bold]")
@@ -690,16 +680,8 @@ def audit_trail_retention_status() -> None:
     init_db()
     with get_session() as session:
         total = session.query(AuditEntry).count()
-        oldest = (
-            session.query(AuditEntry.created_at)
-            .order_by(AuditEntry.created_at.asc())
-            .first()
-        )
-        newest = (
-            session.query(AuditEntry.created_at)
-            .order_by(AuditEntry.created_at.desc())
-            .first()
-        )
+        oldest = session.query(AuditEntry.created_at).order_by(AuditEntry.created_at.asc()).first()
+        newest = session.query(AuditEntry.created_at).order_by(AuditEntry.created_at.desc()).first()
 
         # Look up retention policy from Policy table
         retention_policy = (
@@ -742,7 +724,9 @@ def audit_trail_retention_status() -> None:
                     f"\n[green]All entries within retention window ({age_days}/{days} days).[/green]"
                 )
     else:
-        console.print("\n[dim]No retention policy configured. Use 'warlock policy set retention --days N'.[/dim]")
+        console.print(
+            "\n[dim]No retention policy configured. Use 'warlock policy set retention --days N'.[/dim]"
+        )
 
 
 # ---------------------------------------------------------------------------

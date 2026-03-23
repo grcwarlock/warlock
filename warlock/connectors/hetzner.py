@@ -125,9 +125,7 @@ class HetznerConnector(BaseConnector):
             items = body.get(resource_key, [])
             all_items.extend(items)
 
-            next_cursor = (
-                body.get("meta", {}).get("pagination", {}).get("next_cursor")
-            )
+            next_cursor = body.get("meta", {}).get("pagination", {}).get("next_cursor")
             if not next_cursor:
                 break
             params["cursor"] = next_cursor

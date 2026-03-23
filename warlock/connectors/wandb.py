@@ -91,7 +91,9 @@ class WandbConnector(BaseConnector):
                             raw_data={
                                 "endpoint": endpoint,
                                 "base_url": base_url,
-                                "response": data if isinstance(data, list) else data.get("results", data.get("data", [])),
+                                "response": data
+                                if isinstance(data, list)
+                                else data.get("results", data.get("data", [])),
                             },
                             observed_at=datetime.now(timezone.utc),
                         )

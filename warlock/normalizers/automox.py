@@ -118,7 +118,12 @@ class AutomoxNormalizer(BaseNormalizer):
             patch_id = str(patch.get("id", ""))
             name = patch.get("display_name", patch.get("name", "Patch"))
             severity_raw = str(patch.get("severity", "")).lower()
-            severity_map = {"critical": "critical", "high": "high", "moderate": "medium", "low": "low"}
+            severity_map = {
+                "critical": "critical",
+                "high": "high",
+                "moderate": "medium",
+                "low": "low",
+            }
             severity = severity_map.get(severity_raw, "info")
             installed = patch.get("installed", True)
 

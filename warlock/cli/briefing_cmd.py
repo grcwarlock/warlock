@@ -14,9 +14,12 @@ from warlock.cli import cli, console
 @cli.command()
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--owner", default=None, help="Filter by assignee")
-@click.option("--mode", default="steady-state",
-              type=click.Choice(["steady-state", "audit-prep", "remediation-sprint", "incident-response"]),
-              help="Operational mode")
+@click.option(
+    "--mode",
+    default="steady-state",
+    type=click.Choice(["steady-state", "audit-prep", "remediation-sprint", "incident-response"]),
+    help="Operational mode",
+)
 @click.option("--limit", "-n", default=30, help="Max items per section")
 def briefing(framework, owner, mode, limit):
     """Daily briefing — what needs attention across all domains."""
@@ -30,7 +33,9 @@ def briefing(framework, owner, mode, limit):
     now = datetime.now(timezone.utc)
     filters = QueryFilters(
         frameworks=[framework] if framework else None,
-        owner=owner, mode=mode, limit=limit,
+        owner=owner,
+        mode=mode,
+        limit=limit,
     )
 
     with get_session() as session:
@@ -41,10 +46,12 @@ def briefing(framework, owner, mode, limit):
         items = registry.get_briefing(filters)
 
     fw_label = f" — {framework}" if framework else ""
-    console.print(Panel(
-        f"[bold]Warlock Daily Briefing[/bold] — {now.strftime('%Y-%m-%d')} (mode: {mode}){fw_label}",
-        style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold]Warlock Daily Briefing[/bold] — {now.strftime('%Y-%m-%d')} (mode: {mode}){fw_label}",
+            style="cyan",
+        )
+    )
 
     if not items:
         console.print("[dim]Nothing urgent. All clear.[/dim]")
@@ -53,7 +60,13 @@ def briefing(framework, owner, mode, limit):
     sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     items.sort(key=lambda i: (sev_order.get(i.severity, 5), -i.priority_score))
 
-    sev_colors = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "dim", "info": "dim"}
+    sev_colors = {
+        "critical": "red bold",
+        "high": "red",
+        "medium": "yellow",
+        "low": "dim",
+        "info": "dim",
+    }
 
     table = Table(show_header=True, show_lines=False, pad_edge=False)
     table.add_column("Sev", style="bold", max_width=8)

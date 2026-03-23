@@ -40,15 +40,11 @@ def _write_audit_entry(
     """Append a hash-chained audit entry for a training workflow action."""
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -113,13 +109,10 @@ def training_drive(department: str | None) -> None:
             total = len(all_personnel)
             current = [p for p in all_personnel if p.training_status == "current"]
             overdue = [p for p in all_personnel if p.training_status == "overdue"]
-            not_enrolled = [
-                p for p in all_personnel if p.training_status == "not_enrolled"
-            ]
+            not_enrolled = [p for p in all_personnel if p.training_status == "not_enrolled"]
             completion_rate = (len(current) / total * 100) if total else 0.0
             rate_color = (
-                "green" if completion_rate >= 95 else
-                ("yellow" if completion_rate >= 80 else "red")
+                "green" if completion_rate >= 95 else ("yellow" if completion_rate >= 80 else "red")
             )
 
             # Per-department breakdown
@@ -157,11 +150,7 @@ def training_drive(department: str | None) -> None:
                     dt.add_column("Overdue", justify="right")
                     dt.add_column("Rate", justify="right")
                     for dept, counts in sorted(dept_stats.items()):
-                        rate = (
-                            counts["current"] / counts["total"] * 100
-                            if counts["total"]
-                            else 0.0
-                        )
+                        rate = counts["current"] / counts["total"] * 100 if counts["total"] else 0.0
                         rate_c = "green" if rate >= 95 else ("yellow" if rate >= 80 else "red")
                         dt.add_row(
                             dept,
@@ -206,9 +195,7 @@ def training_drive(department: str | None) -> None:
                     default="q",
                     show_choices=False,
                 )
-                console.print(
-                    "[dim]  s=send reminders  e=escalate overdue  r=report  q=quit[/dim]"
-                )
+                console.print("[dim]  s=send reminders  e=escalate overdue  r=report  q=quit[/dim]")
 
                 if choice == "q":
                     break
@@ -218,9 +205,7 @@ def training_drive(department: str | None) -> None:
                     if not overdue:
                         console.print("[green]No overdue personnel — no reminders needed.[/green]")
                     else:
-                        console.print(
-                            f"\n[bold]Reminder List ({len(overdue)} personnel):[/bold]"
-                        )
+                        console.print(f"\n[bold]Reminder List ({len(overdue)} personnel):[/bold]")
                         for p in overdue:
                             console.print(
                                 f"  [yellow]REMINDER[/yellow]  To: {p.email}  "
@@ -304,11 +289,7 @@ def training_drive(department: str | None) -> None:
                         "|------------|-------|---------|---------|------|",
                     ]
                     for dept, counts in sorted(dept_stats.items()):
-                        rate = (
-                            counts["current"] / counts["total"] * 100
-                            if counts["total"]
-                            else 0.0
-                        )
+                        rate = counts["current"] / counts["total"] * 100 if counts["total"] else 0.0
                         lines.append(
                             f"| {dept} | {counts['total']} | {counts['current']} | "
                             f"{counts['overdue']} | {rate:.1f}% |"

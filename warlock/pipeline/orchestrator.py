@@ -311,9 +311,7 @@ class Pipeline:
                         stale = True
 
                     if stale:
-                        log.warning(
-                            "Reclaiming stale pipeline lock (holder process is dead)"
-                        )
+                        log.warning("Reclaiming stale pipeline lock (holder process is dead)")
                         lock_file = open(lock_path, "w")
                         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     else:

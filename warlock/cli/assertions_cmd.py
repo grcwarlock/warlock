@@ -105,9 +105,7 @@ def assertions_show(name: str) -> None:
     from rich.panel import Panel
 
     bindings: list[tuple[str, str]] = [
-        (fw, ctrl)
-        for (fw, ctrl), alist in eng._control_assertions.items()
-        if name in alist
+        (fw, ctrl) for (fw, ctrl), alist in eng._control_assertions.items() if name in alist
     ]
     remediation = eng._remediation.get(name, {})
 
@@ -373,10 +371,14 @@ def assertions_stats() -> None:
 
     init_db()
     with get_session() as session:
-        rows = session.query(
-            ControlResult.assertion_name,
-            ControlResult.assertion_passed,
-        ).filter(ControlResult.assertion_name.isnot(None)).all()
+        rows = (
+            session.query(
+                ControlResult.assertion_name,
+                ControlResult.assertion_passed,
+            )
+            .filter(ControlResult.assertion_name.isnot(None))
+            .all()
+        )
 
     if not rows:
         console.print("[dim]No assertion results in database.[/dim]")
@@ -471,9 +473,7 @@ def assertions_history(assertion_name: str, limit: int) -> None:
 @click.option("--assertion", "-a", default=None, help="Filter by assertion name")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--limit", "-n", default=25, help="Max results")
-def assertions_failures(
-    assertion: str | None, framework: str | None, limit: int
-) -> None:
+def assertions_failures(assertion: str | None, framework: str | None, limit: int) -> None:
     """List recent assertion failures with failure reasons."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult

@@ -40,7 +40,11 @@ class FortyTwoCrunchNormalizer(BaseNormalizer):
     def _normalize_apis(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("apis", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("apis", response.get("data", []))
+        )
 
         for api in items:
             api_id = str(api.get("id", api.get("api_id", "")))
@@ -70,7 +74,11 @@ class FortyTwoCrunchNormalizer(BaseNormalizer):
     def _normalize_audits(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("audits", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("audits", response.get("data", []))
+        )
 
         for audit in items:
             audit_id = str(audit.get("id", audit.get("audit_id", "")))

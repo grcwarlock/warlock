@@ -128,7 +128,9 @@ class KubecostNormalizer(BaseNormalizer):
             if not isinstance(saving, dict):
                 continue
             saving_type = saving.get("type", saving.get("savingType", "unknown"))
-            estimated_monthly = saving.get("monthlySavings", saving.get("estimatedMonthlySavings", 0.0))
+            estimated_monthly = saving.get(
+                "monthlySavings", saving.get("estimatedMonthlySavings", 0.0)
+            )
             description = saving.get("description", saving_type)
 
             # Any cost savings opportunity is a misconfiguration (over-provisioning)

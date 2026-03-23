@@ -41,7 +41,9 @@ class AxoniusConnector(BaseConnector):
         if not self.get_secret("AXONIUS_API_SECRET"):
             errors.append("AXONIUS_API_SECRET env var is not set")
         if not self.config.settings.get("base_url"):
-            errors.append("'base_url' must be set in connector settings (e.g. 'https://mycompany.axonius.com')")
+            errors.append(
+                "'base_url' must be set in connector settings (e.g. 'https://mycompany.axonius.com')"
+            )
         return errors
 
     def health_check(self) -> bool:

@@ -39,14 +39,16 @@ def _find_modules() -> list[dict]:
         for module_dir in sorted(provider_dir.iterdir()):
             if not module_dir.is_dir():
                 continue
-            modules.append({
-                "cloud": provider,
-                "name": module_dir.name,
-                "path": module_dir,
-                "has_main": (module_dir / "main.tf").exists(),
-                "has_variables": (module_dir / "variables.tf").exists(),
-                "has_outputs": (module_dir / "outputs.tf").exists(),
-            })
+            modules.append(
+                {
+                    "cloud": provider,
+                    "name": module_dir.name,
+                    "path": module_dir,
+                    "has_main": (module_dir / "main.tf").exists(),
+                    "has_variables": (module_dir / "variables.tf").exists(),
+                    "has_outputs": (module_dir / "outputs.tf").exists(),
+                }
+            )
     return modules
 
 
@@ -71,6 +73,7 @@ def _run_tf(args: list[str], cwd: Path, capture: bool = True) -> subprocess.Comp
 def _terraform_available() -> bool:
     """Check if the terraform binary is available on PATH."""
     import shutil
+
     return shutil.which("terraform") is not None
 
 
@@ -95,9 +98,13 @@ def modules_group() -> None:
 
 
 @modules_group.command("list")
-@click.option("--cloud", "-c", default=None,
-              type=click.Choice(["aws", "azure", "gcp"]),
-              help="Filter by cloud provider")
+@click.option(
+    "--cloud",
+    "-c",
+    default=None,
+    type=click.Choice(["aws", "azure", "gcp"]),
+    help="Filter by cloud provider",
+)
 def modules_list(cloud: str | None) -> None:
     """List available Terraform modules."""
     if not _TF_MODULES_ROOT.exists():
@@ -172,7 +179,10 @@ def modules_show(module: str, cloud: str | None) -> None:
                 console.print(f"  [dim]{line}[/dim]")
                 shown += 1
                 if shown >= 20:
-                    remaining = len([ln for ln in lines if ln.strip() and not ln.strip().startswith("#")]) - 20
+                    remaining = (
+                        len([ln for ln in lines if ln.strip() and not ln.strip().startswith("#")])
+                        - 20
+                    )
                     if remaining > 0:
                         console.print(f"  [dim]... ({remaining} more lines)[/dim]")
                     break
@@ -185,14 +195,20 @@ def modules_show(module: str, cloud: str | None) -> None:
 
 
 @terraform_group.command("validate")
-@click.option("--cloud", "-c", default=None,
-              type=click.Choice(["aws", "azure", "gcp"]),
-              help="Validate only modules for this cloud provider")
+@click.option(
+    "--cloud",
+    "-c",
+    default=None,
+    type=click.Choice(["aws", "azure", "gcp"]),
+    help="Validate only modules for this cloud provider",
+)
 @click.option("--module", "-m", default=None, help="Validate only this module name")
 def terraform_validate(cloud: str | None, module: str | None) -> None:
     """Run terraform validate on all modules (or a specific module)."""
     if not _terraform_available():
-        _error("terraform not found on PATH. Install from https://developer.hashicorp.com/terraform")
+        _error(
+            "terraform not found on PATH. Install from https://developer.hashicorp.com/terraform"
+        )
 
     all_modules = _find_modules()
     if cloud:
@@ -206,9 +222,13 @@ def terraform_validate(cloud: str | None, module: str | None) -> None:
     results: list[dict] = []
     for mod in all_modules:
         # terraform init -backend=false -input=false (quiet)
-        init_result = _run_tf(["-chdir=" + str(mod["path"]), "init", "-backend=false", "-input=false"], cwd=_TF_ROOT)
+        init_result = _run_tf(
+            ["-chdir=" + str(mod["path"]), "init", "-backend=false", "-input=false"], cwd=_TF_ROOT
+        )
         if init_result.returncode != 0:
-            results.append({"mod": mod, "ok": False, "msg": "init failed: " + init_result.stderr[:200]})
+            results.append(
+                {"mod": mod, "ok": False, "msg": "init failed: " + init_result.stderr[:200]}
+            )
             continue
 
         val_result = _run_tf(["-chdir=" + str(mod["path"]), "validate", "-no-color"], cwd=_TF_ROOT)
@@ -290,9 +310,13 @@ def terraform_plan(module: str, cloud: str | None, var_file: str | None) -> None
 
 
 @terraform_group.command("drift")
-@click.option("--cloud", "-c", default=None,
-              type=click.Choice(["aws", "azure", "gcp"]),
-              help="Check drift only for this cloud")
+@click.option(
+    "--cloud",
+    "-c",
+    default=None,
+    type=click.Choice(["aws", "azure", "gcp"]),
+    help="Check drift only for this cloud",
+)
 def terraform_drift(cloud: str | None) -> None:
     """Check for configuration drift by running terraform plan -detailed-exitcode.
 
@@ -319,7 +343,13 @@ def terraform_drift(cloud: str | None) -> None:
             cwd=_TF_ROOT,
         )
         plan_res = _run_tf(
-            ["-chdir=" + str(mod["path"]), "plan", "-detailed-exitcode", "-input=false", "-no-color"],
+            [
+                "-chdir=" + str(mod["path"]),
+                "plan",
+                "-detailed-exitcode",
+                "-input=false",
+                "-no-color",
+            ],
             cwd=_TF_ROOT,
         )
         label = f"{mod['cloud']}/{mod['name']}"
@@ -336,7 +366,9 @@ def terraform_drift(cloud: str | None) -> None:
     if drifted:
         console.print(f"[yellow]{len(drifted)} module(s) have drift.[/yellow]")
     if errors:
-        console.print(f"[red]{len(errors)} module(s) had errors (likely missing credentials).[/red]")
+        console.print(
+            f"[red]{len(errors)} module(s) had errors (likely missing credentials).[/red]"
+        )
     if not drifted and not errors:
         console.print(f"[green]No drift detected in {len(all_modules)} module(s).[/green]")
 
@@ -347,11 +379,16 @@ def terraform_drift(cloud: str | None) -> None:
 
 
 @terraform_group.command("compliance")
-@click.option("--cloud", "-c", default=None,
-              type=click.Choice(["aws", "azure", "gcp"]),
-              help="Check only this cloud provider's modules")
-@click.option("--framework", "-f", default=None,
-              help="Framework to check compliance for (informational)")
+@click.option(
+    "--cloud",
+    "-c",
+    default=None,
+    type=click.Choice(["aws", "azure", "gcp"]),
+    help="Check only this cloud provider's modules",
+)
+@click.option(
+    "--framework", "-f", default=None, help="Framework to check compliance for (informational)"
+)
 def terraform_compliance(cloud: str | None, framework: str | None) -> None:
     """Show Terraform module compliance coverage by framework.
 
@@ -362,30 +399,50 @@ def terraform_compliance(cloud: str | None, framework: str | None) -> None:
     # Framework-to-module mapping (which modules satisfy which frameworks)
     _FRAMEWORK_MODULE_MAP: dict[str, list[str]] = {
         "nist_800_53": [
-            "iam-baseline", "secure-account-baseline", "cloudtrail-org",
-            "config-rules", "guardduty-org", "kms-baseline",
-            "key-vault-baseline", "secure-subscription-baseline",
+            "iam-baseline",
+            "secure-account-baseline",
+            "cloudtrail-org",
+            "config-rules",
+            "guardduty-org",
+            "kms-baseline",
+            "key-vault-baseline",
+            "secure-subscription-baseline",
             "secure-project-baseline",
         ],
         "fedramp": [
-            "iam-baseline", "cloudtrail-org", "config-rules",
-            "guardduty-org", "kms-baseline", "compliant-vpc",
+            "iam-baseline",
+            "cloudtrail-org",
+            "config-rules",
+            "guardduty-org",
+            "kms-baseline",
+            "compliant-vpc",
         ],
         "hipaa": [
-            "iam-baseline", "kms-baseline", "cloudtrail-org",
-            "key-vault-baseline", "secure-project-baseline",
+            "iam-baseline",
+            "kms-baseline",
+            "cloudtrail-org",
+            "key-vault-baseline",
+            "secure-project-baseline",
         ],
         "pci_dss": [
-            "compliant-vpc", "iam-baseline", "kms-baseline",
-            "config-rules", "cloudtrail-org",
+            "compliant-vpc",
+            "iam-baseline",
+            "kms-baseline",
+            "config-rules",
+            "cloudtrail-org",
         ],
         "soc2": [
-            "iam-baseline", "cloudtrail-org", "config-rules",
+            "iam-baseline",
+            "cloudtrail-org",
+            "config-rules",
             "secure-account-baseline",
         ],
         "iso_27001": [
-            "iam-baseline", "kms-baseline", "secure-account-baseline",
-            "key-vault-baseline", "secure-project-baseline",
+            "iam-baseline",
+            "kms-baseline",
+            "secure-account-baseline",
+            "key-vault-baseline",
+            "secure-project-baseline",
         ],
     }
 

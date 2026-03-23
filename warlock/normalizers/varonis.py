@@ -50,7 +50,11 @@ class VaronisNormalizer(BaseNormalizer):
     def _normalize_alerts(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("alerts", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("alerts", response.get("data", []))
+        )
 
         for alert in items:
             alert_id = str(alert.get("ID", alert.get("id", "")))
@@ -123,7 +127,11 @@ class VaronisNormalizer(BaseNormalizer):
     def _normalize_permissions(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("permissions", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("permissions", response.get("data", []))
+        )
 
         for perm in items:
             perm_id = str(perm.get("id", ""))

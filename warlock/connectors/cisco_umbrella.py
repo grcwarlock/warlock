@@ -23,9 +23,17 @@ UMBRELLA_BASE_URL = "https://api.umbrella.com"
 
 # (path_template, event_type, params)
 UMBRELLA_ENDPOINTS: list[tuple[str, str, dict]] = [
-    ("/v2/organizations/{org}/roamingcomputers", "umbrella_roaming_computers", {"limit": "100", "page": "1"}),
+    (
+        "/v2/organizations/{org}/roamingcomputers",
+        "umbrella_roaming_computers",
+        {"limit": "100", "page": "1"},
+    ),
     ("/v2/organizations/{org}/policies", "umbrella_policies", {"limit": "100", "page": "1"}),
-    ("/v2/organizations/{org}/destinationlists", "umbrella_destination_lists", {"limit": "100", "page": "1"}),
+    (
+        "/v2/organizations/{org}/destinationlists",
+        "umbrella_destination_lists",
+        {"limit": "100", "page": "1"},
+    ),
 ]
 
 

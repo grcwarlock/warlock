@@ -135,9 +135,7 @@ def _create_poam_for_result(session: Any, result: Any, actor: str) -> Any:
     return poam
 
 
-def _create_exception_for_control(
-    session: Any, framework: str, control_id: str, actor: str
-) -> str:
+def _create_exception_for_control(session: Any, framework: str, control_id: str, actor: str) -> str:
     """Create a minimal policy exception (PolicyOverride + AuditEntry) and return its ID."""
     from warlock.db.models import AuditEntry, PolicyOverride
 
@@ -155,9 +153,7 @@ def _create_exception_for_control(
     session.add(override)
     session.flush()
 
-    seq: int = (
-        session.query(AuditEntry).count() + 1
-    )
+    seq: int = session.query(AuditEntry).count() + 1
     payload = f"{override.id}:policy_exception:{actor}"
     entry_hash = hashlib.sha256(payload.encode()).hexdigest()
 
@@ -212,9 +208,7 @@ def _action_loop(
         return
 
     while True:
-        console.print(
-            "\n[bold]Actions:[/bold] [r]emediate  [p]oam  [e]xception  [s]kip  [q]uit"
-        )
+        console.print("\n[bold]Actions:[/bold] [r]emediate  [p]oam  [e]xception  [s]kip  [q]uit")
         choice = _prompt("Choice:", non_interactive).lower()
 
         if choice in ("q", "quit"):
@@ -293,9 +287,7 @@ def _show_remediation_steps(
                     console.print("\n[bold]AI Guidance:[/bold]")
                     value = ai_result.value
                     if isinstance(value, dict):
-                        console.print(
-                            value.get("guidance") or value.get("narrative") or str(value)
-                        )
+                        console.print(value.get("guidance") or value.get("narrative") or str(value))
                     else:
                         console.print(str(value) if value else "")
         except Exception as exc:
@@ -368,9 +360,7 @@ def investigate_source(source_name: str, use_ai: bool, non_interactive: bool) ->
 
         # Step 3: Select framework
         fw_choices = sorted(by_framework.keys())
-        console.print(
-            f"\nFrameworks: {', '.join(fw_choices)} (or 'all')"
-        )
+        console.print(f"\nFrameworks: {', '.join(fw_choices)} (or 'all')")
         chosen_fw = _prompt("Select a framework to drill into:", non_interactive, default="all")
         if chosen_fw.lower() == "all":
             drill_results = results
@@ -417,7 +407,11 @@ def investigate_source(source_name: str, use_ai: bool, non_interactive: bool) ->
         # Match partial: "AC-2" or "nist_800_53/AC-2"
         matched_key = None
         for k in ctrl_choices:
-            if k == chosen_ctrl or k.endswith(f"/{chosen_ctrl}") or k.lower() == chosen_ctrl.lower():
+            if (
+                k == chosen_ctrl
+                or k.endswith(f"/{chosen_ctrl}")
+                or k.lower() == chosen_ctrl.lower()
+            ):
                 matched_key = k
                 break
         if not matched_key and ctrl_choices:
@@ -427,7 +421,9 @@ def investigate_source(source_name: str, use_ai: bool, non_interactive: bool) ->
 
         # Step 6: Show detail
         if matched_key:
-            fw_part, ctrl_part = (matched_key.split("/", 1) if "/" in matched_key else (active_fw, matched_key))
+            fw_part, ctrl_part = (
+                matched_key.split("/", 1) if "/" in matched_key else (active_fw, matched_key)
+            )
             _show_control_detail_panel(session, fw_part, ctrl_part, selected_results)
 
         # Step 7: Action loop
@@ -465,9 +461,7 @@ def investigate_framework(framework_name: str, use_ai: bool, non_interactive: bo
     with get_session() as session:
         # Step 1: Compliance posture
         all_results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework.ilike(framework_name))
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework.ilike(framework_name)).all()
         )
         nc_results = [r for r in all_results if r.status == "non_compliant"]
         compliant = [r for r in all_results if r.status == "compliant"]
@@ -563,7 +557,9 @@ def investigate_framework(framework_name: str, use_ai: bool, non_interactive: bo
             default=ctrl_choices[0] if ctrl_choices else "",
         )
         selected_results = by_ctrl.get(chosen_ctrl, fam_results[:3])
-        actual_ctrl = chosen_ctrl if chosen_ctrl in by_ctrl else (ctrl_choices[0] if ctrl_choices else "")
+        actual_ctrl = (
+            chosen_ctrl if chosen_ctrl in by_ctrl else (ctrl_choices[0] if ctrl_choices else "")
+        )
 
         _show_control_detail_panel(session, framework_name, actual_ctrl, selected_results)
 
@@ -599,11 +595,7 @@ def investigate_finding(finding_id: str, non_interactive: bool, use_ai: bool) ->
     init_db()
 
     with get_session() as session:
-        finding = (
-            session.query(Finding)
-            .filter(Finding.id.startswith(finding_id))
-            .first()
-        )
+        finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
         if not finding:
             _error(f"Finding not found: {finding_id}. Use 'warlock findings list' to find IDs.")
 
@@ -626,9 +618,7 @@ def investigate_finding(finding_id: str, non_interactive: bool, use_ai: bool) ->
 
         # Step 2: Control mappings
         mappings = (
-            session.query(ControlMapping)
-            .filter(ControlMapping.finding_id == finding.id)
-            .all()
+            session.query(ControlMapping).filter(ControlMapping.finding_id == finding.id).all()
         )
         if mappings:
             map_table = Table(title="Controls this finding maps to")
@@ -695,11 +685,7 @@ def investigate_finding(finding_id: str, non_interactive: bool, use_ai: bool) ->
             elif choice in ("l", "link"):
                 issue_prefix = _prompt("Issue ID to link (prefix):", non_interactive)
                 if issue_prefix:
-                    issue = (
-                        session.query(Issue)
-                        .filter(Issue.id.startswith(issue_prefix))
-                        .first()
-                    )
+                    issue = session.query(Issue).filter(Issue.id.startswith(issue_prefix)).first()
                     if issue:
                         if not issue.finding_id:
                             issue.finding_id = finding.id
@@ -773,18 +759,14 @@ def investigate_control(
     init_db()
 
     with get_session() as session:
-        q = session.query(ControlResult).filter(
-            ControlResult.control_id.ilike(control_id)
-        )
+        q = session.query(ControlResult).filter(ControlResult.control_id.ilike(control_id))
         if framework:
             q = q.filter(ControlResult.framework.ilike(framework))
 
         all_results = q.order_by(ControlResult.assessed_at.desc()).limit(50).all()
 
         if not all_results:
-            console.print(
-                f"[dim]No control results found for '[bold]{control_id}[/bold]'.[/dim]"
-            )
+            console.print(f"[dim]No control results found for '[bold]{control_id}[/bold]'.[/dim]")
             return
 
         # Step 1: Detail
@@ -868,17 +850,13 @@ def investigate_control(
             elif choice in ("r", "remediate"):
                 _show_remediation_steps(nc or all_results[:3], ai_enabled=ai_enabled)
             elif choice in ("t", "test"):
-                console.print(
-                    f"[dim]Run: warlock control-tests run --control {control_id}[/dim]"
-                )
+                console.print(f"[dim]Run: warlock control-tests run --control {control_id}[/dim]")
             elif choice in ("p", "poam"):
                 created = 0
-                for r in (nc or all_results[:1]):
+                for r in nc or all_results[:1]:
                     poam = _create_poam_for_result(session, r, actor)
                     if poam:
-                        console.print(
-                            f"[green]POA&M created:[/green] {poam.id[:8]}"
-                        )
+                        console.print(f"[green]POA&M created:[/green] {poam.id[:8]}")
                         created += 1
                 if not created:
                     console.print("[dim]No new POA&Ms needed.[/dim]")
@@ -904,12 +882,7 @@ def _show_control_detail_panel(
     finding_ids = [r.finding_id for r in results if r.finding_id]
     findings: list[Any] = []
     if finding_ids:
-        findings = (
-            session.query(Finding)
-            .filter(Finding.id.in_(finding_ids))
-            .limit(10)
-            .all()
-        )
+        findings = session.query(Finding).filter(Finding.id.in_(finding_ids)).limit(10).all()
 
     fw_label = framework or sample.framework
     ctrl_label = control_id or sample.control_id
@@ -935,7 +908,9 @@ def _show_control_detail_panel(
 
 
 @cli.command("triage")
-@click.option("--severity", "-s", default="critical", help="Start severity level (default: critical)")
+@click.option(
+    "--severity", "-s", default="critical", help="Start severity level (default: critical)"
+)
 @click.option(
     "--non-interactive",
     is_flag=True,
@@ -958,22 +933,23 @@ def triage(severity: str, non_interactive: bool) -> None:
     with get_session() as session:
         # Collect findings without linked issues, ordered by severity
         all_findings = (
-            session.query(Finding)
-            .order_by(Finding.severity, Finding.observed_at.desc())
-            .all()
+            session.query(Finding).order_by(Finding.severity, Finding.observed_at.desc()).all()
         )
 
         # Filter to findings that have no open issue
         existing_issue_finding_ids = {
             i.finding_id
-            for i in session.query(Issue).filter(
+            for i in session.query(Issue)
+            .filter(
                 Issue.finding_id.isnot(None),
                 Issue.status.notin_(["closed", "verified"]),
-            ).all()
+            )
+            .all()
         }
 
         unreviewed = [
-            f for f in all_findings
+            f
+            for f in all_findings
             if f.id not in existing_issue_finding_ids
             and _sev_rank(f.severity) >= _sev_rank(sev_order[start_idx])
         ]
@@ -996,9 +972,7 @@ def triage(severity: str, non_interactive: bool) -> None:
         for idx, finding in enumerate(unreviewed):
             console.print(f"\n[dim]--- [{idx + 1}/{total}] ---[/dim]")
             sty = _sev_style(finding.severity)
-            observed = (
-                finding.observed_at.strftime("%Y-%m-%d") if finding.observed_at else "?"
-            )
+            observed = finding.observed_at.strftime("%Y-%m-%d") if finding.observed_at else "?"
             console.print(
                 Panel(
                     f"[{sty}]{finding.severity.upper()}[/{sty}]  {finding.title}\n\n"
@@ -1017,9 +991,7 @@ def triage(severity: str, non_interactive: bool) -> None:
                 "[bold]Actions:[/bold] [a]ssign to issue  [s]uppress  "
                 "[l]ink to existing issue  [n]ext  [q]uit"
             )
-            choice = _prompt(
-                f"Triaged {triaged}/{total} -- choice:", non_interactive
-            ).lower()
+            choice = _prompt(f"Triaged {triaged}/{total} -- choice:", non_interactive).lower()
 
             if choice in ("q", "quit"):
                 break
@@ -1041,24 +1013,20 @@ def triage(severity: str, non_interactive: bool) -> None:
                 )
                 if cr:
                     mgr = IssueManager()
-                    issue = mgr.create_from_finding(
-                        session, finding.id, cr.id, created_by=actor
-                    )
+                    issue = mgr.create_from_finding(session, finding.id, cr.id, created_by=actor)
                     session.commit()
                     console.print(
                         f"[green]Issue created:[/green] {issue.id[:8]} [{issue.priority}] {issue.title[:60]}"
                     )
                 else:
-                    console.print("[yellow]No control result linked -- cannot auto-create issue.[/yellow]")
+                    console.print(
+                        "[yellow]No control result linked -- cannot auto-create issue.[/yellow]"
+                    )
                 triaged += 1
             elif choice in ("l", "link"):
                 issue_prefix = _prompt("Issue ID to link (prefix):", non_interactive)
                 if issue_prefix:
-                    issue = (
-                        session.query(Issue)
-                        .filter(Issue.id.startswith(issue_prefix))
-                        .first()
-                    )
+                    issue = session.query(Issue).filter(Issue.id.startswith(issue_prefix)).first()
                     if issue:
                         if not issue.finding_id:
                             issue.finding_id = finding.id
@@ -1070,7 +1038,9 @@ def triage(severity: str, non_interactive: bool) -> None:
             else:
                 console.print("[yellow]Unknown choice.[/yellow]")
 
-        console.print(f"\n[bold]Triage session complete.[/bold] {triaged}/{total} findings reviewed.")
+        console.print(
+            f"\n[bold]Triage session complete.[/bold] {triaged}/{total} findings reviewed."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1106,10 +1076,9 @@ def audit_prep(framework: str, non_interactive: bool) -> None:
         nc_results = _nc_results_for_framework(session, framework)
         stale_threshold = datetime.now(timezone.utc) - timedelta(days=30)
         all_fw_results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework.ilike(framework))
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework.ilike(framework)).all()
         )
+
         def _aware(dt: datetime | None) -> datetime | None:
             if dt is None:
                 return None
@@ -1118,8 +1087,11 @@ def audit_prep(framework: str, non_interactive: bool) -> None:
             return dt
 
         stale = [
-            r for r in all_fw_results
-            if r.assessed_at and (_aware(r.assessed_at) or datetime.min.replace(tzinfo=timezone.utc)) < stale_threshold
+            r
+            for r in all_fw_results
+            if r.assessed_at
+            and (_aware(r.assessed_at) or datetime.min.replace(tzinfo=timezone.utc))
+            < stale_threshold
         ]
 
         # 2. Open POA&Ms overdue
@@ -1137,15 +1109,11 @@ def audit_prep(framework: str, non_interactive: bool) -> None:
 
         # 3. Attestation coverage
         all_attests = (
-            session.query(Attestation)
-            .filter(Attestation.framework.ilike(framework))
-            .all()
+            session.query(Attestation).filter(Attestation.framework.ilike(framework)).all()
         )
         approved_attests = [a for a in all_attests if a.status == "approved"]
         total_controls = len({r.control_id for r in all_fw_results})
-        attest_pct = (
-            int(len(approved_attests) / total_controls * 100) if total_controls else 0
-        )
+        attest_pct = int(len(approved_attests) / total_controls * 100) if total_controls else 0
 
         # 4. Pending evidence requests
         pending_evidence = (
@@ -1295,9 +1263,7 @@ def daily(non_interactive: bool) -> None:
 
         # Open issues
         open_issues = (
-            session.query(Issue)
-            .filter(Issue.status.in_(["open", "assigned", "in_progress"]))
-            .all()
+            session.query(Issue).filter(Issue.status.in_(["open", "assigned", "in_progress"])).all()
         )
 
         # Upcoming deadlines (POA&Ms due in next 7 days)
@@ -1340,9 +1306,7 @@ def daily(non_interactive: bool) -> None:
 
             for p in upcoming:
                 due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else ""
-                deadline_table.add_row(
-                    p.id[:8], p.framework, p.control_id, due, p.status
-                )
+                deadline_table.add_row(p.id[:8], p.framework, p.control_id, due, p.status)
             console.print(deadline_table)
 
         if non_interactive:
@@ -1379,7 +1343,9 @@ def daily(non_interactive: bool) -> None:
 
 @cli.command("remediate-guided")
 @click.argument("item_id")
-@click.option("--ai", "use_ai", is_flag=True, help="AI-enhanced remediation with env-specific commands")
+@click.option(
+    "--ai", "use_ai", is_flag=True, help="AI-enhanced remediation with env-specific commands"
+)
 @click.option(
     "--non-interactive",
     is_flag=True,
@@ -1409,11 +1375,7 @@ def remediate_guided(item_id: str, use_ai: bool, non_interactive: bool) -> None:
         label = item_id
 
         # 1. Try as finding UUID prefix
-        finding = (
-            session.query(Finding)
-            .filter(Finding.id.startswith(item_id))
-            .first()
-        )
+        finding = session.query(Finding).filter(Finding.id.startswith(item_id)).first()
 
         if finding:
             label = f"Finding {finding.id[:8]}: {finding.title[:60]}"
@@ -1497,9 +1459,7 @@ def remediate_guided(item_id: str, use_ai: bool, non_interactive: bool) -> None:
                     mgr = IssueManager()
                     try:
                         mgr.transition(session, issue.id, "in_progress", actor=actor)
-                        console.print(
-                            f"[green]Issue {issue.id[:8]} -> in_progress[/green]"
-                        )
+                        console.print(f"[green]Issue {issue.id[:8]} -> in_progress[/green]")
                     except ValueError as exc:
                         console.print(f"[yellow]{exc}[/yellow]")
                 else:
@@ -1523,9 +1483,7 @@ def remediate_guided(item_id: str, use_ai: bool, non_interactive: bool) -> None:
                     mgr = IssueManager()
                     try:
                         mgr.transition(session, issue.id, "remediated", actor=actor)
-                        console.print(
-                            f"[green]Issue {issue.id[:8]} -> remediated[/green]"
-                        )
+                        console.print(f"[green]Issue {issue.id[:8]} -> remediated[/green]")
                     except ValueError as exc:
                         console.print(f"[yellow]{exc}[/yellow]")
                 else:

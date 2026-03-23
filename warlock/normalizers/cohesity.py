@@ -86,9 +86,13 @@ class CohesityNormalizer(BaseNormalizer):
         for run in items:
             job_id = str(run.get("jobId", ""))
             job_name = run.get("jobName", "unknown")
-            run_id = str(run.get("backupRun", {}).get("base", {}).get("jobRunId", run.get("id", "")))
+            run_id = str(
+                run.get("backupRun", {}).get("base", {}).get("jobRunId", run.get("id", ""))
+            )
             status = (
-                run.get("backupRun", {}).get("base", {}).get("publicStatus", run.get("status", "unknown"))
+                run.get("backupRun", {})
+                .get("base", {})
+                .get("publicStatus", run.get("status", "unknown"))
             )
 
             is_failed = status in _FAILED_RUN_STATUSES
@@ -105,8 +109,12 @@ class CohesityNormalizer(BaseNormalizer):
                         "job_id": job_id,
                         "job_name": job_name,
                         "status": status,
-                        "start_time": run.get("backupRun", {}).get("base", {}).get("startTimeUsecs", ""),
-                        "end_time": run.get("backupRun", {}).get("base", {}).get("endTimeUsecs", ""),
+                        "start_time": run.get("backupRun", {})
+                        .get("base", {})
+                        .get("startTimeUsecs", ""),
+                        "end_time": run.get("backupRun", {})
+                        .get("base", {})
+                        .get("endTimeUsecs", ""),
                     },
                     resource_id=run_id or job_id,
                     resource_type="cohesity_protection_run",

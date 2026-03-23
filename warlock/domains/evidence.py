@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 
 from warlock.db.models import ControlMapping, ControlResult
 from warlock.domains.base import (
-    DomainEvent, QueryFilters, RelatedItem, UrgentItem,
+    DomainEvent,
+    QueryFilters,
+    RelatedItem,
+    UrgentItem,
 )
 
 log = logging.getLogger(__name__)
@@ -31,7 +34,8 @@ class EvidenceDomainService:
 
         q = (
             self._session.query(
-                ControlResult.framework, ControlResult.control_id,
+                ControlResult.framework,
+                ControlResult.control_id,
                 func.max(ControlResult.assessed_at).label("last_assessed"),
             )
             .group_by(ControlResult.framework, ControlResult.control_id)
@@ -46,15 +50,18 @@ class EvidenceDomainService:
             if last and last.tzinfo is None:
                 last = last.replace(tzinfo=timezone.utc)
             days_ago = (now - last).days if last else 999
-            items.append(UrgentItem(
-                domain="evidence", entity_type="stale_evidence",
-                entity_id=f"{fw}/{ctrl}",
-                summary=f"{ctrl} ({fw}): evidence stale — last assessed {days_ago}d ago (threshold: {self._stale_days}d)",
-                severity="medium",
-                priority_score=30 + min(days_ago - self._stale_days, 50),
-                action_hint=f"warlock evidence refresh --control {ctrl} -f {fw}",
-                framework=fw,
-            ))
+            items.append(
+                UrgentItem(
+                    domain="evidence",
+                    entity_type="stale_evidence",
+                    entity_id=f"{fw}/{ctrl}",
+                    summary=f"{ctrl} ({fw}): evidence stale — last assessed {days_ago}d ago (threshold: {self._stale_days}d)",
+                    severity="medium",
+                    priority_score=30 + min(days_ago - self._stale_days, 50),
+                    action_hint=f"warlock evidence refresh --control {ctrl} -f {fw}",
+                    framework=fw,
+                )
+            )
         return items
 
     def get_related_to(self, entity_type: str, entity_id: str) -> list[RelatedItem]:
@@ -84,13 +91,20 @@ class EvidenceDomainService:
         stale = days_ago is not None and days_ago > self._stale_days
         freshness = "stale" if stale else "current" if days_ago is not None else "unknown"
 
-        return [RelatedItem(
-            domain="evidence", entity_type="evidence_summary",
-            entity_id=control_id,
-            summary=f"{finding_count} findings mapped, last assessed {days_ago}d ago, freshness: {freshness}",
-            status=freshness,
-            metadata={"finding_count": finding_count, "days_since_assessment": days_ago, "stale": stale},
-        )]
+        return [
+            RelatedItem(
+                domain="evidence",
+                entity_type="evidence_summary",
+                entity_id=control_id,
+                summary=f"{finding_count} findings mapped, last assessed {days_ago}d ago, freshness: {freshness}",
+                status=freshness,
+                metadata={
+                    "finding_count": finding_count,
+                    "days_since_assessment": days_ago,
+                    "stale": stale,
+                },
+            )
+        ]
 
     def handle_event(self, event: DomainEvent) -> list[DomainEvent]:
         return []

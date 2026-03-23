@@ -43,9 +43,7 @@ class F5Connector(BaseConnector):
         username = self.get_secret("F5_USERNAME")
         password = self.get_secret("F5_PASSWORD")
         if not token and not (username and password):
-            errors.append(
-                "Either F5_API_TOKEN or both F5_USERNAME and F5_PASSWORD must be set"
-            )
+            errors.append("Either F5_API_TOKEN or both F5_USERNAME and F5_PASSWORD must be set")
         if not self.config.settings.get("base_url"):
             errors.append(
                 "F5 base_url must be set in connector settings (e.g. https://bigip.example.com)"

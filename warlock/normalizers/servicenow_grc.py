@@ -49,9 +49,21 @@ class ServiceNowGRCNormalizer(BaseNormalizer):
     def _normalize_policies(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         for item in raw.raw_data.get("response", []):
-            sys_id = str(item.get("sys_id", {}).get("value", "") if isinstance(item.get("sys_id"), dict) else item.get("sys_id", ""))
-            name = item.get("name", {}).get("value", "") if isinstance(item.get("name"), dict) else str(item.get("name", "unknown"))
-            state = item.get("state", {}).get("display_value", "") if isinstance(item.get("state"), dict) else str(item.get("state", ""))
+            sys_id = str(
+                item.get("sys_id", {}).get("value", "")
+                if isinstance(item.get("sys_id"), dict)
+                else item.get("sys_id", "")
+            )
+            name = (
+                item.get("name", {}).get("value", "")
+                if isinstance(item.get("name"), dict)
+                else str(item.get("name", "unknown"))
+            )
+            state = (
+                item.get("state", {}).get("display_value", "")
+                if isinstance(item.get("state"), dict)
+                else str(item.get("state", ""))
+            )
             findings.append(
                 FindingData(
                     **self._base(raw),
@@ -61,8 +73,12 @@ class ServiceNowGRCNormalizer(BaseNormalizer):
                         "sys_id": sys_id,
                         "name": name,
                         "state": state,
-                        "category": item.get("category", {}).get("display_value", "") if isinstance(item.get("category"), dict) else str(item.get("category", "")),
-                        "description": item.get("description", {}).get("value", "") if isinstance(item.get("description"), dict) else str(item.get("description", "")),
+                        "category": item.get("category", {}).get("display_value", "")
+                        if isinstance(item.get("category"), dict)
+                        else str(item.get("category", "")),
+                        "description": item.get("description", {}).get("value", "")
+                        if isinstance(item.get("description"), dict)
+                        else str(item.get("description", "")),
                     },
                     resource_id=sys_id,
                     resource_type="servicenow_grc_policy",
@@ -76,9 +92,21 @@ class ServiceNowGRCNormalizer(BaseNormalizer):
     def _normalize_controls(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         for item in raw.raw_data.get("response", []):
-            sys_id = str(item.get("sys_id", {}).get("value", "") if isinstance(item.get("sys_id"), dict) else item.get("sys_id", ""))
-            name = item.get("name", {}).get("value", "") if isinstance(item.get("name"), dict) else str(item.get("name", "unknown"))
-            state = item.get("state", {}).get("display_value", "") if isinstance(item.get("state"), dict) else str(item.get("state", ""))
+            sys_id = str(
+                item.get("sys_id", {}).get("value", "")
+                if isinstance(item.get("sys_id"), dict)
+                else item.get("sys_id", "")
+            )
+            name = (
+                item.get("name", {}).get("value", "")
+                if isinstance(item.get("name"), dict)
+                else str(item.get("name", "unknown"))
+            )
+            state = (
+                item.get("state", {}).get("display_value", "")
+                if isinstance(item.get("state"), dict)
+                else str(item.get("state", ""))
+            )
             findings.append(
                 FindingData(
                     **self._base(raw),
@@ -88,8 +116,12 @@ class ServiceNowGRCNormalizer(BaseNormalizer):
                         "sys_id": sys_id,
                         "name": name,
                         "state": state,
-                        "control_type": item.get("control_type", {}).get("display_value", "") if isinstance(item.get("control_type"), dict) else str(item.get("control_type", "")),
-                        "owner": item.get("owner", {}).get("display_value", "") if isinstance(item.get("owner"), dict) else str(item.get("owner", "")),
+                        "control_type": item.get("control_type", {}).get("display_value", "")
+                        if isinstance(item.get("control_type"), dict)
+                        else str(item.get("control_type", "")),
+                        "owner": item.get("owner", {}).get("display_value", "")
+                        if isinstance(item.get("owner"), dict)
+                        else str(item.get("owner", "")),
                     },
                     resource_id=sys_id,
                     resource_type="servicenow_grc_control",
@@ -103,9 +135,21 @@ class ServiceNowGRCNormalizer(BaseNormalizer):
     def _normalize_risks(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         for item in raw.raw_data.get("response", []):
-            sys_id = str(item.get("sys_id", {}).get("value", "") if isinstance(item.get("sys_id"), dict) else item.get("sys_id", ""))
-            name = item.get("name", {}).get("value", "") if isinstance(item.get("name"), dict) else str(item.get("name", "unknown"))
-            raw_rating = item.get("risk_rating", {}).get("value", "4") if isinstance(item.get("risk_rating"), dict) else str(item.get("risk_rating", "4"))
+            sys_id = str(
+                item.get("sys_id", {}).get("value", "")
+                if isinstance(item.get("sys_id"), dict)
+                else item.get("sys_id", "")
+            )
+            name = (
+                item.get("name", {}).get("value", "")
+                if isinstance(item.get("name"), dict)
+                else str(item.get("name", "unknown"))
+            )
+            raw_rating = (
+                item.get("risk_rating", {}).get("value", "4")
+                if isinstance(item.get("risk_rating"), dict)
+                else str(item.get("risk_rating", "4"))
+            )
             severity = _RISK_SEVERITY_MAP.get(str(raw_rating), "medium")
             findings.append(
                 FindingData(
@@ -116,9 +160,15 @@ class ServiceNowGRCNormalizer(BaseNormalizer):
                         "sys_id": sys_id,
                         "name": name,
                         "risk_rating": raw_rating,
-                        "state": item.get("state", {}).get("display_value", "") if isinstance(item.get("state"), dict) else str(item.get("state", "")),
-                        "category": item.get("category", {}).get("display_value", "") if isinstance(item.get("category"), dict) else str(item.get("category", "")),
-                        "owner": item.get("owner", {}).get("display_value", "") if isinstance(item.get("owner"), dict) else str(item.get("owner", "")),
+                        "state": item.get("state", {}).get("display_value", "")
+                        if isinstance(item.get("state"), dict)
+                        else str(item.get("state", "")),
+                        "category": item.get("category", {}).get("display_value", "")
+                        if isinstance(item.get("category"), dict)
+                        else str(item.get("category", "")),
+                        "owner": item.get("owner", {}).get("display_value", "")
+                        if isinstance(item.get("owner"), dict)
+                        else str(item.get("owner", "")),
                     },
                     resource_id=sys_id,
                     resource_type="servicenow_grc_risk",

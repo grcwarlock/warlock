@@ -40,7 +40,11 @@ class BanyanNormalizer(BaseNormalizer):
     def _normalize_services(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("services", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("services", []))
+        )
 
         for service in items:
             service_id = str(service.get("ServiceID", service.get("id", "")))
@@ -71,7 +75,11 @@ class BanyanNormalizer(BaseNormalizer):
     def _normalize_policies(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("policies", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("policies", []))
+        )
 
         for policy in items:
             policy_id = str(policy.get("PolicyID", policy.get("id", "")))
@@ -101,7 +109,11 @@ class BanyanNormalizer(BaseNormalizer):
     def _normalize_devices(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("devices", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("devices", []))
+        )
 
         for device in items:
             device_id = str(device.get("SerialNumber", device.get("id", "")))

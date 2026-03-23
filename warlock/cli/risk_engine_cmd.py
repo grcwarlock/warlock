@@ -67,11 +67,7 @@ def _store_record(
     blob = json.dumps(payload, sort_keys=True, default=str).encode()
     evidence_sha256 = hashlib.sha256(blob).hexdigest()
 
-    last = (
-        session.query(AuditEntry)
-        .order_by(AuditEntry.sequence.desc())
-        .first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     sequence = (last.sequence + 1) if last else 1
 
@@ -152,11 +148,7 @@ def quantify(finding_id: str, method: str) -> None:
 
     init_db()
     with get_session() as session:
-        finding = (
-            session.query(Finding)
-            .filter(Finding.id.startswith(finding_id))
-            .first()
-        )
+        finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
         if not finding:
             _error(f"Finding not found: {finding_id}")
 
@@ -204,7 +196,9 @@ def quantify(finding_id: str, method: str) -> None:
 
         if result:
             status_label = result.status
-            console.print(f"\n  Latest control: {result.framework} / {result.control_id} \u2014 {status_label}")
+            console.print(
+                f"\n  Latest control: {result.framework} / {result.control_id} \u2014 {status_label}"
+            )
 
 
 @risk_engine.command("quantify-bulk")
@@ -325,10 +319,8 @@ def simulate(iterations: int, confidence: int) -> None:
     with get_session() as session:
         # Discover all active frameworks from ControlResult
         from warlock.db.models import ControlResult
-        frameworks = [
-            r[0]
-            for r in session.query(ControlResult.framework).distinct().all()
-        ]
+
+        frameworks = [r[0] for r in session.query(ControlResult.framework).distinct().all()]
 
         if not frameworks:
             console.print("[dim]No control results found. Run 'warlock collect' first.[/dim]")
@@ -513,7 +505,9 @@ def heatmap(framework: str | None) -> None:
         records = [r for r in records if r.get("framework") == framework]
 
     if not records:
-        console.print("[dim]No risk register entries found. Use 'warlock risk-engine register add'.[/dim]")
+        console.print(
+            "[dim]No risk register entries found. Use 'warlock risk-engine register add'.[/dim]"
+        )
         return
 
     # Build 5x5 grid
@@ -689,7 +683,9 @@ def register_list(status: str | None) -> None:
     table.add_column("Status")
     table.add_column("Owner", style="dim")
 
-    for r in sorted(records, key=lambda x: int(x.get("likelihood", 3)) * int(x.get("impact", 3)), reverse=True):
+    for r in sorted(
+        records, key=lambda x: int(x.get("likelihood", 3)) * int(x.get("impact", 3)), reverse=True
+    ):
         lh = int(r.get("likelihood", 0))
         im = int(r.get("impact", 0))
         score = lh * im
@@ -710,7 +706,9 @@ def register_list(status: str | None) -> None:
 
 @register.command("add")
 @click.option("--title", required=True, help="Risk title")
-@click.option("--category", required=True, help="Risk category (e.g. operational, compliance, cyber)")
+@click.option(
+    "--category", required=True, help="Risk category (e.g. operational, compliance, cyber)"
+)
 @click.option("--likelihood", type=click.IntRange(1, 5), required=True, help="Likelihood score 1-5")
 @click.option("--impact", type=click.IntRange(1, 5), required=True, help="Impact score 1-5")
 @click.option("--owner", default="unassigned", show_default=True, help="Risk owner (email or name)")
@@ -790,7 +788,9 @@ def register_show(risk_id: str) -> None:
 
 @register.command("update")
 @click.argument("risk_id")
-@click.option("--status", "-s", type=click.Choice(["active", "mitigated", "accepted"]), default=None)
+@click.option(
+    "--status", "-s", type=click.Choice(["active", "mitigated", "accepted"]), default=None
+)
 @click.option("--likelihood", type=click.IntRange(1, 5), default=None)
 @click.option("--impact", type=click.IntRange(1, 5), default=None)
 @click.option("--owner", default=None)
@@ -852,7 +852,9 @@ def appetite_list() -> None:
         records = _load_records(session, "risk_appetite")
 
     if not records:
-        console.print("[dim]No risk appetite thresholds configured. Use 'warlock risk-engine appetite set'.[/dim]")
+        console.print(
+            "[dim]No risk appetite thresholds configured. Use 'warlock risk-engine appetite set'.[/dim]"
+        )
         return
 
     table = Table(title="Risk Appetite Thresholds")
@@ -903,9 +905,7 @@ def appetite_set(category: str, threshold: float, unit: str) -> None:
         }
         _store_record(session, "risk_appetite", "set", record_id, payload, actor)
 
-    console.print(
-        f"[green]Risk appetite set: {category} \u2264 {threshold} {unit}[/green]"
-    )
+    console.print(f"[green]Risk appetite set: {category} \u2264 {threshold} {unit}[/green]")
 
 
 @appetite.command("check")
@@ -919,7 +919,9 @@ def appetite_check() -> None:
         register_entries = _load_records(session, "risk_register")
 
     if not thresholds:
-        console.print("[dim]No appetite thresholds set. Use 'warlock risk-engine appetite set'.[/dim]")
+        console.print(
+            "[dim]No appetite thresholds set. Use 'warlock risk-engine appetite set'.[/dim]"
+        )
         return
 
     # Calculate current score-based exposure per category
@@ -943,7 +945,9 @@ def appetite_check() -> None:
         scores = cat_scores.get(cat, [])
         current = max(scores) if scores else 0.0
         within = current <= limit
-        status_label = "[green]Within appetite[/green]" if within else "[red bold]EXCEEDS appetite[/red bold]"
+        status_label = (
+            "[green]Within appetite[/green]" if within else "[red bold]EXCEEDS appetite[/red bold]"
+        )
         table.add_row(
             cat,
             str(limit),
@@ -975,10 +979,7 @@ def treatment_list(risk_id: str) -> None:
     with get_session() as session:
         records = _load_records(session, "risk_treatment")
 
-    treatments = [
-        r for r in records
-        if r.get("risk_id", "").startswith(risk_id)
-    ]
+    treatments = [r for r in records if r.get("risk_id", "").startswith(risk_id)]
 
     if not treatments:
         console.print(f"[dim]No treatment plans for risk {risk_id}.[/dim]")
@@ -1073,7 +1074,8 @@ def treatment_update(risk_id: str, treatment_id: str, status: str) -> None:
     with get_session() as session:
         records = _load_records(session, "risk_treatment")
         matches = [
-            r for r in records
+            r
+            for r in records
             if r.get("_id", "").startswith(treatment_id)
             and r.get("risk_id", "").startswith(risk_id)
         ]

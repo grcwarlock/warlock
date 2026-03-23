@@ -175,6 +175,7 @@ from warlock.cli import lake as _lake  # noqa: F401, E402
 from warlock.cli import policy_cmd as _policy_cmd  # noqa: F401, E402
 from warlock.cli import briefing_cmd as _briefing_cmd  # noqa: F401, E402
 from warlock.cli import control_cmd as _control_cmd  # noqa: F401, E402
+
 # Phase 2 — Workflow CLI modules
 from warlock.cli import incidents_cmd as _incidents_cmd  # noqa: F401, E402
 from warlock.cli import evidence_cmd as _evidence_cmd  # noqa: F401, E402
@@ -188,6 +189,7 @@ from warlock.cli import audit_engagement_cmd as _audit_engagement_cmd  # noqa: F
 from warlock.cli import control_tests_cmd as _control_tests_cmd  # noqa: F401, E402
 from warlock.cli import training_cmd as _training_cmd  # noqa: F401, E402
 from warlock.cli import bcp_cmd as _bcp_cmd  # noqa: F401, E402
+
 # Phase 3 — CLI expansion modules
 from warlock.cli import connectors_cmd as _connectors_cmd  # noqa: F401, E402
 from warlock.cli import assertions_cmd as _assertions_cmd  # noqa: F401, E402
@@ -206,6 +208,7 @@ from warlock.cli import conmon_cmd as _conmon_cmd  # noqa: F401, E402
 from warlock.cli import sod_cmd as _sod_cmd  # noqa: F401, E402
 from warlock.cli import poam_cmd as _poam_cmd  # noqa: F401, E402
 from warlock.cli import terraform_cmd as _terraform_cmd  # noqa: F401, E402
+
 # Phase 3+ — Analytics, correlation, AI, automation
 from warlock.cli import correlate_cmd as _correlate_cmd  # noqa: F401, E402
 from warlock.cli import bulk_cmd as _bulk_cmd  # noqa: F401, E402
@@ -216,6 +219,7 @@ from warlock.cli import dashboard_cmd as _dashboard_cmd  # noqa: F401, E402
 from warlock.cli import ai_ops_cmd as _ai_ops_cmd  # noqa: F401, E402
 from warlock.cli import automation_cmd as _automation_cmd  # noqa: F401, E402
 from warlock.cli import investigate_cmd as _investigate_cmd  # noqa: F401, E402
+
 # Interactive workflows — guided GRC practitioner UX
 from warlock.cli import vendor_workflow_cmd as _vendor_workflow_cmd  # noqa: F401, E402
 from warlock.cli import incident_workflow_cmd as _incident_workflow_cmd  # noqa: F401, E402

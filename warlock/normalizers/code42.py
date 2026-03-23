@@ -49,7 +49,11 @@ class Code42Normalizer(BaseNormalizer):
     def _normalize_alerts(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("alerts", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("alerts", response.get("data", []))
+        )
 
         for alert in items:
             alert_id = str(alert.get("id", alert.get("alertId", "")))
@@ -85,14 +89,22 @@ class Code42Normalizer(BaseNormalizer):
     def _normalize_file_events(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("fileEvents", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("fileEvents", response.get("data", []))
+        )
 
         for event in items:
             event_id = str(event.get("eventId", event.get("id", "")))
             file_name = event.get("fileName", event.get("file", {}).get("name", "unknown"))
             exposure = event.get("exposure", [])
             # Any exfiltration-related exposure is a high severity alert
-            severity = "high" if any(e in str(exposure) for e in ("OUTSIDE_TRUSTED", "EXFILTRATED")) else "medium"
+            severity = (
+                "high"
+                if any(e in str(exposure) for e in ("OUTSIDE_TRUSTED", "EXFILTRATED"))
+                else "medium"
+            )
 
             findings.append(
                 FindingData(
@@ -122,7 +134,11 @@ class Code42Normalizer(BaseNormalizer):
     def _normalize_users(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("users", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("users", response.get("data", []))
+        )
 
         for user in items:
             user_id = str(user.get("userId", user.get("id", "")))

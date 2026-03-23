@@ -305,10 +305,7 @@ def connectors_status(limit: int) -> None:
     init_db()
     with get_session() as session:
         rows = (
-            session.query(ConnectorRun)
-            .order_by(ConnectorRun.started_at.desc())
-            .limit(limit)
-            .all()
+            session.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).limit(limit).all()
         )
 
     if not rows:
@@ -572,8 +569,7 @@ def connectors_collect(name: str) -> None:
         )
         console.print(f"[{status_style}]{result.status.upper()}[/{status_style}] ", end="")
         console.print(
-            f"{name}: {result.event_count} event(s) collected in "
-            f"{result.duration_seconds:.1f}s"
+            f"{name}: {result.event_count} event(s) collected in {result.duration_seconds:.1f}s"
             if result.duration_seconds
             else f"{name}: {result.event_count} event(s)"
         )
@@ -755,7 +751,9 @@ def connectors_compare(name_a: str, name_b: str) -> None:
     table.add_column(name_b)
 
     for key in ("source_type", "provider", "status", "event_count", "error_count", "started_at"):
-        table.add_row(key.replace("_", " ").title(), str(a.get(key, "\u2014")), str(b.get(key, "\u2014")))
+        table.add_row(
+            key.replace("_", " ").title(), str(a.get(key, "\u2014")), str(b.get(key, "\u2014"))
+        )
 
     console.print(table)
 
@@ -775,7 +773,9 @@ def connectors_export(output: str | None, source_type: str | None) -> None:
 
     init_db()
     with get_session() as session:
-        q = session.query(ConnectorRun).order_by(ConnectorRun.connector_name, ConnectorRun.started_at.desc())
+        q = session.query(ConnectorRun).order_by(
+            ConnectorRun.connector_name, ConnectorRun.started_at.desc()
+        )
         if source_type:
             q = q.filter(ConnectorRun.source_type == source_type)
         rows = q.all()

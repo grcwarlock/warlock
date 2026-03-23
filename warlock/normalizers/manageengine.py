@@ -119,8 +119,11 @@ class ManageEngineNormalizer(BaseNormalizer):
             title = change.get("title", "unknown")
             status = (change.get("status") or {}).get("name", "unknown")
             change_type = (change.get("change_type") or {}).get("name", "")
-            scheduled_start = change.get("scheduled_start_time", {}).get("value", "") \
-                if isinstance(change.get("scheduled_start_time"), dict) else ""
+            scheduled_start = (
+                change.get("scheduled_start_time", {}).get("value", "")
+                if isinstance(change.get("scheduled_start_time"), dict)
+                else ""
+            )
 
             findings.append(
                 FindingData(

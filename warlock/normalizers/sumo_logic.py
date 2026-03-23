@@ -44,7 +44,9 @@ class SumoLogicNormalizer(BaseNormalizer):
             collector_id = str(collector.get("id", ""))
             name = collector.get("name", "unknown")
             alive = collector.get("alive", True)
-            collector_type = collector.get("collectorType", collector.get("collectorType", "Hosted"))
+            collector_type = collector.get(
+                "collectorType", collector.get("collectorType", "Hosted")
+            )
 
             # Dead collectors are a compliance concern (logging gap)
             obs_type = "misconfiguration" if not alive else "inventory"

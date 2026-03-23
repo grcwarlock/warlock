@@ -60,8 +60,12 @@ class HackerOneNormalizer(BaseNormalizer):
 
             # Severity from nested relationships
             severity_rel = report.get("relationships", {}).get("severity", {}).get("data", {})
-            severity_attrs = severity_rel.get("attributes", {}) if isinstance(severity_rel, dict) else {}
-            severity_raw = str(severity_attrs.get("rating", attributes.get("severity", "low"))).lower()
+            severity_attrs = (
+                severity_rel.get("attributes", {}) if isinstance(severity_rel, dict) else {}
+            )
+            severity_raw = str(
+                severity_attrs.get("rating", attributes.get("severity", "low"))
+            ).lower()
             severity = _SEVERITY_MAP.get(severity_raw, "medium")
 
             findings.append(
@@ -74,11 +78,19 @@ class HackerOneNormalizer(BaseNormalizer):
                         "title": title,
                         "state": state,
                         "severity": severity_raw,
-                        "weakness": report.get("relationships", {}).get("weakness", {}).get("data", {}).get("attributes", {}).get("name", ""),
+                        "weakness": report.get("relationships", {})
+                        .get("weakness", {})
+                        .get("data", {})
+                        .get("attributes", {})
+                        .get("name", ""),
                         "bounty_amount": attributes.get("bounty_amount", 0),
                         "created_at": attributes.get("created_at", ""),
                         "disclosed_at": attributes.get("disclosed_at", ""),
-                        "reporter": report.get("relationships", {}).get("reporter", {}).get("data", {}).get("attributes", {}).get("username", ""),
+                        "reporter": report.get("relationships", {})
+                        .get("reporter", {})
+                        .get("data", {})
+                        .get("attributes", {})
+                        .get("username", ""),
                     },
                     resource_id=report_id,
                     resource_type="hackerone_report",

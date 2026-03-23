@@ -1417,9 +1417,7 @@ class Policy(Base):
     expires_at = Column(DateTime(timezone=True), nullable=True)
     description = Column(Text, default="")
 
-    __table_args__ = (
-        Index("ix_policies_type_enabled", "policy_type", "enabled"),
-    )
+    __table_args__ = (Index("ix_policies_type_enabled", "policy_type", "enabled"),)
 
 
 class PolicyHistory(Base):

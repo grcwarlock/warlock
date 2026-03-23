@@ -20,9 +20,7 @@ class DomainRegistry:
     def all_services(self) -> list[DomainService]:
         return list(self._services.values())
 
-    def get_related_to(
-        self, entity_type: str, entity_id: str
-    ) -> dict[str, list[RelatedItem]]:
+    def get_related_to(self, entity_type: str, entity_id: str) -> dict[str, list[RelatedItem]]:
         result: dict[str, list[RelatedItem]] = {}
         for svc in self._services.values():
             related = svc.get_related_to(entity_type, entity_id)
@@ -30,9 +28,7 @@ class DomainRegistry:
                 result[svc.domain_name] = related
         return result
 
-    def get_briefing(
-        self, filters: QueryFilters | None = None
-    ) -> list[UrgentItem]:
+    def get_briefing(self, filters: QueryFilters | None = None) -> list[UrgentItem]:
         filters = filters or QueryFilters()
         items: list[UrgentItem] = []
         for svc in self._services.values():

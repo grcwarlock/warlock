@@ -5,6 +5,7 @@ from __future__ import annotations
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 
+
 # CVSS score to severity mapping (NIST NVD convention)
 def _cvss_to_severity(score: float) -> str:
     if score >= 9.0:
@@ -65,8 +66,12 @@ class Rapid7Normalizer(BaseNormalizer):
                         "ip": asset.get("ip", ""),
                         "os": os_name,
                         "risk_score": asset.get("riskScore", 0),
-                        "assessed_for_vulnerabilities": asset.get("assessedForVulnerabilities", False),
-                        "last_assessed_for_vulnerabilities": str(asset.get("lastAssessedForVulnerabilities", "")),
+                        "assessed_for_vulnerabilities": asset.get(
+                            "assessedForVulnerabilities", False
+                        ),
+                        "last_assessed_for_vulnerabilities": str(
+                            asset.get("lastAssessedForVulnerabilities", "")
+                        ),
                     },
                     resource_id=asset_id,
                     resource_type="rapid7_asset",
@@ -84,7 +89,9 @@ class Rapid7Normalizer(BaseNormalizer):
             title = vuln.get("title", vuln_id)
             cvss = vuln.get("cvss", {})
             cvss_v3 = cvss.get("v3", {}) if isinstance(cvss, dict) else {}
-            cvss_score = float(cvss_v3.get("score", cvss.get("score", 0.0)) if isinstance(cvss_v3, dict) else 0.0)
+            cvss_score = float(
+                cvss_v3.get("score", cvss.get("score", 0.0)) if isinstance(cvss_v3, dict) else 0.0
+            )
             severity = _cvss_to_severity(cvss_score)
 
             findings.append(
@@ -129,8 +136,14 @@ class Rapid7Normalizer(BaseNormalizer):
                         "scan_id": scan_id,
                         "scan_name": scan_name,
                         "status": status,
-                        "assets_discovered": scan.get("assets", {}).get("discovered", 0) if isinstance(scan.get("assets"), dict) else 0,
-                        "vulnerabilities_discovered": scan.get("vulnerabilities", {}).get("total", 0) if isinstance(scan.get("vulnerabilities"), dict) else 0,
+                        "assets_discovered": scan.get("assets", {}).get("discovered", 0)
+                        if isinstance(scan.get("assets"), dict)
+                        else 0,
+                        "vulnerabilities_discovered": scan.get("vulnerabilities", {}).get(
+                            "total", 0
+                        )
+                        if isinstance(scan.get("vulnerabilities"), dict)
+                        else 0,
                         "started": str(scan.get("startTime", "")),
                         "ended": str(scan.get("endTime", "")),
                     },

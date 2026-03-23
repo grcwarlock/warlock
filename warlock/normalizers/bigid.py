@@ -40,7 +40,11 @@ class BigIDNormalizer(BaseNormalizer):
     def _normalize_data_catalog(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("results", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("results", []))
+        )
 
         for item in items:
             item_id = str(item.get("id", item.get("_id", "")))
@@ -72,7 +76,11 @@ class BigIDNormalizer(BaseNormalizer):
     def _normalize_policies(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("policies", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("policies", []))
+        )
 
         for policy in items:
             policy_id = str(policy.get("id", policy.get("_id", "")))
@@ -105,7 +113,11 @@ class BigIDNormalizer(BaseNormalizer):
     def _normalize_scans(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("scans", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("scans", []))
+        )
 
         for scan in items:
             scan_id = str(scan.get("id", scan.get("_id", "")))

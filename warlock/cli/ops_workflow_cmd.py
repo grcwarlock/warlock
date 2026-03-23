@@ -85,11 +85,7 @@ def morning(framework: str | None, no_prompt: bool) -> None:
 
     # Greeting
     hour = now.hour
-    greeting = (
-        "Good morning"
-        if hour < 12
-        else ("Good afternoon" if hour < 17 else "Good evening")
-    )
+    greeting = "Good morning" if hour < 12 else ("Good afternoon" if hour < 17 else "Good evening")
     console.print(
         Panel(
             f"[bold]{greeting}, {actor}[/bold]\n"
@@ -154,7 +150,9 @@ def morning(framework: str | None, no_prompt: bool) -> None:
             incident_q = incident_q.filter(Issue.framework == framework)
         active_incidents = incident_q.count()
         i_color = "red" if active_incidents > 0 else "green"
-        console.print(f"  Active critical/high incidents: [{i_color}]{active_incidents}[/{i_color}]")
+        console.print(
+            f"  Active critical/high incidents: [{i_color}]{active_incidents}[/{i_color}]"
+        )
 
         # Items due today
         eod = now.replace(hour=23, minute=59, second=59)
@@ -201,7 +199,11 @@ def morning(framework: str | None, no_prompt: bool) -> None:
         sla_breaches = sla_q.count()
         if sla_breaches > 0:
             attention_items.append(
-                ("SLA breaches (findings past remediation SLA)", str(sla_breaches), "warlock issues --status open")
+                (
+                    "SLA breaches (findings past remediation SLA)",
+                    str(sla_breaches),
+                    "warlock issues --status open",
+                )
             )
 
         # Overdue POA&Ms
@@ -241,9 +243,7 @@ def morning(framework: str | None, no_prompt: bool) -> None:
         try:
             from warlock.db.models import ControlResult
 
-            stale_q = session.query(ControlResult).filter(
-                ControlResult.assessed_at < stale_cutoff
-            )
+            stale_q = session.query(ControlResult).filter(ControlResult.assessed_at < stale_cutoff)
             if framework:
                 stale_q = stale_q.filter(ControlResult.framework == framework)
             stale_evidence = stale_q.count()
@@ -441,9 +441,7 @@ def weekly(framework: str | None, output: str | None) -> None:
         if framework:
             iq = iq.filter(Issue.framework == framework)
 
-        opened_this = (
-            iq.filter(Issue.created_at >= this_week_start).count()
-        )
+        opened_this = iq.filter(Issue.created_at >= this_week_start).count()
         resolved_this = (
             session.query(Issue)
             .filter(
@@ -453,9 +451,7 @@ def weekly(framework: str | None, output: str | None) -> None:
             .count()
         )
         open_total = (
-            session.query(Issue)
-            .filter(Issue.status.notin_(["closed", "verified"]))
-            .count()
+            session.query(Issue).filter(Issue.status.notin_(["closed", "verified"])).count()
         )
 
         i_color = "red" if opened_this > resolved_this else "green"
@@ -478,9 +474,7 @@ def weekly(framework: str | None, output: str | None) -> None:
         open_poams = poam_q.all()
 
         overdue_count = sum(
-            1
-            for p in open_poams
-            if p.scheduled_completion and p.scheduled_completion < now
+            1 for p in open_poams if p.scheduled_completion and p.scheduled_completion < now
         )
         on_track_count = len(open_poams) - overdue_count
         p_color = "red" if overdue_count > 0 else "green"
@@ -497,15 +491,11 @@ def weekly(framework: str | None, output: str | None) -> None:
         console.print("\n[bold cyan]Connector Health (last 7 days)[/bold cyan]")
 
         all_runs = (
-            session.query(ConnectorRun)
-            .filter(ConnectorRun.started_at >= this_week_start)
-            .all()
+            session.query(ConnectorRun).filter(ConnectorRun.started_at >= this_week_start).all()
         )
         total_runs = len(all_runs)
         error_runs = [r for r in all_runs if r.status in ("error", "partial")]
-        success_rate = (
-            ((total_runs - len(error_runs)) / total_runs * 100) if total_runs else 0.0
-        )
+        success_rate = ((total_runs - len(error_runs)) / total_runs * 100) if total_runs else 0.0
         c_color = "green" if success_rate >= 95 else ("yellow" if success_rate >= 80 else "red")
 
         console.print(
@@ -599,9 +589,7 @@ def weekly(framework: str | None, output: str | None) -> None:
             except OSError as exc:
                 console.print(f"\n  [red]Failed to write report: {exc}[/red]")
         else:
-            console.print(
-                Panel(report_text, title="Weekly Report", style="dim")
-            )
+            console.print(Panel(report_text, title="Weekly Report", style="dim"))
 
 
 # ---------------------------------------------------------------------------
@@ -657,23 +645,19 @@ def monthly_review(framework: str | None, output: str | None) -> None:
 
         fq = session.query(Finding)
         new_this = fq.filter(Finding.ingested_at >= this_month_start).count()
-        new_last = (
-            fq.filter(
-                Finding.ingested_at >= last_month_start,
-                Finding.ingested_at < this_month_start,
-            ).count()
-        )
+        new_last = fq.filter(
+            Finding.ingested_at >= last_month_start,
+            Finding.ingested_at < this_month_start,
+        ).count()
 
         iq = session.query(Issue)
         if framework:
             iq = iq.filter(Issue.framework == framework)
         open_issues = iq.filter(Issue.status.notin_(["closed", "verified"])).count()
-        closed_this = (
-            iq.filter(
-                Issue.status.in_(["closed", "verified"]),
-                Issue.updated_at >= this_month_start,
-            ).count()
-        )
+        closed_this = iq.filter(
+            Issue.status.in_(["closed", "verified"]),
+            Issue.updated_at >= this_month_start,
+        ).count()
 
         trend_table = Table(title="Trends", show_lines=False)
         trend_table.add_column("Metric")
@@ -727,13 +711,17 @@ def monthly_review(framework: str | None, output: str | None) -> None:
                 "Compliance rate",
                 f"{compliant_pct:.1f}%",
                 ">= 85%",
-                "[green]OK[/green]" if compliant_pct >= 85 else ("[yellow]WARN[/yellow]" if compliant_pct >= 70 else "[red]ALERT[/red]"),
+                "[green]OK[/green]"
+                if compliant_pct >= 85
+                else ("[yellow]WARN[/yellow]" if compliant_pct >= 70 else "[red]ALERT[/red]"),
             )
             kri_table.add_row(
                 "Non-compliant controls",
                 str(non_compliant),
                 "< 50",
-                "[green]OK[/green]" if non_compliant < 50 else ("[yellow]WARN[/yellow]" if non_compliant < 100 else "[red]ALERT[/red]"),
+                "[green]OK[/green]"
+                if non_compliant < 50
+                else ("[yellow]WARN[/yellow]" if non_compliant < 100 else "[red]ALERT[/red]"),
             )
         else:
             kri_table.add_row("Compliance rate", "N/A", ">= 85%", "[dim]N/A[/dim]")
@@ -767,7 +755,9 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             "Overdue POA&Ms",
             str(overdue_poams),
             "0",
-            "[green]OK[/green]" if overdue_poams == 0 else ("[yellow]WARN[/yellow]" if overdue_poams <= 5 else "[red]ALERT[/red]"),
+            "[green]OK[/green]"
+            if overdue_poams == 0
+            else ("[yellow]WARN[/yellow]" if overdue_poams <= 5 else "[red]ALERT[/red]"),
         )
 
         console.print(kri_table)
@@ -778,9 +768,7 @@ def monthly_review(framework: str | None, output: str | None) -> None:
         console.print("\n[bold cyan]3. Continuous Monitoring (ConMon) Checklist[/bold cyan]")
 
         recent_runs = (
-            session.query(ConnectorRun)
-            .filter(ConnectorRun.started_at >= this_month_start)
-            .all()
+            session.query(ConnectorRun).filter(ConnectorRun.started_at >= this_month_start).all()
         )
         successful_runs = [r for r in recent_runs if r.status == "success"]
         error_runs = [r for r in recent_runs if r.status in ("error", "partial")]
@@ -822,8 +810,7 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             overdue_vendors = [
                 v
                 for v in vendors
-                if v.last_assessment is None
-                or v.last_assessment < vendor_reassess_cutoff
+                if v.last_assessment is None or v.last_assessment < vendor_reassess_cutoff
             ]
 
             if overdue_vendors:
@@ -834,9 +821,7 @@ def monthly_review(framework: str | None, output: str | None) -> None:
                 v_table.add_column("Risk Score")
                 for v in overdue_vendors[:10]:
                     last_a = (
-                        v.last_assessment.strftime("%Y-%m-%d")
-                        if v.last_assessment
-                        else "never"
+                        v.last_assessment.strftime("%Y-%m-%d") if v.last_assessment else "never"
                     )
                     risk_color = (
                         "red"
@@ -883,8 +868,7 @@ def monthly_review(framework: str | None, output: str | None) -> None:
         expiring_attests = [
             a
             for a in approved_attestations
-            if a.approved_at
-            and (a.approved_at + timedelta(days=365)) <= attestation_expiry_cutoff
+            if a.approved_at and (a.approved_at + timedelta(days=365)) <= attestation_expiry_cutoff
         ]
 
         if expiring_attests:

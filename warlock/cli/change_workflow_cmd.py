@@ -51,15 +51,11 @@ def _write_audit_entry(
     """Append a hash-chained audit entry for a change management action."""
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -323,9 +319,7 @@ def change_submit() -> None:
             for idx, s in enumerate(systems, 1):
                 t.add_row(str(idx), s.name, s.acronym or "—", s.overall_impact or "—")
             console.print(t)
-            raw = Prompt.ask(
-                "Affected system numbers (comma-separated, or blank)", default=""
-            )
+            raw = Prompt.ask("Affected system numbers (comma-separated, or blank)", default="")
             if raw.strip():
                 for part in raw.split(","):
                     part = part.strip()
@@ -359,11 +353,7 @@ def change_submit() -> None:
                 f"Affected systems: {', '.join(affected_systems) or '—'}\n"
                 f"Description: {description or '—'}"
                 + (f"\nJustification: {justification}" if justification else "")
-                + (
-                    "\n[yellow]Post-hoc review required.[/yellow]"
-                    if post_hoc_review
-                    else ""
-                ),
+                + ("\n[yellow]Post-hoc review required.[/yellow]" if post_hoc_review else ""),
                 title="[bold]Change Request Summary[/bold]",
                 border_style="yellow",
             )

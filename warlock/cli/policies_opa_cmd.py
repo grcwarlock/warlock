@@ -134,9 +134,7 @@ def policies_list(framework: str | None, limit: int, fmt: str) -> None:
 
 @policies_grp.command("show")
 @click.argument("policy_ref")
-@click.option(
-    "--raw", is_flag=True, help="Print raw Rego without syntax highlighting"
-)
+@click.option("--raw", is_flag=True, help="Print raw Rego without syntax highlighting")
 def policies_show(policy_ref: str, raw: bool) -> None:
     """Show the content of a policy file.
 
@@ -215,7 +213,9 @@ def policies_evaluate(policy_ref: str, input_json: str | None, query: str) -> No
         warlock policies evaluate ac2_mfa --query data.warlock.nist_800_53.ac2.allow
     """
     if not _opa_available():
-        _error("OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa")
+        _error(
+            "OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa"
+        )
 
     # Resolve file
     rego_path: pathlib.Path | None = None
@@ -284,7 +284,9 @@ def policies_test(framework: str, verbose: bool) -> None:
     Requires `opa` binary on PATH.
     """
     if not _opa_available():
-        _error("OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa")
+        _error(
+            "OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa"
+        )
 
     # Find framework directory under policies/
     fw_dir = _POLICIES_DIR / framework
@@ -293,8 +295,10 @@ def policies_test(framework: str, verbose: bool) -> None:
         fw_norm = framework.replace("_", "-")
         fw_dir = _POLICIES_DIR / fw_norm
         if not fw_dir.is_dir():
-            _error(f"Policy directory not found for framework '{framework}'. "
-                   f"Checked: {_POLICIES_DIR / framework}")
+            _error(
+                f"Policy directory not found for framework '{framework}'. "
+                f"Checked: {_POLICIES_DIR / framework}"
+            )
 
     cmd = ["opa", "test", str(fw_dir)]
     if verbose:
@@ -323,7 +327,9 @@ def policies_test_all(verbose: bool) -> None:
     Requires `opa` binary on PATH.
     """
     if not _opa_available():
-        _error("OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa")
+        _error(
+            "OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa"
+        )
 
     cmd = ["opa", "test", str(_POLICIES_DIR)]
     if verbose:
@@ -423,7 +429,9 @@ def policies_check(framework: str | None) -> None:
     Requires `opa` binary on PATH.
     """
     if not _opa_available():
-        _error("OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa")
+        _error(
+            "OPA binary not found. Install OPA: https://www.openpolicyagent.org/docs/latest/#running-opa"
+        )
 
     target_dir = _POLICIES_DIR
     if framework:

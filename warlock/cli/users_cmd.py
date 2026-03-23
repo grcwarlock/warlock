@@ -111,8 +111,12 @@ def users_show(user_id: str) -> None:
     console.print(f"  Role:      {u.role}")
     console.print(f"  Active:    {'yes' if u.is_active else 'no'}")
     console.print(f"  MFA:       {'enabled' if u.mfa_enabled else 'disabled'}")
-    console.print(f"  Created:   {u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else '\u2014'}")
-    console.print(f"  Last login:{u.last_login.strftime('%Y-%m-%d %H:%M') if u.last_login else ' \u2014'}")
+    console.print(
+        f"  Created:   {u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else '\u2014'}"
+    )
+    console.print(
+        f"  Last login:{u.last_login.strftime('%Y-%m-%d %H:%M') if u.last_login else ' \u2014'}"
+    )
     console.print(f"  Frameworks:{u.allowed_frameworks or 'all'}")
     console.print(f"  Sources:   {u.allowed_sources or 'all'}")
     console.print(f"  Families:  {u.allowed_control_families or 'all'}")
@@ -279,7 +283,9 @@ def users_sessions(user_id: str) -> None:
 
     for e in entries:
         ts = e.created_at.strftime("%Y-%m-%d %H:%M") if e.created_at else "\u2014"
-        action_style = "green" if e.action == "login" else ("red" if "failed" in e.action else "dim")
+        action_style = (
+            "green" if e.action == "login" else ("red" if "failed" in e.action else "dim")
+        )
         table.add_row(ts, f"[{action_style}]{e.action}[/]", e.actor)
 
     console.print(table)
@@ -322,9 +328,15 @@ def users_permissions(user_id: str) -> None:
     console.print(f"  Base permissions:   {', '.join(base) or 'none'}")
     console.print(f"  Action overrides:   {', '.join(overrides) or 'none'}")
     console.print(f"  Effective:          {', '.join(effective)}")
-    console.print(f"  Frameworks:         {', '.join(u.allowed_frameworks) if u.allowed_frameworks else 'all'}")
-    console.print(f"  Sources:            {', '.join(u.allowed_sources) if u.allowed_sources else 'all'}")
-    console.print(f"  Control families:   {', '.join(u.allowed_control_families) if u.allowed_control_families else 'all'}")
+    console.print(
+        f"  Frameworks:         {', '.join(u.allowed_frameworks) if u.allowed_frameworks else 'all'}"
+    )
+    console.print(
+        f"  Sources:            {', '.join(u.allowed_sources) if u.allowed_sources else 'all'}"
+    )
+    console.print(
+        f"  Control families:   {', '.join(u.allowed_control_families) if u.allowed_control_families else 'all'}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -500,9 +512,7 @@ def roles_create(role_name: str, description: str) -> None:
     console.print(f"[green]Custom role '{role_name}' recorded.[/green]")
     if description:
         console.print(f"  Description: {description}")
-    console.print(
-        "[dim]Note: Apply per-user overrides with 'warlock users scopes assign'.[/dim]"
-    )
+    console.print("[dim]Note: Apply per-user overrides with 'warlock users scopes assign'.[/dim]")
 
 
 # ---------------------------------------------------------------------------
@@ -533,10 +543,18 @@ def scopes_list(user_id: str) -> None:
             _error(f"User not found: {user_id}")
 
     console.print(f"\n[bold]Scopes for {u.email}:[/bold]")
-    console.print(f"  Frameworks:       {', '.join(u.allowed_frameworks) if u.allowed_frameworks else '[dim]all[/dim]'}")
-    console.print(f"  Sources:          {', '.join(u.allowed_sources) if u.allowed_sources else '[dim]all[/dim]'}")
-    console.print(f"  Control families: {', '.join(u.allowed_control_families) if u.allowed_control_families else '[dim]all[/dim]'}")
-    console.print(f"  Action overrides: {', '.join(u.allowed_actions) if u.allowed_actions else '[dim]none[/dim]'}")
+    console.print(
+        f"  Frameworks:       {', '.join(u.allowed_frameworks) if u.allowed_frameworks else '[dim]all[/dim]'}"
+    )
+    console.print(
+        f"  Sources:          {', '.join(u.allowed_sources) if u.allowed_sources else '[dim]all[/dim]'}"
+    )
+    console.print(
+        f"  Control families: {', '.join(u.allowed_control_families) if u.allowed_control_families else '[dim]all[/dim]'}"
+    )
+    console.print(
+        f"  Action overrides: {', '.join(u.allowed_actions) if u.allowed_actions else '[dim]none[/dim]'}"
+    )
 
 
 @scopes.command("assign")

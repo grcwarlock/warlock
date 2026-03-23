@@ -73,7 +73,11 @@ class PolicyEngine:
         now = datetime.now(timezone.utc)
         candidates = (
             self._session.query(Policy)
-            .filter(Policy.policy_type == policy_type, Policy.enabled.is_(True), Policy.effective_at <= now)
+            .filter(
+                Policy.policy_type == policy_type,
+                Policy.enabled.is_(True),
+                Policy.effective_at <= now,
+            )
             .all()
         )
         candidates = [p for p in candidates if p.expires_at is None or p.expires_at > now]
@@ -115,15 +119,19 @@ class PolicyEngine:
                 return -1
         return specificity
 
-    def list_policies(self, policy_type: str | None = None, framework: str | None = None) -> list[Policy]:
+    def list_policies(
+        self, policy_type: str | None = None, framework: str | None = None
+    ) -> list[Policy]:
         q = self._session.query(Policy).filter(Policy.enabled.is_(True))
         if policy_type:
             q = q.filter(Policy.policy_type == policy_type)
         policies = q.order_by(Policy.policy_type, Policy.priority.desc()).all()
         if framework:
             policies = [
-                p for p in policies
-                if not p.scope or not p.scope.get("frameworks")
+                p
+                for p in policies
+                if not p.scope
+                or not p.scope.get("frameworks")
                 or framework in p.scope["frameworks"]
             ]
         return policies

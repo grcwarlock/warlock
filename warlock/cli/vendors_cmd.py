@@ -63,10 +63,14 @@ def vendor_list(tier: str | None, limit: int) -> None:
         last_a = v.last_assessment.strftime("%Y-%m-%d") if v.last_assessment else "\u2014"
         contract = v.contract_expires.strftime("%Y-%m-%d") if v.contract_expires else "\u2014"
         score_color = (
-            "green"
-            if v.risk_score and v.risk_score >= 70
-            else ("yellow" if v.risk_score and v.risk_score >= 40 else "red")
-        ) if v.risk_score is not None else ""
+            (
+                "green"
+                if v.risk_score and v.risk_score >= 70
+                else ("yellow" if v.risk_score and v.risk_score >= 40 else "red")
+            )
+            if v.risk_score is not None
+            else ""
+        )
         table.add_row(
             v.id[:8],
             v.name,
@@ -104,10 +108,18 @@ def vendor_show(vendor_id: str) -> None:
     console.print(f"\n[bold]Vendor:[/bold] {v.name}")
     console.print(f"  ID:                {v.id}")
     console.print(f"  Tier:              {v.tier or '\u2014'}")
-    console.print(f"  Risk Score:        {v.risk_score:.0f}/100" if v.risk_score is not None else "  Risk Score:        \u2014")
-    console.print(f"  Last Assessment:   {v.last_assessment.strftime('%Y-%m-%d') if v.last_assessment else '\u2014'}")
+    console.print(
+        f"  Risk Score:        {v.risk_score:.0f}/100"
+        if v.risk_score is not None
+        else "  Risk Score:        \u2014"
+    )
+    console.print(
+        f"  Last Assessment:   {v.last_assessment.strftime('%Y-%m-%d') if v.last_assessment else '\u2014'}"
+    )
     console.print(f"  Assessment Cadence:{v.assessment_cadence_days or '\u2014'} days")
-    console.print(f"  Contract Expires:  {v.contract_expires.strftime('%Y-%m-%d') if v.contract_expires else '\u2014'}")
+    console.print(
+        f"  Contract Expires:  {v.contract_expires.strftime('%Y-%m-%d') if v.contract_expires else '\u2014'}"
+    )
     if v.metadata_:
         console.print(f"  Metadata:          {v.metadata_}")
 
@@ -246,7 +258,9 @@ def vendor_risk_score(vendor_id: str) -> None:
 
     score = v.risk_score
     if score is None:
-        console.print(f"[yellow]No risk score recorded for '{v.name}'. Run 'vendor-mgmt assess'.[/yellow]")
+        console.print(
+            f"[yellow]No risk score recorded for '{v.name}'. Run 'vendor-mgmt assess'.[/yellow]"
+        )
         return
 
     color = "green" if score >= 70 else ("yellow" if score >= 40 else "red")
@@ -256,7 +270,9 @@ def vendor_risk_score(vendor_id: str) -> None:
     console.print(f"  Score:          [{color}]{score:.0f}/100[/]")
     console.print(f"  Risk Level:     [{color}]{level}[/]")
     console.print(f"  Tier:           {v.tier or '\u2014'}")
-    console.print(f"  Last Assessed:  {v.last_assessment.strftime('%Y-%m-%d') if v.last_assessment else '\u2014'}")
+    console.print(
+        f"  Last Assessed:  {v.last_assessment.strftime('%Y-%m-%d') if v.last_assessment else '\u2014'}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -387,7 +403,9 @@ def vendor_reassess_due() -> None:
 
     for v in due:
         last = v.last_assessment.strftime("%Y-%m-%d") if v.last_assessment else "[red]never[/red]"
-        table.add_row(v.id[:8], v.name, v.tier or "\u2014", last, str(v.assessment_cadence_days or 365))
+        table.add_row(
+            v.id[:8], v.name, v.tier or "\u2014", last, str(v.assessment_cadence_days or 365)
+        )
 
     console.print(table)
 
@@ -398,7 +416,9 @@ def vendor_reassess_due() -> None:
 
 
 @vendor_mgmt.command("contracts")
-@click.option("--expiring-within", type=int, default=90, help="Days ahead to look for expiring contracts")
+@click.option(
+    "--expiring-within", type=int, default=90, help="Days ahead to look for expiring contracts"
+)
 def vendor_contracts(expiring_within: int) -> None:
     """List vendors with contracts expiring soon."""
     from datetime import datetime, timedelta, timezone
@@ -586,7 +606,9 @@ def vendor_fourth_party(vendor_id: str) -> None:
 
     console.print(f"\n[bold]Fourth-Party Dependencies: {v.name}[/bold]")
     if not subprocessors:
-        console.print("[dim]No sub-processor data recorded. Update vendor metadata to track fourth parties.[/dim]")
+        console.print(
+            "[dim]No sub-processor data recorded. Update vendor metadata to track fourth parties.[/dim]"
+        )
         return
 
     table = Table(title="Sub-processors")

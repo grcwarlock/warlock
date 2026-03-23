@@ -125,7 +125,9 @@ def exceptions_list(status: str | None, fmt: str) -> None:
     results = []
     for ov in overrides:
         meta = meta_map.get(ov.id, {})
-        effective_status = _derive_status(meta) if meta else ("active" if ov.is_active else "expired")
+        effective_status = (
+            _derive_status(meta) if meta else ("active" if ov.is_active else "expired")
+        )
         if status and effective_status != status:
             continue
         results.append((ov, meta, effective_status))
@@ -188,7 +190,9 @@ def exceptions_list(status: str | None, fmt: str) -> None:
 @click.option("--justification", required=True, help="Justification for the exception")
 @click.option("--approver", required=True, help="Approver actor identity")
 @click.option("--expiry", required=True, help="Exception expiry date (YYYY-MM-DD)")
-@click.option("--compensating-control", "compensating_control", default=None, help="Compensating control ID")
+@click.option(
+    "--compensating-control", "compensating_control", default=None, help="Compensating control ID"
+)
 def exceptions_create(
     policy: str,
     justification: str,
@@ -260,9 +264,7 @@ def exceptions_show(exception_id: str) -> None:
     init_db()
     with get_session() as session:
         ov = (
-            session.query(PolicyOverride)
-            .filter(PolicyOverride.id.startswith(exception_id))
-            .first()
+            session.query(PolicyOverride).filter(PolicyOverride.id.startswith(exception_id)).first()
         )
         if not ov:
             _error(f"Exception not found: {exception_id}")
@@ -314,9 +316,7 @@ def exceptions_renew(exception_id: str, justification: str, new_expiry: str) -> 
 
     with get_session() as session:
         ov = (
-            session.query(PolicyOverride)
-            .filter(PolicyOverride.id.startswith(exception_id))
-            .first()
+            session.query(PolicyOverride).filter(PolicyOverride.id.startswith(exception_id)).first()
         )
         if not ov:
             _error(f"Exception not found: {exception_id}")

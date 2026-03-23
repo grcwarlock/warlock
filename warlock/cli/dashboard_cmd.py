@@ -105,9 +105,7 @@ def _posture_score(session, framework: str | None = None) -> dict[str, Any]:
     return result
 
 
-def _build_posture_table(
-    posture: dict[str, Any], title: str = "Compliance Posture"
-) -> Table:
+def _build_posture_table(posture: dict[str, Any], title: str = "Compliance Posture") -> Table:
     table = Table(title=title)
     table.add_column("Framework", style="cyan")
     table.add_column("Pass Rate", justify="right")
@@ -159,9 +157,7 @@ def dashboard_live(refresh_seconds: int) -> None:
         with get_session() as session:
             # Findings in last hour
             since_1h = _utcnow() - timedelta(hours=1)
-            recent_findings = (
-                session.query(Finding).filter(Finding.ingested_at >= since_1h).count()
-            )
+            recent_findings = session.query(Finding).filter(Finding.ingested_at >= since_1h).count()
             total_findings = session.query(Finding).count()
 
             # Severity breakdown
@@ -175,9 +171,7 @@ def dashboard_live(refresh_seconds: int) -> None:
             # Connector health
             since_24h = _utcnow() - timedelta(hours=24)
             conn_rows = (
-                session.query(
-                    ConnectorRun.status, func.count(ConnectorRun.id).label("cnt")
-                )
+                session.query(ConnectorRun.status, func.count(ConnectorRun.id).label("cnt"))
                 .filter(ConnectorRun.started_at >= since_24h)
                 .group_by(ConnectorRun.status)
                 .all()
@@ -311,9 +305,7 @@ def dashboard_executive() -> None:
         )
 
         # Open issues
-        open_issues = (
-            session.query(Issue).filter(Issue.status.in_(["open", "in_progress"])).count()
-        )
+        open_issues = session.query(Issue).filter(Issue.status.in_(["open", "in_progress"])).count()
 
     overall_total = sum(p["total"] for p in posture.values())
     overall_compliant = sum(p["compliant"] for p in posture.values())
@@ -386,9 +378,7 @@ def dashboard_security() -> None:
 
         # Active incidents (issues with security-related observation types)
         active_incidents = (
-            session.query(Issue)
-            .filter(Issue.status.in_(["open", "in_progress"]))
-            .count()
+            session.query(Issue).filter(Issue.status.in_(["open", "in_progress"])).count()
         )
 
         # Top sources (vulns)
@@ -421,7 +411,10 @@ def dashboard_security() -> None:
     summary.add_column("", style="cyan")
     summary.add_column("")
     summary.add_row("Misconfigurations (30d)", f"{misconfig_count:,}")
-    summary.add_row("Active Incidents", f"[red]{active_incidents:,}[/red]" if active_incidents else "[green]0[/green]")
+    summary.add_row(
+        "Active Incidents",
+        f"[red]{active_incidents:,}[/red]" if active_incidents else "[green]0[/green]",
+    )
     console.print(summary)
 
     src_table = Table(title="Top Vulnerability Sources (30d)")
@@ -474,9 +467,7 @@ def dashboard_operations() -> None:
         )
 
         # Data freshness
-        latest_raw = (
-            session.query(func.max(RawEvent.ingested_at)).scalar()
-        )
+        latest_raw = session.query(func.max(RawEvent.ingested_at)).scalar()
 
     console.print("[bold cyan]Operations Dashboard[/bold cyan]")
     console.print(f"[dim]{_utcnow().strftime('%Y-%m-%d %H:%M UTC')} — last 24 hours[/dim]\n")
@@ -491,7 +482,13 @@ def dashboard_operations() -> None:
     if latest_raw:
         delta = _utcnow() - latest_raw
         freshness = f"{delta.total_seconds() / 3600:.1f}h ago"
-        fresh_color = "green" if delta.total_seconds() < 3600 else "yellow" if delta.total_seconds() < 86400 else "red"
+        fresh_color = (
+            "green"
+            if delta.total_seconds() < 3600
+            else "yellow"
+            if delta.total_seconds() < 86400
+            else "red"
+        )
         summary.add_row("Latest ingestion", f"[{fresh_color}]{freshness}[/{fresh_color}]")
     else:
         summary.add_row("Latest ingestion", "[red]never[/red]")
@@ -556,19 +553,13 @@ def dashboard_program() -> None:
         )
 
         # Evidence freshness: findings with observed_at in last 90 days
-        fresh_findings = (
-            session.query(Finding).filter(Finding.observed_at >= since_90d).count()
-        )
+        fresh_findings = session.query(Finding).filter(Finding.observed_at >= since_90d).count()
         total_findings = session.query(Finding).count()
 
         # Control assessment coverage
-        assessed_controls = (
-            session.query(ControlResult.control_id).distinct().count()
-        )
+        assessed_controls = session.query(ControlResult.control_id).distinct().count()
         not_assessed = (
-            session.query(ControlResult)
-            .filter(ControlResult.status == "not_assessed")
-            .count()
+            session.query(ControlResult).filter(ControlResult.status == "not_assessed").count()
         )
     console.print("[bold cyan]GRC Program Health[/bold cyan]")
     console.print(f"[dim]{now.strftime('%Y-%m-%d %H:%M UTC')}[/dim]\n")
@@ -803,7 +794,9 @@ def kri_show(name: str) -> None:
 @kri.command("set-threshold")
 @click.argument("name")
 @click.option("--warning", "warning_val", required=True, type=float, help="Warning threshold value")
-@click.option("--critical", "critical_val", required=True, type=float, help="Critical threshold value")
+@click.option(
+    "--critical", "critical_val", required=True, type=float, help="Critical threshold value"
+)
 def kri_set_threshold(name: str, warning_val: float, critical_val: float) -> None:
     """Update warning and critical thresholds for a KRI."""
     if name not in _KRI_REGISTRY:
@@ -910,7 +903,9 @@ def kri_trend(days: int) -> None:
             table.add_row(name, "ERR", "", "", "[red]ERROR[/red]", "")
 
     console.print(table)
-    console.print("[dim]Sparkline fills toward the critical threshold. Full bar = at/above critical.[/dim]")
+    console.print(
+        "[dim]Sparkline fills toward the critical threshold. Full bar = at/above critical.[/dim]"
+    )
 
 
 # ===========================================================================
@@ -1041,7 +1036,9 @@ def alerts_acknowledge(alert_id: str) -> None:
 def alerts_configure(kri_name: str, channel: str, threshold: str) -> None:
     """Configure alert notifications for a KRI."""
     if kri_name not in _KRI_REGISTRY:
-        _error(f"Unknown KRI: {kri_name!r}. Run 'warlock dashboard kri list' to see available KRIs.")
+        _error(
+            f"Unknown KRI: {kri_name!r}. Run 'warlock dashboard kri list' to see available KRIs."
+        )
 
     _KRI_REGISTRY[kri_name]["alert_channel"] = channel
     _KRI_REGISTRY[kri_name]["alert_threshold"] = threshold
@@ -1050,7 +1047,9 @@ def alerts_configure(kri_name: str, channel: str, threshold: str) -> None:
         f"[green]Alert configured:[/green] KRI [cyan]{kri_name}[/cyan] will notify via "
         f"[bold]{channel}[/bold] when [bold]{threshold}[/bold] threshold is breached."
     )
-    console.print("[dim]Note: channel dispatch is a placeholder — integrate with your webhook.[/dim]")
+    console.print(
+        "[dim]Note: channel dispatch is a placeholder — integrate with your webhook.[/dim]"
+    )
 
 
 @alerts.command("history")

@@ -25,12 +25,20 @@ SERVICENOW_CMDB_ENDPOINTS: list[tuple[str, str, dict]] = [
     (
         "/api/now/table/cmdb_ci",
         "servicenow_cmdb_cis",
-        {"sysparm_limit": "100", "sysparm_offset": "0", "sysparm_fields": "sys_id,name,sys_class_name,operational_status,install_status,ip_address,fqdn,manufacturer,model_id,serial_number"},
+        {
+            "sysparm_limit": "100",
+            "sysparm_offset": "0",
+            "sysparm_fields": "sys_id,name,sys_class_name,operational_status,install_status,ip_address,fqdn,manufacturer,model_id,serial_number",
+        },
     ),
     (
         "/api/now/table/cmdb_rel_ci",
         "servicenow_cmdb_relationships",
-        {"sysparm_limit": "100", "sysparm_offset": "0", "sysparm_fields": "sys_id,parent,child,type"},
+        {
+            "sysparm_limit": "100",
+            "sysparm_offset": "0",
+            "sysparm_fields": "sys_id,parent,child,type",
+        },
     ),
     (
         "/api/now/table/cmdb_ci_class",
@@ -54,7 +62,9 @@ class ServiceNowCMDBConnector(BaseConnector):
         if not self.get_secret("SERVICENOW_PASSWORD"):
             errors.append("SERVICENOW_PASSWORD env var is not set")
         if not self.config.settings.get("base_url"):
-            errors.append("'base_url' must be set in connector settings (e.g. 'https://myinstance.service-now.com')")
+            errors.append(
+                "'base_url' must be set in connector settings (e.g. 'https://myinstance.service-now.com')"
+            )
         return errors
 
     def health_check(self) -> bool:

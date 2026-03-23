@@ -139,10 +139,7 @@ class AzureKeyVaultConnector(BaseConnector):
             items = body.get("value", [])
             # For secrets, strip the 'id' URL to avoid following to the value endpoint
             # Keep only the metadata sub-object if present
-            safe_items = [
-                {k: v for k, v in item.items() if k != "value"}
-                for item in items
-            ]
+            safe_items = [{k: v for k, v in item.items() if k != "value"} for item in items]
             all_items.extend(safe_items)
 
             next_link = body.get("nextLink")

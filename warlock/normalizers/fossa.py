@@ -58,7 +58,9 @@ class FossaNormalizer(BaseNormalizer):
                         "project_id": project_id,
                         "title": title,
                         "locator": project.get("locator", ""),
-                        "policy": project.get("policy", {}).get("title", "") if isinstance(project.get("policy"), dict) else "",
+                        "policy": project.get("policy", {}).get("title", "")
+                        if isinstance(project.get("policy"), dict)
+                        else "",
                         "issue_count": project.get("issueCount", 0),
                         "last_analyzed": project.get("latestScan", ""),
                     },
@@ -90,7 +92,9 @@ class FossaNormalizer(BaseNormalizer):
                         "type": issue_type,
                         "rule": rule_name,
                         "severity": raw_severity,
-                        "revision": issue.get("revision", {}).get("id", "") if isinstance(issue.get("revision"), dict) else "",
+                        "revision": issue.get("revision", {}).get("id", "")
+                        if isinstance(issue.get("revision"), dict)
+                        else "",
                         "resolved": issue.get("resolved", False),
                     },
                     resource_id=issue_id,

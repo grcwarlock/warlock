@@ -45,10 +45,7 @@ def pipeline_status(limit: int) -> None:
     init_db()
     with get_session() as session:
         rows = (
-            session.query(ConnectorRun)
-            .order_by(ConnectorRun.started_at.desc())
-            .limit(limit)
-            .all()
+            session.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).limit(limit).all()
         )
 
     if not rows:
@@ -206,12 +203,7 @@ def verify_chain(limit: int) -> None:
 
     init_db()
     with get_session() as session:
-        entries = (
-            session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.asc())
-            .limit(limit)
-            .all()
-        )
+        entries = session.query(AuditEntry).order_by(AuditEntry.sequence.asc()).limit(limit).all()
 
     if not entries:
         console.print("[dim]No audit entries found.[/dim]")
@@ -263,12 +255,8 @@ def pipeline_stats(framework: str | None) -> None:
     init_db()
     with get_session() as session:
         total_runs = session.query(ConnectorRun).count()
-        success_runs = (
-            session.query(ConnectorRun).filter(ConnectorRun.status == "success").count()
-        )
-        error_runs = (
-            session.query(ConnectorRun).filter(ConnectorRun.status == "error").count()
-        )
+        success_runs = session.query(ConnectorRun).filter(ConnectorRun.status == "success").count()
+        error_runs = session.query(ConnectorRun).filter(ConnectorRun.status == "error").count()
         total_raw = session.query(RawEvent).count()
         total_findings = session.query(Finding).count()
 
@@ -317,9 +305,7 @@ def pipeline_errors(limit: int, connector: str | None) -> None:
 
     init_db()
     with get_session() as session:
-        q = session.query(ConnectorRun).filter(
-            ConnectorRun.error_count > 0
-        )
+        q = session.query(ConnectorRun).filter(ConnectorRun.error_count > 0)
         if connector:
             q = q.filter(ConnectorRun.connector_name.ilike(f"%{connector}%"))
         rows = q.order_by(ConnectorRun.started_at.desc()).limit(limit).all()
@@ -415,19 +401,11 @@ def pipeline_replay(run_id: str) -> None:
 
     init_db()
     with get_session() as session:
-        run = (
-            session.query(ConnectorRun)
-            .filter(ConnectorRun.id.startswith(run_id))
-            .first()
-        )
+        run = session.query(ConnectorRun).filter(ConnectorRun.id.startswith(run_id)).first()
         if not run:
             _error(f"Connector run not found: {run_id}")
 
-        raw_events = (
-            session.query(RawEvent)
-            .filter(RawEvent.connector_run_id == run.id)
-            .all()
-        )
+        raw_events = session.query(RawEvent).filter(RawEvent.connector_run_id == run.id).all()
         if not raw_events:
             _error(f"No raw events found for run {run_id}.")
 

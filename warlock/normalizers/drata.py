@@ -62,7 +62,9 @@ class DrataNormalizer(BaseNormalizer):
                         "status": status,
                         "description": control.get("description", ""),
                         "framework": control.get("framework", ""),
-                        "owner": control.get("owner", {}).get("name", "") if isinstance(control.get("owner"), dict) else "",
+                        "owner": control.get("owner", {}).get("name", "")
+                        if isinstance(control.get("owner"), dict)
+                        else "",
                         "due_date": control.get("dueDate", ""),
                     },
                     resource_id=control_id,
@@ -119,7 +121,9 @@ class DrataNormalizer(BaseNormalizer):
             person_id = str(person.get("id", ""))
             name = f"{person.get('firstName', '')} {person.get('lastName', '')}".strip()
             email = person.get("email", "unknown")
-            training_status = person.get("trainingStatus", person.get("securityTrainingStatus", "incomplete"))
+            training_status = person.get(
+                "trainingStatus", person.get("securityTrainingStatus", "incomplete")
+            )
 
             findings.append(
                 FindingData(

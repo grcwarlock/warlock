@@ -200,9 +200,7 @@ def frameworks_show(framework_id: str) -> None:
 @click.option("--family", "-f", default=None, help="Filter by family ID")
 @click.option("--limit", "-n", default=100, help="Max results")
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
-def frameworks_controls(
-    framework_id: str, family: str | None, limit: int, fmt: str
-) -> None:
+def frameworks_controls(framework_id: str, family: str | None, limit: int, fmt: str) -> None:
     """List controls for a framework."""
     data = _load_framework_yaml(framework_id)
     families = data.get("control_families", {})
@@ -222,8 +220,7 @@ def frameworks_controls(
 
     if fmt == "json":
         out = [
-            {"family": r[0], "control_id": r[1], "checks": r[2], "event_types": r[3]}
-            for r in rows
+            {"family": r[0], "control_id": r[1], "checks": r[2], "event_types": r[3]} for r in rows
         ]
         console.print_json(json.dumps(out))
         return
@@ -421,7 +418,9 @@ def frameworks_gaps(framework_id: str, limit: int) -> None:
     console.print(f"\n[bold]{label} Compliance Gaps ({len(gaps)} shown)[/bold]")
 
     if not gaps:
-        console.print("[green]No gaps found — all controls have at least one compliant result.[/green]")
+        console.print(
+            "[green]No gaps found — all controls have at least one compliant result.[/green]"
+        )
         return
 
     table = Table()
@@ -508,10 +507,7 @@ def frameworks_stats() -> None:
     all_fw = _iter_all_frameworks()
 
     with get_session() as session:
-        counts = (
-            session.query(ControlResult.framework, ControlResult.status)
-            .all()
-        )
+        counts = session.query(ControlResult.framework, ControlResult.status).all()
 
     db_stats: dict[str, dict[str, int]] = {}
     for fw_id, status in counts:

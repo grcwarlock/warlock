@@ -232,7 +232,8 @@ def engagement_show(engagement_id: str) -> None:
     firm_str = f", {eng_data['auditor_firm']}" if eng_data["auditor_firm"] else ""
     auditor_str = f"{eng_data['auditor_name']}{firm_str}" if eng_data["auditor_name"] else "\u2014"
     in_scope = (
-        ", ".join(eng_data["in_scope_controls"][:5]) + (
+        ", ".join(eng_data["in_scope_controls"][:5])
+        + (
             f" (+{len(eng_data['in_scope_controls']) - 5} more)"
             if len(eng_data["in_scope_controls"]) > 5
             else ""
@@ -305,9 +306,7 @@ def engagement_status(engagement_id: str) -> None:
             .count()
         )
         total_comments = (
-            session.query(AuditComment)
-            .filter(AuditComment.engagement_id == eng.id)
-            .count()
+            session.query(AuditComment).filter(AuditComment.engagement_id == eng.id).count()
         )
 
     console.print(f"\n[bold cyan]Engagement Status: {eng.name}[/bold cyan]")
@@ -327,10 +326,7 @@ def engagement_status(engagement_id: str) -> None:
     else:
         console.print("  [dim]No control results for this framework yet.[/dim]")
 
-    console.print(
-        f"\n  Comments: {total_comments} total, "
-        f"[yellow]{open_comments} open[/yellow]"
-    )
+    console.print(f"\n  Comments: {total_comments} total, [yellow]{open_comments} open[/yellow]")
 
 
 @engagement_grp.command("package")
@@ -539,9 +535,7 @@ def corrective_actions(
     table.add_column("Created")
 
     for r in data:
-        resolved_str = (
-            "[dim]resolved[/dim]" if r["resolved"] else "[yellow]open[/yellow]"
-        )
+        resolved_str = "[dim]resolved[/dim]" if r["resolved"] else "[yellow]open[/yellow]"
         table.add_row(
             r["id"][:8],
             r["target_type"],

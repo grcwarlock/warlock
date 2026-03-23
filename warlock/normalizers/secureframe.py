@@ -46,7 +46,13 @@ class SecureframeNormalizer(BaseNormalizer):
             control_id = str(control.get("id", control.get("slug", "")))
             name = control.get("name", control.get("title", "unknown"))
             status = control.get("status", "passing")
-            passing = str(status).lower() in ("passing", "pass", "compliant", "active", "implemented")
+            passing = str(status).lower() in (
+                "passing",
+                "pass",
+                "compliant",
+                "active",
+                "implemented",
+            )
 
             obs_type = "policy_violation" if not passing else "inventory"
             severity = "high" if not passing else "info"
@@ -83,7 +89,14 @@ class SecureframeNormalizer(BaseNormalizer):
             test_id = str(test.get("id", ""))
             name = test.get("name", test.get("title", "unknown"))
             status = test.get("status", "passing")
-            failing = str(status).lower() in ("failing", "fail", "failed", "error", "na", "not_applicable")
+            failing = str(status).lower() in (
+                "failing",
+                "fail",
+                "failed",
+                "error",
+                "na",
+                "not_applicable",
+            )
 
             obs_type = "policy_violation" if failing else "inventory"
             severity = "high" if failing else "info"
@@ -100,7 +113,9 @@ class SecureframeNormalizer(BaseNormalizer):
                         "description": test.get("description", ""),
                         "control_id": str(test.get("controlId", test.get("control_id", ""))),
                         "last_run": test.get("lastRunAt", test.get("last_run_at", "")),
-                        "remediation": test.get("remediationGuidance", test.get("remediation_guidance", "")),
+                        "remediation": test.get(
+                            "remediationGuidance", test.get("remediation_guidance", "")
+                        ),
                     },
                     resource_id=test_id,
                     resource_type="secureframe_test",
@@ -118,10 +133,14 @@ class SecureframeNormalizer(BaseNormalizer):
 
         for person in items:
             person_id = str(person.get("id", ""))
-            name = person.get("name", f"{person.get('firstName', '')} {person.get('lastName', '')}".strip())
+            name = person.get(
+                "name", f"{person.get('firstName', '')} {person.get('lastName', '')}".strip()
+            )
             email = person.get("email", "unknown")
             employment_status = person.get("employmentStatus", person.get("status", "active"))
-            training_completed = person.get("securityTrainingCompleted", person.get("trainingCompleted", False))
+            training_completed = person.get(
+                "securityTrainingCompleted", person.get("trainingCompleted", False)
+            )
 
             findings.append(
                 FindingData(

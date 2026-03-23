@@ -78,7 +78,11 @@ class SnykContainerNormalizer(BaseNormalizer):
             title = issue_data.get("title", issue.get("title", issue_id))
             raw_severity = issue_data.get("severity", issue.get("severity", "medium")).lower()
             severity = _SNYK_SEVERITY.get(raw_severity, "medium")
-            cve_ids = issue_data.get("identifiers", {}).get("CVE", []) if isinstance(issue_data.get("identifiers"), dict) else []
+            cve_ids = (
+                issue_data.get("identifiers", {}).get("CVE", [])
+                if isinstance(issue_data.get("identifiers"), dict)
+                else []
+            )
             findings.append(
                 FindingData(
                     **self._base(raw),
@@ -91,7 +95,9 @@ class SnykContainerNormalizer(BaseNormalizer):
                         "cve": cve_ids,
                         "cvss_score": issue_data.get("cvssScore", ""),
                         "package_name": issue.get("pkgName", ""),
-                        "package_version": issue.get("pkgVersions", [""])[0] if issue.get("pkgVersions") else "",
+                        "package_version": issue.get("pkgVersions", [""])[0]
+                        if issue.get("pkgVersions")
+                        else "",
                         "fixed_in": issue_data.get("fixedIn", []),
                         "exploit_maturity": issue_data.get("exploitMaturity", ""),
                     },

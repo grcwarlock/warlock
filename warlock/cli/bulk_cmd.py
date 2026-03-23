@@ -85,7 +85,9 @@ def suppress(source: str, severities: tuple[str, ...], reason: str, dry_run: boo
         findings = q.all()
 
         if not findings:
-            console.print(f"[dim]No findings matching source={source!r} severity={list(severities) or 'any'}.[/dim]")
+            console.print(
+                f"[dim]No findings matching source={source!r} severity={list(severities) or 'any'}.[/dim]"
+            )
             return
 
         table = Table(title=f"{'[DRY RUN] ' if dry_run else ''}Suppress findings ({len(findings)})")
@@ -214,7 +216,9 @@ def assign(framework: str | None, severity: str | None, assignee: str, dry_run: 
             console.print("[dim]No matching issues to assign.[/dim]")
             return
 
-        table = Table(title=f"{'[DRY RUN] ' if dry_run else ''}Assign {len(issues)} issue(s) to {assignee!r}")
+        table = Table(
+            title=f"{'[DRY RUN] ' if dry_run else ''}Assign {len(issues)} issue(s) to {assignee!r}"
+        )
         table.add_column("Issue ID", style="dim", max_width=8)
         table.add_column("Title", max_width=50)
         table.add_column("Priority")
@@ -258,8 +262,13 @@ def assign(framework: str | None, severity: str | None, assignee: str, dry_run: 
     help="Target status",
 )
 @click.option("--resolution", required=True, help="Resolution note for audit trail")
-@click.option("--older-than-days", "older_than_days", default=None, type=int,
-              help="Only close issues older than N days")
+@click.option(
+    "--older-than-days",
+    "older_than_days",
+    default=None,
+    type=int,
+    help="Only close issues older than N days",
+)
 @click.option("--framework", "-f", default=None, help="Limit to a framework")
 @click.option("--dry-run", is_flag=True, default=False, help="Preview without persisting")
 def close(
@@ -461,9 +470,11 @@ def deduplicate(source: str | None, dry_run: bool) -> None:
     init_db()
 
     with get_session() as session:
-        q = session.query(Finding.sha256, func.count(Finding.id).label("cnt")).group_by(
-            Finding.sha256
-        ).having(func.count(Finding.id) > 1)
+        q = (
+            session.query(Finding.sha256, func.count(Finding.id).label("cnt"))
+            .group_by(Finding.sha256)
+            .having(func.count(Finding.id) > 1)
+        )
         if source:
             q = q.filter(Finding.source == source)
         dupes = q.all()
@@ -487,17 +498,15 @@ def deduplicate(source: str | None, dry_run: bool) -> None:
             if not dry_run:
                 for f in to_remove:
                     # Remove dependent mappings first to avoid FK constraint errors
-                    session.query(ControlMapping).filter(
-                        ControlMapping.finding_id == f.id
-                    ).delete(synchronize_session=False)
+                    session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).delete(
+                        synchronize_session=False
+                    )
                     session.delete(f)
 
         if not dry_run:
             session.commit()
 
-    console.print(
-        f"Found [bold]{len(dupes)}[/bold] duplicate sha256 group(s) across findings."
-    )
+    console.print(f"Found [bold]{len(dupes)}[/bold] duplicate sha256 group(s) across findings.")
     _done(total_removed, "remove duplicate findings", dry_run)
 
 
@@ -548,9 +557,7 @@ def link_findings_to_issues(auto: bool, dry_run: bool) -> None:
             console.print("[green]No unlinked critical/high findings.[/green]")
             return
 
-        console.print(
-            f"Found [bold]{len(unlinked)}[/bold] unlinked critical/high finding(s)."
-        )
+        console.print(f"Found [bold]{len(unlinked)}[/bold] unlinked critical/high finding(s).")
 
         if not (auto or dry_run):
             console.print("[dim]Pass --auto to create issues, or --dry-run to preview.[/dim]")
@@ -570,9 +577,7 @@ def link_findings_to_issues(auto: bool, dry_run: bool) -> None:
             if not dry_run and auto:
                 # Look up control mapping for framework/control_id context
                 mapping = (
-                    session.query(ControlMapping)
-                    .filter(ControlMapping.finding_id == f.id)
-                    .first()
+                    session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).first()
                 )
                 new_issue = Issue(
                     title=f"[Auto] {(f.title or '')[:200]}",
@@ -596,9 +601,7 @@ def link_findings_to_issues(auto: bool, dry_run: bool) -> None:
             # Handle findings beyond the preview window
             for f in unlinked[25:]:
                 mapping = (
-                    session.query(ControlMapping)
-                    .filter(ControlMapping.finding_id == f.id)
-                    .first()
+                    session.query(ControlMapping).filter(ControlMapping.finding_id == f.id).first()
                 )
                 new_issue = Issue(
                     title=f"[Auto] {(f.title or '')[:200]}",
@@ -644,12 +647,8 @@ def reprocess(source: str, dry_run: bool) -> None:
     init_db()
 
     with get_session() as session:
-        raw_events = (
-            session.query(RawEvent).filter(RawEvent.source == source).all()
-        )
-        existing_findings = (
-            session.query(Finding).filter(Finding.source == source).all()
-        )
+        raw_events = session.query(RawEvent).filter(RawEvent.source == source).all()
+        existing_findings = session.query(Finding).filter(Finding.source == source).all()
 
         console.print(
             f"Source [cyan]{source!r}[/cyan]: "
@@ -672,9 +671,9 @@ def reprocess(source: str, dry_run: bool) -> None:
         # Delete existing findings + their mappings
         finding_ids = [f.id for f in existing_findings]
         if finding_ids:
-            session.query(ControlMapping).filter(
-                ControlMapping.finding_id.in_(finding_ids)
-            ).delete(synchronize_session=False)
+            session.query(ControlMapping).filter(ControlMapping.finding_id.in_(finding_ids)).delete(
+                synchronize_session=False
+            )
             for f in existing_findings:
                 session.delete(f)
             session.flush()
@@ -713,7 +712,9 @@ def reprocess(source: str, dry_run: bool) -> None:
                     session.add(new_finding)
                     created += 1
             session.commit()
-            console.print(f"[green]Re-normalized {created} finding(s) from {len(raw_events)} raw events.[/green]")
+            console.print(
+                f"[green]Re-normalized {created} finding(s) from {len(raw_events)} raw events.[/green]"
+            )
         except Exception as exc:
             session.rollback()
             _error(f"Reprocess failed: {exc}")
@@ -900,14 +901,14 @@ def stats(source: str | None) -> None:
         total_findings = fq.count()
 
         # Suppressed findings
-        suppressed = sum(
-            1 for f in fq.all() if (f.detail or {}).get("suppressed")
-        )
+        suppressed = sum(1 for f in fq.all() if (f.detail or {}).get("suppressed"))
 
         # Duplicate findings (by sha256)
-        dup_q = session.query(Finding.sha256, func.count(Finding.id).label("cnt")).group_by(
-            Finding.sha256
-        ).having(func.count(Finding.id) > 1)
+        dup_q = (
+            session.query(Finding.sha256, func.count(Finding.id).label("cnt"))
+            .group_by(Finding.sha256)
+            .having(func.count(Finding.id) > 1)
+        )
         if source:
             dup_q = dup_q.filter(Finding.source == source)
         dup_groups = dup_q.all()
@@ -925,7 +926,8 @@ def stats(source: str | None) -> None:
 
         # Unlinked critical/high findings
         linked_ids = set(
-            r.finding_id for r in session.query(Issue.finding_id).filter(Issue.finding_id.isnot(None)).all()
+            r.finding_id
+            for r in session.query(Issue.finding_id).filter(Issue.finding_id.isnot(None)).all()
         )
         uq = session.query(Finding).filter(
             Finding.severity.in_(["critical", "high"]),
@@ -952,9 +954,13 @@ def stats(source: str | None) -> None:
 
     table.add_row("suppress (all)", str(total_findings - suppressed), "findings not yet suppressed")
     table.add_row("unsuppress", str(suppressed), "currently suppressed findings")
-    table.add_row("deduplicate", str(dup_count), f"duplicate records across {len(dup_groups)} sha256 group(s)")
+    table.add_row(
+        "deduplicate", str(dup_count), f"duplicate records across {len(dup_groups)} sha256 group(s)"
+    )
     table.add_row("reprocess", str(total_raw), "raw events available for re-normalization")
-    table.add_row("link-findings-to-issues", str(unlinked_crit_high), "critical/high findings without issues")
+    table.add_row(
+        "link-findings-to-issues", str(unlinked_crit_high), "critical/high findings without issues"
+    )
     table.add_row("assign / escalate (open)", str(total_open_issues), "non-closed issues")
     table.add_row("orphan findings", str(orphan_count), "findings with no control mapping")
 

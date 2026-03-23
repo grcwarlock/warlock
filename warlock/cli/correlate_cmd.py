@@ -408,9 +408,7 @@ def impact_analysis(control_id: str, framework: str | None) -> None:
         finding_ids = list({m.finding_id for m in mappings})
         frameworks = list({m.framework for m in mappings})
 
-        results = (
-            session.query(ControlResult).filter(ControlResult.control_id == control_id).all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.control_id == control_id).all()
         non_compliant = [r for r in results if r.status == "non_compliant"]
 
         issues = session.query(Issue).filter(Issue.control_id == control_id).all()
@@ -513,14 +511,8 @@ def blast_radius(finding_id: str) -> None:
         control_ids = list({m.control_id for m in mappings})
         frameworks = list({m.framework for m in mappings})
 
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.finding_id == finding.id)
-            .all()
-        )
-        system_ids = list(
-            {r.system_profile_id for r in results if r.system_profile_id}
-        )
+        results = session.query(ControlResult).filter(ControlResult.finding_id == finding.id).all()
+        system_ids = list({r.system_profile_id for r in results if r.system_profile_id})
 
     sev_sty = _severity_style(finding.severity)
     console.print(
@@ -579,7 +571,11 @@ def common_findings(framework: str | None, min_frameworks: int, limit: int) -> N
             )
             q = q.filter(ControlMapping.finding_id.in_(sub))
 
-        rows = q.order_by(func.count(func.distinct(ControlMapping.framework)).desc()).limit(limit).all()
+        rows = (
+            q.order_by(func.count(func.distinct(ControlMapping.framework)).desc())
+            .limit(limit)
+            .all()
+        )
 
         if not rows:
             console.print("[dim]No findings map to multiple frameworks.[/dim]")
@@ -675,20 +671,20 @@ def orphan_controls(framework: str | None) -> None:
     init_db()
     with get_session() as session:
         # Controls that appear in mappings
-        q_mappings = session.query(
-            ControlMapping.framework, ControlMapping.control_id
-        ).distinct()
+        q_mappings = session.query(ControlMapping.framework, ControlMapping.control_id).distinct()
         if framework:
             q_mappings = q_mappings.filter(ControlMapping.framework == framework)
-        mapped_controls: set[tuple[str, str]] = {(r.framework, r.control_id) for r in q_mappings.all()}
+        mapped_controls: set[tuple[str, str]] = {
+            (r.framework, r.control_id) for r in q_mappings.all()
+        }
 
         # Controls that have results
-        q_results = session.query(
-            ControlResult.framework, ControlResult.control_id
-        ).distinct()
+        q_results = session.query(ControlResult.framework, ControlResult.control_id).distinct()
         if framework:
             q_results = q_results.filter(ControlResult.framework == framework)
-        assessed_controls: set[tuple[str, str]] = {(r.framework, r.control_id) for r in q_results.all()}
+        assessed_controls: set[tuple[str, str]] = {
+            (r.framework, r.control_id) for r in q_results.all()
+        }
 
     controls_with_no_evidence = mapped_controls - assessed_controls
     controls_with_no_findings = assessed_controls - mapped_controls
@@ -913,7 +909,9 @@ def timeline_correlation(days: int, limit: int) -> None:
     # Merge into a unified timeline
     events: list[tuple[datetime, str, str, str]] = []
     for f in findings:
-        events.append((f.observed_at, "finding", f.severity, f"[{f.source}] {(f.title or '')[:60]}"))
+        events.append(
+            (f.observed_at, "finding", f.severity, f"[{f.source}] {(f.title or '')[:60]}")
+        )
     for i in issues:
         events.append((i.created_at, "issue", i.priority, f"[{i.status}] {(i.title or '')[:60]}"))
     for c in changes:

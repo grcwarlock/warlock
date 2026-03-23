@@ -48,7 +48,9 @@ class ArcherNormalizer(BaseNormalizer):
             # Archer content records have a complex field structure
             record_id = str(record.get("Id", record.get("id", record.get("ContentId", ""))))
             content_name = record.get("Name", record.get("name", f"Record {record_id}"))
-            app_name = str(record.get("LevelName", record.get("ApplicationName", record.get("ModuleName", "")))).lower()
+            app_name = str(
+                record.get("LevelName", record.get("ApplicationName", record.get("ModuleName", "")))
+            ).lower()
             tracking_id = str(record.get("TrackingId", record.get("trackingId", "")))
 
             # Determine if this is risk-related content

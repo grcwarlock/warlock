@@ -77,7 +77,11 @@ class OsanoNormalizer(BaseNormalizer):
     def _normalize_data_maps(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("dataMaps", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("dataMaps", response.get("data", []))
+        )
 
         for data_map in items:
             map_id = str(data_map.get("id", ""))

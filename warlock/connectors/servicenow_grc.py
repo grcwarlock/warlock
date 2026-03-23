@@ -36,7 +36,9 @@ class ServiceNowGRCConnector(BaseConnector):
         if not self.get_secret("SERVICENOW_PASSWORD"):
             errors.append("SERVICENOW_PASSWORD env var is not set")
         if not self.config.settings.get("instance_url"):
-            errors.append("settings.instance_url is required (e.g. https://myinstance.service-now.com)")
+            errors.append(
+                "settings.instance_url is required (e.g. https://myinstance.service-now.com)"
+            )
         return errors
 
     def health_check(self) -> bool:

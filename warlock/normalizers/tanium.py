@@ -50,7 +50,11 @@ class TaniumNormalizer(BaseNormalizer):
     def _normalize_endpoints(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("endpoints", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("endpoints", []))
+        )
 
         for endpoint in items:
             endpoint_id = str(endpoint.get("id", endpoint.get("eid", "")))
@@ -64,7 +68,9 @@ class TaniumNormalizer(BaseNormalizer):
                     detail={
                         "endpoint_id": endpoint_id,
                         "name": name,
-                        "os": (endpoint.get("os") or {}).get("name", "") if isinstance(endpoint.get("os"), dict) else endpoint.get("os", endpoint.get("operatingSystem", "")),
+                        "os": (endpoint.get("os") or {}).get("name", "")
+                        if isinstance(endpoint.get("os"), dict)
+                        else endpoint.get("os", endpoint.get("operatingSystem", "")),
                         "ip_addresses": endpoint.get("ipAddresses", []),
                         "is_encrypted": endpoint.get("isEncrypted", False),
                         "compliance_state": endpoint.get("complianceState", ""),
@@ -83,7 +89,11 @@ class TaniumNormalizer(BaseNormalizer):
     def _normalize_patches(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("patches", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("patches", []))
+        )
 
         for patch in items:
             patch_id = str(patch.get("id", patch.get("bulletinId", "")))
@@ -122,7 +132,11 @@ class TaniumNormalizer(BaseNormalizer):
     def _normalize_alerts(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("alerts", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("alerts", []))
+        )
 
         for alert in items:
             alert_id = str(alert.get("id", alert.get("alertId", "")))

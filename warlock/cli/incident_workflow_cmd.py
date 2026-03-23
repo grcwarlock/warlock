@@ -228,10 +228,7 @@ def incident_new() -> None:
                 console.print("\n[dim]Searching for related findings...[/dim]")
                 for kw in keywords[:3]:
                     matches = (
-                        session.query(Finding)
-                        .filter(Finding.title.ilike(f"%{kw}%"))
-                        .limit(5)
-                        .all()
+                        session.query(Finding).filter(Finding.title.ilike(f"%{kw}%")).limit(5).all()
                     )
                     for f in matches:
                         if f.id not in linked_finding_ids:
@@ -278,12 +275,10 @@ def incident_new() -> None:
             )
             console.print("\n[bold]Next steps:[/bold]")
             console.print(
-                f"  warlock incident-response manage {incident_id[:8]}  "
-                f"# manage lifecycle"
+                f"  warlock incident-response manage {incident_id[:8]}  # manage lifecycle"
             )
             console.print(
-                f"  warlock incident-response postmortem {incident_id[:8]}  "
-                f"# after resolution"
+                f"  warlock incident-response postmortem {incident_id[:8]}  # after resolution"
             )
 
     except (KeyboardInterrupt, EOFError):
@@ -340,15 +335,9 @@ def incident_manage(incident_id: str) -> None:
 
                 # Linked findings
                 if issue.finding_id:
-                    f = (
-                        session.query(Finding)
-                        .filter(Finding.id == issue.finding_id)
-                        .first()
-                    )
+                    f = session.query(Finding).filter(Finding.id == issue.finding_id).first()
                     if f:
-                        console.print(
-                            f"\nLinked finding: {f.id[:8]} — {(f.title or '')[:60]}"
-                        )
+                        console.print(f"\nLinked finding: {f.id[:8]} — {(f.title or '')[:60]}")
 
                 # Recent comments
                 recent_comments = (
@@ -362,9 +351,7 @@ def incident_manage(incident_id: str) -> None:
                     console.print("\n[bold]Recent events:[/bold]")
                     for c in reversed(recent_comments):
                         ts = c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "—"
-                        console.print(
-                            f"  [{ts}] {c.author}: {c.content[:80]}"
-                        )
+                        console.print(f"  [{ts}] {c.author}: {c.content[:80]}")
 
                 console.print()
                 choice = Prompt.ask(
@@ -412,9 +399,7 @@ def incident_manage(incident_id: str) -> None:
                     from warlock.db.models import Finding as FindingModel
 
                     found = (
-                        session.query(FindingModel)
-                        .filter(FindingModel.id.startswith(fid))
-                        .first()
+                        session.query(FindingModel).filter(FindingModel.id.startswith(fid)).first()
                     )
                     if found:
                         issue.finding_id = found.id
@@ -530,14 +515,10 @@ def incident_postmortem(incident_id: str) -> None:
             # Generate markdown report
             now_str = _utcnow().strftime("%Y-%m-%d")
             created_str = (
-                issue.created_at.strftime("%Y-%m-%d %H:%M UTC")
-                if issue.created_at
-                else "unknown"
+                issue.created_at.strftime("%Y-%m-%d %H:%M UTC") if issue.created_at else "unknown"
             )
             closed_str = (
-                issue.closed_at.strftime("%Y-%m-%d %H:%M UTC")
-                if issue.closed_at
-                else "open"
+                issue.closed_at.strftime("%Y-%m-%d %H:%M UTC") if issue.closed_at else "open"
             )
 
             report_lines = [
@@ -629,9 +610,7 @@ def incident_drill() -> None:
                 border_style="red",
             )
         )
-        console.print(
-            "\n[dim]This is a simulated exercise. No real systems are affected.[/dim]\n"
-        )
+        console.print("\n[dim]This is a simulated exercise. No real systems are affected.[/dim]\n")
 
         if not Confirm.ask("Begin the drill?", default=True, console=console):
             console.print("[dim]Drill cancelled.[/dim]")
@@ -641,9 +620,7 @@ def incident_drill() -> None:
         scores: list[int] = []
 
         for phase_id, phase_name, phase_prompt in _RESPONSE_PHASES:
-            console.print(
-                f"\n[bold cyan]Phase: {phase_name}[/bold cyan]"
-            )
+            console.print(f"\n[bold cyan]Phase: {phase_name}[/bold cyan]")
             console.print(f"[dim]{phase_prompt}[/dim]")
 
             response = Prompt.ask(
@@ -656,9 +633,23 @@ def incident_drill() -> None:
             score = 5  # default mid-range
             response_lower = response.lower()
             good_indicators = [
-                "isolat", "contain", "notif", "escalat", "document", "log",
-                "evidence", "backup", "restore", "patch", "monitor", "alert",
-                "communicat", "stakeholder", "revok", "block", "quarantin",
+                "isolat",
+                "contain",
+                "notif",
+                "escalat",
+                "document",
+                "log",
+                "evidence",
+                "backup",
+                "restore",
+                "patch",
+                "monitor",
+                "alert",
+                "communicat",
+                "stakeholder",
+                "revok",
+                "block",
+                "quarantin",
             ]
             hit = sum(1 for kw in good_indicators if kw in response_lower)
             score = min(10, 3 + hit * 2)
@@ -667,11 +658,7 @@ def incident_drill() -> None:
 
         # Score the overall response
         avg_score = sum(scores) / len(scores) if scores else 0
-        grade = (
-            "Excellent" if avg_score >= 8
-            else "Good" if avg_score >= 6
-            else "Needs Improvement"
-        )
+        grade = "Excellent" if avg_score >= 8 else "Good" if avg_score >= 6 else "Needs Improvement"
         grade_color = "green" if avg_score >= 8 else ("yellow" if avg_score >= 6 else "red")
 
         console.print("\n[bold]Scoring Criteria Review[/bold]")

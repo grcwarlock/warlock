@@ -120,6 +120,7 @@ from warlock.normalizers.netskope import NetskopeNormalizer
 from warlock.normalizers.nessus import NessusNormalizer
 from warlock.normalizers.bamboohr import BambooHRNormalizer
 from warlock.normalizers.sophos import SophosNormalizer
+
 # --- New normalizers (84) ---
 from warlock.normalizers.pagerduty import PagerDutyNormalizer
 from warlock.normalizers.opsgenie import OpsgenieNormalizer
@@ -205,6 +206,7 @@ from warlock.normalizers.spotio import SpotioNormalizer
 from warlock.normalizers.manageengine import ManageEngineNormalizer
 from warlock.normalizers.ivanti_patch import IvantiPatchNormalizer
 from warlock.normalizers.plextrac import PlexTracNormalizer
+
 # --- New demo connectors ---
 try:
     from scripts.demo_connectors_new import ALL_NEW_CONNECTORS
@@ -228,25 +230,53 @@ import threading  # noqa: E402
 
 try:  # noqa: E402
     from scripts.demo_data import (
-        generate_users, generate_groups, generate_auth_logs,
-        generate_devices, generate_endpoints_edr,
-        generate_cloud_instances, generate_iam_policies, generate_security_groups,
-        generate_storage_buckets, generate_vulnerabilities, generate_code_findings,
-        generate_container_images, generate_employees, generate_training_records,
-        generate_security_alerts, generate_incidents, generate_vendor_assessments,
-        generate_policy_documents, generate_dns_queries, generate_email_events,
-        generate_terraform_workspaces, generate_iac_misconfigs,
+        generate_users,
+        generate_groups,
+        generate_auth_logs,
+        generate_devices,
+        generate_endpoints_edr,
+        generate_cloud_instances,
+        generate_iam_policies,
+        generate_security_groups,
+        generate_storage_buckets,
+        generate_vulnerabilities,
+        generate_code_findings,
+        generate_container_images,
+        generate_employees,
+        generate_training_records,
+        generate_security_alerts,
+        generate_incidents,
+        generate_vendor_assessments,
+        generate_policy_documents,
+        generate_dns_queries,
+        generate_email_events,
+        generate_terraform_workspaces,
+        generate_iac_misconfigs,
     )
 except ImportError:
     from demo_data import (  # type: ignore[no-redef]  # noqa: E402
-        generate_users, generate_groups, generate_auth_logs,
-        generate_devices, generate_endpoints_edr,
-        generate_cloud_instances, generate_iam_policies, generate_security_groups,
-        generate_storage_buckets, generate_vulnerabilities, generate_code_findings,
-        generate_container_images, generate_employees, generate_training_records,
-        generate_security_alerts, generate_incidents, generate_vendor_assessments,
-        generate_policy_documents, generate_dns_queries, generate_email_events,
-        generate_terraform_workspaces, generate_iac_misconfigs,
+        generate_users,
+        generate_groups,
+        generate_auth_logs,
+        generate_devices,
+        generate_endpoints_edr,
+        generate_cloud_instances,
+        generate_iam_policies,
+        generate_security_groups,
+        generate_storage_buckets,
+        generate_vulnerabilities,
+        generate_code_findings,
+        generate_container_images,
+        generate_employees,
+        generate_training_records,
+        generate_security_alerts,
+        generate_incidents,
+        generate_vendor_assessments,
+        generate_policy_documents,
+        generate_dns_queries,
+        generate_email_events,
+        generate_terraform_workspaces,
+        generate_iac_misconfigs,
     )
 
 # Rich demo data — generated once, shared across connectors
@@ -293,19 +323,23 @@ def _users_as_okta(users: list[dict]) -> list[dict]:
     """Convert RICH_DATA users to Okta API format."""
     result = []
     for u in users:
-        status = "ACTIVE" if u["status"] == "active" else (
-            "SUSPENDED" if u["status"] == "suspended" else "DEPROVISIONED"
+        status = (
+            "ACTIVE"
+            if u["status"] == "active"
+            else ("SUSPENDED" if u["status"] == "suspended" else "DEPROVISIONED")
         )
-        result.append({
-            "id": u["user_id"],
-            "status": status,
-            "profile": {
-                "login": u["email"],
-                "firstName": u["first_name"],
-                "lastName": u["last_name"],
-            },
-            "lastLogin": u["last_login"],
-        })
+        result.append(
+            {
+                "id": u["user_id"],
+                "status": status,
+                "profile": {
+                    "login": u["email"],
+                    "firstName": u["first_name"],
+                    "lastName": u["last_name"],
+                },
+                "lastLogin": u["last_login"],
+            }
+        )
     return result
 
 
@@ -314,16 +348,18 @@ def _users_as_entra(users: list[dict]) -> list[dict]:
     result = []
     for u in users:
         account_enabled = u["status"] == "active"
-        result.append({
-            "id": u["user_id"],
-            "displayName": f"{u['first_name']} {u['last_name']}",
-            "userPrincipalName": u["email"],
-            "accountEnabled": account_enabled,
-            "department": u.get("department", ""),
-            "createdDateTime": u["created_at"],
-            "signInActivity": {"lastSignInDateTime": u["last_login"]},
-            "assignedLicenses": [{"skuId": "sku-e5"}],
-        })
+        result.append(
+            {
+                "id": u["user_id"],
+                "displayName": f"{u['first_name']} {u['last_name']}",
+                "userPrincipalName": u["email"],
+                "accountEnabled": account_enabled,
+                "department": u.get("department", ""),
+                "createdDateTime": u["created_at"],
+                "signInActivity": {"lastSignInDateTime": u["last_login"]},
+                "assignedLicenses": [{"skuId": "sku-e5"}],
+            }
+        )
     return result
 
 
@@ -334,21 +370,30 @@ def _users_as_cyberark(users: list[dict]) -> list[dict]:
         # CyberArk expects lastModifiedTime as epoch seconds
         try:
             from datetime import datetime as _dt
-            last_mod_epoch = int(_dt.fromisoformat(u["last_login"].replace("+00:00", "+00:00")).timestamp())
+
+            last_mod_epoch = int(
+                _dt.fromisoformat(u["last_login"].replace("+00:00", "+00:00")).timestamp()
+            )
         except (ValueError, AttributeError):
             last_mod_epoch = int(NOW.timestamp()) - random.randint(0, 86400 * 90)
-        result.append({
-            "id": u["user_id"],
-            "name": u["username"],
-            "address": f"srv-{u['department'].lower()[:3]}.acme.com" if u.get("department") else "srv.acme.com",
-            "userName": u["username"],
-            "platformId": random.choice(["UnixSSH", "WinDomain", "WinServerLocal", "AWSAccessKeys"]),
-            "safeName": f"{u.get('department', 'General')}-Accounts",
-            "secretManagement": {
-                "automaticManagementEnabled": random.random() > 0.15,
-                "lastModifiedTime": last_mod_epoch,
-            },
-        })
+        result.append(
+            {
+                "id": u["user_id"],
+                "name": u["username"],
+                "address": f"srv-{u['department'].lower()[:3]}.acme.com"
+                if u.get("department")
+                else "srv.acme.com",
+                "userName": u["username"],
+                "platformId": random.choice(
+                    ["UnixSSH", "WinDomain", "WinServerLocal", "AWSAccessKeys"]
+                ),
+                "safeName": f"{u.get('department', 'General')}-Accounts",
+                "secretManagement": {
+                    "automaticManagementEnabled": random.random() > 0.15,
+                    "lastModifiedTime": last_mod_epoch,
+                },
+            }
+        )
     return result
 
 
@@ -356,22 +401,24 @@ def _users_as_sailpoint(users: list[dict]) -> list[dict]:
     """Convert RICH_DATA users to SailPoint identities format."""
     result = []
     for u in users:
-        result.append({
-            "id": u["user_id"],
-            "name": f"{u['first_name']} {u['last_name']}",
-            "alias": u["username"],
-            "email": u["email"],
-            "status": "ACTIVE" if u["status"] == "active" else "INACTIVE",
-            "department": u.get("department", ""),
-            "isManager": random.random() < 0.15,
-            "managerRef": {"name": "Manager"},
-            "created": u["created_at"],
-            "modified": u["last_login"],
-            "attributes": {
-                "lastLogin": u["last_login"],
-                "riskScore": random.randint(0, 100),
-            },
-        })
+        result.append(
+            {
+                "id": u["user_id"],
+                "name": f"{u['first_name']} {u['last_name']}",
+                "alias": u["username"],
+                "email": u["email"],
+                "status": "ACTIVE" if u["status"] == "active" else "INACTIVE",
+                "department": u.get("department", ""),
+                "isManager": random.random() < 0.15,
+                "managerRef": {"name": "Manager"},
+                "created": u["created_at"],
+                "modified": u["last_login"],
+                "attributes": {
+                    "lastLogin": u["last_login"],
+                    "riskScore": random.randint(0, 100),
+                },
+            }
+        )
     return result
 
 
@@ -386,19 +433,23 @@ def _auth_logs_as_okta(logs: list[dict]) -> list[dict]:
             event_type = "user.session.start"
             outcome = "FAILURE"
         else:
-            event_type = random.choice([
-                "user.session.start",
-                "user.authentication.auth_via_mfa",
-            ])
+            event_type = random.choice(
+                [
+                    "user.session.start",
+                    "user.authentication.auth_via_mfa",
+                ]
+            )
             outcome = "FAILURE"
-        result.append({
-            "eventType": event_type,
-            "outcome": {"result": outcome},
-            "actor": {
-                "displayName": log["email"],
-                "id": log.get("event_id", ""),
-            },
-        })
+        result.append(
+            {
+                "eventType": event_type,
+                "outcome": {"result": outcome},
+                "actor": {
+                    "displayName": log["email"],
+                    "id": log.get("event_id", ""),
+                },
+            }
+        )
     return result
 
 
@@ -407,21 +458,23 @@ def _vulns_as_crowdstrike(vulns: list[dict]) -> list[dict]:
     result = []
     for v in vulns:
         sev_map = {"critical": "Critical", "high": "High", "medium": "Medium", "low": "Low"}
-        result.append({
-            "id": v["vuln_id"],
-            "cve": {
-                "id": v["cve_id"],
-                "base_score_severity": sev_map.get(v["severity"], "Medium"),
-            },
-            "status": v["status"],
-            "host_info": {
-                "hostname": v["affected_resource"],
-                "device_id": f"dev-{v['vuln_id'][-6:]}",
-            },
-            "app": {
-                "product_name_version": f"{v['package_name']} {v['installed_version']}",
-            },
-        })
+        result.append(
+            {
+                "id": v["vuln_id"],
+                "cve": {
+                    "id": v["cve_id"],
+                    "base_score_severity": sev_map.get(v["severity"], "Medium"),
+                },
+                "status": v["status"],
+                "host_info": {
+                    "hostname": v["affected_resource"],
+                    "device_id": f"dev-{v['vuln_id'][-6:]}",
+                },
+                "app": {
+                    "product_name_version": f"{v['package_name']} {v['installed_version']}",
+                },
+            }
+        )
     return result
 
 
@@ -430,26 +483,30 @@ def _vulns_as_tenable(vulns: list[dict]) -> list[dict]:
     sev_num = {"critical": 4, "high": 3, "medium": 2, "low": 1}
     result = []
     for v in vulns:
-        result.append({
-            "asset": {
-                "hostname": v["affected_resource"],
-                "ipv4": f"10.0.{random.randint(0,255)}.{random.randint(1,254)}",
-                "operating_system": random.choice(["Ubuntu 22.04", "Windows Server 2022", "Amazon Linux 2"]),
-            },
-            "plugin": {
-                "id": random.randint(10000, 99999),
-                "name": v["title"],
-                "cvss_base_score": v["cvss_score"],
-                "severity": sev_num.get(v["severity"], 2),
-                "cve": [v["cve_id"]],
-                "solution": f"Upgrade {v['package_name']} to version {v['fixed_version']} or later.",
-                "see_also": [f"https://nvd.nist.gov/vuln/detail/{v['cve_id']}"],
-            },
-            "severity": v["severity"],
-            "state": "open" if v["status"] == "open" else "fixed",
-            "first_found": v["first_seen"],
-            "last_found": v["last_seen"],
-        })
+        result.append(
+            {
+                "asset": {
+                    "hostname": v["affected_resource"],
+                    "ipv4": f"10.0.{random.randint(0, 255)}.{random.randint(1, 254)}",
+                    "operating_system": random.choice(
+                        ["Ubuntu 22.04", "Windows Server 2022", "Amazon Linux 2"]
+                    ),
+                },
+                "plugin": {
+                    "id": random.randint(10000, 99999),
+                    "name": v["title"],
+                    "cvss_base_score": v["cvss_score"],
+                    "severity": sev_num.get(v["severity"], 2),
+                    "cve": [v["cve_id"]],
+                    "solution": f"Upgrade {v['package_name']} to version {v['fixed_version']} or later.",
+                    "see_also": [f"https://nvd.nist.gov/vuln/detail/{v['cve_id']}"],
+                },
+                "severity": v["severity"],
+                "state": "open" if v["status"] == "open" else "fixed",
+                "first_found": v["first_seen"],
+                "last_found": v["last_seen"],
+            }
+        )
     return result
 
 
@@ -458,24 +515,26 @@ def _vulns_as_qualys(vulns: list[dict]) -> list[dict]:
     sev_num = {"critical": 5, "high": 4, "medium": 3, "low": 2}
     result = []
     for v in vulns:
-        result.append({
-            "QID": random.randint(10000, 99999),
-            "HOST": {
-                "IP": f"10.0.{random.randint(0,255)}.{random.randint(1,254)}",
-                "DNS": v["affected_resource"],
-                "OS": random.choice(["Linux", "Windows", "macOS"]),
-            },
-            "VULN": {
-                "TITLE": v["title"],
-                "SEVERITY": sev_num.get(v["severity"], 3),
-                "CVE_ID_LIST": {"CVE_ID": v["cve_id"]},
-                "CVSS_BASE": str(v["cvss_score"]),
-                "SOLUTION": f"Upgrade {v['package_name']} to {v['fixed_version']}",
-                "FIRST_FOUND": v["first_seen"],
-                "LAST_FOUND": v["last_seen"],
-                "STATUS": "Active" if v["status"] == "open" else "Fixed",
-            },
-        })
+        result.append(
+            {
+                "QID": random.randint(10000, 99999),
+                "HOST": {
+                    "IP": f"10.0.{random.randint(0, 255)}.{random.randint(1, 254)}",
+                    "DNS": v["affected_resource"],
+                    "OS": random.choice(["Linux", "Windows", "macOS"]),
+                },
+                "VULN": {
+                    "TITLE": v["title"],
+                    "SEVERITY": sev_num.get(v["severity"], 3),
+                    "CVE_ID_LIST": {"CVE_ID": v["cve_id"]},
+                    "CVSS_BASE": str(v["cvss_score"]),
+                    "SOLUTION": f"Upgrade {v['package_name']} to {v['fixed_version']}",
+                    "FIRST_FOUND": v["first_seen"],
+                    "LAST_FOUND": v["last_seen"],
+                    "STATUS": "Active" if v["status"] == "open" else "Fixed",
+                },
+            }
+        )
     return result
 
 
@@ -484,19 +543,21 @@ def _vulns_as_wiz(vulns: list[dict]) -> list[dict]:
     result = []
     for v in vulns:
         sev_map = {"critical": "CRITICAL", "high": "HIGH", "medium": "MEDIUM", "low": "LOW"}
-        result.append({
-            "id": v["vuln_id"],
-            "sourceRule": {"name": v["title"]},
-            "severity": sev_map.get(v["severity"], "MEDIUM"),
-            "status": "OPEN" if v["status"] == "open" else "RESOLVED",
-            "entitySnapshot": {
-                "type": v["resource_type"],
-                "name": v["affected_resource"],
-                "cloudPlatform": random.choice(["AWS", "Azure", "GCP"]),
-            },
-            "firstDetectedAt": v["first_seen"],
-            "resolvedAt": v["last_seen"] if v["status"] != "open" else None,
-        })
+        result.append(
+            {
+                "id": v["vuln_id"],
+                "sourceRule": {"name": v["title"]},
+                "severity": sev_map.get(v["severity"], "MEDIUM"),
+                "status": "OPEN" if v["status"] == "open" else "RESOLVED",
+                "entitySnapshot": {
+                    "type": v["resource_type"],
+                    "name": v["affected_resource"],
+                    "cloudPlatform": random.choice(["AWS", "Azure", "GCP"]),
+                },
+                "firstDetectedAt": v["first_seen"],
+                "resolvedAt": v["last_seen"] if v["status"] != "open" else None,
+            }
+        )
     return result
 
 
@@ -504,20 +565,22 @@ def _endpoints_as_crowdstrike(endpoints: list[dict]) -> list[dict]:
     """Convert RICH_DATA endpoints_edr to CrowdStrike device format."""
     result = []
     for ep in endpoints:
-        result.append({
-            "device_id": ep["agent_id"],
-            "hostname": ep["hostname"],
-            "platform_name": ep["platform"],
-            "os_version": ep["os_version"],
-            "agent_version": ep["agent_version"],
-            "status": "normal" if ep["status"] == "online" else (
-                "contained" if ep["status"] == "degraded" else "offline"
-            ),
-            "reduced_functionality_mode": "yes" if ep["status"] == "degraded" else "no",
-            "device_policies": {
-                "prevention": {"applied": ep["prevention_mode"] == "prevent"},
-            },
-        })
+        result.append(
+            {
+                "device_id": ep["agent_id"],
+                "hostname": ep["hostname"],
+                "platform_name": ep["platform"],
+                "os_version": ep["os_version"],
+                "agent_version": ep["agent_version"],
+                "status": "normal"
+                if ep["status"] == "online"
+                else ("contained" if ep["status"] == "degraded" else "offline"),
+                "reduced_functionality_mode": "yes" if ep["status"] == "degraded" else "no",
+                "device_policies": {
+                    "prevention": {"applied": ep["prevention_mode"] == "prevent"},
+                },
+            }
+        )
     return result
 
 
@@ -525,18 +588,20 @@ def _endpoints_as_defender(endpoints: list[dict]) -> list[dict]:
     """Convert RICH_DATA endpoints_edr to Defender for Endpoint format."""
     result = []
     for ep in endpoints:
-        result.append({
-            "id": ep["agent_id"],
-            "computerDnsName": ep["hostname"],
-            "osPlatform": ep["platform"],
-            "osVersion": ep["os_version"],
-            "healthStatus": "Active" if ep["status"] == "online" else "Inactive",
-            "riskScore": random.choice(["Low", "Medium", "High"]),
-            "exposureLevel": random.choice(["Low", "Medium", "High"]),
-            "onboardingStatus": "Onboarded",
-            "lastSeen": ep["last_seen"],
-            "avIsSignatureUpToDate": ep["status"] == "online",
-        })
+        result.append(
+            {
+                "id": ep["agent_id"],
+                "computerDnsName": ep["hostname"],
+                "osPlatform": ep["platform"],
+                "osVersion": ep["os_version"],
+                "healthStatus": "Active" if ep["status"] == "online" else "Inactive",
+                "riskScore": random.choice(["Low", "Medium", "High"]),
+                "exposureLevel": random.choice(["Low", "Medium", "High"]),
+                "onboardingStatus": "Onboarded",
+                "lastSeen": ep["last_seen"],
+                "avIsSignatureUpToDate": ep["status"] == "online",
+            }
+        )
     return result
 
 
@@ -545,22 +610,24 @@ def _endpoints_as_sentinelone(endpoints: list[dict]) -> list[dict]:
     result = []
     for ep in endpoints:
         infected = random.random() < 0.05
-        result.append({
-            "id": ep["agent_id"],
-            "computerName": ep["hostname"],
-            "osType": ep["platform"].lower(),
-            "osName": f"{ep['platform']} {ep['os_version']}",
-            "agentVersion": ep["agent_version"],
-            "isActive": ep["status"] == "online",
-            "infected": infected,
-            "networkStatus": "connected" if ep["status"] == "online" else "disconnected",
-            "lastActiveDate": ep["last_seen"],
-            "encryptedApplications": random.random() > 0.05,
-            "firewallEnabled": random.random() > 0.05,
-            "isPendingUninstall": False,
-            "mitigationMode": "protect" if ep["prevention_mode"] == "prevent" else "detect",
-            "threatRebootRequired": False,
-        })
+        result.append(
+            {
+                "id": ep["agent_id"],
+                "computerName": ep["hostname"],
+                "osType": ep["platform"].lower(),
+                "osName": f"{ep['platform']} {ep['os_version']}",
+                "agentVersion": ep["agent_version"],
+                "isActive": ep["status"] == "online",
+                "infected": infected,
+                "networkStatus": "connected" if ep["status"] == "online" else "disconnected",
+                "lastActiveDate": ep["last_seen"],
+                "encryptedApplications": random.random() > 0.05,
+                "firewallEnabled": random.random() > 0.05,
+                "isPendingUninstall": False,
+                "mitigationMode": "protect" if ep["prevention_mode"] == "prevent" else "detect",
+                "threatRebootRequired": False,
+            }
+        )
     return result
 
 
@@ -568,43 +635,58 @@ def _endpoints_as_sophos(endpoints: list[dict]) -> list[dict]:
     """Convert RICH_DATA endpoints_edr to Sophos Central format."""
     result = []
     for ep in endpoints:
-        health = "good" if ep["status"] == "online" and ep["prevention_mode"] == "prevent" else "bad"
-        result.append({
-            "id": ep["agent_id"],
-            "hostname": ep["hostname"],
-            "os": {
-                "name": ep["platform"],
-                "platform": ep["platform"].lower(),
-                "majorVersion": random.randint(10, 14),
-            },
-            "health": {"overall": health, "threats": {"status": health}},
-            "tamperProtectionEnabled": ep["prevention_mode"] == "prevent",
-            "associatedPerson": {"viaLogin": f"user-{ep['agent_id'][-6:]}@acme.com"},
-            "lastSeenAt": ep["last_seen"],
-            "ipv4Addresses": [f"10.0.{random.randint(0,255)}.{random.randint(1,254)}"],
-        })
+        health = (
+            "good" if ep["status"] == "online" and ep["prevention_mode"] == "prevent" else "bad"
+        )
+        result.append(
+            {
+                "id": ep["agent_id"],
+                "hostname": ep["hostname"],
+                "os": {
+                    "name": ep["platform"],
+                    "platform": ep["platform"].lower(),
+                    "majorVersion": random.randint(10, 14),
+                },
+                "health": {"overall": health, "threats": {"status": health}},
+                "tamperProtectionEnabled": ep["prevention_mode"] == "prevent",
+                "associatedPerson": {"viaLogin": f"user-{ep['agent_id'][-6:]}@acme.com"},
+                "lastSeenAt": ep["last_seen"],
+                "ipv4Addresses": [f"10.0.{random.randint(0, 255)}.{random.randint(1, 254)}"],
+            }
+        )
     return result
 
 
 def _alerts_as_sentinel(alerts: list[dict]) -> list[dict]:
     """Convert RICH_DATA security_alerts to Azure Sentinel incident format."""
     result = []
-    sev_map = {"critical": "High", "high": "High", "medium": "Medium", "low": "Low", "info": "Informational"}
+    sev_map = {
+        "critical": "High",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low",
+        "info": "Informational",
+    }
     status_map = {
-        "new": "New", "investigating": "Active", "resolved": "Closed", "false_positive": "Closed",
+        "new": "New",
+        "investigating": "Active",
+        "resolved": "Closed",
+        "false_positive": "Closed",
     }
     for a in alerts:
-        result.append({
-            "id": a["alert_id"],
-            "properties": {
-                "title": a["title"],
-                "severity": sev_map.get(a["severity"], "Medium"),
-                "status": status_map.get(a["status"], "New"),
-                "createdTimeUtc": a["detected_at"],
-                "closedTimeUtc": a.get("resolved_at"),
-                "incidentNumber": random.randint(1000, 9999),
-            },
-        })
+        result.append(
+            {
+                "id": a["alert_id"],
+                "properties": {
+                    "title": a["title"],
+                    "severity": sev_map.get(a["severity"], "Medium"),
+                    "status": status_map.get(a["status"], "New"),
+                    "createdTimeUtc": a["detected_at"],
+                    "closedTimeUtc": a.get("resolved_at"),
+                    "incidentNumber": random.randint(1000, 9999),
+                },
+            }
+        )
     return result
 
 
@@ -612,19 +694,27 @@ def _alerts_as_splunk(alerts: list[dict]) -> list[dict]:
     """Convert RICH_DATA security_alerts to Splunk notable events format."""
     result = []
     for a in alerts:
-        urgency_map = {"critical": "critical", "high": "high", "medium": "medium", "low": "low", "info": "info"}
-        result.append({
-            "event_id": a["alert_id"],
-            "search_name": a["title"],
-            "urgency": urgency_map.get(a["severity"], "medium"),
-            "status_label": "Resolved" if a["status"] == "resolved" else (
-                "In Progress" if a["status"] == "investigating" else "New"
-            ),
-            "time": a["detected_at"],
-            "src": a["affected_host"],
-            "dest": f"10.0.{random.randint(0,255)}.{random.randint(1,254)}",
-            "rule_name": a["title"],
-        })
+        urgency_map = {
+            "critical": "critical",
+            "high": "high",
+            "medium": "medium",
+            "low": "low",
+            "info": "info",
+        }
+        result.append(
+            {
+                "event_id": a["alert_id"],
+                "search_name": a["title"],
+                "urgency": urgency_map.get(a["severity"], "medium"),
+                "status_label": "Resolved"
+                if a["status"] == "resolved"
+                else ("In Progress" if a["status"] == "investigating" else "New"),
+                "time": a["detected_at"],
+                "src": a["affected_host"],
+                "dest": f"10.0.{random.randint(0, 255)}.{random.randint(1, 254)}",
+                "rule_name": a["title"],
+            }
+        )
     return result
 
 
@@ -633,19 +723,21 @@ def _alerts_as_elastic(alerts: list[dict]) -> list[dict]:
     result = []
     sev_num = {"critical": 99, "high": 73, "medium": 47, "low": 21, "info": 1}
     for a in alerts:
-        result.append({
-            "id": a["alert_id"],
-            "name": a["title"],
-            "severity": a["severity"],
-            "risk_score": sev_num.get(a["severity"], 47),
-            "status": "closed" if a["status"] in ("resolved", "false_positive") else "open",
-            "timestamp": a["detected_at"],
-            "host": {"name": a["affected_host"]},
-            "threat": {
-                "technique": [{"id": a.get("technique", "T1078"), "name": a["title"]}],
-                "tactic": [{"name": a.get("tactic", "Unknown")}],
-            },
-        })
+        result.append(
+            {
+                "id": a["alert_id"],
+                "name": a["title"],
+                "severity": a["severity"],
+                "risk_score": sev_num.get(a["severity"], 47),
+                "status": "closed" if a["status"] in ("resolved", "false_positive") else "open",
+                "timestamp": a["detected_at"],
+                "host": {"name": a["affected_host"]},
+                "threat": {
+                    "technique": [{"id": a.get("technique", "T1078"), "name": a["title"]}],
+                    "tactic": [{"name": a.get("tactic", "Unknown")}],
+                },
+            }
+        )
     return result
 
 
@@ -653,19 +745,21 @@ def _devices_as_intune(devices: list[dict]) -> list[dict]:
     """Convert RICH_DATA devices to Intune managed devices format."""
     result = []
     for d in devices:
-        result.append({
-            "id": d["device_id"],
-            "deviceName": d["device_name"],
-            "operatingSystem": d["platform"],
-            "osVersion": d["os_version"],
-            "complianceState": "compliant" if d["is_compliant"] else "noncompliant",
-            "isEncrypted": d["is_encrypted"],
-            "userPrincipalName": d["user_email"],
-            "lastSyncDateTime": d["last_seen"],
-            "model": d["model"],
-            "serialNumber": d["serial_number"],
-            "managedDeviceOwnerType": "company",
-        })
+        result.append(
+            {
+                "id": d["device_id"],
+                "deviceName": d["device_name"],
+                "operatingSystem": d["platform"],
+                "osVersion": d["os_version"],
+                "complianceState": "compliant" if d["is_compliant"] else "noncompliant",
+                "isEncrypted": d["is_encrypted"],
+                "userPrincipalName": d["user_email"],
+                "lastSyncDateTime": d["last_seen"],
+                "model": d["model"],
+                "serialNumber": d["serial_number"],
+                "managedDeviceOwnerType": "company",
+            }
+        )
     return result
 
 
@@ -675,23 +769,25 @@ def _devices_as_jamf(devices: list[dict]) -> list[dict]:
     for d in devices:
         if d["platform"] not in ("macOS", "iOS"):
             continue
-        result.append({
-            "id": d["device_id"],
-            "general": {
-                "name": d["device_name"],
-                "serial_number": d["serial_number"],
-                "mac_address": f"AA:BB:CC:{random.randint(10,99)}:{random.randint(10,99)}:{random.randint(10,99)}",
-                "last_contact_time": d["last_seen"],
-                "platform": d["platform"],
-                "os_version": d["os_version"],
-            },
-            "hardware": {"model": d["model"]},
-            "security": {
-                "filevault2_status": "Encrypted" if d["is_encrypted"] else "Not Encrypted",
-                "firewall_enabled": d["firewall_enabled"],
-                "gatekeeper_status": "App Store and identified developers",
-            },
-        })
+        result.append(
+            {
+                "id": d["device_id"],
+                "general": {
+                    "name": d["device_name"],
+                    "serial_number": d["serial_number"],
+                    "mac_address": f"AA:BB:CC:{random.randint(10, 99)}:{random.randint(10, 99)}:{random.randint(10, 99)}",
+                    "last_contact_time": d["last_seen"],
+                    "platform": d["platform"],
+                    "os_version": d["os_version"],
+                },
+                "hardware": {"model": d["model"]},
+                "security": {
+                    "filevault2_status": "Encrypted" if d["is_encrypted"] else "Not Encrypted",
+                    "firewall_enabled": d["firewall_enabled"],
+                    "gatekeeper_status": "App Store and identified developers",
+                },
+            }
+        )
     return result
 
 
@@ -701,19 +797,21 @@ def _devices_as_kandji(devices: list[dict]) -> list[dict]:
     for d in devices:
         if d["platform"] not in ("macOS", "iOS"):
             continue
-        result.append({
-            "device_id": d["device_id"],
-            "device_name": d["device_name"],
-            "model": d["model"],
-            "serial_number": d["serial_number"],
-            "platform": d["platform"],
-            "os_version": d["os_version"],
-            "last_check_in": d["last_seen"],
-            "filevault_enabled": d["is_encrypted"],
-            "firewall_enabled": d["firewall_enabled"],
-            "blueprint_name": random.choice(["Standard macOS", "Engineering", "Executives"]),
-            "user": {"email": d["user_email"]},
-        })
+        result.append(
+            {
+                "device_id": d["device_id"],
+                "device_name": d["device_name"],
+                "model": d["model"],
+                "serial_number": d["serial_number"],
+                "platform": d["platform"],
+                "os_version": d["os_version"],
+                "last_check_in": d["last_seen"],
+                "filevault_enabled": d["is_encrypted"],
+                "firewall_enabled": d["firewall_enabled"],
+                "blueprint_name": random.choice(["Standard macOS", "Engineering", "Executives"]),
+                "user": {"email": d["user_email"]},
+            }
+        )
     return result
 
 
@@ -721,17 +819,23 @@ def _employees_as_workday(employees: list[dict]) -> list[dict]:
     """Convert RICH_DATA employees to Workday worker format."""
     result = []
     for emp in employees:
-        result.append({
-            "id": emp["employee_id"],
-            "descriptor": f"{emp['first_name']} {emp['last_name']}",
-            "status": "Active" if emp["status"] == "active" else (
-                "Terminated" if emp["status"] == "terminated" else "Leave"
-            ),
-            "hireDate": emp["start_date"],
-            "department": emp["department"],
-            "manager": emp.get("manager_email", ""),
-            **({"terminationDate": emp["termination_date"]} if emp.get("termination_date") else {}),
-        })
+        result.append(
+            {
+                "id": emp["employee_id"],
+                "descriptor": f"{emp['first_name']} {emp['last_name']}",
+                "status": "Active"
+                if emp["status"] == "active"
+                else ("Terminated" if emp["status"] == "terminated" else "Leave"),
+                "hireDate": emp["start_date"],
+                "department": emp["department"],
+                "manager": emp.get("manager_email", ""),
+                **(
+                    {"terminationDate": emp["termination_date"]}
+                    if emp.get("termination_date")
+                    else {}
+                ),
+            }
+        )
     return result
 
 
@@ -739,18 +843,22 @@ def _employees_as_bamboohr(employees: list[dict]) -> list[dict]:
     """Convert RICH_DATA employees to BambooHR format."""
     result = []
     for emp in employees:
-        result.append({
-            "id": int(emp["employee_id"].replace("EMP-", "")) + 7000,
-            "displayName": f"{emp['first_name']} {emp['last_name']}",
-            "status": "Active" if emp["status"] == "active" else "Inactive",
-            "department": emp["department"],
-            "jobTitle": emp["title"],
-            "hireDate": emp["start_date"],
-            "terminationDate": emp.get("termination_date"),
-            "supervisor": emp.get("manager_email", "").split("@")[0].replace(".", " ").title() if emp.get("manager_email") else "",
-            "supervisorId": str(random.randint(7000, 7999)),
-            "workEmail": emp["email"],
-        })
+        result.append(
+            {
+                "id": int(emp["employee_id"].replace("EMP-", "")) + 7000,
+                "displayName": f"{emp['first_name']} {emp['last_name']}",
+                "status": "Active" if emp["status"] == "active" else "Inactive",
+                "department": emp["department"],
+                "jobTitle": emp["title"],
+                "hireDate": emp["start_date"],
+                "terminationDate": emp.get("termination_date"),
+                "supervisor": emp.get("manager_email", "").split("@")[0].replace(".", " ").title()
+                if emp.get("manager_email")
+                else "",
+                "supervisorId": str(random.randint(7000, 7999)),
+                "workEmail": emp["email"],
+            }
+        )
     return result
 
 
@@ -758,20 +866,22 @@ def _employees_as_gusto(employees: list[dict]) -> list[dict]:
     """Convert RICH_DATA employees to Gusto payroll format."""
     result = []
     for emp in employees:
-        result.append({
-            "uuid": emp["employee_id"],
-            "first_name": emp["first_name"],
-            "last_name": emp["last_name"],
-            "email": emp["email"],
-            "department": emp["department"],
-            "current_employment_status": (
-                "active" if emp["status"] == "active" else "terminated"
-            ),
-            "hire_date": emp["start_date"],
-            "termination_date": emp.get("termination_date"),
-            "is_contractor": emp.get("is_contractor", False),
-            "onboarded": emp["status"] == "active",
-        })
+        result.append(
+            {
+                "uuid": emp["employee_id"],
+                "first_name": emp["first_name"],
+                "last_name": emp["last_name"],
+                "email": emp["email"],
+                "department": emp["department"],
+                "current_employment_status": (
+                    "active" if emp["status"] == "active" else "terminated"
+                ),
+                "hire_date": emp["start_date"],
+                "termination_date": emp.get("termination_date"),
+                "is_contractor": emp.get("is_contractor", False),
+                "onboarded": emp["status"] == "active",
+            }
+        )
     return result
 
 
@@ -779,19 +889,21 @@ def _employees_as_rippling(employees: list[dict]) -> list[dict]:
     """Convert RICH_DATA employees to Rippling format."""
     result = []
     for emp in employees:
-        result.append({
-            "id": emp["employee_id"],
-            "personalEmail": f"{emp['first_name'].lower()}.{emp['last_name'].lower()}@gmail.com",
-            "workEmail": emp["email"],
-            "displayName": f"{emp['first_name']} {emp['last_name']}",
-            "department": emp["department"],
-            "title": emp["title"],
-            "employmentStatus": emp["status"],
-            "startDate": emp["start_date"],
-            "endDate": emp.get("termination_date"),
-            "isActive": emp["status"] == "active",
-            "manager": {"displayName": emp.get("manager_email", "")},
-        })
+        result.append(
+            {
+                "id": emp["employee_id"],
+                "personalEmail": f"{emp['first_name'].lower()}.{emp['last_name'].lower()}@gmail.com",
+                "workEmail": emp["email"],
+                "displayName": f"{emp['first_name']} {emp['last_name']}",
+                "department": emp["department"],
+                "title": emp["title"],
+                "employmentStatus": emp["status"],
+                "startDate": emp["start_date"],
+                "endDate": emp.get("termination_date"),
+                "isActive": emp["status"] == "active",
+                "manager": {"displayName": emp.get("manager_email", "")},
+            }
+        )
     return result
 
 
@@ -802,15 +914,17 @@ def _training_as_knowbe4(records: list[dict]) -> list[dict]:
         status = tr["status"]
         if status == "overdue":
             status = "not_started"
-        result.append({
-            "enrollment_id": tr["record_id"],
-            "user_name": tr["employee_email"].split("@")[0].replace(".", " ").title(),
-            "user": {"name": tr["employee_email"].split("@")[0].replace(".", " ").title()},
-            "module_name": tr["course_name"],
-            "status": status,
-            "due_date": tr["assigned_at"],
-            **({"completion_date": tr["completed_at"]} if tr.get("completed_at") else {}),
-        })
+        result.append(
+            {
+                "enrollment_id": tr["record_id"],
+                "user_name": tr["employee_email"].split("@")[0].replace(".", " ").title(),
+                "user": {"name": tr["employee_email"].split("@")[0].replace(".", " ").title()},
+                "module_name": tr["course_name"],
+                "status": status,
+                "due_date": tr["assigned_at"],
+                **({"completion_date": tr["completed_at"]} if tr.get("completed_at") else {}),
+            }
+        )
     return result
 
 
@@ -819,22 +933,28 @@ def _code_findings_as_snyk(findings: list[dict]) -> list[dict]:
     result = []
     for f in findings:
         sev_map = {"critical": "critical", "high": "high", "medium": "medium", "low": "low"}
-        result.append({
-            "id": f["finding_id"],
-            "attributes": {
-                "title": f["title"],
-                "effective_severity_level": sev_map.get(f["severity"], "medium"),
-                "problems": [{"id": f"CVE-2024-{random.randint(1000,9999)}", "source": "CVE"}],
-                "cvss_score": {"critical": 9.1, "high": 7.5, "medium": 5.5, "low": 2.5}.get(f["severity"], 5.5),
-                "package_name": f.get("rule_id", "unknown-pkg"),
-                "package_version": "1.0.0",
-                "is_fixable": f["status"] != "ignored",
-                "fix_versions": ["2.0.0"] if f["status"] != "ignored" else [],
-                "exploit_maturity": "proof-of-concept" if f["severity"] == "critical" else "no-known-exploit",
-                "language": f.get("language", "javascript"),
-                "coordinates": [{"project_name": f.get("repository", "acme/unknown")}],
-            },
-        })
+        result.append(
+            {
+                "id": f["finding_id"],
+                "attributes": {
+                    "title": f["title"],
+                    "effective_severity_level": sev_map.get(f["severity"], "medium"),
+                    "problems": [{"id": f"CVE-2024-{random.randint(1000, 9999)}", "source": "CVE"}],
+                    "cvss_score": {"critical": 9.1, "high": 7.5, "medium": 5.5, "low": 2.5}.get(
+                        f["severity"], 5.5
+                    ),
+                    "package_name": f.get("rule_id", "unknown-pkg"),
+                    "package_version": "1.0.0",
+                    "is_fixable": f["status"] != "ignored",
+                    "fix_versions": ["2.0.0"] if f["status"] != "ignored" else [],
+                    "exploit_maturity": "proof-of-concept"
+                    if f["severity"] == "critical"
+                    else "no-known-exploit",
+                    "language": f.get("language", "javascript"),
+                    "coordinates": [{"project_name": f.get("repository", "acme/unknown")}],
+                },
+            }
+        )
     return result
 
 
@@ -842,24 +962,37 @@ def _code_findings_as_github_dependabot(findings: list[dict]) -> list[dict]:
     """Convert RICH_DATA code_findings to GitHub Dependabot alert format."""
     result = []
     for f in findings:
-        result.append({
-            "number": random.randint(1, 999),
-            "repository": {"full_name": f.get("repository", "acme/unknown")},
-            "security_advisory": {
-                "severity": f["severity"],
-                "cve_id": f"CVE-2024-{random.randint(1000,9999)}",
-                "summary": f["title"],
-                "ghsa_id": f"GHSA-{''.join(random.choices('abcdefghijklmnop', k=9))}",
-                "cvss": {"score": {"critical": 9.5, "high": 7.5, "medium": 5.5, "low": 2.5}.get(f["severity"], 5.5)},
-            },
-            "dependency": {
-                "package": {
-                    "name": f.get("rule_id", "unknown-pkg"),
-                    "ecosystem": {"python": "pip", "javascript": "npm", "typescript": "npm", "go": "gomod", "java": "maven", "rust": "cargo"}.get(f.get("language", ""), "npm"),
+        result.append(
+            {
+                "number": random.randint(1, 999),
+                "repository": {"full_name": f.get("repository", "acme/unknown")},
+                "security_advisory": {
+                    "severity": f["severity"],
+                    "cve_id": f"CVE-2024-{random.randint(1000, 9999)}",
+                    "summary": f["title"],
+                    "ghsa_id": f"GHSA-{''.join(random.choices('abcdefghijklmnop', k=9))}",
+                    "cvss": {
+                        "score": {"critical": 9.5, "high": 7.5, "medium": 5.5, "low": 2.5}.get(
+                            f["severity"], 5.5
+                        )
+                    },
                 },
-                "manifest_path": f.get("file_path", "package.json"),
-            },
-        })
+                "dependency": {
+                    "package": {
+                        "name": f.get("rule_id", "unknown-pkg"),
+                        "ecosystem": {
+                            "python": "pip",
+                            "javascript": "npm",
+                            "typescript": "npm",
+                            "go": "gomod",
+                            "java": "maven",
+                            "rust": "cargo",
+                        }.get(f.get("language", ""), "npm"),
+                    },
+                    "manifest_path": f.get("file_path", "package.json"),
+                },
+            }
+        )
     return result
 
 
@@ -867,19 +1000,21 @@ def _code_findings_as_checkmarx(findings: list[dict]) -> list[dict]:
     """Convert RICH_DATA code_findings to Checkmarx SAST format."""
     result = []
     for f in findings:
-        result.append({
-            "id": f["finding_id"],
-            "queryName": f["title"],
-            "severity": f["severity"].capitalize(),
-            "status": "New" if f["status"] == "open" else "Resolved",
-            "state": 0,
-            "resultDeepLink": f"https://checkmarx.acme.com/results/{f['finding_id']}",
-            "sourceFile": f.get("file_path", "unknown"),
-            "sourceLine": f.get("line_number", 0),
-            "destFile": f.get("file_path", "unknown"),
-            "language": f.get("language", ""),
-            "cweId": random.choice([79, 89, 200, 312, 502, 611, 798]),
-        })
+        result.append(
+            {
+                "id": f["finding_id"],
+                "queryName": f["title"],
+                "severity": f["severity"].capitalize(),
+                "status": "New" if f["status"] == "open" else "Resolved",
+                "state": 0,
+                "resultDeepLink": f"https://checkmarx.acme.com/results/{f['finding_id']}",
+                "sourceFile": f.get("file_path", "unknown"),
+                "sourceLine": f.get("line_number", 0),
+                "destFile": f.get("file_path", "unknown"),
+                "language": f.get("language", ""),
+                "cweId": random.choice([79, 89, 200, 312, 502, 611, 798]),
+            }
+        )
     return result
 
 
@@ -888,18 +1023,20 @@ def _code_findings_as_sonarqube(findings: list[dict]) -> list[dict]:
     result = []
     sev_map = {"critical": "CRITICAL", "high": "MAJOR", "medium": "MINOR", "low": "INFO"}
     for f in findings:
-        result.append({
-            "key": f["finding_id"],
-            "rule": f["rule_id"],
-            "severity": sev_map.get(f["severity"], "MINOR"),
-            "component": f"acme-app:{f.get('file_path', 'src/unknown')}",
-            "message": f["title"],
-            "status": "OPEN" if f["status"] == "open" else "RESOLVED",
-            "type": random.choice(["BUG", "VULNERABILITY", "CODE_SMELL"]),
-            "line": f.get("line_number", 0),
-            "effort": f"{random.randint(5, 60)}min",
-            "creationDate": f.get("detected_at", NOW.isoformat()),
-        })
+        result.append(
+            {
+                "key": f["finding_id"],
+                "rule": f["rule_id"],
+                "severity": sev_map.get(f["severity"], "MINOR"),
+                "component": f"acme-app:{f.get('file_path', 'src/unknown')}",
+                "message": f["title"],
+                "status": "OPEN" if f["status"] == "open" else "RESOLVED",
+                "type": random.choice(["BUG", "VULNERABILITY", "CODE_SMELL"]),
+                "line": f.get("line_number", 0),
+                "effort": f"{random.randint(5, 60)}min",
+                "creationDate": f.get("detected_at", NOW.isoformat()),
+            }
+        )
     return result
 
 
@@ -907,20 +1044,22 @@ def _code_findings_as_semgrep(findings: list[dict]) -> list[dict]:
     """Convert RICH_DATA code_findings to Semgrep format."""
     result = []
     for f in findings:
-        result.append({
-            "id": f["finding_id"],
-            "check_id": f["rule_id"],
-            "path": f.get("file_path", "src/unknown"),
-            "line": f.get("line_number", 0),
-            "message": f["title"],
-            "severity": f["severity"].upper(),
-            "metadata": {
-                "category": f.get("category", "security"),
-                "cwe": [f"CWE-{random.choice([79, 89, 200, 312, 502])}"],
-                "owasp": [random.choice(["A01:2021", "A02:2021", "A03:2021"])],
-            },
-            "fix": f"// Fix: {f['title']}",
-        })
+        result.append(
+            {
+                "id": f["finding_id"],
+                "check_id": f["rule_id"],
+                "path": f.get("file_path", "src/unknown"),
+                "line": f.get("line_number", 0),
+                "message": f["title"],
+                "severity": f["severity"].upper(),
+                "metadata": {
+                    "category": f.get("category", "security"),
+                    "cwe": [f"CWE-{random.choice([79, 89, 200, 312, 502])}"],
+                    "owasp": [random.choice(["A01:2021", "A02:2021", "A03:2021"])],
+                },
+                "fix": f"// Fix: {f['title']}",
+            }
+        )
     return result
 
 
@@ -928,15 +1067,23 @@ def _code_findings_as_veracode(findings: list[dict]) -> list[dict]:
     """Convert RICH_DATA code_findings to Veracode format."""
     result = []
     for f in findings:
-        result.append({
-            "issue_id": int(f["finding_id"].replace("sast-", "").replace("-", "")[:8], 16) % 100000,
-            "finding_category": {"name": f.get("category", "security")},
-            "severity": {"critical": 5, "high": 4, "medium": 3, "low": 2}.get(f["severity"], 3),
-            "cwe": {"id": random.choice([79, 89, 200, 312, 502, 611, 798])},
-            "display_text": f["title"],
-            "files": {"source_file": {"file": f.get("file_path", "unknown"), "line": f.get("line_number", 0)}},
-            "finding_status": {"status": "OPEN" if f["status"] == "open" else "CLOSED"},
-        })
+        result.append(
+            {
+                "issue_id": int(f["finding_id"].replace("sast-", "").replace("-", "")[:8], 16)
+                % 100000,
+                "finding_category": {"name": f.get("category", "security")},
+                "severity": {"critical": 5, "high": 4, "medium": 3, "low": 2}.get(f["severity"], 3),
+                "cwe": {"id": random.choice([79, 89, 200, 312, 502, 611, 798])},
+                "display_text": f["title"],
+                "files": {
+                    "source_file": {
+                        "file": f.get("file_path", "unknown"),
+                        "line": f.get("line_number", 0),
+                    }
+                },
+                "finding_status": {"status": "OPEN" if f["status"] == "open" else "CLOSED"},
+            }
+        )
     return result
 
 
@@ -944,21 +1091,27 @@ def _code_findings_as_gitguardian(findings: list[dict]) -> list[dict]:
     """Convert RICH_DATA code_findings to GitGuardian secret format."""
     result = []
     secret_types = [
-        "AWS Access Key", "GitHub Token", "Slack Webhook URL",
-        "Generic Password", "RSA Private Key", "JWT Secret",
+        "AWS Access Key",
+        "GitHub Token",
+        "Slack Webhook URL",
+        "Generic Password",
+        "RSA Private Key",
+        "JWT Secret",
     ]
     for f in findings:
-        result.append({
-            "id": f["finding_id"],
-            "type": random.choice(secret_types),
-            "status": "triggered" if f["status"] == "open" else "resolved",
-            "date": f.get("detected_at", NOW.isoformat()),
-            "tags": ["leaked_secret"],
-            "repository": f.get("repository", "acme/unknown"),
-            "file_path": f.get("file_path", "unknown"),
-            "line": f.get("line_number", 0),
-            "validity": random.choice(["valid", "invalid", "unknown"]),
-        })
+        result.append(
+            {
+                "id": f["finding_id"],
+                "type": random.choice(secret_types),
+                "status": "triggered" if f["status"] == "open" else "resolved",
+                "date": f.get("detected_at", NOW.isoformat()),
+                "tags": ["leaked_secret"],
+                "repository": f.get("repository", "acme/unknown"),
+                "file_path": f.get("file_path", "unknown"),
+                "line": f.get("line_number", 0),
+                "validity": random.choice(["valid", "invalid", "unknown"]),
+            }
+        )
     return result
 
 
@@ -967,21 +1120,23 @@ def _vulns_as_nessus(vulns: list[dict]) -> list[dict]:
     sev_num = {"critical": 4, "high": 3, "medium": 2, "low": 1}
     result = []
     for v in vulns:
-        result.append({
-            "plugin_id": random.randint(10000, 99999),
-            "plugin_name": v["title"],
-            "severity": sev_num.get(v["severity"], 2),
-            "host_ip": f"10.0.{random.randint(0,255)}.{random.randint(1,254)}",
-            "host_fqdn": v["affected_resource"],
-            "protocol": random.choice(["tcp", "udp"]),
-            "port": random.choice([22, 80, 443, 8080, 3306, 5432]),
-            "cve": v["cve_id"],
-            "cvss_base_score": v["cvss_score"],
-            "solution": f"Upgrade {v['package_name']} to {v['fixed_version']}",
-            "risk_factor": v["severity"].capitalize(),
-            "first_discovered": v["first_seen"],
-            "last_observed": v["last_seen"],
-        })
+        result.append(
+            {
+                "plugin_id": random.randint(10000, 99999),
+                "plugin_name": v["title"],
+                "severity": sev_num.get(v["severity"], 2),
+                "host_ip": f"10.0.{random.randint(0, 255)}.{random.randint(1, 254)}",
+                "host_fqdn": v["affected_resource"],
+                "protocol": random.choice(["tcp", "udp"]),
+                "port": random.choice([22, 80, 443, 8080, 3306, 5432]),
+                "cve": v["cve_id"],
+                "cvss_base_score": v["cvss_score"],
+                "solution": f"Upgrade {v['package_name']} to {v['fixed_version']}",
+                "risk_factor": v["severity"].capitalize(),
+                "first_discovered": v["first_seen"],
+                "last_observed": v["last_seen"],
+            }
+        )
     return result
 
 
@@ -989,18 +1144,20 @@ def _vulns_as_trivy(vulns: list[dict]) -> list[dict]:
     """Convert RICH_DATA vulnerabilities to Trivy scan format."""
     result = []
     for v in vulns:
-        result.append({
-            "VulnerabilityID": v["cve_id"],
-            "PkgName": v["package_name"],
-            "InstalledVersion": v["installed_version"],
-            "FixedVersion": v["fixed_version"],
-            "Severity": v["severity"].upper(),
-            "Title": v["title"],
-            "Description": v.get("description", v["title"]),
-            "CVSS": {"nvd": {"V3Score": v["cvss_score"]}},
-            "References": [f"https://nvd.nist.gov/vuln/detail/{v['cve_id']}"],
-            "Target": v["affected_resource"],
-        })
+        result.append(
+            {
+                "VulnerabilityID": v["cve_id"],
+                "PkgName": v["package_name"],
+                "InstalledVersion": v["installed_version"],
+                "FixedVersion": v["fixed_version"],
+                "Severity": v["severity"].upper(),
+                "Title": v["title"],
+                "Description": v.get("description", v["title"]),
+                "CVSS": {"nvd": {"V3Score": v["cvss_score"]}},
+                "References": [f"https://nvd.nist.gov/vuln/detail/{v['cve_id']}"],
+                "Target": v["affected_resource"],
+            }
+        )
     return result
 
 
@@ -1012,18 +1169,22 @@ def _email_as_proofpoint(emails: list[dict]) -> dict:
         if e["status"] in ("blocked", "quarantined"):
             blocked.append({"subject": e["subject"]})
         if e.get("threat_type"):
-            delivered_threats.append({
-                "GUID": e["message_id"],
-                "subject": e["subject"],
-                "sender": e["from_address"],
-                "recipient": e["to_address"],
-                "threatsInfoMap": {
-                    "url" if e["threat_type"] == "phishing" else "attachment": {
-                        "threatScore": random.randint(60, 99) if e["threat_type"] == "phishing" else random.randint(30, 70),
-                        "classification": e["threat_type"],
+            delivered_threats.append(
+                {
+                    "GUID": e["message_id"],
+                    "subject": e["subject"],
+                    "sender": e["from_address"],
+                    "recipient": e["to_address"],
+                    "threatsInfoMap": {
+                        "url" if e["threat_type"] == "phishing" else "attachment": {
+                            "threatScore": random.randint(60, 99)
+                            if e["threat_type"] == "phishing"
+                            else random.randint(30, 70),
+                            "classification": e["threat_type"],
+                        },
                     },
-                },
-            })
+                }
+            )
     return {"blocked": blocked, "delivered_threats": delivered_threats}
 
 
@@ -1033,19 +1194,30 @@ def _email_as_abnormal(emails: list[dict]) -> list[dict]:
     for e in emails:
         if not e.get("threat_type"):
             continue
-        result.append({
-            "threatId": e["message_id"],
-            "abxMessageId": random.randint(100000, 999999),
-            "subject": e["subject"],
-            "fromAddress": e["from_address"],
-            "toAddress": e["to_address"],
-            "attackType": e["threat_type"].upper(),
-            "attackStrategy": random.choice([
-                "Credential Phishing", "BEC", "Malware Delivery", "Social Engineering",
-            ]) if e["threat_type"] == "phishing" else "Spam",
-            "sentTime": e["timestamp"],
-            "remediationStatus": "Auto-Remediated" if e["status"] != "delivered" else "No Action",
-        })
+        result.append(
+            {
+                "threatId": e["message_id"],
+                "abxMessageId": random.randint(100000, 999999),
+                "subject": e["subject"],
+                "fromAddress": e["from_address"],
+                "toAddress": e["to_address"],
+                "attackType": e["threat_type"].upper(),
+                "attackStrategy": random.choice(
+                    [
+                        "Credential Phishing",
+                        "BEC",
+                        "Malware Delivery",
+                        "Social Engineering",
+                    ]
+                )
+                if e["threat_type"] == "phishing"
+                else "Spam",
+                "sentTime": e["timestamp"],
+                "remediationStatus": "Auto-Remediated"
+                if e["status"] != "delivered"
+                else "No Action",
+            }
+        )
     return result
 
 
@@ -1055,15 +1227,17 @@ def _dns_as_purview(queries: list[dict]) -> list[dict]:
     for q in queries:
         if q["action"] != "block":
             continue
-        result.append({
-            "alert_id": q["query_id"],
-            "policy_name": f"DLP-{q.get('threat_type', 'policy')}",
-            "severity": "High" if q.get("threat_type") else "Medium",
-            "user": q.get("user_email", ""),
-            "matched_content": q["domain"],
-            "action_taken": "Block",
-            "created_at": q["timestamp"],
-        })
+        result.append(
+            {
+                "alert_id": q["query_id"],
+                "policy_name": f"DLP-{q.get('threat_type', 'policy')}",
+                "severity": "High" if q.get("threat_type") else "Medium",
+                "user": q.get("user_email", ""),
+                "matched_content": q["domain"],
+                "action_taken": "Block",
+                "created_at": q["timestamp"],
+            }
+        )
     return result
 
 
@@ -1071,15 +1245,17 @@ def _dns_as_zscaler(queries: list[dict]) -> list[dict]:
     """Convert RICH_DATA dns_queries to Zscaler web transaction format."""
     result = []
     for q in queries:
-        result.append({
-            "url": f"https://{q['domain']}/",
-            "user": q.get("user_email", ""),
-            "action": q["action"].upper(),
-            "urlCategory": q["category"],
-            "threatName": q.get("threat_type", ""),
-            "clientIP": q["source_ip"],
-            "timestamp": q["timestamp"],
-        })
+        result.append(
+            {
+                "url": f"https://{q['domain']}/",
+                "user": q.get("user_email", ""),
+                "action": q["action"].upper(),
+                "urlCategory": q["category"],
+                "threatName": q.get("threat_type", ""),
+                "clientIP": q["source_ip"],
+                "timestamp": q["timestamp"],
+            }
+        )
     return result
 
 
@@ -1087,17 +1263,19 @@ def _dns_as_netskope(queries: list[dict]) -> list[dict]:
     """Convert RICH_DATA dns_queries to Netskope CASB alert format."""
     result = []
     for q in queries:
-        result.append({
-            "alert_id": q["query_id"],
-            "alert_name": f"Web activity: {q['domain']}",
-            "user": q.get("user_email", ""),
-            "app": q["domain"],
-            "category": q["category"],
-            "action": q["action"],
-            "risk_level": "high" if q.get("threat_type") else "low",
-            "timestamp": q["timestamp"],
-            "src_ip": q["source_ip"],
-        })
+        result.append(
+            {
+                "alert_id": q["query_id"],
+                "alert_name": f"Web activity: {q['domain']}",
+                "user": q.get("user_email", ""),
+                "app": q["domain"],
+                "category": q["category"],
+                "action": q["action"],
+                "risk_level": "high" if q.get("threat_type") else "low",
+                "timestamp": q["timestamp"],
+                "src_ip": q["source_ip"],
+            }
+        )
     return result
 
 
@@ -1105,15 +1283,17 @@ def _vendors_as_securityscorecard(vendors: list[dict]) -> list[dict]:
     """Convert RICH_DATA vendor_assessments to SecurityScorecard format."""
     result = []
     for v in vendors:
-        result.append({
-            "domain": f"{v['vendor_name'].lower().replace(' ', '-')}.com",
-            "name": v["vendor_name"],
-            "score": v["risk_score"],
-            "grade": v["rating"],
-            "industry": v["category"],
-            "last_score_change": v["last_assessed"],
-            "size": random.choice(["small", "medium", "large"]),
-        })
+        result.append(
+            {
+                "domain": f"{v['vendor_name'].lower().replace(' ', '-')}.com",
+                "name": v["vendor_name"],
+                "score": v["risk_score"],
+                "grade": v["rating"],
+                "industry": v["category"],
+                "last_score_change": v["last_assessed"],
+                "size": random.choice(["small", "medium", "large"]),
+            }
+        )
     return result
 
 
@@ -1121,15 +1301,17 @@ def _vendors_as_bitsight(vendors: list[dict]) -> list[dict]:
     """Convert RICH_DATA vendor_assessments to BitSight format."""
     result = []
     for v in vendors:
-        result.append({
-            "guid": v["vendor_id"],
-            "name": v["vendor_name"],
-            "rating": min(900, v["risk_score"] * 10),
-            "rating_date": v["last_assessed"],
-            "industry": v["category"],
-            "country": "US",
-            "percentile": v["risk_score"],
-        })
+        result.append(
+            {
+                "guid": v["vendor_id"],
+                "name": v["vendor_name"],
+                "rating": min(900, v["risk_score"] * 10),
+                "rating_date": v["last_assessed"],
+                "industry": v["category"],
+                "country": "US",
+                "percentile": v["risk_score"],
+            }
+        )
     return result
 
 
@@ -1137,22 +1319,26 @@ def _policies_as_confluence(policies: list[dict]) -> list[dict]:
     """Convert RICH_DATA policy_documents to Confluence page format."""
     result = []
     for p in policies:
-        result.append({
-            "id": p["policy_id"],
-            "title": p["title"],
-            "status": "current" if p["status"] == "active" else "draft",
-            "version": {"number": int(p["version"].split(".")[0])},
-            "_links": {"webui": f"/wiki/spaces/SEC/pages/{p['policy_id']}"},
-            "history": {
-                "lastUpdated": {
-                    "when": p["last_reviewed"],
-                    "by": {"displayName": p["owner_email"].split("@")[0].replace(".", " ").title()},
+        result.append(
+            {
+                "id": p["policy_id"],
+                "title": p["title"],
+                "status": "current" if p["status"] == "active" else "draft",
+                "version": {"number": int(p["version"].split(".")[0])},
+                "_links": {"webui": f"/wiki/spaces/SEC/pages/{p['policy_id']}"},
+                "history": {
+                    "lastUpdated": {
+                        "when": p["last_reviewed"],
+                        "by": {
+                            "displayName": p["owner_email"].split("@")[0].replace(".", " ").title()
+                        },
+                    },
                 },
-            },
-            "_metadata": {
-                "labels": {"results": [{"name": p["category"]}]},
-            },
-        })
+                "_metadata": {
+                    "labels": {"results": [{"name": p["category"]}]},
+                },
+            }
+        )
     return result
 
 
@@ -1160,15 +1346,17 @@ def _policies_as_onetrust(policies: list[dict]) -> list[dict]:
     """Convert RICH_DATA policy_documents to OneTrust assessment format."""
     result = []
     for p in policies:
-        result.append({
-            "id": p["policy_id"],
-            "name": p["title"],
-            "assessmentType": "PIA" if "privacy" in p["category"].lower() else "DPIA",
-            "status": "APPROVED" if p["status"] == "active" else "IN_REVIEW",
-            "riskLevel": random.choice(["LOW", "MEDIUM", "HIGH"]),
-            "lastUpdated": p["last_reviewed"],
-            "reviewer": p["owner_email"],
-        })
+        result.append(
+            {
+                "id": p["policy_id"],
+                "name": p["title"],
+                "assessmentType": "PIA" if "privacy" in p["category"].lower() else "DPIA",
+                "status": "APPROVED" if p["status"] == "active" else "IN_REVIEW",
+                "riskLevel": random.choice(["LOW", "MEDIUM", "HIGH"]),
+                "lastUpdated": p["last_reviewed"],
+                "reviewer": p["owner_email"],
+            }
+        )
     return result
 
 
@@ -1176,16 +1364,18 @@ def _policies_as_servicenow(policies: list[dict]) -> list[dict]:
     """Convert RICH_DATA policy_documents to ServiceNow GRC policy format."""
     result = []
     for p in policies:
-        result.append({
-            "sys_id": p["policy_id"],
-            "name": p["title"],
-            "state": "published" if p["status"] == "active" else "draft",
-            "category": p["category"],
-            "owner": p["owner_email"],
-            "last_reviewed": p["last_reviewed"],
-            "review_date": p.get("review_due", ""),
-            "version": p["version"],
-        })
+        result.append(
+            {
+                "sys_id": p["policy_id"],
+                "name": p["title"],
+                "state": "published" if p["status"] == "active" else "draft",
+                "category": p["category"],
+                "owner": p["owner_email"],
+                "last_reviewed": p["last_reviewed"],
+                "review_date": p.get("review_due", ""),
+                "version": p["version"],
+            }
+        )
     return result
 
 
@@ -1528,11 +1718,10 @@ class DemoAWSConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: cloud instances, security groups, storage, IAM ---
         _aws_instances = _instances_filter_cloud(RICH_DATA["cloud_instances"], "aws")
         for batch_start in range(0, len(_aws_instances), 50):
-            batch = _aws_instances[batch_start:batch_start + 50]
+            batch = _aws_instances[batch_start : batch_start + 50]
             result.events.append(
                 RawEventData(
                     source="aws",
@@ -1576,7 +1765,12 @@ class DemoAWSConnector(BaseConnector):
                     "method": "list_buckets",
                     "region": "us-east-1",
                     "account_id": "912345678012",
-                    "response": {"Buckets": [{"Name": b["name"], "CreationDate": b["created_at"]} for b in _aws_buckets]},
+                    "response": {
+                        "Buckets": [
+                            {"Name": b["name"], "CreationDate": b["created_at"]}
+                            for b in _aws_buckets
+                        ]
+                    },
                 },
             )
         )
@@ -1877,7 +2071,6 @@ class DemoCrowdStrikeConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: endpoints + vulnerabilities ---
         _cs_endpoints = RICH_DATA["endpoints_edr"][0:50]
         result.events.append(
@@ -2144,7 +2337,6 @@ class DemoWorkdayConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: employees ---
         _wd_employees = RICH_DATA["employees"][0:125]
         result.events.append(
@@ -2365,7 +2557,6 @@ class DemoKnowBe4Connector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: training records ---
         _kb4_records = RICH_DATA["training_records"][0:125]
@@ -2659,7 +2850,6 @@ class DemoSecurityScorecardConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: vendor assessments ---
         _ssc_vendors = RICH_DATA["vendor_assessments"][0:30]
         result.events.append(
@@ -2760,7 +2950,6 @@ class DemoConfluenceConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: policy documents ---
         _conf_policies = RICH_DATA["policy_documents"][0:20]
@@ -3083,7 +3272,6 @@ class DemoEntraIDConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: users ---
         _entra_users = RICH_DATA["users"][30:60]
         result.events.append(
@@ -3301,7 +3489,6 @@ class DemoCyberArkConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: privileged accounts ---
         _ca_users = RICH_DATA["users"][60:80]
@@ -3568,7 +3755,6 @@ class DemoSailPointConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: identities ---
         _sp_users = RICH_DATA["users"][80:110]
         result.events.append(
@@ -3766,7 +3952,6 @@ class DemoVaultConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: IaC misconfigs as vault audit events ---
         _vault_iac = RICH_DATA["iac_misconfigs"][0:30]
         result.events.append(
@@ -3776,8 +3961,13 @@ class DemoVaultConnector(BaseConnector):
                 provider="hashicorp",
                 event_type="vault_audit_devices",
                 raw_data={
-                    "data": {"file/": {"type": "file", "options": {"file_path": "/var/log/vault/audit.log"}},
-                             "syslog/": {"type": "syslog", "options": {}}},
+                    "data": {
+                        "file/": {
+                            "type": "file",
+                            "options": {"file_path": "/var/log/vault/audit.log"},
+                        },
+                        "syslog/": {"type": "syslog", "options": {}},
+                    },
                 },
             )
         )
@@ -4121,11 +4311,10 @@ class DemoAzureConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: Azure cloud instances, security groups, storage ---
         _az_instances = _instances_filter_cloud(RICH_DATA["cloud_instances"], "azure")
         for batch_start in range(0, len(_az_instances), 50):
-            batch = _az_instances[batch_start:batch_start + 50]
+            batch = _az_instances[batch_start : batch_start + 50]
             result.events.append(
                 RawEventData(
                     source="azure",
@@ -4414,11 +4603,10 @@ class DemoGCPConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: GCP cloud instances, storage ---
         _gcp_instances = _instances_filter_cloud(RICH_DATA["cloud_instances"], "gcp")
         for batch_start in range(0, len(_gcp_instances), 50):
-            batch = _gcp_instances[batch_start:batch_start + 50]
+            batch = _gcp_instances[batch_start : batch_start + 50]
             result.events.append(
                 RawEventData(
                     source="gcp",
@@ -6650,7 +6838,6 @@ class DemoDefenderConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: endpoints + alerts ---
         _def_endpoints = RICH_DATA["endpoints_edr"][50:100]
         result.events.append(
@@ -6669,11 +6856,22 @@ class DemoDefenderConnector(BaseConnector):
                 source_type=SourceType.EDR,
                 provider="microsoft",
                 event_type="defender_alerts",
-                raw_data={"value": [{"id": a["alert_id"], "title": a["title"], "severity": a["severity"].capitalize(),
-                          "status": "Resolved" if a["status"] == "resolved" else "New",
-                          "investigationState": "Running" if a["status"] == "investigating" else "Queued",
-                          "createdDateTime": a["detected_at"],
-                          "machineId": a["affected_host"]} for a in _def_alerts]},
+                raw_data={
+                    "value": [
+                        {
+                            "id": a["alert_id"],
+                            "title": a["title"],
+                            "severity": a["severity"].capitalize(),
+                            "status": "Resolved" if a["status"] == "resolved" else "New",
+                            "investigationState": "Running"
+                            if a["status"] == "investigating"
+                            else "Queued",
+                            "createdDateTime": a["detected_at"],
+                            "machineId": a["affected_host"],
+                        }
+                        for a in _def_alerts
+                    ]
+                },
             )
         )
         _def_vulns = RICH_DATA["vulnerabilities"][400:650]
@@ -6683,9 +6881,19 @@ class DemoDefenderConnector(BaseConnector):
                 source_type=SourceType.EDR,
                 provider="microsoft",
                 event_type="defender_vulnerabilities",
-                raw_data={"value": [{"id": v["cve_id"], "name": v["title"], "severity": v["severity"].capitalize(),
-                          "cvssV3": v["cvss_score"], "exposedMachines": random.randint(1, 20),
-                          "publishedOn": v["first_seen"]} for v in _def_vulns]},
+                raw_data={
+                    "value": [
+                        {
+                            "id": v["cve_id"],
+                            "name": v["title"],
+                            "severity": v["severity"].capitalize(),
+                            "cvssV3": v["cvss_score"],
+                            "exposedMachines": random.randint(1, 20),
+                            "publishedOn": v["first_seen"],
+                        }
+                        for v in _def_vulns
+                    ]
+                },
             )
         )
 
@@ -6941,7 +7149,6 @@ class DemoSentinelOneConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: endpoints ---
         _s1_agents = RICH_DATA["endpoints_edr"][100:150]
         result.events.append(
@@ -7157,7 +7364,6 @@ class DemoIntuneConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: devices ---
         _intune_devices = RICH_DATA["devices"][0:100]
@@ -7401,7 +7607,6 @@ class DemoSentinelConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: security alerts as incidents ---
         _sen_alerts = RICH_DATA["security_alerts"][120:280]
         result.events.append(
@@ -7641,7 +7846,6 @@ class DemoSplunkConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: security alerts as notable events ---
         _splunk_alerts = RICH_DATA["security_alerts"][280:440]
@@ -7888,7 +8092,6 @@ class DemoElasticConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: security alerts ---
         _elastic_alerts = RICH_DATA["security_alerts"][440:600]
         result.events.append(
@@ -7897,7 +8100,9 @@ class DemoElasticConnector(BaseConnector):
                 source_type=SourceType.SIEM,
                 provider="elastic",
                 event_type="elastic_security_alerts",
-                raw_data={"hits": {"hits": [{"_source": a} for a in _alerts_as_elastic(_elastic_alerts)]}},
+                raw_data={
+                    "hits": {"hits": [{"_source": a} for a in _alerts_as_elastic(_elastic_alerts)]}
+                },
             )
         )
 
@@ -8298,7 +8503,6 @@ class DemoKubernetesConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: container images ---
         _k8s_images = RICH_DATA["container_images"][75:150]
         result.events.append(
@@ -8308,14 +8512,31 @@ class DemoKubernetesConnector(BaseConnector):
                 provider="kubernetes",
                 event_type="k8s_running_pods",
                 raw_data={
-                    "items": [{"metadata": {"name": f"pod-{img['repository'].split('/')[-1]}-{i}",
-                                            "namespace": random.choice(["default", "production", "staging", "monitoring"]),
-                                            "labels": {"app": img["repository"].split("/")[-1]}},
-                               "spec": {"containers": [{"name": img["repository"].split("/")[-1],
-                                                         "image": f"{img['repository']}:{img['tag']}",
-                                                         "securityContext": {"runAsNonRoot": random.random() > 0.15,
-                                                                             "readOnlyRootFilesystem": random.random() > 0.3}}]},
-                               "status": {"phase": "Running"}} for i, img in enumerate(_k8s_images)],
+                    "items": [
+                        {
+                            "metadata": {
+                                "name": f"pod-{img['repository'].split('/')[-1]}-{i}",
+                                "namespace": random.choice(
+                                    ["default", "production", "staging", "monitoring"]
+                                ),
+                                "labels": {"app": img["repository"].split("/")[-1]},
+                            },
+                            "spec": {
+                                "containers": [
+                                    {
+                                        "name": img["repository"].split("/")[-1],
+                                        "image": f"{img['repository']}:{img['tag']}",
+                                        "securityContext": {
+                                            "runAsNonRoot": random.random() > 0.15,
+                                            "readOnlyRootFilesystem": random.random() > 0.3,
+                                        },
+                                    }
+                                ]
+                            },
+                            "status": {"phase": "Running"},
+                        }
+                        for i, img in enumerate(_k8s_images)
+                    ],
                 },
             )
         )
@@ -8512,7 +8733,6 @@ class DemoTenableConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: vulnerabilities ---
         _ten_vulns = RICH_DATA["vulnerabilities"][650:1100]
         result.events.append(
@@ -8703,7 +8923,6 @@ class DemoQualysConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: vulnerabilities ---
         _qual_vulns = RICH_DATA["vulnerabilities"][1100:1500]
         result.events.append(
@@ -8712,7 +8931,11 @@ class DemoQualysConnector(BaseConnector):
                 source_type=SourceType.SCANNER,
                 provider="qualys",
                 event_type="host_detections",
-                raw_data={"HOST_LIST_VM_DETECTION_OUTPUT": {"RESPONSE": {"HOST_LIST": {"HOST": _vulns_as_qualys(_qual_vulns)}}}},
+                raw_data={
+                    "HOST_LIST_VM_DETECTION_OUTPUT": {
+                        "RESPONSE": {"HOST_LIST": {"HOST": _vulns_as_qualys(_qual_vulns)}}
+                    }
+                },
             )
         )
 
@@ -8906,7 +9129,6 @@ class DemoWizConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: vulnerabilities as issues ---
         _wiz_vulns = RICH_DATA["vulnerabilities"][1500:1900]
@@ -9106,7 +9328,6 @@ class DemoPrismaConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: cloud instances as assets ---
         _prisma_assets = RICH_DATA["cloud_instances"][0:50]
         result.events.append(
@@ -9116,9 +9337,17 @@ class DemoPrismaConnector(BaseConnector):
                 provider="prisma",
                 event_type="prisma_assets",
                 raw_data={
-                    "data": [{"id": a["instance_id"], "name": a["name"],
-                              "cloudType": a["cloud"], "regionId": a["region"],
-                              "resourceType": "Instance", "accountId": "acme-account"} for a in _prisma_assets],
+                    "data": [
+                        {
+                            "id": a["instance_id"],
+                            "name": a["name"],
+                            "cloudType": a["cloud"],
+                            "regionId": a["region"],
+                            "resourceType": "Instance",
+                            "accountId": "acme-account",
+                        }
+                        for a in _prisma_assets
+                    ],
                 },
             )
         )
@@ -9335,7 +9564,6 @@ class DemoServiceNowConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: policy documents as ServiceNow records ---
         _snow_policies = RICH_DATA["policy_documents"][20:40]
         result.events.append(
@@ -9489,7 +9717,6 @@ class DemoOneTrustConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: policy documents as assessments ---
         _ot_policies = RICH_DATA["policy_documents"][0:20]
@@ -9758,7 +9985,6 @@ class DemoSnykConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: code findings ---
         _snyk_findings = RICH_DATA["code_findings"][0:120]
         result.events.append(
@@ -9962,7 +10188,6 @@ class DemoGitHubConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: code findings as dependabot alerts ---
         _gh_findings = RICH_DATA["code_findings"][120:240]
         result.events.append(
@@ -10076,7 +10301,6 @@ class DemoProofpointConnector(BaseConnector):
                 },
             )
         )
-
 
         # --- Rich data: email events ---
         _pp_data = _email_as_proofpoint(RICH_DATA["email_events"][0:100])
@@ -10209,7 +10433,6 @@ class DemoPurviewConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: DNS queries as DLP alerts ---
         _pv_alerts = _dns_as_purview(RICH_DATA["dns_queries"][0:80])
         result.events.append(
@@ -10338,7 +10561,6 @@ class DemoVeeamConnector(BaseConnector):
             )
         )
 
-
         # --- Rich data: security alerts as backup alerts ---
         _veeam_alerts = RICH_DATA["security_alerts"][900:950]
         result.events.append(
@@ -10348,10 +10570,18 @@ class DemoVeeamConnector(BaseConnector):
                 provider="veeam",
                 event_type="veeam_sessions",
                 raw_data={
-                    "data": [{"id": a["alert_id"], "name": f"Backup-{a['alert_id'][-6:]}",
-                              "result": "Warning" if a["severity"] in ("high", "critical") else "Success",
-                              "creationTime": a["detected_at"],
-                              "endTime": a.get("resolved_at", a["detected_at"])} for a in _veeam_alerts],
+                    "data": [
+                        {
+                            "id": a["alert_id"],
+                            "name": f"Backup-{a['alert_id'][-6:]}",
+                            "result": "Warning"
+                            if a["severity"] in ("high", "critical")
+                            else "Success",
+                            "creationTime": a["detected_at"],
+                            "endTime": a.get("resolved_at", a["detected_at"]),
+                        }
+                        for a in _veeam_alerts
+                    ],
                 },
             )
         )
@@ -13129,12 +13359,22 @@ class DemoPaloAltoConnector(BaseConnector):
                 provider="palo_alto",
                 event_type="pan_threat_logs",
                 raw_data={
-                    "logs": [{"threat_id": q["query_id"], "type": q.get("threat_type", "url"),
-                              "severity": "critical" if q.get("threat_type") == "malware" else "medium",
-                              "src_ip": q["source_ip"], "dst_ip": f"203.0.{random.randint(0,255)}.{random.randint(1,254)}",
-                              "action": "alert" if q["action"] == "allow" else "block",
-                              "threat_name": q["domain"],
-                              "category": q.get("threat_type", "unknown")} for q in _pa_dns if q["action"] == "block" or q.get("threat_type")],
+                    "logs": [
+                        {
+                            "threat_id": q["query_id"],
+                            "type": q.get("threat_type", "url"),
+                            "severity": "critical"
+                            if q.get("threat_type") == "malware"
+                            else "medium",
+                            "src_ip": q["source_ip"],
+                            "dst_ip": f"203.0.{random.randint(0, 255)}.{random.randint(1, 254)}",
+                            "action": "alert" if q["action"] == "allow" else "block",
+                            "threat_name": q["domain"],
+                            "category": q.get("threat_type", "unknown"),
+                        }
+                        for q in _pa_dns
+                        if q["action"] == "block" or q.get("threat_type")
+                    ],
                 },
             )
         )
@@ -13230,10 +13470,18 @@ class DemoFortinetConnector(BaseConnector):
                 provider="fortinet",
                 event_type="forti_ips_logs",
                 raw_data={
-                    "results": [{"logid": q["query_id"], "srcip": q["source_ip"],
-                                 "dstip": f"203.0.{random.randint(0,255)}.{random.randint(1,254)}",
-                                 "action": q["action"], "threat_name": q["domain"],
-                                 "severity": "critical" if q.get("threat_type") else "medium"} for q in _fort_dns if q.get("threat_type")],
+                    "results": [
+                        {
+                            "logid": q["query_id"],
+                            "srcip": q["source_ip"],
+                            "dstip": f"203.0.{random.randint(0, 255)}.{random.randint(1, 254)}",
+                            "action": q["action"],
+                            "threat_name": q["domain"],
+                            "severity": "critical" if q.get("threat_type") else "medium",
+                        }
+                        for q in _fort_dns
+                        if q.get("threat_type")
+                    ],
                 },
             )
         )
@@ -13541,10 +13789,17 @@ class DemoDuoConnector(BaseConnector):
                 provider="duo",
                 event_type="duo_users",
                 raw_data={
-                    "response": [{"user_id": u["user_id"], "username": u["username"],
-                                  "email": u["email"], "status": "active" if u["status"] == "active" else "disabled",
-                                  "is_enrolled": u["is_enrolled_mfa"],
-                                  "last_login": u["last_login"]} for u in _duo_users],
+                    "response": [
+                        {
+                            "user_id": u["user_id"],
+                            "username": u["username"],
+                            "email": u["email"],
+                            "status": "active" if u["status"] == "active" else "disabled",
+                            "is_enrolled": u["is_enrolled_mfa"],
+                            "last_login": u["last_login"],
+                        }
+                        for u in _duo_users
+                    ],
                 },
             )
         )
@@ -13556,12 +13811,18 @@ class DemoDuoConnector(BaseConnector):
                 provider="duo",
                 event_type="duo_auth_logs",
                 raw_data={
-                    "response": [{"txid": log["event_id"], "user": {"name": log["username"]},
-                                  "result": "SUCCESS" if log["result"] == "success" else "FAILURE",
-                                  "reason": log.get("reason", ""),
-                                  "access_device": {"ip": log["ip_address"]},
-                                  "factor": log["factor"],
-                                  "timestamp": log["timestamp"]} for log in _duo_logs],
+                    "response": [
+                        {
+                            "txid": log["event_id"],
+                            "user": {"name": log["username"]},
+                            "result": "SUCCESS" if log["result"] == "success" else "FAILURE",
+                            "reason": log.get("reason", ""),
+                            "access_device": {"ip": log["ip_address"]},
+                            "factor": log["factor"],
+                            "timestamp": log["timestamp"],
+                        }
+                        for log in _duo_logs
+                    ],
                 },
             )
         )
@@ -13706,10 +13967,17 @@ class DemoOnePasswordConnector(BaseConnector):
                 provider="onepassword",
                 event_type="onepassword_users",
                 raw_data={
-                    "users": [{"uuid": u["user_id"], "email": u["email"],
-                               "name": f"{u['first_name']} {u['last_name']}",
-                               "state": "A" if u["status"] == "active" else "S",
-                               "type": "R", "created_at": u["created_at"]} for u in _op_users],
+                    "users": [
+                        {
+                            "uuid": u["user_id"],
+                            "email": u["email"],
+                            "name": f"{u['first_name']} {u['last_name']}",
+                            "state": "A" if u["status"] == "active" else "S",
+                            "type": "R",
+                            "created_at": u["created_at"],
+                        }
+                        for u in _op_users
+                    ],
                 },
             )
         )
@@ -13811,11 +14079,18 @@ class DemoBitwardenConnector(BaseConnector):
                 provider="bitwarden",
                 event_type="bitwarden_members",
                 raw_data={
-                    "data": [{"id": u["user_id"], "email": u["email"],
-                              "name": f"{u['first_name']} {u['last_name']}",
-                              "status": 2 if u["status"] == "active" else 0,
-                              "type": 2, "twoFactorEnabled": u["is_enrolled_mfa"],
-                              "resetPasswordEnrolled": False} for u in _bw_users],
+                    "data": [
+                        {
+                            "id": u["user_id"],
+                            "email": u["email"],
+                            "name": f"{u['first_name']} {u['last_name']}",
+                            "status": 2 if u["status"] == "active" else 0,
+                            "type": 2,
+                            "twoFactorEnabled": u["is_enrolled_mfa"],
+                            "resetPasswordEnrolled": False,
+                        }
+                        for u in _bw_users
+                    ],
                 },
             )
         )
@@ -13939,12 +14214,25 @@ class DemoGuardDutyConnector(BaseConnector):
                 provider="aws",
                 event_type="guardduty_findings",
                 raw_data={
-                    "findings": [{"id": a["alert_id"], "type": f"Recon:{a['tactic']}",
-                                  "severity": {"critical": 8.0, "high": 7.0, "medium": 5.0, "low": 2.0, "info": 1.0}.get(a["severity"], 5.0),
-                                  "title": a["title"], "description": a["description"],
-                                  "resource": {"resourceType": "Instance"},
-                                  "service": {"action": {"actionType": "NETWORK_CONNECTION"}},
-                                  "createdAt": a["detected_at"]} for a in _gd_alerts],
+                    "findings": [
+                        {
+                            "id": a["alert_id"],
+                            "type": f"Recon:{a['tactic']}",
+                            "severity": {
+                                "critical": 8.0,
+                                "high": 7.0,
+                                "medium": 5.0,
+                                "low": 2.0,
+                                "info": 1.0,
+                            }.get(a["severity"], 5.0),
+                            "title": a["title"],
+                            "description": a["description"],
+                            "resource": {"resourceType": "Instance"},
+                            "service": {"action": {"actionType": "NETWORK_CONNECTION"}},
+                            "createdAt": a["detected_at"],
+                        }
+                        for a in _gd_alerts
+                    ],
                 },
             )
         )
@@ -14061,11 +14349,17 @@ class DemoDatadogConnector(BaseConnector):
                 provider="datadog",
                 event_type="datadog_monitors",
                 raw_data={
-                    "monitors": [{"id": a["alert_id"], "name": a["title"],
-                                  "type": "service check",
-                                  "overall_state": "Alert" if a["status"] == "new" else "OK",
-                                  "tags": [f"severity:{a['severity']}"],
-                                  "created": a["detected_at"]} for a in _dd_alerts],
+                    "monitors": [
+                        {
+                            "id": a["alert_id"],
+                            "name": a["title"],
+                            "type": "service check",
+                            "overall_state": "Alert" if a["status"] == "new" else "OK",
+                            "tags": [f"severity:{a['severity']}"],
+                            "created": a["detected_at"],
+                        }
+                        for a in _dd_alerts
+                    ],
                 },
             )
         )
@@ -14179,11 +14473,17 @@ class DemoNewRelicConnector(BaseConnector):
                 provider="newrelic",
                 event_type="newrelic_violations",
                 raw_data={
-                    "violations": [{"id": a["alert_id"], "label": a["title"],
-                                    "priority": a["severity"],
-                                    "opened_at": a["detected_at"],
-                                    "closed_at": a.get("resolved_at"),
-                                    "entity": {"name": a["affected_host"]}} for a in _nr_alerts],
+                    "violations": [
+                        {
+                            "id": a["alert_id"],
+                            "label": a["title"],
+                            "priority": a["severity"],
+                            "opened_at": a["detected_at"],
+                            "closed_at": a.get("resolved_at"),
+                            "entity": {"name": a["affected_host"]},
+                        }
+                        for a in _nr_alerts
+                    ],
                 },
             )
         )
@@ -15008,11 +15308,18 @@ class DemoJumpCloudConnector(BaseConnector):
                 provider="jumpcloud",
                 event_type="jumpcloud_users",
                 raw_data={
-                    "users": [{"id": u["user_id"], "username": u["username"],
-                               "email": u["email"], "mfa_enabled": u["is_enrolled_mfa"],
-                               "suspended": u["status"] != "active",
-                               "created": u["created_at"],
-                               "last_login": u["last_login"]} for u in _jc_users],
+                    "users": [
+                        {
+                            "id": u["user_id"],
+                            "username": u["username"],
+                            "email": u["email"],
+                            "mfa_enabled": u["is_enrolled_mfa"],
+                            "suspended": u["status"] != "active",
+                            "created": u["created_at"],
+                            "last_login": u["last_login"],
+                        }
+                        for u in _jc_users
+                    ],
                 },
             )
         )
@@ -15139,12 +15446,18 @@ class DemoAuth0Connector(BaseConnector):
                 provider="auth0",
                 event_type="auth0_users",
                 raw_data={
-                    "users": [{"user_id": f"auth0|{u['user_id']}", "email": u["email"],
-                               "name": f"{u['first_name']} {u['last_name']}",
-                               "mfa_enrolled": u["is_enrolled_mfa"],
-                               "blocked": u["status"] != "active",
-                               "last_login": u["last_login"],
-                               "logins_count": random.randint(1, 500)} for u in _a0_users],
+                    "users": [
+                        {
+                            "user_id": f"auth0|{u['user_id']}",
+                            "email": u["email"],
+                            "name": f"{u['first_name']} {u['last_name']}",
+                            "mfa_enrolled": u["is_enrolled_mfa"],
+                            "blocked": u["status"] != "active",
+                            "last_login": u["last_login"],
+                            "logins_count": random.randint(1, 500),
+                        }
+                        for u in _a0_users
+                    ],
                 },
             )
         )
@@ -15156,12 +15469,19 @@ class DemoAuth0Connector(BaseConnector):
                 provider="auth0",
                 event_type="auth0_logs",
                 raw_data={
-                    "logs": [{"log_id": log["event_id"],
-                              "type": "s" if log["result"] == "success" else "f",
-                              "description": "Successful login" if log["result"] == "success" else f"Failed login: {log.get('reason', 'unknown')}",
-                              "user_id": f"auth0|{log['event_id'][-8:]}",
-                              "ip": log["ip_address"],
-                              "date": log["timestamp"]} for log in _a0_logs],
+                    "logs": [
+                        {
+                            "log_id": log["event_id"],
+                            "type": "s" if log["result"] == "success" else "f",
+                            "description": "Successful login"
+                            if log["result"] == "success"
+                            else f"Failed login: {log.get('reason', 'unknown')}",
+                            "user_id": f"auth0|{log['event_id'][-8:]}",
+                            "ip": log["ip_address"],
+                            "date": log["timestamp"],
+                        }
+                        for log in _a0_logs
+                    ],
                 },
             )
         )
@@ -15268,11 +15588,22 @@ class DemoGitLabConnector(BaseConnector):
                 provider="gitlab",
                 event_type="gitlab_vulnerabilities",
                 raw_data={
-                    "vulnerabilities": [{"id": f["finding_id"], "title": f["title"],
-                                         "severity": f["severity"], "state": "detected" if f["status"] == "open" else "resolved",
-                                         "project_id": random.randint(100, 200), "scanner": "sast",
-                                         "location": {"file": f.get("file_path", "unknown"), "line": f.get("line_number", 0)},
-                                         "detected_at": f.get("detected_at", NOW.isoformat())} for f in _gl_findings],
+                    "vulnerabilities": [
+                        {
+                            "id": f["finding_id"],
+                            "title": f["title"],
+                            "severity": f["severity"],
+                            "state": "detected" if f["status"] == "open" else "resolved",
+                            "project_id": random.randint(100, 200),
+                            "scanner": "sast",
+                            "location": {
+                                "file": f.get("file_path", "unknown"),
+                                "line": f.get("line_number", 0),
+                            },
+                            "detected_at": f.get("detected_at", NOW.isoformat()),
+                        }
+                        for f in _gl_findings
+                    ],
                 },
             )
         )
@@ -15376,13 +15707,21 @@ class DemoJiraConnector(BaseConnector):
                 provider="jira",
                 event_type="jira_security_bugs",
                 raw_data={
-                    "issues": [{"key": f"SEC-{200 + i}", "summary": inc["title"],
-                                "priority": inc["severity"].capitalize(),
-                                "status": "Open" if inc["status"] in ("open", "investigating") else "Done",
-                                "assignee": inc.get("assignee_email", ""),
-                                "created": inc["reported_at"],
-                                "due_date": inc.get("contained_at", ""),
-                                "labels": ["security", inc["type"]]} for i, inc in enumerate(_jira_incidents)],
+                    "issues": [
+                        {
+                            "key": f"SEC-{200 + i}",
+                            "summary": inc["title"],
+                            "priority": inc["severity"].capitalize(),
+                            "status": "Open"
+                            if inc["status"] in ("open", "investigating")
+                            else "Done",
+                            "assignee": inc.get("assignee_email", ""),
+                            "created": inc["reported_at"],
+                            "due_date": inc.get("contained_at", ""),
+                            "labels": ["security", inc["type"]],
+                        }
+                        for i, inc in enumerate(_jira_incidents)
+                    ],
                 },
             )
         )
@@ -15479,12 +15818,22 @@ class DemoSlackConnector(BaseConnector):
                 provider="slack",
                 event_type="slack_users",
                 raw_data={
-                    "members": [{"id": u["user_id"], "name": u["username"],
-                                 "profile": {"email": u["email"], "real_name": f"{u['first_name']} {u['last_name']}"},
-                                 "is_admin": random.random() < 0.1,
-                                 "is_owner": False, "is_restricted": False,
-                                 "has_2fa": u["is_enrolled_mfa"],
-                                 "deleted": u["status"] != "active"} for u in _slack_users],
+                    "members": [
+                        {
+                            "id": u["user_id"],
+                            "name": u["username"],
+                            "profile": {
+                                "email": u["email"],
+                                "real_name": f"{u['first_name']} {u['last_name']}",
+                            },
+                            "is_admin": random.random() < 0.1,
+                            "is_owner": False,
+                            "is_restricted": False,
+                            "has_2fa": u["is_enrolled_mfa"],
+                            "deleted": u["status"] != "active",
+                        }
+                        for u in _slack_users
+                    ],
                 },
             )
         )
@@ -15568,7 +15917,10 @@ class DemoGoogleWorkspaceConnector(BaseConnector):
                             "id": "gws-act-002",
                             "actor": {"email": "alice.chen@acme.com"},
                             "event_name": "ADD_GROUP_MEMBER",
-                            "parameters": {"group": "security-team@acme.com", "member": "bob.martinez@acme.com"},
+                            "parameters": {
+                                "group": "security-team@acme.com",
+                                "member": "bob.martinez@acme.com",
+                            },
                             "time": (NOW - timedelta(hours=6)).isoformat(),
                         },
                     ]
@@ -15585,13 +15937,19 @@ class DemoGoogleWorkspaceConnector(BaseConnector):
                 provider="google",
                 event_type="gw_users",
                 raw_data={
-                    "users": [{"id": u["user_id"], "primaryEmail": u["email"],
-                               "name": {"fullName": f"{u['first_name']} {u['last_name']}"},
-                               "suspended": u["status"] != "active",
-                               "isAdmin": random.random() < 0.1,
-                               "isEnrolledIn2Sv": u["is_enrolled_mfa"],
-                               "lastLoginTime": u["last_login"],
-                               "creationTime": u["created_at"]} for u in _gw_users],
+                    "users": [
+                        {
+                            "id": u["user_id"],
+                            "primaryEmail": u["email"],
+                            "name": {"fullName": f"{u['first_name']} {u['last_name']}"},
+                            "suspended": u["status"] != "active",
+                            "isAdmin": random.random() < 0.1,
+                            "isEnrolledIn2Sv": u["is_enrolled_mfa"],
+                            "lastLoginTime": u["last_login"],
+                            "creationTime": u["created_at"],
+                        }
+                        for u in _gw_users
+                    ],
                 },
             )
         )
@@ -15603,11 +15961,22 @@ class DemoGoogleWorkspaceConnector(BaseConnector):
                 provider="google",
                 event_type="gw_login_events",
                 raw_data={
-                    "items": [{"id": {"time": log["timestamp"]},
-                               "actor": {"email": log["email"]},
-                               "events": [{"name": "login_success" if log["result"] == "success" else "login_failure",
-                                           "parameters": [{"name": "login_type", "value": log["factor"]}]}],
-                               "ipAddress": log["ip_address"]} for log in _gw_logs],
+                    "items": [
+                        {
+                            "id": {"time": log["timestamp"]},
+                            "actor": {"email": log["email"]},
+                            "events": [
+                                {
+                                    "name": "login_success"
+                                    if log["result"] == "success"
+                                    else "login_failure",
+                                    "parameters": [{"name": "login_type", "value": log["factor"]}],
+                                }
+                            ],
+                            "ipAddress": log["ip_address"],
+                        }
+                        for log in _gw_logs
+                    ],
                 },
             )
         )
@@ -16325,10 +16694,16 @@ class DemoGrafanaConnector(BaseConnector):
                 provider="grafana",
                 event_type="grafana_alerts",
                 raw_data={
-                    "alerts": [{"id": a["alert_id"], "labels": {"alertname": a["title"], "severity": a["severity"]},
-                                "state": "firing" if a["status"] == "new" else "normal",
-                                "activeAt": a["detected_at"],
-                                "resolvedAt": a.get("resolved_at")} for a in _graf_alerts],
+                    "alerts": [
+                        {
+                            "id": a["alert_id"],
+                            "labels": {"alertname": a["title"], "severity": a["severity"]},
+                            "state": "firing" if a["status"] == "new" else "normal",
+                            "activeAt": a["detected_at"],
+                            "resolvedAt": a.get("resolved_at"),
+                        }
+                        for a in _graf_alerts
+                    ],
                 },
             )
         )
@@ -16677,8 +17052,17 @@ class DemoSageMakerConnector(BaseConnector):
                 source_type=SourceType.AI_ML,
                 provider="aws",
                 event_type="sagemaker_endpoints",
-                raw_data={"Endpoints": [{"EndpointName": f"ml-{i['name']}", "EndpointStatus": i["state"].capitalize(),
-                           "CreationTime": i["launched_at"], "InstanceType": i["instance_type"]} for i in _sm_instances]},
+                raw_data={
+                    "Endpoints": [
+                        {
+                            "EndpointName": f"ml-{i['name']}",
+                            "EndpointStatus": i["state"].capitalize(),
+                            "CreationTime": i["launched_at"],
+                            "InstanceType": i["instance_type"],
+                        }
+                        for i in _sm_instances
+                    ]
+                },
             )
         )
 
@@ -16778,10 +17162,19 @@ class DemoDatabricksConnector(BaseConnector):
                 source_type=SourceType.DATA_GOVERNANCE,
                 provider="databricks",
                 event_type="databricks_clusters",
-                raw_data={"clusters": [{"cluster_id": i["instance_id"], "cluster_name": f"db-{i['name']}",
-                           "state": i["state"].upper(), "spark_version": "14.3.x-scala2.12",
-                           "node_type_id": i["instance_type"],
-                           "start_time": i["launched_at"]} for i in _db_instances]},
+                raw_data={
+                    "clusters": [
+                        {
+                            "cluster_id": i["instance_id"],
+                            "cluster_name": f"db-{i['name']}",
+                            "state": i["state"].upper(),
+                            "spark_version": "14.3.x-scala2.12",
+                            "node_type_id": i["instance_type"],
+                            "start_time": i["launched_at"],
+                        }
+                        for i in _db_instances
+                    ]
+                },
             )
         )
 
@@ -16868,9 +17261,17 @@ class DemoExchangeOnlineConnector(BaseConnector):
                 provider="microsoft",
                 event_type="exchange_message_trace",
                 raw_data={
-                    "value": [{"MessageId": e["message_id"], "SenderAddress": e["from_address"],
-                               "RecipientAddress": e["to_address"], "Subject": e["subject"],
-                               "Status": e["status"].capitalize(), "Direction": e["direction"]} for e in _exo_emails],
+                    "value": [
+                        {
+                            "MessageId": e["message_id"],
+                            "SenderAddress": e["from_address"],
+                            "RecipientAddress": e["to_address"],
+                            "Subject": e["subject"],
+                            "Status": e["status"].capitalize(),
+                            "Direction": e["direction"],
+                        }
+                        for e in _exo_emails
+                    ],
                 },
             )
         )
@@ -16946,7 +17347,12 @@ class DemoJenkinsConnector(BaseConnector):
                                 "result": "UNSTABLE",
                                 "timestamp": int((NOW - timedelta(minutes=45)).timestamp() * 1000),
                                 "duration": 540000,
-                                "test_report": {"total": 342, "passed": 338, "failed": 4, "skipped": 0},
+                                "test_report": {
+                                    "total": 342,
+                                    "passed": 338,
+                                    "failed": 4,
+                                    "skipped": 0,
+                                },
                             },
                         },
                     ]
@@ -16968,7 +17374,9 @@ class DemoJenkinsConnector(BaseConnector):
                             "numExecutors": 2,
                             "idle": False,
                             "jnlpAgent": False,
-                            "monitorData": {"hudson.node_monitors.DiskSpaceMonitor": {"size": 53687091200}},
+                            "monitorData": {
+                                "hudson.node_monitors.DiskSpaceMonitor": {"size": 53687091200}
+                            },
                         },
                         {
                             "displayName": "build-agent-01",
@@ -16977,7 +17385,9 @@ class DemoJenkinsConnector(BaseConnector):
                             "numExecutors": 4,
                             "idle": True,
                             "jnlpAgent": True,
-                            "monitorData": {"hudson.node_monitors.DiskSpaceMonitor": {"size": 107374182400}},
+                            "monitorData": {
+                                "hudson.node_monitors.DiskSpaceMonitor": {"size": 107374182400}
+                            },
                         },
                         {
                             "displayName": "build-agent-02",
@@ -17002,7 +17412,10 @@ class DemoJenkinsConnector(BaseConnector):
                 raw_data={
                     "useSecurity": True,
                     "crumbIssuer": {"crumbRequestField": "Jenkins-Crumb"},
-                    "securityRealm": {"type": "LDAPSecurityRealm", "server": "ldap://ldap.acme.com:389"},
+                    "securityRealm": {
+                        "type": "LDAPSecurityRealm",
+                        "server": "ldap://ldap.acme.com:389",
+                    },
                     "authorizationStrategy": {"type": "RoleBased"},
                     "slaveAgentPort": -1,
                     "markupFormatter": "EscapedMarkupFormatter",
@@ -17118,7 +17531,11 @@ class DemoGitHubActionsConnector(BaseConnector):
                     "alerts": [
                         {
                             "number": 101,
-                            "rule": {"id": "py/sql-injection", "severity": "error", "description": "SQL Injection"},
+                            "rule": {
+                                "id": "py/sql-injection",
+                                "severity": "error",
+                                "description": "SQL Injection",
+                            },
                             "state": "open",
                             "tool": {"name": "CodeQL"},
                             "most_recent_instance": {
@@ -17132,13 +17549,22 @@ class DemoGitHubActionsConnector(BaseConnector):
                         },
                         {
                             "number": 102,
-                            "rule": {"id": "js/xss", "severity": "warning", "description": "Cross-site Scripting"},
+                            "rule": {
+                                "id": "js/xss",
+                                "severity": "warning",
+                                "description": "Cross-site Scripting",
+                            },
                             "state": "open",
                             "tool": {"name": "CodeQL"},
                             "most_recent_instance": {
                                 "ref": "refs/heads/main",
-                                "location": {"path": "frontend/src/components/UserProfile.jsx", "start_line": 87},
-                                "message": {"text": "User-controlled value rendered without escaping"},
+                                "location": {
+                                    "path": "frontend/src/components/UserProfile.jsx",
+                                    "start_line": 87,
+                                },
+                                "message": {
+                                    "text": "User-controlled value rendered without escaping"
+                                },
                                 "classifications": ["security"],
                             },
                             "severity": "high",
@@ -17146,7 +17572,11 @@ class DemoGitHubActionsConnector(BaseConnector):
                         },
                         {
                             "number": 103,
-                            "rule": {"id": "py/insecure-hash", "severity": "note", "description": "Use of insecure hash algorithm"},
+                            "rule": {
+                                "id": "py/insecure-hash",
+                                "severity": "note",
+                                "description": "Use of insecure hash algorithm",
+                            },
                             "state": "open",
                             "tool": {"name": "CodeQL"},
                             "most_recent_instance": {
@@ -17356,7 +17786,10 @@ class DemoCircleCIConnector(BaseConnector):
                             "status": "success",
                             "created_at": (NOW - timedelta(hours=1)).isoformat(),
                             "trigger": {"type": "webhook", "actor": {"login": "ci-dev-alice"}},
-                            "vcs": {"branch": "main", "revision": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"},
+                            "vcs": {
+                                "branch": "main",
+                                "revision": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+                            },
                         },
                         {
                             "id": "cc-pipe-002",
@@ -17366,7 +17799,10 @@ class DemoCircleCIConnector(BaseConnector):
                             "status": "success",
                             "created_at": (NOW - timedelta(hours=4)).isoformat(),
                             "trigger": {"type": "webhook", "actor": {"login": "ci-dev-bob"}},
-                            "vcs": {"branch": "feat/notifications", "revision": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"},
+                            "vcs": {
+                                "branch": "feat/notifications",
+                                "revision": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1",
+                            },
                         },
                         {
                             "id": "cc-pipe-003",
@@ -17376,8 +17812,16 @@ class DemoCircleCIConnector(BaseConnector):
                             "status": "failed",
                             "created_at": (NOW - timedelta(hours=6)).isoformat(),
                             "trigger": {"type": "webhook", "actor": {"login": "ci-dev-carol"}},
-                            "vcs": {"branch": "feat/dashboard-v2", "revision": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"},
-                            "errors": [{"type": "config", "message": "Job 'deploy-prod' failed: exit code 1 — npm audit found 2 high severity vulnerabilities"}],
+                            "vcs": {
+                                "branch": "feat/dashboard-v2",
+                                "revision": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+                            },
+                            "errors": [
+                                {
+                                    "type": "config",
+                                    "message": "Job 'deploy-prod' failed: exit code 1 — npm audit found 2 high severity vulnerabilities",
+                                }
+                            ],
                         },
                     ],
                     "next_page_token": None,
@@ -17397,9 +17841,18 @@ class DemoCircleCIConnector(BaseConnector):
                             "name": "production-secrets",
                             "created_at": (NOW - timedelta(days=180)).isoformat(),
                             "environment_variables": [
-                                {"variable": "AWS_ACCESS_KEY_ID", "created_at": (NOW - timedelta(days=30)).isoformat()},
-                                {"variable": "AWS_SECRET_ACCESS_KEY", "created_at": (NOW - timedelta(days=30)).isoformat()},
-                                {"variable": "DATABASE_URL", "created_at": (NOW - timedelta(days=60)).isoformat()},
+                                {
+                                    "variable": "AWS_ACCESS_KEY_ID",
+                                    "created_at": (NOW - timedelta(days=30)).isoformat(),
+                                },
+                                {
+                                    "variable": "AWS_SECRET_ACCESS_KEY",
+                                    "created_at": (NOW - timedelta(days=30)).isoformat(),
+                                },
+                                {
+                                    "variable": "DATABASE_URL",
+                                    "created_at": (NOW - timedelta(days=60)).isoformat(),
+                                },
                             ],
                         },
                         {
@@ -17407,8 +17860,14 @@ class DemoCircleCIConnector(BaseConnector):
                             "name": "staging-secrets",
                             "created_at": (NOW - timedelta(days=365)).isoformat(),
                             "environment_variables": [
-                                {"variable": "STAGING_DB_URL", "created_at": (NOW - timedelta(days=400)).isoformat()},
-                                {"variable": "LEGACY_API_TOKEN", "created_at": (NOW - timedelta(days=540)).isoformat()},
+                                {
+                                    "variable": "STAGING_DB_URL",
+                                    "created_at": (NOW - timedelta(days=400)).isoformat(),
+                                },
+                                {
+                                    "variable": "LEGACY_API_TOKEN",
+                                    "created_at": (NOW - timedelta(days=540)).isoformat(),
+                                },
                             ],
                         },
                     ],
@@ -17562,48 +18021,90 @@ def main():
 
     # New connectors (84 new sources)
     _new_provider_map = [
-        ("pagerduty", "DemoPagerDutyConnector"), ("opsgenie", "DemoOpsgenieConnector"),
-        ("axonius", "DemoAxoniusConnector"), ("servicenow_cmdb", "DemoServiceNowCMDBConnector"),
-        ("runzero", "DemoRunZeroConnector"), ("patch_mgmt_microsoft", "DemoPatchMgmtMicrosoftConnector"),
-        ("ivanti", "DemoIvantiConnector"), ("venafi", "DemoVenafiConnector"),
-        ("aws_acm", "DemoAWSACMConnector"), ("digicert", "DemoDigiCertConnector"),
-        ("aws_secrets", "DemoAWSSecretsConnector"), ("azure_keyvault", "DemoAzureKeyVaultConnector"),
-        ("gcp_secrets", "DemoGCPSecretsConnector"), ("servicenow_grc", "DemoServiceNowGRCConnector"),
-        ("nightfall", "DemoNightfallConnector"), ("aws_backup", "DemoAWSBackupConnector"),
-        ("orca", "DemoOrcaConnector"), ("lacework", "DemoLaceworkConnector"),
-        ("rapid7", "DemoRapid7Connector"), ("crowdstrike_spotlight", "DemoCrowdStrikeSpotlightConnector"),
-        ("ping_identity", "DemoPingIdentityConnector"), ("onelogin", "DemoOneLoginConnector"),
-        ("workspace_one", "DemoWorkspaceOneConnector"), ("sumo_logic", "DemoSumoLogicConnector"),
-        ("cisco_umbrella", "DemoCiscoUmbrellaConnector"), ("drata", "DemoDrataConnector"),
-        ("vanta", "DemoVantaConnector"), ("archer", "DemoArcherConnector"),
-        ("drata_api", "DemoDrataAPIConnector"), ("vanta_api", "DemoVantaAPIConnector"),
-        ("secureframe", "DemoSecureframeConnector"), ("salesforce", "DemoSalesforceConnector"),
-        ("teams_compliance", "DemoTeamsComplianceConnector"), ("zoom", "DemoZoomConnector"),
-        ("smarsh", "DemoSmarshConnector"), ("ansible", "DemoAnsibleConnector"),
-        ("adp", "DemoADPConnector"), ("ukg", "DemoUKGConnector"),
-        ("sap_successfactors", "DemoSAPSuccessFactorsConnector"), ("wandb", "DemoWandBConnector"),
-        ("vertex_ai", "DemoVertexAIConnector"), ("mimecast", "DemoMimecastConnector"),
-        ("chainguard", "DemoChainGuardConnector"), ("syft_grype", "DemoSyftGrypeConnector"),
-        ("fossa", "DemoFossaConnector"), ("snyk_container", "DemoSnykContainerConnector"),
-        ("socketdev", "DemoSocketDevConnector"), ("salt_security", "DemoSaltSecurityConnector"),
-        ("noname", "DemoNoNameConnector"), ("wallarm", "DemoWallarmConnector"),
-        ("fortytwoCrunch", "DemoFortyTwoCrunchConnector"), ("tailscale", "DemoTailscaleConnector"),
-        ("twingate", "DemoTwingateConnector"), ("banyan", "DemoBanyanConnector"),
-        ("code42", "DemoCode42Connector"), ("varonis", "DemoVaronisConnector"),
-        ("bigid", "DemoBigIDConnector"), ("rubrik_security", "DemoRubrikSecurityConnector"),
-        ("commvault", "DemoCommvaultConnector"), ("rubrik", "DemoRubrikConnector"),
-        ("cohesity", "DemoCohesityConnector"), ("druva", "DemoDruvaConnector"),
-        ("ermetic", "DemoErmeticConnector"), ("trustarc", "DemoTrustArcConnector"),
-        ("cookiebot", "DemoCookiebotConnector"), ("osano", "DemoOsanoConnector"),
-        ("vulcan", "DemoVulcanConnector"), ("tanium", "DemoTaniumConnector"),
-        ("automox", "DemoAutomoxConnector"), ("fleet", "DemoFleetConnector"),
-        ("cobalt", "DemoCobaltConnector"), ("hackerone", "DemoHackerOneConnector"),
-        ("linode", "DemoLinodeConnector"), ("hetzner", "DemoHetznerConnector"),
-        ("logrhythm", "DemoLogRhythmConnector"), ("barracuda", "DemoBarracudaConnector"),
-        ("f5", "DemoF5Connector"), ("paylocity", "DemoPaylocityConnector"),
-        ("kubecost", "DemoKubecostConnector"), ("infracost", "DemoInfracostConnector"),
-        ("spotio", "DemoSpotioConnector"), ("manageengine", "DemoManageEngineConnector"),
-        ("ivanti_patch", "DemoIvantiPatchConnector"), ("plextrac", "DemoPlexTracConnector"),
+        ("pagerduty", "DemoPagerDutyConnector"),
+        ("opsgenie", "DemoOpsgenieConnector"),
+        ("axonius", "DemoAxoniusConnector"),
+        ("servicenow_cmdb", "DemoServiceNowCMDBConnector"),
+        ("runzero", "DemoRunZeroConnector"),
+        ("patch_mgmt_microsoft", "DemoPatchMgmtMicrosoftConnector"),
+        ("ivanti", "DemoIvantiConnector"),
+        ("venafi", "DemoVenafiConnector"),
+        ("aws_acm", "DemoAWSACMConnector"),
+        ("digicert", "DemoDigiCertConnector"),
+        ("aws_secrets", "DemoAWSSecretsConnector"),
+        ("azure_keyvault", "DemoAzureKeyVaultConnector"),
+        ("gcp_secrets", "DemoGCPSecretsConnector"),
+        ("servicenow_grc", "DemoServiceNowGRCConnector"),
+        ("nightfall", "DemoNightfallConnector"),
+        ("aws_backup", "DemoAWSBackupConnector"),
+        ("orca", "DemoOrcaConnector"),
+        ("lacework", "DemoLaceworkConnector"),
+        ("rapid7", "DemoRapid7Connector"),
+        ("crowdstrike_spotlight", "DemoCrowdStrikeSpotlightConnector"),
+        ("ping_identity", "DemoPingIdentityConnector"),
+        ("onelogin", "DemoOneLoginConnector"),
+        ("workspace_one", "DemoWorkspaceOneConnector"),
+        ("sumo_logic", "DemoSumoLogicConnector"),
+        ("cisco_umbrella", "DemoCiscoUmbrellaConnector"),
+        ("drata", "DemoDrataConnector"),
+        ("vanta", "DemoVantaConnector"),
+        ("archer", "DemoArcherConnector"),
+        ("drata_api", "DemoDrataAPIConnector"),
+        ("vanta_api", "DemoVantaAPIConnector"),
+        ("secureframe", "DemoSecureframeConnector"),
+        ("salesforce", "DemoSalesforceConnector"),
+        ("teams_compliance", "DemoTeamsComplianceConnector"),
+        ("zoom", "DemoZoomConnector"),
+        ("smarsh", "DemoSmarshConnector"),
+        ("ansible", "DemoAnsibleConnector"),
+        ("adp", "DemoADPConnector"),
+        ("ukg", "DemoUKGConnector"),
+        ("sap_successfactors", "DemoSAPSuccessFactorsConnector"),
+        ("wandb", "DemoWandBConnector"),
+        ("vertex_ai", "DemoVertexAIConnector"),
+        ("mimecast", "DemoMimecastConnector"),
+        ("chainguard", "DemoChainGuardConnector"),
+        ("syft_grype", "DemoSyftGrypeConnector"),
+        ("fossa", "DemoFossaConnector"),
+        ("snyk_container", "DemoSnykContainerConnector"),
+        ("socketdev", "DemoSocketDevConnector"),
+        ("salt_security", "DemoSaltSecurityConnector"),
+        ("noname", "DemoNoNameConnector"),
+        ("wallarm", "DemoWallarmConnector"),
+        ("fortytwoCrunch", "DemoFortyTwoCrunchConnector"),
+        ("tailscale", "DemoTailscaleConnector"),
+        ("twingate", "DemoTwingateConnector"),
+        ("banyan", "DemoBanyanConnector"),
+        ("code42", "DemoCode42Connector"),
+        ("varonis", "DemoVaronisConnector"),
+        ("bigid", "DemoBigIDConnector"),
+        ("rubrik_security", "DemoRubrikSecurityConnector"),
+        ("commvault", "DemoCommvaultConnector"),
+        ("rubrik", "DemoRubrikConnector"),
+        ("cohesity", "DemoCohesityConnector"),
+        ("druva", "DemoDruvaConnector"),
+        ("ermetic", "DemoErmeticConnector"),
+        ("trustarc", "DemoTrustArcConnector"),
+        ("cookiebot", "DemoCookiebotConnector"),
+        ("osano", "DemoOsanoConnector"),
+        ("vulcan", "DemoVulcanConnector"),
+        ("tanium", "DemoTaniumConnector"),
+        ("automox", "DemoAutomoxConnector"),
+        ("fleet", "DemoFleetConnector"),
+        ("cobalt", "DemoCobaltConnector"),
+        ("hackerone", "DemoHackerOneConnector"),
+        ("linode", "DemoLinodeConnector"),
+        ("hetzner", "DemoHetznerConnector"),
+        ("logrhythm", "DemoLogRhythmConnector"),
+        ("barracuda", "DemoBarracudaConnector"),
+        ("f5", "DemoF5Connector"),
+        ("paylocity", "DemoPaylocityConnector"),
+        ("kubecost", "DemoKubecostConnector"),
+        ("infracost", "DemoInfracostConnector"),
+        ("spotio", "DemoSpotioConnector"),
+        ("manageengine", "DemoManageEngineConnector"),
+        ("ivanti_patch", "DemoIvantiPatchConnector"),
+        ("plextrac", "DemoPlexTracConnector"),
     ]
     # Build class lookup from ALL_NEW_CONNECTORS
     _new_cls_map = {cls.__name__: cls for cls in ALL_NEW_CONNECTORS}

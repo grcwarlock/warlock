@@ -71,7 +71,9 @@ class DrataConnector(BaseConnector):
         api_key = self.get_secret("DRATA_API_KEY")
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for endpoint, event_type, params in DRATA_ENDPOINTS:

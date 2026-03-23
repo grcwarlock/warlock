@@ -69,7 +69,9 @@ class ChainguardConnector(BaseConnector):
         token = self.get_secret("CHAINGUARD_API_TOKEN")
         base_url = self.config.settings.get("base_url", CHAINGUARD_BASE_URL)
         headers = self._headers(token)
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for endpoint, event_type in CHAINGUARD_ENDPOINTS:
@@ -77,7 +79,9 @@ class ChainguardConnector(BaseConnector):
                     resp = client.get(endpoint)
                     resp.raise_for_status()
                     body = resp.json()
-                    items = body if isinstance(body, list) else body.get("items", body.get("data", []))
+                    items = (
+                        body if isinstance(body, list) else body.get("items", body.get("data", []))
+                    )
                     result.events.append(
                         RawEventData(
                             source="chainguard",

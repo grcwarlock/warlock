@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 
 from warlock.db.models import ControlResult, POAM
 from warlock.domains.base import (
-    DomainEvent, QueryFilters, RelatedItem, UrgentItem,
+    DomainEvent,
+    QueryFilters,
+    RelatedItem,
+    UrgentItem,
 )
 
 log = logging.getLogger(__name__)
@@ -29,14 +32,21 @@ class ControlsDomainService:
         self._session = session
 
     def get_urgent_items(self, filters: QueryFilters) -> list[UrgentItem]:
-        q = self._session.query(
-            ControlResult.framework, ControlResult.control_id,
-            ControlResult.severity,
-            func.count(ControlResult.id).label("count"),
-        ).filter(
-            ControlResult.status == "non_compliant",
-        ).group_by(
-            ControlResult.framework, ControlResult.control_id, ControlResult.severity,
+        q = (
+            self._session.query(
+                ControlResult.framework,
+                ControlResult.control_id,
+                ControlResult.severity,
+                func.count(ControlResult.id).label("count"),
+            )
+            .filter(
+                ControlResult.status == "non_compliant",
+            )
+            .group_by(
+                ControlResult.framework,
+                ControlResult.control_id,
+                ControlResult.severity,
+            )
         )
         if filters.frameworks:
             q = q.filter(ControlResult.framework.in_(filters.frameworks))
@@ -45,23 +55,27 @@ class ControlsDomainService:
         items = []
         for fw, ctrl, sev, count in rows:
             score = _SEV_SCORE.get(sev, 10) + min(count, 100)
-            items.append(UrgentItem(
-                domain="controls", entity_type="control",
-                entity_id=f"{fw}/{ctrl}",
-                summary=f"{ctrl} ({fw}): {count} non-compliant results [{sev}]",
-                severity=sev or "medium", priority_score=score,
-                action_hint=f"warlock control {ctrl} -f {fw}",
-                framework=fw,
-            ))
+            items.append(
+                UrgentItem(
+                    domain="controls",
+                    entity_type="control",
+                    entity_id=f"{fw}/{ctrl}",
+                    summary=f"{ctrl} ({fw}): {count} non-compliant results [{sev}]",
+                    severity=sev or "medium",
+                    priority_score=score,
+                    action_hint=f"warlock control {ctrl} -f {fw}",
+                    framework=fw,
+                )
+            )
         return items
 
     def get_related_to(self, entity_type: str, entity_id: str) -> list[RelatedItem]:
         if entity_type != "control":
             return []
         control_id = entity_id
-        results = self._session.query(ControlResult).filter(
-            ControlResult.control_id == control_id
-        ).all()
+        results = (
+            self._session.query(ControlResult).filter(ControlResult.control_id == control_id).all()
+        )
         if not results:
             return []
 
@@ -77,7 +91,8 @@ class ControlsDomainService:
 
         items: list[RelatedItem] = [
             RelatedItem(
-                domain="controls", entity_type="control_status",
+                domain="controls",
+                entity_type="control_status",
                 entity_id=control_id,
                 summary=f"Compliant: {compliant}, Non-compliant: {non_compliant}, Total: {total}",
                 status="non_compliant" if non_compliant > 0 else "compliant",
@@ -88,12 +103,16 @@ class ControlsDomainService:
         poams = self._session.query(POAM).filter(POAM.control_id == control_id).all()
         for poam in poams:
             desc = poam.weakness_description[:80] if poam.weakness_description else "N/A"
-            items.append(RelatedItem(
-                domain="controls", entity_type="poam",
-                entity_id=poam.id,
-                summary=f"POAM: {desc} [{poam.status}]",
-                severity=poam.severity, status=poam.status,
-            ))
+            items.append(
+                RelatedItem(
+                    domain="controls",
+                    entity_type="poam",
+                    entity_id=poam.id,
+                    summary=f"POAM: {desc} [{poam.status}]",
+                    severity=poam.severity,
+                    status=poam.status,
+                )
+            )
         return items
 
     def handle_event(self, event: DomainEvent) -> list[DomainEvent]:

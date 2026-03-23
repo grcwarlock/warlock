@@ -69,7 +69,9 @@ class AxoniusNormalizer(BaseNormalizer):
                         "device_id": device_id,
                         "hostname": hostname,
                         "os_type": os_type,
-                        "adapter_count": len(device.get("adapters", [])) if isinstance(device, dict) else 0,
+                        "adapter_count": len(device.get("adapters", []))
+                        if isinstance(device, dict)
+                        else 0,
                         "last_seen": device.get("last_seen", ""),
                     },
                     resource_id=device_id,
@@ -108,7 +110,9 @@ class AxoniusNormalizer(BaseNormalizer):
                         "username": username,
                         "email": email,
                         "is_admin": is_admin,
-                        "adapter_count": len(user.get("adapters", [])) if isinstance(user, dict) else 0,
+                        "adapter_count": len(user.get("adapters", []))
+                        if isinstance(user, dict)
+                        else 0,
                         "last_seen": user.get("last_seen", ""),
                     },
                     resource_id=user_id,

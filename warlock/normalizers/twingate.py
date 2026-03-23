@@ -40,7 +40,11 @@ class TwingateNormalizer(BaseNormalizer):
     def _normalize_resources(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("resources", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("resources", response.get("data", []))
+        )
 
         for resource in items:
             resource_id = str(resource.get("id", ""))
@@ -75,7 +79,11 @@ class TwingateNormalizer(BaseNormalizer):
     def _normalize_connectors(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("connectors", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("connectors", response.get("data", []))
+        )
 
         for connector in items:
             connector_id = str(connector.get("id", ""))
@@ -110,7 +118,11 @@ class TwingateNormalizer(BaseNormalizer):
     def _normalize_users(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("users", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("users", response.get("data", []))
+        )
 
         for user in items:
             user_id = str(user.get("id", ""))

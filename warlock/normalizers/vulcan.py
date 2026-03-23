@@ -51,7 +51,11 @@ class VulcanNormalizer(BaseNormalizer):
     def _normalize_assets(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("assets", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("assets", response.get("data", []))
+        )
 
         for asset in items:
             asset_id = str(asset.get("id", ""))
@@ -125,7 +129,11 @@ class VulcanNormalizer(BaseNormalizer):
     def _normalize_campaigns(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("campaigns", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("campaigns", response.get("data", []))
+        )
 
         for campaign in items:
             campaign_id = str(campaign.get("id", ""))

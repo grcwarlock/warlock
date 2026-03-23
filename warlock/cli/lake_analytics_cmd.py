@@ -144,26 +144,16 @@ def lake_summary() -> None:
         connector_count = session.query(ConnectorRun).count()
 
         latest_raw = (
-            session.query(RawEvent.ingested_at)
-            .order_by(RawEvent.ingested_at.desc())
-            .first()
+            session.query(RawEvent.ingested_at).order_by(RawEvent.ingested_at.desc()).first()
         )
         earliest_raw = (
-            session.query(RawEvent.ingested_at)
-            .order_by(RawEvent.ingested_at.asc())
-            .first()
+            session.query(RawEvent.ingested_at).order_by(RawEvent.ingested_at.asc()).first()
         )
         latest_finding = (
-            session.query(Finding.ingested_at)
-            .order_by(Finding.ingested_at.desc())
-            .first()
+            session.query(Finding.ingested_at).order_by(Finding.ingested_at.desc()).first()
         )
 
-        sources = (
-            session.query(RawEvent.source, RawEvent.provider)
-            .distinct()
-            .all()
-        )
+        sources = session.query(RawEvent.source, RawEvent.provider).distinct().all()
 
     table = Table(title="Data Lake Summary")
     table.add_column("Metric", style="cyan")
@@ -458,9 +448,7 @@ def lake_lineage(finding_id: str) -> None:
         if not finding:
             _error(f"Finding not found: {finding_id}")
 
-        raw_event = (
-            session.query(RawEvent).filter(RawEvent.id == finding.raw_event_id).first()
-        )
+        raw_event = session.query(RawEvent).filter(RawEvent.id == finding.raw_event_id).first()
         connector_run = None
         if raw_event:
             connector_run = (
@@ -479,7 +467,9 @@ def lake_lineage(finding_id: str) -> None:
         t_finding.add_row("Title", finding.title or "—")
         t_finding.add_row("Severity", finding.severity)
         t_finding.add_row("Source", f"{finding.source} / {finding.provider}")
-        t_finding.add_row("Observed at", str(finding.observed_at)[:19] if finding.observed_at else "—")
+        t_finding.add_row(
+            "Observed at", str(finding.observed_at)[:19] if finding.observed_at else "—"
+        )
         t_finding.add_row("SHA256", finding.sha256[:16] + "...")
         console.print(t_finding)
 
@@ -489,7 +479,9 @@ def lake_lineage(finding_id: str) -> None:
             t_raw.add_column("Value")
             t_raw.add_row("ID", raw_event.id)
             t_raw.add_row("Event type", raw_event.event_type)
-            t_raw.add_row("Ingested at", str(raw_event.ingested_at)[:19] if raw_event.ingested_at else "—")
+            t_raw.add_row(
+                "Ingested at", str(raw_event.ingested_at)[:19] if raw_event.ingested_at else "—"
+            )
             t_raw.add_row("SHA256", raw_event.sha256[:16] + "...")
             console.print(t_raw)
 
@@ -501,7 +493,10 @@ def lake_lineage(finding_id: str) -> None:
             t_conn.add_row("Connector", connector_run.connector_name)
             t_conn.add_row("Source", f"{connector_run.source} / {connector_run.provider}")
             t_conn.add_row("Status", connector_run.status)
-            t_conn.add_row("Started at", str(connector_run.started_at)[:19] if connector_run.started_at else "—")
+            t_conn.add_row(
+                "Started at",
+                str(connector_run.started_at)[:19] if connector_run.started_at else "—",
+            )
             t_conn.add_row("Events collected", str(connector_run.event_count))
             console.print(t_conn)
 
@@ -729,9 +724,7 @@ def lake_partitions() -> None:
 
 
 @lake_analytics.command("compact")
-@click.option(
-    "--dry-run", is_flag=True, help="Show what would be compacted without writing"
-)
+@click.option("--dry-run", is_flag=True, help="Show what would be compacted without writing")
 def lake_compact(dry_run: bool) -> None:
     """Compact small Parquet files in the lake to reduce file-count overhead."""
     import pathlib
@@ -751,11 +744,7 @@ def lake_compact(dry_run: bool) -> None:
     for zone_dir in sorted(lake_path.rglob("*")):
         if not zone_dir.is_dir():
             continue
-        small_files = [
-            f
-            for f in zone_dir.glob("*.parquet")
-            if f.stat().st_size < SMALL_THRESHOLD
-        ]
+        small_files = [f for f in zone_dir.glob("*.parquet") if f.stat().st_size < SMALL_THRESHOLD]
         if len(small_files) < 2:
             continue
 
@@ -808,13 +797,9 @@ def lake_retention() -> None:
 
     with get_session() as session:
         raw_total = session.query(RawEvent).count()
-        raw_eligible = (
-            session.query(RawEvent).filter(RawEvent.ingested_at < cutoff).count()
-        )
+        raw_eligible = session.query(RawEvent).filter(RawEvent.ingested_at < cutoff).count()
         finding_total = session.query(Finding).count()
-        finding_eligible = (
-            session.query(Finding).filter(Finding.ingested_at < cutoff).count()
-        )
+        finding_eligible = session.query(Finding).filter(Finding.ingested_at < cutoff).count()
 
     table = Table(title="Data Retention Policy")
     table.add_column("Metric", style="cyan")
@@ -940,9 +925,7 @@ def anomaly_detect(source: str | None, days: int) -> None:
         elif total < drop_threshold and avg > 0:
             anomalies.append((day, total, "DROP", f"{total / avg:.1f}x average"))
 
-    console.print(
-        f"[bold]Anomaly Detection[/bold] — {days}-day window, avg {avg:.0f} findings/day"
-    )
+    console.print(f"[bold]Anomaly Detection[/bold] — {days}-day window, avg {avg:.0f} findings/day")
 
     if not anomalies:
         console.print("[green]No anomalies detected.[/green]")

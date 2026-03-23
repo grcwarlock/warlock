@@ -38,7 +38,9 @@ class WorkspaceOneConnector(BaseConnector):
         if not self.get_secret("WORKSPACE_ONE_API_KEY"):
             errors.append("WORKSPACE_ONE_API_KEY env var is not set")
         if not self.config.settings.get("base_url"):
-            errors.append("settings.base_url is required for Workspace ONE (e.g. https://as###.awmdm.com)")
+            errors.append(
+                "settings.base_url is required for Workspace ONE (e.g. https://as###.awmdm.com)"
+            )
         return errors
 
     def health_check(self) -> bool:
@@ -71,7 +73,9 @@ class WorkspaceOneConnector(BaseConnector):
         api_key = self.get_secret("WORKSPACE_ONE_API_KEY")
         headers = self._headers(api_key)
 
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for endpoint, event_type, params in WORKSPACE_ONE_ENDPOINTS:
@@ -121,8 +125,8 @@ class WorkspaceOneConnector(BaseConnector):
             body = resp.json()
 
             # Workspace ONE wraps results in various keys
-            items = (
-                body.get("Devices", body.get("profiles", body.get("apps", body.get("Result", []))))
+            items = body.get(
+                "Devices", body.get("profiles", body.get("apps", body.get("Result", [])))
             )
             if not isinstance(items, list):
                 items = []

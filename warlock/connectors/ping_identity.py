@@ -86,7 +86,9 @@ class PingIdentityConnector(BaseConnector):
 
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for path_template, event_type, params in PING_ENDPOINTS:

@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 
-_EXPIRY_CRITICAL_DAYS = 0   # Already expired
-_EXPIRY_HIGH_DAYS = 30      # Expires within 30 days
+_EXPIRY_CRITICAL_DAYS = 0  # Already expired
+_EXPIRY_HIGH_DAYS = 30  # Expires within 30 days
 
 
 def _days_until_expiry(not_after: str) -> int | None:

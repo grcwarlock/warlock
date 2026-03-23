@@ -134,7 +134,9 @@ class LaceworkConnector(BaseConnector):
             items = body.get("data", [])
             all_items.extend(items)
             paging = body.get("paging", {})
-            next_cursor = paging.get("urls", {}).get("nextPage") if isinstance(paging, dict) else None
+            next_cursor = (
+                paging.get("urls", {}).get("nextPage") if isinstance(paging, dict) else None
+            )
             if not next_cursor or not items:
                 break
             current_params["nextPage"] = next_cursor

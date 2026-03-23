@@ -112,25 +112,17 @@ def _gdpr_deadline(days: int = 30) -> str:
     return (_utcnow() + timedelta(days=days)).strftime("%Y-%m-%d")
 
 
-def _write_audit_entry(
-    session, action: str, entity_type: str, entity_id: str, extra: dict
-) -> None:
+def _write_audit_entry(session, action: str, entity_type: str, entity_id: str, extra: dict) -> None:
     """Append a hash-chained audit entry."""
     import hashlib
 
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry)
-        .order_by(AuditEntry.sequence.desc())
-        .first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -210,13 +202,9 @@ def privacy_dsar_intake() -> None:
 
         with get_session() as session:
             # Auto-search data silos for subject's data
-            console.print(
-                f"\n[dim]Searching data silos for '{subject_email}'...[/dim]"
-            )
+            console.print(f"\n[dim]Searching data silos for '{subject_email}'...[/dim]")
 
-            all_silos = (
-                session.query(DataSilo).filter(DataSilo.is_active.is_(True)).all()
-            )
+            all_silos = session.query(DataSilo).filter(DataSilo.is_active.is_(True)).all()
 
             pii_silos = [s for s in all_silos if s.contains_pii]
 
@@ -272,9 +260,7 @@ def privacy_dsar_intake() -> None:
             if assignee.strip():
                 dsar_data["assigned_to"] = assignee.strip()
 
-            _write_audit_entry(
-                session, "dsar_created", "dsar", dsar_id, dsar_data
-            )
+            _write_audit_entry(session, "dsar_created", "dsar", dsar_id, dsar_data)
 
             console.print()
             console.print(
@@ -286,11 +272,7 @@ def privacy_dsar_intake() -> None:
                     f"Deadline: [bold]{deadline_str}[/bold] "
                     f"({deadline_days} days)  |  "
                     f"PII silos to check: {len(pii_silos)}"
-                    + (
-                        f"\nAssigned to: {assignee.strip()}"
-                        if assignee.strip()
-                        else ""
-                    ),
+                    + (f"\nAssigned to: {assignee.strip()}" if assignee.strip() else ""),
                     border_style="green",
                 )
             )
@@ -350,7 +332,9 @@ def privacy_breach_response() -> None:
             # 72-hour GDPR deadline
             gdpr_deadline = discovered_dt + timedelta(hours=72)
             hours_remaining = (gdpr_deadline - _utcnow()).total_seconds() / 3600
-            deadline_color = "red" if hours_remaining < 24 else ("yellow" if hours_remaining < 48 else "green")
+            deadline_color = (
+                "red" if hours_remaining < 24 else ("yellow" if hours_remaining < 48 else "green")
+            )
 
             console.print(
                 f"\n[bold]GDPR 72-hour notification deadline:[/bold] "
@@ -359,7 +343,9 @@ def privacy_breach_response() -> None:
             if hours_remaining < 0:
                 console.print("[red bold]DEADLINE PASSED — immediate action required.[/red bold]")
             else:
-                console.print(f"  [{deadline_color}]{hours_remaining:.1f} hours remaining[/{deadline_color}]")
+                console.print(
+                    f"  [{deadline_color}]{hours_remaining:.1f} hours remaining[/{deadline_color}]"
+                )
 
             # Show affected data silos
             affected_silos = (
@@ -373,9 +359,7 @@ def privacy_breach_response() -> None:
                 .all()
             )
 
-            total_records = sum(
-                s.total_records or 0 for s in affected_silos if s.total_records
-            )
+            total_records = sum(s.total_records or 0 for s in affected_silos if s.total_records)
 
             if affected_silos:
                 console.print(
@@ -413,9 +397,7 @@ def privacy_breach_response() -> None:
                             "notified_by": _get_actor(),
                         }
                     )
-                    console.print(
-                        f"  [green]Notification to {info['authority']} recorded.[/green]"
-                    )
+                    console.print(f"  [green]Notification to {info['authority']} recorded.[/green]")
 
             # Create breach record
             breach_id = str(uuid.uuid4())
@@ -436,8 +418,7 @@ def privacy_breach_response() -> None:
             # Generate breach notification report
             report_lines = [
                 "# Data Breach Notification Report",
-                f"\n**Date:** {_utcnow().strftime('%Y-%m-%d')}  "
-                f"**Breach ID:** {breach_id[:8]}",
+                f"\n**Date:** {_utcnow().strftime('%Y-%m-%d')}  **Breach ID:** {breach_id[:8]}",
                 "\n## Breach Summary\n",
                 f"**What happened:** {what_happened}",
                 f"**Discovered:** {discovered_dt.strftime('%Y-%m-%d %H:%M UTC')}",
@@ -558,6 +539,7 @@ def privacy_data_map_review() -> None:
                 table.add_column("Owner")
 
                 for silo in group:
+
                     def _yn(v: bool | None) -> str:  # noqa: E306
                         if v is True:
                             return "[yellow]yes[/yellow]"
@@ -582,7 +564,9 @@ def privacy_data_map_review() -> None:
             console.print("\n[bold yellow]Compliance Gaps[/bold yellow]")
             gaps_found = False
 
-            no_retention = [s for s in silos if not s.retention_days and (s.contains_pii or s.contains_phi)]
+            no_retention = [
+                s for s in silos if not s.retention_days and (s.contains_pii or s.contains_phi)
+            ]
             if no_retention:
                 console.print(
                     f"\n  [yellow]Missing retention policy:[/yellow] {len(no_retention)} PII/PHI silo(s)"
@@ -593,7 +577,11 @@ def privacy_data_map_review() -> None:
                     console.print(f"    ... and {len(no_retention) - 5} more")
                 gaps_found = True
 
-            no_encryption = [s for s in silos if s.encrypted_at_rest is False and (s.contains_pii or s.contains_phi)]
+            no_encryption = [
+                s
+                for s in silos
+                if s.encrypted_at_rest is False and (s.contains_pii or s.contains_phi)
+            ]
             if no_encryption:
                 console.print(
                     f"\n  [red]Not encrypted at rest:[/red] {len(no_encryption)} PII/PHI silo(s)"
@@ -602,11 +590,11 @@ def privacy_data_map_review() -> None:
                     console.print(f"    - {s.name} ({s.silo_type})")
                 gaps_found = True
 
-            unknown_class = [s for s in silos if not s.data_classification or s.data_classification == "unknown"]
+            unknown_class = [
+                s for s in silos if not s.data_classification or s.data_classification == "unknown"
+            ]
             if unknown_class:
-                console.print(
-                    f"\n  [dim]Unclassified silos:[/dim] {len(unknown_class)}"
-                )
+                console.print(f"\n  [dim]Unclassified silos:[/dim] {len(unknown_class)}")
                 gaps_found = True
 
             if not gaps_found:
@@ -634,9 +622,7 @@ def privacy_data_map_review() -> None:
                     f"PII: {silo.contains_pii}  PHI: {silo.contains_phi}  PCI: {silo.contains_pci}"
                 )
 
-                if not Confirm.ask(
-                    "  Update classification?", default=False, console=console
-                ):
+                if not Confirm.ask("  Update classification?", default=False, console=console):
                     continue
 
                 new_cls = Prompt.ask(
@@ -707,9 +693,7 @@ def privacy_impact_assessment(system: str) -> None:
             )
 
             if silos:
-                console.print(
-                    f"\n[bold]Relevant data silos for '{system}'[/bold]"
-                )
+                console.print(f"\n[bold]Relevant data silos for '{system}'[/bold]")
                 for silo in silos[:10]:
                     cls_style = _CLASSIFICATION_STYLE.get(
                         silo.data_classification or "unknown", "white"
@@ -721,9 +705,7 @@ def privacy_impact_assessment(system: str) -> None:
                     )
                 console.print()
             else:
-                console.print(
-                    f"[dim]No data silos found matching '{system}'.[/dim]\n"
-                )
+                console.print(f"[dim]No data silos found matching '{system}'.[/dim]\n")
 
             # Walk through DPIA questions
             answers: dict[str, str] = {}
@@ -736,15 +718,21 @@ def privacy_impact_assessment(system: str) -> None:
             # Risk score calculation
             # Simple heuristic: flag negative-sentiment responses
             _risk_keywords = [
-                "high risk", "significant", "sensitive", "health", "financial",
-                "criminal", "children", "large scale", "systematic", "vulnerable",
-                "profiling", "automated decision",
+                "high risk",
+                "significant",
+                "sensitive",
+                "health",
+                "financial",
+                "criminal",
+                "children",
+                "large scale",
+                "systematic",
+                "vulnerable",
+                "profiling",
+                "automated decision",
             ]
             risk_hits = sum(
-                1
-                for ans in answers.values()
-                for kw in _risk_keywords
-                if kw in ans.lower()
+                1 for ans in answers.values() for kw in _risk_keywords if kw in ans.lower()
             )
             # Residual risk from explicit answer
             residual_lower = answers.get("residual_risk", "").lower()
@@ -816,9 +804,7 @@ def privacy_impact_assessment(system: str) -> None:
             console.print(f"[{risk_color}]{risk_label}[/{risk_color}]")
 
             # Optionally submit for DPO review
-            if Confirm.ask(
-                "\nSubmit for DPO review?", default=(risk_score >= 40), console=console
-            ):
+            if Confirm.ask("\nSubmit for DPO review?", default=(risk_score >= 40), console=console):
                 dpia_id = str(uuid.uuid4())
                 _write_audit_entry(
                     session,
@@ -852,9 +838,7 @@ def privacy_impact_assessment(system: str) -> None:
                         "completed_by": _get_actor(),
                     },
                 )
-                console.print(
-                    f"[green]DPIA saved to audit trail. Record ID: {dpia_id[:8]}[/green]"
-                )
+                console.print(f"[green]DPIA saved to audit trail. Record ID: {dpia_id[:8]}[/green]")
 
     except (KeyboardInterrupt, EOFError):
         console.print("\n[dim]DPIA session ended.[/dim]")

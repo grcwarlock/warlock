@@ -146,13 +146,10 @@ def vulns_sla_breach(source: str | None, severity: str | None, limit: int) -> No
         for sev in sevs:
             days = _SLA_DAYS.get(sev, 90)
             cutoff = now - timedelta(days=days)
-            q = (
-                session.query(Finding)
-                .filter(
-                    Finding.observation_type == "vulnerability",
-                    Finding.severity == sev,
-                    Finding.observed_at < cutoff,
-                )
+            q = session.query(Finding).filter(
+                Finding.observation_type == "vulnerability",
+                Finding.severity == sev,
+                Finding.observed_at < cutoff,
             )
             if source:
                 q = q.filter(Finding.source == source)
@@ -272,7 +269,9 @@ def vulns_trends(days: int, source: str | None) -> None:
 
 @vulns.command("accept")
 @click.argument("finding_id")
-@click.option("--reason", "-r", required=True, help="Justification for accepting this vulnerability")
+@click.option(
+    "--reason", "-r", required=True, help="Justification for accepting this vulnerability"
+)
 @click.option(
     "--actor",
     default=None,
@@ -316,9 +315,7 @@ def vulns_accept(finding_id: str, reason: str, actor: str | None) -> None:
         finding.detail = detail
         session.commit()
 
-    console.print(
-        f"[green]Vulnerability {finding_id[:8]} risk-accepted by {actor_name}.[/green]"
-    )
+    console.print(f"[green]Vulnerability {finding_id[:8]} risk-accepted by {actor_name}.[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -472,7 +469,9 @@ def vulns_remediation_rate(days: int, source: str | None) -> None:
         q_remediated = (
             session.query(Finding)
             .join(Finding.control_mappings)
-            .join(ControlResult, ControlResult.control_mapping_id == ControlResult.control_mapping_id)
+            .join(
+                ControlResult, ControlResult.control_mapping_id == ControlResult.control_mapping_id
+            )
             .filter(
                 Finding.observation_type == "vulnerability",
                 Finding.observed_at >= cutoff,

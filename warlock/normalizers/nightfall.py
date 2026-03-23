@@ -53,7 +53,9 @@ class NightfallNormalizer(BaseNormalizer):
                 confidence = finding.get("confidence", "POSSIBLE")
                 severity = _CONFIDENCE_SEVERITY_MAP.get(confidence, "medium")
                 detector = finding.get("detector", {})
-                detector_name = detector.get("name", "unknown") if isinstance(detector, dict) else str(detector)
+                detector_name = (
+                    detector.get("name", "unknown") if isinstance(detector, dict) else str(detector)
+                )
                 location = finding.get("location", {})
                 resource = location.get("byteRange", {}) if isinstance(location, dict) else {}
 

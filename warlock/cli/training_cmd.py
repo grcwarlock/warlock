@@ -30,9 +30,7 @@ def training() -> None:
 @training.command("status")
 @click.option("--department", "-d", default=None, help="Filter by department")
 @click.option("--role", "-r", default=None, help="Filter by employee type/role")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def training_status(
     department: str | None,
     role: str | None,
@@ -141,9 +139,7 @@ def training_status(
     help="Include personnel overdue by at least N days (0 = all overdue)",
 )
 @click.option("--department", default=None, help="Filter by department")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def overdue_training(days: int, department: str | None, output_format: str) -> None:
     """List personnel with overdue training."""
     from datetime import datetime, timedelta, timezone
@@ -163,8 +159,7 @@ def overdue_training(days: int, department: str | None, output_format: str) -> N
         if cutoff and days:
             # Only include if last_training_date is older than cutoff or missing
             q = q.filter(
-                (Personnel.last_training_date < cutoff)
-                | (Personnel.last_training_date.is_(None))
+                (Personnel.last_training_date < cutoff) | (Personnel.last_training_date.is_(None))
             )
         rows = q.order_by(Personnel.last_training_date.asc().nullsfirst()).all()
 
@@ -174,8 +169,12 @@ def overdue_training(days: int, department: str | None, output_format: str) -> N
                 "full_name": r.full_name,
                 "department": r.department or "",
                 "employee_type": r.employee_type or "",
-                "last_training_date": str(r.last_training_date)[:10] if r.last_training_date else "\u2014",
-                "phishing_score": f"{r.phishing_score:.1f}" if r.phishing_score is not None else "\u2014",
+                "last_training_date": str(r.last_training_date)[:10]
+                if r.last_training_date
+                else "\u2014",
+                "phishing_score": f"{r.phishing_score:.1f}"
+                if r.phishing_score is not None
+                else "\u2014",
                 "manager_email": r.manager_email or "",
             }
             for r in rows
@@ -220,10 +219,10 @@ def overdue_training(days: int, department: str | None, output_format: str) -> N
 
 
 @training.command("campaigns")
-@click.option("--status", "-s", default=None, help="Filter by campaign status (e.g. completed, active)")
 @click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
+    "--status", "-s", default=None, help="Filter by campaign status (e.g. completed, active)"
 )
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def campaigns_list(status: str | None, output_format: str) -> None:
     """List training campaigns derived from personnel completion records.
 
@@ -250,7 +249,7 @@ def campaigns_list(status: str | None, output_format: str) -> None:
     campaign_completions: dict[str, int] = {}
     campaign_dates: dict[str, str] = {}
 
-    for (completions, t_status, _) in rows:
+    for completions, t_status, _ in rows:
         for entry in completions or []:
             name = entry.get("campaign") or entry.get("name") or ""
             if not name:
@@ -348,9 +347,7 @@ def training_report(output_format: str) -> None:
     not_enrolled = status_counts.get("not_enrolled", 0)
     completion_rate = f"{current / total * 100:.1f}%" if total else "N/A"
     avg_phishing = (
-        f"{sum(phishing_scores) / len(phishing_scores):.1f}"
-        if phishing_scores
-        else "N/A"
+        f"{sum(phishing_scores) / len(phishing_scores):.1f}" if phishing_scores else "N/A"
     )
 
     if output_format == "json":
@@ -373,7 +370,9 @@ def training_report(output_format: str) -> None:
         console.print("# Training Compliance Report\n")
         console.print(f"**Total Active Personnel:** {total}")
         console.print(f"**Completion Rate:** {completion_rate}")
-        console.print(f"**Current:** {current} | **Overdue:** {overdue} | **Not Enrolled:** {not_enrolled}")
+        console.print(
+            f"**Current:** {current} | **Overdue:** {overdue} | **Not Enrolled:** {not_enrolled}"
+        )
         console.print(f"**Avg Phishing Score:** {avg_phishing}\n")
         console.print("## By Department\n")
         for dept, s_map in sorted(dept_counts.items()):

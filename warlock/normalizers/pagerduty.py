@@ -128,7 +128,9 @@ class PagerDutyNormalizer(BaseNormalizer):
 
         for oncall in items:
             schedule = oncall.get("schedule", {})
-            schedule_name = schedule.get("summary", "unknown") if isinstance(schedule, dict) else "unknown"
+            schedule_name = (
+                schedule.get("summary", "unknown") if isinstance(schedule, dict) else "unknown"
+            )
             schedule_id = schedule.get("id", "") if isinstance(schedule, dict) else ""
             user = oncall.get("user", {})
             user_name = user.get("summary", "unknown") if isinstance(user, dict) else "unknown"

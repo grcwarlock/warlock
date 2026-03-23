@@ -50,7 +50,11 @@ class ErmeticNormalizer(BaseNormalizer):
     def _normalize_identities(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("identities", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("identities", response.get("data", []))
+        )
 
         for identity in items:
             identity_id = str(identity.get("id", ""))
@@ -84,7 +88,11 @@ class ErmeticNormalizer(BaseNormalizer):
     def _normalize_permissions(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("permissions", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("permissions", response.get("data", []))
+        )
 
         for perm in items:
             perm_id = str(perm.get("id", ""))
@@ -117,7 +125,11 @@ class ErmeticNormalizer(BaseNormalizer):
     def _normalize_findings(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("findings", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("findings", response.get("data", []))
+        )
 
         for finding in items:
             finding_id = str(finding.get("id", ""))

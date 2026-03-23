@@ -119,9 +119,7 @@ def _collect_attestation_deadlines(session) -> list[dict]:
 
     items = []
     rows = (
-        session.query(Attestation)
-        .filter(Attestation.status.notin_(["approved", "rejected"]))
-        .all()
+        session.query(Attestation).filter(Attestation.status.notin_(["approved", "rejected"])).all()
     )
     for att in rows:
         # Use updated_at + 7 days as a reasonable review SLA
@@ -147,9 +145,7 @@ def _collect_exception_deadlines(session) -> list[dict]:
     from warlock.db.models import AuditEntry, PolicyOverride
 
     items = []
-    overrides = (
-        session.query(PolicyOverride).filter(PolicyOverride.is_active.is_(True)).all()
-    )
+    overrides = session.query(PolicyOverride).filter(PolicyOverride.is_active.is_(True)).all()
     meta_rows = (
         session.query(AuditEntry)
         .filter(
@@ -268,9 +264,7 @@ def calendar() -> None:
     type=click.Choice(["table", "json"]),
     help="Output format",
 )
-def calendar_list(
-    item_type: str | None, since: str | None, until: str | None, fmt: str
-) -> None:
+def calendar_list(item_type: str | None, since: str | None, until: str | None, fmt: str) -> None:
     """List compliance calendar items."""
     from warlock.db.engine import get_session, init_db
 
@@ -327,7 +321,9 @@ def calendar_list(
             i["id"],
             i["type"],
             i["title"][:50],
-            f"[{due_color}]{_format_due(i['due_date'])}[/]" if due_color else _format_due(i["due_date"]),
+            f"[{due_color}]{_format_due(i['due_date'])}[/]"
+            if due_color
+            else _format_due(i["due_date"]),
             (i.get("detail") or "")[:30],
         )
 
@@ -494,7 +490,9 @@ def calendar_export(fmt: str) -> None:
 
     if fmt == "csv":
         buf = io.StringIO()
-        writer = csv.DictWriter(buf, fieldnames=["id", "source", "type", "title", "due_date", "detail"])
+        writer = csv.DictWriter(
+            buf, fieldnames=["id", "source", "type", "title", "due_date", "detail"]
+        )
         writer.writeheader()
         for i in all_items:
             writer.writerow(

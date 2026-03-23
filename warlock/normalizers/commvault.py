@@ -43,7 +43,11 @@ class CommvaultNormalizer(BaseNormalizer):
     def _normalize_clients(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("clientProperties", response.get("clients", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("clientProperties", response.get("clients", []))
+        )
 
         for client in items:
             client_obj = client.get("client", client) if isinstance(client, dict) else client
@@ -75,7 +79,11 @@ class CommvaultNormalizer(BaseNormalizer):
     def _normalize_jobs(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("jobs", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("jobs", response.get("data", []))
+        )
 
         for job in items:
             job_id = str(job.get("jobId", job.get("id", "")))
@@ -115,7 +123,11 @@ class CommvaultNormalizer(BaseNormalizer):
     def _normalize_backupsets(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("backupSetProperties", response.get("backupsets", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("backupSetProperties", response.get("backupsets", []))
+        )
 
         for bset in items:
             bset_obj = bset.get("backupSet", bset) if isinstance(bset, dict) else bset

@@ -145,11 +145,7 @@ def evidence_show(result_id: str) -> None:
     threshold = datetime.now(timezone.utc) - timedelta(days=30)
 
     with get_session() as session:
-        result = (
-            session.query(ControlResult)
-            .filter(ControlResult.id.startswith(result_id))
-            .first()
-        )
+        result = session.query(ControlResult).filter(ControlResult.id.startswith(result_id)).first()
         if not result:
             _error(f"Evidence record not found: {result_id}")
 
@@ -341,7 +337,10 @@ def evidence_package(framework: str, output: str) -> None:
         ],
     }
 
-    out_file = out_dir / f"evidence_package_{framework}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    out_file = (
+        out_dir
+        / f"evidence_package_{framework}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    )
     out_file.write_text(_json.dumps(package, indent=2, default=str))
 
     compliant = sum(1 for r in rows if r.status == "compliant")
@@ -349,7 +348,9 @@ def evidence_package(framework: str, output: str) -> None:
 
     console.print(f"[green]Evidence package created:[/green] {out_file}")
     console.print(f"  Framework: {framework}")
-    console.print(f"  Controls: {len(rows)} total, {compliant} compliant, {non_compliant} non-compliant")
+    console.print(
+        f"  Controls: {len(rows)} total, {compliant} compliant, {non_compliant} non-compliant"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -366,11 +367,7 @@ def evidence_chain(result_id: str) -> None:
 
     init_db()
     with get_session() as session:
-        result = (
-            session.query(ControlResult)
-            .filter(ControlResult.id.startswith(result_id))
-            .first()
-        )
+        result = session.query(ControlResult).filter(ControlResult.id.startswith(result_id)).first()
         if not result:
             _error(f"Evidence record not found: {result_id}")
 
@@ -423,11 +420,7 @@ def evidence_verify(result_id: str) -> None:
 
     init_db()
     with get_session() as session:
-        result = (
-            session.query(ControlResult)
-            .filter(ControlResult.id.startswith(result_id))
-            .first()
-        )
+        result = session.query(ControlResult).filter(ControlResult.id.startswith(result_id)).first()
         if not result:
             _error(f"Evidence record not found: {result_id}")
 
@@ -482,7 +475,9 @@ def evidence_verify(result_id: str) -> None:
 
 @evidence.command("freshness")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--threshold-days", "-t", default=30, help="Staleness threshold in days (default: 30)")
+@click.option(
+    "--threshold-days", "-t", default=30, help="Staleness threshold in days (default: 30)"
+)
 def evidence_freshness(framework: str | None, threshold_days: int) -> None:
     """Show evidence freshness report — which controls have stale or missing assessments."""
     from warlock.db.engine import get_session, init_db
@@ -652,9 +647,7 @@ def evidence_export(framework: str | None, fmt: str) -> None:
             info.size = len(data)
             tf.addfile(info, io.BytesIO(data))
 
-    console.print(
-        f"[green]Evidence exported:[/green] {filename}  ({len(rows)} records)"
-    )
+    console.print(f"[green]Evidence exported:[/green] {filename}  ({len(rows)} records)")
 
 
 # ---------------------------------------------------------------------------
@@ -953,9 +946,7 @@ def requests_assign(request_id: str, assignee: str) -> None:
 
     with get_session() as session:
         req = (
-            session.query(EvidenceRequest)
-            .filter(EvidenceRequest.id.startswith(request_id))
-            .first()
+            session.query(EvidenceRequest).filter(EvidenceRequest.id.startswith(request_id)).first()
         )
         if not req:
             _error(f"Evidence request not found: {request_id}")
@@ -1001,9 +992,7 @@ def requests_fulfill(request_id: str, file_path: str | None, notes: str | None) 
 
     with get_session() as session:
         req = (
-            session.query(EvidenceRequest)
-            .filter(EvidenceRequest.id.startswith(request_id))
-            .first()
+            session.query(EvidenceRequest).filter(EvidenceRequest.id.startswith(request_id)).first()
         )
         if not req:
             _error(f"Evidence request not found: {request_id}")

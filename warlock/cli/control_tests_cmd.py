@@ -32,9 +32,7 @@ def control_tests() -> None:
 
 @control_tests.command("schedule")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def schedule_view(framework: str | None, output_format: str) -> None:
     """View control test schedule grouped by control family."""
     from warlock.db.engine import get_session, init_db
@@ -67,7 +65,9 @@ def schedule_view(framework: str | None, output_format: str) -> None:
                 "last_assessed": str(assessed_at)[:10] if assessed_at else "\u2014",
             }
 
-    data = sorted(seen.values(), key=lambda r: (r["framework"], r["control_family"], r["control_id"]))
+    data = sorted(
+        seen.values(), key=lambda r: (r["framework"], r["control_family"], r["control_id"])
+    )
 
     if not data:
         console.print("[dim]No control results found.[/dim]")
@@ -209,14 +209,16 @@ def execute_test(
         if evidence:
             # Append evidence reference to remediation summary
             existing = cr.remediation_summary or ""
-            cr.remediation_summary = (
-                f"{existing}\n[Test {now.date()}] Evidence: {evidence}".strip()
-            )
+            cr.remediation_summary = f"{existing}\n[Test {now.date()}] Evidence: {evidence}".strip()
 
         cr_id = cr.id
         cr_framework = cr.framework
 
-    icon = {"pass": "[green]PASS[/green]", "fail": "[red]FAIL[/red]", "partial": "[yellow]PARTIAL[/yellow]"}[result]
+    icon = {
+        "pass": "[green]PASS[/green]",
+        "fail": "[red]FAIL[/red]",
+        "partial": "[yellow]PARTIAL[/yellow]",
+    }[result]
     console.print(
         f"{icon} Control [cyan]{control_id}[/cyan] "
         f"(framework: {cr_framework}, result id: {cr_id[:8]}) "
@@ -234,9 +236,7 @@ def execute_test(
 @control_tests.command("due")
 @click.option("--days", "-d", default=30, help="Controls due within N days (default: 30)")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def due_controls(days: int, framework: str | None, output_format: str) -> None:
     """List controls due for testing within the next N days.
 
@@ -261,7 +261,9 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
 
     with get_session() as session:
         # Get latest assessed_at per (framework, control_id)
-        q = session.query(ControlResult.framework, ControlResult.control_id, ControlResult.assessed_at)
+        q = session.query(
+            ControlResult.framework, ControlResult.control_id, ControlResult.assessed_at
+        )
         if framework:
             q = q.filter(ControlResult.framework == framework)
         results = q.order_by(ControlResult.assessed_at.desc()).all()
@@ -273,9 +275,7 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
                 last_assessed[key] = assessed_at
 
         # Get mappings with frequency set
-        mq = session.query(ControlMapping).filter(
-            ControlMapping.monitoring_frequency.isnot(None)
-        )
+        mq = session.query(ControlMapping).filter(ControlMapping.monitoring_frequency.isnot(None))
         if framework:
             mq = mq.filter(ControlMapping.framework == framework)
         mappings = mq.all()
@@ -357,12 +357,8 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
 @click.argument("control_id")
 @click.option("--last", "-n", default=20, help="Show last N results (default: 20)")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
-def control_history(
-    control_id: str, last: int, framework: str | None, output_format: str
-) -> None:
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+def control_history(control_id: str, last: int, framework: str | None, output_format: str) -> None:
     """Show test history for a control."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
@@ -441,7 +437,9 @@ def control_history(
 
 @control_tests.command("report")
 @click.option("--framework", "-f", default=None, help="Scope to framework")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json", "md"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "md"])
+)
 def tests_report(framework: str | None, output_format: str) -> None:
     """Generate a control testing report by framework."""
     from warlock.db.engine import get_session, init_db
@@ -525,9 +523,7 @@ def tests_report(framework: str | None, output_format: str) -> None:
 
 @control_tests.command("gaps")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def gaps(framework: str | None, output_format: str) -> None:
     """List controls that have never been tested or are past-due.
 
@@ -557,7 +553,9 @@ def gaps(framework: str | None, output_format: str) -> None:
         mappings = q.all()
 
         # Latest assessed_at per (framework, control_id)
-        rq = session.query(ControlResult.framework, ControlResult.control_id, ControlResult.assessed_at)
+        rq = session.query(
+            ControlResult.framework, ControlResult.control_id, ControlResult.assessed_at
+        )
         if framework:
             rq = rq.filter(ControlResult.framework == framework)
         result_rows = rq.order_by(ControlResult.assessed_at.desc()).all()
@@ -605,7 +603,9 @@ def gaps(framework: str | None, output_format: str) -> None:
                 )
 
     if not gap_rows:
-        console.print("[green]No gaps found. All controls are within their testing cadence.[/green]")
+        console.print(
+            "[green]No gaps found. All controls are within their testing cadence.[/green]"
+        )
         return
 
     if output_format == "json":

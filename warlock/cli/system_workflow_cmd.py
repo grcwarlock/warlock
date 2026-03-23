@@ -101,15 +101,11 @@ def _write_audit_entry(
     """Append a hash-chained audit entry."""
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -175,16 +171,12 @@ def onboard_system() -> None:
         confidentiality = Prompt.ask(
             "Confidentiality impact", choices=list(_IMPACT_LEVELS), default="moderate"
         )
-        integrity = Prompt.ask(
-            "Integrity impact", choices=list(_IMPACT_LEVELS), default="moderate"
-        )
+        integrity = Prompt.ask("Integrity impact", choices=list(_IMPACT_LEVELS), default="moderate")
         availability = Prompt.ask(
             "Availability impact", choices=list(_IMPACT_LEVELS), default="moderate"
         )
         overall = _overall_impact(confidentiality, integrity, availability)
-        console.print(
-            f"\nOverall impact level: [bold yellow]{overall.upper()}[/bold yellow]"
-        )
+        console.print(f"\nOverall impact level: [bold yellow]{overall.upper()}[/bold yellow]")
 
         # --- Step 3: Responsible parties ---
         console.print("\n[bold]Step 3 of 5: Responsible Parties[/bold]")
@@ -214,9 +206,7 @@ def onboard_system() -> None:
                 .all()
             )
 
-        if existing_systems and Confirm.ask(
-            "Map dependencies to existing systems?", default=False
-        ):
+        if existing_systems and Confirm.ask("Map dependencies to existing systems?", default=False):
             t = Table(show_header=True, header_style="bold")
             t.add_column("#")
             t.add_column("Name")
@@ -347,11 +337,7 @@ def system_review(system_id: str) -> None:
             from warlock.cli import _resolve_system_id
 
             resolved_id = _resolve_system_id(session, system_id)
-            sp = (
-                session.query(SystemProfile)
-                .filter(SystemProfile.id == resolved_id)
-                .first()
-            )
+            sp = session.query(SystemProfile).filter(SystemProfile.id == resolved_id).first()
             if not sp:
                 _error(f"System not found: '{system_id}'")
 
@@ -368,14 +354,10 @@ def system_review(system_id: str) -> None:
                 }.get(sp.authorization_status or "", "white")
 
                 auth_expiry = (
-                    sp.authorization_expiry.strftime("%Y-%m-%d")
-                    if sp.authorization_expiry
-                    else "—"
+                    sp.authorization_expiry.strftime("%Y-%m-%d") if sp.authorization_expiry else "—"
                 )
                 auth_date = (
-                    sp.authorization_date.strftime("%Y-%m-%d")
-                    if sp.authorization_date
-                    else "—"
+                    sp.authorization_date.strftime("%Y-%m-%d") if sp.authorization_date else "—"
                 )
 
                 console.print(
@@ -401,9 +383,7 @@ def system_review(system_id: str) -> None:
                 total = len(results)
                 if total:
                     compliant = sum(1 for r in results if r.status == "compliant")
-                    non_compliant = sum(
-                        1 for r in results if r.status == "non_compliant"
-                    )
+                    non_compliant = sum(1 for r in results if r.status == "non_compliant")
                     pct = (compliant / total * 100) if total else 0.0
                     pct_color = "green" if pct >= 80 else ("yellow" if pct >= 60 else "red")
                     console.print(
@@ -412,9 +392,7 @@ def system_review(system_id: str) -> None:
                         f"({compliant}/{total})  |  Non-compliant: {non_compliant}"
                     )
                 else:
-                    console.print(
-                        "\n[dim]No control results scoped to this system yet.[/dim]"
-                    )
+                    console.print("\n[dim]No control results scoped to this system yet.[/dim]")
 
                 # --- Dependencies ---
                 deps_out = (
@@ -477,9 +455,7 @@ def system_review(system_id: str) -> None:
                     sp.authorization_status = new_status
                     sp.updated_at = _utcnow()
                     session.commit()
-                    console.print(
-                        f"[green]Authorization status updated to: {new_status}[/green]"
-                    )
+                    console.print(f"[green]Authorization status updated to: {new_status}[/green]")
 
                 elif choice == "a":
                     all_systems = (
@@ -508,7 +484,12 @@ def system_review(system_id: str) -> None:
                             if 0 <= idx < len(all_systems):
                                 dep_type = Prompt.ask(
                                     "Dependency type",
-                                    choices=["infrastructure", "identity", "network", "application"],
+                                    choices=[
+                                        "infrastructure",
+                                        "identity",
+                                        "network",
+                                        "application",
+                                    ],
                                     default="infrastructure",
                                 )
                                 new_dep = SystemDependency(

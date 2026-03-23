@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 
-_EXPIRY_HIGH_DAYS = 30   # Medium severity threshold
+_EXPIRY_HIGH_DAYS = 30  # Medium severity threshold
 
 
 def _days_until_expiry(not_after: str | None) -> int | None:
@@ -62,8 +62,12 @@ class AwsAcmNormalizer(BaseNormalizer):
 
         for cert in items:
             cert_arn = cert.get("CertificateArn", cert.get("CertificateArn", ""))
-            domain = cert.get("DomainName", cert.get("SubjectAlternativeNames", ["unknown"])[0]
-                              if cert.get("SubjectAlternativeNames") else "unknown")
+            domain = cert.get(
+                "DomainName",
+                cert.get("SubjectAlternativeNames", ["unknown"])[0]
+                if cert.get("SubjectAlternativeNames")
+                else "unknown",
+            )
             status = cert.get("Status", "UNKNOWN")
             not_after = cert.get("NotAfter", "")
             key_algorithm = cert.get("KeyAlgorithm", "")

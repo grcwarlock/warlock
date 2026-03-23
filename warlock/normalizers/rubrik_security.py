@@ -49,7 +49,11 @@ class RubrikSecurityNormalizer(BaseNormalizer):
     def _normalize_data_classification(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("results", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("results", []))
+        )
 
         for item in items:
             item_id = str(item.get("id", ""))
@@ -79,7 +83,11 @@ class RubrikSecurityNormalizer(BaseNormalizer):
     def _normalize_anomalies(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("data", response.get("anomalies", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("data", response.get("anomalies", []))
+        )
 
         for anomaly in items:
             anomaly_id = str(anomaly.get("id", ""))

@@ -185,7 +185,11 @@ def catalogs_show(framework: str, limit: int, family: str | None) -> None:
                 return
             ctrl_id = ctrl.get("id", "")
             ctrl_title = ctrl.get("title", "")
-            if family and family.lower() not in fam_label.lower() and family.lower() not in ctrl_id.lower():
+            if (
+                family
+                and family.lower() not in fam_label.lower()
+                and family.lower() not in ctrl_id.lower()
+            ):
                 # Also check sub-controls
                 _emit_controls(ctrl.get("controls", []), fam_label)
                 return
@@ -441,7 +445,9 @@ def validate_file(file: str) -> None:
             break
 
     if doc_type is None:
-        console.print(f"[yellow]Warning: unrecognized OSCAL document type. Top-level keys: {list(data.keys())}[/yellow]")
+        console.print(
+            f"[yellow]Warning: unrecognized OSCAL document type. Top-level keys: {list(data.keys())}[/yellow]"
+        )
     else:
         console.print(f"[green]Document type:[/green] {doc_type}")
 
@@ -455,5 +461,7 @@ def validate_file(file: str) -> None:
     else:
         console.print("[yellow]Warning: no 'metadata' section found.[/yellow]")
 
-    console.print(f"\n[green]File parses cleanly:[/green] {path.name} ({path.stat().st_size // 1024} KB)")
+    console.print(
+        f"\n[green]File parses cleanly:[/green] {path.name} ({path.stat().st_size // 1024} KB)"
+    )
     console.print("[green]Validation passed.[/green]")

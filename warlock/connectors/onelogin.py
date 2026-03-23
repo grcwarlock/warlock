@@ -81,7 +81,9 @@ class OneLoginConnector(BaseConnector):
 
         headers = {"Authorization": f"bearer:{token}", "Content-Type": "application/json"}
 
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for endpoint, event_type, params in ONELOGIN_ENDPOINTS:

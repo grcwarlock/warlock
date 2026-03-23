@@ -85,13 +85,15 @@ def sod_analyze(email: str | None) -> None:
         for rule_a, rule_b, desc in _SOD_RULES:
             roles_normalized = [r.split("(")[0] for r in user_roles]
             if rule_a in roles_normalized and rule_b in roles_normalized:
-                conflicts.append({
-                    "email": user.email,
-                    "name": user.name,
-                    "role": user.role,
-                    "conflict": f"{rule_a} + {rule_b}",
-                    "description": desc,
-                })
+                conflicts.append(
+                    {
+                        "email": user.email,
+                        "name": user.name,
+                        "role": user.role,
+                        "conflict": f"{rule_a} + {rule_b}",
+                        "description": desc,
+                    }
+                )
 
     if not conflicts:
         console.print(f"[green]No SoD conflicts detected across {len(users)} user(s).[/green]")

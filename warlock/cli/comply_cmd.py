@@ -98,7 +98,8 @@ def auto_map(framework: str | None, dry_run: bool) -> None:
         if framework:
             # Filter to actionable observation types for framework-scoped auto-mapping
             unmapped = [
-                f for f in unmapped
+                f
+                for f in unmapped
                 if f.observation_type in ["misconfiguration", "vulnerability", "policy_violation"]
             ]
 
@@ -176,7 +177,9 @@ def gap_close(framework: str | None) -> None:
         q = session.query(ControlResult).filter(ControlResult.status == "non_compliant")
         if framework:
             q = q.filter(ControlResult.framework == framework)
-        results = q.order_by(ControlResult.severity, ControlResult.assessed_at.desc()).limit(200).all()
+        results = (
+            q.order_by(ControlResult.severity, ControlResult.assessed_at.desc()).limit(200).all()
+        )
 
     if not results:
         console.print("[green]No non-compliant controls found.[/green]")
@@ -187,7 +190,9 @@ def gap_close(framework: str | None) -> None:
     sev_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     for r in results:
         key = (r.framework, r.control_id)
-        if key not in seen or sev_rank.get(r.severity.lower(), 99) < sev_rank.get(seen[key].severity.lower(), 99):
+        if key not in seen or sev_rank.get(r.severity.lower(), 99) < sev_rank.get(
+            seen[key].severity.lower(), 99
+        ):
             seen[key] = r
 
     table = Table(title=f"Gap Close Recommendations ({len(seen)} controls)")
@@ -203,9 +208,13 @@ def gap_close(framework: str | None) -> None:
         "low": "green",
     }
 
-    for (fw, ctrl), r in sorted(seen.items(), key=lambda x: sev_rank.get(x[1].severity.lower(), 99)):
+    for (fw, ctrl), r in sorted(
+        seen.items(), key=lambda x: sev_rank.get(x[1].severity.lower(), 99)
+    ):
         sev = r.severity.lower()
-        remediation = r.remediation_summary or "Re-run pipeline after applying fix; see warlock remediate."
+        remediation = (
+            r.remediation_summary or "Re-run pipeline after applying fix; see warlock remediate."
+        )
         table.add_row(
             fw,
             ctrl,
@@ -230,24 +239,20 @@ def audit_prep(framework: str) -> None:
 
     init_db()
     with get_session() as session:
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
         poams = (
             session.query(POAM)
-            .filter(POAM.framework == framework, POAM.status.notin_(["completed", "verified", "closed"]))
+            .filter(
+                POAM.framework == framework, POAM.status.notin_(["completed", "verified", "closed"])
+            )
             .all()
         )
-        attestations = (
-            session.query(Attestation)
-            .filter(Attestation.framework == framework)
-            .all()
-        )
+        attestations = session.query(Attestation).filter(Attestation.framework == framework).all()
 
     if not results:
-        console.print(f"[yellow]No control results for framework '{framework}'. Run 'warlock collect' first.[/yellow]")
+        console.print(
+            f"[yellow]No control results for framework '{framework}'. Run 'warlock collect' first.[/yellow]"
+        )
         return
 
     total = len(results)
@@ -287,7 +292,10 @@ def audit_prep(framework: str) -> None:
         (non_compliant == 0, f"No non-compliant controls (current: {non_compliant})"),
         (len(poams) == 0, f"No open POA&Ms (current: {len(poams)})"),
         (stale == 0, f"All evidence fresh (<30 days, stale: {stale})"),
-        (approved_attestations > 0, f"At least one approved attestation (current: {approved_attestations})"),
+        (
+            approved_attestations > 0,
+            f"At least one approved attestation (current: {approved_attestations})",
+        ),
     ]
 
     console.print("\n[bold]Checklist:[/bold]")
@@ -300,7 +308,9 @@ def audit_prep(framework: str) -> None:
         console.print("\n[green bold]READY for audit.[/green bold]")
     else:
         failed_count = sum(1 for p, _ in checks if not p)
-        console.print(f"\n[yellow]Audit readiness: {len(checks) - failed_count}/{len(checks)} checks passed.[/yellow]")
+        console.print(
+            f"\n[yellow]Audit readiness: {len(checks) - failed_count}/{len(checks)} checks passed.[/yellow]"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -317,14 +327,12 @@ def readiness_score(framework: str) -> None:
 
     init_db()
     with get_session() as session:
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
         open_poams = (
             session.query(POAM)
-            .filter(POAM.framework == framework, POAM.status.notin_(["completed", "verified", "closed"]))
+            .filter(
+                POAM.framework == framework, POAM.status.notin_(["completed", "verified", "closed"])
+            )
             .count()
         )
         approved_atts = (
@@ -334,7 +342,9 @@ def readiness_score(framework: str) -> None:
         )
 
     if not results:
-        console.print(f"[yellow]No control results for '{framework}'. Run 'warlock collect' first.[/yellow]")
+        console.print(
+            f"[yellow]No control results for '{framework}'. Run 'warlock collect' first.[/yellow]"
+        )
         return
 
     total = len(results)
@@ -372,7 +382,9 @@ def readiness_score(framework: str) -> None:
 
     table.add_row("Compliance rate", "50%", f"{compliance_pct:.0f}%", f"{compliance_pct * 0.5:.1f}")
     table.add_row("Control coverage", "30%", f"{coverage_pct:.0f}%", f"{coverage_pct * 0.3:.1f}")
-    table.add_row("Evidence freshness", "20%", f"{freshness_pct:.0f}%", f"{freshness_pct * 0.2:.1f}")
+    table.add_row(
+        "Evidence freshness", "20%", f"{freshness_pct:.0f}%", f"{freshness_pct * 0.2:.1f}"
+    )
     table.add_row("Open POA&Ms penalty", "\u2014", str(open_poams), f"-{poam_penalty:.1f}")
     table.add_row("Attestation bonus", "\u2014", str(approved_atts), f"+{attestation_bonus:.1f}")
 
@@ -401,21 +413,9 @@ def pre_audit(framework: str, output_format: str) -> None:
 
     init_db()
     with get_session() as session:
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
-        )
-        poams = (
-            session.query(POAM)
-            .filter(POAM.framework == framework)
-            .all()
-        )
-        attestations = (
-            session.query(Attestation)
-            .filter(Attestation.framework == framework)
-            .all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
+        poams = session.query(POAM).filter(POAM.framework == framework).all()
+        attestations = session.query(Attestation).filter(Attestation.framework == framework).all()
 
     total = len(results)
     if not total:
@@ -427,7 +427,8 @@ def pre_audit(framework: str, output_format: str) -> None:
     not_assessed = sum(1 for r in results if r.status == "not_assessed")
     open_poams = [p for p in poams if p.status not in ("completed", "verified", "closed")]
     overdue_poams = [
-        p for p in open_poams
+        p
+        for p in open_poams
         if p.scheduled_completion and p.scheduled_completion < datetime.now(timezone.utc)
     ]
     approved_atts = sum(1 for a in attestations if a.status == "approved")
@@ -473,7 +474,9 @@ def pre_audit(framework: str, output_format: str) -> None:
     ]
 
     if non_compliant == 0 and not open_poams:
-        lines.append("The system is **ready for audit**. All controls are compliant and no open POA&Ms exist.")
+        lines.append(
+            "The system is **ready for audit**. All controls are compliant and no open POA&Ms exist."
+        )
     else:
         lines.append(
             f"Address {non_compliant} non-compliant controls and {len(open_poams)} open POA&Ms before audit."
@@ -519,7 +522,9 @@ def remediation_plan(framework: str | None, severity: str | None) -> None:
     sev_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     for r in results:
         key = (r.framework, r.control_id)
-        if key not in seen or sev_rank.get(r.severity.lower(), 9) < sev_rank.get(seen[key].severity.lower(), 9):
+        if key not in seen or sev_rank.get(r.severity.lower(), 9) < sev_rank.get(
+            seen[key].severity.lower(), 9
+        ):
             seen[key] = r
 
     table = Table(title=f"Prioritized Remediation Plan ({len(seen)} controls)")
@@ -547,7 +552,9 @@ def remediation_plan(framework: str | None, severity: str | None) -> None:
 
     for i, r in enumerate(sorted_results, 1):
         sev = r.severity.lower()
-        action = r.remediation_summary or "Re-run pipeline after remediation; see 'warlock remediate'."
+        action = (
+            r.remediation_summary or "Re-run pipeline after remediation; see 'warlock remediate'."
+        )
         table.add_row(
             str(i),
             r.framework,
@@ -655,7 +662,11 @@ def benchmark(framework: str | None) -> None:
     table.add_column("Pass Rate", justify="right")
     table.add_column("Bar")
 
-    for fw in sorted(fw_stats, key=lambda k: fw_stats[k]["compliant"] / max(fw_stats[k]["total"], 1), reverse=True):
+    for fw in sorted(
+        fw_stats,
+        key=lambda k: fw_stats[k]["compliant"] / max(fw_stats[k]["total"], 1),
+        reverse=True,
+    ):
         s = fw_stats[fw]
         rate = s["compliant"] / s["total"] * 100 if s["total"] else 0.0
         bar_len = int(rate / 5)
@@ -683,9 +694,7 @@ def maturity_model(framework: str | None) -> None:
         results = _framework_results(session, framework)
         poam_count = session.query(POAM).count()
         attestation_count = (
-            session.query(Attestation)
-            .filter(Attestation.status == "approved")
-            .count()
+            session.query(Attestation).filter(Attestation.status == "approved").count()
         )
         audit_entry_count = session.query(AuditEntry).count()
 
@@ -712,10 +721,10 @@ def maturity_model(framework: str | None) -> None:
     }
     styles = {1: "red", 2: "orange3", 3: "yellow", 4: "cyan", 5: "green bold"}
 
-    console.print(f"\n[bold]GRC Maturity Assessment{f' \u2014 {framework}' if framework else ''}[/bold]")
     console.print(
-        f"  [{styles[maturity]}][bold]Level {maturity}/5[/bold][/]  {labels[maturity]}\n"
+        f"\n[bold]GRC Maturity Assessment{f' \u2014 {framework}' if framework else ''}[/bold]"
     )
+    console.print(f"  [{styles[maturity]}][bold]Level {maturity}/5[/bold][/]  {labels[maturity]}\n")
 
     table = Table(title="Maturity Level Breakdown")
     table.add_column("Level", justify="right")
@@ -745,10 +754,7 @@ def quick_wins(framework: str | None, limit: int) -> None:
 
     init_db()
     with get_session() as session:
-        q = (
-            session.query(ControlResult)
-            .filter(ControlResult.status == "non_compliant")
-        )
+        q = session.query(ControlResult).filter(ControlResult.status == "non_compliant")
         if framework:
             q = q.filter(ControlResult.framework == framework)
         results = q.all()
@@ -766,7 +772,9 @@ def quick_wins(framework: str | None, limit: int) -> None:
     seen: dict[tuple[str, str], ControlResult] = {}
     for r in results:
         key = (r.framework, r.control_id)
-        if key not in seen or sev_rank.get(r.severity.lower(), 9) < sev_rank.get(seen[key].severity.lower(), 9):
+        if key not in seen or sev_rank.get(r.severity.lower(), 9) < sev_rank.get(
+            seen[key].severity.lower(), 9
+        ):
             seen[key] = r
 
     # Score: medium/low severity with a remediation summary available = quick win
@@ -781,7 +789,9 @@ def quick_wins(framework: str | None, limit: int) -> None:
 
     candidates.sort(key=lambda x: x[0], reverse=True)
 
-    table = Table(title=f"Quick Wins ({min(limit, len(candidates))} of {len(candidates)} candidates)")
+    table = Table(
+        title=f"Quick Wins ({min(limit, len(candidates))} of {len(candidates)} candidates)"
+    )
     table.add_column("Score", justify="right", style="bold")
     table.add_column("Framework", style="cyan")
     table.add_column("Control")
@@ -829,9 +839,8 @@ def regression_check(framework: str | None, days: int) -> None:
 
     with get_session() as session:
         # Recent non-compliant results
-        q_recent = (
-            session.query(ControlResult)
-            .filter(ControlResult.status == "non_compliant", ControlResult.assessed_at >= cutoff)
+        q_recent = session.query(ControlResult).filter(
+            ControlResult.status == "non_compliant", ControlResult.assessed_at >= cutoff
         )
         if framework:
             q_recent = q_recent.filter(ControlResult.framework == framework)
@@ -1067,7 +1076,9 @@ def schedule_audit(framework: str | None) -> None:
 
     target_date = now + timedelta(days=ready_in_days)
 
-    console.print(f"\n[bold]Audit Schedule Recommendation{f' \u2014 {framework}' if framework else ''}[/bold]")
+    console.print(
+        f"\n[bold]Audit Schedule Recommendation{f' \u2014 {framework}' if framework else ''}[/bold]"
+    )
     console.print(f"  Current compliance: [{_pct_style(compliance_pct)}]{compliance_pct:.0f}%[/]")
     console.print(f"  Open POA&Ms: {poam_count}")
     console.print(f"  [{style}]{recommendation}[/]")
@@ -1157,7 +1168,12 @@ def executive_brief(framework: str | None, output_format: str) -> None:
         return
 
     # Markdown
-    rating_md = {"Strong": "**Strong**", "Adequate": "**Adequate**", "Needs Improvement": "**Needs Improvement**", "At Risk": "**:warning: At Risk**"}.get(rating, rating)
+    rating_md = {
+        "Strong": "**Strong**",
+        "Adequate": "**Adequate**",
+        "Needs Improvement": "**Needs Improvement**",
+        "At Risk": "**:warning: At Risk**",
+    }.get(rating, rating)
 
     lines = [
         f"# Executive Compliance Brief{f': {framework}' if framework else ''}",

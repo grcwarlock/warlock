@@ -30,7 +30,10 @@ ENDPOINTS: list[tuple[str, str, dict]] = [
     (
         "/deviceManagement/managedDevices",
         "microsoft_managed_devices",
-        {"$top": "100", "$select": "id,deviceName,operatingSystem,osVersion,complianceState,lastSyncDateTime,managedDeviceOwnerType"},
+        {
+            "$top": "100",
+            "$select": "id,deviceName,operatingSystem,osVersion,complianceState,lastSyncDateTime,managedDeviceOwnerType",
+        },
     ),
 ]
 

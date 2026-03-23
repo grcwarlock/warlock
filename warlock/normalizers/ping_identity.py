@@ -52,7 +52,11 @@ class PingIdentityNormalizer(BaseNormalizer):
             )
             username = user.get("username", user.get("email", "unknown"))
             enabled = user.get("enabled", True)
-            status = user.get("account", {}).get("status", "OK") if isinstance(user.get("account"), dict) else "OK"
+            status = (
+                user.get("account", {}).get("status", "OK")
+                if isinstance(user.get("account"), dict)
+                else "OK"
+            )
 
             findings.append(
                 FindingData(
@@ -115,7 +119,11 @@ class PingIdentityNormalizer(BaseNormalizer):
             policy_id = str(policy.get("id", ""))
             name = policy.get("name", "unknown")
             # Policies lacking MFA actions represent a policy gap
-            actions = policy.get("_embedded", {}).get("actions", []) if isinstance(policy.get("_embedded"), dict) else []
+            actions = (
+                policy.get("_embedded", {}).get("actions", [])
+                if isinstance(policy.get("_embedded"), dict)
+                else []
+            )
             has_mfa_action = any(
                 a.get("type", "").upper() in ("MFA", "MULTI_FACTOR_AUTHENTICATION")
                 for a in actions

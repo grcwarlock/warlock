@@ -103,12 +103,16 @@ class SyftGrypeNormalizer(BaseNormalizer):
 
         for report in reports:
             # Syft uses 'artifacts'; CycloneDX SBOMs use 'components'; demo uses 'packages'
-            artifacts = report.get("artifacts", report.get("packages", report.get("components", [])))
+            artifacts = report.get(
+                "artifacts", report.get("packages", report.get("components", []))
+            )
             source_meta = report.get("source", {})
             image_name = report.get("image", "")
             if not image_name and isinstance(source_meta, dict):
                 target = source_meta.get("target", {})
-                image_name = target.get("userInput", "") if isinstance(target, dict) else str(target)
+                image_name = (
+                    target.get("userInput", "") if isinstance(target, dict) else str(target)
+                )
 
             for artifact in artifacts:
                 pkg_name = artifact.get("name", "")

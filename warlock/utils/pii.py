@@ -25,9 +25,7 @@ from typing import Any
 
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
-_PHONE_RE = re.compile(
-    r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"
-)
+_PHONE_RE = re.compile(r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b")
 
 _PII_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (_EMAIL_RE, "email"),

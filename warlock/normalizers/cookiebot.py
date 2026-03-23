@@ -40,7 +40,11 @@ class CookiebotNormalizer(BaseNormalizer):
     def _normalize_scans(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("scans", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("scans", response.get("data", []))
+        )
 
         for scan in items:
             scan_id = str(scan.get("id", scan.get("scanId", "")))
@@ -73,7 +77,11 @@ class CookiebotNormalizer(BaseNormalizer):
     def _normalize_consents(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("consents", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("consents", response.get("data", []))
+        )
 
         for consent in items:
             consent_id = str(consent.get("id", consent.get("consentId", "")))
@@ -108,7 +116,11 @@ class CookiebotNormalizer(BaseNormalizer):
     def _normalize_domains(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("domains", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("domains", response.get("data", []))
+        )
 
         for domain in items:
             domain_id = str(domain.get("id", domain.get("domainId", "")))

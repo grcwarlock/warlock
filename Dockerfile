@@ -23,6 +23,7 @@ COPY alembic.ini .
 COPY pyproject.toml .
 COPY scripts/demo_seed.py scripts/demo_seed.py
 COPY scripts/demo_data.py scripts/demo_data.py
+COPY scripts/demo_connectors_new.py scripts/demo_connectors_new.py
 COPY scripts/docker-demo.sh scripts/docker-demo.sh
 RUN chmod +x scripts/docker-demo.sh
 # Reinstall warlock itself (not deps) so entry points resolve against full source

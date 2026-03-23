@@ -470,8 +470,15 @@ def findings_export(
 
         buf = io.StringIO()
         fields = [
-            "id", "title", "severity", "observation_type", "source",
-            "source_type", "provider", "resource_id", "observed_at",
+            "id",
+            "title",
+            "severity",
+            "observation_type",
+            "source",
+            "source_type",
+            "provider",
+            "resource_id",
+            "observed_at",
         ]
         writer = csv.DictWriter(buf, fieldnames=fields)
         writer.writeheader()
@@ -748,11 +755,7 @@ def findings_aging(severity: str | None, source_type: str | None) -> None:
     for bucket, items in buckets.items():
         cnt = len(items)
         pct = cnt / total * 100 if total else 0
-        style = (
-            "green" if bucket == "0-7 days"
-            else "yellow" if bucket == "8-30 days"
-            else "red"
-        )
+        style = "green" if bucket == "0-7 days" else "yellow" if bucket == "8-30 days" else "red"
         table.add_row(
             f"[{style}]{bucket}[/{style}]",
             str(cnt),

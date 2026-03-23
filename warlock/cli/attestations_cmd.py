@@ -199,11 +199,7 @@ def attestation_show(attest_id: str) -> None:
     init_db()
 
     with get_session() as session:
-        attest = (
-            session.query(Attestation)
-            .filter(Attestation.id.startswith(attest_id))
-            .first()
-        )
+        attest = session.query(Attestation).filter(Attestation.id.startswith(attest_id)).first()
 
     if not attest:
         _error(f"Attestation not found: {attest_id}")
@@ -259,19 +255,13 @@ def attestation_sign(attest_id: str, actor: str | None) -> None:
     now = datetime.now(timezone.utc)
 
     with get_session() as session:
-        attest = (
-            session.query(Attestation)
-            .filter(Attestation.id.startswith(attest_id))
-            .first()
-        )
+        attest = session.query(Attestation).filter(Attestation.id.startswith(attest_id)).first()
 
         if not attest:
             _error(f"Attestation not found: {attest_id}")
 
         if attest.status == "approved":
-            console.print(
-                f"[yellow]Attestation {attest.id[:8]} is already approved.[/yellow]"
-            )
+            console.print(f"[yellow]Attestation {attest.id[:8]} is already approved.[/yellow]")
             return
 
         if attest.status in ("draft", "submitted"):
@@ -288,9 +278,7 @@ def attestation_sign(attest_id: str, actor: str | None) -> None:
         session.commit()
         short_id = attest.id[:8]
 
-    console.print(
-        f"[green]Attestation {short_id} approved by {signer} at {now.date()}[/green]"
-    )
+    console.print(f"[green]Attestation {short_id} approved by {signer} at {now.date()}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +364,9 @@ def attestation_expiring(days: int) -> None:
             .all()
         )
 
-    expiring = [a for a in rows if a.approved_at and now <= (a.approved_at + one_year) <= window_end]
+    expiring = [
+        a for a in rows if a.approved_at and now <= (a.approved_at + one_year) <= window_end
+    ]
 
     if not expiring:
         console.print(f"[green]No attestations expiring within {days} days.[/green]")
@@ -449,9 +439,7 @@ def attestation_report(framework: str | None, output_format: str) -> None:
     all_statuses = ["draft", "submitted", "reviewed", "approved", "rejected"]
 
     if output_format == "json":
-        report_data = {
-            fw: dict(counts) for fw, counts in sorted(by_framework.items())
-        }
+        report_data = {fw: dict(counts) for fw, counts in sorted(by_framework.items())}
         console.print(json.dumps(report_data, indent=2))
         return
 
@@ -486,11 +474,7 @@ def attestation_history(attest_id: str) -> None:
     init_db()
 
     with get_session() as session:
-        attest = (
-            session.query(Attestation)
-            .filter(Attestation.id.startswith(attest_id))
-            .first()
-        )
+        attest = session.query(Attestation).filter(Attestation.id.startswith(attest_id)).first()
         if not attest:
             _error(f"Attestation not found: {attest_id}")
 

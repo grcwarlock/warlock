@@ -79,7 +79,11 @@ class GcpSecretsNormalizer(BaseNormalizer):
             # Check if rotation is configured at all
             has_rotation = bool(rotation_period or next_rotation)
 
-            if not has_rotation and days_since_create is not None and days_since_create > _ROTATION_OVERDUE_DAYS:
+            if (
+                not has_rotation
+                and days_since_create is not None
+                and days_since_create > _ROTATION_OVERDUE_DAYS
+            ):
                 obs_type = "misconfiguration"
                 severity = "medium"
                 title = f"GCP secret no rotation configured ({days_since_create}d old): {name}"

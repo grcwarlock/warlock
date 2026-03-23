@@ -21,7 +21,11 @@ log = logging.getLogger(__name__)
 
 # Endpoint → (event_type, params) mapping
 PAGERDUTY_ENDPOINTS: list[tuple[str, str, dict]] = [
-    ("/incidents", "pagerduty_incidents", {"limit": "100", "statuses[]": ["triggered", "acknowledged", "resolved"]}),
+    (
+        "/incidents",
+        "pagerduty_incidents",
+        {"limit": "100", "statuses[]": ["triggered", "acknowledged", "resolved"]},
+    ),
     ("/services", "pagerduty_services", {"limit": "100"}),
     ("/oncalls", "pagerduty_oncalls", {"limit": "100"}),
     ("/escalation_policies", "pagerduty_escalation_policies", {"limit": "100"}),

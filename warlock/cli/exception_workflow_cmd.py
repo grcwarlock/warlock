@@ -40,15 +40,11 @@ def _write_audit_entry(
     """Append a hash-chained audit entry."""
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -111,9 +107,7 @@ def exception_review(days: int) -> None:
             )
 
             if not exceptions:
-                console.print(
-                    f"[green]No exceptions expiring in the next {days} days.[/green]"
-                )
+                console.print(f"[green]No exceptions expiring in the next {days} days.[/green]")
                 return
 
             console.print(
@@ -132,9 +126,7 @@ def exception_review(days: int) -> None:
             for idx, exc in enumerate(exceptions, 1):
                 console.print()
                 days_left = (exc.expiry_date - _utcnow()).days if exc.expiry_date else 0
-                expiry_str = (
-                    exc.expiry_date.strftime("%Y-%m-%d") if exc.expiry_date else "—"
-                )
+                expiry_str = exc.expiry_date.strftime("%Y-%m-%d") if exc.expiry_date else "—"
                 risk_color = {
                     "critical": "red bold",
                     "high": "red",
@@ -182,7 +174,9 @@ def exception_review(days: int) -> None:
                     break
 
                 elif choice == "r":
-                    new_justification = Prompt.ask("New justification", default=exc.risk_description or "")
+                    new_justification = Prompt.ask(
+                        "New justification", default=exc.risk_description or ""
+                    )
                     ext_days = Prompt.ask("Extend by how many days?", default="90")
                     try:
                         ext = int(ext_days)
@@ -252,9 +246,7 @@ def exception_review(days: int) -> None:
                             "remediation_plan": remediation_plan,
                         },
                     )
-                    console.print(
-                        f"[red]Revoked.[/red] Remediation issue created: {issue_id[:8]}"
-                    )
+                    console.print(f"[red]Revoked.[/red] Remediation issue created: {issue_id[:8]}")
                     revoked += 1
 
                 # "s" = skip

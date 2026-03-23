@@ -97,9 +97,7 @@ def incidents_create(
         session.add(issue)
 
         # Audit entry
-        last = (
-            session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        )
+        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
         prev_hash = last.entry_hash if last else "genesis"
         seq = (last.sequence + 1) if last else 1
         payload = f"{seq}:{prev_hash}:incident_created:{issue.id}:{actor}"
@@ -661,14 +659,12 @@ def incidents_metrics(since: str | None) -> None:
 
     # MTTR (mean time to resolve)
     resolved = [
-        i
-        for i in rows
-        if i.status in ("resolved", "closed") and i.created_at and i.updated_at
+        i for i in rows if i.status in ("resolved", "closed") and i.created_at and i.updated_at
     ]
     if resolved:
-        mttr_seconds = sum(
-            (i.updated_at - i.created_at).total_seconds() for i in resolved
-        ) / len(resolved)
+        mttr_seconds = sum((i.updated_at - i.created_at).total_seconds() for i in resolved) / len(
+            resolved
+        )
         mttr_hours = mttr_seconds / 3600
         mttr_str = f"{mttr_hours:.1f}h"
     else:
@@ -748,9 +744,7 @@ def incidents_link(incident_id: str, finding: str) -> None:
         issue.updated_at = now
         session.commit()
 
-    console.print(
-        f"[green]Incident {incident_id[:8]} linked to finding {finding[:8]}[/green]"
-    )
+    console.print(f"[green]Incident {incident_id[:8]} linked to finding {finding[:8]}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -761,9 +755,7 @@ def incidents_link(incident_id: str, finding: str) -> None:
 @incidents.command("responders")
 @click.argument("incident_id")
 @click.option("--add", "add_user", default=None, help="User ID/email to add as responder")
-@click.option(
-    "--remove", "remove_user", default=None, help="User ID/email to remove as responder"
-)
+@click.option("--remove", "remove_user", default=None, help="User ID/email to remove as responder")
 def incidents_responders(incident_id: str, add_user: str | None, remove_user: str | None) -> None:
     """Manage responders (assigned_to) for an incident.
 
@@ -781,9 +773,7 @@ def incidents_responders(incident_id: str, add_user: str | None, remove_user: st
             _error(f"Incident not found: {incident_id}")
 
         if not add_user and not remove_user:
-            console.print(
-                f"[bold]Responder:[/bold] {issue.assigned_to or '[dim]unassigned[/dim]'}"
-            )
+            console.print(f"[bold]Responder:[/bold] {issue.assigned_to or '[dim]unassigned[/dim]'}")
             return
 
         actor = _get_actor()
@@ -794,9 +784,7 @@ def incidents_responders(incident_id: str, add_user: str | None, remove_user: st
             issue.assigned_at = now
             issue.updated_at = now
             session.commit()
-            console.print(
-                f"[green]Incident {incident_id[:8]}:[/green] responder set to {add_user}"
-            )
+            console.print(f"[green]Incident {incident_id[:8]}:[/green] responder set to {add_user}")
 
         if remove_user:
             if issue.assigned_to != remove_user:

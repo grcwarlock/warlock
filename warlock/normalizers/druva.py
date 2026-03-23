@@ -43,7 +43,11 @@ class DruvaNormalizer(BaseNormalizer):
     def _normalize_endpoints(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("endpoints", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("endpoints", response.get("data", []))
+        )
 
         for endpoint in items:
             endpoint_id = str(endpoint.get("id", endpoint.get("endpointId", "")))
@@ -80,7 +84,11 @@ class DruvaNormalizer(BaseNormalizer):
     def _normalize_backupsets(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("backupsets", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("backupsets", response.get("data", []))
+        )
 
         for bset in items:
             bset_id = str(bset.get("id", bset.get("backupSetId", "")))
@@ -117,7 +125,11 @@ class DruvaNormalizer(BaseNormalizer):
     def _normalize_restores(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("restores", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("restores", response.get("data", []))
+        )
 
         for restore in items:
             restore_id = str(restore.get("id", restore.get("restoreId", "")))

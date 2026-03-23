@@ -96,7 +96,9 @@ def run_all(dry_run: bool) -> None:
 
 @automation.command("collect-and-assess")
 @click.option("--source", "-s", multiple=True, help="Limit to source(s) (repeatable)")
-@click.option("--framework", "-f", multiple=True, help="Limit assessment to framework(s) (repeatable)")
+@click.option(
+    "--framework", "-f", multiple=True, help="Limit assessment to framework(s) (repeatable)"
+)
 @click.option("--dry-run", is_flag=True, default=False, help="Show plan without executing")
 def collect_and_assess(
     source: tuple[str, ...],
@@ -173,7 +175,9 @@ def refresh_evidence(framework: str | None, stale_days: int, dry_run: bool) -> N
         )
         return
 
-    table = Table(title=f"Stale Controls (last assessed > {stale_days} days ago, showing up to 200)")
+    table = Table(
+        title=f"Stale Controls (last assessed > {stale_days} days ago, showing up to 200)"
+    )
     table.add_column("Framework", style="cyan")
     table.add_column("Control ID")
     table.add_column("Status")
@@ -233,7 +237,9 @@ def refresh_evidence(framework: str | None, stale_days: int, dry_run: bool) -> N
     show_default=True,
     help="Severity levels to auto-issue (repeatable)",
 )
-@click.option("--dry-run", is_flag=True, default=False, help="Show would-be issues without creating")
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Show would-be issues without creating"
+)
 @click.option("--limit", "-n", default=100, help="Max issues to create in one run")
 def auto_issue(
     severity: tuple[str, ...],
@@ -263,9 +269,7 @@ def auto_issue(
     candidates = candidates[:limit]
 
     if not candidates:
-        console.print(
-            f"[green]No untracked findings at severity {', '.join(severity)}.[/green]"
-        )
+        console.print(f"[green]No untracked findings at severity {', '.join(severity)}.[/green]")
         return
 
     console.print(
@@ -322,7 +326,9 @@ def auto_issue(
 
 @automation.command("auto-poam")
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
-@click.option("--dry-run", is_flag=True, default=False, help="Show would-be POA&Ms without creating")
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Show would-be POA&Ms without creating"
+)
 @click.option("--limit", "-n", default=50, help="Max POA&Ms to create in one run")
 def auto_poam(
     framework: str | None,
@@ -352,22 +358,15 @@ def auto_poam(
             q = q.filter(ControlResult.framework == framework)
         results = q.order_by(ControlResult.assessed_at.desc()).all()
 
-        candidates = [
-            r for r in results
-            if (r.framework, r.control_id) not in existing_pairs
-        ]
+        candidates = [r for r in results if (r.framework, r.control_id) not in existing_pairs]
 
     candidates = candidates[:limit]
 
     if not candidates:
-        console.print(
-            "[green]No non-compliant controls without an existing POA&M.[/green]"
-        )
+        console.print("[green]No non-compliant controls without an existing POA&M.[/green]")
         return
 
-    console.print(
-        f"[bold]{len(candidates)}[/bold] non-compliant control(s) without a POA&M."
-    )
+    console.print(f"[bold]{len(candidates)}[/bold] non-compliant control(s) without a POA&M.")
 
     table = Table(title="Controls to Auto-POA&M")
     table.add_column("Framework", style="cyan")
@@ -538,9 +537,7 @@ def rules_list(fmt: str) -> None:
 
     if not rows:
         console.print("[dim]No automation rules defined.[/dim]")
-        console.print(
-            "[dim]Use 'warlock automation rules create' to add a rule.[/dim]"
-        )
+        console.print("[dim]Use 'warlock automation rules create' to add a rule.[/dim]")
         return
 
     rules = []
@@ -548,15 +545,17 @@ def rules_list(fmt: str) -> None:
         extra = row.extra or {}
         if extra.get("deleted"):
             continue
-        rules.append({
-            "id": row.entity_id,
-            "trigger": extra.get("trigger", "—"),
-            "action": extra.get("action", "—"),
-            "conditions": extra.get("conditions", ""),
-            "enabled": extra.get("enabled", True),
-            "created_by": row.actor,
-            "created_at": str(row.created_at)[:19],
-        })
+        rules.append(
+            {
+                "id": row.entity_id,
+                "trigger": extra.get("trigger", "—"),
+                "action": extra.get("action", "—"),
+                "conditions": extra.get("conditions", ""),
+                "enabled": extra.get("enabled", True),
+                "created_by": row.actor,
+                "created_at": str(row.created_at)[:19],
+            }
+        )
 
     if fmt == "json":
         console.print(json.dumps(rules, indent=2))
@@ -610,12 +609,9 @@ def rules_create(trigger: str, action: str, conditions: str, enabled: bool) -> N
     with get_session() as session:
         # Get the current sequence + 1
         from sqlalchemy import func
+
         max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = (
-            session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.desc())
-            .first()
-        )
+        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
         prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
         seq = max_seq + 1
 
@@ -627,9 +623,7 @@ def rules_create(trigger: str, action: str, conditions: str, enabled: bool) -> N
             "rule_id": rule_id,
         }
         payload = json.dumps(extra, sort_keys=True)
-        entry_hash = hashlib.sha256(
-            f"{seq}:{prev_hash}:{rule_id}:{payload}".encode()
-        ).hexdigest()
+        entry_hash = hashlib.sha256(f"{seq}:{prev_hash}:{rule_id}:{payload}".encode()).hexdigest()
 
         entry = AuditEntry(
             id=str(_uuid.uuid4()),
@@ -687,16 +681,17 @@ def rules_delete(rule_id: str) -> None:
             return
 
         from sqlalchemy import func
+
         max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = (
-            session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.desc())
-            .first()
-        )
+        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
         prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
         seq = max_seq + 1
 
-        del_extra = {"trigger": extra.get("trigger"), "action": extra.get("action"), "deleted": True}
+        del_extra = {
+            "trigger": extra.get("trigger"),
+            "action": extra.get("action"),
+            "deleted": True,
+        }
         payload = json.dumps(del_extra, sort_keys=True)
         entry_hash = hashlib.sha256(
             f"{seq}:{prev_hash}:{row.entity_id}:{payload}".encode()
@@ -789,17 +784,14 @@ def rules_test(rule_id: str, dry_run: bool) -> None:
             if "framework" in condition_filters:
                 q = q.filter(ControlResult.framework == condition_filters["framework"])
             rows = q.limit(10).all()
-            matches = [
-                f"{r.id[:8]} — {r.framework}/{r.control_id} [{r.severity}]" for r in rows
-            ]
+            matches = [f"{r.id[:8]} — {r.framework}/{r.control_id} [{r.severity}]" for r in rows]
 
     if matches:
         console.print(f"\n[green]{len(matches)} matching record(s) (showing up to 10):[/green]")
         for m in matches:
             console.print(f"  [dim]{m}[/dim]")
         console.print(
-            f"\n[dim]{'(dry-run) Would execute' if dry_run else 'Would execute'}: "
-            f"{action}[/dim]"
+            f"\n[dim]{'(dry-run) Would execute' if dry_run else 'Would execute'}: {action}[/dim]"
         )
     else:
         console.print("\n[dim]No matching records for this rule's trigger at this time.[/dim]")
@@ -898,12 +890,9 @@ def schedules_set(name: str, cron: str, enabled: bool) -> None:
 
     with get_session() as session:
         from sqlalchemy import func
+
         max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = (
-            session.query(AuditEntry)
-            .order_by(AuditEntry.sequence.desc())
-            .first()
-        )
+        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
         prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
         seq = max_seq + 1
 
@@ -913,9 +902,7 @@ def schedules_set(name: str, cron: str, enabled: bool) -> None:
             "enabled": enabled,
         }
         payload = json.dumps(extra, sort_keys=True)
-        entry_hash = hashlib.sha256(
-            f"{seq}:{prev_hash}:{sched_id}:{payload}".encode()
-        ).hexdigest()
+        entry_hash = hashlib.sha256(f"{seq}:{prev_hash}:{sched_id}:{payload}".encode()).hexdigest()
 
         entry = AuditEntry(
             id=str(_uuid.uuid4()),

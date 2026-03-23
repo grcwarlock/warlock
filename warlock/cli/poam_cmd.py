@@ -57,13 +57,16 @@ def poam_milestones(poam_id: str) -> None:
             "weakness": (poam.weakness_description or "")[:80],
             "scheduled_completion": (
                 poam.scheduled_completion.strftime("%Y-%m-%d")
-                if poam.scheduled_completion else "\u2014"
+                if poam.scheduled_completion
+                else "\u2014"
             ),
         }
 
-    console.print(f"\n[bold]POA&M {poam_display['id']}[/bold] — "
-                  f"{poam_display['framework']}/{poam_display['control_id']} "
-                  f"[{poam_display['status']}]")
+    console.print(
+        f"\n[bold]POA&M {poam_display['id']}[/bold] — "
+        f"{poam_display['framework']}/{poam_display['control_id']} "
+        f"[{poam_display['status']}]"
+    )
     console.print(f"Weakness: {poam_display['weakness']}")
     console.print(f"Scheduled completion: {poam_display['scheduled_completion']}\n")
 
@@ -84,7 +87,9 @@ def poam_milestones(poam_id: str) -> None:
 
     for i, ms in enumerate(milestones, 1):
         status = ms.get("status", "pending")
-        status_style = "green" if status == "completed" else ("yellow" if status == "in_progress" else "dim")
+        status_style = (
+            "green" if status == "completed" else ("yellow" if status == "in_progress" else "dim")
+        )
         due = ms.get("due_date", "\u2014")
         completed = ms.get("completed_date", "\u2014")
         table.add_row(
@@ -201,8 +206,15 @@ def poam_milestone_update(
     "--type",
     "deviation_type",
     required=True,
-    type=click.Choice(["false-positive", "vendor-dependency", "operational-requirement",
-                       "risk-accepted", "compensating-control"]),
+    type=click.Choice(
+        [
+            "false-positive",
+            "vendor-dependency",
+            "operational-requirement",
+            "risk-accepted",
+            "compensating-control",
+        ]
+    ),
     help="Deviation type",
 )
 @click.option("--reason", "-r", required=True, help="Justification for the deviation")
@@ -266,6 +278,4 @@ def poam_deviation(
     console.print(f"  By:      {actor_name}")
     if expiry:
         console.print(f"  Expiry:  {expiry}")
-    console.print(
-        f"\n[dim]Total deviation records: {len(poam.delay_justifications or [])}[/dim]"
-    )
+    console.print(f"\n[dim]Total deviation records: {len(poam.delay_justifications or [])}[/dim]")

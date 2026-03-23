@@ -19,10 +19,7 @@ class MicrosoftPatchMgmtNormalizer(BaseNormalizer):
     }
 
     def can_handle(self, raw_event: RawEventData) -> bool:
-        return (
-            raw_event.source == "patch_mgmt_microsoft"
-            and raw_event.event_type in self.HANDLERS
-        )
+        return raw_event.source == "patch_mgmt_microsoft" and raw_event.event_type in self.HANDLERS
 
     def normalize(self, raw_event: RawEventData) -> list[FindingData]:
         handler_name = self.HANDLERS[raw_event.event_type]

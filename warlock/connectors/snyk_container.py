@@ -72,7 +72,9 @@ class SnykContainerConnector(BaseConnector):
             (f"/v1/org/{org_id}/container/issues", "snyk_container_issues"),
         ]
 
-        client = httpx.Client(base_url=base_url, headers=headers, timeout=self.config.timeout_seconds)
+        client = httpx.Client(
+            base_url=base_url, headers=headers, timeout=self.config.timeout_seconds
+        )
 
         try:
             for endpoint, event_type in endpoints:
@@ -80,7 +82,11 @@ class SnykContainerConnector(BaseConnector):
                     resp = client.get(endpoint)
                     resp.raise_for_status()
                     body = resp.json()
-                    items = body if isinstance(body, list) else body.get("results", body.get("issues", []))
+                    items = (
+                        body
+                        if isinstance(body, list)
+                        else body.get("results", body.get("issues", []))
+                    )
                     result.events.append(
                         RawEventData(
                             source="snyk_container",

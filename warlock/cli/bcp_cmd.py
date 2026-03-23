@@ -54,9 +54,7 @@ def _impact_style(impact: str | None) -> str:
     type=click.Choice(["high", "moderate", "low"]),
     help="Filter by overall_impact level",
 )
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def bcp_systems(criticality: str | None, output_format: str) -> None:
     """List systems with their security impact / criticality tier.
 
@@ -135,9 +133,7 @@ def bcp_systems(criticality: str | None, output_format: str) -> None:
 
 @bcp.command("bia")
 @click.option("--system", "-s", default=None, help="System profile ID, acronym, or name fragment")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def bia(system: str | None, output_format: str) -> None:
     """Business impact analysis for systems.
 
@@ -179,8 +175,12 @@ def bia(system: str | None, output_format: str) -> None:
                 "integrity_impact": r.integrity_impact or "",
                 "availability_impact": r.availability_impact or "",
                 "authorization_status": r.authorization_status or "",
-                "authorization_date": str(r.authorization_date)[:10] if r.authorization_date else "\u2014",
-                "authorization_expiry": str(r.authorization_expiry)[:10] if r.authorization_expiry else "\u2014",
+                "authorization_date": str(r.authorization_date)[:10]
+                if r.authorization_date
+                else "\u2014",
+                "authorization_expiry": str(r.authorization_expiry)[:10]
+                if r.authorization_expiry
+                else "\u2014",
                 "frameworks": r.frameworks or [],
                 "deployment_model": r.deployment_model or "",
                 "service_model": r.service_model or "",
@@ -208,7 +208,9 @@ def bia(system: str | None, output_format: str) -> None:
         impact = r["overall_impact"]
         style = _impact_style(impact)
         auth_exp_str = (
-            f"  Expires:    {r['authorization_expiry']}\n" if r["authorization_expiry"] != "\u2014" else ""
+            f"  Expires:    {r['authorization_expiry']}\n"
+            if r["authorization_expiry"] != "\u2014"
+            else ""
         )
         console.print(
             Panel(
@@ -259,9 +261,7 @@ def dr_test() -> None:
 
 
 @dr_test.command("schedule")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def dr_schedule(output_format: str) -> None:
     """View DR test schedule by system (derived from active audit engagements).
 
@@ -271,7 +271,12 @@ def dr_schedule(output_format: str) -> None:
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import SystemProfile
 
-    _cadence_map = {"high": "quarterly", "moderate": "semi-annual", "medium": "semi-annual", "low": "annual"}
+    _cadence_map = {
+        "high": "quarterly",
+        "moderate": "semi-annual",
+        "medium": "semi-annual",
+        "low": "annual",
+    }
 
     init_db()
     with get_session() as session:
@@ -389,9 +394,7 @@ def dr_execute(
         if not sp:
             # Fallback: name search
             sp = (
-                session.query(SystemProfile)
-                .filter(SystemProfile.name.ilike(f"%{system}%"))
-                .first()
+                session.query(SystemProfile).filter(SystemProfile.name.ilike(f"%{system}%")).first()
             )
         if not sp:
             _error(
@@ -463,8 +466,7 @@ def dr_execute(
 
     if comment_id:
         console.print(
-            f"\n[green]Saved:[/green] result recorded as comment {comment_id[:8]} "
-            f"in {eng_label}."
+            f"\n[green]Saved:[/green] result recorded as comment {comment_id[:8]} in {eng_label}."
         )
     else:
         console.print(
@@ -483,9 +485,7 @@ def dr_execute(
 @dr_test.command("results")
 @click.option("--system", "-s", default=None, help="Filter by system name, acronym, or ID")
 @click.option("--last", "-n", default=20, help="Show last N results (default: 20)")
-@click.option(
-    "--format", "output_format", default="table", type=click.Choice(["table", "json"])
-)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
 def dr_results(system: str | None, last: int, output_format: str) -> None:
     """List recorded DR test results."""
     import json as _json
@@ -622,10 +622,10 @@ def dr_report(output_format: str) -> None:
         # Enrich with system criticality
         system_ids = list(latest.keys())
         sps = (
-            session.query(SystemProfile)
-            .filter(SystemProfile.id.in_(system_ids))
-            .all()
-        ) if system_ids else []
+            (session.query(SystemProfile).filter(SystemProfile.id.in_(system_ids)).all())
+            if system_ids
+            else []
+        )
         sp_map = {sp.id: sp for sp in sps}
 
         # Systems with no DR tests
@@ -679,7 +679,9 @@ def dr_report(output_format: str) -> None:
         console.print("# DR Test Report\n")
         console.print(f"**Total Systems:** {len(all_systems)}")
         console.print(f"**Tested:** {total_tested} | **Untested:** {total_untested}")
-        console.print(f"**Pass:** {total_pass} | **Fail:** {total_fail} | **Partial:** {total_partial}\n")
+        console.print(
+            f"**Pass:** {total_pass} | **Fail:** {total_fail} | **Partial:** {total_partial}\n"
+        )
         console.print("## Results\n")
         for r in report_rows:
             console.print(
@@ -722,7 +724,9 @@ def dr_report(output_format: str) -> None:
                 r["test_result"], ""
             )
             impact_style = _impact_style(r["overall_impact"])
-            rto_str = str(r["rto_actual_minutes"]) if r["rto_actual_minutes"] is not None else "\u2014"
+            rto_str = (
+                str(r["rto_actual_minutes"]) if r["rto_actual_minutes"] is not None else "\u2014"
+            )
             table.add_row(
                 r["system_name"][:30],
                 f"[{impact_style}]{r['overall_impact']}[/]",
@@ -737,6 +741,4 @@ def dr_report(output_format: str) -> None:
         console.print(f"\n[yellow]Systems with no DR tests ({total_untested}):[/yellow]")
         for sp in untested:
             style = _impact_style(sp.overall_impact)
-            console.print(
-                f"  [{style}]{sp.name}[/] ([dim]{sp.overall_impact or 'unknown'}[/dim])"
-            )
+            console.print(f"  [{style}]{sp.name}[/] ([dim]{sp.overall_impact or 'unknown'}[/dim])")

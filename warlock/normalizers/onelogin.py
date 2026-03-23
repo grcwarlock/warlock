@@ -11,10 +11,10 @@ from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 
 # OneLogin event type IDs that represent suspicious/compliance-relevant activity
 _POLICY_EVENT_IDS = {
-    5,    # User locked out
-    6,    # User password changed
-    8,    # User MFA disabled
-    72,   # App removed from user
+    5,  # User locked out
+    6,  # User password changed
+    8,  # User MFA disabled
+    72,  # App removed from user
     100,  # Role removed from user
 }
 
@@ -122,7 +122,11 @@ class OneLoginNormalizer(BaseNormalizer):
             event_id = str(event.get("id", ""))
             event_type_id = event.get("event_type_id", 0)
             actor = event.get("actor_user_name", event.get("user_name", "unknown"))
-            event_name = event.get("type", {}).get("name", str(event_type_id)) if isinstance(event.get("type"), dict) else str(event_type_id)
+            event_name = (
+                event.get("type", {}).get("name", str(event_type_id))
+                if isinstance(event.get("type"), dict)
+                else str(event_type_id)
+            )
 
             is_policy = int(event_type_id) in _POLICY_EVENT_IDS
             obs_type = "policy_violation" if is_policy else "alert"

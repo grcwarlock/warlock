@@ -76,11 +76,7 @@ def _write_audit_entry(
     from warlock.db.models import AuditEntry
 
     # Derive sequence and previous_hash from the last entry
-    last = (
-        session.query(AuditEntry)
-        .order_by(AuditEntry.sequence.desc())
-        .first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     sequence = (last.sequence + 1) if last else 1
     prev_hash = last.entry_hash if last else "genesis"
 
@@ -353,8 +349,7 @@ def dsar_show(dsar_id: str) -> None:
             note = e.get("notes") or e.get("reason") or ""
             console.print(
                 f"  [{entry.created_at.strftime('%Y-%m-%d %H:%M')}] "
-                f"[cyan]{entry.action}[/cyan]  by {entry.actor}"
-                + (f"  -- {note}" if note else "")
+                f"[cyan]{entry.action}[/cyan]  by {entry.actor}" + (f"  -- {note}" if note else "")
             )
 
 
@@ -436,9 +431,7 @@ def dsar_escalate(dsar_id: str, reason: str) -> None:
         )
         session.commit()
 
-    console.print(
-        f"[yellow]DSAR {row.entity_id[:8]} escalated by {actor}:[/yellow] {reason}"
-    )
+    console.print(f"[yellow]DSAR {row.entity_id[:8]} escalated by {actor}:[/yellow] {reason}")
 
 
 @dsar.command("overdue")
@@ -512,7 +505,9 @@ def breach() -> None:
     type=click.Choice(list(_BREACH_SEVERITIES)),
     help="Breach severity",
 )
-@click.option("--discovery-date", "discovery_date", required=True, help="Date discovered YYYY-MM-DD")
+@click.option(
+    "--discovery-date", "discovery_date", required=True, help="Date discovered YYYY-MM-DD"
+)
 def breach_create(title: str, severity: str, discovery_date: str) -> None:
     """Record a new personal data breach."""
     from warlock.db.engine import get_session, init_db
@@ -625,8 +620,7 @@ def breach_show(breach_id: str) -> None:
             note = e.get("authority") or e.get("notes") or ""
             console.print(
                 f"  [{entry.created_at.strftime('%Y-%m-%d %H:%M')}] "
-                f"[cyan]{entry.action}[/cyan]  by {entry.actor}"
-                + (f"  -- {note}" if note else "")
+                f"[cyan]{entry.action}[/cyan]  by {entry.actor}" + (f"  -- {note}" if note else "")
             )
 
 
@@ -723,9 +717,7 @@ def breach_status(breach_id: str) -> None:
         )
 
     extra = row.extra or {}
-    console.print(
-        f"\n[bold]Breach {row.entity_id[:8]}[/bold] -- {extra.get('title', '\u2014')}"
-    )
+    console.print(f"\n[bold]Breach {row.entity_id[:8]}[/bold] -- {extra.get('title', '\u2014')}")
     console.print(f"Severity: {extra.get('severity', '\u2014')}")
     console.print(f"Discovery: {_fmt_date(extra.get('discovery_date'))}")
 
@@ -782,7 +774,9 @@ def transfers_list(mechanism: str | None) -> None:
         rows = q.order_by(AuditEntry.created_at.desc()).all()
 
     if mechanism:
-        rows = [r for r in rows if (r.extra or {}).get("mechanism", "").lower() == mechanism.lower()]
+        rows = [
+            r for r in rows if (r.extra or {}).get("mechanism", "").lower() == mechanism.lower()
+        ]
 
     if not rows:
         console.print("[dim]No data transfer records found.[/dim]")
@@ -1101,7 +1095,9 @@ def ropa(output_format: str) -> None:
         lines.append(f"- **Data classification:** {s.data_classification}")
         lines.append(f"- **Contains PII:** {'Yes' if s.contains_pii else 'No'}")
         lines.append(f"- **Contains PHI:** {'Yes' if s.contains_phi else 'No'}")
-        lines.append(f"- **Retention:** {str(s.retention_days) + ' days' if s.retention_days else 'Not defined'}")
+        lines.append(
+            f"- **Retention:** {str(s.retention_days) + ' days' if s.retention_days else 'Not defined'}"
+        )
         lines.append(f"- **Owner:** {s.owner or 'N/A'}  |  **Team:** {s.team or 'N/A'}")
         lines.append(f"- **Encrypted at rest:** {s.encrypted_at_rest}")
         lines.append(f"- **Encrypted in transit:** {s.encrypted_in_transit}")

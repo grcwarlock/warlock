@@ -53,15 +53,11 @@ def _write_audit_entry(
     """Append a hash-chained audit entry."""
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -216,11 +212,7 @@ def evidence_sprint(framework: str, days: int, assignee: str | None) -> None:
                 session.flush()
 
             # Get or create a placeholder auditor record for CLI-submitted requests
-            auditor = (
-                session.query(ExternalAuditor)
-                .filter(ExternalAuditor.email == actor)
-                .first()
-            )
+            auditor = session.query(ExternalAuditor).filter(ExternalAuditor.email == actor).first()
             if not auditor:
                 auditor = ExternalAuditor(
                     id=str(uuid.uuid4()),
@@ -360,18 +352,14 @@ def evidence_collection(framework: str | None, assignee: str | None) -> None:
 
     try:
         with get_session() as session:
-            q = session.query(EvidenceRequest).filter(
-                EvidenceRequest.status == "requested"
-            )
+            q = session.query(EvidenceRequest).filter(EvidenceRequest.status == "requested")
             if framework:
                 q = q.filter(EvidenceRequest.framework.ilike(framework))
 
             pending = q.order_by(EvidenceRequest.created_at).limit(50).all()
 
             if not pending:
-                console.print(
-                    "[green]No pending evidence requests found.[/green]"
-                )
+                console.print("[green]No pending evidence requests found.[/green]")
                 return
 
             console.print(
@@ -389,11 +377,12 @@ def evidence_collection(framework: str | None, assignee: str | None) -> None:
             for idx, req in enumerate(pending, 1):
                 console.print()
                 due_str = (
-                    "—"
-                )  # EvidenceRequest has no due_date field — use the engagement period_end
+                    "—"  # EvidenceRequest has no due_date field — use the engagement period_end
+                )
                 # Pull from engagement if available
                 if req.engagement_id:
                     from warlock.db.models import AuditEngagement
+
                     eng = (
                         session.query(AuditEngagement)
                         .filter(AuditEngagement.id == req.engagement_id)

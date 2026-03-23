@@ -51,9 +51,7 @@ def _resolve_vendor(session, value: str):
         return vendor
 
     # Partial name
-    vendor = (
-        session.query(Vendor).filter(Vendor.name.ilike(f"%{value}%")).first()
-    )
+    vendor = session.query(Vendor).filter(Vendor.name.ilike(f"%{value}%")).first()
     return vendor
 
 
@@ -87,17 +85,11 @@ def _write_audit_entry(session, action: str, entity_id: str, extra: dict) -> Non
 
     from warlock.db.models import AuditEntry
 
-    last = (
-        session.query(AuditEntry)
-        .order_by(AuditEntry.sequence.desc())
-        .first()
-    )
+    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
     prev_hash = last.entry_hash if last else "genesis"
     seq = (last.sequence + 1) if last else 1
 
-    payload = json.dumps(
-        {"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True
-    )
+    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
     entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
 
     entry = AuditEntry(
@@ -164,14 +156,10 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
         # --- 1. Vendor profile ---
         tier_style = _risk_tier_color(vendor.tier)
         last_assessed = (
-            vendor.last_assessment.strftime("%Y-%m-%d")
-            if vendor.last_assessment
-            else "Never"
+            vendor.last_assessment.strftime("%Y-%m-%d") if vendor.last_assessment else "Never"
         )
         contract_exp = (
-            vendor.contract_expires.strftime("%Y-%m-%d")
-            if vendor.contract_expires
-            else "Unknown"
+            vendor.contract_expires.strftime("%Y-%m-%d") if vendor.contract_expires else "Unknown"
         )
         meta = vendor.metadata_ or {}
 
@@ -222,9 +210,7 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
 
         # --- 3. Questionnaire status ---
         q_status = meta.get("questionnaire_status", "not_sent")
-        q_style = {"sent": "yellow", "pending": "yellow", "complete": "green"}.get(
-            q_status, "dim"
-        )
+        q_style = {"sent": "yellow", "pending": "yellow", "complete": "green"}.get(q_status, "dim")
         console.print(
             f"\nQuestionnaire: [{q_style}]{q_status}[/{q_style}]  |  "
             f"SOC 2 Report: {meta.get('soc2_status', 'not_requested')}  |  "
@@ -276,9 +262,7 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
                 vendor.id,
                 {"old_tier": old_tier, "new_tier": new_tier},
             )
-            console.print(
-                f"[green]Risk tier updated: {old_tier} -> {new_tier}[/green]"
-            )
+            console.print(f"[green]Risk tier updated: {old_tier} -> {new_tier}[/green]")
 
         elif choice == "s":
             meta_new = dict(meta)
@@ -286,12 +270,8 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
             meta_new["questionnaire_sent_at"] = _utcnow().isoformat()
             vendor.metadata_ = meta_new
             session.commit()
-            _write_audit_entry(
-                session, "vendor_questionnaire_sent", vendor.id, {}
-            )
-            console.print(
-                f"[green]Questionnaire marked as sent for {vendor.name}.[/green]"
-            )
+            _write_audit_entry(session, "vendor_questionnaire_sent", vendor.id, {})
+            console.print(f"[green]Questionnaire marked as sent for {vendor.name}.[/green]")
 
         elif choice == "r":
             soc2_status = Prompt.ask(
@@ -337,9 +317,7 @@ def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N
             )
             session.add(issue)
             session.commit()
-            console.print(
-                f"[green]Issue created: {issue.id[:8]} [{priority}] {title}[/green]"
-            )
+            console.print(f"[green]Issue created: {issue.id[:8]} [{priority}] {title}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -363,8 +341,7 @@ def vendor_onboard() -> None:
     try:
         console.print(
             Panel(
-                "[bold]Vendor Onboarding Wizard[/bold]\n"
-                "Press Ctrl-C at any time to cancel.",
+                "[bold]Vendor Onboarding Wizard[/bold]\nPress Ctrl-C at any time to cancel.",
                 border_style="cyan",
             )
         )
@@ -431,9 +408,7 @@ def vendor_onboard() -> None:
         )
 
         with get_session() as session:
-            existing = (
-                session.query(Vendor).filter(Vendor.name.ilike(name.strip())).first()
-            )
+            existing = session.query(Vendor).filter(Vendor.name.ilike(name.strip())).first()
             if existing:
                 _error(
                     f"Vendor '{name.strip()}' already exists (ID: {existing.id[:8]}). "
@@ -465,9 +440,7 @@ def vendor_onboard() -> None:
                 border_style="green",
             )
         )
-        console.print(
-            f"\n[dim]Next: warlock vendor-review assess '{vendor.name}'[/dim]"
-        )
+        console.print(f"\n[dim]Next: warlock vendor-review assess '{vendor.name}'[/dim]")
 
     except (KeyboardInterrupt, EOFError):
         console.print("\n[dim]Onboarding cancelled.[/dim]")
@@ -507,9 +480,7 @@ def vendor_reassess() -> None:
                         overdue.append((v, days_since, cadence))
 
             if not overdue:
-                console.print(
-                    "[green]All vendors are within their reassessment cadence.[/green]"
-                )
+                console.print("[green]All vendors are within their reassessment cadence.[/green]")
                 return
 
             table = Table(title=f"Vendors Due for Reassessment ({len(overdue)})")
@@ -521,12 +492,8 @@ def vendor_reassess() -> None:
             table.add_column("Risk Score", justify="right")
 
             for v, days_since, cadence in overdue:
-                last = (
-                    v.last_assessment.strftime("%Y-%m-%d") if v.last_assessment else "Never"
-                )
-                overdue_days = (
-                    str(days_since - cadence) if days_since is not None else "—"
-                )
+                last = v.last_assessment.strftime("%Y-%m-%d") if v.last_assessment else "Never"
+                overdue_days = str(days_since - cadence) if days_since is not None else "—"
                 score_val = f"{v.risk_score:.1f}" if v.risk_score is not None else "—"
                 tier_style = _risk_tier_color(v.tier)
                 table.add_row(
@@ -559,7 +526,9 @@ def vendor_reassess() -> None:
                     )
                 if v.risk_score is not None:
                     score_color = (
-                        "red" if v.risk_score >= 70 else ("yellow" if v.risk_score >= 40 else "green")
+                        "red"
+                        if v.risk_score >= 70
+                        else ("yellow" if v.risk_score >= 40 else "green")
                     )
                     console.print(
                         f"  Risk score: [{score_color}]{v.risk_score:.1f}[/{score_color}]"

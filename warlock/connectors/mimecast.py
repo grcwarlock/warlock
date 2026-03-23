@@ -129,10 +129,7 @@ class MimecastConnector(BaseConnector):
             hmac.new(secret_bytes, hmac_msg.encode(), hashlib.sha1).digest()
         ).decode()
 
-        auth_header = (
-            f"MC {access_key}:"
-            f"MCS+HMAC-SHA1:{request_id}:{signature}"
-        )
+        auth_header = f"MC {access_key}:MCS+HMAC-SHA1:{request_id}:{signature}"
 
         headers = {
             "Authorization": auth_header,

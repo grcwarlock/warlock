@@ -41,7 +41,11 @@ class TrustArcNormalizer(BaseNormalizer):
     def _normalize_assessments(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("assessments", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("assessments", response.get("data", []))
+        )
 
         for assessment in items:
             assessment_id = str(assessment.get("id", assessment.get("assessmentId", "")))
@@ -113,7 +117,11 @@ class TrustArcNormalizer(BaseNormalizer):
     def _normalize_cookie_consent(self, raw: RawEventData) -> list[FindingData]:
         findings = []
         response = raw.raw_data.get("response", {})
-        items = response if isinstance(response, list) else response.get("consents", response.get("data", []))
+        items = (
+            response
+            if isinstance(response, list)
+            else response.get("consents", response.get("data", []))
+        )
 
         for consent in items:
             consent_id = str(consent.get("id", ""))

@@ -124,7 +124,9 @@ def integrations_list() -> None:
     help="Integration type to configure",
 )
 @click.option("--url", default=None, help="Endpoint URL or webhook URL")
-@click.option("--token", default=None, help="API token or secret (stored as env ref, not persisted)")
+@click.option(
+    "--token", default=None, help="API token or secret (stored as env ref, not persisted)"
+)
 @click.option("--channel", default=None, help="Channel name (for Slack, Teams, etc.)")
 def integrations_configure(
     integration_type: str,
@@ -433,14 +435,16 @@ def notifications_rules_list() -> None:
 @click.option(
     "--trigger",
     required=True,
-    type=click.Choice([
-        "new_issue",
-        "issue_critical",
-        "poam_overdue",
-        "connector_failure",
-        "compliance_breach",
-        "vendor_high_risk",
-    ]),
+    type=click.Choice(
+        [
+            "new_issue",
+            "issue_critical",
+            "poam_overdue",
+            "connector_failure",
+            "compliance_breach",
+            "vendor_high_risk",
+        ]
+    ),
     help="Event that triggers the notification",
 )
 @click.option(

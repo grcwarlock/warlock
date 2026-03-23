@@ -182,9 +182,7 @@ def explain_control(control_id: str, framework: str | None, use_ai: bool) -> Non
     if not _check_ai_available(use_ai):
         return
 
-    status_summary = (
-        {r.status: 0 for r in rows} if rows else {}
-    )
+    status_summary = {r.status: 0 for r in rows} if rows else {}
     for r in rows:
         status_summary[r.status] = status_summary.get(r.status, 0) + 1
 
@@ -239,17 +237,19 @@ def root_cause(finding_id: str, use_ai: bool) -> None:
             .all()
         )
 
-    console.print(Panel(
-        f"[bold]{row.title}[/bold]\n\n"
-        f"ID:               {row.id}\n"
-        f"Severity:         {row.severity}\n"
-        f"Observation Type: {row.observation_type}\n"
-        f"Source:           {row.source} / {row.provider}\n"
-        f"Resource:         {row.resource_type or '—'} — {row.resource_id or '—'}\n"
-        f"Observed At:      {row.observed_at}",
-        title="[bold cyan]Finding[/bold cyan]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold]{row.title}[/bold]\n\n"
+            f"ID:               {row.id}\n"
+            f"Severity:         {row.severity}\n"
+            f"Observation Type: {row.observation_type}\n"
+            f"Source:           {row.source} / {row.provider}\n"
+            f"Resource:         {row.resource_type or '—'} — {row.resource_id or '—'}\n"
+            f"Observed At:      {row.observed_at}",
+            title="[bold cyan]Finding[/bold cyan]",
+            border_style="cyan",
+        )
+    )
 
     if not _check_ai_available(use_ai):
         return
@@ -308,9 +308,15 @@ def predict_risk(framework: str | None, limit: int, use_ai: bool) -> None:
         ).group_by(ControlResult.framework, ControlResult.control_id)
         if framework:
             q = q.filter(ControlResult.framework == framework)
-        rows = q.order_by(func.sum(
-            (ControlResult.status == "non_compliant").cast(int)  # type: ignore[arg-type]
-        ).desc()).limit(limit).all()
+        rows = (
+            q.order_by(
+                func.sum(
+                    (ControlResult.status == "non_compliant").cast(int)  # type: ignore[arg-type]
+                ).desc()
+            )
+            .limit(limit)
+            .all()
+        )
 
     if not rows:
         console.print("[dim]No control results found.[/dim]")
@@ -336,13 +342,15 @@ def predict_risk(framework: str | None, limit: int, use_ai: bool) -> None:
             str(failures),
             f"[{style}]{rate:.0%}[/{style}]",
         )
-        risk_data.append({
-            "framework": r.framework,
-            "control_id": r.control_id,
-            "total": total,
-            "failures": failures,
-            "failure_rate": round(rate, 3),
-        })
+        risk_data.append(
+            {
+                "framework": r.framework,
+                "control_id": r.control_id,
+                "total": total,
+                "failures": failures,
+                "failure_rate": round(rate, 3),
+            }
+        )
     console.print(table)
 
     if not _check_ai_available(use_ai):
@@ -392,13 +400,9 @@ def suggest_remediation(finding_id: str, use_ai: bool) -> None:
             .limit(10)
             .all()
         )
-        mapped_controls = [
-            {"framework": m.framework, "control_id": m.control_id} for m in mappings
-        ]
+        mapped_controls = [{"framework": m.framework, "control_id": m.control_id} for m in mappings]
 
-    console.print(
-        f"[bold]{row.title}[/bold]  [{row.severity}]  {row.source}/{row.provider}"
-    )
+    console.print(f"[bold]{row.title}[/bold]  [{row.severity}]  {row.source}/{row.provider}")
     if mapped_controls:
         console.print(
             "[dim]Mapped controls: "
@@ -448,9 +452,7 @@ def prioritize(framework: str | None, limit: int, use_ai: bool) -> None:
 
     init_db()
     with get_session() as session:
-        q = session.query(ControlResult).filter(
-            ControlResult.status == "non_compliant"
-        )
+        q = session.query(ControlResult).filter(ControlResult.status == "non_compliant")
         if framework:
             q = q.filter(ControlResult.framework == framework)
         rows = q.order_by(ControlResult.assessed_at.desc()).limit(limit).all()
@@ -587,10 +589,7 @@ def draft_poam(finding_id: str, use_ai: bool) -> None:
             _error(f"Finding '{finding_id}' not found.")
 
         mappings = (
-            session.query(ControlMapping)
-            .filter(ControlMapping.finding_id == row.id)
-            .limit(5)
-            .all()
+            session.query(ControlMapping).filter(ControlMapping.finding_id == row.id).limit(5).all()
         )
 
     console.print(f"[bold]Draft POA&M for Finding:[/bold] {row.title}")
@@ -965,14 +964,20 @@ def forecast(framework: str | None, days: int, use_ai: bool) -> None:
         )
         if framework:
             q = q.filter(ControlResult.framework == framework)
-        recent = q.filter(
-            ControlResult.assessed_at >= _utcnow() - timedelta(days=30)
-        ).group_by(ControlResult.framework, ControlResult.status).all()
+        recent = (
+            q.filter(ControlResult.assessed_at >= _utcnow() - timedelta(days=30))
+            .group_by(ControlResult.framework, ControlResult.status)
+            .all()
+        )
 
-        older = q.filter(
-            ControlResult.assessed_at >= _utcnow() - timedelta(days=90),
-            ControlResult.assessed_at < _utcnow() - timedelta(days=30),
-        ).group_by(ControlResult.framework, ControlResult.status).all()
+        older = (
+            q.filter(
+                ControlResult.assessed_at >= _utcnow() - timedelta(days=90),
+                ControlResult.assessed_at < _utcnow() - timedelta(days=30),
+            )
+            .group_by(ControlResult.framework, ControlResult.status)
+            .all()
+        )
 
     def _agg(rows: list) -> dict[str, dict[str, int]]:
         out: dict[str, dict[str, int]] = {}
@@ -1140,9 +1145,7 @@ def brief(framework: str | None, use_ai: bool) -> None:
     console.print(f"  Findings:        {total_findings}")
 
     if status_dist:
-        compliant = (
-            status_dist.get("compliant", 0) + status_dist.get("inherited_compliant", 0)
-        )
+        compliant = status_dist.get("compliant", 0) + status_dist.get("inherited_compliant", 0)
         non_compliant = status_dist.get("non_compliant", 0)
         pct = compliant / total_results * 100 if total_results else 0
         console.print(
@@ -1213,6 +1216,7 @@ def ask_grc(question: str, ctx_scope: str, framework: str | None) -> None:
     with get_session() as session:
         if ctx_scope in ("framework", "all"):
             from sqlalchemy import func
+
             q = session.query(
                 ControlResult.framework,
                 ControlResult.status,
@@ -1222,20 +1226,18 @@ def ask_grc(question: str, ctx_scope: str, framework: str | None) -> None:
                 q = q.filter(ControlResult.framework == framework)
             rows = q.group_by(ControlResult.framework, ControlResult.status).all()
             context_data["control_status_distribution"] = [
-                {"framework": r.framework, "status": r.status, "count": r.cnt}
-                for r in rows
+                {"framework": r.framework, "status": r.status, "count": r.cnt} for r in rows
             ]
 
         if ctx_scope in ("findings", "all"):
             from sqlalchemy import func
+
             sev_rows = (
                 session.query(Finding.severity, func.count(Finding.id).label("cnt"))
                 .group_by(Finding.severity)
                 .all()
             )
-            context_data["finding_severity_distribution"] = {
-                r.severity: r.cnt for r in sev_rows
-            }
+            context_data["finding_severity_distribution"] = {r.severity: r.cnt for r in sev_rows}
 
     svc = get_ai_service()
     session_id = str(uuid.uuid4())
@@ -1247,11 +1249,13 @@ def ask_grc(question: str, ctx_scope: str, framework: str | None) -> None:
     )
     result = svc.converse(session_id=session_id, message=question, context=ctx)
     if result.ai_used:
-        console.print(Panel(
-            _parse_ai_response(result.value),
-            title="[cyan]AI Answer[/cyan]",
-            border_style="cyan",
-        ))
+        console.print(
+            Panel(
+                _parse_ai_response(result.value),
+                title="[cyan]AI Answer[/cyan]",
+                border_style="cyan",
+            )
+        )
     else:
         console.print(f"[yellow]AI unavailable: {result.fallback_reason}[/yellow]")
 

@@ -125,7 +125,9 @@ class LaceworkNormalizer(BaseNormalizer):
             raw_severity = str(check.get("severity", "Low")).lower()
             severity = _LACEWORK_SEVERITY_MAP.get(raw_severity, "medium")
 
-            obs_type = "policy_violation" if status in ("non-compliant", "failed", "fail") else "inventory"
+            obs_type = (
+                "policy_violation" if status in ("non-compliant", "failed", "fail") else "inventory"
+            )
 
             findings.append(
                 FindingData(
