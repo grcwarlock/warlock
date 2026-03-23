@@ -467,6 +467,154 @@ def attestation_report(framework: str | None, output_format: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Workflow transitions: submit, review, approve, reject, prepare
+# ---------------------------------------------------------------------------
+
+
+@attestations.command("submit")
+@click.argument("attest_id")
+@click.option(
+    "--as",
+    "actor",
+    default=None,
+    help="Actor submitting the attestation (default: WLK_CLI_ACTOR env)",
+)
+def attestation_submit(attest_id: str, actor: str | None) -> None:
+    """Submit an attestation for review (draft -> submitted)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.attestation import AttestationWorkflow
+
+    init_db()
+    submitter = actor or _get_actor()
+    wf = AttestationWorkflow()
+
+    with get_session() as session:
+        try:
+            att = wf.submit(session, attest_id, submitter)
+            session.commit()
+            console.print(f"[green]Attestation {att.id[:8]} submitted by {submitter}[/green]")
+        except ValueError as exc:
+            _error(str(exc))
+
+
+@attestations.command("review")
+@click.argument("attest_id")
+@click.option("--notes", "-n", default=None, help="Review notes")
+@click.option(
+    "--as",
+    "actor",
+    default=None,
+    help="Actor reviewing the attestation (default: WLK_CLI_ACTOR env)",
+)
+def attestation_review(attest_id: str, notes: str | None, actor: str | None) -> None:
+    """Mark an attestation as reviewed (submitted -> reviewed)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.attestation import AttestationWorkflow
+
+    init_db()
+    reviewer = actor or _get_actor()
+    wf = AttestationWorkflow()
+
+    with get_session() as session:
+        try:
+            att = wf.review(session, attest_id, reviewer, review_notes=notes)
+            session.commit()
+            console.print(f"[green]Attestation {att.id[:8]} reviewed by {reviewer}[/green]")
+        except ValueError as exc:
+            _error(str(exc))
+
+
+@attestations.command("approve")
+@click.argument("attest_id")
+@click.option(
+    "--as",
+    "actor",
+    default=None,
+    help="Actor approving the attestation (default: WLK_CLI_ACTOR env)",
+)
+def attestation_approve(attest_id: str, actor: str | None) -> None:
+    """Approve an attestation (reviewed -> approved)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.attestation import AttestationWorkflow
+
+    init_db()
+    approver = actor or _get_actor()
+    wf = AttestationWorkflow()
+
+    with get_session() as session:
+        try:
+            att = wf.approve(session, attest_id, approver)
+            session.commit()
+            console.print(f"[green]Attestation {att.id[:8]} approved by {approver}[/green]")
+        except ValueError as exc:
+            _error(str(exc))
+
+
+@attestations.command("reject")
+@click.argument("attest_id")
+@click.option("--reason", "-r", required=True, help="Reason for rejection")
+@click.option(
+    "--as",
+    "actor",
+    default=None,
+    help="Actor rejecting the attestation (default: WLK_CLI_ACTOR env)",
+)
+def attestation_reject(attest_id: str, reason: str, actor: str | None) -> None:
+    """Reject an attestation (submitted/reviewed -> rejected)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.attestation import AttestationWorkflow
+
+    init_db()
+    rejector = actor or _get_actor()
+    wf = AttestationWorkflow()
+
+    with get_session() as session:
+        try:
+            att = wf.reject(session, attest_id, rejector, reason)
+            session.commit()
+            console.print(f"[red]Attestation {att.id[:8]} rejected by {rejector}[/red]")
+            console.print(f"  Reason: {reason}")
+        except ValueError as exc:
+            _error(str(exc))
+
+
+@attestations.command("prepare")
+@click.option("--framework", "-f", required=True, help="Framework ID (e.g. soc2)")
+@click.option("--engagement", "-e", required=True, help="Engagement UUID")
+@click.option(
+    "--as",
+    "actor",
+    default=None,
+    help="Actor preparing the attestations (default: WLK_CLI_ACTOR env)",
+)
+def attestation_prepare(framework: str, engagement: str, actor: str | None) -> None:
+    """Batch-create draft attestations for all controls in a framework."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.attestation import AttestationWorkflow
+
+    init_db()
+    preparer = actor or _get_actor()
+    wf = AttestationWorkflow()
+
+    with get_session() as session:
+        try:
+            created = wf.prepare_batch(session, framework, engagement, prepared_by=preparer)
+            session.commit()
+        except (ValueError, FileNotFoundError) as exc:
+            _error(str(exc))
+
+    console.print(
+        f"[green]Created {len(created)} draft attestations for {framework} "
+        f"(engagement {engagement[:8]})[/green]"
+    )
+
+
+# ---------------------------------------------------------------------------
+# history
+# ---------------------------------------------------------------------------
+
+
 @attestations.command("history")
 @click.argument("attest_id")
 def attestation_history(attest_id: str) -> None:

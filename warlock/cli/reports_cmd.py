@@ -97,6 +97,85 @@ def reports_executive(framework: str | None, out_format: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@reports.command("pdf")
+@click.option("--framework", "-f", required=True, help="Framework to generate PDF for")
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output file path (default: report_{framework}_{date}.pdf)",
+)
+@click.option("--organization", default="Warlock GRC", help="Organization name for cover page")
+def reports_pdf(framework: str, output: str | None, organization: str) -> None:
+    """Generate a production-ready PDF compliance report with cover page and TOC."""
+    from datetime import datetime, timezone
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.reports import ReportGenerator
+
+    if output is None:
+        date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+        output = f"report_{framework}_{date_str}.pdf"
+
+    init_db()
+    gen = ReportGenerator()
+
+    with get_session() as session:
+        try:
+            pdf_bytes = gen.generate_pdf(
+                session,
+                framework,
+                organization=organization,
+            )
+        except ImportError as exc:
+            console.print(f"[red]Error:[/red] {exc}")
+            raise SystemExit(1) from exc
+
+    with open(output, "wb") as fh:
+        fh.write(pdf_bytes)
+
+    size_kb = len(pdf_bytes) / 1024
+    console.print(f"[green]PDF report written to {output} ({size_kb:.1f} KB)[/green]")
+
+
+# ---------------------------------------------------------------------------
+# reports executive-export
+# ---------------------------------------------------------------------------
+
+
+@reports.command("executive-export")
+@click.option("--framework", "-f", default=None, help="Limit to a specific framework")
+@click.option(
+    "--output",
+    "-o",
+    default="summary.md",
+    help="Output file path (default: summary.md)",
+)
+def reports_executive_export(framework: str | None, output: str) -> None:
+    """Export executive compliance summary as a formatted markdown file."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.executive import format_executive_text, generate_executive_summary
+
+    init_db()
+    with get_session() as session:
+        data = generate_executive_summary(session, framework=framework)
+
+    text = format_executive_text(data)
+
+    with open(output, "w") as fh:
+        fh.write(text)
+
+    console.print(f"[green]Executive summary written to {output}[/green]")
+    console.print(f"  Posture score: {data['overall_posture_score']}%")
+    console.print(f"  Trend:         {data['trend']}")
+    console.print(f"  Open issues:   {data['open_issues_count']}")
+
+
+# ---------------------------------------------------------------------------
+# reports compliance
+# ---------------------------------------------------------------------------
+
+
 @reports.command("compliance")
 @click.option("--framework", "-f", required=True, help="Framework to report on")
 @click.option("--limit", "-n", default=50, help="Max control rows")

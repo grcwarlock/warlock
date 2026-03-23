@@ -1,7 +1,7 @@
 # Warlock Backlog
 
 **Last updated:** 2026-03-23
-**Total:** 375 done / 481 total (78%)
+**Total:** 380 done / 481 total (79%)
 
 ---
 
@@ -294,8 +294,8 @@ Check to see if all connector tiers are complete and wired into the demo and dat
 
 ### 5.4 Export & reporting
 
-- [ ] PG-18: PDF report generation (ReportLab or WeasyPrint) — L | P2
-- [ ] PG-19: Executive summary template — M | P2
+- [x] PG-18: PDF report generation (ReportLab or WeasyPrint) — L | P2
+- [x] PG-19: Executive summary template — M | P2
 - [ ] PG-20: Embeddable compliance widget (iframe HTML) — M | P3
 - [ ] PG-21: SVG compliance badges for README — S | P3
 - [ ] PG-22: Slack/Teams notification integration — M | P2
@@ -393,8 +393,8 @@ CLI grew from 42+ commands to **539+ commands** across 63 modules. All items com
 ### 8.5 Compliance Depth
 
 - [ ] F-26: FedRAMP ConMon tooling — L | P2
-- [ ] F-27: SOC 2 points of focus (200+) — L | P2
-- [ ] F-28: Attestation workflow (SOC 2/ISO) — L | P2
+- [x] F-27: SOC 2 points of focus (109 across 32 controls) — L | P2
+- [x] F-28: Attestation workflow (SOC 2/ISO) — L | P2
 - [ ] F-29: CIS Benchmark mappings — M | P2
 - [ ] F-30: NIST 800-53 enhancements (1,034 gaps) — XL | P2
 - [ ] F-31: Reverse crosswalks — M | P2
@@ -522,7 +522,7 @@ These were written as part of the proddocs initiative and live in `proddocs/`.
 
 ## 11. Operational
 
-- [ ] OPS-1: Wire FedRAMP/HIPAA/CMMC/GDPR checks to event_types in YAMLs — M | P1
+- [x] OPS-1: Wire FedRAMP/HIPAA/CMMC/GDPR checks to event_types in YAMLs — M | P1 (already wired)
 - [ ] OPS-2: demo_exports/ — pre-generated sample packages — S | P2
 - [ ] OPS-3: docs/architecture-diagram.html — visual architecture — S | P2
 - [ ] OPS-4: Celery integration (alternative task queue) — M | P3
