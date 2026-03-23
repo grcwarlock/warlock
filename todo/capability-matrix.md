@@ -741,7 +741,7 @@ Generated 2026-03-22 by 5 specialized GRC agents analyzing the full codebase.
 ## Domain 18: Platform & Infrastructure (45 capabilities)
 
 683. 42 SQLAlchemy models covering full GRC lifecycle
-684. 16 Alembic database migrations with reversibility verification
+684. Database schema managed via Base.metadata.create_all() (no Alembic versions directory)
 685. Domain service architecture: 7 modules implementing DomainService protocol
 686. Domain registry for cross-domain service discovery
 687. Domain event bus for cascade event propagation with correlation_id
@@ -763,7 +763,7 @@ Generated 2026-03-22 by 5 specialized GRC agents analyzing the full codebase.
 703. OSCAL catalog/profile JSON for 11 frameworks (17 files)
 704. Docker demo workflow: migrations, seed, API server
 705. Demo seed: 81 connectors, 358 raw events, ~5,008 findings, 373K+ mappings
-706. GitHub Actions CI: ruff lint, pytest (509 tests), Docker build
+706. GitHub Actions CI: ruff lint, pytest (657 tests), Docker build
 707. GitHub Actions compliance gate: OPA, Terraform, OSCAL, Framework YAML validation
 708. QA gate script: 20+ checks covering all aspects
 709. Quick QA mode for fast development iteration

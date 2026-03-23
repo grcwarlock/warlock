@@ -337,7 +337,7 @@ Built as part of the domain architecture initiative. All items complete.
 
 ## 7. CLI Expansion (DONE — 2026-03-22)
 
-CLI grew from 42+ commands to **556 leaf commands** across 68 modules. All items complete.
+CLI grew from 42+ commands to **599 leaf commands** across 68 modules. All items complete.
 
 <details>
 <summary>Click to expand completed items</summary>
@@ -623,9 +623,9 @@ Completed plans (deleted): data-lake-phase-0 through phase-3, data-lake-hardenin
 **Current codebase stats:**
 - 165 connectors + 165 normalizers
 - 14 frameworks (1,996 controls)
-- 556 CLI leaf commands (68 modules)
-- 509 tests (32 files)
-- 42 DB models, 16 migrations
+- 599 CLI leaf commands (68 modules)
+- 657 tests (32 files)
+- 42 DB models, schema via Base.metadata.create_all()
 - 23 lake modules, 7 domain services
 - 670 OPA/Rego policies
 - 17 OSCAL JSON packages

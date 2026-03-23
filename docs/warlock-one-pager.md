@@ -57,8 +57,8 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 
 | Component | Technology |
 |-----------|-----------|
-| API | FastAPI — 152 REST endpoints, ABAC-scoped, rate-limited |
-| CLI | Click + Rich — 556 leaf commands across 68 modules |
+| API | FastAPI — 163 REST endpoints, ABAC-scoped, rate-limited |
+| CLI | Click + Rich — 599 leaf commands across 68 modules |
 | Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 42 models |
 | Data Lake | DuckDB + Parquet — 23 modules across 3 zones |
 | Policy Engine | OPA/Rego — 670 policies |

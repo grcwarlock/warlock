@@ -36,7 +36,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
          |                                       |
     +----v----+                          +-------v--------+
     | REST API|                          | Webhooks/Slack |
-    | 152 rts |                          | PagerDuty/Jira |
+    | 163 rts |                          | PagerDuty/Jira |
     +---------+                          +----------------+
 ```
 
@@ -335,7 +335,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## CLI
 
-556 leaf commands across 68 modules in `warlock/cli/`:
+599 leaf commands across 68 modules in `warlock/cli/`:
 
 | Domain | Key Commands |
 |---|---|
@@ -350,7 +350,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## REST API
 
-152 routes across 13 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
+163 routes across 13 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
 
 ## Key Design Patterns
 

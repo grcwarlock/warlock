@@ -325,7 +325,7 @@ make clean       # Stop docker, remove DB
 
 ## Database Migrations
 
-Warlock uses Alembic for database migrations. The project has 16 migration files.
+Warlock manages database schema via `Base.metadata.create_all()` in `init_db()`. No Alembic versions directory exists; `alembic/env.py` is present for future migration support.
 
 ### Run Migrations
 

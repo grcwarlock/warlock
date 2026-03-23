@@ -29,8 +29,8 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](api/reference.md) | 152 REST endpoints across 13 router files |
-| [CLI Reference](api/cli-reference.md) | 556 leaf commands across 68 modules |
+| [API Reference](api/reference.md) | 163 REST endpoints across 13 router files |
+| [CLI Reference](api/cli-reference.md) | 599 leaf commands across 68 modules |
 
 ## Operations
 

@@ -96,7 +96,7 @@ If these numbers change, something is broken. Check the dependency chain table i
 pytest tests/ -v --tb=short
 ```
 
-Expected: 509 tests across 32 files, 0 failures. Run a quick subset:
+Expected: 657 tests across 32 files, 0 failures. Run a quick subset:
 
 ```bash
 pytest tests/test_api.py -v             # API tests only
@@ -221,16 +221,16 @@ warlock/
   normalizers/   -- 165 parsers (Stage 2)
   mappers/       -- Control mapping (Stage 3)
   assessors/     -- Assertion engine + AI reasoning (Stage 4)
-  api/           -- FastAPI REST API (152 routes)
-  cli/           -- Click CLI (556 leaf commands across 68 modules)
-  db/            -- SQLAlchemy models (42) + Alembic migrations
+  api/           -- FastAPI REST API (163 routes)
+  cli/           -- Click CLI (599 leaf commands across 68 modules)
+  db/            -- SQLAlchemy models (42), schema via Base.metadata.create_all()
   export/        -- OSCAL, binder, alerts
   workflows/     -- POA&M, risk acceptance, GDPR, retention
   pipeline/      -- Orchestrator, event bus, queue backends, scheduler
   lake/          -- GRC Data Lake (DuckDB, Parquet, RAG)
   domains/       -- Domain service modules
   frameworks/    -- 14 framework YAMLs (1,996 controls)
-tests/           -- 509 tests across 32 files
+tests/           -- 657 tests across 32 files
 policies/        -- 670 OPA/Rego files
 frameworks-oscal/ -- OSCAL catalog/profile JSON
 terraform/       -- 12 IaC modules

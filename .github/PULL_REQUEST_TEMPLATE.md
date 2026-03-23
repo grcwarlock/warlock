@@ -6,7 +6,7 @@
 - `path/to/file.py` -- Description of change
 
 ## Testing
-- [ ] `pytest tests/` passes (509+ baseline)
+- [ ] `pytest tests/` passes (657+ baseline)
 - [ ] `ruff check warlock/` passes
 - [ ] `ruff format --check warlock/` passes
 - [ ] Demo seed produces expected numbers (165/0/589/~5475/373852)
