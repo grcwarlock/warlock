@@ -563,7 +563,7 @@ class POAM(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('draft','open','in_progress','completed','verified','closed')",
+            "status IN ('draft','open','in_progress','remediated','verified','completed','closed','risk_accepted','cancelled')",
             name="ck_poams_status",
         ),
         Index("idx_poam_framework", "framework", "control_id"),
