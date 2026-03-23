@@ -338,13 +338,16 @@ def ai_converse(
                 "remediation_summary": row.remediation_summary,
             }
 
-    # Get or create a conversation session
+    # Get or create a conversation session (H-12: scoped to current user)
     session_obj = _conversation_manager.get_or_create(
         session_id=body.session_id,
         entity_type=body.entity_type,
         entity_id=body.entity_id,
         entity_data=entity_data,
+        user_id=current_user.id,
     )
+    if session_obj is None:
+        raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
 
     ctx = ConversationContext(
         entity_type=body.entity_type,
@@ -401,7 +404,8 @@ def ai_get_conversation(
     current_user: User = Depends(require_permission("read")),
 ):
     """Return the full message history for a conversation session."""
-    session_obj = _conversation_manager.get_session(session_id)
+    # H-12: Only return sessions owned by the requesting user (404 prevents enumeration)
+    session_obj = _conversation_manager.get_session(session_id, user_id=current_user.id)
     if session_obj is None:
         raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
 
@@ -423,16 +427,11 @@ def ai_delete_conversation(
     current_user: User = Depends(require_permission("write")),
 ):
     """Delete a conversation session and its history."""
-    # C-6: Actually delete the session from the manager's store.
-    with _conversation_manager._lock:
-        session_obj = _conversation_manager._sessions.get(session_id)
-        if session_obj is None:
-            raise HTTPException(
-                status_code=404, detail="Conversation session not found or expired."
-            )
-        del _conversation_manager._sessions[session_id]
+    # H-12: Verify ownership before deletion (404 prevents enumeration)
+    if not _conversation_manager.delete_session(session_id, user_id=current_user.id):
+        raise HTTPException(status_code=404, detail="Conversation session not found or expired.")
 
-    log.info("Conversation session %s deleted by user", session_id)
+    log.info("Conversation session %s deleted by user %s", session_id, current_user.id)
     return MessageResponse(message=f"Conversation {session_id} deleted.")
 
 
@@ -446,8 +445,12 @@ def ai_audit_log(
 
     This serves as the AI audit log -- each session corresponds to an
     interactive reasoning event tied to a compliance entity.
+
+    H-12: Non-admin users only see their own sessions.
     """
-    sessions = _conversation_manager.list_sessions()
+    # Admins see all sessions; everyone else sees only their own
+    filter_user_id = "" if current_user.role == "admin" else current_user.id
+    sessions = _conversation_manager.list_sessions(user_id=filter_user_id)
     total = len(sessions)
     page = sessions[offset : offset + limit]
 

@@ -35,6 +35,19 @@ class PipelineConcurrencyError(RuntimeError):
 
 
 @dataclass
+class ConnectorCommitStatus:
+    """Tracks per-connector commit result for H-30 transaction splitting."""
+
+    connector_name: str = ""
+    committed: bool = False
+    error: str | None = None
+    raw_events: int = 0
+    findings: int = 0
+    mappings: int = 0
+    results: int = 0
+
+
+@dataclass
 class PipelineRunStats:
     run_id: str = field(default_factory=lambda: str(__import__("uuid").uuid4()))
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -52,6 +65,9 @@ class PipelineRunStats:
     # Normalizer quality counters
     normalizer_failures: int = 0  # raw events where normalization raised an exception
     events_without_findings: int = 0  # raw events that produced zero findings
+
+    # H-30: Per-connector commit tracking
+    connector_commits: list[ConnectorCommitStatus] = field(default_factory=list)
 
     @property
     def duration_seconds(self) -> float | None:
@@ -134,102 +150,138 @@ class Pipeline:
         # Stage 1: Collect raw events from all connectors
         connector_results = self.connectors.collect_all()
         for cr in connector_results:
-            if cr.status in ("success", "partial"):
-                stats.connectors_succeeded += 1
-            else:
-                stats.connectors_failed += 1
-                stats.errors.extend(cr.errors)
+            # H-30: Per-connector transaction — each connector's collect/normalize/
+            # map/assess cycle is committed independently so a single connector
+            # failure does not roll back the entire pipeline, and write locks are
+            # released between connectors to reduce contention.
+            commit_status = ConnectorCommitStatus(connector_name=cr.connector_name)
 
-            # Persist connector run (flush deferred to end of connector batch — #44)
-            db_run = self._persist_connector_run(session, cr)
-            # Capture ID as a plain string so it survives expunge_all (#54)
-            connector_run_id = db_run.id
+            try:
+                if cr.status in ("success", "partial"):
+                    stats.connectors_succeeded += 1
+                else:
+                    stats.connectors_failed += 1
+                    stats.errors.extend(cr.errors)
 
-            for raw_event in cr.events:
-                # Persist raw event
-                db_raw = self._persist_raw_event(session, raw_event, connector_run_id)
-                raw_event_id = db_raw.id  # capture before potential expunge
-                stats.raw_events_collected += 1
-                self.bus.publish(
-                    PipelineEvent(
-                        event_type="raw_event.created",
-                        payload_id=raw_event_id,
-                        metadata={"source": raw_event.source, "event_type": raw_event.event_type},
-                    )
-                )
+                # Persist connector run (flush deferred to end of connector batch — #44)
+                db_run = self._persist_connector_run(session, cr)
+                # Capture ID as a plain string so it survives expunge_all (#54)
+                connector_run_id = db_run.id
 
-                # Stage 2: Normalize
-                try:
-                    findings = self.normalizers.normalize(raw_event)
-                except Exception as norm_exc:
-                    stats.normalizer_failures += 1
-                    stats.errors.append(f"Normalization failed for {raw_event_id}: {norm_exc}")
-                    log.exception("Normalizer failed for raw event %s", raw_event_id)
-                    continue
-                if not findings:
-                    stats.events_without_findings += 1
-                # Accumulate for OPA stage (avoids re-normalization later)
-                all_normalized_findings.extend(findings)
-                for finding in findings:
-                    finding.raw_event_id = raw_event_id
-                    db_finding = self._persist_finding(session, finding)
-                    finding_id = db_finding.id  # capture before potential expunge
-                    stats.findings_normalized += 1
+                for raw_event in cr.events:
+                    # Persist raw event
+                    db_raw = self._persist_raw_event(session, raw_event, connector_run_id)
+                    raw_event_id = db_raw.id  # capture before potential expunge
+                    commit_status.raw_events += 1
+                    stats.raw_events_collected += 1
                     self.bus.publish(
                         PipelineEvent(
-                            event_type="finding.normalized",
-                            payload_id=finding_id,
+                            event_type="raw_event.created",
+                            payload_id=raw_event_id,
                             metadata={
-                                "severity": finding.severity,
-                                "type": finding.observation_type,
+                                "source": raw_event.source,
+                                "event_type": raw_event.event_type,
                             },
                         )
                     )
 
-                    # Stage 3: Map to controls
-                    mapped = self.mapper.map(finding)
-                    for mapping in mapped.mappings:
-                        self._persist_mapping(session, mapping)
-                        stats.controls_mapped += 1
-
-                    if mapped.mappings:
+                    # Stage 2: Normalize
+                    try:
+                        findings = self.normalizers.normalize(raw_event)
+                    except Exception as norm_exc:
+                        stats.normalizer_failures += 1
+                        stats.errors.append(f"Normalization failed for {raw_event_id}: {norm_exc}")
+                        log.exception("Normalizer failed for raw event %s", raw_event_id)
+                        continue
+                    if not findings:
+                        stats.events_without_findings += 1
+                    # Accumulate for OPA stage (avoids re-normalization later)
+                    all_normalized_findings.extend(findings)
+                    for finding in findings:
+                        finding.raw_event_id = raw_event_id
+                        db_finding = self._persist_finding(session, finding)
+                        finding_id = db_finding.id  # capture before potential expunge
+                        commit_status.findings += 1
+                        stats.findings_normalized += 1
                         self.bus.publish(
                             PipelineEvent(
-                                event_type="finding.mapped",
+                                event_type="finding.normalized",
                                 payload_id=finding_id,
                                 metadata={
-                                    "mapping_count": len(mapped.mappings),
-                                    "frameworks": list({m.framework for m in mapped.mappings}),
+                                    "severity": finding.severity,
+                                    "type": finding.observation_type,
                                 },
                             )
                         )
 
-                    # Stage 4: Assess
-                    results = self.assessor.assess(mapped, raw_data=raw_event.raw_data)
-                    for result in results:
-                        db_result = self._persist_result(session, result)
-                        result_id = db_result.id  # capture before potential expunge
-                        stats.results_assessed += 1
-                        self.bus.publish(
-                            PipelineEvent(
-                                event_type="control.assessed",
-                                payload_id=result_id,
-                                metadata={
-                                    "framework": result.framework,
-                                    "control_id": result.control_id,
-                                    "status": result.status,
-                                    "severity": result.severity,
-                                },
-                            )
-                        )
+                        # Stage 3: Map to controls
+                        mapped = self.mapper.map(finding)
+                        for mapping in mapped.mappings:
+                            self._persist_mapping(session, mapping)
+                            commit_status.mappings += 1
+                            stats.controls_mapped += 1
 
-            # #44: Flush once per connector batch instead of per record.
-            # #54: Expunge all ORM objects to release identity-map memory.
-            #      All IDs needed downstream have been captured as plain strings above.
-            session.flush()
-            session.expunge_all()
+                        if mapped.mappings:
+                            self.bus.publish(
+                                PipelineEvent(
+                                    event_type="finding.mapped",
+                                    payload_id=finding_id,
+                                    metadata={
+                                        "mapping_count": len(mapped.mappings),
+                                        "frameworks": list({m.framework for m in mapped.mappings}),
+                                    },
+                                )
+                            )
+
+                        # Stage 4: Assess
+                        results = self.assessor.assess(mapped, raw_data=raw_event.raw_data)
+                        for result in results:
+                            db_result = self._persist_result(session, result)
+                            result_id = db_result.id  # capture before potential expunge
+                            commit_status.results += 1
+                            stats.results_assessed += 1
+                            self.bus.publish(
+                                PipelineEvent(
+                                    event_type="control.assessed",
+                                    payload_id=result_id,
+                                    metadata={
+                                        "framework": result.framework,
+                                        "control_id": result.control_id,
+                                        "status": result.status,
+                                        "severity": result.severity,
+                                    },
+                                )
+                            )
+
+                # H-30: Commit this connector's batch and free ORM memory.
+                # The flush + commit releases write locks held during this connector's
+                # inserts. expunge_all frees the identity map so memory stays bounded
+                # regardless of how many connectors run.
+                session.flush()
+                session.commit()
+                session.expunge_all()
+                commit_status.committed = True
+
+            except Exception as connector_exc:
+                # H-30: Rollback only this connector's uncommitted work, log the
+                # error, and continue with the next connector. Previously a single
+                # connector failure inside the shared transaction would require
+                # rolling back all connectors.
+                log.exception(
+                    "Connector %s failed — rolling back its transaction",
+                    cr.connector_name,
+                )
+                session.rollback()
+                session.expunge_all()
+                commit_status.committed = False
+                commit_status.error = str(connector_exc)
+                stats.connectors_failed += 1
+                stats.errors.append(f"Connector {cr.connector_name} failed: {connector_exc}")
+
+            stats.connector_commits.append(commit_status)
 
         # Stage 5 (optional): OPA compliance evaluation across all frameworks
+        # Uses its own transaction boundary, independent of per-connector commits.
         if self.opa_evaluator is not None:
             opa_results = self._evaluate_opa_compliance(
                 session, connector_results, all_normalized_findings
@@ -237,6 +289,7 @@ class Pipeline:
             stats.results_assessed += len(opa_results)
 
         session.flush()
+        session.commit()
         stats.completed_at = datetime.now(timezone.utc)
         log.info(
             "Pipeline run complete: %d raw events → %d findings → %d mappings → %d results (%.1fs)",

@@ -11,7 +11,6 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
-import os
 from datetime import datetime, timezone
 from typing import Any
 
@@ -58,8 +57,20 @@ def _anonymize_value(field_name: str, record_id: str) -> str:
     The token is derived from hmac(field_name + record_id, secret) so that
     repeated erasure calls for the same record produce identical output,
     making the operation idempotent.
+
+    H-22: The HMAC secret is read from config (WLK_GDPR_HMAC_SECRET).
+    If the secret is not configured, this raises RuntimeError to prevent
+    silent use of a weak default.
     """
-    secret = os.environ.get("WLK_GDPR_HMAC_SECRET", "warlock-gdpr-default-secret")
+    from warlock.config import get_settings
+
+    secret = get_settings().gdpr_hmac_secret
+    if not secret:
+        raise RuntimeError(
+            "WLK_GDPR_HMAC_SECRET is not configured. "
+            "GDPR anonymization requires a secret of at least 32 characters. "
+            "Set WLK_GDPR_HMAC_SECRET in your environment or .env file."
+        )
     digest = hmac.new(
         secret.encode(),
         f"{field_name}:{record_id}".encode(),

@@ -290,6 +290,10 @@ class Settings(BaseSettings):
     jwt_secret: str = ""  # REQUIRED in production — min 32 chars
     jwt_expire_minutes: int = 60  # token lifetime
 
+    # H-29: Legacy SHA-256 password hash migration deadline (days from deployment).
+    # After this many days, SHA-256 hashes are rejected and users must reset.
+    password_hash_legacy_deadline_days: int = 90
+
     # API server
     api_host: str = "0.0.0.0"
     api_port: int = 8000
@@ -346,6 +350,10 @@ class Settings(BaseSettings):
     opa_compliance_fail_mode: str = "open"  # "open" (skip if OPA down) or "closed"
     opa_bundle_path: str = "policies/"
     opa_frameworks: list[str] = Field(default_factory=list)  # empty = all available
+
+    # GDPR HMAC secret for deterministic anonymization (H-22)
+    # Must be 32+ chars in production. Empty = error when GDPR features are invoked.
+    gdpr_hmac_secret: str = ""
 
     # Trust portal
     trust_portal_secret: str = ""  # HMAC secret for download token signing

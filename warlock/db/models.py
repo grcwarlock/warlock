@@ -24,6 +24,7 @@ from sqlalchemy import (
     Text,
     Boolean,
     ForeignKey,
+    UniqueConstraint,
 )
 from sqlalchemy import (
     JSON as SQLiteJSON,
@@ -259,6 +260,12 @@ class ControlResult(Base):
         Index("idx_result_finding", "finding_id"),
         Index("idx_result_mapping", "control_mapping_id"),
         Index("idx_result_system_profile", "system_profile_id"),
+        UniqueConstraint(
+            "finding_id",
+            "control_mapping_id",
+            "system_profile_id",
+            name="uq_result_finding_mapping_system",
+        ),
     )
 
 
@@ -359,6 +366,13 @@ class PostureSnapshot(Base):
         Index("idx_posture_framework", "framework", "control_id"),
         Index("idx_posture_status", "status"),
         Index("idx_posture_system", "system_profile_id"),
+        UniqueConstraint(
+            "snapshot_date",
+            "framework",
+            "control_id",
+            "system_profile_id",
+            name="uq_posture_date_framework_control_system",
+        ),
     )
 
 

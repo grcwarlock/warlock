@@ -35,6 +35,7 @@ class ConversationSession:
     entity_type: str
     entity_id: str
     entity_data: dict[str, Any]
+    user_id: str = ""
     messages: list[dict[str, str]] = field(default_factory=list)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_activity: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -58,6 +59,7 @@ class ConversationSession:
             "session_id": self.session_id,
             "entity_type": self.entity_type,
             "entity_id": self.entity_id,
+            "user_id": self.user_id,
             "message_count": self.message_count,
             "created_at": self.created_at.isoformat(),
             "last_activity": self.last_activity.isoformat(),
@@ -116,6 +118,7 @@ class ConversationManager:
         entity_type: str,
         entity_id: str,
         entity_data: dict[str, Any],
+        user_id: str = "",
     ) -> ConversationSession:
         """Return an existing session or create a new one.
 
@@ -125,6 +128,10 @@ class ConversationManager:
 
         When the session pool is full, the oldest idle session is
         evicted to make room.
+
+        H-12: Sessions are scoped to the requesting user.  When resuming
+        an existing session, the caller must pass the same ``user_id``
+        that created it; mismatches return ``None`` from ``get_session``.
         """
         with self._lock:
             # Try to return existing.
@@ -133,6 +140,15 @@ class ConversationManager:
                 if session.is_expired(self._ttl):
                     log.debug("Session %s expired, creating replacement", session_id)
                     del self._sessions[session_id]
+                elif session.user_id and session.user_id != user_id:
+                    # H-12: Session belongs to a different user — treat as not found
+                    log.warning(
+                        "Session %s belongs to user %s, not %s",
+                        session_id,
+                        session.user_id,
+                        user_id,
+                    )
+                    return None  # type: ignore[return-value]
                 else:
                     session.touch()
                     return session
@@ -147,18 +163,24 @@ class ConversationManager:
                 entity_type=entity_type,
                 entity_id=entity_id,
                 entity_data=entity_data,
+                user_id=user_id,
             )
             self._sessions[new_id] = session
             log.debug(
-                "Created session %s for %s/%s",
+                "Created session %s for %s/%s (user=%s)",
                 new_id,
                 entity_type,
                 entity_id,
+                user_id,
             )
             return session
 
-    def get_session(self, session_id: str) -> ConversationSession | None:
-        """Look up a session by ID, or return ``None`` if not found/expired."""
+    def get_session(self, session_id: str, user_id: str = "") -> ConversationSession | None:
+        """Look up a session by ID, or return ``None`` if not found/expired.
+
+        H-12: When *user_id* is provided, the session must belong to that
+        user.  Returns ``None`` (not 403) to prevent session ID enumeration.
+        """
         with self._lock:
             session = self._sessions.get(session_id)
             if session is None:
@@ -166,7 +188,24 @@ class ConversationManager:
             if session.is_expired(self._ttl):
                 del self._sessions[session_id]
                 return None
+            if user_id and session.user_id and session.user_id != user_id:
+                return None
             return session
+
+    def delete_session(self, session_id: str, user_id: str = "") -> bool:
+        """Delete a session by ID.  Returns True if deleted, False if not found.
+
+        H-12: When *user_id* is provided, the session must belong to that
+        user.  Returns False (not 403) to prevent session ID enumeration.
+        """
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                return False
+            if user_id and session.user_id and session.user_id != user_id:
+                return False
+            del self._sessions[session_id]
+            return True
 
     # ------------------------------------------------------------------
     # Messages
@@ -257,10 +296,21 @@ class ConversationManager:
         with self._lock:
             return len(self._sessions)
 
-    def list_sessions(self) -> list[dict[str, Any]]:
-        """Return summary dicts for all active sessions."""
+    def list_sessions(self, user_id: str = "") -> list[dict[str, Any]]:
+        """Return summary dicts for active sessions.
+
+        H-12: When *user_id* is provided, only that user's sessions are
+        returned.  Pass an empty string to list all (admin use only).
+        """
         with self._lock:
-            return [s.to_dict() for s in self._sessions.values() if not s.is_expired(self._ttl)]
+            results = []
+            for s in self._sessions.values():
+                if s.is_expired(self._ttl):
+                    continue
+                if user_id and s.user_id != user_id:
+                    continue
+                results.append(s.to_dict())
+            return results
 
     # ------------------------------------------------------------------
     # Internal

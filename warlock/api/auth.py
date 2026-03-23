@@ -29,6 +29,10 @@ from warlock.db.models import User, APIKey
 
 log = logging.getLogger(__name__)
 
+# H-29: Record when this module was first loaded as the reference point for
+# the legacy hash deadline. In production, this approximates deployment time.
+_MODULE_LOAD_TIME = datetime.now(timezone.utc)
+
 
 # Configuration — loaded from Settings, not raw os.environ
 def _load_auth_config():
@@ -113,6 +117,22 @@ def verify_password(password: str, hashed: str) -> bool:
         # Legacy SHA-256 format — verify but log warning for migration
         # S-14: Migration path: legacy hashes are auto-upgraded on next login
         # in authenticate_user(). This path should be fully deprecated.
+        # H-29: After the legacy deadline, reject SHA-256 hashes entirely.
+        from warlock.config import get_settings
+
+        cfg = get_settings()
+        deadline_days = cfg.password_hash_legacy_deadline_days
+        if deadline_days > 0:
+            elapsed = (datetime.now(timezone.utc) - _MODULE_LOAD_TIME).days
+            if elapsed >= deadline_days:
+                log.error(
+                    "Legacy SHA-256 hash rejected — deadline of %d days has passed "
+                    "(module loaded %d days ago). User must reset their password.",
+                    deadline_days,
+                    elapsed,
+                )
+                return False
+
         salt, expected = hashed.split(":", 1)
         actual = hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
         if hmac.compare_digest(actual, expected):
@@ -347,13 +367,15 @@ def authenticate_user(session: Session, email: str, password: str) -> User | dic
 
     if verify_password(password, user.hashed_password):
         # Force re-hash legacy passwords on successful login
-        if not user.hashed_password.startswith(("$2b$", "pbkdf2:")):
+        if not user.hashed_password.startswith(("$2b$", "pbkdf2:", "bcrypt:")):
             log.info("Migrating legacy password hash for user %s", user.email)
             user.hashed_password = hash_password(password)
         # Success — reset failure counter
         user.failed_login_count = 0
         user.locked_until = None
         user.last_login = datetime.now(timezone.utc)
+        # H-29: Flush to ensure re-hashed password and login metadata are persisted
+        session.flush()
 
         # #21: If MFA is enabled, return partial auth with signed challenge token
         if user.mfa_enabled:
@@ -429,6 +451,28 @@ PERMISSIONS: dict[str, set[str]] = {
 def has_permission(role: str, permission: str) -> bool:
     """Check if a role has a specific permission."""
     return permission in PERMISSIONS.get(role, set())
+
+
+def find_legacy_hashes(session: Session) -> list[dict[str, str]]:
+    """Query users with non-bcrypt/non-pbkdf2 password hashes.
+
+    H-29: Helps admins identify users who still have legacy SHA-256 hashes
+    and need a forced password reset before the migration deadline.
+
+    Returns a list of dicts with 'id', 'email', and 'hash_prefix' (first 8 chars).
+    """
+    users = session.query(User).filter(User.is_active == True).all()  # noqa: E712
+    legacy = []
+    for u in users:
+        if u.hashed_password and not u.hashed_password.startswith(("bcrypt:", "pbkdf2:")):
+            legacy.append(
+                {
+                    "id": u.id,
+                    "email": u.email,
+                    "hash_prefix": u.hashed_password[:8] + "...",
+                }
+            )
+    return legacy
 
 
 # S-13: Pre-compute a realistic dummy hash at module load for timing oracle prevention.
