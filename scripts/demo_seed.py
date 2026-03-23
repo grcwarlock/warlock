@@ -17879,6 +17879,73 @@ class DemoCircleCIConnector(BaseConnector):
         return result
 
 
+def _seed_audit_trail(session) -> int:
+    """Populate the hash-chained audit trail with representative entries."""
+    from warlock.db.audit import AuditTrail
+    from warlock.db.models import Finding, ControlResult, RawEvent
+
+    trail = AuditTrail(session)
+    count = 0
+
+    # Record a sample of pipeline events to populate the chain
+    raw_events = session.query(RawEvent).limit(5).all()
+    for ev in raw_events:
+        trail.record(
+            action="evidence_collected",
+            entity_type="raw_event",
+            entity_id=ev.id,
+            actor="pipeline",
+            evidence_sha256=ev.sha256 or "",
+        )
+        count += 1
+
+    findings = session.query(Finding).limit(10).all()
+    for f in findings:
+        trail.record(
+            action="finding_created",
+            entity_type="finding",
+            entity_id=f.id,
+            actor="pipeline",
+            evidence_sha256=f.sha256 or "",
+        )
+        count += 1
+
+    results = session.query(ControlResult).limit(10).all()
+    for r in results:
+        trail.record(
+            action="control_assessed",
+            entity_type="control_result",
+            entity_id=r.id,
+            actor="assertion_engine",
+        )
+        count += 1
+
+    # Add some user actions
+    trail.record(
+        action="user_login",
+        entity_type="user",
+        entity_id="demo-admin",
+        actor="demo-admin@warlock.dev",
+    )
+    trail.record(
+        action="report_exported",
+        entity_type="export",
+        entity_id="soc2-q4-2025",
+        actor="demo-admin@warlock.dev",
+        metadata={"format": "oscal", "framework": "soc2"},
+    )
+    trail.record(
+        action="issue_created",
+        entity_type="issue",
+        entity_id="demo-issue-001",
+        actor="demo-admin@warlock.dev",
+    )
+    count += 3
+
+    session.commit()
+    return count
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -18632,7 +18699,12 @@ def main():
         users_created = _create_demo_users(session)
         print(f"       Users created: {users_created}")
 
-    print("[23/23] Seed complete!\n")
+    print("[23/24] Populating audit trail (hash-chained)...")
+    with get_session() as session:
+        n_audit = _seed_audit_trail(session)
+        print(f"       Audit entries: {n_audit}")
+
+    print("[24/24] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")

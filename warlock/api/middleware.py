@@ -213,6 +213,10 @@ _SKIP_PATHS = frozenset(
     {
         "/api/v1/health",
         "/health",
+        "/healthz",
+        "/readyz",
+        "/health/live",
+        "/health/ready",
         "/docs",
         "/openapi.json",
         "/redoc",

@@ -10,6 +10,7 @@ import json as _json
 from datetime import datetime, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
@@ -124,7 +125,7 @@ def incidents_create(
 
         console.print(
             f"[green]Incident created:[/green] [cyan]{issue.id[:8]}[/cyan] "
-            f"[{_SEVERITY_STYLES.get(severity, '')}]{severity}[/] — {title}"
+            f"[{_SEVERITY_STYLES.get(severity, '')}]{severity}[/] — {escape(title)}"
         )
 
 
@@ -210,10 +211,10 @@ def incidents_list(
         created = i.created_at.strftime("%Y-%m-%d") if i.created_at else "\u2014"
         table.add_row(
             i.id[:8],
-            i.title[:50],
+            escape(i.title[:50]),
             f"[{sev_style}]{i.priority}[/]",
             f"[{st_style}]{i.status}[/]",
-            classification,
+            escape(classification),
             i.assigned_to or "\u2014",
             created,
         )
@@ -248,10 +249,10 @@ def incidents_show(incident_id: str) -> None:
         console.print()
         console.print(
             Panel(
-                f"[bold]{issue.title}[/bold]\n\n"
+                f"[bold]{escape(issue.title)}[/bold]\n\n"
                 f"ID: {issue.id}  |  Severity: [{sev_style}]{issue.priority}[/]  |  "
                 f"Status: [{st_style}]{issue.status}[/]\n"
-                f"Classification: {classification}  |  "
+                f"Classification: {escape(classification)}  |  "
                 f"Assigned: {issue.assigned_to or '[dim]unassigned[/dim]'}\n"
                 f"Created: {issue.created_at}  |  Updated: {issue.updated_at}",
                 title="[bold red]Incident[/bold red]",
@@ -260,15 +261,17 @@ def incidents_show(incident_id: str) -> None:
         )
 
         if issue.description:
-            console.print(f"\n[bold]Description:[/bold]\n{issue.description}")
+            console.print(f"\n[bold]Description:[/bold]\n{escape(issue.description)}")
 
         if issue.remediation_plan:
-            console.print(f"\n[bold]Remediation Plan:[/bold]\n{issue.remediation_plan}")
+            console.print(f"\n[bold]Remediation Plan:[/bold]\n{escape(issue.remediation_plan)}")
 
         if issue.remediation_evidence:
             console.print("\n[bold]Evidence:[/bold]")
             for ev in issue.remediation_evidence:
-                console.print(f"  - {ev.get('description', '')} ({ev.get('url', '')})")
+                console.print(
+                    f"  - {escape(ev.get('description', ''))} ({escape(ev.get('url', ''))})"
+                )
 
         console.print(
             f"\n[dim]Framework: {issue.framework or 'n/a'}  "
@@ -421,9 +424,9 @@ def incidents_close(incident_id: str, resolution: str, lessons_learned: str | No
         session.commit()
 
     console.print(f"[green]Incident {incident_id[:8]} closed.[/green]")
-    console.print(f"  Resolution: {resolution}")
+    console.print(f"  Resolution: {escape(resolution)}")
     if lessons_learned:
-        console.print(f"  Lessons learned: {lessons_learned}")
+        console.print(f"  Lessons learned: {escape(lessons_learned)}")
 
 
 # ---------------------------------------------------------------------------
@@ -465,7 +468,7 @@ def incidents_timeline(incident_id: str) -> None:
     for e in entries:
         ts = e.created_at.strftime("%Y-%m-%d %H:%M:%S") if e.created_at else "\u2014"
         details = _json.dumps(e.extra, default=str) if e.extra else ""
-        table.add_row(str(e.sequence), ts, e.action, e.actor, details[:60])
+        table.add_row(str(e.sequence), ts, e.action, e.actor, escape(details[:60]))
 
     console.print(table)
 
@@ -518,7 +521,7 @@ def incidents_add_event(incident_id: str, event_type: str, description: str) -> 
         session.commit()
 
     console.print(
-        f"[green]Event added to incident {incident_id[:8]}:[/green] {event_type} — {description}"
+        f"[green]Event added to incident {incident_id[:8]}:[/green] {escape(event_type)} — {escape(description)}"
     )
 
 
@@ -595,11 +598,11 @@ def incidents_report(incident_id: str, fmt: str) -> None:
 
     # Markdown
     lines = [
-        f"# Post-Mortem Report: {issue.title}",
+        f"# Post-Mortem Report: {escape(issue.title)}",
         "",
         f"**ID:** {issue.id}  ",
         f"**Severity:** {issue.priority}  ",
-        f"**Classification:** {classification}  ",
+        f"**Classification:** {escape(classification)}  ",
         f"**Status:** {issue.status}  ",
         f"**Created:** {issue.created_at}  ",
         f"**Closed:** {issue.closed_at or 'N/A'}  ",
@@ -607,11 +610,11 @@ def incidents_report(incident_id: str, fmt: str) -> None:
         "",
         "## Description",
         "",
-        issue.description or "_No description provided._",
+        escape(issue.description) if issue.description else "_No description provided._",
         "",
         "## Resolution",
         "",
-        issue.remediation_plan or "_Not yet resolved._",
+        escape(issue.remediation_plan) if issue.remediation_plan else "_Not yet resolved._",
         "",
         "## Timeline",
         "",
@@ -619,13 +622,13 @@ def incidents_report(incident_id: str, fmt: str) -> None:
     for e in entries:
         ts = e.created_at.strftime("%Y-%m-%d %H:%M:%S") if e.created_at else "?"
         details = _json.dumps(e.extra, default=str) if e.extra else ""
-        lines.append(f"- `{ts}` **{e.action}** by {e.actor} — {details}")
+        lines.append(f"- `{ts}` **{escape(e.action)}** by {escape(e.actor)} — {escape(details)}")
 
     if comments:
         lines += ["", "## Comments", ""]
         for c in comments:
             ts = c.created_at.strftime("%Y-%m-%d %H:%M:%S") if c.created_at else "?"
-            lines.append(f"- `{ts}` **{c.author}**: {c.content}")
+            lines.append(f"- `{ts}` **{escape(c.author)}**: {escape(c.content)}")
 
     console.print("\n".join(lines))
 
@@ -707,7 +710,7 @@ def incidents_metrics(since: str | None) -> None:
     cat_table.add_column("Classification")
     cat_table.add_column("Count", justify="right")
     for cat, count in sorted(cat_counts.items(), key=lambda x: -x[1]):
-        cat_table.add_row(cat, str(count))
+        cat_table.add_row(escape(cat), str(count))
     console.print(cat_table)
 
     st_table = Table(title="Status Distribution")

@@ -15,6 +15,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console, _error
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -178,7 +179,7 @@ def lake_summary() -> None:
 
     now = _utcnow()
     if latest_raw and latest_raw[0]:
-        delta = now - latest_raw[0]
+        delta = now - ensure_aware(latest_raw[0])
         hours_ago = delta.total_seconds() / 3600
         freshness = f"{hours_ago:.1f}h ago"
     else:
@@ -228,7 +229,7 @@ def lake_sources() -> None:
 
     now = _utcnow()
     for row in rows:
-        last = row.last_updated
+        last = ensure_aware(row.last_updated)
         if last:
             delta = now - last
             age = f"{delta.total_seconds() / 3600:.1f}h ago"
@@ -293,7 +294,7 @@ def lake_freshness(source: str | None, threshold_hours: int) -> None:
     table.add_column("Events", justify="right")
 
     for row in rows:
-        last = row.last_updated
+        last = ensure_aware(row.last_updated)
         if last:
             delta = now - last
             hours = delta.total_seconds() / 3600

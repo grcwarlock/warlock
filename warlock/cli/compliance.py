@@ -18,11 +18,12 @@ from warlock.cli import cli, console, _error, _check_ai_available, _parse_ai_res
     ),
     help="Filter by status",
 )
+@click.option("--system", default=None, help="Filter by system profile name or ID")
 @click.option("--limit", "-n", default=50, help="Max results")
-def results(framework: str | None, status: str | None, limit: int) -> None:
+def results(framework: str | None, status: str | None, system: str | None, limit: int) -> None:
     """Query control results from the last pipeline run."""
     from warlock.db.engine import get_session
-    from warlock.db.models import ControlResult
+    from warlock.db.models import ControlResult, SystemProfile
 
     with get_session() as session:
         q = session.query(ControlResult)
@@ -30,6 +31,21 @@ def results(framework: str | None, status: str | None, limit: int) -> None:
             q = q.filter(ControlResult.framework == framework)
         if status:
             q = q.filter(ControlResult.status == status)
+        if system:
+            # Resolve system name/ID to framework list, then filter results
+            sp = (
+                session.query(SystemProfile)
+                .filter(
+                    (SystemProfile.name.ilike(f"%{system}%"))
+                    | (SystemProfile.id.like(f"{system}%"))
+                )
+                .first()
+            )
+            if sp and sp.frameworks:
+                q = q.filter(ControlResult.framework.in_(sp.frameworks))
+            else:
+                console.print(f"[red]System '{system}' not found or has no frameworks.[/red]")
+                return
         q = q.order_by(ControlResult.assessed_at.desc()).limit(limit)
         rows = q.all()
 

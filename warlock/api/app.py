@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
+
+from warlock.api.deps import get_db
 
 from warlock import __version__ as _VERSION
 from warlock.api.routers import (
@@ -117,7 +119,11 @@ def create_app() -> FastAPI:
         async def opa_policy_middleware(request: Request, call_next):
             # Skip trust portal (public) and health endpoints
             path = request.url.path
-            if path.startswith("/trust") or path.endswith("/health"):
+            if (
+                path.startswith("/trust")
+                or path.endswith("/health")
+                or path in ("/healthz", "/readyz")
+            ):
                 return await call_next(request)
             # OPA evaluation happens via dependency injection, not middleware
             # This middleware just attaches the gate to request state
@@ -153,6 +159,21 @@ def create_app() -> FastAPI:
     application.include_router(admin.router, prefix=prefix, tags=["admin"])
     application.include_router(ai_routes.router, prefix=prefix, tags=["ai"])
     application.include_router(export.router, prefix=prefix, tags=["export"])
+
+    # ------------------------------------------------------------------
+    # Root-level health endpoints for k8s probes, load balancers, Docker
+    # ------------------------------------------------------------------
+    application.include_router(health.router, tags=["health"])
+
+    @application.get("/healthz", tags=["health"])
+    def healthz():
+        """Alias for /health — standard k8s liveness probe path."""
+        return health.health()
+
+    @application.get("/readyz", tags=["health"])
+    def readyz(db=Depends(get_db)):
+        """Alias for /health/ready — standard k8s readiness probe path."""
+        return health.health_ready(db)
 
     return application
 

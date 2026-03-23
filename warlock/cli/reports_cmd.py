@@ -10,6 +10,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -715,7 +716,7 @@ def reports_sla(framework: str | None) -> None:
     for i in issues:
         sla = _SLA_DAYS.get(i.priority, 30)
         if i.created_at:
-            age_days = (now - i.created_at).days
+            age_days = (now - ensure_aware(i.created_at)).days
             if age_days > sla:
                 breached[i.priority] = breached.get(i.priority, 0) + 1
             else:

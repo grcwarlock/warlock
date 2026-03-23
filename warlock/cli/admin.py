@@ -11,16 +11,37 @@ from warlock.cli import cli, console
 
 
 @cli.command("systems")
-def systems_list() -> None:
-    """List active system profiles."""
+@click.option(
+    "--status",
+    default=None,
+    type=click.Choice(
+        ["authorized", "in_process", "not_authorized", "denied", "revoked"],
+        case_sensitive=False,
+    ),
+    help="Filter by authorization status",
+)
+def systems_list(status: str | None) -> None:
+    """List system profiles. Use --status to filter (e.g. --status not_authorized)."""
     from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SystemProfile
     from warlock.workflows.system_profile import SystemProfileManager
 
     init_db()
     mgr = SystemProfileManager()
 
     with get_session() as session:
-        profiles = mgr.list_active(session)
+        if status:
+            profiles = (
+                session.query(SystemProfile)
+                .filter(
+                    SystemProfile.is_active == True,  # noqa: E712
+                    SystemProfile.authorization_status == status,
+                )
+                .order_by(SystemProfile.name)
+                .all()
+            )
+        else:
+            profiles = mgr.list_active(session)
 
     if not profiles:
         console.print(
