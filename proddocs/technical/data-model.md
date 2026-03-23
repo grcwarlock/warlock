@@ -161,10 +161,10 @@ ConnectorRun (1) ---> RawEvent (N)
                   ControlResult (N)
 ```
 
-A single pipeline run with 81 connectors produces approximately:
-- 81 ConnectorRun rows
-- 358 RawEvent rows
-- 5,008 Finding rows
+A single pipeline run with 165 connectors produces approximately:
+- 165 ConnectorRun rows
+- 589 RawEvent rows
+- ~5,475 Finding rows
 - 373,852 ControlMapping rows
 - 373,852 ControlResult rows
 
@@ -567,4 +567,4 @@ All foreign keys have dedicated indexes (tagged #20 in code comments). Composite
 
 ## Migration Strategy
 
-13 Alembic migrations in `alembic/versions/`. Migrations are tested for reversibility in the QA gate. The demo seed validates the full schema by inserting 81 connectors, 358 raw events, 5,008 findings, and 373,852 control results.
+13 Alembic migrations in `alembic/versions/`. Migrations are tested for reversibility in the QA gate. The demo seed validates the full schema by inserting 165 connectors, 589 raw events, ~5,475 findings, and 373,852 control results.

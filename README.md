@@ -94,7 +94,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
-## CLI (499 commands across 79 groups)
+## CLI (539+ commands across 79 groups)
 
 Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
@@ -271,8 +271,8 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 82 source connectors (Stage 1)
-├── normalizers/          # 82 normalizers (Stage 2)
+├── connectors/           # 165 source connectors (Stage 1)
+├── normalizers/          # 165 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)

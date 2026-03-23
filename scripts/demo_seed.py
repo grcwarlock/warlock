@@ -10,9 +10,9 @@ every assertion (101), and every framework (14).
 Usage:
     python scripts/demo_seed.py          # seed + run pipeline (~7s)
     warlock coverage                     # compliance summary across 14 frameworks
-    warlock findings                     # 5,008+ findings from 81 sources
+    warlock findings                     # ~5,475 findings from 165 sources
     warlock results --status non_compliant
-    warlock sources                      # 81 connectors + 82 normalizers
+    warlock sources                      # 165 connectors + 165 normalizers
     warlock systems                      # 5 system profiles
     warlock issues                       # compliance issues
 """

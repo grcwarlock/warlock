@@ -1,6 +1,6 @@
 # Connector Catalog
 
-Warlock includes 82 source connectors that collect security and compliance telemetry from the tools your organization already uses. Each connector follows the same contract: validate configuration, verify connectivity, and produce raw events with verbatim API responses preserved for auditability.
+Warlock includes 165 source connectors that collect security and compliance telemetry from the tools your organization already uses. Each connector follows the same contract: validate configuration, verify connectivity, and produce raw events with verbatim API responses preserved for auditability.
 
 This document catalogs every connector by category, explains how connectors work, and describes how to add new connectors.
 

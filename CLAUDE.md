@@ -76,7 +76,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (81 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (13 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
+The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (165 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (13 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -184,7 +184,7 @@ warlock/
   normalizers/   — 165 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
   assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
-  api/           — FastAPI REST API (153 routes, ABAC-scoped, 9 domain routers)
+  api/           — FastAPI REST API (157 routes, ABAC-scoped, 9 domain routers)
   cli/           — Click CLI package (45+ commands, 11 domain modules)
   db/            — SQLAlchemy models (38) + Alembic migrations (12)
   export/        — OSCAL, binder, alerts, reports
@@ -203,7 +203,7 @@ terraform/       — 12 IaC modules (AWS, Azure, GCP)
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
-  demo_seed.py   — 81 mock connectors, 5,008 findings, 373K+ results
+  demo_seed.py   — 165 mock connectors, ~5,475 findings, 373K+ results
   demo_api.sh    — API query helper with auto-auth
   docker-demo.sh — Docker demo entrypoint (migrate + seed + serve)
 ```

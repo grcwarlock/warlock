@@ -42,10 +42,10 @@ warlock-api
 ```
 
 Expected demo output shows:
-- 81 connectors succeeded
+- 165 connectors succeeded
 - 0 connectors failed
-- 358 raw events collected
-- 5,008 findings normalized
+- 589 raw events collected
+- ~5,475 findings normalized
 - 373,852 controls mapped
 
 ---
@@ -248,7 +248,7 @@ Every control result traces back to its raw API response — the hash chain is t
 
 ### Key Components
 
-- **Connectors** (`warlock/connectors/`) — 82 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
+- **Connectors** (`warlock/connectors/`) — 165 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI

@@ -5,7 +5,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
 ## High-Level Architecture
 
 ```
-                         82 Connectors
+                        165 Connectors
                               |
                     +---------v----------+
                     |  Stage 1: Collect  |  ConnectorRegistry.collect_all()
@@ -36,7 +36,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
          |                                       |
     +----v----+                          +-------v--------+
     | REST API|                          | Webhooks/Slack |
-    | 153 rts |                          | PagerDuty/Jira |
+    | 157 rts |                          | PagerDuty/Jira |
     +---------+                          +----------------+
 ```
 
@@ -350,7 +350,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## REST API
 
-153 routes across 9 domain routers in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
+157 routes across 9 domain routers in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
 
 ## Key Design Patterns
 

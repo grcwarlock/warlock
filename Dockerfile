@@ -38,5 +38,5 @@ ENV WLK_DATABASE_URL=sqlite:////data/warlock.db \
     PYTHONDONTWRITEBYTECODE=1
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 ENTRYPOINT ["warlock-api"]

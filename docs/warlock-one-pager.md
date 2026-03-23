@@ -17,7 +17,7 @@ Warlock treats compliance as a telemetry problem. It continuously ingests securi
 
 | Stage | What Happens | Output |
 |-------|-------------|--------|
-| **Collect** | Pull data from 82 sources (cloud, identity, EDR, scanners, HRIS, code security, etc.) | Raw events with verbatim API responses |
+| **Collect** | Pull data from 165 sources (cloud, identity, EDR, scanners, HRIS, code security, etc.) | Raw events with verbatim API responses |
 | **Normalize** | Transform provider-specific data into a universal finding format with automatic PII scrubbing | Clean, structured findings |
 | **Map** | Map findings to controls across 14 compliance frameworks via 1,843 crosswalk edges | Control mappings (assess once, satisfy many frameworks) |
 | **Assess** | Evaluate controls using deterministic assertions, AI reasoning, OPA policies, and control inheritance | Auditable pass/fail results with full evidence chain |
@@ -28,7 +28,7 @@ NIST 800-53 (1,176) | ISO 27001 (93) | ISO 27701 (95) | ISO 42001 (39) | SOC 2 (
 
 Crosswalks mean evidence collected for one framework automatically satisfies overlapping controls in others. One body of evidence, all frameworks.
 
-## 82 Source Connectors
+## 165 Source Connectors
 
 Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare) | Identity (Okta, Entra ID, CyberArk, SailPoint, Vault, JumpCloud, Auth0) | EDR (CrowdStrike, Defender, SentinelOne, Sophos) | Scanners (Tenable, Qualys, Wiz, Nessus) | Code Security (Snyk, GitHub, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode) | SIEM (Sentinel, Splunk, Elastic) | Network (Palo Alto, Fortinet, Zscaler) | HRIS (Workday, BambooHR, Gusto, Rippling) | CI/CD (Jenkins, GitHub Actions, GitLab CI, CircleCI) | and 20+ more across DLP, MDM, backup, email security, observability, GRC, and physical security.
 
@@ -57,9 +57,9 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 
 | Component | Technology |
 |-----------|-----------|
-| API | FastAPI — 153 REST endpoints, ABAC-scoped, rate-limited |
-| CLI | Click + Rich — 42+ commands across 8 domain modules |
-| Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 34 models |
+| API | FastAPI — 157 REST endpoints, ABAC-scoped, rate-limited |
+| CLI | Click + Rich — 539+ commands across 63 domain modules |
+| Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 40 models |
 | Data Lake | DuckDB + Parquet — 24 modules across 3 zones |
 | Policy Engine | OPA/Rego — 670 policies |
 | Infrastructure | Terraform — 12 IaC modules (AWS, Azure, GCP) |
@@ -84,4 +84,4 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 docker compose up demo
 ```
 
-API at localhost:8000/docs. 82 connectors, 5,008 findings, 373,000+ control results seeded automatically.
+API at localhost:8000/docs. 165 connectors, ~5,475 findings, 373,000+ control results seeded automatically.

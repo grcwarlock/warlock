@@ -25,8 +25,8 @@ Warlock eliminates all three problems by replacing manual processes with an auto
 Evidence flows through four immutable stages, each producing SHA-256 integrity hashes:
 
 ```
-Stage 1: Connectors (82 sources)   --> RawEventData      Collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (82 parsers)  --> FindingData        Transform to universal findings
+Stage 1: Connectors (165 sources)  --> RawEventData      Collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (165 parsers) --> FindingData        Transform to universal findings
 Stage 3: Control Mapper            --> ControlMappingData  Map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)       --> ControlResultData   Deterministic assertions + AI reasoning
 ```
@@ -35,7 +35,7 @@ Every finding traces back to its raw API response. Every control result traces b
 
 ### Stage 1: Collection
 
-82 source connectors pull security telemetry from the tools your organization already uses -- cloud providers (AWS, Azure, GCP), identity providers (Okta, Entra ID), EDR platforms (CrowdStrike, SentinelOne), vulnerability scanners (Tenable, Qualys, Wiz), and dozens more. Each connector validates its configuration, verifies connectivity via health check, and produces raw events with the verbatim API response preserved.
+165 source connectors pull security telemetry from the tools your organization already uses -- cloud providers (AWS, Azure, GCP), identity providers (Okta, Entra ID), EDR platforms (CrowdStrike, SentinelOne), vulnerability scanners (Tenable, Qualys, Wiz), and dozens more. Each connector validates its configuration, verifies connectivity via health check, and produces raw events with the verbatim API response preserved.
 
 ### Stage 2: Normalization
 
@@ -144,7 +144,7 @@ Warlock is a Python 3.12+ application with these core components:
 
 | Component | Technology | Purpose |
 |---|---|---|
-| API | FastAPI + Uvicorn | 153 REST endpoints, ABAC-scoped |
+| API | FastAPI + Uvicorn | 157 REST endpoints, ABAC-scoped |
 | CLI | Click + Rich | 42+ commands across 8 domain modules |
 | Database | SQLAlchemy 2.0 + Alembic | 36 models, 11 migrations |
 | Data Lake | DuckDB + PyArrow + Parquet | Analytical queries over compliance data |
@@ -163,7 +163,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 docker compose up demo
 ```
 
-This starts PostgreSQL, Redis, OPA, runs migrations, seeds demo data (81 connectors, 5,008 findings, 373,000+ control results), and serves the API.
+This starts PostgreSQL, Redis, OPA, runs migrations, seeds demo data (165 connectors, ~5,475 findings, 373,000+ control results), and serves the API.
 
 **Local Python (development)**:
 ```bash

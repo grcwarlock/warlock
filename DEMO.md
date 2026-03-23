@@ -16,7 +16,7 @@ That's it. The stack starts:
 - **Postgres 16** — production database
 - **Redis 7** — event bus / queue backend
 - **OPA** — 670 Rego policies across 8 frameworks
-- **Warlock** — migrations, seed data (81 connectors, 5,008 findings, 373,852 control results), API server
+- **Warlock** — migrations, seed data (165 connectors, ~5,475 findings, 373,852 control results), API server
 
 When it finishes:
 
@@ -61,7 +61,7 @@ The script:
 1. Creates a virtualenv and installs dependencies
 2. Starts OPA with 670 Rego policies (if installed)
 3. Runs database migrations (SQLite)
-4. Seeds 81 connectors, 5,008 findings, 373,852 control results across 14 frameworks
+4. Seeds 165 connectors, ~5,475 findings, 373,852 control results across 14 frameworks
 5. Prompts for AI provider configuration (optional)
 6. Starts the API server on port 8000
 

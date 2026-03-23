@@ -219,6 +219,7 @@ jobs:
           COMMANDS=(
             "control"
             "coverage"
+            "results"
             "findings"
             "remediate"
             "simulate-audit"

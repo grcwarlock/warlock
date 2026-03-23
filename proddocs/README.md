@@ -22,7 +22,7 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 
 | Document | Description |
 |----------|-------------|
-| [Connectors](features/connectors.md) | 82 source connectors across 24 categories |
+| [Connectors](features/connectors.md) | 165 source connectors across 24 categories |
 | [Assessment Engine](features/assessment-engine.md) | 4-tier assessment — assertions, AI, OPA, inheritance |
 
 ## API & CLI
