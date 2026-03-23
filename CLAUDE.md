@@ -62,9 +62,6 @@ Do not batch 20 edits and test once. Do not dispatch 6 agents and test after all
 
 The v1 frontend incident: you copied 1,010 files from a ZIP into the repo without being asked. You then had to remove 129 of them. Before adding or removing any directory or large set of files, state what you plan to do and wait for approval.
 
-### Rule 7: If the user shares a secret, warn immediately
-
-If an API key, password, or credential appears in the conversation, immediately tell the user to rotate it. Do not store it in any file, env var, or command history. On 2026-03-19, an Anthropic API key was shared in chat.
 
 ---
 
@@ -101,16 +98,25 @@ make verify-docs # documentation accuracy check only
 3. Ask: "Ready to push?"
 4. WAIT for explicit "yes" before running `git push`
 
-### Pre-commit hook (optional)
+### Pre-push hook (REQUIRED — installed in both repos)
 
-To run quick QA automatically before every commit, create `.git/hooks/pre-commit`:
+A pre-push hook runs `ruff check` + `ruff format --check` on the exact committed state before pushing. This catches duplicate imports from merge resolutions — the #1 CI failure pattern. It stashes uncommitted changes first so it checks what would actually hit CI.
+
+Location: `.git/hooks/pre-push` (already installed in both `~/Coding/GitHub/warlock` and `~/Desktop/stress-testing/warlock`).
+
+If the hook fails, fix with: `.venv/bin/ruff check --fix warlock/ scripts/ && .venv/bin/ruff format warlock/ scripts/`
+
+### After rebase/merge resolution — ALWAYS run lint before continuing
+
+Merge resolutions routinely introduce duplicate imports (both sides import the same thing). After `git rebase --continue` or any merge conflict resolution:
 
 ```bash
-#!/bin/bash
-./scripts/qa.sh --quick
+.venv/bin/ruff check --fix warlock/ scripts/demo_seed.py scripts/demo_connectors_new.py
+.venv/bin/ruff format warlock/ scripts/demo_seed.py scripts/demo_connectors_new.py
+git add -u && git commit --amend --no-edit
 ```
 
-Then `chmod +x .git/hooks/pre-commit`.
+This amends the rebase commit with clean imports before pushing.
 
 ---
 
@@ -129,7 +135,9 @@ Safe to run in parallel. No file conflicts. Dispatch as many as needed.
 | Security agent | `warlock/api/*.py`, `warlock/config.py` |
 | Assessor agent | `warlock/assessors/*.py` |
 | Database agent | `warlock/db/*.py`, `alembic/`, migrations |
-| Workflow agent | `warlock/workflows/*.py`, `warlock/export/*.py`, `warlock/cli.py` |
+| Workflow agent | `warlock/workflows/*.py`, `warlock/export/*.py` |
+| CLI agent | `warlock/cli/*.py` (66 modules — assign by domain, not all at once) |
+| Demo seed agent | `scripts/demo_seed.py`, `scripts/demo_connectors_new.py` |
 | Terraform agent | `terraform/**/*.tf` |
 | OSCAL agent | `frameworks-oscal/**/*`, `warlock/normalizers/*.py`, `warlock/connectors/*.py` |
 
@@ -154,7 +162,7 @@ When you change the left column, you MUST update every file in the right column.
 | Normalizer (`warlock/normalizers/`) | `__init__.py`, verify matching connector, re-run demo seed |
 | DB model (`warlock/db/`) | Alembic migration, API routes, CLI commands, demo seed |
 | Config setting (`warlock/config.py`) | `.env.example`, README.md if user-facing |
-| API route (`warlock/api/`) | ABAC enforcement, input validation, auth decorator |
+| API route (`warlock/api/`) | ABAC enforcement, input validation, auth decorator, update middleware skip paths for health endpoints |
 | Assertion (`warlock/assessors/`) | All control bindings (list-based), demo seed |
 | Pipeline (`warlock/pipeline/`) | Demo seed, connector count, hash chain |
 | AI reasoning (`warlock/assessors/`) | Prompt sanitization, API key in header not URL, confidence floor |
@@ -164,7 +172,7 @@ When you change the left column, you MUST update every file in the right column.
 | OPA policies (`policies/`) | `opa check` + `opa test`, input schema matches normalizer output |
 | OSCAL packages (`frameworks-oscal/`) | Validate JSON, check control IDs match pipeline YAML, update README.md counts |
 | Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader doesn't crash, update README.md framework table |
-| CLI command (`warlock/cli.py`) | `.github/workflows/ci.yml` CLI smoke test list, README.md, DEMO.md, CONTRIBUTING.md |
+| CLI command (`warlock/cli/*.py`) | `.github/workflows/ci.yml` CLI smoke test list, README.md, DEMO.md, CONTRIBUTING.md, CLI-REFERENCE.md |
 | CI workflows (`.github/workflows/`) | Verify command/group names match actual CLI, test locally before pushing — CI failures block all PRs |
 | Docker (`Dockerfile`, `docker-compose.yml`) | Rebuild image (`docker compose build demo`), verify `docker compose up demo` succeeds |
 | Connector/normalizer/framework count changes | Update `proddocs/features/connectors.md`, `proddocs/product/frameworks.md`, `proddocs/product/overview.md` counts |
@@ -213,7 +221,10 @@ scripts/
 - **Hash-chained audit trail**: SHA-256 at every pipeline stage. Never break the chain.
 - **Fail-closed security**: OPA gate, assertions, ABAC all default to deny.
 - **Multiple assertions per control**: List-based bindings. Append, never overwrite.
-- **Timezone-aware datetimes**: Use `ensure_aware()` from `warlock/utils/`. No naive datetimes.
+- **Timezone-aware datetimes**: Use `ensure_aware()` from `warlock/utils/`. No naive datetimes. SQLite returns naive datetimes even with `timezone=True` — always wrap DB values.
+- **Rich markup escaping**: Use `rich.markup.escape()` on ALL user-supplied text before passing to `console.print()`. Unescaped `[brackets]` in titles/descriptions crash Rich.
+- **Root health endpoints**: `/health`, `/healthz`, `/readyz` at app root (not just `/api/v1/health`). Required for k8s probes, load balancers, Docker HEALTHCHECK.
+- **CLI groups show defaults**: All CLI groups use `invoke_without_command=True` and show a useful summary when called without a subcommand. Never error on bare group invocation.
 - **Prompt sanitization**: `<evidence>` tags + control character stripping in all LLM prompts.
 - **Gemini API key in header**: `x-goog-api-key`, never in URL query params.
 
@@ -318,13 +329,22 @@ These are not theoretical. These all happened.
 2. **Sub-agent claimed 13 normalizers missing — they all existed.** Now Rule 2.
 3. **Parallel agents conflicted on models.py — migration gap crashed the seed.** Now Rule 3.
 4. **Copied v1 frontend (1,010 files) without being asked.** Now Rule 6.
-5. **User's API key pasted in chat — not flagged.** Now Rule 7.
-6. **`warlock retention` printed in seed output instead of `warlock retention report`.** Demo found it, not tests.
-7. **Login endpoint had ImportError (`ACCESS_TOKEN_EXPIRE_MINUTES`) — never caught by tests.** Demo found it.
-8. **Datetime naive/aware bug in personnel.py — never caught by tests.** User found it by running the demo in their terminal.
-9. **README said 172 tests when there were 190.** Stale docs are lies.
-10. **OPA policies (592 files, 25K LOC) were dead code.** Nobody noticed until the audit.
-11. **ABAC scope filters existed but were never called.** Every user could see everything.
-12. **Assertion bindings silently overwrote each other.** AC-2 lost its MFA check.
+5. **`warlock retention` printed in seed output instead of `warlock retention report`.** Demo found it, not tests.
+6. **Login endpoint had ImportError (`ACCESS_TOKEN_EXPIRE_MINUTES`) — never caught by tests.** Demo found it.
+7. **Datetime naive/aware bug in personnel.py — never caught by tests.** User found it by running the demo in their terminal.
+8. **README said 172 tests when there were 190.** Stale docs are lies.
+9. **OPA policies (592 files, 25K LOC) were dead code.** Nobody noticed until the audit.
+10. **ABAC scope filters existed but were never called.** Every user could see everything.
+11. **Assertion bindings silently overwrote each other.** AC-2 lost its MFA check.
+
+## Lessons From 2026-03-22 Sessions
+
+12. **Datetime naive/aware bugs hit 6 CLI commands (lake-analytics summary/sources/freshness, reports sla, etc.).** Tests passed, demo crashed. `_utcnow()` returns aware, SQLite returns naive. Always wrap DB datetime values with `ensure_aware()`.
+13. **Rich markup injection crashed incidents CLI.** User text with `[brackets]` in titles caused `MarkupError`. All user-supplied strings in Rich output must be wrapped with `escape()`.
+14. **Demo seed had zero audit trail entries.** The core hash-chain trust mechanism was completely untestable. Seed data must cover every feature path, not just the happy path.
+15. **Coverage rate showed NIST 800-53 at 4%.** Denominator included 213K `not_assessed` controls. Metrics that include irrelevant data are misleading — worse than no data.
+16. **CLI groups errored (exit 2) on bare invocation.** 8 groups (`findings`, `connectors`, `assertions`, etc.) gave unhelpful Click errors instead of showing data. Every group must have a useful default.
+17. **Working across two repo copies caused merge conflicts.** The `~/Coding/GitHub/warlock` and `~/Desktop/stress-testing/warlock` repos diverged. Same fixes applied twice = 13-file rebase conflict. Use one repo per task.
+18. **demo_seed.py is the #1 conflict-prone file.** At 18K+ lines, it's the most edited file in the project. Never let two agents touch it simultaneously. Never make changes there without re-running the full seed.
 
 Every rule in this document exists because one of these happened.
