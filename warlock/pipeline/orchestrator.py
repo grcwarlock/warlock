@@ -14,6 +14,7 @@ from warlock.normalizers.base import FindingData, NormalizerRegistry
 from warlock.mappers.control_mapper import ControlMapper
 from warlock.assessors.engine import Assessor, ControlResultData
 from warlock.pipeline.bus import EventBus, PipelineEvent
+from warlock.pipeline.schema_registry import SchemaRegistry
 from warlock.db import models
 
 # Optional OPA compliance evaluation imports (may not be initialized)
@@ -97,6 +98,7 @@ class Pipeline:
         assessor: Assessor,
         bus: EventBus,
         opa_evaluator: OPAComplianceEvaluator | None = None,
+        schema_registry: SchemaRegistry | None = None,
     ) -> None:
         self.connectors = connectors
         self.normalizers = normalizers
@@ -104,6 +106,7 @@ class Pipeline:
         self.assessor = assessor
         self.bus = bus
         self.opa_evaluator = opa_evaluator
+        self.schema_registry = schema_registry
 
     def run(self, session: Session) -> PipelineRunStats:
         """Execute the full pipeline. One pass, all connectors.
@@ -184,6 +187,16 @@ class Pipeline:
                             },
                         )
                     )
+
+                    # OPS-7: Optional schema validation
+                    if self.schema_registry is not None:
+                        schema_errors = self.schema_registry.validate_event(raw_event)
+                        if schema_errors:
+                            log.warning(
+                                "Schema validation warnings for event %s: %s",
+                                raw_event_id,
+                                "; ".join(schema_errors),
+                            )
 
                     # Stage 2: Normalize
                     try:

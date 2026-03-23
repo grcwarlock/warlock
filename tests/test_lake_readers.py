@@ -354,5 +354,6 @@ class TestAggregations:
 
     def test_refresh_empty_lake(self, tmp_path):
         from warlock.lake.aggregations import refresh_aggregations
+
         counts = refresh_aggregations(str(tmp_path))
         assert counts == {}

@@ -20,9 +20,20 @@ import pytest
 pytest.importorskip("pyarrow")
 
 FRAMEWORKS = [
-    "nist_800_53", "iso_27001", "soc2", "hipaa", "fedramp",
-    "pci_dss", "cmmc_l2", "gdpr", "iso_27701", "iso_42001",
-    "ucf", "nist_csf", "eu_ai_act", "sec_cyber",
+    "nist_800_53",
+    "iso_27001",
+    "soc2",
+    "hipaa",
+    "fedramp",
+    "pci_dss",
+    "cmmc_l2",
+    "gdpr",
+    "iso_27701",
+    "iso_42001",
+    "ucf",
+    "nist_csf",
+    "eu_ai_act",
+    "sec_cyber",
 ]
 STATUSES = ["compliant", "non_compliant", "partial", "not_assessed", "not_applicable"]
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
@@ -49,9 +60,7 @@ def lake_parquet(tmp_path_factory):
         "control_id": [f"CTRL-{random.randint(1, 200)}" for _ in range(n_results)],
         "status": [random.choice(STATUSES) for _ in range(n_results)],
         "severity": [random.choice(SEVERITIES) for _ in range(n_results)],
-        "assessed_at": [
-            now - timedelta(days=random.randint(0, 180)) for _ in range(n_results)
-        ],
+        "assessed_at": [now - timedelta(days=random.randint(0, 180)) for _ in range(n_results)],
         "assessor": [
             random.choice(["assertion:mfa_check", "opa:nist_800_53", "ai:gemini", "manual"])
             for _ in range(n_results)
@@ -84,10 +93,10 @@ def lake_parquet(tmp_path_factory):
     findings_data = {
         "id": [str(uuid.uuid4()) for _ in range(n_findings)],
         "severity": [random.choice(SEVERITIES) for _ in range(n_findings)],
-        "source": [random.choice(["aws", "okta", "crowdstrike", "tenable"]) for _ in range(n_findings)],
-        "observed_at": [
-            now - timedelta(days=random.randint(0, 90)) for _ in range(n_findings)
+        "source": [
+            random.choice(["aws", "okta", "crowdstrike", "tenable"]) for _ in range(n_findings)
         ],
+        "observed_at": [now - timedelta(days=random.randint(0, 90)) for _ in range(n_findings)],
     }
     pq.write_table(
         pa.table(findings_data),
@@ -105,6 +114,7 @@ class TestDuckDBFeasibility:
     def test_query_1_dashboard_framework_status_groupby(self, lake_parquet):
         """Dashboard summary: GROUP BY framework, status with counts."""
         from warlock.lake.query import LakeQueryEngine
+
         engine = LakeQueryEngine(str(lake_parquet))
         path = str(lake_parquet / "control_results.parquet")
 
@@ -118,12 +128,15 @@ class TestDuckDBFeasibility:
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         assert len(result) > 0
-        assert elapsed_ms < self.MAX_MS, f"Dashboard query took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        assert elapsed_ms < self.MAX_MS, (
+            f"Dashboard query took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        )
         print(f"\n  Dashboard GROUP BY: {elapsed_ms:.1f}ms ({len(result)} rows)")
 
     def test_query_2_posture_trend_avg_by_framework(self, lake_parquet):
         """Posture trend: AVG score per framework per snapshot date."""
         from warlock.lake.query import LakeQueryEngine
+
         engine = LakeQueryEngine(str(lake_parquet))
         path = str(lake_parquet / "posture_snapshots.parquet")
 
@@ -137,12 +150,15 @@ class TestDuckDBFeasibility:
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         assert len(result) > 0
-        assert elapsed_ms < self.MAX_MS, f"Posture trend query took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        assert elapsed_ms < self.MAX_MS, (
+            f"Posture trend query took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        )
         print(f"\n  Posture trend AVG: {elapsed_ms:.1f}ms ({len(result)} rows)")
 
     def test_query_3_coverage_summary_with_counts(self, lake_parquet):
         """Coverage summary: count by framework + status with percentage."""
         from warlock.lake.query import LakeQueryEngine
+
         engine = LakeQueryEngine(str(lake_parquet))
         path = str(lake_parquet / "control_results.parquet")
 
@@ -167,12 +183,15 @@ class TestDuckDBFeasibility:
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         assert len(result) > 0
-        assert elapsed_ms < self.MAX_MS, f"Coverage summary took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        assert elapsed_ms < self.MAX_MS, (
+            f"Coverage summary took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        )
         print(f"\n  Coverage CTE: {elapsed_ms:.1f}ms ({len(result)} rows)")
 
     def test_query_4_findings_with_window_pagination(self, lake_parquet):
         """Paginated findings with total count via window function."""
         from warlock.lake.query import LakeQueryEngine
+
         engine = LakeQueryEngine(str(lake_parquet))
         path = str(lake_parquet / "findings.parquet")
 
@@ -188,12 +207,17 @@ class TestDuckDBFeasibility:
 
         assert len(result) <= 100
         assert "total" in result[0]
-        assert elapsed_ms < self.MAX_MS, f"Windowed pagination took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
-        print(f"\n  Window pagination: {elapsed_ms:.1f}ms ({len(result)} rows, total={result[0]['total']})")
+        assert elapsed_ms < self.MAX_MS, (
+            f"Windowed pagination took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        )
+        print(
+            f"\n  Window pagination: {elapsed_ms:.1f}ms ({len(result)} rows, total={result[0]['total']})"
+        )
 
     def test_query_5_cross_framework_drift_detection(self, lake_parquet):
         """Drift detection: compare latest two snapshot dates per framework."""
         from warlock.lake.query import LakeQueryEngine
+
         engine = LakeQueryEngine(str(lake_parquet))
         path = str(lake_parquet / "posture_snapshots.parquet")
 
@@ -216,5 +240,7 @@ class TestDuckDBFeasibility:
         """)
         elapsed_ms = (time.perf_counter() - start) * 1000
 
-        assert elapsed_ms < self.MAX_MS, f"Drift detection took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        assert elapsed_ms < self.MAX_MS, (
+            f"Drift detection took {elapsed_ms:.0f}ms (limit {self.MAX_MS}ms)"
+        )
         print(f"\n  Drift detection: {elapsed_ms:.1f}ms ({len(result)} drifted controls)")

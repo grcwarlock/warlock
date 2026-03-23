@@ -367,6 +367,9 @@ class Settings(BaseSettings):
     # Environment mode
     env: str = "development"  # "development", "staging", "production"
 
+    # Event-type schema validation (OPS-7)
+    schema_validation_enabled: bool = False  # Log warnings for unregistered event_types
+
     # Continuous Control Monitoring
     ccm_enabled: bool = False
     ccm_stale_threshold_hours: int = 24

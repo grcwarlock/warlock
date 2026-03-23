@@ -1,4 +1,5 @@
 """Tests for the conversational compliance query engine."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 import pytest
@@ -98,27 +99,32 @@ def seeded_lake_for_ask(tmp_path):
 class TestQueryLake:
     def test_posture_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
+
         result = query_lake(seeded_lake_for_ask, "What is our compliance posture?")
         assert result["type"] == "posture_summary"
         assert "answer" in result
 
     def test_findings_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
+
         result = query_lake(seeded_lake_for_ask, "Show me critical findings")
         assert result["type"] == "findings_summary"
 
     def test_connector_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
+
         result = query_lake(seeded_lake_for_ask, "How many connectors do we have?")
         assert result["type"] == "connector_summary"
 
     def test_framework_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
+
         result = query_lake(seeded_lake_for_ask, "What frameworks are we tracking?")
         assert result["type"] == "framework_summary"
 
     def test_general_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
+
         result = query_lake(seeded_lake_for_ask, "Give me an overview")
         assert result["type"] == "general_overview"
         assert "answer" in result

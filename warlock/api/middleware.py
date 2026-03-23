@@ -75,9 +75,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return f"ip:{host}"
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        from warlock.utils.cache import get_cache
+        from warlock.utils.cache import MemoryCache, get_cache
 
+        cache = get_cache()
         key = self._client_key(request)
+
+        # Determine whether rate limits are enforced per-worker (in-memory)
+        # or globally (Redis).  When MemoryCache is in use each Uvicorn worker
+        # maintains its own counters, so a client can effectively multiply its
+        # allowed request budget by the number of workers.  The scope header
+        # lets API consumers know which mode is active.  See H-24.
+        using_memory = isinstance(cache, MemoryCache)
+        scope = "worker" if using_memory else "global"
 
         # Apply per-endpoint limits when defined; fall back to instance defaults
         path = request.url.path
@@ -88,22 +97,30 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         max_allowed = rpm + burst
         cache_key = f"ratelimit:{key}"
-        count = get_cache().increment(cache_key, ttl=self.window_seconds)
+        count = cache.increment(cache_key, ttl=self.window_seconds)
 
         if count > max_allowed:
             log.warning(
-                "Rate limit exceeded for %s (%d requests in window)",
+                "Rate limit exceeded for %s (%d requests in window, scope=%s)",
                 key,
                 count,
+                scope,
             )
             return Response(
-                content='{"detail":"Rate limit exceeded"}',
+                content='{"detail":"Rate limit exceeded","scope":"' + scope + '"}',
                 status_code=429,
                 media_type="application/json",
-                headers={"Retry-After": str(self.window_seconds)},
+                headers={
+                    "Retry-After": str(self.window_seconds),
+                    "X-RateLimit-Scope": scope,
+                },
             )
 
-        return await call_next(request)
+        response = await call_next(request)
+        response.headers["X-RateLimit-Scope"] = scope
+        if using_memory:
+            response.headers["X-RateLimit-Warning"] = "per-worker"
+        return response
 
 
 # ---------------------------------------------------------------------------
@@ -342,10 +359,11 @@ def register_middleware(app) -> None:
     wlk_env = os.environ.get("WLK_ENV", "").strip().lower()
     cache_url = os.environ.get("WLK_CACHE_URL", "").strip()
     if wlk_env == "production" and not cache_url:
-        log.warning(
-            "PRODUCTION WARNING: No cache URL configured (WLK_CACHE_URL). "
-            "Rate limiter and caches are running in per-process in-memory mode. "
-            "State will not be shared across workers. "
+        log.error(
+            "PRODUCTION ERROR: No cache URL configured (WLK_CACHE_URL). "
+            "Rate limiter is running in per-process in-memory mode — each worker "
+            "maintains independent counters, so effective rate limits are multiplied "
+            "by the number of workers (H-24). "
             "Configure WLK_CACHE_URL to a Redis instance for production deployments."
         )
 

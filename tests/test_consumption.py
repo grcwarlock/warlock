@@ -1,4 +1,5 @@
 """Tests for consumption tier — 5 output paths."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 import pytest
@@ -72,27 +73,32 @@ def seeded_lake_for_consumption(tmp_path):
 class TestGRCToolExport:
     def test_generic_export(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import export_for_grc_tool
+
         result = export_for_grc_tool(seeded_lake_for_consumption)
         assert len(result) == 3
 
     def test_vanta_export(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import export_for_grc_tool
+
         result = export_for_grc_tool(seeded_lake_for_consumption, tool="vanta")
         assert all("test_name" in r for r in result)
         assert all("status" in r for r in result)
 
     def test_drata_export(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import export_for_grc_tool
+
         result = export_for_grc_tool(seeded_lake_for_consumption, tool="drata")
         assert all("compliance_status" in r for r in result)
 
     def test_framework_filter(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import export_for_grc_tool
+
         result = export_for_grc_tool(seeded_lake_for_consumption, framework="nist_800_53")
         assert all(r["framework"] == "nist_800_53" for r in result)
 
     def test_empty_lake(self, tmp_path):
         from warlock.lake.consumption import export_for_grc_tool
+
         result = export_for_grc_tool(str(tmp_path))
         assert result == []
 
@@ -101,12 +107,19 @@ class TestBIQuery:
     def test_execute_query(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import execute_bi_query
         from pathlib import Path
-        glob = str(Path(seeded_lake_for_consumption) / "curated" / "control_results" / "**" / "*.parquet")
-        result = execute_bi_query(seeded_lake_for_consumption, f"SELECT COUNT(*) as cnt FROM read_parquet('{glob}', union_by_name=true)")
+
+        glob = str(
+            Path(seeded_lake_for_consumption) / "curated" / "control_results" / "**" / "*.parquet"
+        )
+        result = execute_bi_query(
+            seeded_lake_for_consumption,
+            f"SELECT COUNT(*) as cnt FROM read_parquet('{glob}', union_by_name=true)",
+        )
         assert result[0]["cnt"] == 3
 
     def test_available_tables(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import get_available_tables
+
         tables = get_available_tables(seeded_lake_for_consumption)
         assert len(tables) > 0
         assert all("zone" in t for t in tables)
@@ -115,6 +128,7 @@ class TestBIQuery:
 class TestRegulatoryFiling:
     def test_gdpr_dpa(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import generate_regulatory_filing
+
         result = generate_regulatory_filing(seeded_lake_for_consumption, "gdpr_dpa")
         assert result["filing_type"] == "gdpr_dpa"
         assert "sections" in result
@@ -122,11 +136,13 @@ class TestRegulatoryFiling:
 
     def test_sec_8k(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import generate_regulatory_filing
+
         result = generate_regulatory_filing(seeded_lake_for_consumption, "sec_8k")
         assert result["filing_type"] == "sec_8k"
 
     def test_unknown_type(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import generate_regulatory_filing
+
         result = generate_regulatory_filing(seeded_lake_for_consumption, "invalid")
         assert "error" in result
 
@@ -134,17 +150,20 @@ class TestRegulatoryFiling:
 class TestQuestionnaireAutomation:
     def test_sig_autofill(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import auto_fill_questionnaire
+
         result = auto_fill_questionnaire(seeded_lake_for_consumption, "sig")
         assert len(result) > 0
         assert all("question" in r and "answer" in r for r in result)
 
     def test_caiq_autofill(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import auto_fill_questionnaire
+
         result = auto_fill_questionnaire(seeded_lake_for_consumption, "caiq")
         assert len(result) > 0
 
     def test_ddq_autofill(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import auto_fill_questionnaire
+
         result = auto_fill_questionnaire(seeded_lake_for_consumption, "ddq")
         assert len(result) > 0
 
@@ -152,6 +171,7 @@ class TestQuestionnaireAutomation:
 class TestTrustCenter:
     def test_generate_trust_center(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import generate_trust_center_data
+
         result = generate_trust_center_data(seeded_lake_for_consumption)
         assert "posture_badges" in result
         assert "artifacts" in result
@@ -160,6 +180,7 @@ class TestTrustCenter:
 
     def test_badges_status(self, seeded_lake_for_consumption):
         from warlock.lake.consumption import generate_trust_center_data
+
         result = generate_trust_center_data(seeded_lake_for_consumption)
         # nist and iso have 1 compliant each (100%), soc2 has 1 non-compliant (0%)
         assert result["posture_badges"]["nist_800_53"]["status"] == "compliant"

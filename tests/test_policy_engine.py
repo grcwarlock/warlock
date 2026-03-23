@@ -1,7 +1,5 @@
 """Tests for policy engine: models, CRUD, resolution."""
 
-from datetime import datetime, timezone
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -23,6 +21,7 @@ def db_session():
 class TestPolicyModel:
     def test_create_policy(self, db_session):
         from warlock.db.models import Policy
+
         p = Policy(
             policy_type="sla",
             scope={"severity": ["critical"]},
@@ -40,6 +39,7 @@ class TestPolicyModel:
 
     def test_create_policy_history(self, db_session):
         from warlock.db.models import Policy, PolicyHistory
+
         p = Policy(
             policy_type="retention",
             scope={},
@@ -64,6 +64,7 @@ class TestPolicyModel:
 class TestAssetModel:
     def test_create_asset(self, db_session):
         from warlock.db.models import Asset
+
         a = Asset(
             resource_id="prod-db-01",
             resource_type="database",
@@ -82,6 +83,7 @@ class TestAssetModel:
 class TestVendorModel:
     def test_create_vendor(self, db_session):
         from warlock.db.models import Vendor
+
         v = Vendor(
             name="Cloudflare",
             tier="critical",
@@ -98,6 +100,7 @@ class TestVendorModel:
 class TestPolicyEngine:
     def test_set_and_get_policy(self, db_session):
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         engine.set_policy(
             policy_type="sla",
@@ -111,20 +114,26 @@ class TestPolicyEngine:
 
     def test_get_returns_none_when_no_match(self, db_session):
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         result = engine.get("sla", severity="critical")
         assert result is None
 
     def test_specific_scope_beats_global(self, db_session):
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         engine.set_policy(
-            policy_type="sla", scope={},
-            rules={"remediation_days": 30}, actor="admin@acme.com",
+            policy_type="sla",
+            scope={},
+            rules={"remediation_days": 30},
+            actor="admin@acme.com",
         )
         engine.set_policy(
-            policy_type="sla", scope={"severity": ["critical"]},
-            rules={"remediation_days": 14}, actor="admin@acme.com",
+            policy_type="sla",
+            scope={"severity": ["critical"]},
+            rules={"remediation_days": 14},
+            actor="admin@acme.com",
         )
         result = engine.get("sla", severity="critical")
         assert result.rules["remediation_days"] == 14
@@ -133,16 +142,21 @@ class TestPolicyEngine:
 
     def test_higher_priority_wins(self, db_session):
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         engine.set_policy(
             policy_type="retention",
             scope={"frameworks": ["pci_dss"]},
-            rules={"days": 365}, actor="admin@acme.com", priority=0,
+            rules={"days": 365},
+            actor="admin@acme.com",
+            priority=0,
         )
         engine.set_policy(
             policy_type="retention",
             scope={"frameworks": ["pci_dss"]},
-            rules={"days": 2555}, actor="compliance@acme.com", priority=10,
+            rules={"days": 2555},
+            actor="compliance@acme.com",
+            priority=10,
         )
         result = engine.get("retention", framework="pci_dss")
         assert result.rules["days"] == 2555
@@ -150,10 +164,13 @@ class TestPolicyEngine:
     def test_disabled_policies_excluded(self, db_session):
         from warlock.db.models import Policy
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         engine.set_policy(
-            policy_type="sla", scope={},
-            rules={"remediation_days": 14}, actor="admin@acme.com",
+            policy_type="sla",
+            scope={},
+            rules={"remediation_days": 14},
+            actor="admin@acme.com",
         )
         p = db_session.query(Policy).first()
         p.enabled = False
@@ -164,10 +181,13 @@ class TestPolicyEngine:
     def test_set_policy_creates_history(self, db_session):
         from warlock.db.models import PolicyHistory
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         engine.set_policy(
-            policy_type="retention", scope={},
-            rules={"days": 365}, actor="admin@acme.com",
+            policy_type="retention",
+            scope={},
+            rules={"days": 365},
+            actor="admin@acme.com",
         )
         history = db_session.query(PolicyHistory).all()
         assert len(history) == 1
@@ -176,6 +196,7 @@ class TestPolicyEngine:
 
     def test_list_policies(self, db_session):
         from warlock.domains.policy_engine import PolicyEngine
+
         engine = PolicyEngine(db_session)
         engine.set_policy("sla", {}, {"days": 14}, "admin@acme.com")
         engine.set_policy("retention", {}, {"days": 365}, "admin@acme.com")

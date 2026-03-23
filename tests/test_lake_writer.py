@@ -7,7 +7,6 @@ import pytest
 pytest.importorskip("pyarrow")
 
 
-
 class TestZoneWriters:
     def test_write_raw_zone(self, tmp_path):
         """Verify raw zone writes Parquet files readable by DuckDB."""
@@ -489,9 +488,7 @@ class TestReconciliation:
         ]
         assert result.passed
 
-        result.comparisons.append(
-            TableComparison(table="c", oltp_count=100, lake_count=50)
-        )
+        result.comparisons.append(TableComparison(table="c", oltp_count=100, lake_count=50))
         assert not result.passed
         assert len(result.drifted) == 1
 

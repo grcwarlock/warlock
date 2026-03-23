@@ -1,4 +1,5 @@
 """Tests for MCP tool interface."""
+
 import pytest
 
 pytest.importorskip("pyarrow")
@@ -7,12 +8,14 @@ pytest.importorskip("pyarrow")
 class TestMCPToolDefinitions:
     def test_get_tools_returns_list(self):
         from warlock.lake.mcp_tools import get_mcp_tools
+
         tools = get_mcp_tools()
         assert isinstance(tools, list)
         assert len(tools) == 8
 
     def test_each_tool_has_required_fields(self):
         from warlock.lake.mcp_tools import get_mcp_tools
+
         for tool in get_mcp_tools():
             assert "name" in tool
             assert "description" in tool
@@ -22,29 +25,38 @@ class TestMCPToolDefinitions:
 class TestMCPToolCalls:
     def test_unknown_tool(self, tmp_path):
         from warlock.lake.mcp_tools import call_mcp_tool
+
         result = call_mcp_tool(str(tmp_path), "nonexistent")
         assert "error" in result
 
     def test_lake_overview_empty(self, tmp_path):
         from warlock.lake.mcp_tools import call_mcp_tool
+
         result = call_mcp_tool(str(tmp_path), "lake_overview")
         # Empty lake has no parquet files — result is either a valid overview or an error dict
         assert isinstance(result, dict)
 
     def test_compliance_posture_with_data(self, seeded_lake_for_mcp):
         from warlock.lake.mcp_tools import call_mcp_tool
+
         result = call_mcp_tool(seeded_lake_for_mcp, "compliance_posture")
         assert "summary" in result
         assert len(result["summary"]) > 0
 
     def test_framework_list_with_data(self, seeded_lake_for_mcp):
         from warlock.lake.mcp_tools import call_mcp_tool
+
         result = call_mcp_tool(seeded_lake_for_mcp, "framework_list")
         assert "frameworks" in result
 
     def test_control_details_with_data(self, seeded_lake_for_mcp):
         from warlock.lake.mcp_tools import call_mcp_tool
-        result = call_mcp_tool(seeded_lake_for_mcp, "control_details", {"framework": "nist_800_53", "control_id": "AC-2"})
+
+        result = call_mcp_tool(
+            seeded_lake_for_mcp,
+            "control_details",
+            {"framework": "nist_800_53", "control_id": "AC-2"},
+        )
         assert "assessments" in result
 
 

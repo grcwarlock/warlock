@@ -4,7 +4,6 @@ Proves: Ingest → Normalize → Map → Assess flows through all 4 stages,
 persists to all 5 tables, and publishes events on the bus.
 """
 
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

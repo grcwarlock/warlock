@@ -1,4 +1,5 @@
 """Tests for lake maintenance jobs."""
+
 import pytest
 
 pytest.importorskip("pyarrow")

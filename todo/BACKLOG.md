@@ -1,7 +1,7 @@
 # Warlock Backlog
 
-**Last updated:** 2026-03-22
-**Total:** 343 done / 481 total (71%)
+**Last updated:** 2026-03-23
+**Total:** 361 done / 481 total (75%)
 
 ---
 
@@ -50,7 +50,7 @@ Every item follows this format:
 
 - [x] H-22: GDPR anonymization uses hardcoded HMAC secret (workflows/gdpr.py:62) — S | P0
 - [x] H-23: AI error messages leak internal exception details (assessors/ai_reasoning.py:273-391) — S | P1
-- [ ] H-24: In-memory rate limiter ineffective with multiple workers (api/middleware.py:39-106) — M | P1
+- [x] H-24: In-memory rate limiter ineffective with multiple workers (api/middleware.py:39-106) — M | P1
 - [x] H-25: Swallowed except Exception: pass in connectors hides data loss — M | P1
 - [x] H-26: NormalizerRegistry catches exceptions, failure counter never fires — S | P1
 - [ ] H-27: POA&M _CLOSED_STATUSES includes verified but state machine says intermediate — S | P1
@@ -526,9 +526,9 @@ These were written as part of the proddocs initiative and live in `proddocs/`.
 - [ ] OPS-2: demo_exports/ — pre-generated sample packages — S | P2
 - [ ] OPS-3: docs/architecture-diagram.html — visual architecture — S | P2
 - [ ] OPS-4: Celery integration (alternative task queue) — M | P3
-- [ ] OPS-5: nltk CVE remediation (CVE-2026-33230, CVE-2026-33231) — S | P1
+- [x] OPS-5: nltk CVE remediation (CVE-2026-33230, CVE-2026-33231) — S | P1 (N/A — nltk not in codebase)
 - [ ] OPS-6: Connector vendor accuracy pass (verify 165 connectors against real API docs) — XL | P0
-- [ ] OPS-7: Schema registry for event_types — M | P1
+- [x] OPS-7: Schema registry for event_types — M | P1
 - [ ] OPS-8: Smarter fallback normalizer (heuristics for unknown event_types) — M | P2
 - [ ] OPS-9: Demo data vendor accuracy (match real API response schemas) — L | P2
 
