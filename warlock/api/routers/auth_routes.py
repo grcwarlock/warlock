@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -47,7 +48,7 @@ class RegisterRequest(BaseModel):
     email: str
     name: str
     password: str
-    role: str = "viewer"
+    role: Literal["admin", "auditor", "owner", "viewer"] = "viewer"
 
 
 class UserResponse(BaseModel):

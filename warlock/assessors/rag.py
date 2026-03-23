@@ -31,6 +31,15 @@ from warlock.normalizers.base import FindingData
 
 log = logging.getLogger(__name__)
 
+_SAFE_TABLE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+def _validate_table_name(name: str) -> str:
+    """Validate a table name is safe for SQL interpolation."""
+    if not _SAFE_TABLE_NAME_RE.match(name):
+        raise ValueError(f"Invalid table name: {name!r}")
+    return name
+
 
 # ---------------------------------------------------------------------------
 # ControlDocument — the unit stored in the vector DB
@@ -528,18 +537,13 @@ class PgVectorStore(VectorStore):
     Requires: ``pip install pgvector sqlalchemy psycopg2-binary``
     """
 
-    _TABLE_NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
-
     def __init__(
         self,
         connection_string: str,
         table_name: str = "warlock_control_embeddings",
         dimensions: int = 1536,
     ) -> None:
-        if not self._TABLE_NAME_RE.match(table_name):
-            raise ValueError(
-                f"Invalid table_name {table_name!r}: must match [a-zA-Z_][a-zA-Z0-9_]*"
-            )
+        _validate_table_name(table_name)
 
         from sqlalchemy import (
             Column,

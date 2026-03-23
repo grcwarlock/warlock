@@ -159,14 +159,14 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             ),
         }
 
-    except Exception as exc:
+    except Exception:
         log.exception("Lambda execution failed")
         elapsed = round(time.time() - start, 2)
         return {
             "statusCode": 500,
             "body": json.dumps(
                 {
-                    "error": str(exc),
+                    "error": "Internal pipeline execution error",
                     "action": action,
                     "execution_time_seconds": elapsed,
                 },

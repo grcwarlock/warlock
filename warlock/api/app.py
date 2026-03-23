@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import Depends, FastAPI, Request
+from starlette.responses import JSONResponse
 
 from warlock.api.deps import get_db
 
@@ -127,9 +128,29 @@ def create_app() -> FastAPI:
                 or path.endswith("/health")
             ):
                 return await call_next(request)
-            # OPA evaluation happens via dependency injection, not middleware
-            # This middleware just attaches the gate to request state
+
+            # Skip unauthenticated auth endpoints
+            if path in (
+                "/api/v1/auth/login",
+                "/api/v1/auth/mfa",
+                "/api/v1/auth/refresh",
+            ):
+                return await call_next(request)
+
+            # Attach gate to request state for per-route use
             request.state.policy_gate = _policy_gate
+
+            # Evaluate OPA policy if a user is present on the request
+            user = getattr(request.state, "user", None)
+            if user is not None:
+                action = request.method.lower()
+                allowed = await _policy_gate.evaluate(request, user, action)
+                if not allowed:
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "Policy denied by OPA gate"},
+                    )
+
             return await call_next(request)
 
     # ------------------------------------------------------------------

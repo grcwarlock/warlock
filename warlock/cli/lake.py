@@ -9,6 +9,18 @@ import click
 from warlock.cli import cli, console, _error
 
 
+def _safe_lake_path(path: str) -> str:
+    """Validate a lake path is safe for SQL interpolation.
+
+    Lake paths are interpolated into DuckDB ``read_parquet()`` calls.
+    This guard rejects paths containing characters that could break out
+    of the single-quoted SQL string literal (``'``, ``;``, ``--``).
+    """
+    if "'" in path or ";" in path or "--" in path:
+        raise ValueError(f"Unsafe characters in lake path: {path!r}")
+    return path
+
+
 @cli.group()
 def lake() -> None:
     """Data lake management commands."""
@@ -316,7 +328,7 @@ def evidence_list(path: str | None, limit: int) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "evidence_artifacts" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "evidence_artifacts" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/evidence_artifacts/**/*.parquet")):
         console.print(
@@ -357,7 +369,7 @@ def evidence_freshness(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "evidence_freshness" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "evidence_freshness" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/evidence_freshness/**/*.parquet")):
         console.print(
@@ -406,7 +418,7 @@ def incidents_list(path: str | None, status: str | None, limit: int) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "incidents" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "incidents" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/incidents/**/*.parquet")):
         console.print(
@@ -451,7 +463,7 @@ def incidents_events(path: str | None, severity: str | None, limit: int) -> None
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "security_events" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "security_events" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/security_events/**/*.parquet")):
         console.print(
@@ -505,7 +517,7 @@ def privacy_dsars(path: str | None, status: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "dsars" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "dsars" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/dsars/**/*.parquet")):
         console.print(
@@ -548,7 +560,7 @@ def privacy_processing(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "processing_activities" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "processing_activities" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/processing_activities/**/*.parquet")):
         console.print(
@@ -585,7 +597,7 @@ def privacy_transfers(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "data_transfers" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "data_transfers" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/data_transfers/**/*.parquet")):
         console.print(
@@ -633,7 +645,7 @@ def supply_chain_sbom(path: str | None, limit: int) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "sbom_components" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "sbom_components" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/sbom_components/**/*.parquet")):
         console.print(
@@ -670,7 +682,7 @@ def supply_chain_suppliers(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "supplier_assessments" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "supplier_assessments" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/supplier_assessments/**/*.parquet")):
         console.print(
@@ -707,7 +719,7 @@ def supply_chain_concentration(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "concentration_risk" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "concentration_risk" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/concentration_risk/**/*.parquet")):
         console.print(
@@ -755,7 +767,7 @@ def analytics_trends(path: str | None, framework: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "agg_framework_posture" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "agg_framework_posture" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/agg_framework_posture/**/*.parquet")):
         console.print(
@@ -799,7 +811,9 @@ def analytics_heatmap(path: str | None, framework: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "agg_control_family_posture" / "**" / "*.parquet")
+    glob = _safe_lake_path(
+        str(base / "curated" / "agg_control_family_posture" / "**" / "*.parquet")
+    )
 
     if not list(base.glob("curated/agg_control_family_posture/**/*.parquet")):
         console.print(
@@ -853,7 +867,7 @@ def health_runs(path: str | None, limit: int) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "pipeline_runs" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "pipeline_runs" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/pipeline_runs/**/*.parquet")):
         console.print(
@@ -890,7 +904,7 @@ def health_freshness(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "data_freshness" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "data_freshness" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/data_freshness/**/*.parquet")):
         console.print(
@@ -927,7 +941,7 @@ def health_coverage(path: str | None) -> None:
     settings = get_settings()
     lake_path = path or settings.lake_path
     base = Path(lake_path)
-    glob = str(base / "curated" / "coverage_metrics" / "**" / "*.parquet")
+    glob = _safe_lake_path(str(base / "curated" / "coverage_metrics" / "**" / "*.parquet"))
 
     if not list(base.glob("curated/coverage_metrics/**/*.parquet")):
         console.print(

@@ -1006,7 +1006,7 @@ def list_audit_trail(
     limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission("read")),
+    current_user: User = Depends(require_permission("manage_users")),
 ):
     repos = get_repos(db)
     rows, total = repos.audit_entries.list_filtered(
@@ -1041,7 +1041,7 @@ def list_audit_trail(
 @router.get("/audit-trail/verify", response_model=AuditVerifyResponse)
 def verify_audit_trail(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission("read")),
+    current_user: User = Depends(require_permission("manage_users")),
 ):
     from warlock.db.audit import AuditTrail
 

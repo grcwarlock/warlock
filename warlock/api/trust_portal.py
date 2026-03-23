@@ -15,8 +15,10 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
+import os
 import re
 import time
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any
 
@@ -45,11 +47,16 @@ def _get_download_secret() -> str:
     s = get_settings()
     secret = getattr(s, "trust_portal_secret", "") or ""
     if not secret:
-        if getattr(s, "env", "development") == "production":
-            raise RuntimeError("WLK_TRUST_PORTAL_SECRET must be set in production")
+        if getattr(s, "env", "development") != "development":
+            raise RuntimeError(
+                "WLK_TRUST_PORTAL_SECRET must be set in non-development environments"
+            )
         secret = "wlk-trust-portal-dev-only-secret"
     return secret
 
+
+# Anchor trust document storage to a known directory to prevent path traversal
+_TRUST_DOCS_ROOT = Path(__file__).resolve().parent.parent.parent / "exports" / "trust_documents"
 
 log = logging.getLogger(__name__)
 
@@ -475,7 +482,6 @@ async def upload_trust_document(
             status_code=400, detail="Title must contain at least one alphanumeric character."
         )
 
-    import os
     import uuid
 
     doc_id = str(uuid.uuid4())
@@ -634,7 +640,6 @@ async def serve_trust_document(
     For NDA/contract-tier documents, a valid auth token is required in
     addition to the HMAC download signature.
     """
-    import os
     from fastapi.responses import FileResponse
 
     if not _verify_download_token(document_id, expires, token):
@@ -656,6 +661,13 @@ async def serve_trust_document(
                 detail="Authentication required to download NDA/contract-tier documents.",
             )
         get_current_user(request, authorization, x_api_key, db)
+
+    # H-3: Path traversal protection — ensure file is within trusted directory
+    expected_dir = os.path.realpath(str(_TRUST_DOCS_ROOT))
+    real_path = os.path.realpath(doc.file_path)
+    if not real_path.startswith(expected_dir + os.sep) and real_path != expected_dir:
+        log.warning("Path traversal attempt blocked: %s", doc.file_path)
+        raise HTTPException(status_code=403, detail="Access denied")
 
     if not os.path.isfile(doc.file_path):
         log.error("Trust document file missing on disk: %s", doc.file_path)
