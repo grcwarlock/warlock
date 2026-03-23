@@ -215,6 +215,14 @@ from warlock.cli import lake_analytics_cmd as _lake_analytics_cmd  # noqa: F401,
 from warlock.cli import dashboard_cmd as _dashboard_cmd  # noqa: F401, E402
 from warlock.cli import ai_ops_cmd as _ai_ops_cmd  # noqa: F401, E402
 from warlock.cli import automation_cmd as _automation_cmd  # noqa: F401, E402
+from warlock.cli import investigate_cmd as _investigate_cmd  # noqa: F401, E402
+# Interactive workflows — guided GRC practitioner UX
+from warlock.cli import vendor_workflow_cmd as _vendor_workflow_cmd  # noqa: F401, E402
+from warlock.cli import incident_workflow_cmd as _incident_workflow_cmd  # noqa: F401, E402
+from warlock.cli import privacy_workflow_cmd as _privacy_workflow_cmd  # noqa: F401, E402
+from warlock.cli import audit_workflow_cmd as _audit_workflow_cmd  # noqa: F401, E402
+from warlock.cli import risk_workflow_cmd as _risk_workflow_cmd  # noqa: F401, E402
+from warlock.cli import ops_workflow_cmd as _ops_workflow_cmd  # noqa: F401, E402
 
 
 if __name__ == "__main__":
