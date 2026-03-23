@@ -98,11 +98,7 @@ def finding_vendor(finding_id: str, vendor_id: str) -> None:
             "info": 0,
         }
         # Count existing findings linked to this vendor
-        linked_findings = (
-            session.query(Finding)
-            .filter(Finding.vendor_id == vendor.id)
-            .all()
-        )
+        linked_findings = session.query(Finding).filter(Finding.vendor_id == vendor.id).all()
         existing_count = len(linked_findings)
 
         # Link finding to vendor
@@ -111,9 +107,7 @@ def finding_vendor(finding_id: str, vendor_id: str) -> None:
 
         # Recalculate vendor risk score from all linked findings
         all_linked = linked_findings + [finding]
-        total_weight = sum(
-            severity_weights.get((f.severity or "").lower(), 5) for f in all_linked
-        )
+        total_weight = sum(severity_weights.get((f.severity or "").lower(), 5) for f in all_linked)
         # Normalize to 0-100 scale, capped
         new_score = min(100, total_weight)
         old_score = vendor.risk_score or 0
@@ -175,10 +169,22 @@ def incident_breach(incident_id: str, personal_data: bool | None) -> None:
         title_lower = (incident.title or "").lower()
         detail_str = json.dumps(incident.detail or {}, default=str).lower()
         pii_keywords = [
-            "personal data", "pii", "email", "ssn", "social security",
-            "credit card", "health record", "patient", "employee record",
-            "customer data", "user data", "gdpr", "name and address",
-            "date of birth", "passport", "driver license",
+            "personal data",
+            "pii",
+            "email",
+            "ssn",
+            "social security",
+            "credit card",
+            "health record",
+            "patient",
+            "employee record",
+            "customer data",
+            "user data",
+            "gdpr",
+            "name and address",
+            "date of birth",
+            "passport",
+            "driver license",
         ]
         auto_detected = any(kw in title_lower or kw in detail_str for kw in pii_keywords)
 
@@ -460,15 +466,9 @@ def change_compliance(change_id: str) -> None:
         frameworks_affected = list({r.framework for r in affected_controls})
         non_compliant = [r for r in affected_controls if r.status == "non_compliant"]
 
-        console.print(
-            f"\n[bold]Controls potentially affected: {len(affected_controls)}[/bold]"
-        )
-        console.print(
-            f"  Frameworks: {', '.join(sorted(frameworks_affected))}"
-        )
-        console.print(
-            f"  Already non-compliant: [red]{len(non_compliant)}[/red]"
-        )
+        console.print(f"\n[bold]Controls potentially affected: {len(affected_controls)}[/bold]")
+        console.print(f"  Frameworks: {', '.join(sorted(frameworks_affected))}")
+        console.print(f"  Already non-compliant: [red]{len(non_compliant)}[/red]")
 
         table = Table(title="Controls requiring re-assessment")
         table.add_column("Framework", style="cyan")
@@ -560,13 +560,9 @@ def training_access(user_id: str) -> None:
         return
 
     completed = [r for r in records if r.status == "completed"]
-    overdue = [
-        r for r in records
-        if r.status != "completed" and r.due_date and r.due_date < now
-    ]
+    overdue = [r for r in records if r.status != "completed" and r.due_date and r.due_date < now]
     pending = [
-        r for r in records
-        if r.status != "completed" and (not r.due_date or r.due_date >= now)
+        r for r in records if r.status != "completed" and (not r.due_date or r.due_date >= now)
     ]
 
     console.print(
@@ -593,7 +589,12 @@ def training_access(user_id: str) -> None:
             days_over = (now - r.due_date).days if r.due_date else 0
             table.add_row(
                 r.id[:8],
-                (getattr(r, "course_name", None) or getattr(r, "title", None) or r.training_type or "\u2014")[:45],
+                (
+                    getattr(r, "course_name", None)
+                    or getattr(r, "title", None)
+                    or r.training_type
+                    or "\u2014"
+                )[:45],
                 _fmt_dt(r.due_date),
                 str(days_over),
             )
@@ -617,7 +618,12 @@ def training_access(user_id: str) -> None:
         for r in pending:
             p_table.add_row(
                 r.id[:8],
-                (getattr(r, "course_name", None) or getattr(r, "title", None) or r.training_type or "\u2014")[:45],
+                (
+                    getattr(r, "course_name", None)
+                    or getattr(r, "title", None)
+                    or r.training_type
+                    or "\u2014"
+                )[:45],
                 _fmt_dt(r.due_date),
                 r.status or "\u2014",
             )

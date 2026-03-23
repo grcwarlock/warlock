@@ -157,14 +157,16 @@ def triage_ai(framework: str | None, limit: int, use_ai: bool, ask: bool) -> Non
             r.observed_at.strftime("%Y-%m-%d") if r.observed_at else "\u2014",
         )
         sev_counts[r.severity] = sev_counts.get(r.severity, 0) + 1
-        finding_data.append({
-            "id": r.id[:8],
-            "title": (r.title or "")[:80],
-            "severity": r.severity,
-            "source": r.source,
-            "observation_type": r.observation_type,
-            "resource_type": r.resource_type,
-        })
+        finding_data.append(
+            {
+                "id": r.id[:8],
+                "title": (r.title or "")[:80],
+                "severity": r.severity,
+                "source": r.source,
+                "observation_type": r.observation_type,
+                "resource_type": r.resource_type,
+            }
+        )
     console.print(table)
 
     # Severity distribution
@@ -210,9 +212,7 @@ def triage_ai(framework: str | None, limit: int, use_ai: bool, ask: bool) -> Non
 @click.option("--limit", "-n", default=20, help="Max mappings to show")
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI crosswalk suggestions")
 @click.option("--ask", is_flag=True, default=False, help="Interactive AI follow-up")
-def crosswalk_ai(
-    source_fw: str, target_fw: str, limit: int, use_ai: bool, ask: bool
-) -> None:
+def crosswalk_ai(source_fw: str, target_fw: str, limit: int, use_ai: bool, ask: bool) -> None:
     """AI-suggested control mappings between two frameworks.
 
     \b
@@ -387,13 +387,15 @@ def policy_draft(control_family: str, framework: str, use_ai: bool, ask: bool) -
             str(non_compliant),
             str(partial),
         )
-        control_data.append({
-            "control_id": cid,
-            "total_results": len(statuses),
-            "compliant": compliant,
-            "non_compliant": non_compliant,
-            "partial": partial,
-        })
+        control_data.append(
+            {
+                "control_id": cid,
+                "total_results": len(statuses),
+                "compliant": compliant,
+                "non_compliant": non_compliant,
+                "partial": partial,
+            }
+        )
 
     console.print(table)
     console.print(f"\n[dim]{len(controls)} controls in family {control_family}[/dim]")
@@ -487,9 +489,7 @@ def sufficiency_ai(framework: str, limit: int, use_ai: bool, ask: bool) -> None:
         controls[r.control_id]["statuses"].append(r.status)
         controls[r.control_id]["evidence_counts"].append(len(r.evidence_ids or []))
         if r.remediation_summary:
-            controls[r.control_id]["remediation_summaries"].append(
-                r.remediation_summary[:200]
-            )
+            controls[r.control_id]["remediation_summaries"].append(r.remediation_summary[:200])
 
     table = Table(title=f"Insufficient Evidence: {framework}")
     table.add_column("Control ID", style="cyan")
@@ -505,7 +505,11 @@ def sufficiency_ai(framework: str, limit: int, use_ai: bool, ask: bool) -> None:
     control_data = []
     for cid, info in sorted(controls.items()):
         primary_status = max(set(info["statuses"]), key=info["statuses"].count)
-        avg_ev = sum(info["evidence_counts"]) / len(info["evidence_counts"]) if info["evidence_counts"] else 0
+        avg_ev = (
+            sum(info["evidence_counts"]) / len(info["evidence_counts"])
+            if info["evidence_counts"]
+            else 0
+        )
         st_sty = status_styles.get(primary_status, "")
         table.add_row(
             cid,
@@ -513,13 +517,15 @@ def sufficiency_ai(framework: str, limit: int, use_ai: bool, ask: bool) -> None:
             str(len(info["statuses"])),
             f"{avg_ev:.1f}",
         )
-        control_data.append({
-            "control_id": cid,
-            "primary_status": primary_status,
-            "result_count": len(info["statuses"]),
-            "avg_evidence": round(avg_ev, 1),
-            "remediation_hints": info["remediation_summaries"][:2],
-        })
+        control_data.append(
+            {
+                "control_id": cid,
+                "primary_status": primary_status,
+                "result_count": len(info["statuses"]),
+                "avg_evidence": round(avg_ev, 1),
+                "remediation_hints": info["remediation_summaries"][:2],
+            }
+        )
 
     console.print(table)
     console.print(f"\n[dim]{len(controls)} controls with insufficient evidence[/dim]")
@@ -603,27 +609,34 @@ def benchmark_ai(framework: str, use_ai: bool, ask: bool) -> None:
 
     total_controls = len(control_status)
     fully_compliant = sum(
-        1 for cs in control_status.values()
+        1
+        for cs in control_status.values()
         if cs.get("compliant", 0) > 0 and cs.get("non_compliant", 0) == 0
     )
-    non_compliant = sum(
-        1 for cs in control_status.values() if cs.get("non_compliant", 0) > 0
-    )
+    non_compliant = sum(1 for cs in control_status.values() if cs.get("non_compliant", 0) > 0)
     partial = total_controls - fully_compliant - non_compliant
 
     maturity_pct = (fully_compliant / total_controls * 100) if total_controls else 0
     maturity_level = (
-        "Advanced" if maturity_pct >= 80
-        else "Established" if maturity_pct >= 60
-        else "Developing" if maturity_pct >= 40
-        else "Initial" if maturity_pct >= 20
+        "Advanced"
+        if maturity_pct >= 80
+        else "Established"
+        if maturity_pct >= 60
+        else "Developing"
+        if maturity_pct >= 40
+        else "Initial"
+        if maturity_pct >= 20
         else "Ad-hoc"
     )
     maturity_color = (
-        "green" if maturity_pct >= 80
-        else "cyan" if maturity_pct >= 60
-        else "yellow" if maturity_pct >= 40
-        else "red" if maturity_pct >= 20
+        "green"
+        if maturity_pct >= 80
+        else "cyan"
+        if maturity_pct >= 60
+        else "yellow"
+        if maturity_pct >= 40
+        else "red"
+        if maturity_pct >= 20
         else "red bold"
     )
 

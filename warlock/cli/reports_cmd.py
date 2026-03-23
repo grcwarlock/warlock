@@ -101,6 +101,7 @@ def reports_executive(framework: str | None, out_format: str, output: str | None
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print("\nExecutive Compliance Summary")
@@ -255,6 +256,7 @@ def reports_compliance(framework: str, limit: int, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(table)
@@ -658,6 +660,7 @@ def reports_board(framework: str | None, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print("\nBoard GRC Summary")
@@ -725,6 +728,7 @@ def reports_kri(framework: str | None, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(table)
@@ -776,6 +780,7 @@ def reports_kpi(framework: str | None, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(table)
@@ -836,6 +841,7 @@ def reports_conmon(framework: str | None, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print("\nConMon Status Report")
@@ -909,6 +915,7 @@ def reports_sla(framework: str | None, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(table)
@@ -957,6 +964,7 @@ def reports_attestation_summary(framework: str | None, output: str | None) -> No
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(f"\nAttestation Summary (framework: {framework or 'all'})")
@@ -964,7 +972,9 @@ def reports_attestation_summary(framework: str | None, output: str | None) -> No
         file_console.print(
             f"  Assertion-assessed:     {assertion_assessed} ({assertion_assessed / total * 100:.0f}%)"
         )
-        file_console.print(f"  AI-assessed:            {ai_assessed} ({ai_assessed / total * 100:.0f}%)")
+        file_console.print(
+            f"  AI-assessed:            {ai_assessed} ({ai_assessed / total * 100:.0f}%)"
+        )
         file_console.print(f"  Auditor-examined:       {examined} ({examined / total * 100:.0f}%)")
         with open(output, "w") as f:
             f.write(buf.getvalue())

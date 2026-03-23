@@ -1035,9 +1035,8 @@ def remediate(
             for i in issues:
                 i.status = to_status
                 i.verification_notes = (
-                    (i.verification_notes or "")
-                    + f"\n[bulk remediate] transitioned to {to_status} at {now.isoformat()}"
-                )
+                    i.verification_notes or ""
+                ) + f"\n[bulk remediate] transitioned to {to_status} at {now.isoformat()}"
             session.commit()
 
     _done(len(issues), f"remediate (→ {to_status})", dry_run)
@@ -1129,7 +1128,9 @@ def attest(framework: str, controls: str, owner: str, statement: str, dry_run: b
 
 
 @bulk.command("import-findings")
-@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Path to input file")
+@click.option(
+    "--file", "filepath", required=True, type=click.Path(exists=True), help="Path to input file"
+)
 @click.option(
     "--format",
     "fmt",
@@ -1287,8 +1288,7 @@ def override_results(
 
         if not results:
             console.print(
-                f"[dim]No control results for framework={framework!r} "
-                f"controls={control_ids}.[/dim]"
+                f"[dim]No control results for framework={framework!r} controls={control_ids}.[/dim]"
             )
             return
 

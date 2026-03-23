@@ -1170,11 +1170,7 @@ def automation_gate(
     failures: list[str] = []
 
     with get_session() as session:
-        results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
-        )
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
 
         if not results:
             _error(f"No control results found for framework '{framework}'. Run pipeline first.")
@@ -1188,11 +1184,7 @@ def automation_gate(
         # Check critical findings
         critical_count = 0
         if fail_on_critical:
-            critical_count = (
-                session.query(Finding)
-                .filter(Finding.severity == "critical")
-                .count()
-            )
+            critical_count = session.query(Finding).filter(Finding.severity == "critical").count()
 
     console.print(f"\n[bold]Compliance Gate: {framework}[/bold]")
     console.print(f"  Total controls:   {total}")
@@ -1204,9 +1196,7 @@ def automation_gate(
 
     if fail_on_critical:
         crit_color = "red" if critical_count > 0 else "green"
-        console.print(
-            f"  Critical findings:[{crit_color}]{critical_count}[/]"
-        )
+        console.print(f"  Critical findings:[{crit_color}]{critical_count}[/]")
 
     # Evaluate gate conditions
     if score < min_score:

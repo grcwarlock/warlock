@@ -321,12 +321,20 @@ def audit_prep(framework: str) -> None:
 
 @comply.command("readiness-score")
 @click.argument("framework", required=False, default=None)
-@click.option("--framework", "-f", "framework_opt", default=None, help="Framework (alternative to positional arg)")
+@click.option(
+    "--framework",
+    "-f",
+    "framework_opt",
+    default=None,
+    help="Framework (alternative to positional arg)",
+)
 def readiness_score(framework: str | None, framework_opt: str | None) -> None:
     """Compute a 0-100 readiness score with breakdown for a framework."""
     framework = framework or framework_opt
     if not framework:
-        raise click.UsageError("Missing framework. Usage: readiness-score <framework> or readiness-score -f <framework>")
+        raise click.UsageError(
+            "Missing framework. Usage: readiness-score <framework> or readiness-score -f <framework>"
+        )
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Attestation, ControlResult, POAM
@@ -686,6 +694,7 @@ def benchmark(framework: str | None, output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(table)

@@ -56,6 +56,7 @@ def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> Non
 
     if fmt == "json":
         import json as _json
+
         data = [
             {
                 "id": u.id,
@@ -108,7 +109,9 @@ def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> Non
 
 
 @users.command("import")
-@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path")
+@click.option(
+    "--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path"
+)
 @click.option(
     "--format", "fmt", default="json", type=click.Choice(["json", "csv"]), help="File format"
 )

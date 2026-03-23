@@ -31,7 +31,9 @@ def control_tests() -> None:
 
 
 @control_tests.command("import")
-@click.option("--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path")
+@click.option(
+    "--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path"
+)
 @click.option(
     "--format", "fmt", default="json", type=click.Choice(["json", "csv"]), help="File format"
 )

@@ -1026,9 +1026,7 @@ def frameworks_import(filepath: str, validate: bool) -> None:
                 _error(f"Family '{fam_id}' must be a dict, got {type(fam_data).__name__}")
             controls = fam_data.get("controls", {})
             if not isinstance(controls, dict):
-                _error(
-                    f"Family '{fam_id}' controls must be a dict, got {type(controls).__name__}"
-                )
+                _error(f"Family '{fam_id}' controls must be a dict, got {type(controls).__name__}")
             total_controls += len(controls)
 
         console.print(f"[green]Validation passed:[/green] {fw_id}")

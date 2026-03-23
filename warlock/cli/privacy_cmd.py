@@ -498,9 +498,17 @@ def breach() -> None:
 
 
 @breach.command("list")
-@click.option("--severity", "-s", type=click.Choice(list(_BREACH_SEVERITIES)), default=None, help="Filter by severity")
+@click.option(
+    "--severity",
+    "-s",
+    type=click.Choice(list(_BREACH_SEVERITIES)),
+    default=None,
+    help="Filter by severity",
+)
 @click.option("--limit", "-n", default=50, help="Max results")
-@click.option("--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
 def breach_list(severity: str | None, limit: int, fmt: str) -> None:
     """List all recorded personal data breaches."""
     from warlock.db.engine import get_session, init_db

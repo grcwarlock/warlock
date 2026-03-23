@@ -694,7 +694,9 @@ def evidence_stats(framework: str | None) -> None:
         compliant = sum(1 for r in results if r.status == "compliant")
         non_compliant = sum(1 for r in results if r.status == "non_compliant")
         partial = sum(1 for r in results if r.status == "partial")
-        fresh = sum(1 for r in results if r.assessed_at and ensure_aware(r.assessed_at) >= threshold)
+        fresh = sum(
+            1 for r in results if r.assessed_at and ensure_aware(r.assessed_at) >= threshold
+        )
         with_ev = sum(1 for r in results if r.evidence_ids)
         table.add_row(
             fw,

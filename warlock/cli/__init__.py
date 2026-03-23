@@ -311,10 +311,13 @@ def help_topic(topic: str | None) -> None:
 
     content = _HELP_TOPICS.get(topic)
     if not content:
-        console.print(f"[yellow]Unknown topic '{topic}'. Available: {', '.join(_HELP_TOPICS.keys())}[/yellow]")
+        console.print(
+            f"[yellow]Unknown topic '{topic}'. Available: {', '.join(_HELP_TOPICS.keys())}[/yellow]"
+        )
         return
 
     from rich.panel import Panel
+
     console.print(Panel(content, title=f"[bold]{topic}[/bold]", border_style="cyan"))
 
 

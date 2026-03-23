@@ -38,7 +38,9 @@ def collect(source: tuple[str, ...]) -> None:
     )
 
     # Run with progress indicator
-    with console.status("[bold cyan]Running pipeline (collect → normalize → map → assess)...[/bold cyan]"):
+    with console.status(
+        "[bold cyan]Running pipeline (collect → normalize → map → assess)...[/bold cyan]"
+    ):
         with get_session() as session:
             stats = pipeline.run(session)
 

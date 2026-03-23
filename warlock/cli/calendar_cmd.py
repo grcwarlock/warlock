@@ -212,14 +212,16 @@ def _collect_vendor_deadlines(session) -> list[dict]:
                 due = datetime.fromisoformat(reassess)
                 if due.tzinfo is None:
                     due = due.replace(tzinfo=timezone.utc)
-                items.append({
-                    "source": "vendor",
-                    "id": r.entity_id[:8],
-                    "title": f"Vendor reassessment due: {extra.get('name', r.entity_id[:8])}",
-                    "type": "review",
-                    "due_date": due,
-                    "detail": f"vendor={extra.get('name', '')}",
-                })
+                items.append(
+                    {
+                        "source": "vendor",
+                        "id": r.entity_id[:8],
+                        "title": f"Vendor reassessment due: {extra.get('name', r.entity_id[:8])}",
+                        "type": "review",
+                        "due_date": due,
+                        "detail": f"vendor={extra.get('name', '')}",
+                    }
+                )
             except ValueError:
                 pass
         # Check for contract expiry
@@ -229,14 +231,16 @@ def _collect_vendor_deadlines(session) -> list[dict]:
                 due = datetime.fromisoformat(contract_exp)
                 if due.tzinfo is None:
                     due = due.replace(tzinfo=timezone.utc)
-                items.append({
-                    "source": "vendor",
-                    "id": r.entity_id[:8],
-                    "title": f"Vendor contract expiry: {extra.get('name', r.entity_id[:8])}",
-                    "type": "renewal",
-                    "due_date": due,
-                    "detail": f"vendor={extra.get('name', '')}",
-                })
+                items.append(
+                    {
+                        "source": "vendor",
+                        "id": r.entity_id[:8],
+                        "title": f"Vendor contract expiry: {extra.get('name', r.entity_id[:8])}",
+                        "type": "renewal",
+                        "due_date": due,
+                        "detail": f"vendor={extra.get('name', '')}",
+                    }
+                )
             except ValueError:
                 pass
     return items
@@ -257,17 +261,21 @@ def _collect_training_deadlines(session) -> list[dict]:
                         due = info.get("due_date") or info.get("expiry")
                         if due:
                             try:
-                                due_dt = datetime.fromisoformat(due) if isinstance(due, str) else due
+                                due_dt = (
+                                    datetime.fromisoformat(due) if isinstance(due, str) else due
+                                )
                                 if due_dt.tzinfo is None:
                                     due_dt = due_dt.replace(tzinfo=timezone.utc)
-                                items.append({
-                                    "source": "training",
-                                    "id": p.id[:8],
-                                    "title": f"Training due: {course} ({p.name or p.id[:8]})",
-                                    "type": "deadline",
-                                    "due_date": due_dt,
-                                    "detail": f"employee={p.name or ''} course={course}",
-                                })
+                                items.append(
+                                    {
+                                        "source": "training",
+                                        "id": p.id[:8],
+                                        "title": f"Training due: {course} ({p.name or p.id[:8]})",
+                                        "type": "deadline",
+                                        "due_date": due_dt,
+                                        "detail": f"employee={p.name or ''} course={course}",
+                                    }
+                                )
                             except (ValueError, TypeError):
                                 pass
     except Exception:

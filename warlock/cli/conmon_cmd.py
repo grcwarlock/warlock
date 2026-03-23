@@ -82,6 +82,7 @@ def conmon_status(framework: str | None, system: str | None, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
+
         data = []
         for fw in sorted(fw_stats.keys()):
             stats = fw_stats[fw]
@@ -91,15 +92,17 @@ def conmon_status(framework: str | None, system: str | None, fmt: str) -> None:
             not_assessed = stats.get("not_assessed", 0) + stats.get("not_applicable", 0)
             total = sum(stats.values())
             score = (compliant / total * 100) if total > 0 else 0.0
-            data.append({
-                "framework": fw,
-                "compliant": compliant,
-                "non_compliant": non_compliant,
-                "partial": partial,
-                "not_assessed": not_assessed,
-                "total": total,
-                "score_pct": round(score, 1),
-            })
+            data.append(
+                {
+                    "framework": fw,
+                    "compliant": compliant,
+                    "non_compliant": non_compliant,
+                    "partial": partial,
+                    "not_assessed": not_assessed,
+                    "total": total,
+                    "score_pct": round(score, 1),
+                }
+            )
         console.print(_json.dumps(data, indent=2))
         return
 

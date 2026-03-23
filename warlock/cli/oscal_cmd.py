@@ -475,9 +475,7 @@ def validate_file(file: str) -> None:
 @oscal_group.command("component-definition")
 @click.argument("framework")
 @click.option("--output", "-o", default=None, help="Output file path")
-@click.option(
-    "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata"
-)
+@click.option("--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
 @click.option(
     "--component-type",
     default="software",
@@ -517,7 +515,9 @@ def component_definition(
     # Deduplicate: keep latest per control_id
     latest: dict[str, object] = {}
     for r in results:
-        if r.control_id not in latest or (r.assessed_at and r.assessed_at > latest[r.control_id].assessed_at):
+        if r.control_id not in latest or (
+            r.assessed_at and r.assessed_at > latest[r.control_id].assessed_at
+        ):
             latest[r.control_id] = r
 
     now = datetime.now(timezone.utc)
@@ -525,17 +525,21 @@ def component_definition(
 
     implemented_reqs = []
     for ctrl_id, r in sorted(latest.items()):
-        impl_status = "implemented" if r.status == "compliant" else (
-            "partial" if r.status == "partial" else "planned"
+        impl_status = (
+            "implemented"
+            if r.status == "compliant"
+            else ("partial" if r.status == "partial" else "planned")
         )
-        implemented_reqs.append({
-            "control-id": ctrl_id,
-            "uuid": str(_uuid.uuid4()),
-            "description": r.remediation_summary or f"Control {ctrl_id} — status: {r.status}",
-            "props": [
-                {"name": "implementation-status", "value": impl_status},
-            ],
-        })
+        implemented_reqs.append(
+            {
+                "control-id": ctrl_id,
+                "uuid": str(_uuid.uuid4()),
+                "description": r.remediation_summary or f"Control {ctrl_id} — status: {r.status}",
+                "props": [
+                    {"name": "implementation-status", "value": impl_status},
+                ],
+            }
+        )
 
     doc = {
         "component-definition": {
@@ -590,9 +594,7 @@ def component_definition(
 @click.option(
     "--output", "-o", required=True, type=click.Path(), help="Output directory for the package"
 )
-@click.option(
-    "--system-name", default="Warlock GRC System", help="System name for OSCAL metadata"
-)
+@click.option("--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
 def audit_package(framework: str, output: str, system_name: str) -> None:
     """Export a complete audit package for a framework.
 
@@ -673,15 +675,20 @@ def audit_package(framework: str, output: str, system_name: str) -> None:
 
         implemented_reqs = []
         for ctrl_id, r in sorted(latest.items()):
-            impl_status = "implemented" if r.status == "compliant" else (
-                "partial" if r.status == "partial" else "planned"
+            impl_status = (
+                "implemented"
+                if r.status == "compliant"
+                else ("partial" if r.status == "partial" else "planned")
             )
-            implemented_reqs.append({
-                "control-id": ctrl_id,
-                "uuid": str(_uuid.uuid4()),
-                "description": r.remediation_summary or f"Control {ctrl_id} — status: {r.status}",
-                "props": [{"name": "implementation-status", "value": impl_status}],
-            })
+            implemented_reqs.append(
+                {
+                    "control-id": ctrl_id,
+                    "uuid": str(_uuid.uuid4()),
+                    "description": r.remediation_summary
+                    or f"Control {ctrl_id} — status: {r.status}",
+                    "props": [{"name": "implementation-status", "value": impl_status}],
+                }
+            )
 
         comp_doc = {
             "component-definition": {

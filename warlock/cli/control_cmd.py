@@ -11,7 +11,9 @@ from warlock.cli import cli, console
 @cli.command("control-hub")
 @click.argument("control_id")
 @click.option("--framework", "-f", default=None, help="Framework context")
-@click.option("--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
 def control_hub(control_id, framework, fmt):
     """Cross-domain view of a control: status, evidence, issues, POA&Ms, attestations, exceptions, OPA coverage."""
     from warlock.db.engine import get_session, init_db
@@ -57,11 +59,7 @@ def control_hub(control_id, framework, fmt):
         attestations = att_q.all()
 
         # Issues linked via control_id in tags or detail
-        issues = (
-            session.query(Issue)
-            .filter(Issue.control_id == control_id)
-            .all()
-        )
+        issues = session.query(Issue).filter(Issue.control_id == control_id).all()
 
         # Evidence requests
         ev_q = session.query(EvidenceRequest).filter(EvidenceRequest.control_id == control_id)
@@ -75,20 +73,16 @@ def control_hub(control_id, framework, fmt):
             for r in control_results
         ]
         hub_data["poams"] = [
-            {"id": p.id[:8], "status": p.status, "due": str(p.scheduled_completion)}
-            for p in poams
+            {"id": p.id[:8], "status": p.status, "due": str(p.scheduled_completion)} for p in poams
         ]
         hub_data["attestations"] = [
-            {"id": a.id[:8], "status": a.status, "owner": a.owner}
-            for a in attestations
+            {"id": a.id[:8], "status": a.status, "owner": a.owner} for a in attestations
         ]
         hub_data["issues"] = [
-            {"id": i.id[:8], "title": i.title, "status": i.status}
-            for i in issues
+            {"id": i.id[:8], "title": i.title, "status": i.status} for i in issues
         ]
         hub_data["evidence_requests"] = [
-            {"id": e.id[:8], "status": e.status}
-            for e in evidence_requests
+            {"id": e.id[:8], "status": e.status} for e in evidence_requests
         ]
         hub_data["domain_links"] = {
             k: [{"summary": i.summary, "status": i.status} for i in v]
@@ -104,8 +98,12 @@ def control_hub(control_id, framework, fmt):
     if control_results:
         console.print("\n[bold cyan]Compliance Status[/bold cyan]")
         for r in control_results:
-            style = {"compliant": "green", "non_compliant": "red", "partial": "yellow"}.get(r.status, "dim")
-            console.print(f"  [{style}]{r.status}[/{style}] — {r.framework} (assessed {r.assessed_at or 'never'})")
+            style = {"compliant": "green", "non_compliant": "red", "partial": "yellow"}.get(
+                r.status, "dim"
+            )
+            console.print(
+                f"  [{style}]{r.status}[/{style}] — {r.framework} (assessed {r.assessed_at or 'never'})"
+            )
     else:
         console.print("\n[dim]No compliance results found.[/dim]")
 
@@ -114,14 +112,18 @@ def control_hub(control_id, framework, fmt):
         console.print(f"\n[bold cyan]POA&Ms ({len(poams)})[/bold cyan]")
         for p in poams:
             style = "red" if p.status in ("open", "in_progress") else "green"
-            console.print(f"  [{style}]{p.id[:8]}[/{style}] — {p.status} (due {p.scheduled_completion or 'TBD'})")
+            console.print(
+                f"  [{style}]{p.id[:8]}[/{style}] — {p.status} (due {p.scheduled_completion or 'TBD'})"
+            )
 
     # Attestations
     if attestations:
         console.print(f"\n[bold cyan]Attestations ({len(attestations)})[/bold cyan]")
         for a in attestations:
             style = "green" if a.status == "approved" else "yellow"
-            console.print(f"  [{style}]{a.id[:8]}[/{style}] — {a.status} (owner: {a.owner or 'unassigned'})")
+            console.print(
+                f"  [{style}]{a.id[:8]}[/{style}] — {a.status} (owner: {a.owner or 'unassigned'})"
+            )
 
     # Issues
     if issues:
@@ -157,6 +159,7 @@ def control_hub(control_id, framework, fmt):
     # OPA policy coverage check
     try:
         from pathlib import Path
+
         policies_dir = Path("policies")
         if policies_dir.exists():
             matching = list(policies_dir.rglob(f"*{control_id.lower().replace('-', '_')}*"))

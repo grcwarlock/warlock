@@ -475,7 +475,9 @@ def weekly(framework: str | None, output: str | None) -> None:
         open_poams = poam_q.all()
 
         overdue_count = sum(
-            1 for p in open_poams if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
+            1
+            for p in open_poams
+            if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
         )
         on_track_count = len(open_poams) - overdue_count
         p_color = "red" if overdue_count > 0 else "green"

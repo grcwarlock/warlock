@@ -114,7 +114,9 @@ def lifecycle() -> None:
 
 
 @lifecycle.command("audit")
-@click.option("--framework", "-f", required=True, help="Framework to audit (e.g. soc2, nist_800_53)")
+@click.option(
+    "--framework", "-f", required=True, help="Framework to audit (e.g. soc2, nist_800_53)"
+)
 @click.option("--date", "target_date_str", default=None, help="Target audit date (YYYY-MM-DD)")
 @click.option("--interactive/--no-interactive", default=True)
 def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bool) -> None:
@@ -141,7 +143,9 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
 
     if target_date_str:
         try:
-            target_date = datetime.strptime(target_date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            target_date = datetime.strptime(target_date_str, "%Y-%m-%d").replace(
+                tzinfo=timezone.utc
+            )
         except ValueError:
             console.print("[red]Invalid date format. Use YYYY-MM-DD.[/red]")
             raise SystemExit(1)
@@ -212,7 +216,9 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
         # =================================================================
         console.print("\n[bold cyan]Phase 2: Gap Identification[/bold cyan]")
 
-        gap_results = [r for r in all_results if r.status in ("non_compliant", "partial", "not_assessed")]
+        gap_results = [
+            r for r in all_results if r.status in ("non_compliant", "partial", "not_assessed")
+        ]
 
         if not gap_results:
             console.print("  [green]No compliance gaps found.[/green]")
@@ -251,8 +257,7 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
 
         stale_cutoff = now - timedelta(days=30)
         stale = [
-            r for r in all_results
-            if r.assessed_at and ensure_aware(r.assessed_at) < stale_cutoff
+            r for r in all_results if r.assessed_at and ensure_aware(r.assessed_at) < stale_cutoff
         ]
         fresh = len(all_results) - len(stale)
         console.print(
@@ -265,9 +270,7 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
                     f"  Queue re-collection for {len(stale)} stale controls?",
                     default=False,
                 ):
-                    console.print(
-                        f"  [dim]Run: warlock collect --framework {framework}[/dim]"
-                    )
+                    console.print(f"  [dim]Run: warlock collect --framework {framework}[/dim]")
             except (KeyboardInterrupt, EOFError):
                 console.print("\n  [dim]Skipped.[/dim]")
 
@@ -368,7 +371,8 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
         )
 
         overdue_poams = [
-            p for p in open_poams
+            p
+            for p in open_poams
             if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
         ]
 
@@ -385,7 +389,9 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
             poam_table.add_column("Due")
             poam_table.add_column("Severity")
             for p in overdue_poams[:10]:
-                due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "---"
+                due = (
+                    p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "---"
+                )
                 poam_table.add_row(
                     p.id[:8],
                     p.control_id,
@@ -428,7 +434,9 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
         overall = sum(scores) / len(scores)
         overall_color = "green" if overall >= 80 else ("yellow" if overall >= 50 else "red")
 
-        console.print(f"  Overall readiness: [{overall_color}][bold]{overall:.0f}/100[/bold][/{overall_color}]")
+        console.print(
+            f"  Overall readiness: [{overall_color}][bold]{overall:.0f}/100[/bold][/{overall_color}]"
+        )
 
         if overall >= 80:
             console.print(
@@ -437,9 +445,7 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
                 f"  [dim]Run: warlock export oscal --framework {framework}[/dim]"
             )
         elif overall >= 50:
-            console.print(
-                "\n  [yellow]Address gaps before exporting the audit package.[/yellow]"
-            )
+            console.print("\n  [yellow]Address gaps before exporting the audit package.[/yellow]")
         else:
             console.print(
                 "\n  [red]Significant gaps remain. Resolve POA&Ms and evidence issues first.[/red]"
@@ -494,9 +500,7 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
     init_db()
 
     with get_session() as session:
-        finding = (
-            session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
-        )
+        finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
         if not finding:
             console.print(f"[red]Finding not found: '{finding_id}'[/red]")
             raise SystemExit(1)
@@ -545,11 +549,7 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
                     console.print("[dim]No control results linked.[/dim]")
 
                 # --- Linked issues ---
-                issues = (
-                    session.query(Issue)
-                    .filter(Issue.finding_id == finding.id)
-                    .all()
-                )
+                issues = session.query(Issue).filter(Issue.finding_id == finding.id).all()
                 if issues:
                     console.print(f"\n  Linked issues: [bold]{len(issues)}[/bold]")
                     for iss in issues[:5]:
@@ -561,15 +561,15 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
                     console.print("\n  [dim]No linked issues.[/dim]")
 
                 # --- Linked POA&Ms ---
-                poams = (
-                    session.query(POAM)
-                    .filter(POAM.finding_id == finding.id)
-                    .all()
-                )
+                poams = session.query(POAM).filter(POAM.finding_id == finding.id).all()
                 if poams:
                     console.print(f"\n  Linked POA&Ms: [bold]{len(poams)}[/bold]")
                     for p in poams[:5]:
-                        due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "---"
+                        due = (
+                            p.scheduled_completion.strftime("%Y-%m-%d")
+                            if p.scheduled_completion
+                            else "---"
+                        )
                         console.print(
                             f"    [{_poam_color(p.status)}]{p.status}[/] "
                             f"{p.id[:8]} — {p.control_id}  due={due}"
@@ -608,7 +608,9 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
                     priority = Prompt.ask(
                         "Priority",
                         choices=["critical", "high", "medium", "low"],
-                        default=finding.severity if finding.severity in ("critical", "high", "medium", "low") else "medium",
+                        default=finding.severity
+                        if finding.severity in ("critical", "high", "medium", "low")
+                        else "medium",
                     )
                     issue = Issue(
                         id=str(uuid.uuid4()),
@@ -653,7 +655,9 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
                     )
                     session.add(poam)
                     session.commit()
-                    console.print(f"  [green]POA&M created: {poam.id[:8]} due in {days_val}d[/green]")
+                    console.print(
+                        f"  [green]POA&M created: {poam.id[:8]} due in {days_val}d[/green]"
+                    )
 
                 elif choice == "a":
                     if not issues:
@@ -674,16 +678,20 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
                     if issues:
                         iss = issues[0]
                         existing = iss.remediation_evidence or []
-                        existing.append({
-                            "description": evidence_desc,
-                            "uploaded_at": _utcnow().isoformat(),
-                            "actor": _get_actor(),
-                        })
+                        existing.append(
+                            {
+                                "description": evidence_desc,
+                                "uploaded_at": _utcnow().isoformat(),
+                                "actor": _get_actor(),
+                            }
+                        )
                         iss.remediation_evidence = existing
                         session.commit()
                         console.print(f"  [green]Evidence added to issue {iss.id[:8]}.[/green]")
                     else:
-                        console.print("  [yellow]Create an issue first to attach evidence.[/yellow]")
+                        console.print(
+                            "  [yellow]Create an issue first to attach evidence.[/yellow]"
+                        )
 
                 elif choice == "v":
                     if issues:
@@ -739,7 +747,9 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
         if not vendor:
             vendor = session.query(Vendor).filter(Vendor.name.ilike(vendor_name_or_id)).first()
         if not vendor:
-            vendor = session.query(Vendor).filter(Vendor.name.ilike(f"%{vendor_name_or_id}%")).first()
+            vendor = (
+                session.query(Vendor).filter(Vendor.name.ilike(f"%{vendor_name_or_id}%")).first()
+            )
 
         if not vendor:
             console.print(f"[red]Vendor not found: '{vendor_name_or_id}'[/red]")
@@ -751,14 +761,21 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
         try:
             while True:
                 # --- Profile ---
-                tier_color = {"1": "red bold", "critical": "red bold", "2": "yellow", "high": "yellow"}.get(
-                    (vendor.tier or "").lower(), "dim"
-                )
+                tier_color = {
+                    "1": "red bold",
+                    "critical": "red bold",
+                    "2": "yellow",
+                    "high": "yellow",
+                }.get((vendor.tier or "").lower(), "dim")
                 contract_exp = (
-                    vendor.contract_expires.strftime("%Y-%m-%d") if vendor.contract_expires else "Unknown"
+                    vendor.contract_expires.strftime("%Y-%m-%d")
+                    if vendor.contract_expires
+                    else "Unknown"
                 )
                 last_assessed = (
-                    vendor.last_assessment.strftime("%Y-%m-%d") if vendor.last_assessment else "Never"
+                    vendor.last_assessment.strftime("%Y-%m-%d")
+                    if vendor.last_assessment
+                    else "Never"
                 )
                 cadence = vendor.assessment_cadence_days or 365
                 if vendor.last_assessment:
@@ -794,7 +811,11 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                 linked = (
                     session.query(Finding)
                     .filter(Finding.source == vendor.name.lower().replace(" ", "_"))
-                    .order_by(Finding.created_at.desc() if hasattr(Finding, 'created_at') else Finding.ingested_at.desc())
+                    .order_by(
+                        Finding.created_at.desc()
+                        if hasattr(Finding, "created_at")
+                        else Finding.ingested_at.desc()
+                    )
                     .limit(5)
                     .all()
                 )
@@ -844,7 +865,10 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                     vendor.last_assessment = now
                     session.commit()
                     _write_audit_entry(
-                        session, "vendor_reassessed", "vendor", vendor.id,
+                        session,
+                        "vendor_reassessed",
+                        "vendor",
+                        vendor.id,
                         {"old_score": old_score, "new_score": new_score},
                     )
                     console.print(
@@ -864,7 +888,10 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                     meta = meta_new
                     session.commit()
                     _write_audit_entry(
-                        session, "vendor_soc2_reviewed", "vendor", vendor.id,
+                        session,
+                        "vendor_soc2_reviewed",
+                        "vendor",
+                        vendor.id,
                         {"soc2_status": soc2_new},
                     )
                     console.print(f"  [green]SOC 2 status: {soc2_new}[/green]")
@@ -877,7 +904,11 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                     meta = meta_new
                     session.commit()
                     _write_audit_entry(
-                        session, "vendor_questionnaire_sent", "vendor", vendor.id, {},
+                        session,
+                        "vendor_questionnaire_sent",
+                        "vendor",
+                        vendor.id,
+                        {},
                     )
                     console.print(f"  [green]Questionnaire sent to {vendor.name}.[/green]")
 
@@ -907,7 +938,10 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
                     meta = meta_new
                     session.commit()
                     _write_audit_entry(
-                        session, "vendor_offboarded", "vendor", vendor.id,
+                        session,
+                        "vendor_offboarded",
+                        "vendor",
+                        vendor.id,
                         {"offboarded_by": _get_actor()},
                     )
                     console.print(f"  [green]{vendor.name} has been offboarded.[/green]")
@@ -967,11 +1001,7 @@ def conmon_lifecycle(framework: str, interactive: bool) -> None:
         # =================================================================
         console.print("\n[bold cyan]Step 1: Evidence Collection[/bold cyan]")
 
-        recent_runs = (
-            session.query(ConnectorRun)
-            .filter(ConnectorRun.started_at >= month_ago)
-            .all()
-        )
+        recent_runs = session.query(ConnectorRun).filter(ConnectorRun.started_at >= month_ago).all()
         succeeded = sum(1 for r in recent_runs if r.status == "success")
         failed = sum(1 for r in recent_runs if r.status == "failure")
 
@@ -996,16 +1026,16 @@ def conmon_lifecycle(framework: str, interactive: bool) -> None:
         console.print("\n[bold cyan]Step 2: Month-over-Month Comparison[/bold cyan]")
 
         current_results = (
-            session.query(ControlResult)
-            .filter(ControlResult.framework == framework)
-            .all()
+            session.query(ControlResult).filter(ControlResult.framework == framework).all()
         )
         total = len(current_results)
         if total == 0:
             console.print(f"  [yellow]No control results for '{framework}'.[/yellow]")
             return
 
-        compliant_now = sum(1 for r in current_results if r.status in ("compliant", "inherited_compliant"))
+        compliant_now = sum(
+            1 for r in current_results if r.status in ("compliant", "inherited_compliant")
+        )
         pct_now = compliant_now / total * 100
 
         # Check posture snapshots for comparison
@@ -1089,13 +1119,13 @@ def conmon_lifecycle(framework: str, interactive: bool) -> None:
             .all()
         )
         overdue = [
-            p for p in open_poams
+            p
+            for p in open_poams
             if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
         ]
 
         console.print(
-            f"  Open: [yellow]{len(open_poams)}[/yellow]   "
-            f"Overdue: [red]{len(overdue)}[/red]"
+            f"  Open: [yellow]{len(open_poams)}[/yellow]   Overdue: [red]{len(overdue)}[/red]"
         )
 
         # =================================================================
@@ -1104,7 +1134,9 @@ def conmon_lifecycle(framework: str, interactive: bool) -> None:
         console.print("\n[bold cyan]Step 5: Deliverable Generation[/bold cyan]")
 
         console.print("  ConMon deliverables:")
-        console.print(f"  [dim]1. warlock export binder --framework {framework} --period monthly[/dim]")
+        console.print(
+            f"  [dim]1. warlock export binder --framework {framework} --period monthly[/dim]"
+        )
         console.print(f"  [dim]2. warlock reports compliance --framework {framework}[/dim]")
         console.print(f"  [dim]3. warlock reports drift --framework {framework}[/dim]")
         console.print(f"  [dim]4. warlock export oscal --framework {framework}[/dim]")
@@ -1170,9 +1202,7 @@ def risk_review(interactive: bool) -> None:
         # Load all active/approved risk acceptances
         acceptances = (
             session.query(RiskAcceptance)
-            .filter(
-                RiskAcceptance.status.in_(["approved", "active", "requested", "reviewed"])
-            )
+            .filter(RiskAcceptance.status.in_(["approved", "active", "requested", "reviewed"]))
             .order_by(RiskAcceptance.expiry_date.asc())
             .all()
         )
@@ -1186,13 +1216,13 @@ def risk_review(interactive: bool) -> None:
             # Categorize
             expired = [a for a in acceptances if ensure_aware(a.expiry_date) < now]
             expiring_soon = [
-                a for a in acceptances
+                a
+                for a in acceptances
                 if ensure_aware(a.expiry_date) >= now
                 and ensure_aware(a.expiry_date) < now + timedelta(days=30)
             ]
             active = [
-                a for a in acceptances
-                if ensure_aware(a.expiry_date) >= now + timedelta(days=30)
+                a for a in acceptances if ensure_aware(a.expiry_date) >= now + timedelta(days=30)
             ]
 
             summary_table = Table(title="Risk Register Summary", show_lines=False)
@@ -1236,9 +1266,7 @@ def risk_review(interactive: bool) -> None:
                                 f"  [green]Renewed until {ra.expiry_date.strftime('%Y-%m-%d')}[/green]"
                             )
                         elif action == "e":
-                            console.print(
-                                f"  [dim]Run: warlock risk escalate {ra.id[:8]}[/dim]"
-                            )
+                            console.print(f"  [dim]Run: warlock risk escalate {ra.id[:8]}[/dim]")
                         elif action == "c":
                             ra.status = "revoked"
                             session.commit()
@@ -1277,7 +1305,9 @@ def risk_review(interactive: bool) -> None:
                 f"  [red]{len(overdue_poams)} overdue POA&M(s) represent unmitigated risk.[/red]"
             )
             for p in overdue_poams[:5]:
-                due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "---"
+                due = (
+                    p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "---"
+                )
                 console.print(
                     f"    {p.framework}/{p.control_id}  severity={p.severity}  "
                     f"due=[red]{due}[/red]  status={p.status}"
@@ -1311,7 +1341,12 @@ def risk_review(interactive: bool) -> None:
 
 
 @lifecycle.command("control-owners")
-@click.option("--status", "-s", default="non_compliant", help="Control status to filter (default: non_compliant)")
+@click.option(
+    "--status",
+    "-s",
+    default="non_compliant",
+    help="Control status to filter (default: non_compliant)",
+)
 @click.option("--framework", "-f", default=None, help="Limit to specific framework")
 @click.option("--interactive/--no-interactive", default=True)
 def control_owners_notify(status: str, framework: str | None, interactive: bool) -> None:
@@ -1513,12 +1548,10 @@ def policy_lifecycle(interactive: bool) -> None:
         # =================================================================
         console.print("\n[bold cyan]Step 2: Policy Review Status[/bold cyan]")
 
-        expired_policies = [
-            p for p in enabled
-            if p.expires_at and ensure_aware(p.expires_at) < now
-        ]
+        expired_policies = [p for p in enabled if p.expires_at and ensure_aware(p.expires_at) < now]
         expiring_soon = [
-            p for p in enabled
+            p
+            for p in enabled
             if p.expires_at
             and ensure_aware(p.expires_at) >= now
             and ensure_aware(p.expires_at) < now + timedelta(days=30)
@@ -1528,9 +1561,7 @@ def policy_lifecycle(interactive: bool) -> None:
             console.print(f"  [red]Expired: {len(expired_policies)} policy(ies)[/red]")
             for p in expired_policies[:5]:
                 exp_str = p.expires_at.strftime("%Y-%m-%d") if p.expires_at else "---"
-                console.print(
-                    f"    [red]{p.policy_type}[/red] {p.id[:8]} — expired {exp_str}"
-                )
+                console.print(f"    [red]{p.policy_type}[/red] {p.id[:8]} — expired {exp_str}")
         if expiring_soon:
             console.print(f"  [yellow]Expiring within 30d: {len(expiring_soon)}[/yellow]")
             for p in expiring_soon[:5]:
@@ -1628,9 +1659,7 @@ def policy_lifecycle(interactive: bool) -> None:
                             console.print("  [green]No expired policies to review.[/green]")
                             continue
                         for p in expired_policies[:3]:
-                            console.print(
-                                f"\n  Policy: {p.policy_type} ({p.id[:8]})"
-                            )
+                            console.print(f"\n  Policy: {p.policy_type} ({p.id[:8]})")
                             console.print(f"  Description: {(p.description or '')[:80]}")
                             renew = Confirm.ask("  Renew for 365 days?", default=True)
                             if renew:

@@ -229,7 +229,9 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
         )
 
         overdue_poams = [
-            p for p in open_poams if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
+            p
+            for p in open_poams
+            if p.scheduled_completion and ensure_aware(p.scheduled_completion) < now
         ]
 
         if not open_poams:

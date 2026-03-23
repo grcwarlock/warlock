@@ -209,9 +209,7 @@ def poam_list(
                 "severity": p.severity,
                 "status": p.status,
                 "scheduled_completion": (
-                    p.scheduled_completion.strftime("%Y-%m-%d")
-                    if p.scheduled_completion
-                    else None
+                    p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else None
                 ),
                 "created_by": p.created_by,
             }
@@ -303,19 +301,13 @@ def poam_show(poam_id: str) -> None:
             )
         )
 
-        console.print(
-            f"\n[bold]Weakness:[/bold]\n{escape(poam.weakness_description or 'n/a')}"
-        )
+        console.print(f"\n[bold]Weakness:[/bold]\n{escape(poam.weakness_description or 'n/a')}")
 
         if poam.resources_required:
-            console.print(
-                f"\n[bold]Remediation Plan:[/bold]\n{escape(poam.resources_required)}"
-            )
+            console.print(f"\n[bold]Remediation Plan:[/bold]\n{escape(poam.resources_required)}")
 
         if poam.vendor_dependency:
-            console.print(
-                f"\n[bold]Vendor Dependency:[/bold] {escape(poam.vendor_dependency)}"
-            )
+            console.print(f"\n[bold]Vendor Dependency:[/bold] {escape(poam.vendor_dependency)}")
 
         milestones = list(poam.milestones or [])
         if milestones:
@@ -403,10 +395,7 @@ def poam_close(poam_id: str, note: str) -> None:
         session.add(audit)
         session.commit()
 
-    console.print(
-        f"[green]POA&M {poam_id[:8]} closed:[/green] "
-        f"{old_status} \u2192 completed"
-    )
+    console.print(f"[green]POA&M {poam_id[:8]} closed:[/green] {old_status} \u2192 completed")
     console.print(f"  Note: {escape(note)}")
 
 
@@ -460,6 +449,7 @@ def poam_milestones(poam_id: str, fmt: str) -> None:
     if not milestones:
         if fmt == "json":
             import json as _json
+
             console.print(_json.dumps({"poam": poam_display, "milestones": []}, indent=2))
             return
         console.print("[dim]No milestones defined for this POA&M.[/dim]")
@@ -471,7 +461,10 @@ def poam_milestones(poam_id: str, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
-        console.print(_json.dumps({"poam": poam_display, "milestones": milestones}, indent=2, default=str))
+
+        console.print(
+            _json.dumps({"poam": poam_display, "milestones": milestones}, indent=2, default=str)
+        )
         return
 
     table = Table(title=f"Milestones ({len(milestones)})")

@@ -87,9 +87,11 @@ def _interactive_findings_loop(rows: list) -> None:
             if 0 <= idx < len(rows):
                 reason = click.prompt("Suppression reason")
                 from warlock.db.engine import get_session
+
                 r = rows[idx]
                 with get_session() as session:
                     from warlock.db.models import Finding
+
                     finding = session.query(Finding).filter(Finding.id == r.id).first()
                     if finding:
                         detail = dict(finding.detail or {})
@@ -107,15 +109,21 @@ def _interactive_findings_loop(rows: list) -> None:
             if 0 <= idx < len(rows):
                 note = click.prompt("Annotation")
                 from warlock.db.engine import get_session
+
                 r = rows[idx]
                 with get_session() as session:
                     from warlock.db.models import Finding
+
                     finding = session.query(Finding).filter(Finding.id == r.id).first()
                     if finding:
                         detail = dict(finding.detail or {})
                         annotations = list(detail.get("_annotations", []))
                         annotations.append(
-                            {"note": note, "actor": _get_actor(), "timestamp": _utcnow().isoformat()}
+                            {
+                                "note": note,
+                                "actor": _get_actor(),
+                                "timestamp": _utcnow().isoformat(),
+                            }
                         )
                         detail["_annotations"] = annotations
                         finding.detail = detail
@@ -141,7 +149,13 @@ def _interactive_findings_loop(rows: list) -> None:
 @click.option("--suppressed/--no-suppressed", default=False, help="Include suppressed findings")
 @click.option("--limit", "-n", default=50, help="Max results")
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
-@click.option("--interactive", "-i", is_flag=True, default=False, help="Interactive mode: browse and act on findings")
+@click.option(
+    "--interactive",
+    "-i",
+    is_flag=True,
+    default=False,
+    help="Interactive mode: browse and act on findings",
+)
 def findings_list(
     severity: str | None,
     source: str | None,

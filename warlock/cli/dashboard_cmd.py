@@ -292,12 +292,19 @@ def dashboard_posture(framework: tuple[str, ...], output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print(table)
-        file_console.print(f"\nAssessed Compliance:  {assessed_rate:.1f}%  (of controls that have been assessed)")
-        file_console.print(f"Overall Compliance:   {overall_rate:.1f}%  (of all controls including not_assessed)")
-        file_console.print(f"Assessment Coverage:  {coverage_rate:.1f}%  (percentage of controls with assessments)")
+        file_console.print(
+            f"\nAssessed Compliance:  {assessed_rate:.1f}%  (of controls that have been assessed)"
+        )
+        file_console.print(
+            f"Overall Compliance:   {overall_rate:.1f}%  (of all controls including not_assessed)"
+        )
+        file_console.print(
+            f"Assessment Coverage:  {coverage_rate:.1f}%  (percentage of controls with assessments)"
+        )
         with open(output, "w") as f:
             f.write(buf.getvalue())
         console.print(f"[green]Report written to {output}[/green]")
@@ -379,6 +386,7 @@ def dashboard_executive(output: str | None) -> None:
     if output:
         from io import StringIO
         from rich.console import Console as RichConsole
+
         buf = StringIO()
         file_console = RichConsole(file=buf, width=120)
         file_console.print("\nExecutive Compliance Summary")
