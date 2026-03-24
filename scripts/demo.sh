@@ -22,7 +22,7 @@ source .venv/bin/activate
 
 # 2. Install
 echo "[2/7] Installing dependencies..."
-pip install -e ".[dev,ai]" --quiet > /dev/null 2>&1
+python -m pip install -e ".[dev,ai]" --quiet > /dev/null 2>&1
 
 # 3. Kill anything on our ports
 echo "[3/7] Clearing ports..."
@@ -52,7 +52,7 @@ fi
 echo "[5/7] Seeding demo environment..."
 rm -f warlock.db
 export WLK_AI_ENABLED=false
-alembic upgrade head 2>&1 | grep -v "^INFO" || true
+python -m alembic upgrade head 2>&1 | grep -v "^INFO" || true
 python scripts/demo_seed.py 2>&1 | grep -E "^\[|^  Raw|^  Find|^  Cont|^  Conn|^  Dur|Seed complete" || true
 echo ""
 
@@ -144,9 +144,6 @@ if kill -0 $API_PID 2>/dev/null; then
     echo "  Demo is live!"
     echo "============================================================"
     echo ""
-    echo "  >>> source .venv/bin/activate <<<"
-    echo "  (run this first to enable CLI commands)"
-    echo ""
     echo "  CLI:  warlock coverage"
     echo "        warlock findings"
     echo "        warlock results --status non_compliant"
@@ -196,6 +193,14 @@ if kill -0 $API_PID 2>/dev/null; then
     echo ""
     echo "  Stop:   kill $API_PID ${OPA_PID:-}"
     echo "============================================================"
+    echo ""
+
+    # Drop into interactive shell with venv activated so CLI works immediately
+    if [ -t 0 ] && [ "${WARLOCK_NO_SHELL:-}" != "1" ]; then
+        echo "  Launching shell with warlock CLI ready..."
+        echo ""
+        exec "${SHELL:-/bin/zsh}" -i
+    fi
 else
     echo "ERROR: API server failed to start."
     exit 1

@@ -252,6 +252,470 @@ def bia(system: str | None, output_format: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# backup-status (DLA-5)
+# ---------------------------------------------------------------------------
+
+
+@bcp.command("backup-status")
+@click.option("--system", "-s", default=None, help="Filter by system name, acronym, or ID")
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+def bcp_backup_status(system: str | None, output_format: str) -> None:
+    """Show backup status across systems.
+
+    Queries SystemProfile records for backup-related metadata stored in
+    the continuous_monitoring_plan and extra fields.  Systems are flagged
+    if no backup evidence is found.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SystemProfile
+    from warlock.cli import _resolve_system_id
+
+    init_db()
+    with get_session() as session:
+        if system:
+            sys_id = _resolve_system_id(session, system)
+            q = session.query(SystemProfile).filter(SystemProfile.id == sys_id)
+            rows = q.all()
+            if not rows:
+                rows = (
+                    session.query(SystemProfile)
+                    .filter(SystemProfile.name.ilike(f"%{system}%"))
+                    .all()
+                )
+        else:
+            rows = (
+                session.query(SystemProfile)
+                .filter(SystemProfile.is_active == True)  # noqa: E712
+                .order_by(SystemProfile.name)
+                .all()
+            )
+
+        data = []
+        for r in rows:
+            extra = r.extra or {} if hasattr(r, "extra") else {}
+            backup_info = extra.get("backup", {}) if isinstance(extra, dict) else {}
+            has_conmon = bool(r.continuous_monitoring_plan)
+            data.append(
+                {
+                    "id": r.id,
+                    "name": r.name,
+                    "acronym": r.acronym or "",
+                    "overall_impact": r.overall_impact or "unknown",
+                    "backup_frequency": backup_info.get("frequency", "not configured"),
+                    "backup_location": backup_info.get("location", "not configured"),
+                    "last_backup": backup_info.get("last_backup", "unknown"),
+                    "backup_verified": backup_info.get("verified", False),
+                    "has_conmon": has_conmon,
+                }
+            )
+
+    if not data:
+        console.print("[dim]No systems found.[/dim]")
+        return
+
+    if output_format == "json":
+        import json
+
+        console.print(json.dumps(data, indent=2))
+        return
+
+    table = Table(title=f"Backup Status ({len(data)} systems)")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("System", max_width=30)
+    table.add_column("Criticality")
+    table.add_column("Backup Frequency")
+    table.add_column("Location")
+    table.add_column("Last Backup")
+    table.add_column("Verified")
+    table.add_column("ConMon Plan")
+
+    for r in data:
+        impact_style = _impact_style(r["overall_impact"])
+        verified_str = "[green]Yes[/green]" if r["backup_verified"] else "[red]No[/red]"
+        conmon_str = "[green]Yes[/green]" if r["has_conmon"] else "[yellow]No[/yellow]"
+        table.add_row(
+            r["id"][:8],
+            escape(r["name"][:30]),
+            f"[{impact_style}]{r['overall_impact']}[/]",
+            r["backup_frequency"],
+            r["backup_location"],
+            r["last_backup"],
+            verified_str,
+            conmon_str,
+        )
+
+    console.print(table)
+    not_configured = sum(1 for r in data if r["backup_frequency"] == "not configured")
+    if not_configured:
+        console.print(
+            f"\n[yellow]Warning: {not_configured} system(s) have no backup "
+            f"configuration metadata.[/yellow]"
+        )
+
+
+# ---------------------------------------------------------------------------
+# dr-readiness (DLA-5)
+# ---------------------------------------------------------------------------
+
+
+@bcp.command("dr-readiness")
+@click.option("--system", "-s", default=None, help="Filter by system name, acronym, or ID")
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+def bcp_dr_readiness(system: str | None, output_format: str) -> None:
+    """DR readiness assessment — check RTO/RPO compliance across systems.
+
+    Evaluates each system's disaster recovery readiness based on:
+    - Whether DR tests have been performed
+    - Whether backup configuration exists
+    - Whether continuous monitoring is active
+    - Criticality-based assessment thresholds
+    """
+    import json as _json
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditComment, SystemProfile
+
+    _readiness_thresholds = {
+        "high": {"max_days_since_test": 90, "label": "quarterly"},
+        "moderate": {"max_days_since_test": 180, "label": "semi-annual"},
+        "medium": {"max_days_since_test": 180, "label": "semi-annual"},
+        "low": {"max_days_since_test": 365, "label": "annual"},
+    }
+
+    init_db()
+    with get_session() as session:
+        if system:
+            from warlock.cli import _resolve_system_id
+
+            sys_id = _resolve_system_id(session, system)
+            systems = session.query(SystemProfile).filter(SystemProfile.id == sys_id).all()
+            if not systems:
+                systems = (
+                    session.query(SystemProfile)
+                    .filter(SystemProfile.name.ilike(f"%{system}%"))
+                    .all()
+                )
+        else:
+            systems = (
+                session.query(SystemProfile)
+                .filter(SystemProfile.is_active == True)  # noqa: E712
+                .order_by(SystemProfile.name)
+                .all()
+            )
+
+        # Get latest DR test per system
+        dr_comments = (
+            session.query(AuditComment)
+            .filter(AuditComment.target_type == "dr_test")
+            .order_by(AuditComment.created_at.desc())
+            .all()
+        )
+        latest_tests: dict[str, dict] = {}
+        for c in dr_comments:
+            if c.target_id not in latest_tests:
+                try:
+                    payload = _json.loads(c.content)
+                except (ValueError, TypeError):
+                    payload = {}
+                latest_tests[c.target_id] = {
+                    "test_result": payload.get("test_result", "unknown"),
+                    "tested_at": payload.get("tested_at", str(c.created_at))[:10],
+                    "rto_actual_minutes": payload.get("rto_actual_minutes"),
+                }
+
+        data = []
+        for sp in systems:
+            impact = (sp.overall_impact or "low").lower()
+            threshold = _readiness_thresholds.get(impact, _readiness_thresholds["low"])
+            has_conmon = bool(sp.continuous_monitoring_plan)
+            test_info = latest_tests.get(sp.id)
+
+            # Readiness scoring
+            score = 0
+            issues: list[str] = []
+
+            if has_conmon:
+                score += 25
+            else:
+                issues.append("No continuous monitoring plan")
+
+            if test_info:
+                score += 25
+                if test_info["test_result"] == "pass":
+                    score += 25
+                elif test_info["test_result"] == "partial":
+                    score += 10
+                    issues.append("Last DR test was partial")
+                else:
+                    issues.append("Last DR test failed")
+            else:
+                issues.append("No DR test recorded")
+
+            # Backup check (extra field)
+            extra = sp.extra or {} if hasattr(sp, "extra") else {}
+            backup_info = extra.get("backup", {}) if isinstance(extra, dict) else {}
+            if backup_info.get("frequency"):
+                score += 25
+            else:
+                issues.append("No backup configuration")
+
+            if score >= 75:
+                readiness = "ready"
+            elif score >= 50:
+                readiness = "partial"
+            elif score >= 25:
+                readiness = "at_risk"
+            else:
+                readiness = "not_ready"
+
+            data.append(
+                {
+                    "id": sp.id,
+                    "name": sp.name,
+                    "acronym": sp.acronym or "",
+                    "overall_impact": sp.overall_impact or "unknown",
+                    "required_cadence": threshold["label"],
+                    "last_test": test_info["tested_at"] if test_info else "never",
+                    "last_result": test_info["test_result"] if test_info else "n/a",
+                    "readiness": readiness,
+                    "score": score,
+                    "issues": issues,
+                }
+            )
+
+    if not data:
+        console.print("[dim]No systems found.[/dim]")
+        return
+
+    if output_format == "json":
+        import json
+
+        console.print(json.dumps(data, indent=2))
+        return
+
+    _readiness_styles = {
+        "ready": "green",
+        "partial": "yellow",
+        "at_risk": "red",
+        "not_ready": "red bold",
+    }
+
+    table = Table(title=f"DR Readiness Assessment ({len(data)} systems)")
+    table.add_column("System", max_width=25)
+    table.add_column("Criticality")
+    table.add_column("Required Cadence")
+    table.add_column("Last Test")
+    table.add_column("Last Result")
+    table.add_column("Readiness")
+    table.add_column("Score", justify="right")
+    table.add_column("Issues", max_width=40)
+
+    for r in data:
+        impact_style = _impact_style(r["overall_impact"])
+        readiness_style = _readiness_styles.get(r["readiness"], "")
+        result_style = {"pass": "green", "fail": "red", "partial": "yellow"}.get(
+            r["last_result"], "dim"
+        )
+        table.add_row(
+            escape(r["name"][:25]),
+            f"[{impact_style}]{r['overall_impact']}[/]",
+            r["required_cadence"],
+            r["last_test"],
+            f"[{result_style}]{r['last_result']}[/]",
+            f"[{readiness_style}]{r['readiness']}[/]",
+            f"{r['score']}/100",
+            escape("; ".join(r["issues"])[:40]) if r["issues"] else "[green]None[/green]",
+        )
+
+    console.print(table)
+
+    ready_count = sum(1 for r in data if r["readiness"] == "ready")
+    not_ready = sum(1 for r in data if r["readiness"] == "not_ready")
+    console.print(
+        f"\n[bold]Summary:[/bold] {ready_count} ready, "
+        f"{len(data) - ready_count - not_ready} partial/at-risk, "
+        f"{not_ready} not ready"
+    )
+
+
+# ---------------------------------------------------------------------------
+# recovery-test (DLA-5)
+# ---------------------------------------------------------------------------
+
+
+@bcp.command("recovery-test")
+@click.option("--system", "-s", required=True, help="System name, acronym, or ID")
+@click.option(
+    "--type",
+    "test_type",
+    required=True,
+    type=click.Choice(["full", "partial", "tabletop", "walkthrough"]),
+    help="Recovery test type",
+)
+@click.option(
+    "--result",
+    required=True,
+    type=click.Choice(["pass", "fail", "partial"]),
+    help="Test outcome",
+)
+@click.option("--rto-target", "rto_target", default=None, type=int, help="Target RTO (minutes)")
+@click.option(
+    "--rto-actual", "rto_actual", default=None, type=int, help="Actual RTO achieved (minutes)"
+)
+@click.option("--rpo-target", "rpo_target", default=None, type=int, help="Target RPO (minutes)")
+@click.option(
+    "--rpo-actual", "rpo_actual", default=None, type=int, help="Actual RPO achieved (minutes)"
+)
+@click.option("--notes", default="", help="Test observations and notes")
+@click.option("--participants", default=None, help="Comma-separated list of participants")
+def bcp_recovery_test(
+    system: str,
+    test_type: str,
+    result: str,
+    rto_target: int | None,
+    rto_actual: int | None,
+    rpo_target: int | None,
+    rpo_actual: int | None,
+    notes: str,
+    participants: str | None,
+) -> None:
+    """Log a recovery test with detailed results.
+
+    Records a recovery test including RTO/RPO targets vs actuals,
+    test type, participants, and observations.  Results are stored
+    as AuditComment records on the active audit engagement.
+    """
+    import json as _json
+    from datetime import datetime, timezone
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditComment, AuditEngagement, SystemProfile
+    from warlock.cli import _resolve_system_id
+
+    init_db()
+    actor = _get_actor()
+    now = datetime.now(timezone.utc)
+
+    with get_session() as session:
+        sys_id = _resolve_system_id(session, system)
+        sp = session.query(SystemProfile).filter(SystemProfile.id == sys_id).first()
+        if not sp:
+            sp = (
+                session.query(SystemProfile).filter(SystemProfile.name.ilike(f"%{system}%")).first()
+            )
+        if not sp:
+            _error(
+                f"System '{system}' not found. Use 'warlock bcp systems' to list available systems."
+            )
+
+        # Find active engagement
+        eng = None
+        if sp.frameworks:
+            eng = (
+                session.query(AuditEngagement)
+                .filter(
+                    AuditEngagement.framework.in_(sp.frameworks),
+                    AuditEngagement.status == "active",
+                )
+                .order_by(AuditEngagement.created_at.desc())
+                .first()
+            )
+        if not eng:
+            eng = (
+                session.query(AuditEngagement)
+                .filter(AuditEngagement.status == "active")
+                .order_by(AuditEngagement.created_at.desc())
+                .first()
+            )
+
+        content_dict = {
+            "system_id": sp.id,
+            "system_name": sp.name,
+            "test_type": test_type,
+            "test_result": result,
+            "rto_target_minutes": rto_target,
+            "rto_actual_minutes": rto_actual,
+            "rpo_target_minutes": rpo_target,
+            "rpo_actual_minutes": rpo_actual,
+            "rto_met": (rto_actual <= rto_target)
+            if rto_actual is not None and rto_target is not None
+            else None,
+            "rpo_met": (rpo_actual <= rpo_target)
+            if rpo_actual is not None and rpo_target is not None
+            else None,
+            "participants": [p.strip() for p in participants.split(",")] if participants else [],
+            "notes": notes,
+            "tested_by": actor,
+            "tested_at": now.isoformat(),
+        }
+        content = _json.dumps(content_dict)
+
+        if eng:
+            comment = AuditComment(
+                engagement_id=eng.id,
+                target_type="dr_test",
+                target_id=sp.id,
+                author=actor,
+                author_role="practitioner",
+                content=content,
+            )
+            session.add(comment)
+            session.flush()
+            eng_label = f"engagement {eng.id[:8]} ({escape(eng.name)})"
+        else:
+            eng_label = None
+
+    # Display results
+    icon = {
+        "pass": "[green]PASS[/green]",
+        "fail": "[red]FAIL[/red]",
+        "partial": "[yellow]PARTIAL[/yellow]",
+    }[result]
+
+    console.print(f"\n[bold]Recovery Test {icon}[/bold] for [cyan]{escape(sp.name)}[/cyan]")
+    console.print(f"  Type: {test_type}")
+    console.print(f"  Tested by: {escape(actor)} at {str(now)[:19]} UTC")
+
+    if rto_target is not None or rto_actual is not None:
+        rto_met = ""
+        if rto_actual is not None and rto_target is not None:
+            rto_met = (
+                " [green](MET)[/green]" if rto_actual <= rto_target else " [red](MISSED)[/red]"
+            )
+        console.print(
+            f"  RTO: target={rto_target or '?'}min, actual={rto_actual or '?'}min{rto_met}"
+        )
+
+    if rpo_target is not None or rpo_actual is not None:
+        rpo_met = ""
+        if rpo_actual is not None and rpo_target is not None:
+            rpo_met = (
+                " [green](MET)[/green]" if rpo_actual <= rpo_target else " [red](MISSED)[/red]"
+            )
+        console.print(
+            f"  RPO: target={rpo_target or '?'}min, actual={rpo_actual or '?'}min{rpo_met}"
+        )
+
+    if participants:
+        console.print(f"  Participants: {escape(participants)}")
+    if notes:
+        console.print(f"  Notes: {escape(notes)}")
+
+    if eng_label:
+        console.print(f"\n[green]Saved:[/green] result recorded in {eng_label}.")
+    else:
+        console.print(
+            "\n[yellow]Warning:[/yellow] No active audit engagement found. "
+            "Result was not persisted. Create an engagement first:\n"
+            "  warlock audit engagement create --framework <fw> --name '<name>' "
+            "--start-date YYYY-MM-DD --end-date YYYY-MM-DD"
+        )
+
+
+# ---------------------------------------------------------------------------
+# dr-test sub-group
+# ---------------------------------------------------------------------------
+
+
 @bcp.group("dr-test", invoke_without_command=True)
 @click.pass_context
 def dr_test(ctx: click.Context) -> None:

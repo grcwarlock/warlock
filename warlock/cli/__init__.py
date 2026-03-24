@@ -258,6 +258,14 @@ from warlock.cli import remediation_cmd as _remediation_cmd  # noqa: F401, E402
 from warlock.cli import interop_cmd as _interop_cmd  # noqa: F401, E402
 from warlock.cli import ai_assist_cmd as _ai_assist_cmd  # noqa: F401, E402
 
+# Backlog Blitz — new CLI modules (2026-03-24)
+from warlock.cli import compliance_views_cmd as _compliance_views_cmd  # noqa: F401, E402
+from warlock.cli import forecasting_cmd as _forecasting_cmd  # noqa: F401, E402
+from warlock.cli import security_posture_cmd as _security_posture_cmd  # noqa: F401, E402
+from warlock.cli import collaboration_cmd as _collaboration_cmd  # noqa: F401, E402
+from warlock.cli import search_cmd as _search_cmd  # noqa: F401, E402
+from warlock.cli import audit_cmd as _audit_cmd  # noqa: F401, E402
+
 
 # ---------------------------------------------------------------------------
 # UX-005: Conceptual help topics

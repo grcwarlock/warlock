@@ -765,6 +765,307 @@ def incidents_link(incident_id: str, finding: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# playbook — display playbook steps
+# ---------------------------------------------------------------------------
+
+
+@incidents.command("playbook")
+@click.argument("incident_type", required=False, default=None)
+def incidents_playbook(incident_type: str | None) -> None:
+    """Display incident response playbook steps.
+
+    Without INCIDENT_TYPE, lists all available playbooks.
+    With INCIDENT_TYPE, shows the full playbook phases and steps.
+    """
+    from warlock.workflows.incident_playbooks import PlaybookLibrary
+
+    lib = PlaybookLibrary()
+
+    if not incident_type:
+        # List all playbooks
+        playbooks = lib.list_playbooks()
+        table = Table(title="Available Incident Playbooks")
+        table.add_column("Type", style="cyan")
+        table.add_column("Name")
+        table.add_column("Severity")
+        table.add_column("Phases", justify="right")
+        table.add_column("Steps", justify="right")
+        table.add_column("Description", max_width=50)
+
+        for pb in playbooks:
+            sev_style = _SEVERITY_STYLES.get(pb["severity"], "")
+            table.add_row(
+                pb["type"],
+                pb["name"],
+                f"[{sev_style}]{pb['severity']}[/]",
+                str(pb["phase_count"]),
+                str(pb["total_steps"]),
+                pb["description"][:50],
+            )
+
+        console.print(table)
+        console.print(
+            "\n[dim]Tip: run 'warlock incidents playbook <type>' to view full playbook steps.[/dim]"
+        )
+        return
+
+    playbook = lib.get_playbook(incident_type)
+    if not playbook:
+        _error(
+            f"Unknown playbook type: {incident_type}. "
+            f"Available: {', '.join(t['type'] for t in lib.list_playbooks())}"
+        )
+
+    sev_style = _SEVERITY_STYLES.get(playbook["severity"], "")
+    console.print(
+        f"\n[bold]{escape(playbook['name'])}[/bold]  [{sev_style}]{playbook['severity']}[/]"
+    )
+    console.print(f"[dim]{escape(playbook['description'])}[/dim]\n")
+
+    for pi, phase in enumerate(playbook["phases"]):
+        console.print(f"[bold cyan]Phase {pi + 1}: {escape(phase['name'])}[/bold cyan]")
+
+        for si, step in enumerate(phase["steps"]):
+            console.print(
+                f"  [{pi}.{si}] [bold]{escape(step['role'])}[/bold] ({escape(step['timeframe'])})"
+            )
+            console.print(f"        {escape(step['action'])}")
+            for item in step.get("checklist", []):
+                console.print(f"          [dim]- {escape(item)}[/dim]")
+            console.print()
+
+
+# ---------------------------------------------------------------------------
+# playbook-progress — show execution progress
+# ---------------------------------------------------------------------------
+
+
+@incidents.command("playbook-progress")
+@click.argument("incident_id")
+@click.option(
+    "--type",
+    "playbook_type",
+    required=True,
+    type=click.Choice(["data_breach", "ransomware", "insider_threat", "ddos"]),
+    help="Playbook type to check progress for",
+)
+def incidents_playbook_progress(incident_id: str, playbook_type: str) -> None:
+    """Show playbook execution progress for an incident."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Issue
+    from warlock.workflows.incident_playbooks import PlaybookLibrary
+
+    init_db()
+    lib = PlaybookLibrary()
+
+    with get_session() as session:
+        issue = session.query(Issue).filter(Issue.id.startswith(incident_id)).first()
+        if not issue:
+            _error(f"Incident not found: {incident_id}")
+
+        progress = lib.get_progress(session, issue.id, playbook_type)
+
+    console.print(
+        f"\n[bold]{escape(progress['playbook_name'])}[/bold] -- Incident {incident_id[:8]}"
+    )
+    console.print(
+        f"Progress: [cyan]{progress['completed_steps']}/{progress['total_steps']}[/cyan] "
+        f"steps ({progress['percent_complete']}%)\n"
+    )
+
+    for phase in progress["phases"]:
+        phase_label = (
+            "[green]DONE[/green]"
+            if phase["completed_steps"] == phase["total_steps"]
+            else f"{phase['completed_steps']}/{phase['total_steps']}"
+        )
+        console.print(
+            f"[bold]Phase {phase['phase_index'] + 1}: "
+            f"{escape(phase['phase_name'])}[/bold] [{phase_label}]"
+        )
+
+        for step in phase["steps"]:
+            if step["completed"]:
+                icon = "[green]x[/green]"
+                detail = f" (by {escape(step.get('actor', '?'))})"
+            else:
+                icon = "[dim]o[/dim]"
+                detail = ""
+            console.print(f"  [{icon}] {escape(step['role'])}: {escape(step['action'])}{detail}")
+        console.print()
+
+
+# ---------------------------------------------------------------------------
+# communicate — render communication template
+# ---------------------------------------------------------------------------
+
+
+@incidents.command("communicate")
+@click.argument("incident_id")
+@click.option(
+    "--template",
+    "-t",
+    "template_name",
+    required=True,
+    type=click.Choice(
+        [
+            "initial_notification",
+            "status_update",
+            "resolution_notice",
+            "regulatory_notification",
+        ]
+    ),
+    help="Communication template to render",
+)
+@click.option("--commander", default=None, help="Incident commander name")
+@click.option("--contact", default=None, help="Contact info for response team")
+@click.option("--update-number", default="1", help="Update sequence number (for status_update)")
+def incidents_communicate(
+    incident_id: str,
+    template_name: str,
+    commander: str | None,
+    contact: str | None,
+    update_number: str,
+) -> None:
+    """Render a crisis communication template for an incident."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Issue
+    from warlock.workflows.incident_playbooks import render_template
+
+    init_db()
+    with get_session() as session:
+        issue = session.query(Issue).filter(Issue.id.startswith(incident_id)).first()
+        if not issue:
+            _error(f"Incident not found: {incident_id}")
+
+        classification = (issue.tags or ["unclassified"])[0]
+        detected_at = (
+            issue.created_at.strftime("%Y-%m-%d %H:%M UTC") if issue.created_at else "unknown"
+        )
+
+        context = {
+            "incident_id": issue.id,
+            "incident_title": issue.title,
+            "severity": issue.priority or "unknown",
+            "classification": classification,
+            "status": issue.status,
+            "description": issue.description or "No description provided.",
+            "detected_at": detected_at,
+            "commander": commander or issue.assigned_to or "unassigned",
+            "contact": contact or "incident-response@organization.com",
+            "update_interval": "2 hours",
+            "update_number": update_number,
+            "elapsed": "calculating...",
+            "progress": "See incident timeline for details.",
+            "current_actions": "See active playbook steps.",
+            "next_steps": "Will be determined by incident commander.",
+            "next_update_time": "Per update interval.",
+            "duration": "calculating...",
+            "resolved_at": (
+                issue.closed_at.strftime("%Y-%m-%d %H:%M UTC") if issue.closed_at else "N/A"
+            ),
+            "root_cause": "To be determined in post-mortem.",
+            "resolution": issue.remediation_plan or "Not yet resolved.",
+            "impact_summary": "To be determined.",
+            "preventive_measures": "To be determined in post-mortem.",
+            "postmortem_deadline": "5 business days",
+            "organization": "Organization",
+            "contact_name": commander or "DPO",
+            "contact_title": "Data Protection Officer",
+            "contact_email": contact or "dpo@organization.com",
+            "contact_phone": "[NOT PROVIDED]",
+            "discovery_date": detected_at,
+            "notification_date": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "deadline": "72 hours from discovery (GDPR) / 4 business days (SEC)",
+            "regulation": "GDPR Article 33 / SEC Rule 10-K",
+            "breach_description": issue.description or "See incident details.",
+            "data_categories": "[NOT PROVIDED]",
+            "affected_count": "[NOT PROVIDED]",
+            "consequences": "[NOT PROVIDED]",
+            "measures_taken": "See incident timeline.",
+            "measures_proposed": "See remediation plan.",
+        }
+
+    try:
+        rendered = render_template(template_name, context)
+    except ValueError as exc:
+        _error(str(exc))
+
+    from rich.panel import Panel
+
+    console.print(
+        Panel(
+            f"[bold]Subject:[/bold] {escape(rendered['subject'])}\n\n{escape(rendered['body'])}",
+            title=f"[bold cyan]{escape(rendered['name'])}[/bold cyan]",
+            border_style="cyan",
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# mobile-approve — API stub (UX-9)
+# ---------------------------------------------------------------------------
+
+
+@incidents.command("mobile-approve")
+@click.argument("incident_id")
+def incidents_mobile_approve(incident_id: str) -> None:
+    """Stub: mobile approval API endpoint for incident actions.
+
+    This command displays the API endpoint that will be used for
+    mobile-based incident approvals once the mobile gateway is deployed.
+    """
+    console.print(
+        f"[bold]Mobile Approval API Endpoint:[/bold]\n"
+        f"  POST /api/v1/incidents/{escape(incident_id)}/approve\n\n"
+        f"[dim]Request body:[/dim]\n"
+        f'  {{"approver": "<user_id>", "action": "approve|reject", '
+        f'"comment": "<optional>"}}\n\n'
+        f"[dim]Authentication: Bearer token (OAuth 2.0 / OIDC)\n"
+        f"Push notification will be sent to assigned approvers.\n"
+        f"This endpoint is not yet active -- pending mobile gateway deployment.[/dim]"
+    )
+
+
+# ---------------------------------------------------------------------------
+# offline-collect — API stub (UX-10)
+# ---------------------------------------------------------------------------
+
+
+@incidents.command("offline-collect")
+def incidents_offline_collect() -> None:
+    """Stub: instructions for offline evidence collection and later sync.
+
+    Provides guidance for collecting incident evidence in environments
+    without network connectivity, with sync instructions for when
+    connectivity is restored.
+    """
+    console.print(
+        "[bold]Offline Evidence Collection[/bold]\n\n"
+        "[bold]Step 1: Collect evidence locally[/bold]\n"
+        "  Save evidence files to a designated local directory:\n"
+        "    mkdir -p ./warlock-offline-evidence/<incident_id>/\n\n"
+        "  For each evidence item, create a JSON manifest:\n"
+        '    {"file": "screenshot.png", "type": "screenshot", '
+        '"description": "...", "collected_by": "...", '
+        '"collected_at": "ISO8601", "sha256": "..."}\n\n'
+        "[bold]Step 2: Compute integrity hashes[/bold]\n"
+        "  sha256sum ./warlock-offline-evidence/<incident_id>/* > checksums.sha256\n\n"
+        "[bold]Step 3: Sync when connectivity is restored[/bold]\n"
+        "  POST /api/v1/incidents/<incident_id>/evidence/bulk-upload\n"
+        "  Content-Type: multipart/form-data\n"
+        "  Include the manifest JSON and all evidence files.\n\n"
+        "[bold]Step 4: Verify integrity[/bold]\n"
+        "  warlock incidents show <incident_id>\n"
+        "  Verify uploaded evidence SHA-256 hashes match local checksums.\n\n"
+        "[dim]The bulk upload endpoint and offline sync agent are pending "
+        "implementation. Evidence can currently be attached manually via:\n"
+        "  warlock incidents add-event <incident_id> --type evidence_collected "
+        '--description "..."[/dim]'
+    )
+
+
+# ---------------------------------------------------------------------------
 # responders
 # ---------------------------------------------------------------------------
 

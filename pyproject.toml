@@ -20,6 +20,8 @@ dependencies = [
     "bcrypt>=4.1",          # #14: Password hashing (was optional, now required)
     "PyJWT>=2.8",           # #14: JWT tokens (was optional, now required)
     "cryptography>=42.0",   # #14: Fernet field encryption (was optional, now required)
+    "openpyxl>=3.1",        # RPT-3: Excel export
+    "python-jose[cryptography]>=3.3",  # INT-1: OIDC JWT validation
 ]
 
 [project.optional-dependencies]
@@ -46,6 +48,7 @@ analytics = ["numpy>=2.0", "pandas>=2.0"]
 monitoring = ["prometheus-client>=0.20"]
 lake = ["duckdb>=1.1", "pyarrow>=17.0", "pyiceberg[pyarrow]>=0.7", "nats-py>=2.7"]
 pdf = ["weasyprint>=62.0"]
+graphql = ["strawberry-graphql[fastapi]>=0.220"]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4", "pip-audit>=2.7"]
 
 [project.scripts]

@@ -162,6 +162,9 @@ class Finding(Base):
     # PII
     pii_detected = Column(Boolean, default=False, nullable=False, server_default="0")
 
+    # SAC-3: Data classification
+    classification = Column(String(50))  # public, internal, confidential, restricted
+
     # Integrity
     sha256 = Column(String(64), nullable=False)
 
@@ -253,6 +256,9 @@ class ControlResult(Base):
     remediation_summary = Column(Text)
     remediation_steps = Column(JSONType)
     console_path = Column(Text)
+
+    # RQM-21: Inherent risk (ALE with zero control effectiveness)
+    inherent_risk_ale = Column(Float)  # annual loss expectancy without controls
 
     # Lineage
     evidence_ids = Column(JSONType)  # [raw_event UUIDs] that informed this
@@ -435,6 +441,18 @@ class User(Base):
     # Refresh token (#58)
     refresh_token_hash = Column(String(64), nullable=True)
 
+    # PLT-3: Role hierarchy
+    parent_role = Column(String(50))  # role this role inherits from
+    delegated_by = Column(String(36))  # user_id who delegated admin
+
+    # SAC-2: Session management
+    session_expires_at = Column(DateTime(timezone=True))
+    max_concurrent_sessions = Column(Integer, default=5)
+
+    # INT-1: SSO/OIDC
+    sso_provider = Column(String(50))  # okta, azure_ad, google
+    sso_subject_id = Column(String(255))  # external IdP subject identifier
+
     __table_args__ = (Index("idx_user_role", "role"),)
 
 
@@ -479,6 +497,10 @@ class RiskAnalysis(Base):
     iterations = Column(Integer, default=10000)
     details = Column(SQLiteJSON, default=dict)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    # RQM-23: Risk culture metrics
+    risk_culture_score = Column(Float)  # 0-100 organizational risk maturity
+    mttr_days = Column(Float)  # mean time to remediate in days
 
     __table_args__ = (
         Index("idx_risk_framework", "framework"),
@@ -551,6 +573,14 @@ class POAM(Base):
     delay_count = Column(Integer, default=0)
     delay_justifications = Column(SQLiteJSON, default=list)  # [{date, justification, approved_by}]
     resources_required = Column(Text)
+
+    # POAM-1: Cost tracking and resource allocation
+    cost_estimate = Column(Float)  # estimated remediation cost in USD
+    resource_allocation = Column(Text)  # who/what is allocated to remediate
+
+    # POAM-3: Escalation tracking
+    escalation_sent_at = Column(DateTime(timezone=True))  # last escalation notification
+    escalation_level = Column(Integer, default=0)  # 0=none, 1=owner, 2=lead, 3=CISO
 
     created_by = Column(String(255))
     updated_by = Column(String(255))
@@ -725,9 +755,15 @@ class Issue(Base):
     source = Column(String(50))  # "pipeline", "manual", "import"
     tags = Column(SQLiteJSON, default=list)
 
+    # ISS-7: Root cause grouping
+    root_cause_id = Column(String(36))  # groups related issues under same root cause
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     created_by = Column(String(255))
+
+    # ISS-4: Watchers relationship
+    watchers = relationship("WatchSubscription", back_populates="issue", cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint(
@@ -1523,6 +1559,154 @@ class Vendor(Base):
     last_assessment = Column(DateTime(timezone=True), nullable=True)
     assessment_cadence_days = Column(Integer, nullable=True)
     metadata_ = Column("metadata", JSONType, default=dict)
+
+    # RQM-14: Vendor blast radius
+    blast_radius_score = Column(Float)  # 0-100 impact if vendor fails
+    dependent_systems = Column(SQLiteJSON, default=list)  # system_profile_ids affected
+    dependent_frameworks = Column(SQLiteJSON, default=list)  # frameworks affected
+    dependent_control_count = Column(Integer, default=0)  # total controls affected
+
+
+# ---------------------------------------------------------------------------
+# Watch Subscriptions — ISS-4: users watching issues/entities for changes
+# ---------------------------------------------------------------------------
+
+
+class WatchSubscription(Base):
+    """Tracks user subscriptions to entity status changes."""
+
+    __tablename__ = "watch_subscriptions"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    entity_type = Column(String(50), nullable=False)  # issue, poam, finding, vendor
+    entity_id = Column(String(36), nullable=False)
+    issue_id = Column(String(36), ForeignKey("issues.id", ondelete="CASCADE"))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    issue = relationship("Issue", back_populates="watchers")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "entity_type", "entity_id", name="uq_watch_user_entity"),
+        Index("idx_watch_entity", "entity_type", "entity_id"),
+        Index("idx_watch_user", "user_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Escalation Policies — AUT-4: configurable escalation chains
+# ---------------------------------------------------------------------------
+
+
+class EscalationPolicy(Base):
+    """Defines escalation chains for overdue items."""
+
+    __tablename__ = "escalation_policies"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False, unique=True)
+    description = Column(Text)
+
+    # Levels: [{level: 1, role: "control_owner", delay_hours: 24},
+    #          {level: 2, role: "team_lead", delay_hours: 48},
+    #          {level: 3, role: "ciso", delay_hours: 72}]
+    levels = Column(SQLiteJSON, nullable=False, default=list)
+    cooldown_minutes = Column(Integer, default=60)  # min time between notifications
+    active = Column(Boolean, default=True)
+
+    # Scope: which entity types this policy applies to
+    entity_types = Column(SQLiteJSON, default=list)  # ["issue", "poam", "finding"]
+    min_severity = Column(String(20), default="high")  # minimum severity to trigger
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    created_by = Column(String(255))
+
+    __table_args__ = (
+        Index("idx_escalation_active", "active"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Saved Queries — DLA-1: persistent analytics queries
+# ---------------------------------------------------------------------------
+
+
+class SavedQuery(Base):
+    """Saved lake/analytics queries for reuse."""
+
+    __tablename__ = "saved_queries"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    sql_text = Column(Text, nullable=False)
+    query_type = Column(String(50), default="custom")  # custom, template, sla_breach, drift, etc.
+    parameters = Column(SQLiteJSON, default=dict)  # template parameters with defaults
+    shared = Column(Boolean, default=False)  # visible to all users
+    created_by = Column(String(255))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    last_run_at = Column(DateTime(timezone=True))
+    run_count = Column(Integer, default=0)
+
+    __table_args__ = (
+        Index("idx_saved_query_type", "query_type"),
+        Index("idx_saved_query_shared", "shared"),
+        Index("idx_saved_query_created_by", "created_by"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# IP Allowlist — SAC-1: restrict API access by IP/CIDR
+# ---------------------------------------------------------------------------
+
+
+class IPAllowlistEntry(Base):
+    """IP allowlist entries for API access restriction."""
+
+    __tablename__ = "ip_allowlist"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    cidr = Column(String(50), nullable=False)  # e.g. "10.0.0.0/8" or "203.0.113.5/32"
+    description = Column(Text)
+    active = Column(Boolean, default=True)
+    created_by = Column(String(255))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    expires_at = Column(DateTime(timezone=True))  # optional expiry
+
+    __table_args__ = (
+        Index("idx_ip_allowlist_active", "active"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Risk Dependencies — RQM-9: risk interconnection mapping
+# ---------------------------------------------------------------------------
+
+
+class RiskDependency(Base):
+    """Maps dependencies and cascade effects between risks."""
+
+    __tablename__ = "risk_dependencies"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    risk_id = Column(String(36), ForeignKey("risk_analyses.id", ondelete="CASCADE"), nullable=False)
+    depends_on_risk_id = Column(
+        String(36), ForeignKey("risk_analyses.id", ondelete="CASCADE"), nullable=False
+    )
+    relationship_type = Column(
+        String(50), nullable=False
+    )  # causes, amplifies, mitigates, correlates
+    weight = Column(Float, default=1.0)  # strength of dependency (0-1)
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("risk_id", "depends_on_risk_id", name="uq_risk_dependency"),
+        Index("idx_risk_dep_risk", "risk_id"),
+        Index("idx_risk_dep_depends_on", "depends_on_risk_id"),
+    )
 
 
 # ---------------------------------------------------------------------------

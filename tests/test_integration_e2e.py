@@ -850,11 +850,11 @@ class TestInteroperability:
         assert r is not None
 
     def test_full_table_count(self, session):
-        """Verify all 42 tables exist (39 original + alerts, remediations, pipeline_runs)."""
+        """Verify all 47 tables exist (42 original + watch_subscriptions, escalation_policies, saved_queries, ip_allowlist, risk_dependencies)."""
         from sqlalchemy import inspect
 
         tables = set(inspect(session.bind).get_table_names())
-        expected_count = 42
+        expected_count = 47
         actual = len([t for t in tables if t != "alembic_version"])
         assert actual == expected_count, (
             f"Expected {expected_count} tables, got {actual}: {sorted(tables)}"

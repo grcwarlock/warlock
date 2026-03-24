@@ -14,7 +14,9 @@ from warlock.db.models import (
     Finding,
     Issue,
     IssueComment,
+    WatchSubscription,
 )
+from warlock.utils import ensure_aware
 
 
 class IssueManager:
@@ -443,3 +445,363 @@ class IssueManager:
             "by_priority": by_priority,
             "overdue": overdue_count,
         }
+
+    # ------------------------------------------------------------------
+    # ISS-4: Watch list
+    # ------------------------------------------------------------------
+
+    def watch(
+        self,
+        session: Session,
+        issue_id: str,
+        user_id: str,
+        actor: str = "",
+    ) -> WatchSubscription:
+        """Subscribe a user to status changes on an issue.
+
+        Args:
+            session: SQLAlchemy session.
+            issue_id: ID of the issue to watch.
+            user_id: ID of the user subscribing.
+            actor: Who initiated the watch (may differ from user_id).
+
+        Returns:
+            The created WatchSubscription.
+
+        Raises:
+            ValueError: If issue not found or already watching.
+        """
+        issue = session.query(Issue).filter(Issue.id == issue_id).first()
+        if not issue:
+            raise ValueError(f"Issue not found: {issue_id}")
+
+        existing = (
+            session.query(WatchSubscription)
+            .filter(
+                WatchSubscription.issue_id == issue_id,
+                WatchSubscription.user_id == user_id,
+                WatchSubscription.entity_type == "issue",
+            )
+            .first()
+        )
+        if existing:
+            raise ValueError(f"User {user_id} is already watching issue {issue_id}")
+
+        sub = WatchSubscription(
+            user_id=user_id,
+            entity_type="issue",
+            entity_id=issue_id,
+            issue_id=issue_id,
+        )
+        session.add(sub)
+        session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="issue_watch_added",
+            entity_type="issue",
+            entity_id=issue_id,
+            actor=actor or user_id,
+            metadata={"user_id": user_id},
+        )
+
+        return sub
+
+    def unwatch(
+        self,
+        session: Session,
+        issue_id: str,
+        user_id: str,
+        actor: str = "",
+    ) -> None:
+        """Remove a user's watch subscription from an issue.
+
+        Args:
+            session: SQLAlchemy session.
+            issue_id: ID of the issue.
+            user_id: ID of the user to unsubscribe.
+            actor: Who initiated the unwatch.
+
+        Raises:
+            ValueError: If issue not found or subscription not found.
+        """
+        issue = session.query(Issue).filter(Issue.id == issue_id).first()
+        if not issue:
+            raise ValueError(f"Issue not found: {issue_id}")
+
+        sub = (
+            session.query(WatchSubscription)
+            .filter(
+                WatchSubscription.issue_id == issue_id,
+                WatchSubscription.user_id == user_id,
+                WatchSubscription.entity_type == "issue",
+            )
+            .first()
+        )
+        if not sub:
+            raise ValueError(f"User {user_id} is not watching issue {issue_id}")
+
+        session.delete(sub)
+        session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="issue_watch_removed",
+            entity_type="issue",
+            entity_id=issue_id,
+            actor=actor or user_id,
+            metadata={"user_id": user_id},
+        )
+
+    def get_watchers(
+        self,
+        session: Session,
+        issue_id: str,
+    ) -> list[WatchSubscription]:
+        """List all watch subscriptions for an issue.
+
+        Args:
+            session: SQLAlchemy session.
+            issue_id: ID of the issue.
+
+        Returns:
+            List of WatchSubscription rows.
+
+        Raises:
+            ValueError: If issue not found.
+        """
+        issue = session.query(Issue).filter(Issue.id == issue_id).first()
+        if not issue:
+            raise ValueError(f"Issue not found: {issue_id}")
+
+        return (
+            session.query(WatchSubscription)
+            .filter(
+                WatchSubscription.issue_id == issue_id,
+                WatchSubscription.entity_type == "issue",
+            )
+            .order_by(WatchSubscription.created_at)
+            .all()
+        )
+
+    def get_watched_issues(
+        self,
+        session: Session,
+        user_id: str,
+    ) -> list[Issue]:
+        """List all issues a user is watching.
+
+        Args:
+            session: SQLAlchemy session.
+            user_id: ID of the user.
+
+        Returns:
+            List of Issue rows the user is subscribed to.
+        """
+        sub_ids = (
+            session.query(WatchSubscription.issue_id)
+            .filter(
+                WatchSubscription.user_id == user_id,
+                WatchSubscription.entity_type == "issue",
+                WatchSubscription.issue_id.isnot(None),
+            )
+            .subquery()
+        )
+        return (
+            session.query(Issue)
+            .filter(Issue.id.in_(sub_ids))
+            .order_by(Issue.updated_at.desc())
+            .all()
+        )
+
+    # ------------------------------------------------------------------
+    # ISS-3: Velocity tracking
+    # ------------------------------------------------------------------
+
+    def velocity_metrics(
+        self,
+        session: Session,
+        framework: str | None = None,
+        days: int = 90,
+    ) -> dict[str, Any]:
+        """Calculate issue velocity metrics over a time window.
+
+        Metrics include mean-time-to-resolve (MTTR) by priority,
+        closure rate, and inflow vs outflow counts.
+
+        Args:
+            session: SQLAlchemy session.
+            framework: Optional framework filter.
+            days: Lookback window in days (default 90).
+
+        Returns:
+            Dict with mttr_by_priority, closure_rate, inflow, outflow.
+        """
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(days=days)
+
+        # --- Inflow: issues created in the window ---
+        inflow_q = session.query(func.count(Issue.id)).filter(
+            Issue.created_at >= window_start,
+        )
+        if framework:
+            inflow_q = inflow_q.filter(Issue.framework == framework)
+        inflow = inflow_q.scalar() or 0
+
+        # --- Outflow: issues closed in the window ---
+        outflow_q = session.query(func.count(Issue.id)).filter(
+            Issue.closed_at >= window_start,
+            Issue.closed_at.isnot(None),
+        )
+        if framework:
+            outflow_q = outflow_q.filter(Issue.framework == framework)
+        outflow = outflow_q.scalar() or 0
+
+        # --- MTTR by priority: average time from created_at to closed_at ---
+        closed_q = session.query(Issue).filter(
+            Issue.closed_at.isnot(None),
+            Issue.closed_at >= window_start,
+        )
+        if framework:
+            closed_q = closed_q.filter(Issue.framework == framework)
+
+        closed_issues = closed_q.all()
+
+        mttr_accum: dict[str, list[float]] = {}
+        for issue in closed_issues:
+            created = ensure_aware(issue.created_at)
+            closed = ensure_aware(issue.closed_at)
+            delta_hours = (closed - created).total_seconds() / 3600.0
+            priority = issue.priority or "medium"
+            mttr_accum.setdefault(priority, []).append(delta_hours)
+
+        mttr_by_priority: dict[str, float] = {}
+        for priority, hours_list in mttr_accum.items():
+            mttr_by_priority[priority] = round(sum(hours_list) / len(hours_list), 2)
+
+        # --- Closure rate ---
+        closure_rate = round(outflow / inflow, 4) if inflow > 0 else 0.0
+
+        return {
+            "days": days,
+            "inflow": inflow,
+            "outflow": outflow,
+            "closure_rate": closure_rate,
+            "mttr_by_priority_hours": mttr_by_priority,
+        }
+
+    # ------------------------------------------------------------------
+    # ISS-7: Root cause analysis
+    # ------------------------------------------------------------------
+
+    def group_by_root_cause(
+        self,
+        session: Session,
+        framework: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Group issues by root_cause_id.
+
+        Args:
+            session: SQLAlchemy session.
+            framework: Optional framework filter.
+
+        Returns:
+            List of dicts with root_cause_id, count, priorities, frameworks.
+        """
+        query = (
+            session.query(
+                Issue.root_cause_id,
+                func.count(Issue.id).label("count"),
+            )
+            .filter(
+                Issue.root_cause_id.isnot(None),
+                Issue.root_cause_id != "",
+            )
+            .group_by(Issue.root_cause_id)
+        )
+
+        if framework:
+            query = query.filter(Issue.framework == framework)
+
+        rows = query.all()
+        result: list[dict[str, Any]] = []
+
+        for root_cause_id, count in rows:
+            # Fetch detail for each group
+            issues = session.query(Issue).filter(
+                Issue.root_cause_id == root_cause_id,
+            )
+            if framework:
+                issues = issues.filter(Issue.framework == framework)
+            issues = issues.all()
+
+            priorities = {}
+            frameworks = set()
+            for iss in issues:
+                pri = iss.priority or "medium"
+                priorities[pri] = priorities.get(pri, 0) + 1
+                if iss.framework:
+                    frameworks.add(iss.framework)
+
+            result.append(
+                {
+                    "root_cause_id": root_cause_id,
+                    "count": count,
+                    "priorities": priorities,
+                    "frameworks": sorted(frameworks),
+                }
+            )
+
+        # Sort by count descending
+        result.sort(key=lambda r: r["count"], reverse=True)
+        return result
+
+    def set_root_cause(
+        self,
+        session: Session,
+        issue_ids: list[str],
+        root_cause_id: str,
+        actor: str = "",
+    ) -> list[Issue]:
+        """Link multiple issues to the same root cause.
+
+        Args:
+            session: SQLAlchemy session.
+            issue_ids: List of issue IDs to link.
+            root_cause_id: The root cause identifier.
+            actor: Who performed the linking.
+
+        Returns:
+            List of updated Issue objects.
+
+        Raises:
+            ValueError: If no valid issues found.
+        """
+        if not root_cause_id:
+            raise ValueError("root_cause_id must not be empty")
+
+        issues = session.query(Issue).filter(Issue.id.in_(issue_ids)).all()
+        if not issues:
+            raise ValueError(f"No issues found for IDs: {issue_ids}")
+
+        now = datetime.now(timezone.utc)
+        for issue in issues:
+            issue.root_cause_id = root_cause_id
+            issue.updated_at = now
+
+        session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="issues_root_cause_set",
+            entity_type="issue",
+            entity_id="batch",
+            actor=actor or "system",
+            metadata={
+                "root_cause_id": root_cause_id,
+                "issue_ids": [str(i.id) for i in issues],
+                "count": len(issues),
+            },
+        )
+
+        return issues

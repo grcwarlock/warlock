@@ -1305,3 +1305,516 @@ def trends_connectors(days: int) -> None:
         )
 
     console.print(table)
+
+
+# ===========================================================================
+# DLA-1: Saved Queries
+# ===========================================================================
+
+
+_BUILTIN_TEMPLATES: dict[str, dict[str, str]] = {
+    "sla_breach": {
+        "name": "SLA Breach Detection",
+        "description": "Find POAMs past their scheduled completion date",
+        "sql": (
+            "SELECT id, framework, control_id, severity, status, "
+            "scheduled_completion, weakness_description "
+            "FROM poams "
+            "WHERE status NOT IN ('closed', 'verified') "
+            "AND scheduled_completion < CURRENT_TIMESTAMP "
+            "ORDER BY scheduled_completion ASC"
+        ),
+    },
+    "control_drift_30d": {
+        "name": "Control Drift (30 days)",
+        "description": "Controls that changed status in the last 30 days",
+        "sql": (
+            "SELECT framework, control_id, status, severity, assessed_at "
+            "FROM control_results "
+            "WHERE assessed_at >= datetime('now', '-30 days') "
+            "AND status IN ('non_compliant', 'partial') "
+            "ORDER BY assessed_at DESC"
+        ),
+    },
+    "top_failures": {
+        "name": "Top Failure Controls",
+        "description": "Controls with the most non-compliant findings",
+        "sql": (
+            "SELECT framework, control_id, COUNT(*) as failure_count "
+            "FROM control_results "
+            "WHERE status = 'non_compliant' "
+            "GROUP BY framework, control_id "
+            "ORDER BY failure_count DESC "
+            "LIMIT 25"
+        ),
+    },
+    "remediation_velocity": {
+        "name": "Remediation Velocity",
+        "description": "Average time from POAM creation to completion by framework",
+        "sql": (
+            "SELECT framework, "
+            "COUNT(*) as completed, "
+            "AVG(JULIANDAY(actual_completion) - JULIANDAY(created_at)) as avg_days "
+            "FROM poams "
+            "WHERE status IN ('completed', 'verified', 'closed') "
+            "AND actual_completion IS NOT NULL "
+            "GROUP BY framework "
+            "ORDER BY avg_days ASC"
+        ),
+    },
+}
+
+
+@lake_analytics.command("save-query")
+@click.option("--name", required=True, help="Unique name for the saved query")
+@click.option("--sql", "sql_text", required=True, help="SQL statement to save")
+@click.option("--description", default="", help="Description of the query")
+@click.option("--shared", is_flag=True, help="Make this query visible to all users")
+def lake_save_query(name: str, sql_text: str, description: str, shared: bool) -> None:
+    """Save a reusable SQL query for later execution."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SavedQuery
+
+    init_db()
+    with get_session() as session:
+        existing = session.query(SavedQuery).filter(SavedQuery.name == name).first()
+        if existing:
+            _error(
+                f"Query with name '{name}' already exists. Delete it first or use a different name."
+            )
+
+        sq = SavedQuery(
+            name=name,
+            sql_text=sql_text,
+            description=description,
+            query_type="custom",
+            shared=shared,
+        )
+        session.add(sq)
+        session.commit()
+
+    console.print(f"[green]Saved query '{escape(name)}'.[/green]")
+
+
+@lake_analytics.command("list-queries")
+def lake_list_queries() -> None:
+    """List all saved queries with metadata."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SavedQuery
+
+    init_db()
+    with get_session() as session:
+        queries = session.query(SavedQuery).order_by(SavedQuery.name).all()
+
+    if not queries:
+        console.print(
+            "[yellow]No saved queries. Use 'lake-analytics save-query' to create one.[/yellow]"
+        )
+        return
+
+    table = Table(title=f"Saved Queries ({len(queries)})")
+    table.add_column("Name", style="cyan")
+    table.add_column("Type")
+    table.add_column("Description")
+    table.add_column("Shared")
+    table.add_column("Last Run")
+    table.add_column("Runs", justify="right")
+
+    for sq in queries:
+        last_run = _iso_str(sq.last_run_at) if sq.last_run_at else "never"
+        table.add_row(
+            escape(sq.name),
+            sq.query_type or "custom",
+            escape(sq.description or ""),
+            "yes" if sq.shared else "no",
+            last_run,
+            str(sq.run_count or 0),
+        )
+
+    console.print(table)
+
+
+@lake_analytics.command("run-query")
+@click.argument("name")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["table", "json", "csv"]),
+    default="table",
+    show_default=True,
+    help="Output format",
+)
+def lake_run_query(name: str, fmt: str) -> None:
+    """Execute a saved query by name and display results."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SavedQuery
+
+    init_db()
+    with get_session() as session:
+        sq = session.query(SavedQuery).filter(SavedQuery.name == name).first()
+        if not sq:
+            _error(
+                f"Saved query '{name}' not found. Use 'lake-analytics list-queries' to see available queries."
+            )
+
+        sql = sq.sql_text
+
+        # Update run metadata
+        sq.run_count = (sq.run_count or 0) + 1
+        sq.last_run_at = _utcnow()
+        session.commit()
+
+    # Execute the query against the database
+    from warlock.db.engine import get_session as gs
+
+    with gs() as session:
+        try:
+            result = session.execute(__import__("sqlalchemy").text(sql))
+            rows = [dict(row._mapping) for row in result]
+        except Exception as exc:
+            _error(f"Query execution failed: {exc}")
+
+    if not rows:
+        console.print("[dim]No rows returned.[/dim]")
+        return
+
+    if fmt == "json":
+        console.print_json(json.dumps(rows, default=str))
+        return
+
+    if fmt == "csv":
+        keys = list(rows[0].keys())
+        console.print(",".join(keys))
+        for row in rows:
+            console.print(",".join(str(row.get(k, "")) for k in keys))
+        return
+
+    table = Table(title=f"Query: {escape(name)} ({len(rows)} rows)")
+    for col in rows[0].keys():
+        table.add_column(str(col), overflow="fold")
+    for row in rows:
+        table.add_row(*[str(v) if v is not None else "" for v in row.values()])
+    console.print(table)
+
+
+@lake_analytics.command("delete-query")
+@click.argument("name")
+def lake_delete_query(name: str) -> None:
+    """Delete a saved query by name."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SavedQuery
+
+    init_db()
+    with get_session() as session:
+        sq = session.query(SavedQuery).filter(SavedQuery.name == name).first()
+        if not sq:
+            _error(f"Saved query '{name}' not found.")
+
+        session.delete(sq)
+        session.commit()
+
+    console.print(f"[green]Deleted query '{escape(name)}'.[/green]")
+
+
+@lake_analytics.command("query-templates")
+def lake_query_templates() -> None:
+    """Show built-in query templates for common GRC analytics patterns."""
+    table = Table(title=f"Built-in Query Templates ({len(_BUILTIN_TEMPLATES)})")
+    table.add_column("Key", style="cyan")
+    table.add_column("Name", style="bold")
+    table.add_column("Description")
+
+    for key, tmpl in sorted(_BUILTIN_TEMPLATES.items()):
+        table.add_row(key, tmpl["name"], tmpl["description"])
+
+    console.print(table)
+    console.print(
+        "\n[dim]Use a template: "
+        "warlock lake-analytics save-query --name my_query "
+        '--sql "<paste SQL from template>"[/dim]'
+    )
+
+    # Also print the SQL for each template
+    for key, tmpl in sorted(_BUILTIN_TEMPLATES.items()):
+        console.print(f"\n[bold cyan]{tmpl['name']}[/bold cyan] ({key}):")
+        console.print(f"[dim]{tmpl['sql']}[/dim]")
+
+
+def _iso_str(dt: datetime | None) -> str:
+    """Format a datetime for CLI display, handling naive datetimes."""
+    if dt is None:
+        return ""
+    dt = ensure_aware(dt)
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
+# ===========================================================================
+# DLA-3: Time-travel
+# ===========================================================================
+
+
+@lake_analytics.command("time-travel")
+@click.option(
+    "--date",
+    "target_date",
+    required=True,
+    help="Historical date to query (YYYY-MM-DD)",
+)
+@click.option("--framework", default=None, help="Filter by framework")
+def lake_time_travel(target_date: str, framework: str | None) -> None:
+    """Query historical compliance posture from PostureSnapshot at a given date.
+
+    Shows the compliance state as it was on the specified date, using
+    the closest PostureSnapshot records on or before that date.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import PostureSnapshot
+    from sqlalchemy import func
+
+    init_db()
+    try:
+        dt = datetime.strptime(target_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    except ValueError:
+        _error(f"Invalid date format: {target_date!r}. Use YYYY-MM-DD.")
+
+    # End of the target day
+    dt_end = dt + timedelta(days=1)
+
+    with get_session() as session:
+        # Find the latest snapshot for each (framework, control_id) on or before target date
+        subq = session.query(
+            PostureSnapshot.framework,
+            PostureSnapshot.control_id,
+            func.max(PostureSnapshot.snapshot_date).label("max_date"),
+        ).filter(PostureSnapshot.snapshot_date < dt_end)
+        if framework:
+            subq = subq.filter(PostureSnapshot.framework == framework)
+        subq = subq.group_by(
+            PostureSnapshot.framework,
+            PostureSnapshot.control_id,
+        ).subquery()
+
+        snapshots = (
+            session.query(PostureSnapshot)
+            .join(
+                subq,
+                (PostureSnapshot.framework == subq.c.framework)
+                & (PostureSnapshot.control_id == subq.c.control_id)
+                & (PostureSnapshot.snapshot_date == subq.c.max_date),
+            )
+            .all()
+        )
+
+    if not snapshots:
+        console.print(
+            f"[yellow]No posture snapshots found on or before {target_date}."
+            f"{' Framework: ' + framework if framework else ''}[/yellow]"
+        )
+        return
+
+    # Aggregate by framework
+    by_fw: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for s in snapshots:
+        by_fw[s.framework][s.status] += 1
+
+    console.print(f"\n[bold]Compliance Posture as of {target_date}[/bold]\n")
+
+    table = Table(title=f"Historical Posture ({len(snapshots)} controls)")
+    table.add_column("Framework", style="cyan")
+    table.add_column("Compliant", justify="right", style="green")
+    table.add_column("Non-Compliant", justify="right", style="red")
+    table.add_column("Partial", justify="right", style="yellow")
+    table.add_column("Not Assessed", justify="right", style="dim")
+    table.add_column("Total", justify="right")
+    table.add_column("Pass Rate", justify="right")
+
+    for fw in sorted(by_fw):
+        statuses = by_fw[fw]
+        c = statuses.get("compliant", 0)
+        nc = statuses.get("non_compliant", 0)
+        p = statuses.get("partial", 0)
+        na = statuses.get("not_assessed", 0)
+        total = c + nc + p + na
+        rate = f"{c / total * 100:.1f}%" if total else "N/A"
+        table.add_row(fw, str(c), str(nc), str(p), str(na), str(total), rate)
+
+    console.print(table)
+
+
+# ===========================================================================
+# DLA-4: Tiered storage
+# ===========================================================================
+
+
+@lake_analytics.command("storage-tiers")
+def lake_storage_tiers() -> None:
+    """Show data distribution across hot/warm/cold tiers based on record age.
+
+    Hot: <30 days, Warm: 30-180 days, Cold: >180 days.
+    Shows counts and estimated storage per tier.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Finding, RawEvent
+
+    init_db()
+    now = _utcnow()
+    hot_cutoff = now - timedelta(days=30)
+    warm_cutoff = now - timedelta(days=180)
+
+    with get_session() as session:
+        # Raw events by tier
+        raw_hot = session.query(RawEvent).filter(RawEvent.ingested_at >= hot_cutoff).count()
+        raw_warm = (
+            session.query(RawEvent)
+            .filter(RawEvent.ingested_at >= warm_cutoff, RawEvent.ingested_at < hot_cutoff)
+            .count()
+        )
+        raw_cold = session.query(RawEvent).filter(RawEvent.ingested_at < warm_cutoff).count()
+
+        # Findings by tier
+        find_hot = session.query(Finding).filter(Finding.ingested_at >= hot_cutoff).count()
+        find_warm = (
+            session.query(Finding)
+            .filter(Finding.ingested_at >= warm_cutoff, Finding.ingested_at < hot_cutoff)
+            .count()
+        )
+        find_cold = session.query(Finding).filter(Finding.ingested_at < warm_cutoff).count()
+
+    # Estimate ~1 KB per raw event, ~2 KB per finding (rough sizing)
+    est_raw_kb = 1
+    est_find_kb = 2
+
+    table = Table(title="Storage Tiers (by record age)")
+    table.add_column("Tier", style="bold")
+    table.add_column("Age Range")
+    table.add_column("Raw Events", justify="right")
+    table.add_column("Findings", justify="right")
+    table.add_column("Total Records", justify="right")
+    table.add_column("Est. Storage", justify="right")
+
+    def _est_size(raw: int, findings: int) -> str:
+        total_kb = raw * est_raw_kb + findings * est_find_kb
+        return _format_bytes(total_kb * 1024)
+
+    table.add_row(
+        "[green]Hot[/green]",
+        "<30 days",
+        f"{raw_hot:,}",
+        f"{find_hot:,}",
+        f"{raw_hot + find_hot:,}",
+        _est_size(raw_hot, find_hot),
+    )
+    table.add_row(
+        "[yellow]Warm[/yellow]",
+        "30-180 days",
+        f"{raw_warm:,}",
+        f"{find_warm:,}",
+        f"{raw_warm + find_warm:,}",
+        _est_size(raw_warm, find_warm),
+    )
+    table.add_row(
+        "[dim]Cold[/dim]",
+        ">180 days",
+        f"{raw_cold:,}",
+        f"{find_cold:,}",
+        f"{raw_cold + find_cold:,}",
+        _est_size(raw_cold, find_cold),
+    )
+
+    table.add_section()
+    total_raw = raw_hot + raw_warm + raw_cold
+    total_find = find_hot + find_warm + find_cold
+    table.add_row(
+        "[bold]Total[/bold]",
+        "",
+        f"{total_raw:,}",
+        f"{total_find:,}",
+        f"{total_raw + total_find:,}",
+        _est_size(total_raw, total_find),
+    )
+
+    console.print(table)
+
+
+# ===========================================================================
+# DLA-10: Historical risk
+# ===========================================================================
+
+
+@lake_analytics.command("risk-history")
+@click.option("--framework", default=None, help="Filter by framework")
+@click.option(
+    "--months",
+    type=int,
+    default=6,
+    show_default=True,
+    help="Number of months to look back",
+)
+def lake_risk_history(framework: str | None, months: int) -> None:
+    """Show risk analysis trends over time (mean ALE and VaR 95% by month)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import RiskAnalysis
+    from sqlalchemy import func, extract
+
+    init_db()
+    since = _utcnow() - timedelta(days=months * 30)
+
+    with get_session() as session:
+        q = session.query(
+            extract("year", RiskAnalysis.created_at).label("year"),
+            extract("month", RiskAnalysis.created_at).label("month"),
+            func.avg(RiskAnalysis.mean_ale).label("avg_ale"),
+            func.avg(RiskAnalysis.var_95).label("avg_var95"),
+            func.count(RiskAnalysis.id).label("analyses"),
+        ).filter(RiskAnalysis.created_at >= since)
+
+        if framework:
+            q = q.filter(RiskAnalysis.framework == framework)
+
+        rows = q.group_by("year", "month").order_by("year", "month").all()
+
+    if not rows:
+        console.print(
+            f"[yellow]No risk analyses found in the past {months} months."
+            f"{' Framework: ' + framework if framework else ''}[/yellow]"
+        )
+        return
+
+    table = Table(
+        title=f"Risk History — Last {months} Months" + (f" ({framework})" if framework else "")
+    )
+    table.add_column("Month", style="cyan")
+    table.add_column("Analyses", justify="right")
+    table.add_column("Avg Mean ALE", justify="right")
+    table.add_column("Avg VaR 95%", justify="right")
+    table.add_column("Trend")
+
+    prev_ale: float | None = None
+    for row in rows:
+        year = int(row.year)
+        month = int(row.month)
+        month_str = f"{year}-{month:02d}"
+        avg_ale = float(row.avg_ale) if row.avg_ale else 0.0
+        avg_var = float(row.avg_var95) if row.avg_var95 else 0.0
+
+        # Trend indicator
+        if prev_ale is not None:
+            if avg_ale > prev_ale * 1.1:
+                trend = "[red]UP[/red]"
+            elif avg_ale < prev_ale * 0.9:
+                trend = "[green]DOWN[/green]"
+            else:
+                trend = "[dim]STABLE[/dim]"
+        else:
+            trend = "—"
+        prev_ale = avg_ale
+
+        table.add_row(
+            month_str,
+            str(row.analyses),
+            f"${avg_ale:,.0f}",
+            f"${avg_var:,.0f}",
+            trend,
+        )
+
+    console.print(table)

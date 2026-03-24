@@ -339,3 +339,404 @@ class POAMManager:
         )
         # W-4: ensure_aware before comparing scheduled_completion
         return [p for p in poams if ensure_aware(p.scheduled_completion) < now]
+
+    # ------------------------------------------------------------------
+    # POAM-1: Cost tracking
+    # ------------------------------------------------------------------
+
+    def update_cost(
+        self,
+        session: Session,
+        poam_id: str,
+        cost_estimate: float | None = None,
+        resource_allocation: str | None = None,
+        actor: str = "",
+    ) -> POAM:
+        """Update cost estimate and/or resource allocation on a POA&M.
+
+        Args:
+            session: SQLAlchemy session.
+            poam_id: ID of the POA&M.
+            cost_estimate: Estimated remediation cost in USD.
+            resource_allocation: Description of allocated resources.
+            actor: Who performed the update.
+
+        Returns:
+            Updated POAM.
+
+        Raises:
+            ValueError: If POA&M not found.
+        """
+        poam = session.get(POAM, poam_id)
+        if not poam:
+            raise ValueError(f"POA&M not found: {poam_id}")
+
+        changes: dict[str, object] = {}
+
+        if cost_estimate is not None:
+            changes["old_cost_estimate"] = poam.cost_estimate
+            poam.cost_estimate = cost_estimate
+            changes["new_cost_estimate"] = cost_estimate
+
+        if resource_allocation is not None:
+            changes["old_resource_allocation"] = poam.resource_allocation
+            poam.resource_allocation = resource_allocation
+            changes["new_resource_allocation"] = resource_allocation
+
+        poam.updated_by = actor or "system"
+        session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="poam_cost_updated",
+            entity_type="poam",
+            entity_id=str(poam.id),
+            actor=actor or "system",
+            metadata=changes,
+        )
+
+        log.info(
+            "Updated cost for POA&M %s: estimate=%s, allocation=%s",
+            poam_id,
+            cost_estimate,
+            resource_allocation,
+        )
+        return poam
+
+    def cost_summary(
+        self,
+        session: Session,
+        framework: str | None = None,
+    ) -> list[dict[str, object]]:
+        """Aggregate cost estimates by framework and status.
+
+        Args:
+            session: SQLAlchemy session.
+            framework: Optional framework filter.
+
+        Returns:
+            List of dicts with framework, status, count, total_cost.
+        """
+        from sqlalchemy import func
+
+        query = session.query(
+            POAM.framework,
+            POAM.status,
+            func.count(POAM.id).label("count"),
+            func.coalesce(func.sum(POAM.cost_estimate), 0.0).label("total_cost"),
+        ).group_by(POAM.framework, POAM.status)
+
+        if framework:
+            query = query.filter(POAM.framework == framework)
+
+        rows = query.all()
+        return [
+            {
+                "framework": row.framework,
+                "status": row.status,
+                "count": row.count,
+                "total_cost": float(row.total_cost),
+            }
+            for row in rows
+        ]
+
+    # ------------------------------------------------------------------
+    # POAM-3: Overdue / escalation helpers
+    # ------------------------------------------------------------------
+
+    def check_overdue(self, session: Session) -> list[POAM]:
+        """Find POA&Ms past scheduled_completion that are not in a terminal status.
+
+        This is used by the EscalationManager to determine which POA&Ms need
+        escalation notifications.
+
+        Returns:
+            List of overdue POAM rows with ensure_aware applied.
+        """
+        return self.get_overdue(session)
+
+    def get_overdue_summary(
+        self,
+        session: Session,
+    ) -> dict[str, dict[str, int]]:
+        """Count overdue POA&Ms grouped by severity and framework.
+
+        Returns:
+            Dict with 'by_severity' and 'by_framework' sub-dicts mapping
+            to counts.
+        """
+        overdue = self.get_overdue(session)
+        by_severity: dict[str, int] = {}
+        by_framework: dict[str, int] = {}
+
+        for p in overdue:
+            sev = p.severity or "unknown"
+            by_severity[sev] = by_severity.get(sev, 0) + 1
+            fw = p.framework or "unknown"
+            by_framework[fw] = by_framework.get(fw, 0) + 1
+
+        return {
+            "total": len(overdue),
+            "by_severity": by_severity,
+            "by_framework": by_framework,
+        }
+
+    # ------------------------------------------------------------------
+    # POAM-2: Dependencies
+    # ------------------------------------------------------------------
+
+    def add_dependency(
+        self,
+        session: Session,
+        poam_id: str,
+        depends_on_poam_id: str,
+        actor: str = "",
+    ) -> POAM:
+        """Record that *poam_id* depends on *depends_on_poam_id*.
+
+        Dependencies are stored in the milestones JSON array as entries
+        with ``"type": "dependency"``.
+
+        Args:
+            session: SQLAlchemy session.
+            poam_id: The POA&M that has the dependency.
+            depends_on_poam_id: The POA&M it depends on.
+            actor: Who recorded the dependency.
+
+        Returns:
+            Updated POAM.
+
+        Raises:
+            ValueError: If either POA&M is not found, or self-dependency.
+        """
+        if poam_id == depends_on_poam_id:
+            raise ValueError("A POA&M cannot depend on itself")
+
+        poam = session.get(POAM, poam_id)
+        if not poam:
+            raise ValueError(f"POA&M not found: {poam_id}")
+
+        dep_poam = session.get(POAM, depends_on_poam_id)
+        if not dep_poam:
+            raise ValueError(f"Dependent POA&M not found: {depends_on_poam_id}")
+
+        milestones = list(poam.milestones or [])
+
+        # Check for duplicate dependency
+        for ms in milestones:
+            if (
+                ms.get("type") == "dependency"
+                and ms.get("depends_on_poam_id") == depends_on_poam_id
+            ):
+                log.debug("Dependency %s -> %s already exists", poam_id, depends_on_poam_id)
+                return poam
+
+        milestones.append(
+            {
+                "type": "dependency",
+                "depends_on_poam_id": depends_on_poam_id,
+                "depends_on_framework": dep_poam.framework,
+                "depends_on_control_id": dep_poam.control_id,
+                "recorded_by": actor or "system",
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        poam.milestones = milestones
+        poam.updated_by = actor or "system"
+        session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="poam_dependency_added",
+            entity_type="poam",
+            entity_id=str(poam.id),
+            actor=actor or "system",
+            metadata={
+                "depends_on_poam_id": depends_on_poam_id,
+                "depends_on_framework": dep_poam.framework,
+                "depends_on_control_id": dep_poam.control_id,
+            },
+        )
+
+        log.info("Added dependency: POA&M %s depends on %s", poam_id, depends_on_poam_id)
+        return poam
+
+    def get_dependencies(self, session: Session, poam_id: str) -> list[dict[str, str]]:
+        """List dependencies for a POA&M.
+
+        Args:
+            session: SQLAlchemy session.
+            poam_id: ID of the POA&M.
+
+        Returns:
+            List of dependency dicts from the milestones JSON.
+
+        Raises:
+            ValueError: If POA&M not found.
+        """
+        poam = session.get(POAM, poam_id)
+        if not poam:
+            raise ValueError(f"POA&M not found: {poam_id}")
+
+        milestones = list(poam.milestones or [])
+        return [ms for ms in milestones if ms.get("type") == "dependency"]
+
+    def check_dependency_conflicts(self, session: Session, poam_id: str) -> list[dict[str, object]]:
+        """Check if any POA&Ms this one depends on are still open.
+
+        Args:
+            session: SQLAlchemy session.
+            poam_id: ID of the POA&M to check.
+
+        Returns:
+            List of conflict dicts with dependency info and current status.
+
+        Raises:
+            ValueError: If POA&M not found.
+        """
+        deps = self.get_dependencies(session, poam_id)
+        conflicts: list[dict[str, object]] = []
+
+        for dep in deps:
+            dep_id = dep.get("depends_on_poam_id", "")
+            dep_poam = session.get(POAM, dep_id)
+            if not dep_poam:
+                conflicts.append(
+                    {
+                        "depends_on_poam_id": dep_id,
+                        "status": "missing",
+                        "warning": "Dependent POA&M no longer exists",
+                    }
+                )
+                continue
+
+            if dep_poam.status not in _CLOSED_STATUSES:
+                conflicts.append(
+                    {
+                        "depends_on_poam_id": dep_id,
+                        "framework": dep_poam.framework,
+                        "control_id": dep_poam.control_id,
+                        "status": dep_poam.status,
+                        "warning": f"Dependent POA&M is still in '{dep_poam.status}' status",
+                    }
+                )
+
+        return conflicts
+
+    # ------------------------------------------------------------------
+    # POAM-4: Bulk operations
+    # ------------------------------------------------------------------
+
+    def bulk_update_status(
+        self,
+        session: Session,
+        new_status: str,
+        actor: str,
+        framework: str | None = None,
+        severity: str | None = None,
+        poam_ids: list[str] | None = None,
+    ) -> list[POAM]:
+        """Batch-update status for multiple POA&Ms filtered by framework/severity.
+
+        Uses the transition() method for each POA&M so status validation
+        is enforced.  POA&Ms that cannot transition are skipped with a
+        warning log.
+
+        Args:
+            session: SQLAlchemy session.
+            new_status: Target status.
+            actor: Who performed the update.
+            framework: Optional framework filter.
+            severity: Optional severity filter.
+            poam_ids: Optional explicit list of POA&M IDs.
+
+        Returns:
+            List of successfully transitioned POAMs.
+        """
+        query = session.query(POAM).filter(~POAM.status.in_(_CLOSED_STATUSES))
+
+        if framework:
+            query = query.filter(POAM.framework == framework)
+        if severity:
+            query = query.filter(POAM.severity == severity)
+        if poam_ids:
+            query = query.filter(POAM.id.in_(poam_ids))
+
+        candidates = query.all()
+        updated: list[POAM] = []
+
+        for poam in candidates:
+            try:
+                self.transition(session, str(poam.id), new_status, actor=actor)
+                updated.append(poam)
+            except ValueError as exc:
+                log.warning("Skipping POA&M %s during bulk update: %s", poam.id, exc)
+
+        log.info(
+            "Bulk status update to '%s': %d/%d POA&Ms updated by %s",
+            new_status,
+            len(updated),
+            len(candidates),
+            actor,
+        )
+        return updated
+
+    def bulk_assign(
+        self,
+        session: Session,
+        assigned_to: str,
+        actor: str,
+        framework: str | None = None,
+        severity: str | None = None,
+        poam_ids: list[str] | None = None,
+    ) -> list[POAM]:
+        """Batch-assign POA&Ms to a user.
+
+        Args:
+            session: SQLAlchemy session.
+            assigned_to: User to assign POA&Ms to.
+            actor: Who performed the assignment.
+            framework: Optional framework filter.
+            severity: Optional severity filter.
+            poam_ids: Optional explicit list of POA&M IDs.
+
+        Returns:
+            List of assigned POAMs.
+        """
+        query = session.query(POAM).filter(~POAM.status.in_(_CLOSED_STATUSES))
+
+        if framework:
+            query = query.filter(POAM.framework == framework)
+        if severity:
+            query = query.filter(POAM.severity == severity)
+        if poam_ids:
+            query = query.filter(POAM.id.in_(poam_ids))
+
+        poams = query.all()
+        for poam in poams:
+            poam.updated_by = assigned_to
+
+        session.flush()
+
+        if poams:
+            audit = AuditTrail(session)
+            audit.record(
+                action="poam_bulk_assigned",
+                entity_type="poam",
+                entity_id="batch",
+                actor=actor,
+                metadata={
+                    "assigned_to": assigned_to,
+                    "count": len(poams),
+                    "framework": framework,
+                    "severity": severity,
+                },
+            )
+
+        log.info(
+            "Bulk assigned %d POA&Ms to %s by %s",
+            len(poams),
+            assigned_to,
+            actor,
+        )
+        return poams

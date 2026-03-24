@@ -78,6 +78,10 @@ def export_for_grc_tool(
             return [_map_vanta(r) for r in result]
         elif tool == "drata":
             return [_map_drata(r) for r in result]
+        elif tool == "auditboard":
+            return [_map_auditboard(r) for r in result]
+        elif tool == "servicenow":
+            return [_map_servicenow(r) for r in result]
         else:
             return result
     finally:
@@ -103,6 +107,71 @@ def _map_drata(row: dict) -> dict:
         "risk_level": row.get("severity", ""),
         "last_check": row.get("assessed_at", ""),
     }
+
+
+def _map_auditboard(row: dict) -> dict:
+    """Map lake fields to AuditBoard's expected format.
+
+    AuditBoard expects: control_id, test_name, test_status, evidence,
+    last_tested, exceptions.
+    """
+    status = row.get("status", "")
+    test_status = {
+        "compliant": "Effective",
+        "non_compliant": "Ineffective",
+        "partial": "Partially Effective",
+        "not_assessed": "Not Tested",
+    }.get(status, "Not Tested")
+
+    return {
+        "control_id": row["control_id"],
+        "test_name": f"{row['framework']}/{row['control_id']}",
+        "test_status": test_status,
+        "evidence": f"{row.get('finding_count', 0)} finding(s) evaluated",
+        "last_tested": row.get("assessed_at", ""),
+        "exceptions": "Yes" if status == "non_compliant" else "No",
+    }
+
+
+def _map_servicenow(row: dict) -> dict:
+    """Map lake fields to ServiceNow GRC expected format.
+
+    ServiceNow expects: cmdb_ci, finding_type, severity, state,
+    assignment_group, remediation.
+    """
+    status = row.get("status", "")
+    state_map = {
+        "compliant": "Closed",
+        "non_compliant": "Open",
+        "partial": "Work in Progress",
+        "not_assessed": "New",
+    }
+
+    return {
+        "cmdb_ci": row.get("control_id", ""),
+        "finding_type": f"{row['framework']} Control Assessment",
+        "severity": _servicenow_severity(row.get("severity", "")),
+        "state": state_map.get(status, "New"),
+        "assignment_group": f"GRC-{row['framework']}",
+        "remediation": (
+            "Remediation required"
+            if status == "non_compliant"
+            else "Monitoring"
+            if status == "partial"
+            else "No action required"
+        ),
+    }
+
+
+def _servicenow_severity(severity: str) -> str:
+    """Map internal severity to ServiceNow priority scale (1-4)."""
+    return {
+        "critical": "1 - Critical",
+        "high": "2 - High",
+        "medium": "3 - Medium",
+        "low": "4 - Low",
+        "info": "4 - Low",
+    }.get(severity.lower(), "3 - Medium")
 
 
 # ---------------------------------------------------------------------------

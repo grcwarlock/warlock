@@ -19,8 +19,10 @@ from warlock.utils import ensure_aware
 from warlock.db.models import (
     ControlResult,
     Finding,
+    SystemDependency,
     SystemProfile,
 )
+from warlock.db.models import Vendor as VendorModel
 
 log = logging.getLogger(__name__)
 
@@ -397,6 +399,248 @@ class VendorRiskEngine:
             sum(1 for s in scores if s.overall_score < high_risk_threshold),
         )
         return scores
+
+    # --- RQM-14: Vendor Blast Radius ---
+
+    def compute_blast_radius(
+        self,
+        session: Session,
+        vendor_id: str,
+    ) -> dict[str, Any]:
+        """Compute blast radius if a vendor fails.
+
+        Queries SystemDependency records and SystemProfile connector_scope
+        to identify all systems, frameworks, and controls that depend on
+        the vendor. Updates the Vendor model with blast radius metrics.
+
+        Args:
+            session: SQLAlchemy session.
+            vendor_id: Vendor record ID.
+
+        Returns:
+            Dict with blast radius report including affected systems,
+            frameworks, control counts, and score.
+        """
+        vendor = session.query(VendorModel).filter(VendorModel.id == vendor_id).first()
+        if not vendor:
+            log.warning("Vendor %s not found", vendor_id)
+            return {"error": f"Vendor {vendor_id} not found"}
+
+        vendor_name_lower = vendor.name.lower()
+
+        # Strategy 1: Find systems via SystemDependency where vendor's
+        # system is a provider
+        affected_system_ids: set[str] = set()
+        affected_frameworks: set[str] = set()
+
+        # Find system profiles associated with this vendor via connector_scope
+        all_profiles = session.query(SystemProfile).all()
+        vendor_system_ids: set[str] = set()
+        for profile in all_profiles:
+            scopes = [s.lower() for s in (profile.connector_scope or [])]
+            if vendor_name_lower in scopes:
+                vendor_system_ids.add(profile.id)
+                affected_system_ids.add(profile.id)
+                for fw in profile.frameworks or []:
+                    affected_frameworks.add(fw)
+
+        # Strategy 2: Find downstream systems via SystemDependency
+        if vendor_system_ids:
+            deps = (
+                session.query(SystemDependency)
+                .filter(SystemDependency.provider_system_id.in_(list(vendor_system_ids)))
+                .all()
+            )
+            for dep in deps:
+                affected_system_ids.add(dep.consumer_system_id)
+                # Look up consumer's frameworks
+                consumer = (
+                    session.query(SystemProfile)
+                    .filter(SystemProfile.id == dep.consumer_system_id)
+                    .first()
+                )
+                if consumer:
+                    for fw in consumer.frameworks or []:
+                        affected_frameworks.add(fw)
+
+        # Count affected controls
+        affected_control_count = 0
+        control_details: list[dict[str, str]] = []
+        if affected_system_ids:
+            results = (
+                session.query(
+                    ControlResult.framework,
+                    ControlResult.control_id,
+                )
+                .filter(ControlResult.system_profile_id.in_(list(affected_system_ids)))
+                .distinct()
+                .all()
+            )
+            affected_control_count = len(results)
+            control_details = [
+                {"framework": r.framework, "control_id": r.control_id}
+                for r in results[:100]  # Cap details to prevent bloat
+            ]
+
+        # Compute blast radius score (0-100)
+        # Weighted: 40% system count, 30% framework count, 30% control density
+        total_systems = max(len(all_profiles), 1)
+        total_frameworks = 14  # Known framework count from CLAUDE.md
+
+        system_ratio = len(affected_system_ids) / total_systems
+        framework_ratio = len(affected_frameworks) / total_frameworks
+        control_ratio = min(affected_control_count / 1000.0, 1.0)  # Normalize to 1000
+
+        blast_score = round((system_ratio * 40 + framework_ratio * 30 + control_ratio * 30), 2)
+
+        # Update vendor record
+        vendor.blast_radius_score = blast_score
+        vendor.dependent_systems = sorted(affected_system_ids)
+        vendor.dependent_frameworks = sorted(affected_frameworks)
+        vendor.dependent_control_count = affected_control_count
+        session.flush()
+
+        log.info(
+            "Blast radius for vendor %s: score=%.1f, systems=%d, frameworks=%d, controls=%d",
+            vendor.name,
+            blast_score,
+            len(affected_system_ids),
+            len(affected_frameworks),
+            affected_control_count,
+        )
+
+        return {
+            "vendor_id": vendor_id,
+            "vendor_name": vendor.name,
+            "blast_radius_score": blast_score,
+            "affected_system_count": len(affected_system_ids),
+            "affected_system_ids": sorted(affected_system_ids),
+            "affected_frameworks": sorted(affected_frameworks),
+            "affected_framework_count": len(affected_frameworks),
+            "affected_control_count": affected_control_count,
+            "control_details": control_details,
+        }
+
+    # --- RQM-16: Impact Propagation (Vendor Failure Simulation) ---
+
+    def simulate_vendor_failure(
+        self,
+        session: Session,
+        vendor_id: str,
+    ) -> dict[str, Any]:
+        """Simulate the impact of a vendor failing completely.
+
+        Identifies all systems dependent on the vendor, all controls
+        assessed against those systems, and calculates the posture impact
+        if all vendor-dependent controls went non-compliant.
+
+        Args:
+            session: SQLAlchemy session.
+            vendor_id: Vendor record ID.
+
+        Returns:
+            Dict with impact assessment including affected posture percentage,
+            framework-level breakdown, and severity classification.
+        """
+        from sqlalchemy import func as sa_func
+
+        # First compute blast radius to get affected scope
+        blast = self.compute_blast_radius(session, vendor_id)
+        if "error" in blast:
+            return blast
+
+        affected_system_ids = blast["affected_system_ids"]
+        if not affected_system_ids:
+            return {
+                "vendor_id": vendor_id,
+                "vendor_name": blast["vendor_name"],
+                "impact_severity": "none",
+                "posture_impact_pct": 0.0,
+                "message": "No systems depend on this vendor",
+            }
+
+        # Get total control result count and affected count per framework
+        total_controls = session.query(sa_func.count(ControlResult.id)).scalar() or 0
+
+        affected_controls = (
+            session.query(ControlResult)
+            .filter(ControlResult.system_profile_id.in_(affected_system_ids))
+            .all()
+        )
+
+        # Framework-level impact breakdown
+        framework_impact: dict[str, dict[str, int]] = {}
+        compliant_at_risk = 0
+        for cr in affected_controls:
+            fw = cr.framework or "unknown"
+            if fw not in framework_impact:
+                framework_impact[fw] = {
+                    "total_affected": 0,
+                    "currently_compliant": 0,
+                    "currently_non_compliant": 0,
+                }
+            framework_impact[fw]["total_affected"] += 1
+            if cr.status == "compliant":
+                framework_impact[fw]["currently_compliant"] += 1
+                compliant_at_risk += 1
+            elif cr.status == "non_compliant":
+                framework_impact[fw]["currently_non_compliant"] += 1
+
+        # Posture impact: what percentage of currently-compliant controls
+        # would go non-compliant if the vendor fails
+        posture_impact_pct = (
+            round(compliant_at_risk / total_controls * 100, 2) if total_controls > 0 else 0.0
+        )
+
+        # Severity classification
+        if posture_impact_pct >= 25.0:
+            severity = "critical"
+        elif posture_impact_pct >= 10.0:
+            severity = "high"
+        elif posture_impact_pct >= 5.0:
+            severity = "medium"
+        elif posture_impact_pct > 0:
+            severity = "low"
+        else:
+            severity = "none"
+
+        # Per-framework posture impact
+        framework_breakdown: list[dict[str, Any]] = []
+        for fw, counts in sorted(framework_impact.items()):
+            fw_total = (
+                session.query(sa_func.count(ControlResult.id))
+                .filter(ControlResult.framework == fw)
+                .scalar()
+                or 0
+            )
+            fw_impact_pct = (
+                round(counts["currently_compliant"] / fw_total * 100, 2) if fw_total > 0 else 0.0
+            )
+            framework_breakdown.append(
+                {
+                    "framework": fw,
+                    "total_controls_in_framework": fw_total,
+                    "affected_controls": counts["total_affected"],
+                    "compliant_at_risk": counts["currently_compliant"],
+                    "posture_impact_pct": fw_impact_pct,
+                }
+            )
+
+        framework_breakdown.sort(key=lambda x: x["posture_impact_pct"], reverse=True)
+
+        return {
+            "vendor_id": vendor_id,
+            "vendor_name": blast["vendor_name"],
+            "impact_severity": severity,
+            "blast_radius_score": blast["blast_radius_score"],
+            "total_controls_in_system": total_controls,
+            "affected_control_count": len(affected_controls),
+            "compliant_controls_at_risk": compliant_at_risk,
+            "posture_impact_pct": posture_impact_pct,
+            "affected_system_count": len(affected_system_ids),
+            "affected_framework_count": blast["affected_framework_count"],
+            "framework_breakdown": framework_breakdown,
+        }
 
 
 def _create_vendor_risk_finding(

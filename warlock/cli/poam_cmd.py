@@ -73,6 +73,10 @@ def poam_group(ctx: click.Context) -> None:
     help="Severity level",
 )
 @click.option("--finding-id", "finding_id", default=None, help="Related finding ID")
+@click.option(
+    "--cost", "cost_estimate", default=None, type=float, help="Estimated remediation cost in USD"
+)
+@click.option("--resource-allocation", default=None, help="Resource allocation description")
 def poam_create(
     control: str,
     framework: str,
@@ -82,6 +86,8 @@ def poam_create(
     assigned_to: str | None,
     severity: str,
     finding_id: str | None,
+    cost_estimate: float | None,
+    resource_allocation: str | None,
 ) -> None:
     """Create a new POA&M entry."""
     import hashlib
@@ -116,6 +122,8 @@ def poam_create(
             created_at=now,
             updated_at=now,
             finding_id=finding_id,
+            cost_estimate=cost_estimate,
+            resource_allocation=resource_allocation,
         )
         session.add(poam)
 
@@ -672,3 +680,288 @@ def poam_deviation(
     if expiry:
         console.print(f"  Expiry:  {expiry}")
     console.print(f"\n[dim]Total deviation records: {len(poam.delay_justifications or [])}[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# cost — POAM-1
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("cost")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def poam_cost(framework: str | None, fmt: str) -> None:
+    """Show cost summary for POA&Ms aggregated by framework and status."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.poam import POAMManager
+
+    init_db()
+    mgr = POAMManager()
+    with get_session() as session:
+        rows = mgr.cost_summary(session, framework=framework)
+
+    if not rows:
+        console.print("[dim]No POA&Ms with cost data found.[/dim]")
+        return
+
+    if fmt == "json":
+        console.print_json(data=rows)
+        return
+
+    table = Table(title="POA&M Cost Summary")
+    table.add_column("Framework")
+    table.add_column("Status")
+    table.add_column("Count", justify="right")
+    table.add_column("Total Cost (USD)", justify="right")
+
+    grand_total = 0.0
+    grand_count = 0
+    for row in sorted(rows, key=lambda r: (r["framework"], r["status"])):
+        st_style = _ST_STYLES.get(row["status"], "")
+        table.add_row(
+            escape(row["framework"]),
+            f"[{st_style}]{row['status']}[/]",
+            str(row["count"]),
+            f"${row['total_cost']:,.2f}",
+        )
+        grand_total += row["total_cost"]
+        grand_count += row["count"]
+
+    table.add_section()
+    table.add_row("[bold]TOTAL[/bold]", "", str(grand_count), f"[bold]${grand_total:,.2f}[/bold]")
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# overdue — POAM-3
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("overdue")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def poam_overdue(framework: str | None, fmt: str) -> None:
+    """Show overdue POA&Ms with days overdue and severity."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.utils import ensure_aware
+    from warlock.workflows.poam import POAMManager
+
+    init_db()
+    mgr = POAMManager()
+    with get_session() as session:
+        overdue_poams = mgr.check_overdue(session)
+
+        if framework:
+            overdue_poams = [p for p in overdue_poams if p.framework == framework]
+
+        now = datetime.now(timezone.utc)
+        rows_data = []
+        for p in overdue_poams:
+            sched = ensure_aware(p.scheduled_completion)
+            days_overdue = (now - sched).days
+            rows_data.append(
+                {
+                    "id": p.id,
+                    "framework": p.framework,
+                    "control_id": p.control_id,
+                    "severity": p.severity,
+                    "status": p.status,
+                    "scheduled_completion": sched.strftime("%Y-%m-%d"),
+                    "days_overdue": days_overdue,
+                    "cost_estimate": p.cost_estimate,
+                }
+            )
+
+    if not rows_data:
+        console.print("[green]No overdue POA&Ms found.[/green]")
+        return
+
+    if fmt == "json":
+        console.print_json(data=rows_data)
+        return
+
+    table = Table(title=f"Overdue POA&Ms ({len(rows_data)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Framework")
+    table.add_column("Control")
+    table.add_column("Severity")
+    table.add_column("Status")
+    table.add_column("Due Date")
+    table.add_column("Days Overdue", justify="right")
+    table.add_column("Cost (USD)", justify="right")
+
+    for row in sorted(rows_data, key=lambda r: r["days_overdue"], reverse=True):
+        sev_style = _SEV_STYLES.get(row["severity"], "")
+        st_style = _ST_STYLES.get(row["status"], "")
+        days_style = "red bold" if row["days_overdue"] > 30 else "yellow"
+        cost_str = f"${row['cost_estimate']:,.2f}" if row["cost_estimate"] else "\u2014"
+        table.add_row(
+            row["id"][:8],
+            escape(row["framework"]),
+            escape(row["control_id"]),
+            f"[{sev_style}]{row['severity']}[/]",
+            f"[{st_style}]{row['status']}[/]",
+            row["scheduled_completion"],
+            f"[{days_style}]{row['days_overdue']}[/{days_style}]",
+            cost_str,
+        )
+
+    console.print(table)
+
+    # Summary by severity
+    summary = mgr.get_overdue_summary(session)
+    if summary.get("by_severity"):
+        console.print("\n[bold]By severity:[/bold]", end="  ")
+        parts = []
+        for sev, cnt in sorted(summary["by_severity"].items()):
+            sev_style = _SEV_STYLES.get(sev, "")
+            parts.append(f"[{sev_style}]{sev}[/]: {cnt}")
+        console.print("  ".join(parts))
+
+
+# ---------------------------------------------------------------------------
+# bulk-update — POAM-4
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("bulk-update")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option(
+    "--severity",
+    "-s",
+    default=None,
+    type=click.Choice(["critical", "high", "moderate", "low"]),
+    help="Filter by severity",
+)
+@click.option(
+    "--status",
+    required=True,
+    type=click.Choice(
+        ["open", "in_progress", "remediated", "verified", "completed", "risk_accepted", "cancelled"]
+    ),
+    help="Target status",
+)
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+def poam_bulk_update(
+    framework: str | None,
+    severity: str | None,
+    status: str,
+    yes: bool,
+) -> None:
+    """Batch update status for multiple POA&Ms by framework/severity."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import POAM
+    from warlock.workflows.poam import POAMManager, _CLOSED_STATUSES
+
+    init_db()
+    actor = _get_actor()
+
+    with get_session() as session:
+        # Preview how many will be affected
+        query = session.query(POAM).filter(~POAM.status.in_(_CLOSED_STATUSES))
+        if framework:
+            query = query.filter(POAM.framework == framework)
+        if severity:
+            query = query.filter(POAM.severity == severity)
+        count = query.count()
+
+        if count == 0:
+            console.print("[dim]No matching POA&Ms found.[/dim]")
+            return
+
+        if not yes:
+            filters = []
+            if framework:
+                filters.append(f"framework={framework}")
+            if severity:
+                filters.append(f"severity={severity}")
+            filter_str = ", ".join(filters) if filters else "all open"
+            if not click.confirm(f"Update {count} POA&Ms ({filter_str}) to status '{status}'?"):
+                console.print("[dim]Cancelled.[/dim]")
+                return
+
+        mgr = POAMManager()
+        updated = mgr.bulk_update_status(
+            session,
+            new_status=status,
+            actor=actor,
+            framework=framework,
+            severity=severity,
+        )
+        session.commit()
+
+    console.print(f"[green]Updated {len(updated)}/{count} POA&Ms to '{status}'.[/green]")
+    if len(updated) < count:
+        console.print(
+            f"[yellow]{count - len(updated)} POA&Ms skipped (invalid transition).[/yellow]"
+        )
+
+
+# ---------------------------------------------------------------------------
+# bulk-assign — POAM-4
+# ---------------------------------------------------------------------------
+
+
+@poam_group.command("bulk-assign")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option(
+    "--severity",
+    "-s",
+    default=None,
+    type=click.Choice(["critical", "high", "moderate", "low"]),
+    help="Filter by severity",
+)
+@click.option("--assignee", "-a", required=True, help="User to assign POA&Ms to")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+def poam_bulk_assign(
+    framework: str | None,
+    severity: str | None,
+    assignee: str,
+    yes: bool,
+) -> None:
+    """Batch assign POA&Ms to a user by framework/severity."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import POAM
+    from warlock.workflows.poam import POAMManager, _CLOSED_STATUSES
+
+    init_db()
+    actor = _get_actor()
+
+    with get_session() as session:
+        query = session.query(POAM).filter(~POAM.status.in_(_CLOSED_STATUSES))
+        if framework:
+            query = query.filter(POAM.framework == framework)
+        if severity:
+            query = query.filter(POAM.severity == severity)
+        count = query.count()
+
+        if count == 0:
+            console.print("[dim]No matching POA&Ms found.[/dim]")
+            return
+
+        if not yes:
+            filters = []
+            if framework:
+                filters.append(f"framework={framework}")
+            if severity:
+                filters.append(f"severity={severity}")
+            filter_str = ", ".join(filters) if filters else "all open"
+            if not click.confirm(f"Assign {count} POA&Ms ({filter_str}) to '{assignee}'?"):
+                console.print("[dim]Cancelled.[/dim]")
+                return
+
+        mgr = POAMManager()
+        assigned = mgr.bulk_assign(
+            session,
+            assigned_to=assignee,
+            actor=actor,
+            framework=framework,
+            severity=severity,
+        )
+        session.commit()
+
+    console.print(f"[green]Assigned {len(assigned)} POA&Ms to '{escape(assignee)}'.[/green]")

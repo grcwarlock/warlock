@@ -1,4 +1,4 @@
-.PHONY: install test lint migrate dev clean seed help qa qa-quick verify-docs demo cli
+.PHONY: install test lint migrate dev clean seed reset help qa qa-quick verify-docs demo cli
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -35,13 +35,13 @@ dev: ## Start local dev environment (docker-compose)
 seed: ## Run demo seed
 	python scripts/demo_seed.py
 
-demo: ## Spin up full demo (DB + OPA + API + seed) in one command
-	./scripts/demo.sh
-	@echo ""
-	@echo "  ⚠  Run this to use CLI commands:"
-	@echo ""
-	@echo "     source .venv/bin/activate"
-	@echo ""
+reset: ## Reset SQLite DB and seed fresh data
+	rm -f warlock.db
+	.venv/bin/alembic upgrade head
+	.venv/bin/python scripts/demo_seed.py
+
+demo: ## Spin up full demo (DB + OPA + API + seed) and drop into CLI-ready shell
+	@./scripts/demo.sh
 
 cli: ## Activate venv and show available commands
 	@echo "Run this in your terminal:"

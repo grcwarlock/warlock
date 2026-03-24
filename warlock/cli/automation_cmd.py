@@ -1297,3 +1297,568 @@ def schedules_set(name: str, cron: str, enabled: bool) -> None:
         "[dim]To execute on schedule, configure the Warlock scheduler or an "
         "external cron to run 'warlock automation run-all'.[/dim]"
     )
+
+
+# ---------------------------------------------------------------------------
+# ci-status (AUT-5)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("ci-status")
+@click.option("--limit", "-n", default=10, help="Number of recent runs to show")
+def ci_status(limit: int) -> None:
+    """Show recent pipeline runs and compliance gate results.
+
+    Queries ConnectorRun records and ControlResult aggregates to display
+    a summary of recent pipeline executions and their compliance posture.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ConnectorRun, ControlResult
+    from warlock.utils import ensure_aware
+
+    init_db()
+
+    with get_session() as session:
+        runs = (
+            session.query(ConnectorRun).order_by(ConnectorRun.started_at.desc()).limit(limit).all()
+        )
+
+        if not runs:
+            console.print(
+                "[dim]No pipeline runs found. Run 'warlock automation run-all' first.[/dim]"
+            )
+            return
+
+        # Get aggregate compliance stats per framework
+        all_results = session.query(ControlResult).all()
+        frameworks: dict[str, dict[str, int]] = {}
+        for r in all_results:
+            fw = r.framework
+            if fw not in frameworks:
+                frameworks[fw] = {"total": 0, "compliant": 0, "non_compliant": 0}
+            frameworks[fw]["total"] += 1
+            if r.status == "compliant":
+                frameworks[fw]["compliant"] += 1
+            elif r.status == "non_compliant":
+                frameworks[fw]["non_compliant"] += 1
+
+    table = Table(title=f"Recent Pipeline Runs (last {limit})")
+    table.add_column("Run ID", style="dim", max_width=8)
+    table.add_column("Connector", style="cyan")
+    table.add_column("Status")
+    table.add_column("Events", justify="right")
+    table.add_column("Errors", justify="right")
+    table.add_column("Started", style="dim")
+    table.add_column("Duration", style="dim")
+
+    for run in runs:
+        status_color = {"success": "green", "error": "red", "partial": "yellow"}.get(
+            run.status, "dim"
+        )
+        started = ensure_aware(run.started_at).strftime("%Y-%m-%d %H:%M") if run.started_at else "—"
+        duration = f"{run.duration_seconds:.1f}s" if run.duration_seconds else "—"
+        table.add_row(
+            run.id[:8],
+            escape(run.connector_name),
+            f"[{status_color}]{run.status}[/]",
+            str(run.event_count),
+            str(run.error_count),
+            started,
+            duration,
+        )
+
+    console.print(table)
+
+    if frameworks:
+        console.print("\n[bold]Compliance Summary by Framework:[/bold]")
+        gate_table = Table()
+        gate_table.add_column("Framework", style="cyan")
+        gate_table.add_column("Total", justify="right")
+        gate_table.add_column("Compliant", justify="right")
+        gate_table.add_column("Non-Compliant", justify="right")
+        gate_table.add_column("Score", justify="right")
+        gate_table.add_column("Gate Result")
+
+        for fw, counts in sorted(frameworks.items()):
+            score = (counts["compliant"] / counts["total"] * 100) if counts["total"] else 0.0
+            gate_result = "[green]PASS[/green]" if score >= 80.0 else "[red]FAIL[/red]"
+            score_color = "green" if score >= 80.0 else "red"
+            gate_table.add_row(
+                fw,
+                str(counts["total"]),
+                str(counts["compliant"]),
+                str(counts["non_compliant"]),
+                f"[{score_color}]{score:.1f}%[/]",
+                gate_result,
+            )
+
+        console.print(gate_table)
+
+
+# ---------------------------------------------------------------------------
+# ci-badge (AUT-5)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("ci-badge")
+@click.option("--framework", "-f", required=True, help="Framework to generate badge for")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["markdown", "html", "json"]),
+    default="markdown",
+    help="Badge output format",
+)
+def ci_badge(framework: str, fmt: str) -> None:
+    """Generate a compliance badge (markdown/HTML/JSON) for a framework.
+
+    Shows pass/fail status based on the current compliance score for use
+    in README files, dashboards, or CI/CD pipelines.
+
+    Example:
+
+    \b
+      warlock automation ci-badge --framework soc2 --format markdown
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+
+    with get_session() as session:
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
+
+    if not results:
+        _error(f"No control results found for framework '{framework}'. Run pipeline first.")
+
+    total = len(results)
+    compliant = sum(1 for r in results if r.status == "compliant")
+    score = (compliant / total * 100) if total else 0.0
+    status = "passing" if score >= 80.0 else "failing"
+    color = "brightgreen" if score >= 80.0 else "red"
+
+    label = f"{framework} compliance"
+    message = f"{score:.0f}%25 {status}"
+
+    if fmt == "markdown":
+        badge_url = f"https://img.shields.io/badge/{label.replace(' ', '%20')}-{message.replace(' ', '%20')}-{color}"
+        console.print(f"![{label}]({badge_url})")
+    elif fmt == "html":
+        badge_url = f"https://img.shields.io/badge/{label.replace(' ', '%20')}-{message.replace(' ', '%20')}-{color}"
+        console.print(f'<img src="{badge_url}" alt="{label}" />')
+    elif fmt == "json":
+        badge_json = {
+            "schemaVersion": 1,
+            "label": label,
+            "message": f"{score:.0f}% {status}",
+            "color": color,
+            "framework": framework,
+            "total_controls": total,
+            "compliant_controls": compliant,
+            "score": round(score, 1),
+        }
+        console.print(json.dumps(badge_json, indent=2))
+
+
+# ---------------------------------------------------------------------------
+# github-check (AUT-8)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("github-check")
+@click.option("--framework", "-f", required=True, help="Framework to evaluate")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["json", "summary"]),
+    default="json",
+    help="Output format (json for API, summary for human-readable)",
+)
+def github_check(framework: str, fmt: str) -> None:
+    """Generate GitHub-compatible check run output for a framework.
+
+    Produces JSON suitable for the GitHub Checks API
+    (POST /repos/{owner}/{repo}/check-runs) or a human-readable summary.
+
+    Example:
+
+    \b
+      warlock automation github-check --framework soc2 | gh api \\
+        repos/OWNER/REPO/check-runs --input -
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+
+    with get_session() as session:
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
+
+    if not results:
+        _error(f"No control results found for framework '{framework}'. Run pipeline first.")
+
+    total = len(results)
+    compliant = sum(1 for r in results if r.status == "compliant")
+    non_compliant = sum(1 for r in results if r.status == "non_compliant")
+    partial = sum(1 for r in results if r.status == "partial")
+    score = (compliant / total * 100) if total else 0.0
+
+    if score >= 80.0:
+        conclusion = "success"
+    elif score >= 50.0:
+        conclusion = "neutral"
+    else:
+        conclusion = "failure"
+
+    summary = (
+        f"**{framework.upper()} Compliance Check**\n\n"
+        f"| Metric | Value |\n|---|---|\n"
+        f"| Total controls | {total} |\n"
+        f"| Compliant | {compliant} |\n"
+        f"| Non-compliant | {non_compliant} |\n"
+        f"| Partial | {partial} |\n"
+        f"| Score | {score:.1f}% |\n"
+    )
+
+    if fmt == "json":
+        check_run = {
+            "name": f"warlock/{framework}-compliance",
+            "status": "completed",
+            "conclusion": conclusion,
+            "output": {
+                "title": f"{framework.upper()} Compliance: {score:.1f}%",
+                "summary": summary,
+                "annotations": [],
+            },
+        }
+
+        # Add annotations for non-compliant controls (up to 50 per GitHub API limit)
+        nc_results = [r for r in results if r.status == "non_compliant"][:50]
+        for r in nc_results:
+            check_run["output"]["annotations"].append(
+                {
+                    "path": f"controls/{framework}/{r.control_id}",
+                    "start_line": 1,
+                    "end_line": 1,
+                    "annotation_level": "warning",
+                    "message": f"Control {r.control_id} is non-compliant (severity: {r.severity})",
+                    "title": f"{r.control_id} non-compliant",
+                }
+            )
+
+        console.print(json.dumps(check_run, indent=2))
+    else:
+        console.print(f"\n[bold]GitHub Check: {framework.upper()} Compliance[/bold]")
+        console.print(f"  Conclusion:    {conclusion}")
+        console.print(f"  Score:         {score:.1f}%")
+        console.print(f"  Total:         {total}")
+        console.print(f"  Compliant:     {compliant}")
+        console.print(f"  Non-compliant: {non_compliant}")
+        console.print(f"  Partial:       {partial}")
+
+
+# ---------------------------------------------------------------------------
+# gitlab-status (AUT-8)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("gitlab-status")
+@click.option("--framework", "-f", required=True, help="Framework to evaluate")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["json", "summary"]),
+    default="json",
+    help="Output format (json for API, summary for human-readable)",
+)
+def gitlab_status(framework: str, fmt: str) -> None:
+    """Generate GitLab CI-compatible status output for a framework.
+
+    Produces JSON suitable for GitLab CI external status checks or
+    commit status API (POST /projects/:id/statuses/:sha).
+
+    Example:
+
+    \b
+      warlock automation gitlab-status --framework soc2
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+
+    with get_session() as session:
+        results = session.query(ControlResult).filter(ControlResult.framework == framework).all()
+
+    if not results:
+        _error(f"No control results found for framework '{framework}'. Run pipeline first.")
+
+    total = len(results)
+    compliant = sum(1 for r in results if r.status == "compliant")
+    non_compliant = sum(1 for r in results if r.status == "non_compliant")
+    score = (compliant / total * 100) if total else 0.0
+
+    if score >= 80.0:
+        state = "success"
+    elif score >= 50.0:
+        state = "success"  # GitLab uses success/failed/pending, no "neutral"
+    else:
+        state = "failed"
+
+    description = (
+        f"{framework.upper()}: {score:.1f}% compliant "
+        f"({compliant}/{total} controls, {non_compliant} non-compliant)"
+    )
+
+    if fmt == "json":
+        status_payload = {
+            "state": state,
+            "name": f"warlock/{framework}-compliance",
+            "description": description,
+            "target_url": "",
+            "coverage": round(score, 1),
+        }
+        console.print(json.dumps(status_payload, indent=2))
+    else:
+        state_color = "green" if state == "success" else "red"
+        console.print(f"\n[bold]GitLab Status: {framework.upper()} Compliance[/bold]")
+        console.print(f"  State:         [{state_color}]{state}[/]")
+        console.print(f"  Score:         {score:.1f}%")
+        console.print(f"  Description:   {description}")
+
+
+# ---------------------------------------------------------------------------
+# auto-close (AUT-9)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("auto-close")
+@click.option(
+    "--stale-days",
+    "-d",
+    default=30,
+    help="Close issues whose linked finding has no new occurrence in N days (default: 30)",
+)
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without closing")
+@click.option("--limit", "-n", default=100, help="Max issues to close in one run")
+def auto_close(stale_days: int, dry_run: bool, limit: int) -> None:
+    """Auto-close issues whose linked finding has not been reproduced.
+
+    Finds open Issues where the linked Finding's source has not produced
+    a new finding in the last N days, indicating the issue may be resolved.
+    Closes them with an audit trail entry noting 'auto-closed: finding not reproduced'.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Finding, Issue
+
+    init_db()
+    actor = _get_actor()
+    cutoff = _utcnow() - timedelta(days=stale_days)
+
+    with get_session() as session:
+        # Get all open issues that have a linked finding
+        open_issues = (
+            session.query(Issue)
+            .filter(
+                Issue.status.in_(["open", "assigned"]),
+                Issue.finding_id.isnot(None),
+            )
+            .all()
+        )
+
+        if not open_issues:
+            console.print("[green]No open issues with linked findings to evaluate.[/green]")
+            return
+
+        # For each issue, check if the linked finding's source has produced
+        # new findings since the cutoff
+        candidates: list[Issue] = []
+        for issue in open_issues:
+            finding = session.query(Finding).filter(Finding.id == issue.finding_id).first()
+            if not finding:
+                continue
+
+            # Check for recent findings from the same source
+            recent = (
+                session.query(Finding.id)
+                .filter(
+                    Finding.source == finding.source,
+                    Finding.provider == finding.provider,
+                    Finding.observation_type == finding.observation_type,
+                    Finding.ingested_at > cutoff,
+                )
+                .first()
+            )
+            if recent is None:
+                candidates.append(issue)
+
+            if len(candidates) >= limit:
+                break
+
+    if not candidates:
+        console.print(
+            f"[green]No stale issues found (all linked findings have "
+            f"occurrences within the last {stale_days} days).[/green]"
+        )
+        return
+
+    table = Table(title=f"Issues to Auto-Close (no findings in last {stale_days} days)")
+    table.add_column("Issue ID", style="dim", max_width=8)
+    table.add_column("Priority")
+    table.add_column("Title", max_width=50)
+    table.add_column("Status")
+    table.add_column("Finding ID", style="dim", max_width=8)
+
+    for issue in candidates[:20]:
+        table.add_row(
+            issue.id[:8],
+            issue.priority,
+            escape((issue.title or "")[:50]),
+            issue.status,
+            (issue.finding_id or "")[:8],
+        )
+    if len(candidates) > 20:
+        console.print(f"[dim]... and {len(candidates) - 20} more[/dim]")
+    console.print(table)
+
+    console.print(f"\n[bold]{len(candidates)}[/bold] issue(s) eligible for auto-close.")
+
+    if dry_run:
+        console.print(
+            f"\n[dim](dry-run) Would close {len(candidates)} issue(s). "
+            f"Pass without --dry-run to execute.[/dim]"
+        )
+        return
+
+    closed = 0
+    now = _utcnow()
+
+    with get_session() as session:
+        for issue in candidates:
+            db_issue = session.query(Issue).filter(Issue.id == issue.id).first()
+            if db_issue:
+                db_issue.status = "closed"
+                db_issue.updated_at = now
+                db_issue.updated_by = actor
+                closed += 1
+
+        session.commit()
+
+    console.print(
+        f"[green]Auto-closed {closed} issue(s) "
+        f"(reason: finding not reproduced in {stale_days} days).[/green]"
+    )
+
+
+# ---------------------------------------------------------------------------
+# auto-assign (AUT-10)
+# ---------------------------------------------------------------------------
+
+
+@automation.command("auto-assign")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview without assigning")
+@click.option("--limit", "-n", default=100, help="Max issues to assign in one run")
+def auto_assign(dry_run: bool, limit: int) -> None:
+    """Auto-assign unassigned issues based on resource owner.
+
+    Finds open Issues with no assigned_to value and attempts to determine
+    the resource owner from the linked Finding's SystemProfile (system_owner)
+    or account_id. Assigns the issue to the identified owner.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Finding, Issue, SystemProfile
+
+    init_db()
+    actor = _get_actor()
+
+    with get_session() as session:
+        # Get unassigned open issues
+        unassigned = (
+            session.query(Issue)
+            .filter(
+                Issue.status.in_(["open"]),
+                (Issue.assigned_to.is_(None)) | (Issue.assigned_to == ""),
+            )
+            .limit(limit)
+            .all()
+        )
+
+        if not unassigned:
+            console.print("[green]No unassigned open issues found.[/green]")
+            return
+
+        # Build a cache of system_profile owners
+        profiles = {p.id: p for p in session.query(SystemProfile).all()}
+
+        # Resolve owners for each issue
+        assignments: list[tuple[Issue, str]] = []
+        for issue in unassigned:
+            owner: str | None = None
+
+            if issue.finding_id:
+                finding = session.query(Finding).filter(Finding.id == issue.finding_id).first()
+                if finding:
+                    # Try SystemProfile first
+                    if finding.system_profile_id and finding.system_profile_id in profiles:
+                        profile = profiles[finding.system_profile_id]
+                        owner = profile.system_owner_email or profile.system_owner
+
+                    # Fall back to account_id as a pseudo-owner identifier
+                    if not owner and finding.account_id:
+                        owner = f"account:{finding.account_id}"
+
+            if owner:
+                assignments.append((issue, owner))
+
+    if not assignments:
+        console.print("[dim]No owners could be resolved for unassigned issues.[/dim]")
+        console.print(
+            "[dim]Ensure findings are linked to SystemProfiles with system_owner set, "
+            "or that findings have account_id populated.[/dim]"
+        )
+        return
+
+    table = Table(title="Issues to Auto-Assign")
+    table.add_column("Issue ID", style="dim", max_width=8)
+    table.add_column("Priority")
+    table.add_column("Title", max_width=45)
+    table.add_column("Resolved Owner", style="cyan")
+
+    for issue, owner in assignments[:20]:
+        table.add_row(
+            issue.id[:8],
+            issue.priority,
+            escape((issue.title or "")[:45]),
+            escape(owner),
+        )
+    if len(assignments) > 20:
+        console.print(f"[dim]... and {len(assignments) - 20} more[/dim]")
+    console.print(table)
+
+    console.print(f"\n[bold]{len(assignments)}[/bold] issue(s) can be auto-assigned.")
+
+    if dry_run:
+        console.print(
+            f"\n[dim](dry-run) Would assign {len(assignments)} issue(s). "
+            f"Pass without --dry-run to execute.[/dim]"
+        )
+        return
+
+    assigned = 0
+    now = _utcnow()
+
+    with get_session() as session:
+        for issue, owner in assignments:
+            db_issue = session.query(Issue).filter(Issue.id == issue.id).first()
+            if db_issue:
+                db_issue.assigned_to = owner
+                db_issue.assigned_by = actor
+                db_issue.assigned_at = now
+                db_issue.status = "assigned"
+                db_issue.updated_at = now
+                db_issue.updated_by = actor
+                assigned += 1
+
+        session.commit()
+
+    console.print(f"[green]Auto-assigned {assigned} issue(s).[/green]")

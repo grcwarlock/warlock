@@ -15,9 +15,13 @@ import hmac
 import json
 import logging
 import os
+import smtplib
 import time
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Any
 
 try:
@@ -34,6 +38,34 @@ log = logging.getLogger(__name__)
 
 TIMEOUT = 15.0
 MAX_RETRIES = 1
+
+# ---------------------------------------------------------------------------
+# Email rate limiter: max 100 emails per rolling hour window
+# ---------------------------------------------------------------------------
+
+_email_rate_lock = threading.Lock()
+_email_send_timestamps: list[float] = []
+_EMAIL_RATE_LIMIT = 100
+_EMAIL_RATE_WINDOW_SECONDS = 3600.0
+
+
+def _check_email_rate_limit() -> bool:
+    """Return True if sending is allowed under the rate limit.
+
+    Maintains an in-memory list of send timestamps and prunes entries
+    older than the 1-hour window. Thread-safe.
+    """
+    now = time.monotonic()
+    with _email_rate_lock:
+        # Prune old entries
+        cutoff = now - _EMAIL_RATE_WINDOW_SECONDS
+        while _email_send_timestamps and _email_send_timestamps[0] < cutoff:
+            _email_send_timestamps.pop(0)
+        if len(_email_send_timestamps) >= _EMAIL_RATE_LIMIT:
+            return False
+        _email_send_timestamps.append(now)
+        return True
+
 
 # ---------------------------------------------------------------------------
 # WebhookSubscriber (#34)
@@ -360,7 +392,7 @@ class AlertRouter:
         self._last_error: str = ""
         # W-9: Alert deduplication cache
         self._sent_cache: dict[str, datetime] = {}
-        self.cooldown_minutes: int = 60
+        self.cooldown_minutes: int = self._load_cooldown_minutes()
 
     def evaluate_and_alert(
         self,
@@ -512,30 +544,192 @@ class AlertRouter:
         return self._post_with_retry(config.url, payload)
 
     def send_email(self, config: AlertConfig, posture: ControlPosture) -> bool:
-        """Send email alert (placeholder -- SMTP not configured).
+        """Send an email alert for a posture degradation via SMTP.
 
-        Email delivery requires SMTP configuration which varies by deployment.
-        This method logs the alert details. To enable actual email sending,
-        configure an SMTP relay or integrate with a transactional email service
-        (SES, SendGrid, Postmark).
+        Reads SMTP configuration from ``get_settings()``. Supports both
+        STARTTLS (port 587) and implicit SSL (port 465). Falls back to
+        a log warning if SMTP is not configured.
 
         Args:
-            config: Alert configuration.
+            config: Alert configuration. ``config.url`` is used as the
+                recipient email address.
             posture: Control posture triggering the alert.
 
         Returns:
-            False (W-8: email sending not implemented).
+            True if sent successfully, False otherwise.
         """
-        log.warning(
-            "EMAIL ALERT (not implemented -- SMTP not configured): "
-            "framework=%s control=%s status=%s score=%.1f",
-            posture.framework,
-            posture.control_id,
-            posture.status,
-            posture.posture_score,
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if not settings.smtp_host:
+            log.warning(
+                "Email alert skipped — smtp_host not configured: "
+                "framework=%s control=%s status=%s score=%.1f",
+                posture.framework,
+                posture.control_id,
+                posture.status,
+                posture.posture_score,
+            )
+            self._last_error = "SMTP not configured (smtp_host is empty)"
+            return False
+
+        recipient = config.url
+        if not recipient:
+            log.warning("Email alert config has no recipient (url field)")
+            self._last_error = "No recipient email address"
+            return False
+
+        subject = (
+            f"[Warlock GRC] Compliance Alert: {posture.framework} / "
+            f"{posture.control_id} — {posture.status}"
         )
-        self._last_error = "Email sending not implemented"
-        return False
+        body_html = _build_posture_email_html(posture)
+
+        return self._smtp_send(
+            settings=settings,
+            recipient=recipient,
+            subject=subject,
+            body_html=body_html,
+        )
+
+    def send_escalation_email(
+        self,
+        recipient: str,
+        subject: str,
+        body_html: str,
+    ) -> bool:
+        """Send an escalation notification email via SMTP.
+
+        Called by the escalation engine. Uses the same SMTP transport
+        as ``send_email`` but accepts pre-built subject and body.
+
+        Args:
+            recipient: Destination email address.
+            subject: Email subject line.
+            body_html: HTML body content.
+
+        Returns:
+            True if sent successfully, False otherwise.
+        """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if not settings.smtp_host:
+            log.warning("Escalation email skipped — smtp_host not configured")
+            self._last_error = "SMTP not configured (smtp_host is empty)"
+            return False
+
+        return self._smtp_send(
+            settings=settings,
+            recipient=recipient,
+            subject=subject,
+            body_html=body_html,
+        )
+
+    def _smtp_send(
+        self,
+        settings: Any,
+        recipient: str,
+        subject: str,
+        body_html: str,
+    ) -> bool:
+        """Low-level SMTP send with rate limiting and error handling.
+
+        Supports STARTTLS (port 587) and implicit SSL (port 465).
+        Authenticates when ``smtp_user`` and ``smtp_password`` are set.
+
+        Args:
+            settings: Application settings object with smtp_* fields.
+            recipient: Destination email address.
+            subject: Email subject line.
+            body_html: HTML body content.
+
+        Returns:
+            True on success, False on failure.
+        """
+        if not _check_email_rate_limit():
+            log.warning(
+                "Email rate limit exceeded (%d/hour) — dropping email to %s",
+                _EMAIL_RATE_LIMIT,
+                recipient,
+            )
+            self._last_error = "Rate limit exceeded"
+            return False
+
+        msg = MIMEMultipart("alternative")
+        msg["From"] = settings.smtp_from
+        msg["To"] = recipient
+        msg["Subject"] = subject
+        msg["X-Mailer"] = "Warlock GRC"
+
+        # Plain text fallback
+        import html as html_mod
+
+        plain_text = html_mod.unescape(
+            body_html.replace("<br>", "\n")
+            .replace("<br/>", "\n")
+            .replace("</p>", "\n")
+            .replace("</tr>", "\n")
+            .replace("</td>", " | ")
+        )
+        # Strip remaining tags
+        import re
+
+        plain_text = re.sub(r"<[^>]+>", "", plain_text)
+
+        msg.attach(MIMEText(plain_text, "plain", "utf-8"))
+        msg.attach(MIMEText(body_html, "html", "utf-8"))
+
+        try:
+            if settings.smtp_port == 465:
+                # Implicit SSL
+                with smtplib.SMTP_SSL(
+                    settings.smtp_host,
+                    settings.smtp_port,
+                    timeout=TIMEOUT,
+                ) as server:
+                    if settings.smtp_user and settings.smtp_password:
+                        server.login(settings.smtp_user, settings.smtp_password)
+                    server.send_message(msg)
+            else:
+                # STARTTLS or plain
+                with smtplib.SMTP(
+                    settings.smtp_host,
+                    settings.smtp_port,
+                    timeout=TIMEOUT,
+                ) as server:
+                    server.ehlo()
+                    if settings.smtp_tls:
+                        server.starttls()
+                        server.ehlo()
+                    if settings.smtp_user and settings.smtp_password:
+                        server.login(settings.smtp_user, settings.smtp_password)
+                    server.send_message(msg)
+
+            log.info(
+                "Email sent successfully: to=%s subject=%s",
+                recipient,
+                subject[:80],
+            )
+            return True
+
+        except smtplib.SMTPAuthenticationError as exc:
+            self._last_error = f"SMTP authentication failed: {exc}"
+            log.error("SMTP auth failed for %s: %s", settings.smtp_host, exc)
+            return False
+        except smtplib.SMTPException as exc:
+            self._last_error = f"SMTP error: {exc}"
+            log.error("SMTP error sending to %s: %s", recipient, exc)
+            return False
+        except OSError as exc:
+            self._last_error = f"SMTP connection error: {exc}"
+            log.error(
+                "Failed to connect to SMTP %s:%d: %s",
+                settings.smtp_host,
+                settings.smtp_port,
+                exc,
+            )
+            return False
 
     @staticmethod
     def _post_with_retry(
@@ -585,3 +779,98 @@ class AlertRouter:
 
         log.error("Alert POST to %s failed after retries: %s", url, last_error)
         return False
+
+    @staticmethod
+    def _load_cooldown_minutes() -> int:
+        """Load cooldown from config, falling back to 60 minutes.
+
+        Reads ``escalation_check_interval_minutes`` from the application
+        settings. If config loading fails (e.g. during early startup),
+        defaults to 60 minutes.
+        """
+        try:
+            from warlock.config import get_settings
+
+            settings = get_settings()
+            return settings.escalation_check_interval_minutes or 60
+        except Exception:
+            return 60
+
+
+# ---------------------------------------------------------------------------
+# Email HTML template for posture alerts
+# ---------------------------------------------------------------------------
+
+
+def _build_posture_email_html(posture: ControlPosture) -> str:
+    """Build an HTML email body for a posture degradation alert.
+
+    The template includes severity-coloured status, posture score,
+    finding counts, evidence freshness, and a footer with the
+    assessment timestamp.
+    """
+    status_color = {
+        "non_compliant": "#c0392b",
+        "partial": "#e67e22",
+        "compliant": "#27ae60",
+        "not_assessed": "#95a5a6",
+    }.get(posture.status, "#7f8c8d")
+
+    freshness_text = (
+        f"{posture.evidence_freshness_hours:.1f} hours ago"
+        if posture.evidence_freshness_hours is not None
+        else "unknown"
+    )
+
+    assessed_str = (
+        posture.assessed_at.strftime("%Y-%m-%d %H:%M UTC") if posture.assessed_at else "N/A"
+    )
+
+    return f"""<html>
+<body style="font-family: sans-serif; color: #333; max-width: 600px;">
+<h2 style="color: {status_color};">
+  Compliance Alert: {posture.framework} / {posture.control_id}
+</h2>
+<p>The posture for control <strong>{posture.control_id}</strong> in
+<strong>{posture.framework}</strong> has degraded and requires attention.</p>
+
+<table style="border-collapse: collapse; width: 100%;">
+  <tr>
+    <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #ddd;">Status</td>
+    <td style="padding: 8px; border-bottom: 1px solid #ddd; color: {status_color};">
+      {posture.status}
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #ddd;">Posture Score</td>
+    <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+      {posture.posture_score:.1f} / 100
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #ddd;">Findings</td>
+    <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+      Compliant: {posture.compliant_count} |
+      Non-compliant: {posture.non_compliant_count} |
+      Partial: {posture.partial_count} |
+      Total: {posture.total_findings}
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #ddd;">Evidence Sources</td>
+    <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+      {", ".join(posture.evidence_sources) or "none"}
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #ddd;">Last Evidence</td>
+    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{freshness_text}</td>
+  </tr>
+</table>
+
+<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+<p style="font-size: 12px; color: #888;">
+  Warlock GRC | Assessed at {assessed_str}
+</p>
+</body>
+</html>"""

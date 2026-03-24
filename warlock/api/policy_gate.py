@@ -1,19 +1,38 @@
-"""OPA policy enforcement middleware for API operations.
+"""OPA policy enforcement middleware and IP allowlist for API operations.
 
 Calls an OPA server to evaluate whether an API operation is allowed
 based on custom policy rules. Falls back to allow/deny based on
 ``fail_mode`` when OPA is unreachable.
+
+SAC-1: IP allowlist enforcement — checks client IP against the
+``ip_allowlist`` database table when ``ip_allowlist_enabled`` is True.
 """
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request, status
 
+from warlock.utils import ensure_aware
+
 log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Health endpoint paths that bypass all policy checks (including IP allowlist)
+# ---------------------------------------------------------------------------
+
+_HEALTH_PATHS = frozenset({"/health", "/healthz", "/readyz"})
+
+
+def _is_health_endpoint(path: str) -> bool:
+    """Return True for health/readiness endpoints that skip policy checks."""
+    return path in _HEALTH_PATHS or path.endswith("/health")
 
 
 class PolicyGate:
@@ -172,6 +191,104 @@ class PolicyGate:
             return True
 
         return _enforce
+
+
+# ---------------------------------------------------------------------------
+# IP Allowlist Enforcement (SAC-1)
+# ---------------------------------------------------------------------------
+
+
+def _get_client_ip(request: Request) -> str:
+    """Extract the real client IP from the request.
+
+    Respects X-Forwarded-For (first entry) when behind a reverse proxy,
+    falling back to the direct client address.
+    """
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        # X-Forwarded-For: client, proxy1, proxy2 — take the leftmost
+        return forwarded.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "0.0.0.0"
+
+
+async def check_ip_allowlist(request: Request) -> None:
+    """Enforce IP allowlist if enabled in settings.
+
+    Checks the client IP against active, non-expired CIDR entries in
+    the ``ip_allowlist`` database table. Raises HTTP 403 if the IP
+    is not in any allowlisted range.
+
+    Skips the check for health endpoints so that load balancer and
+    Kubernetes probes are never blocked.
+
+    SAC-1: IP allowlist enforcement.
+    """
+    from warlock.config import get_settings
+
+    settings = get_settings()
+    if not settings.ip_allowlist_enabled:
+        return
+
+    path = request.url.path
+    if _is_health_endpoint(path):
+        return
+
+    client_ip_str = _get_client_ip(request)
+
+    try:
+        client_ip = ipaddress.ip_address(client_ip_str)
+    except ValueError:
+        log.warning("IP allowlist: could not parse client IP %r — denying", client_ip_str)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: unrecognized client address",
+        )
+
+    # Query active allowlist entries from DB
+    from warlock.db.engine import get_session
+    from warlock.db.models import IPAllowlistEntry
+
+    with get_session() as db:
+        entries = (
+            db.query(IPAllowlistEntry)
+            .filter(IPAllowlistEntry.active == True)  # noqa: E712
+            .all()
+        )
+
+        now = datetime.now(timezone.utc)
+        for entry in entries:
+            # Skip expired entries
+            if entry.expires_at:
+                expires = ensure_aware(entry.expires_at)
+                if expires < now:
+                    continue
+
+            try:
+                network = ipaddress.ip_network(entry.cidr, strict=False)
+                if client_ip in network:
+                    log.debug(
+                        "IP allowlist: %s matched CIDR %s (%s)",
+                        client_ip_str,
+                        entry.cidr,
+                        entry.description or "no description",
+                    )
+                    return  # Allowed
+            except ValueError:
+                log.warning(
+                    "IP allowlist: invalid CIDR %r in entry %s — skipping",
+                    entry.cidr,
+                    entry.id,
+                )
+                continue
+
+    # No matching entry found — deny
+    log.warning("IP allowlist: %s not in any allowlisted CIDR — access denied", client_ip_str)
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=f"Access denied: IP {client_ip_str} is not in the allowlist",
+    )
 
 
 # ---------------------------------------------------------------------------

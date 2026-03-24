@@ -295,6 +295,16 @@ BUILTIN_RULES: list[AlertRule] = [
 class AlertRulesEngine:
     """Evaluates registered alert rules and creates Alert objects.
 
+    Supports configurable cooldown to prevent duplicate alerts for the
+    same rule+entity combination within a time window. The cooldown is
+    read from ``get_settings().escalation_check_interval_minutes`` or
+    defaults to 60 minutes.
+
+    The dedup cache can optionally persist to the database by checking
+    existing open alerts for the same rule name. When no DB match is
+    needed (e.g. high-throughput mode), the in-memory cache provides
+    fast deduplication.
+
     Usage::
 
         engine = AlertRulesEngine()
@@ -303,13 +313,105 @@ class AlertRulesEngine:
     """
 
     rules: list[AlertRule] = field(default_factory=lambda: list(BUILTIN_RULES))
+    _sent_cache: dict[str, datetime] = field(default_factory=dict, repr=False)
+    _cooldown_minutes: int | None = field(default=None, repr=False)
+
+    @property
+    def cooldown_minutes(self) -> int:
+        """Return the configured cooldown, loading from settings on first access."""
+        if self._cooldown_minutes is not None:
+            return self._cooldown_minutes
+        try:
+            from warlock.config import get_settings
+
+            settings = get_settings()
+            self._cooldown_minutes = settings.escalation_check_interval_minutes or 60
+        except Exception:
+            self._cooldown_minutes = 60
+        return self._cooldown_minutes
+
+    @cooldown_minutes.setter
+    def cooldown_minutes(self, value: int) -> None:
+        """Allow explicit override of cooldown (useful in tests)."""
+        self._cooldown_minutes = value
 
     def register(self, rule: AlertRule) -> None:
         """Register a new alert rule."""
         self.rules.append(rule)
 
+    def _is_within_cooldown(
+        self,
+        session: Session,
+        rule_name: str,
+        dedup_key: str,
+        now: datetime,
+    ) -> bool:
+        """Check if an alert for this rule+key was recently created.
+
+        First checks the in-memory cache. If not found, falls back to
+        querying the database for an existing open alert with the same
+        ``rule_name`` created within the cooldown window.
+
+        Args:
+            session: Active SQLAlchemy session.
+            rule_name: The rule that generated this alert.
+            dedup_key: A unique key combining rule name and entity identifiers.
+            now: Current UTC timestamp.
+
+        Returns:
+            True if a recent alert exists and the new one should be suppressed.
+        """
+        cooldown = self.cooldown_minutes
+
+        # Check in-memory cache first
+        last_sent = self._sent_cache.get(dedup_key)
+        if last_sent is not None:
+            elapsed = (now - last_sent).total_seconds() / 60.0
+            if elapsed < cooldown:
+                return True
+
+        # Fall back to DB: check for recent open alert with same rule_name
+        try:
+            from warlock.db.models import Alert
+
+            cutoff = now - timedelta(minutes=cooldown)
+            existing = (
+                session.query(Alert)
+                .filter(
+                    Alert.rule_name == rule_name,
+                    Alert.status == "open",
+                    Alert.created_at >= cutoff,
+                )
+                .first()
+            )
+            if existing:
+                # Populate cache so subsequent checks for same key are fast
+                from warlock.utils import ensure_aware
+
+                created = ensure_aware(existing.created_at) or now
+                self._sent_cache[dedup_key] = created
+                return True
+        except Exception:  # noqa: BLE001
+            # DB check failure should not block alert creation
+            pass
+
+        return False
+
+    def _build_dedup_key(self, rule_name: str, payload: dict) -> str:
+        """Build a dedup key from rule name and payload identifiers."""
+        parts = [rule_name]
+        for key in ("framework", "control_id", "finding_id", "connector_name"):
+            val = payload.get(key)
+            if val:
+                parts.append(str(val))
+        return "|".join(parts)
+
     def evaluate(self, session: Session) -> list:
         """Run all registered rules and create Alert objects for matches.
+
+        Applies cooldown-based deduplication: if an alert for the same
+        rule and entity was created within the cooldown window, the
+        duplicate is suppressed.
 
         Returns:
             List of newly created Alert model instances (already added to session).
@@ -329,6 +431,11 @@ class AlertRulesEngine:
                 continue
 
             for payload in payloads:
+                dedup_key = self._build_dedup_key(rule.name, payload)
+
+                if self._is_within_cooldown(session, rule.name, dedup_key, now):
+                    continue
+
                 alert = Alert(
                     id=str(uuid.uuid4()),
                     title=payload.get("title", f"Alert from {rule.name}"),
@@ -348,6 +455,9 @@ class AlertRulesEngine:
                 )
                 session.add(alert)
                 created.append(alert)
+
+                # Update in-memory cache
+                self._sent_cache[dedup_key] = now
 
         if created:
             session.commit()

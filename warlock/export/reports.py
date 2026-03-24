@@ -811,6 +811,42 @@ class ReportGenerator:
             "using your browser's print-to-PDF feature (the HTML includes print CSS)."
         )
 
+    def generate_excel(
+        self,
+        session: Session,
+        engagement_id: str,
+        filepath: str,
+    ) -> str:
+        """Generate a multi-sheet Excel workbook for an engagement.
+
+        Creates a workbook with findings, control results, POAMs, and a
+        summary sheet scoped to the engagement's framework and period.
+
+        Args:
+            session: SQLAlchemy session.
+            engagement_id: ID of the AuditEngagement.
+            filepath: Output .xlsx path.
+
+        Returns:
+            Path to the written file as a string.
+        """
+        from warlock.export.excel import ExcelExporter
+
+        eng = _get_engagement(session, engagement_id)
+        exporter = ExcelExporter()
+        out = exporter.export_multi_sheet(
+            session,
+            filepath,
+            framework=eng.framework,
+        )
+        log.info(
+            "Generated Excel report for engagement %s (%s) at %s",
+            engagement_id,
+            eng.framework,
+            out,
+        )
+        return str(out)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

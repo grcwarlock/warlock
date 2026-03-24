@@ -198,31 +198,57 @@ def integrations_configure(
 
 
 @integrations.command("test")
-@click.option(
-    "--type",
-    "integration_type",
-    required=True,
-    type=click.Choice(_INTEGRATION_TYPES),
-    help="Integration type to test",
-)
-def integrations_test(integration_type: str) -> None:
-    """Send a test event to verify an integration is working."""
-    import os
+@click.argument("name")
+def integrations_test(name: str) -> None:
+    """Test connectivity to an integration.
 
-    token_env = f"WLK_INTEGRATION_{integration_type.upper()}_TOKEN"
-    token = os.environ.get(token_env)
+    NAME: Integration name from the registry (e.g. jira_sync, slack, teams).
+    Use 'warlock integrations available' to see all registered integrations.
 
-    if not token:
+    Attempts to load the integration module and, if the integration class
+    exposes a test_connection() method, calls it to verify connectivity.
+    """
+    from rich.markup import escape as _esc
+
+    from warlock.integrations import get_integration
+
+    try:
+        cls = get_integration(name)
+    except KeyError as exc:
+        _error(str(exc))
+    except ImportError as exc:
+        _error(f"Integration '{name}' could not be imported: {exc}")
+
+    console.print(f"[cyan]Testing integration '{_esc(name)}'...[/cyan]")
+    console.print(f"  Module: {cls.__module__}")
+    console.print(f"  Class:  {cls.__name__}")
+
+    # Check configuration status
+    if hasattr(cls, "is_configured"):
+        configured = cls.is_configured()
+        cfg_color = "green" if configured else "yellow"
+        console.print(f"  Configured: [{cfg_color}]{configured}[/]")
+        if not configured:
+            console.print(
+                f"[yellow]Integration '{_esc(name)}' is not configured. "
+                f"Set the required environment variables or run 'integrations configure'.[/yellow]"
+            )
+            return
+    else:
+        console.print("  Configured: [dim]unknown (no is_configured method)[/dim]")
+
+    # Attempt connectivity test if available
+    if hasattr(cls, "test_connection"):
+        try:
+            result = cls.test_connection()
+            console.print(f"[green]Connectivity test passed: {_esc(str(result))}[/green]")
+        except Exception as exc:
+            console.print(f"[red]Connectivity test failed: {_esc(str(exc))}[/red]")
+    else:
         console.print(
-            f"[yellow]No token found for {integration_type}. "
-            f"Set {token_env} to enable connectivity testing.[/yellow]"
+            f"[dim]Integration '{_esc(name)}' loaded successfully. "
+            f"No test_connection() method available for live testing.[/dim]"
         )
-        console.print(f"[dim]Test event for '{integration_type}' would be sent here.[/dim]")
-        return
-
-    # Connectivity simulation (real implementation would call the integration SDK)
-    console.print(f"[green]Test event sent to '{integration_type}'.[/green]")
-    console.print("[dim]Check your integration platform for the test message.[/dim]")
 
 
 # ---------------------------------------------------------------------------
@@ -253,6 +279,158 @@ def integrations_status() -> None:
         )
 
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# integrations sync
+# ---------------------------------------------------------------------------
+
+
+@integrations.command("sync")
+@click.argument("name")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview sync without executing")
+@click.option(
+    "--direction",
+    type=click.Choice(["push", "pull", "both"]),
+    default="both",
+    help="Sync direction: push findings out, pull status updates in, or both",
+)
+def integrations_sync(name: str, dry_run: bool, direction: str) -> None:
+    """Trigger a sync operation for an integration.
+
+    NAME: Integration name from the registry (e.g. jira_sync, servicenow_push).
+
+    Push mode sends findings/issues to the external system.
+    Pull mode fetches status updates from the external system.
+
+    Example:
+
+    \b
+      warlock integrations sync jira_sync --direction push --dry-run
+    """
+    from rich.markup import escape as _esc
+
+    from warlock.integrations import get_integration
+
+    try:
+        cls = get_integration(name)
+    except KeyError as exc:
+        _error(str(exc))
+    except ImportError as exc:
+        _error(f"Integration '{name}' could not be imported: {exc}")
+
+    console.print(f"[cyan]Syncing integration '{_esc(name)}' (direction: {direction})...[/cyan]")
+
+    # Check configuration
+    if hasattr(cls, "is_configured") and not cls.is_configured():
+        _error(
+            f"Integration '{name}' is not configured. Set the required environment variables first."
+        )
+
+    if dry_run:
+        console.print(
+            f"[dim](dry-run) Would sync '{_esc(name)}' with direction '{direction}'.[/dim]"
+        )
+
+        if direction in ("push", "both"):
+            from warlock.db.engine import get_session, init_db
+            from warlock.db.models import Finding
+
+            init_db()
+            with get_session() as session:
+                finding_count = session.query(Finding).count()
+            console.print(f"  [dim]Findings available to push: {finding_count}[/dim]")
+
+        if direction in ("pull", "both"):
+            console.print("  [dim]Would pull status updates from external system.[/dim]")
+
+        console.print("\n[dim]Pass without --dry-run to execute the sync.[/dim]")
+        return
+
+    # Execute sync based on available methods
+    pushed = 0
+    pulled = 0
+
+    if direction in ("push", "both") and hasattr(cls, "push") or hasattr(cls, "sync_push"):
+        sync_method = getattr(cls, "push", None) or getattr(cls, "sync_push", None)
+        if sync_method:
+            try:
+                result = sync_method()
+                pushed = result if isinstance(result, int) else 1
+                console.print(f"[green]Push sync completed ({pushed} record(s)).[/green]")
+            except Exception as exc:
+                console.print(f"[red]Push sync failed: {_esc(str(exc))}[/red]")
+        else:
+            console.print(f"[dim]No push method available on '{_esc(name)}'.[/dim]")
+
+    if direction in ("pull", "both") and hasattr(cls, "pull") or hasattr(cls, "sync_pull"):
+        sync_method = getattr(cls, "pull", None) or getattr(cls, "sync_pull", None)
+        if sync_method:
+            try:
+                result = sync_method()
+                pulled = result if isinstance(result, int) else 1
+                console.print(f"[green]Pull sync completed ({pulled} record(s)).[/green]")
+            except Exception as exc:
+                console.print(f"[red]Pull sync failed: {_esc(str(exc))}[/red]")
+        else:
+            console.print(f"[dim]No pull method available on '{_esc(name)}'.[/dim]")
+
+    if not pushed and not pulled:
+        console.print(
+            f"[dim]Integration '{_esc(name)}' does not expose push/pull sync methods. "
+            f"Sync must be implemented in the integration module.[/dim]"
+        )
+
+    console.print(f"[green]Sync complete for '{_esc(name)}'.[/green]")
+
+
+# ---------------------------------------------------------------------------
+# integrations available
+# ---------------------------------------------------------------------------
+
+
+@integrations.command("available")
+def integrations_available() -> None:
+    """Show all available integrations from the registry with their status.
+
+    Lists every integration registered in warlock.integrations, showing
+    whether it can be imported and whether it is configured.
+    """
+    from warlock.integrations import list_available
+
+    entries = list_available()
+
+    if not entries:
+        console.print("[dim]No integrations registered in the integration registry.[/dim]")
+        return
+
+    table = Table(title=f"Integration Registry ({len(entries)} integrations)")
+    table.add_column("Name", style="cyan")
+    table.add_column("Class")
+    table.add_column("Module", style="dim", max_width=40)
+    table.add_column("Available", justify="center")
+    table.add_column("Configured", justify="center")
+
+    for entry in entries:
+        avail_str = "[green]yes[/green]" if entry["available"] else "[red]no[/red]"
+        cfg_str = (
+            "[green]yes[/green]"
+            if entry["configured"]
+            else "[dim]no[/dim]"
+            if entry["available"]
+            else "[dim]--[/dim]"
+        )
+        table.add_row(
+            entry["name"],
+            entry["class_name"],
+            entry["module"],
+            avail_str,
+            cfg_str,
+        )
+
+    console.print(table)
+    console.print("\n[dim]Use 'warlock integrations test <name>' to verify connectivity.[/dim]")
+    console.print("[dim]Use 'warlock integrations sync <name>' to trigger a sync operation.[/dim]")
 
 
 # ---------------------------------------------------------------------------

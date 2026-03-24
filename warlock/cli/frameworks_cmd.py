@@ -1050,3 +1050,326 @@ def frameworks_import(filepath: str, validate: bool) -> None:
 
     shutil.copy2(src, dest)
     console.print(f"[green]Framework '{fw_id}' imported to {dest}[/green]")
+
+
+# ---------------------------------------------------------------------------
+# frameworks import-custom (FWK-4)
+# ---------------------------------------------------------------------------
+
+
+@frameworks_grp.command("import-custom")
+@click.option(
+    "--file",
+    "filepath",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to custom framework YAML",
+)
+def frameworks_import_custom(filepath: str) -> None:
+    """Import and validate a custom framework definition from YAML.
+
+    Validates the YAML has the required v2 dict-based structure
+    (framework_id, control_families with nested controls dict)
+    and copies it into the warlock/frameworks/ directory.
+    """
+    import shutil
+
+    src = pathlib.Path(filepath)
+
+    try:
+        with open(src) as fh:
+            data = yaml.safe_load(fh) or {}
+    except yaml.YAMLError as exc:
+        _error(f"Invalid YAML: {exc}")
+
+    fw_id = data.get("framework_id")
+    if not fw_id:
+        _error("Custom framework YAML must have a 'framework_id' key at the top level.")
+
+    if not isinstance(fw_id, str) or not fw_id.strip():
+        _error("'framework_id' must be a non-empty string.")
+
+    families = data.get("control_families", {})
+    if not isinstance(families, dict):
+        _error(
+            "Framework YAML must have 'control_families' as a dict (v2 format). "
+            "Got: " + type(families).__name__
+        )
+    if not families:
+        _error("Framework YAML has no control families defined.")
+
+    # Validate each family structure
+    total_controls = 0
+    for fam_id, fam_data in families.items():
+        if not isinstance(fam_data, dict):
+            _error(f"Family '{fam_id}' must be a dict, got {type(fam_data).__name__}")
+        controls = fam_data.get("controls", {})
+        if not isinstance(controls, dict):
+            _error(f"Family '{fam_id}' controls must be a dict, got {type(controls).__name__}")
+        total_controls += len(controls)
+
+    if total_controls == 0:
+        _error("Framework has control families but no controls defined in any family.")
+
+    console.print(f"[green]Validation passed:[/green] {fw_id}")
+    console.print(f"  Families: {len(families)}")
+    console.print(f"  Controls: {total_controls}")
+
+    # Check for event_types in controls (optional but useful)
+    controls_all = _collect_controls(data)
+    event_types = _collect_event_types(controls_all)
+    if event_types:
+        console.print(f"  Event types: {len(event_types)}")
+    else:
+        console.print(
+            "  [dim]No event_types defined (controls will not match pipeline events)[/dim]"
+        )
+
+    dest = _FRAMEWORKS_DIR / f"{fw_id}.yaml"
+    if dest.exists():
+        console.print(
+            f"[yellow]Warning: overwriting existing framework YAML at {dest.name}[/yellow]"
+        )
+
+    shutil.copy2(src, dest)
+    console.print(f"[green]Custom framework '{fw_id}' imported to {dest}[/green]")
+
+
+# ---------------------------------------------------------------------------
+# frameworks tailor (FWK-2: Baseline tailoring)
+# ---------------------------------------------------------------------------
+
+
+@frameworks_grp.command("tailor")
+@click.option("--framework", "-f", required=True, help="Source framework ID (e.g. nist_800_53)")
+@click.option(
+    "--system-id", "-s", required=True, help="System identifier for the tailored baseline"
+)
+@click.option(
+    "--add-controls",
+    default=None,
+    help="Comma-separated control IDs to add to the baseline",
+)
+@click.option(
+    "--remove-controls",
+    default=None,
+    help="Comma-separated control IDs to remove from the baseline",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    type=click.Path(),
+    help="Output file path (default: frameworks/<framework>_tailored_<system-id>.yaml)",
+)
+def frameworks_tailor(
+    framework: str,
+    system_id: str,
+    add_controls: str | None,
+    remove_controls: str | None,
+    output: str | None,
+) -> None:
+    """Create a tailored baseline for a specific system from an existing framework.
+
+    Starts with the full framework control set, then applies additions
+    and removals to produce a system-specific baseline YAML.
+    """
+    from rich.markup import escape as esc
+
+    data = _load_framework_yaml(framework)
+    all_controls = _collect_controls(data)
+    base_ids = set(all_controls.keys())
+
+    adds: set[str] = set()
+    removes: set[str] = set()
+
+    if add_controls:
+        adds = {c.strip() for c in add_controls.split(",") if c.strip()}
+    if remove_controls:
+        removes = {c.strip() for c in remove_controls.split(",") if c.strip()}
+
+    # Validate that removals exist in the base
+    unknown_removes = removes - base_ids
+    if unknown_removes:
+        console.print(
+            f"[yellow]Warning: these controls are not in {framework} "
+            f"and cannot be removed: {', '.join(sorted(unknown_removes))}[/yellow]"
+        )
+        removes -= unknown_removes
+
+    tailored_ids = (base_ids - removes) | adds
+    removed_count = len(base_ids & removes)
+    added_count = len(adds - base_ids)
+
+    # Build tailored YAML structure
+    tailored_families: dict[str, Any] = {}
+    families = data.get("control_families", {})
+    for fam_id, fam_data in families.items():
+        fam_controls = fam_data.get("controls", {})
+        kept = {cid: cdata for cid, cdata in fam_controls.items() if cid in tailored_ids}
+        if kept:
+            tailored_families[fam_id] = {
+                **{k: v for k, v in fam_data.items() if k != "controls"},
+                "controls": kept,
+            }
+
+    # Add controls that don't belong to any existing family
+    added_without_family = adds - base_ids
+    if added_without_family:
+        custom_controls = {
+            cid: {"title": f"Custom addition: {cid}"} for cid in sorted(added_without_family)
+        }
+        tailored_families.setdefault("custom_additions", {"controls": {}})
+        tailored_families["custom_additions"]["controls"].update(custom_controls)
+
+    tailored_data = {
+        "framework_id": f"{framework}_tailored_{system_id}",
+        "source_framework": framework,
+        "system_id": system_id,
+        "tailoring": {
+            "added": sorted(adds),
+            "removed": sorted(removes),
+        },
+        "control_families": tailored_families,
+    }
+
+    total_controls = sum(len(f.get("controls", {})) for f in tailored_families.values())
+
+    # Write output
+    out_path = output or str(_FRAMEWORKS_DIR / f"{framework}_tailored_{system_id}.yaml")
+    with open(out_path, "w") as fh:
+        yaml.dump(tailored_data, fh, default_flow_style=False, sort_keys=False)
+
+    label = _FRAMEWORK_DISPLAY_NAMES.get(framework, framework)
+    console.print("\n[bold cyan]Tailored Baseline Created[/bold cyan]")
+    console.print(f"  Source framework: {label}")
+    console.print(f"  System ID:        {esc(system_id)}")
+    console.print(f"  Base controls:    {len(base_ids)}")
+    console.print(f"  Added:            {added_count}")
+    console.print(f"  Removed:          {removed_count}")
+    console.print(f"  Final controls:   {total_controls}")
+    console.print(f"  Output:           {out_path}")
+
+
+# ---------------------------------------------------------------------------
+# frameworks gap-analysis (FWK-6)
+# ---------------------------------------------------------------------------
+
+
+@frameworks_grp.command("gap-analysis")
+@click.argument("framework_id")
+@click.option("--limit", "-n", default=100, help="Max results")
+@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+def frameworks_gap_analysis(framework_id: str, limit: int, fmt: str) -> None:
+    """Comprehensive gap analysis: controls with no assertions, no evidence, or no test coverage.
+
+    Shows a table with each control and its gap status across three dimensions:
+    assertions (has a deterministic check), evidence (has findings), and
+    test results (has been assessed).
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+    data = _load_framework_yaml(framework_id)
+    all_controls = _collect_controls(data)
+
+    with get_session() as session:
+        # Controls with any assessment result
+        assessed_rows = (
+            session.query(ControlResult.control_id, ControlResult.assertion_name)
+            .filter(ControlResult.framework == framework_id)
+            .all()
+        )
+
+        # Controls with findings (evidence)
+        evidence_rows = (
+            session.query(ControlResult.control_id)
+            .filter(
+                ControlResult.framework == framework_id,
+                ControlResult.finding_id.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+
+    # Build sets
+    has_assertion: set[str] = set()
+    has_test: set[str] = set()
+    for ctrl_id, assertion_name in assessed_rows:
+        has_test.add(ctrl_id)
+        if assertion_name:
+            has_assertion.add(ctrl_id)
+
+    has_evidence = {r[0] for r in evidence_rows}
+
+    # Build gap rows
+    rows: list[dict] = []
+    for ctrl_id in sorted(all_controls.keys()):
+        a = ctrl_id in has_assertion
+        e = ctrl_id in has_evidence
+        t = ctrl_id in has_test
+
+        gaps: list[str] = []
+        if not a:
+            gaps.append("no_assertion")
+        if not e:
+            gaps.append("no_evidence")
+        if not t:
+            gaps.append("no_test")
+
+        if gaps:
+            rows.append(
+                {
+                    "control_id": ctrl_id,
+                    "has_assertion": a,
+                    "has_evidence": e,
+                    "has_test": t,
+                    "gap_type": ", ".join(gaps),
+                }
+            )
+
+    rows = rows[:limit]
+    total_controls = len(all_controls)
+    gap_count = len(rows)
+
+    if fmt == "json":
+        out = {
+            "framework": framework_id,
+            "total_controls": total_controls,
+            "gap_count": gap_count,
+            "gaps": rows,
+        }
+        console.print_json(json.dumps(out, indent=2))
+        return
+
+    label = _FRAMEWORK_DISPLAY_NAMES.get(framework_id, framework_id)
+    console.print(f"\n[bold]{label} Gap Analysis[/bold]")
+    console.print(f"  Total controls: {total_controls}")
+    console.print(f"  Controls with gaps: {gap_count}")
+    pct_covered = ((total_controls - gap_count) / total_controls * 100) if total_controls else 0
+    console.print(f"  Full coverage: {pct_covered:.1f}%")
+
+    if not rows:
+        console.print(
+            "\n[green]No gaps found -- all controls have assertions, evidence, and tests.[/green]"
+        )
+        return
+
+    table = Table(title=f"{label} Control Gaps ({len(rows)} shown)")
+    table.add_column("Control ID", style="cyan")
+    table.add_column("Assertion", justify="center")
+    table.add_column("Evidence", justify="center")
+    table.add_column("Test", justify="center")
+    table.add_column("Gap Type", style="yellow")
+
+    for r in rows:
+        table.add_row(
+            r["control_id"],
+            "[green]yes[/green]" if r["has_assertion"] else "[red]no[/red]",
+            "[green]yes[/green]" if r["has_evidence"] else "[red]no[/red]",
+            "[green]yes[/green]" if r["has_test"] else "[red]no[/red]",
+            r["gap_type"],
+        )
+
+    console.print(table)

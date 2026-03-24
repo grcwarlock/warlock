@@ -379,6 +379,35 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "text"  # "text" or "json" for structured logging
 
+    # --- SMTP Email (AUT-2) ---
+    smtp_host: str = ""  # SMTP server hostname
+    smtp_port: int = 587  # 587 for STARTTLS, 465 for SSL, 25 for plain
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_tls: bool = True  # use STARTTLS
+    smtp_from: str = "warlock@localhost"  # From address
+
+    # --- SSO/OIDC (INT-1) ---
+    sso_enabled: bool = False
+    sso_provider: str = ""  # okta, azure_ad, google, generic_oidc
+    sso_issuer_url: str = ""  # e.g. https://accounts.google.com
+    sso_client_id: str = ""
+    sso_client_secret: str = ""
+    sso_callback_url: str = "/api/v1/auth/sso/callback"
+    sso_auto_create_users: bool = True  # auto-create user on first SSO login
+    sso_default_role: str = "viewer"  # role for auto-created SSO users
+
+    # --- IP Allowlist (SAC-1) ---
+    ip_allowlist_enabled: bool = False  # enforce IP allowlist from DB
+
+    # --- Session Management (SAC-2) ---
+    session_timeout_minutes: int = 480  # 8 hours default
+    max_concurrent_sessions: int = 5  # per user
+
+    # --- Escalation (AUT-4) ---
+    escalation_enabled: bool = False
+    escalation_check_interval_minutes: int = 60  # how often to scan for overdue items
+
     # --- Data Lake ---
     lake_enabled: bool = False
     lake_path: str = "lake"  # Local filesystem path or object store prefix

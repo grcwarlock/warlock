@@ -1349,3 +1349,566 @@ def batch_classify(
         },
         f"Batch Classification ({len(rows)} findings)",
     )
+
+
+# ---------------------------------------------------------------------------
+# horizon-scan
+# ---------------------------------------------------------------------------
+
+
+@ai_ops.command("horizon-scan")
+@click.option("--framework", "-f", multiple=True, help="Framework(s) to scan (repeatable)")
+@click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI advisory generation")
+def horizon_scan(framework: tuple[str, ...], use_ai: bool) -> None:
+    """Regulatory horizon scanning -- upcoming deadlines and emerging requirements."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.ai.horizon_scanning import HorizonScanner
+
+    init_db()
+    fw_list: list[str] | None = list(framework) if framework else None
+
+    with get_session() as session:
+        scanner = HorizonScanner(session)
+        changes = scanner.scan_regulatory_changes(fw_list)
+        advisory = scanner.generate_advisory(changes)
+
+    # Regulatory calendar table
+    if advisory.deadlines:
+        table = Table(title="Regulatory Calendar")
+        table.add_column("Regulation", style="cyan", max_width=40)
+        table.add_column("Effective Date")
+        table.add_column("Impact", justify="center")
+        table.add_column("Frameworks Affected", max_width=30)
+        table.add_column("Action Required", max_width=50)
+
+        for d in advisory.deadlines:
+            impact_style = {
+                "critical": "red bold",
+                "high": "red",
+                "medium": "yellow",
+                "low": "dim",
+            }.get(d.impact_level, "")
+            table.add_row(
+                escape(d.regulation),
+                str(d.effective_date),
+                f"[{impact_style}]{d.impact_level}[/{impact_style}]"
+                if impact_style
+                else d.impact_level,
+                ", ".join(d.frameworks_affected),
+                escape(d.action_required[:50]) + ("..." if len(d.action_required) > 50 else ""),
+            )
+        console.print(table)
+    else:
+        console.print("[dim]No regulatory deadlines match the selected frameworks.[/dim]")
+
+    # Emerging requirements
+    if advisory.emerging_requirements:
+        console.print()
+        em_table = Table(title="Emerging Requirements (Pattern Detection)")
+        em_table.add_column("Framework", style="cyan")
+        em_table.add_column("Pattern")
+        em_table.add_column("Confidence", justify="right")
+        em_table.add_column("Affected Controls", max_width=30)
+        em_table.add_column("Description", max_width=50)
+
+        for req in advisory.emerging_requirements:
+            conf_style = (
+                "green" if req.confidence >= 0.7 else "yellow" if req.confidence >= 0.4 else "dim"
+            )
+            em_table.add_row(
+                req.framework,
+                req.pattern_type,
+                f"[{conf_style}]{req.confidence:.0%}[/{conf_style}]",
+                ", ".join(req.affected_controls[:5])
+                + ("..." if len(req.affected_controls) > 5 else ""),
+                escape(req.description[:50]) + ("..." if len(req.description) > 50 else ""),
+            )
+        console.print(em_table)
+
+    # Summary panel
+    risk_style = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "green"}.get(
+        advisory.risk_level, ""
+    )
+    console.print(
+        Panel(
+            f"Overall Risk Level: [{risk_style}]{advisory.risk_level.upper()}[/{risk_style}]\n\n"
+            + escape(advisory.summary),
+            title="[bold]Horizon Scan Summary[/bold]",
+            border_style="cyan",
+        )
+    )
+
+    if not _check_ai_available(use_ai):
+        return
+
+    change_data = [
+        {
+            "source": c.source,
+            "regulation": c.regulation,
+            "impact_level": c.impact_level,
+            "frameworks_affected": c.frameworks_affected,
+            "description": c.description[:200],
+        }
+        for c in changes
+    ]
+    _run_ai(
+        "governance_analysis",
+        {
+            "regulatory_changes": change_data,
+            "total_changes": len(changes),
+            "risk_level": advisory.risk_level,
+            "question": (
+                "Analyze these regulatory changes and emerging requirements. "
+                "Provide a prioritized action plan with specific steps, timelines, "
+                "and resource estimates for achieving compliance. "
+                "Highlight any cross-framework synergies."
+            ),
+        },
+        "Regulatory Horizon Advisory",
+    )
+
+
+# ---------------------------------------------------------------------------
+# devtools (subgroup)
+# ---------------------------------------------------------------------------
+
+
+@ai_ops.group("devtools", invoke_without_command=True)
+@click.pass_context
+def devtools_group(ctx: click.Context) -> None:
+    """AI assessment debugging and inspection tools."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@devtools_group.command("inspect")
+@click.argument("control_result_id")
+def devtools_inspect(control_result_id: str) -> None:
+    """Inspect a single AI assessment -- prompt, response, confidence.
+
+    CONTROL_RESULT_ID: UUID or prefix of the control result.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.ai.devtools import AIDevTools
+
+    init_db()
+    with get_session() as session:
+        tools = AIDevTools(session)
+        info = tools.inspect_assessment(control_result_id)
+
+    if info is None:
+        _error(f"Control result '{control_result_id}' not found.")
+
+    # Assessment overview
+    body = (
+        f"[bold]Control Result:[/bold] {info.control_result_id}\n"
+        f"Framework:    {info.framework}\n"
+        f"Control ID:   {info.control_id}\n"
+        f"Status:       {info.status}\n"
+        f"Severity:     {info.severity}\n"
+        f"Assessor:     {info.assessor}\n"
+        f"Assessed At:  {info.assessed_at or '---'}\n"
+        f"Finding ID:   {info.finding_id}\n"
+    )
+    console.print(
+        Panel(body, title="[bold cyan]Assessment Overview[/bold cyan]", border_style="cyan")
+    )
+
+    # Assertion details
+    if info.assertion_name:
+        assertion_body = (
+            f"Assertion:    {escape(info.assertion_name)}\n"
+            f"Passed:       {info.assertion_passed}\n"
+            f"Findings:     {json.dumps(info.assertion_findings, default=str)[:500] if info.assertion_findings else '---'}"
+        )
+        console.print(
+            Panel(
+                assertion_body,
+                title="[bold yellow]Assertion Details[/bold yellow]",
+                border_style="yellow",
+            )
+        )
+
+    # AI details
+    if info.ai_confidence is not None:
+        conf_style = (
+            "green"
+            if info.ai_confidence >= 0.7
+            else "yellow"
+            if info.ai_confidence >= 0.5
+            else "red"
+        )
+        ai_body = (
+            f"Model:        {info.ai_model or '---'}\n"
+            f"Confidence:   [{conf_style}]{info.ai_confidence:.2f}[/{conf_style}]\n"
+            f"Assessment:\n{escape(info.ai_assessment or '(none)')[:1000]}"
+        )
+        console.print(
+            Panel(
+                ai_body, title="[bold magenta]AI Assessment[/bold magenta]", border_style="magenta"
+            )
+        )
+
+    # Prompt context
+    console.print(
+        Panel(
+            json.dumps(info.prompt_context, indent=2, default=str),
+            title="[bold dim]Reconstructed Prompt Context[/bold dim]",
+            border_style="dim",
+        )
+    )
+
+    # Remediation
+    if info.remediation_summary:
+        console.print(
+            Panel(
+                escape(info.remediation_summary),
+                title="[bold green]Remediation Summary[/bold green]",
+                border_style="green",
+            )
+        )
+
+
+@devtools_group.command("compare")
+@click.argument("id1")
+@click.argument("id2")
+def devtools_compare(id1: str, id2: str) -> None:
+    """Compare two AI assessments side-by-side.
+
+    ID1: UUID or prefix of the first control result.
+    ID2: UUID or prefix of the second control result.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.ai.devtools import AIDevTools
+
+    init_db()
+    with get_session() as session:
+        tools = AIDevTools(session)
+        comparison = tools.compare_assessments(id1, id2)
+
+    if comparison is None:
+        _error(f"One or both control results not found: '{id1}', '{id2}'.")
+
+    # Header
+    console.print("\n[bold]Assessment Comparison[/bold]")
+    console.print(
+        f"  Same framework: {'yes' if comparison.same_framework else '[yellow]no[/yellow]'}"
+    )
+    console.print(
+        f"  Same control:   {'yes' if comparison.same_control else '[yellow]no[/yellow]'}"
+    )
+    console.print(f"  Same model:     {'yes' if comparison.same_model else '[yellow]no[/yellow]'}")
+    if comparison.confidence_delta is not None:
+        delta_style = "green" if comparison.confidence_delta >= 0 else "red"
+        console.print(
+            f"  Confidence delta: [{delta_style}]{comparison.confidence_delta:+.2f}[/{delta_style}]"
+        )
+
+    # Side-by-side table
+    table = Table(title="Side-by-Side Comparison")
+    table.add_column("Field", style="cyan")
+    table.add_column(f"Left ({comparison.left.control_result_id[:8]})")
+    table.add_column(f"Right ({comparison.right.control_result_id[:8]})")
+
+    table.add_row("Framework", comparison.left.framework, comparison.right.framework)
+    table.add_row("Control ID", comparison.left.control_id, comparison.right.control_id)
+    table.add_row("Status", comparison.left.status, comparison.right.status)
+    table.add_row("Severity", comparison.left.severity, comparison.right.severity)
+    table.add_row("Assessor", comparison.left.assessor, comparison.right.assessor)
+    table.add_row(
+        "AI Confidence",
+        f"{comparison.left.ai_confidence:.2f}"
+        if comparison.left.ai_confidence is not None
+        else "N/A",
+        f"{comparison.right.ai_confidence:.2f}"
+        if comparison.right.ai_confidence is not None
+        else "N/A",
+    )
+    table.add_row(
+        "AI Model",
+        comparison.left.ai_model or "N/A",
+        comparison.right.ai_model or "N/A",
+    )
+    table.add_row(
+        "Assessed At",
+        str(comparison.left.assessed_at)[:19] if comparison.left.assessed_at else "---",
+        str(comparison.right.assessed_at)[:19] if comparison.right.assessed_at else "---",
+    )
+    console.print(table)
+
+    # Differences
+    console.print(
+        Panel(
+            "\n".join(f"  - {escape(d)}" for d in comparison.differences),
+            title="[bold yellow]Differences[/bold yellow]",
+            border_style="yellow",
+        )
+    )
+
+    # AI assessment text comparison
+    if comparison.left.ai_assessment or comparison.right.ai_assessment:
+        left_text = (comparison.left.ai_assessment or "(none)")[:500]
+        right_text = (comparison.right.ai_assessment or "(none)")[:500]
+        console.print(
+            Panel(
+                escape(left_text),
+                title=f"[dim]Left AI Assessment ({comparison.left.control_result_id[:8]})[/dim]",
+                border_style="dim",
+            )
+        )
+        console.print(
+            Panel(
+                escape(right_text),
+                title=f"[dim]Right AI Assessment ({comparison.right.control_result_id[:8]})[/dim]",
+                border_style="dim",
+            )
+        )
+
+
+@devtools_group.command("confidence")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+def devtools_confidence(framework: str | None) -> None:
+    """Show AI confidence score distribution with outlier detection."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.ai.devtools import AIDevTools
+
+    init_db()
+    with get_session() as session:
+        tools = AIDevTools(session)
+        analysis = tools.confidence_analysis(framework)
+
+    if analysis.ai_assessed_count == 0:
+        console.print("[dim]No AI-assessed control results found.[/dim]")
+        return
+
+    # Summary
+    console.print("\n[bold]Confidence Analysis[/bold]" + (f" -- {framework}" if framework else ""))
+    console.print(f"  Total control results:  {analysis.total_assessments}")
+    console.print(f"  AI-assessed:            {analysis.ai_assessed_count}")
+    console.print(f"  Mean confidence:        {analysis.mean_confidence:.4f}")
+    console.print(f"  Median confidence:      {analysis.median_confidence:.4f}")
+    console.print(f"  Std deviation:          {analysis.std_deviation:.4f}")
+    console.print(
+        f"  Range:                  {analysis.min_confidence:.4f} - {analysis.max_confidence:.4f}"
+    )
+
+    # Distribution histogram
+    table = Table(title="Confidence Distribution")
+    table.add_column("Range", style="cyan")
+    table.add_column("Count", justify="right")
+    table.add_column("Percentage", justify="right")
+    table.add_column("Histogram", max_width=30)
+
+    max_count = max((b.count for b in analysis.distribution), default=1)
+    for bucket in analysis.distribution:
+        bar_len = int(bucket.count / max_count * 25) if max_count > 0 else 0
+        bar = "#" * bar_len
+        style = (
+            "green" if bucket.range_low >= 0.7 else "yellow" if bucket.range_low >= 0.4 else "red"
+        )
+        table.add_row(
+            f"{bucket.range_low:.1f}-{bucket.range_high:.1f}",
+            str(bucket.count),
+            f"{bucket.percentage:.1f}%",
+            f"[{style}]{bar}[/{style}]",
+        )
+    console.print(table)
+
+    # Outliers
+    if analysis.outliers_low:
+        console.print("\n[yellow]Low-confidence outliers (below mean - 2*std):[/yellow]")
+        out_table = Table(title="Outliers")
+        out_table.add_column("ID", style="dim", max_width=8)
+        out_table.add_column("Framework")
+        out_table.add_column("Control")
+        out_table.add_column("Confidence", justify="right")
+        out_table.add_column("Status")
+        out_table.add_column("Model")
+
+        for o in analysis.outliers_low:
+            out_table.add_row(
+                o.control_result_id[:8],
+                o.framework,
+                o.control_id,
+                f"[red]{o.ai_confidence:.2f}[/red]" if o.ai_confidence is not None else "N/A",
+                o.status,
+                o.ai_model or "N/A",
+            )
+        console.print(out_table)
+    else:
+        console.print("[dim]No low-confidence outliers detected.[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# forecast-risk
+# ---------------------------------------------------------------------------
+
+
+@ai_ops.command("forecast-risk")
+@click.option("--framework", "-f", required=True, help="Framework to forecast")
+@click.option("--months", "-m", default=3, help="Forecast horizon in months (1-12)")
+@click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI narrative")
+def forecast_risk(framework: str, months: int, use_ai: bool) -> None:
+    """Risk prediction using historical posture data with linear regression.
+
+    Uses PostureSnapshot scores to compute a trend line and project
+    future compliance posture for the specified framework.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import PostureSnapshot
+
+    init_db()
+    months = max(1, min(12, months))
+
+    with get_session() as session:
+        snapshots = (
+            session.query(PostureSnapshot)
+            .filter(PostureSnapshot.framework == framework)
+            .order_by(PostureSnapshot.snapshot_date.asc())
+            .limit(1000)
+            .all()
+        )
+
+    if not snapshots:
+        console.print(f"[dim]No posture snapshots found for framework '{escape(framework)}'.[/dim]")
+        return
+
+    # Extract time series: (days_since_first, posture_score)
+    from warlock.utils import ensure_aware as _ea
+
+    first_date = _ea(snapshots[0].snapshot_date)
+    data_points: list[tuple[float, float]] = []
+    for s in snapshots:
+        snap_date = _ea(s.snapshot_date)
+        if snap_date is None or first_date is None:
+            continue
+        days = (snap_date - first_date).total_seconds() / 86400.0
+        data_points.append((days, float(s.posture_score)))
+
+    if len(data_points) < 2:
+        console.print("[dim]Insufficient data points for regression (need at least 2).[/dim]")
+        return
+
+    # Simple linear regression: y = mx + b
+    n = len(data_points)
+    sum_x = sum(p[0] for p in data_points)
+    sum_y = sum(p[1] for p in data_points)
+    sum_xy = sum(p[0] * p[1] for p in data_points)
+    sum_x2 = sum(p[0] ** 2 for p in data_points)
+
+    denom = n * sum_x2 - sum_x**2
+    if abs(denom) < 1e-10:
+        console.print("[dim]Insufficient variance in data for regression.[/dim]")
+        return
+
+    slope = (n * sum_xy - sum_x * sum_y) / denom
+    intercept = (sum_y - slope * sum_x) / n
+
+    # R-squared
+    mean_y = sum_y / n
+    ss_tot = sum((p[1] - mean_y) ** 2 for p in data_points)
+    ss_res = sum((p[1] - (slope * p[0] + intercept)) ** 2 for p in data_points)
+    r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+
+    # Current and forecast values
+    last_day = data_points[-1][0]
+    current_score = slope * last_day + intercept
+    forecast_days = months * 30
+    forecast_score = slope * (last_day + forecast_days) + intercept
+    forecast_score = max(0.0, min(100.0, forecast_score))
+
+    # Trend direction
+    if slope > 0.1:
+        trend = "[green]improving[/green]"
+        trend_label = "improving"
+    elif slope < -0.1:
+        trend = "[red]declining[/red]"
+        trend_label = "declining"
+    else:
+        trend = "[dim]stable[/dim]"
+        trend_label = "stable"
+
+    # Display results
+    console.print(f"\n[bold]Risk Forecast: {escape(framework)}[/bold]")
+    console.print(f"  Data points:       {n}")
+    console.print(f"  Time span:         {data_points[-1][0]:.0f} days")
+    console.print(f"  Trend:             {trend} ({slope:+.3f} score/day)")
+    console.print(f"  R-squared:         {r_squared:.4f}")
+    console.print(f"  Current score:     {current_score:.1f}")
+    console.print(f"  Forecast ({months}mo):   {forecast_score:.1f}")
+
+    # Monthly projections table
+    table = Table(title=f"Monthly Score Projections ({framework})")
+    table.add_column("Month", style="cyan")
+    table.add_column("Projected Score", justify="right")
+    table.add_column("Risk Level")
+
+    for m in range(1, months + 1):
+        proj_score = slope * (last_day + m * 30) + intercept
+        proj_score = max(0.0, min(100.0, proj_score))
+        risk = (
+            "[green]low[/green]"
+            if proj_score >= 80
+            else "[yellow]medium[/yellow]"
+            if proj_score >= 60
+            else "[red]high[/red]"
+            if proj_score >= 40
+            else "[red bold]critical[/red bold]"
+        )
+        table.add_row(f"+{m}", f"{proj_score:.1f}", risk)
+    console.print(table)
+
+    # Risk assessment
+    risk_level = (
+        "low"
+        if forecast_score >= 80
+        else "medium"
+        if forecast_score >= 60
+        else "high"
+        if forecast_score >= 40
+        else "critical"
+    )
+    risk_style = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "green"}.get(
+        risk_level, ""
+    )
+    console.print(
+        Panel(
+            f"Projected risk level at +{months} months: [{risk_style}]{risk_level.upper()}[/{risk_style}]\n"
+            f"Trend: {trend_label} at {abs(slope):.3f} score points/day\n"
+            f"Model fit (R-squared): {r_squared:.4f}"
+            + (
+                "\n\n[yellow]Warning: R-squared < 0.5 indicates weak model fit. "
+                "Forecast reliability is low.[/yellow]"
+                if r_squared < 0.5
+                else ""
+            ),
+            title="[bold]Risk Assessment[/bold]",
+            border_style="cyan",
+        )
+    )
+
+    if not _check_ai_available(use_ai):
+        return
+
+    _run_ai(
+        "risk_narrative",
+        {
+            "framework": framework,
+            "data_points": n,
+            "current_score": round(current_score, 1),
+            "forecast_score": round(forecast_score, 1),
+            "forecast_months": months,
+            "slope": round(slope, 4),
+            "r_squared": round(r_squared, 4),
+            "trend": trend_label,
+            "risk_level": risk_level,
+            "question": (
+                f"The {framework} compliance posture score is projected to reach "
+                f"{forecast_score:.1f} in {months} months (current: {current_score:.1f}, "
+                f"trend: {trend_label}). Provide a risk narrative explaining what this means, "
+                "what factors likely drive this trend, and recommend specific actions to "
+                "improve the trajectory."
+            ),
+        },
+        f"Risk Forecast: {framework}",
+    )

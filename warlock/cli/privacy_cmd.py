@@ -1186,3 +1186,307 @@ def ropa(output_format: str) -> None:
         lines.append("")
 
     console.print("\n".join(lines))
+
+
+# ---------------------------------------------------------------------------
+# PRV-2: Cookie consent documentation
+# ---------------------------------------------------------------------------
+
+
+@privacy.command("cookie-consent")
+@click.option(
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json"]),
+    help="Output format",
+)
+def cookie_consent(fmt: str) -> None:
+    """Cookie and tracker consent documentation.
+
+    Lists DataSilo records classified as "tracking" to provide a consent
+    inventory.  Each entry shows whether the cookie/tracker requires user
+    consent and whether it has been documented in the privacy policy.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import DataSilo
+
+    init_db()
+
+    with get_session() as session:
+        rows = (
+            session.query(DataSilo)
+            .filter(
+                DataSilo.is_active.is_(True),
+                DataSilo.data_classification == "tracking",
+            )
+            .order_by(DataSilo.name)
+            .limit(500)
+            .all()
+        )
+
+    # If no tracking-classified silos, also look for cookie/tracker in name
+    if not rows:
+        with get_session() as session:
+            rows = (
+                session.query(DataSilo)
+                .filter(
+                    DataSilo.is_active.is_(True),
+                    DataSilo.name.ilike("%cookie%")
+                    | DataSilo.name.ilike("%tracker%")
+                    | DataSilo.name.ilike("%analytics%")
+                    | DataSilo.name.ilike("%pixel%")
+                    | DataSilo.silo_type.ilike("%tracking%"),
+                )
+                .order_by(DataSilo.name)
+                .limit(500)
+                .all()
+            )
+
+    if not rows:
+        console.print("[dim]No tracking or cookie-related data silos found.[/dim]")
+        console.print(
+            "[dim]Hint: data silos with data_classification='tracking' or names "
+            "containing 'cookie', 'tracker', 'analytics', or 'pixel' are surfaced here.[/dim]"
+        )
+        return
+
+    records: list[dict] = []
+    for s in rows:
+        # Determine purpose from silo type or provider
+        purpose = s.silo_type or "unknown"
+        if s.provider:
+            purpose = f"{s.provider} {purpose}"
+
+        # Consent required if PII-containing or restricted/confidential
+        consent_required = s.contains_pii or s.data_classification in (
+            "restricted",
+            "confidential",
+            "tracking",
+        )
+
+        # Documented = has a non-empty remediation_notes or scan has been completed
+        documented = bool(s.remediation_notes) or s.scan_status == "completed"
+
+        records.append(
+            {
+                "name": s.name,
+                "type": s.silo_type,
+                "purpose": purpose,
+                "consent_required": consent_required,
+                "documented": documented,
+                "provider": s.provider or "\u2014",
+                "contains_pii": s.contains_pii,
+            }
+        )
+
+    if fmt == "json":
+        console.print(json.dumps(records, indent=2, default=str))
+        return
+
+    undocumented = sum(1 for r in records if not r["documented"])
+    table = Table(
+        title=f"Cookie / Tracker Consent Inventory ({len(records)} items, {undocumented} undocumented)"
+    )
+    table.add_column("Name", max_width=35)
+    table.add_column("Type", style="cyan")
+    table.add_column("Purpose", max_width=30)
+    table.add_column("Consent Required")
+    table.add_column("Documented")
+
+    for r in records:
+        consent_display = "[red]Yes[/red]" if r["consent_required"] else "[green]No[/green]"
+        doc_display = "[green]Yes[/green]" if r["documented"] else "[red bold]NO[/red bold]"
+        table.add_row(
+            escape(r["name"][:35]),
+            r["type"],
+            r["purpose"][:30],
+            consent_display,
+            doc_display,
+        )
+
+    console.print(table)
+
+    if undocumented:
+        console.print(
+            f"\n[yellow]Action required: {undocumented} cookie(s)/tracker(s) are not "
+            f"documented. Update your privacy policy and cookie banner.[/yellow]"
+        )
+
+
+# ---------------------------------------------------------------------------
+# PRV-5: AI governance privacy analysis
+# ---------------------------------------------------------------------------
+
+# Keywords indicating privacy-relevant AI controls
+_AI_PRIVACY_KEYWORDS = frozenset(
+    {
+        "data",
+        "processing",
+        "profiling",
+        "automated",
+        "decision",
+        "personal",
+        "consent",
+        "privacy",
+        "retention",
+        "transparency",
+        "fairness",
+        "bias",
+        "discrimination",
+        "surveillance",
+        "monitoring",
+    }
+)
+
+
+@privacy.command("ai-governance")
+@click.option(
+    "--status-filter",
+    "status_filter",
+    default=None,
+    type=click.Choice(["compliant", "non_compliant", "partial", "not_assessed", "not_applicable"]),
+    help="Filter by control status",
+)
+@click.option(
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json"]),
+    help="Output format",
+)
+def ai_governance(status_filter: str | None, fmt: str) -> None:
+    """AI governance privacy analysis.
+
+    Queries ControlResult records for the EU AI Act and ISO 42001 frameworks,
+    highlighting controls related to data processing, profiling, and automated
+    decision-making.  Each control is annotated with an inferred AI risk level
+    and privacy impact flag.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+
+    with get_session() as session:
+        q = session.query(ControlResult).filter(
+            ControlResult.framework.in_(["eu_ai_act", "iso_42001"])
+        )
+        if status_filter:
+            q = q.filter(ControlResult.status == status_filter)
+        results = q.order_by(ControlResult.framework, ControlResult.control_id).limit(2000).all()
+
+    if not results:
+        console.print("[dim]No AI governance control results found (eu_ai_act / iso_42001).[/dim]")
+        return
+
+    # Deduplicate by (framework, control_id) keeping worst status
+    _status_rank = {
+        "non_compliant": 0,
+        "partial": 1,
+        "not_assessed": 2,
+        "risk_accepted": 3,
+        "compliant": 4,
+        "inherited_compliant": 5,
+        "not_applicable": 6,
+    }
+    deduped: dict[tuple[str, str], dict] = {}
+    for cr in results:
+        key = (cr.framework, cr.control_id)
+        control_title = cr.control_id  # control_id doubles as short identifier
+
+        # Infer AI risk level from severity
+        severity = (cr.severity or "medium").lower()
+        ai_risk_map = {
+            "critical": "Unacceptable",
+            "high": "High",
+            "medium": "Limited",
+            "low": "Minimal",
+            "info": "Minimal",
+        }
+        ai_risk_level = ai_risk_map.get(severity, "Limited")
+
+        # Detect privacy impact by checking if control_id or assertion name
+        # contains privacy-related keywords
+        search_text = f"{cr.control_id} {cr.assertion_name or ''}".lower()
+        privacy_impact = any(kw in search_text for kw in _AI_PRIVACY_KEYWORDS)
+
+        record = {
+            "framework": cr.framework,
+            "control": control_title,
+            "status": cr.status,
+            "ai_risk_level": ai_risk_level,
+            "privacy_impact": privacy_impact,
+            "severity": severity,
+            "assertion": cr.assertion_name or "\u2014",
+        }
+
+        existing = deduped.get(key)
+        if existing is None:
+            deduped[key] = record
+        else:
+            # Keep worst-case status
+            if _status_rank.get(cr.status, 9) < _status_rank.get(existing["status"], 9):
+                deduped[key] = record
+
+    rows = list(deduped.values())
+
+    if fmt == "json":
+        console.print(json.dumps(rows, indent=2, default=str))
+        return
+
+    privacy_flagged = sum(1 for r in rows if r["privacy_impact"])
+    non_compliant = sum(1 for r in rows if r["status"] in ("non_compliant", "partial"))
+
+    table = Table(
+        title=(
+            f"AI Governance Privacy Analysis ({len(rows)} controls, "
+            f"{privacy_flagged} privacy-relevant, {non_compliant} non-compliant)"
+        )
+    )
+    table.add_column("Framework", style="dim", max_width=12)
+    table.add_column("Control", max_width=20)
+    table.add_column("Status")
+    table.add_column("AI Risk Level")
+    table.add_column("Privacy Impact")
+
+    _status_styles = {
+        "compliant": "green",
+        "inherited_compliant": "green",
+        "non_compliant": "red bold",
+        "partial": "yellow",
+        "not_assessed": "dim",
+        "not_applicable": "dim",
+        "risk_accepted": "yellow",
+    }
+    _risk_styles = {
+        "Unacceptable": "red bold",
+        "High": "red",
+        "Limited": "yellow",
+        "Minimal": "green",
+    }
+
+    for r in rows:
+        st_sty = _status_styles.get(r["status"], "")
+        risk_sty = _risk_styles.get(r["ai_risk_level"], "")
+        impact_display = "[red bold]YES[/red bold]" if r["privacy_impact"] else "[dim]No[/dim]"
+        table.add_row(
+            r["framework"],
+            escape(r["control"]),
+            f"[{st_sty}]{r['status']}[/{st_sty}]" if st_sty else r["status"],
+            f"[{risk_sty}]{r['ai_risk_level']}[/{risk_sty}]" if risk_sty else r["ai_risk_level"],
+            impact_display,
+        )
+
+    console.print(table)
+
+    if non_compliant:
+        console.print(
+            f"\n[red]{non_compliant} control(s) are non-compliant or partial. "
+            f"Review with your AI governance officer before deploying AI systems.[/red]"
+        )
+    if privacy_flagged:
+        console.print(
+            f"[yellow]{privacy_flagged} control(s) have privacy implications. "
+            f"Ensure DPIA is completed for affected AI processing activities.[/yellow]"
+        )
