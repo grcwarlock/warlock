@@ -763,7 +763,9 @@ class Issue(Base):
     created_by = Column(String(255))
 
     # ISS-4: Watchers relationship
-    watchers = relationship("WatchSubscription", back_populates="issue", cascade="all, delete-orphan")
+    watchers = relationship(
+        "WatchSubscription", back_populates="issue", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -1622,9 +1624,7 @@ class EscalationPolicy(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     created_by = Column(String(255))
 
-    __table_args__ = (
-        Index("idx_escalation_active", "active"),
-    )
+    __table_args__ = (Index("idx_escalation_active", "active"),)
 
 
 # ---------------------------------------------------------------------------
@@ -1675,9 +1675,7 @@ class IPAllowlistEntry(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     expires_at = Column(DateTime(timezone=True))  # optional expiry
 
-    __table_args__ = (
-        Index("idx_ip_allowlist_active", "active"),
-    )
+    __table_args__ = (Index("idx_ip_allowlist_active", "active"),)
 
 
 # ---------------------------------------------------------------------------

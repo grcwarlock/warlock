@@ -4,10 +4,10 @@
 import yaml
 import sys
 
-sys.path.insert(0, "/Users/jsn/Coding/GitHub/warlock")
+sys.path.insert(0, "/Users/jsn/warlock")
 
 # Load control IDs from the framework YAML
-with open("/Users/jsn/Coding/GitHub/warlock/warlock/frameworks/nist_800_53.yaml") as f:
+with open("/Users/jsn/warlock/warlock/frameworks/nist_800_53.yaml") as f:
     fw = yaml.safe_load(f)
 
 all_controls = []
@@ -6547,7 +6547,7 @@ def represent_none(dumper, _):
 
 NullDumper.add_representer(type(None), represent_none)
 
-output_path = "/Users/jsn/Coding/GitHub/warlock/warlock/frameworks/remediation/nist_800_53.yaml"
+output_path = "/Users/jsn/warlock/warlock/frameworks/remediation/nist_800_53.yaml"
 with open(output_path, "w") as f:
     yaml.dump(
         output,

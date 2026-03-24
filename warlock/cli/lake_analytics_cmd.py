@@ -896,20 +896,21 @@ def anomaly_detect(source: str | None, days: int) -> None:
     """Detect anomalies in finding volume and severity patterns."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func, cast, Date
+    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
 
     with get_session() as session:
         q = session.query(
-            cast(Finding.ingested_at, Date).label("day"),
+            func.strftime("%Y-%m-%d", Finding.ingested_at).label("day"),
             Finding.severity,
             func.count(Finding.id).label("count"),
         ).filter(Finding.ingested_at >= since)
         if source:
             q = q.filter(Finding.source == source)
         rows = q.group_by("day", Finding.severity).order_by("day").all()
+        rows = [r for r in rows if r.day is not None]
 
     if not rows:
         console.print("[yellow]No findings in the analysis window.[/yellow]")
@@ -966,7 +967,7 @@ def anomaly_list(severity: str | None, since: str | None) -> None:
     """List detected anomalies in the data lake (days with abnormal finding counts)."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func, cast, Date
+    from sqlalchemy import func
 
     init_db()
     since_dt = _utcnow() - timedelta(days=30)
@@ -978,12 +979,13 @@ def anomaly_list(severity: str | None, since: str | None) -> None:
 
     with get_session() as session:
         q = session.query(
-            cast(Finding.ingested_at, Date).label("day"),
+            func.strftime("%Y-%m-%d", Finding.ingested_at).label("day"),
             func.count(Finding.id).label("count"),
         ).filter(Finding.ingested_at >= since_dt)
         if severity:
             q = q.filter(Finding.severity == severity)
         rows = q.group_by("day").order_by("day").all()
+        rows = [r for r in rows if r.day is not None]
 
     if not rows:
         console.print("[yellow]No findings in the selected window.[/yellow]")
@@ -1102,7 +1104,7 @@ def trends_findings(days: int, group_by: str) -> None:
     """Show finding volume trends over time."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func, cast, Date
+    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -1117,7 +1119,7 @@ def trends_findings(days: int, group_by: str) -> None:
 
         rows = (
             session.query(
-                cast(Finding.ingested_at, Date).label("day"),
+                func.strftime("%Y-%m-%d", Finding.ingested_at).label("day"),
                 dim_col.label("dimension"),
                 func.count(Finding.id).label("count"),
             )
@@ -1126,6 +1128,7 @@ def trends_findings(days: int, group_by: str) -> None:
             .order_by("day", func.count(Finding.id).desc())
             .all()
         )
+        rows = [r for r in rows if r.day is not None]
 
     if not rows:
         console.print(f"[yellow]No findings in the past {days} days.[/yellow]")
@@ -1211,7 +1214,7 @@ def trends_risk(days: int) -> None:
     """Show risk score trends (severity distribution over time)."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func, cast, Date
+    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -1219,7 +1222,7 @@ def trends_risk(days: int) -> None:
     with get_session() as session:
         rows = (
             session.query(
-                cast(Finding.ingested_at, Date).label("day"),
+                func.strftime("%Y-%m-%d", Finding.ingested_at).label("day"),
                 Finding.severity,
                 func.count(Finding.id).label("count"),
             )
@@ -1228,6 +1231,7 @@ def trends_risk(days: int) -> None:
             .order_by("day")
             .all()
         )
+        rows = [r for r in rows if r.day is not None]
 
     if not rows:
         console.print(f"[yellow]No findings in the past {days} days.[/yellow]")

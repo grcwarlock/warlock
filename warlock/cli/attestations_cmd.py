@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 import click
 from rich.table import Table
 
+from warlock.utils import ensure_aware
+
 from warlock.cli import cli, console, _error, _get_actor
 
 
@@ -326,7 +328,7 @@ def attestation_overdue() -> None:
 
     for a in rows:
         if a.prepared_at:
-            delta = (now - a.prepared_at).days
+            delta = (now - ensure_aware(a.prepared_at)).days
         else:
             delta = 0
         style = _STATUS_STYLES.get(a.status, "")
@@ -370,7 +372,9 @@ def attestation_expiring(days: int) -> None:
         )
 
     expiring = [
-        a for a in rows if a.approved_at and now <= (a.approved_at + one_year) <= window_end
+        a
+        for a in rows
+        if a.approved_at and now <= (ensure_aware(a.approved_at) + one_year) <= window_end
     ]
 
     if not expiring:

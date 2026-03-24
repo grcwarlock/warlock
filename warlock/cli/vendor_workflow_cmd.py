@@ -14,6 +14,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
+from warlock.utils import ensure_aware
+
 import click
 from rich.markup import escape
 from rich.panel import Panel
@@ -483,7 +485,7 @@ def vendor_reassess() -> None:
                 if v.last_assessment is None:
                     overdue.append((v, None, cadence))
                 else:
-                    days_since = (now - v.last_assessment).days
+                    days_since = (now - ensure_aware(v.last_assessment)).days
                     if days_since >= cadence:
                         overdue.append((v, days_since, cadence))
 

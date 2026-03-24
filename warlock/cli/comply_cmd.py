@@ -446,7 +446,8 @@ def pre_audit(framework: str, output_format: str) -> None:
     overdue_poams = [
         p
         for p in open_poams
-        if p.scheduled_completion and p.scheduled_completion < datetime.now(timezone.utc)
+        if p.scheduled_completion
+        and ensure_aware(p.scheduled_completion) < datetime.now(timezone.utc)
     ]
     approved_atts = sum(1 for a in attestations if a.status == "approved")
 
@@ -1040,9 +1041,12 @@ def debt(framework: str | None) -> None:
         table.add_column("Due Date")
         table.add_column("Days Overdue", justify="right")
 
-        for p in sorted(overdue_poams, key=lambda x: x.scheduled_completion or now):
+        for p in sorted(
+            overdue_poams,
+            key=lambda x: ensure_aware(x.scheduled_completion) if x.scheduled_completion else now,
+        ):
             due = p.scheduled_completion
-            overdue_days = (now - due).days if due else 0
+            overdue_days = (now - ensure_aware(due)).days if due else 0
             table.add_row(
                 p.id[:8],
                 p.framework,

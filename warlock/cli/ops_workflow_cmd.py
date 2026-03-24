@@ -535,7 +535,7 @@ def weekly(framework: str | None, output: str | None) -> None:
             dl_table.add_column("Due Date")
             dl_table.add_column("Status")
             for p in upcoming_deadlines:
-                days_left = (p.scheduled_completion - now).days
+                days_left = (ensure_aware(p.scheduled_completion) - now).days
                 color = "red" if days_left <= 3 else ("yellow" if days_left <= 7 else "white")
                 dl_table.add_row(
                     p.control_id,
@@ -940,7 +940,8 @@ def monthly_review(framework: str | None, output: str | None) -> None:
         expiring_attests = [
             a
             for a in approved_attestations
-            if a.approved_at and (a.approved_at + timedelta(days=365)) <= attestation_expiry_cutoff
+            if a.approved_at
+            and (ensure_aware(a.approved_at) + timedelta(days=365)) <= attestation_expiry_cutoff
         ]
 
         if expiring_attests:
@@ -951,7 +952,9 @@ def monthly_review(framework: str | None, output: str | None) -> None:
             a_table.add_column("Approved At")
             a_table.add_column("Approx Expiry")
             for a in expiring_attests[:10]:
-                approx_expiry = (a.approved_at + timedelta(days=365)).strftime("%Y-%m-%d")
+                approx_expiry = (ensure_aware(a.approved_at) + timedelta(days=365)).strftime(
+                    "%Y-%m-%d"
+                )
                 a_table.add_row(
                     a.id[:8],
                     a.framework,
@@ -1032,7 +1035,9 @@ def monthly_review(framework: str | None, output: str | None) -> None:
                 "",
             ]
             for a in expiring_attests[:5]:
-                approx_expiry = (a.approved_at + timedelta(days=365)).strftime("%Y-%m-%d")
+                approx_expiry = (ensure_aware(a.approved_at) + timedelta(days=365)).strftime(
+                    "%Y-%m-%d"
+                )
                 report_lines.append(
                     f"- {a.framework}/{a.control_id or 'framework'} — expires ~{approx_expiry}"
                 )

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Warlock GRC Platform — Double-click to launch demo
-cd /Users/jsn/Coding/GitHub/warlock
+cd /Users/jsn/warlock
 exec < /dev/tty
 
 ./scripts/demo.sh

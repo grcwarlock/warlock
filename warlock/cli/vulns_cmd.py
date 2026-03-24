@@ -12,6 +12,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
+from warlock.utils import ensure_aware
 
 # SLA thresholds (days) per severity — industry standard
 _SLA_DAYS: dict[str, int] = {
@@ -158,7 +159,7 @@ def vulns_sla_breach(source: str | None, severity: str | None, limit: int) -> No
                 q = q.filter(Finding.source == source)
             rows = q.order_by(Finding.observed_at.asc()).all()
             for r in rows:
-                age_days = (now - r.observed_at).days
+                age_days = (now - ensure_aware(r.observed_at)).days
                 over_sla = age_days - days
                 results.append((r, over_sla))
 
@@ -182,7 +183,7 @@ def vulns_sla_breach(source: str | None, severity: str | None, limit: int) -> No
     for finding, over in results:
         sev_style = _SEVERITY_STYLES.get(finding.severity, "")
         sla = _SLA_DAYS.get(finding.severity, 90)
-        age = (now - finding.observed_at).days
+        age = (now - ensure_aware(finding.observed_at)).days
         table.add_row(
             finding.id[:8],
             finding.source,
@@ -361,7 +362,7 @@ def vulns_aging(min_age: int, source: str | None, limit: int) -> None:
     table.add_column("Title", max_width=45)
 
     for finding in rows:
-        age = (now - finding.observed_at).days
+        age = (now - ensure_aware(finding.observed_at)).days
         sev_style = _SEVERITY_STYLES.get(finding.severity, "")
         table.add_row(
             finding.id[:8],
@@ -453,7 +454,7 @@ def vulns_remediation_rate(days: int, source: str | None) -> None:
     """
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding
+    from warlock.db.models import ControlMapping, ControlResult, Finding
 
     init_db()
     now = datetime.now(timezone.utc)
@@ -472,9 +473,7 @@ def vulns_remediation_rate(days: int, source: str | None) -> None:
         q_remediated = (
             session.query(Finding)
             .join(Finding.control_mappings)
-            .join(
-                ControlResult, ControlResult.control_mapping_id == ControlResult.control_mapping_id
-            )
+            .join(ControlResult, ControlResult.control_mapping_id == ControlMapping.id)
             .filter(
                 Finding.observation_type == "vulnerability",
                 Finding.observed_at >= cutoff,

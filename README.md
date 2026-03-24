@@ -94,7 +94,7 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
-## CLI (599 leaf commands across 68 modules)
+## CLI (686 leaf commands across 74 modules)
 
 Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
@@ -306,7 +306,7 @@ warlock/
 │   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
-│   ├── models.py         # 42 SQLAlchemy models
+│   ├── models.py         # 47 SQLAlchemy models
 │   ├── migrations/       # Schema via Base.metadata.create_all()
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
@@ -342,12 +342,14 @@ warlock/
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
 ├── domains/          # 7 domain service modules (registry, event bus, policy engine)
-└── cli/              # Click CLI package (599 leaf commands, 68 modules)
+├── integrations/     # Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
+├── platform/         # Tenancy, white-label, delegation, sandbox, legacy/bulk import
+└── cli/              # Click CLI package (686 leaf commands, 74 modules)
 ```
 
 ## Database
 
-42 tables (schema managed via `Base.metadata.create_all()`):
+47 tables (schema managed via `Base.metadata.create_all()`):
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency
@@ -359,6 +361,7 @@ warlock/
 **Domain Architecture:** Policy, PolicyHistory, Asset, Vendor
 **Operational:** Alert, Remediation, PipelineRun
 **Search:** Embedding
+**Platform:** WatchSubscription, EscalationPolicy, SavedQuery, IPAllowlistEntry, RiskDependency
 
 ## Tech Stack
 

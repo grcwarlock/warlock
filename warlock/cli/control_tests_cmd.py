@@ -17,6 +17,7 @@ import click
 from rich.table import Table
 
 from warlock.cli import cli, console, _error, _get_actor
+from warlock.utils import ensure_aware
 
 
 @cli.group("control-tests", invoke_without_command=True)
@@ -53,8 +54,12 @@ def control_tests_import(filepath: str, fmt: str, dry_run: bool) -> None:
 
     records: list[dict] = []
     if fmt == "json":
-        with open(filepath) as fh:
-            data = json.load(fh)
+        try:
+            with open(filepath) as fh:
+                data = json.load(fh)
+        except json.JSONDecodeError as exc:
+            _error(f"Invalid JSON in {filepath}: {exc}")
+            return
         records = data.get("results", data) if isinstance(data, dict) else data
     else:
         with open(filepath, newline="") as fh:
@@ -412,7 +417,7 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
                     }
                 )
             else:
-                next_due = la + timedelta(days=freq_days)
+                next_due = ensure_aware(la) + timedelta(days=freq_days)
                 if next_due <= cutoff:
                     due_rows.append(
                         {
@@ -704,7 +709,7 @@ def gaps(framework: str | None, output_format: str) -> None:
             )
         elif m.monitoring_frequency:
             freq_days = frequency_days.get(m.monitoring_frequency, 365)
-            overdue_by = (now - la).days - freq_days
+            overdue_by = (now - ensure_aware(la)).days - freq_days
             if overdue_by > 0:
                 gap_rows.append(
                     {

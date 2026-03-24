@@ -14,6 +14,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
+from warlock.utils import ensure_aware
+
 from warlock.cli import cli, console, _error, _get_actor
 
 
@@ -249,7 +251,7 @@ def poam_list(
         overdue_flag = ""
         if (
             p.scheduled_completion
-            and p.scheduled_completion < now
+            and ensure_aware(p.scheduled_completion) < now
             and p.status not in ("completed", "verified", "closed")
         ):
             overdue_flag = " [red]OVERDUE[/red]"
@@ -799,8 +801,16 @@ def poam_overdue(framework: str | None, fmt: str) -> None:
         st_style = _ST_STYLES.get(row["status"], "")
         days_style = "red bold" if row["days_overdue"] > 30 else "yellow"
         cost_str = f"${row['cost_estimate']:,.2f}" if row["cost_estimate"] else "\u2014"
-        sev_text = f"[{sev_style}]{escape(row['severity'])}[/{sev_style}]" if sev_style else escape(row["severity"])
-        st_text = f"[{st_style}]{escape(row['status'])}[/{st_style}]" if st_style else escape(row["status"])
+        sev_text = (
+            f"[{sev_style}]{escape(row['severity'])}[/{sev_style}]"
+            if sev_style
+            else escape(row["severity"])
+        )
+        st_text = (
+            f"[{st_style}]{escape(row['status'])}[/{st_style}]"
+            if st_style
+            else escape(row["status"])
+        )
         table.add_row(
             row["id"][:8],
             escape(row["framework"]),

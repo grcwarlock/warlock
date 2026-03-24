@@ -299,29 +299,20 @@ def predict_risk(framework: str | None, limit: int, use_ai: bool) -> None:
     """Predict which controls are likely to fail based on historical trends."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
+    from sqlalchemy import case, func
 
     init_db()
     with get_session() as session:
+        fail_expr = case((ControlResult.status == "non_compliant", 1), else_=0)
         q = session.query(
             ControlResult.framework,
             ControlResult.control_id,
             func.count(ControlResult.id).label("total"),
-            func.sum(
-                (ControlResult.status == "non_compliant").cast(int)  # type: ignore[arg-type]
-            ).label("failures"),
+            func.sum(fail_expr).label("failures"),
         ).group_by(ControlResult.framework, ControlResult.control_id)
         if framework:
             q = q.filter(ControlResult.framework == framework)
-        rows = (
-            q.order_by(
-                func.sum(
-                    (ControlResult.status == "non_compliant").cast(int)  # type: ignore[arg-type]
-                ).desc()
-            )
-            .limit(limit)
-            .all()
-        )
+        rows = q.order_by(func.sum(fail_expr).desc()).limit(limit).all()
 
     if not rows:
         console.print("[dim]No control results found.[/dim]")

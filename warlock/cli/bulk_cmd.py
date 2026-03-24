@@ -570,7 +570,7 @@ def link_findings_to_issues(severity: str, dry_run: bool) -> None:
                 Finding.severity.in_(severities),
                 ~Finding.id.in_(linked_finding_ids),
             )
-            .order_by(Finding.severity, Finding.created_at)
+            .order_by(Finding.severity, Finding.ingested_at)
             .all()
         )
 

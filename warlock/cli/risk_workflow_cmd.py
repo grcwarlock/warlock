@@ -14,6 +14,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from warlock.utils import ensure_aware
+
 import click
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
@@ -725,7 +727,9 @@ def risk_quarterly(framework: str | None, output: str | None, interactive: bool)
         all_risks = q.all()
 
         due_for_review = [
-            ra for ra in all_risks if ra.reviewed_at is None or ra.reviewed_at < quarter_start
+            ra
+            for ra in all_risks
+            if ra.reviewed_at is None or ensure_aware(ra.reviewed_at) < quarter_start
         ]
 
         console.print(

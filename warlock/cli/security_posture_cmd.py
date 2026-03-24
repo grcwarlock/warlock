@@ -609,15 +609,11 @@ def cis_benchmarks(framework: str | None) -> None:
         family_stats = session.query(
             ControlResult.control_id,
             ControlResult.framework,
-            func.sum(case((ControlResult.status == "compliant", 1), else_=0)).label(
-                "pass_count"
-            ),
+            func.sum(case((ControlResult.status == "compliant", 1), else_=0)).label("pass_count"),
             func.sum(case((ControlResult.status == "non_compliant", 1), else_=0)).label(
                 "fail_count"
             ),
-            func.sum(case((ControlResult.status == "partial", 1), else_=0)).label(
-                "partial_count"
-            ),
+            func.sum(case((ControlResult.status == "partial", 1), else_=0)).label("partial_count"),
             func.count(ControlResult.id).label("total"),
         ).filter(ControlResult.status.in_(["compliant", "non_compliant", "partial"]))
         if framework:
@@ -625,9 +621,7 @@ def cis_benchmarks(framework: str | None) -> None:
 
         family_stats = (
             family_stats.group_by(ControlResult.framework, ControlResult.control_id)
-            .order_by(
-                func.sum(case((ControlResult.status == "non_compliant", 1), else_=0)).desc()
-            )
+            .order_by(func.sum(case((ControlResult.status == "non_compliant", 1), else_=0)).desc())
             .limit(50)
             .all()
         )
@@ -712,9 +706,7 @@ def cloud_config(source: str | None, limit: int) -> None:
 
         rows = (
             q.group_by(Finding.resource_type, Finding.source)
-            .order_by(
-                func.sum(case((ControlResult.status == "non_compliant", 1), else_=0)).desc()
-            )
+            .order_by(func.sum(case((ControlResult.status == "non_compliant", 1), else_=0)).desc())
             .limit(limit)
             .all()
         )

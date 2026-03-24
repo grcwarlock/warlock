@@ -443,9 +443,9 @@ class HorizonScanner:
             self._session.query(
                 ControlResult.control_id,
                 func.count(ControlResult.id).label("total"),
-                func.sum(
-                    case((ControlResult.status == "non_compliant", 1), else_=0)
-                ).label("failures"),
+                func.sum(case((ControlResult.status == "non_compliant", 1), else_=0)).label(
+                    "failures"
+                ),
             )
             .filter(ControlResult.framework == framework)
             .group_by(ControlResult.control_id)
@@ -495,9 +495,9 @@ class HorizonScanner:
             self._session.query(
                 ControlResult.control_id,
                 func.count(ControlResult.id).label("total"),
-                func.sum(
-                    case((ControlResult.status == "not_assessed", 1), else_=0)
-                ).label("not_assessed"),
+                func.sum(case((ControlResult.status == "not_assessed", 1), else_=0)).label(
+                    "not_assessed"
+                ),
             )
             .filter(ControlResult.framework == framework)
             .group_by(ControlResult.control_id)
