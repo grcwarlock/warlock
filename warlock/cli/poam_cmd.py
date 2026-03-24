@@ -799,12 +799,14 @@ def poam_overdue(framework: str | None, fmt: str) -> None:
         st_style = _ST_STYLES.get(row["status"], "")
         days_style = "red bold" if row["days_overdue"] > 30 else "yellow"
         cost_str = f"${row['cost_estimate']:,.2f}" if row["cost_estimate"] else "\u2014"
+        sev_text = f"[{sev_style}]{escape(row['severity'])}[/{sev_style}]" if sev_style else escape(row["severity"])
+        st_text = f"[{st_style}]{escape(row['status'])}[/{st_style}]" if st_style else escape(row["status"])
         table.add_row(
             row["id"][:8],
             escape(row["framework"]),
             escape(row["control_id"]),
-            f"[{sev_style}]{row['severity']}[/]",
-            f"[{st_style}]{row['status']}[/]",
+            sev_text,
+            st_text,
             row["scheduled_completion"],
             f"[{days_style}]{row['days_overdue']}[/{days_style}]",
             cost_str,
@@ -812,14 +814,19 @@ def poam_overdue(framework: str | None, fmt: str) -> None:
 
     console.print(table)
 
-    # Summary by severity
-    summary = mgr.get_overdue_summary(session)
-    if summary.get("by_severity"):
+    # Summary by severity (count from already-loaded data)
+    sev_counts: dict[str, int] = {}
+    for row in rows_data:
+        sev_counts[row["severity"]] = sev_counts.get(row["severity"], 0) + 1
+    if sev_counts:
         console.print("\n[bold]By severity:[/bold]", end="  ")
         parts = []
-        for sev, cnt in sorted(summary["by_severity"].items()):
+        for sev, cnt in sorted(sev_counts.items()):
             sev_style = _SEV_STYLES.get(sev, "")
-            parts.append(f"[{sev_style}]{sev}[/]: {cnt}")
+            if sev_style:
+                parts.append(f"[{sev_style}]{escape(sev)}[/{sev_style}]: {cnt}")
+            else:
+                parts.append(f"{escape(sev)}: {cnt}")
         console.print("  ".join(parts))
 
 

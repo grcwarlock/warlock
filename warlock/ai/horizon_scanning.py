@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from warlock.db.models import ControlResult
@@ -444,7 +444,7 @@ class HorizonScanner:
                 ControlResult.control_id,
                 func.count(ControlResult.id).label("total"),
                 func.sum(
-                    (ControlResult.status == "non_compliant").cast(int)  # type: ignore[arg-type]
+                    case((ControlResult.status == "non_compliant", 1), else_=0)
                 ).label("failures"),
             )
             .filter(ControlResult.framework == framework)
@@ -496,7 +496,7 @@ class HorizonScanner:
                 ControlResult.control_id,
                 func.count(ControlResult.id).label("total"),
                 func.sum(
-                    (ControlResult.status == "not_assessed").cast(int)  # type: ignore[arg-type]
+                    case((ControlResult.status == "not_assessed", 1), else_=0)
                 ).label("not_assessed"),
             )
             .filter(ControlResult.framework == framework)
