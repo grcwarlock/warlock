@@ -601,13 +601,42 @@ def vendor_soc2_review(vendor_id: str, report_date: str | None, opinion: str | N
 
 
 @vendor_mgmt.command("fourth-party")
-@click.argument("vendor_id")
-def vendor_fourth_party(vendor_id: str) -> None:
-    """List fourth-party (sub-processor) dependencies for a vendor."""
+@click.argument("vendor_id", required=False, default=None)
+def vendor_fourth_party(vendor_id: str | None) -> None:
+    """List fourth-party (sub-processor) dependencies for a vendor.
+
+    When VENDOR_ID is omitted, shows all vendors with their sub-processor data.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Vendor
 
     init_db()
+
+    if vendor_id is None:
+        with get_session() as session:
+            vendors = session.query(Vendor).order_by(Vendor.name).all()
+        if not vendors:
+            console.print("[dim]No vendors found.[/dim]")
+            return
+
+        table = Table(title="Fourth-Party Dependencies (all vendors)")
+        table.add_column("Vendor", style="cyan")
+        table.add_column("Sub-processors", justify="right")
+        table.add_column("Names", style="dim", max_width=60)
+
+        for v in vendors:
+            meta = v.metadata_ or {}
+            sps = meta.get("subprocessors", [])
+            names = ", ".join(
+                (sp.get("name", "?") if isinstance(sp, dict) else str(sp)) for sp in sps[:5]
+            )
+            if len(sps) > 5:
+                names += f" (+{len(sps) - 5})"
+            table.add_row(escape(v.name or ""), str(len(sps)), names or "\u2014")
+
+        console.print(table)
+        return
+
     with get_session() as session:
         v = session.query(Vendor).filter(Vendor.id.startswith(vendor_id)).first()
         if not v:
@@ -754,15 +783,45 @@ def vendor_import(filepath: str, fmt: str, dry_run: bool) -> None:
 
 
 @vendor_mgmt.command("sla")
-@click.argument("vendor_id")
+@click.argument("vendor_id", required=False, default=None)
 @click.option("--set-uptime", type=float, default=None, help="Set contracted uptime SLA (%)")
 @click.option("--set-response", type=int, default=None, help="Set incident response SLA (hours)")
-def vendor_sla(vendor_id: str, set_uptime: float | None, set_response: int | None) -> None:
-    """View or update SLA terms for a vendor."""
+def vendor_sla(vendor_id: str | None, set_uptime: float | None, set_response: int | None) -> None:
+    """View or update SLA terms for a vendor.
+
+    When VENDOR_ID is omitted, shows SLA summary for all vendors.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Vendor
 
     init_db()
+
+    if vendor_id is None:
+        with get_session() as session:
+            vendors = session.query(Vendor).order_by(Vendor.name).all()
+        if not vendors:
+            console.print("[dim]No vendors found.[/dim]")
+            return
+
+        table = Table(title="Vendor SLA Summary")
+        table.add_column("ID", style="dim", max_width=8)
+        table.add_column("Vendor", style="cyan")
+        table.add_column("Uptime SLA", justify="right")
+        table.add_column("Response SLA", justify="right")
+
+        for v in vendors:
+            meta = v.metadata_ or {}
+            uptime = meta.get("sla_uptime_pct")
+            response = meta.get("sla_response_hours")
+            table.add_row(
+                v.id[:8],
+                escape(v.name or ""),
+                f"{uptime}%" if uptime is not None else "\u2014",
+                f"{response}h" if response is not None else "\u2014",
+            )
+        console.print(table)
+        return
+
     with get_session() as session:
         v = session.query(Vendor).filter(Vendor.id.startswith(vendor_id)).first()
         if not v:

@@ -367,27 +367,34 @@ def connectors_status(limit: int, fmt: str) -> None:
 
 
 @connectors.command("history")
-@click.argument("name")
+@click.argument("name", required=False, default=None)
 @click.option("--limit", "-n", default=10, help="Number of runs to show")
-def connectors_history(name: str, limit: int) -> None:
-    """Show run history for a specific connector."""
+def connectors_history(name: str | None, limit: int) -> None:
+    """Show run history for a specific connector.
+
+    When NAME is omitted, shows recent run history across all connectors.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ConnectorRun
 
     init_db()
     with get_session() as session:
-        rows = (
-            session.query(ConnectorRun)
-            .filter(ConnectorRun.connector_name == name)
-            .order_by(ConnectorRun.started_at.desc())
-            .limit(limit)
-            .all()
-        )
+        q = session.query(ConnectorRun).order_by(ConnectorRun.started_at.desc())
+        if name is not None:
+            q = q.filter(ConnectorRun.connector_name == name)
+        rows = q.limit(limit).all()
 
     if not rows:
-        _error(f"No history found for connector '{name}'.")
+        if name:
+            _error(f"No history found for connector '{name}'.")
+        else:
+            console.print("[dim]No connector run history found.[/dim]")
+            return
 
-    table = Table(title=f"History: {name}")
+    title = f"History: {name}" if name else f"Recent Connector History (last {limit})"
+    table = Table(title=title)
+    if name is None:
+        table.add_column("Connector", style="cyan")
     table.add_column("Run ID", style="dim", max_width=8)
     table.add_column("Status")
     table.add_column("Events", justify="right")
@@ -402,14 +409,20 @@ def connectors_history(name: str, limit: int) -> None:
             "partial": "yellow",
         }.get(run.status, "dim")
         dur = f"{run.duration_seconds:.1f}s" if run.duration_seconds else "\u2014"
-        table.add_row(
-            run.id[:8],
-            f"[{status_style}]{run.status}[/{status_style}]",
-            str(run.event_count or 0),
-            str(run.error_count or 0),
-            dur,
-            str(run.started_at)[:19] if run.started_at else "\u2014",
+        cells = []
+        if name is None:
+            cells.append(run.connector_name)
+        cells.extend(
+            [
+                run.id[:8],
+                f"[{status_style}]{run.status}[/{status_style}]",
+                str(run.event_count or 0),
+                str(run.error_count or 0),
+                dur,
+                str(run.started_at)[:19] if run.started_at else "\u2014",
+            ]
         )
+        table.add_row(*cells)
 
     console.print(table)
 

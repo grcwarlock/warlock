@@ -260,8 +260,8 @@ def poam_list(
             escape(p.framework or ""),
             escape(p.control_id or ""),
             escape((p.weakness_description or "")[:40]),
-            f"[{sev_style}]{p.severity}[/]",
-            f"[{st_style}]{p.status}[/]",
+            f"[{sev_style}]{p.severity}[/{sev_style}]" if sev_style else escape(p.severity or ""),
+            f"[{st_style}]{p.status}[/{st_style}]" if st_style else escape(p.status or ""),
             f"{due_str}{overdue_flag}",
         )
 

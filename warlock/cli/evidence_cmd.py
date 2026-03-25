@@ -521,7 +521,7 @@ def evidence_freshness(framework: str | None, threshold_days: int) -> None:
         now = datetime.now(timezone.utc)
         for r in stale:
             if r.assessed_at:
-                days_ago = (now - r.assessed_at).days
+                days_ago = (now - ensure_aware(r.assessed_at)).days
                 last = r.assessed_at.strftime("%Y-%m-%d")
             else:
                 days_ago = 9999

@@ -877,6 +877,7 @@ def monthly_review(framework: str | None, output: str | None) -> None:
         # ---------------------------------------------------------------
         console.print("\n[bold cyan]4. Vendor Reassessments Due[/bold cyan]")
 
+        overdue_vendors = []
         try:
             vendors = session.query(Vendor).all()
             overdue_vendors = [

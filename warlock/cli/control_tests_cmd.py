@@ -474,22 +474,25 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
 
 
 @control_tests.command("history")
-@click.argument("control_id")
+@click.argument("control_id", required=False, default=None)
 @click.option("--last", "-n", default=20, help="Show last N results (default: 20)")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
-def control_history(control_id: str, last: int, framework: str | None, output_format: str) -> None:
-    """Show test history for a control."""
+def control_history(
+    control_id: str | None, last: int, framework: str | None, output_format: str
+) -> None:
+    """Show test history for a control.
+
+    When CONTROL_ID is omitted, shows recent test history across all controls.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
 
     init_db()
     with get_session() as session:
-        q = (
-            session.query(ControlResult)
-            .filter(ControlResult.control_id == control_id)
-            .order_by(ControlResult.assessed_at.desc())
-        )
+        q = session.query(ControlResult).order_by(ControlResult.assessed_at.desc())
+        if control_id is not None:
+            q = q.filter(ControlResult.control_id == control_id)
         if framework:
             q = q.filter(ControlResult.framework == framework)
         rows = q.limit(last).all()
@@ -512,7 +515,8 @@ def control_history(control_id: str, last: int, framework: str | None, output_fo
         ]
 
     if not data:
-        console.print(f"[dim]No test history found for control '{control_id}'.[/dim]")
+        label = f"control '{control_id}'" if control_id else "any control"
+        console.print(f"[dim]No test history found for {label}.[/dim]")
         return
 
     if output_format == "json":
@@ -521,9 +525,15 @@ def control_history(control_id: str, last: int, framework: str | None, output_fo
         console.print(json.dumps(data, indent=2))
         return
 
-    table = Table(title=f"Test History: {control_id} (last {last})")
+    title = (
+        f"Test History: {control_id} (last {last})"
+        if control_id
+        else f"Recent Test History (last {last})"
+    )
+    table = Table(title=title)
     table.add_column("ID", style="dim", max_width=8)
     table.add_column("Framework", style="cyan")
+    table.add_column("Control", style="cyan")
     table.add_column("Status")
     table.add_column("Severity")
     table.add_column("Assessor", max_width=25)
@@ -540,6 +550,7 @@ def control_history(control_id: str, last: int, framework: str | None, output_fo
         table.add_row(
             r["id"][:8],
             r["framework"],
+            r["control_id"],
             f"[{status_style}]{r['status']}[/]",
             r["severity"],
             r["assessor"][:25] if r["assessor"] else "\u2014",

@@ -870,6 +870,9 @@ def forecast_cmd(framework: str | None, target_score: float, fmt: str) -> None:
         needed_compliant = 1
 
     days_to_target = math.ceil(needed_compliant / daily_rate)
+    if days_to_target > 3650:
+        console.print("[yellow]At current velocity, target is >10 years away.[/yellow]")
+        return
     projected_date = now + timedelta(days=days_to_target)
 
     table = Table(title="Compliance Forecast")

@@ -668,39 +668,46 @@ def frameworks_event_types(framework_id: str, limit: int) -> None:
 
 
 @frameworks_grp.command("connectors")
-@click.argument("framework_id")
-def frameworks_connectors(framework_id: str) -> None:
-    """List connectors that feed data relevant to this framework."""
+@click.argument("framework_id", required=False, default=None)
+def frameworks_connectors(framework_id: str | None) -> None:
+    """List connectors that feed data relevant to a framework.
+
+    When FRAMEWORK_ID is omitted, shows connectors for all frameworks.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import RawEvent
 
     init_db()
-    data = _load_framework_yaml(framework_id)
-    controls = _collect_controls(data)
-    event_types = _collect_event_types(controls)
 
-    with get_session() as session:
-        rows = (
-            session.query(RawEvent.provider, RawEvent.source_type, RawEvent.source)
-            .filter(RawEvent.event_type.in_(event_types))
-            .distinct()
-            .all()
-        )
+    fw_ids = [framework_id] if framework_id else list(_FRAMEWORK_DISPLAY_NAMES.keys())
 
-    label = _FRAMEWORK_DISPLAY_NAMES.get(framework_id, framework_id)
-    if not rows:
-        console.print(f"[dim]No connector data found for {label} event types.[/dim]")
-        return
+    for fw_id in fw_ids:
+        data = _load_framework_yaml(fw_id)
+        controls = _collect_controls(data)
+        event_types = _collect_event_types(controls)
 
-    table = Table(title=f"Connectors contributing to {label}")
-    table.add_column("Provider", style="cyan")
-    table.add_column("Source Type")
-    table.add_column("Source")
+        with get_session() as session:
+            rows = (
+                session.query(RawEvent.provider, RawEvent.source_type, RawEvent.source)
+                .filter(RawEvent.event_type.in_(event_types))
+                .distinct()
+                .all()
+            )
 
-    for provider, source_type, source in sorted(rows):
-        table.add_row(provider, source_type, source)
+        label = _FRAMEWORK_DISPLAY_NAMES.get(fw_id, fw_id)
+        if not rows:
+            console.print(f"[dim]No connector data found for {label} event types.[/dim]")
+            continue
 
-    console.print(table)
+        table = Table(title=f"Connectors contributing to {label}")
+        table.add_column("Provider", style="cyan")
+        table.add_column("Source Type")
+        table.add_column("Source")
+
+        for provider, source_type, source in sorted(rows):
+            table.add_row(provider, source_type, source)
+
+        console.print(table)
 
 
 # ---------------------------------------------------------------------------
@@ -709,39 +716,45 @@ def frameworks_connectors(framework_id: str) -> None:
 
 
 @frameworks_grp.command("calendar")
-@click.argument("framework_id")
-def frameworks_calendar(framework_id: str) -> None:
-    """Show monitoring frequency calendar for a framework's controls."""
-    data = _load_framework_yaml(framework_id)
-    controls = _collect_controls(data)
+@click.argument("framework_id", required=False, default=None)
+def frameworks_calendar(framework_id: str | None) -> None:
+    """Show monitoring frequency calendar for a framework's controls.
 
-    freq_map: dict[str, list[str]] = {}
-    for ctrl_id, ctrl_data in controls.items():
-        freq = "not_specified"
-        if ctrl_data:
-            for check in ctrl_data.get("checks", []):
-                if check.get("monitoring_frequency"):
-                    freq = check["monitoring_frequency"]
-                    break
-        freq_map.setdefault(freq, []).append(ctrl_id)
+    When FRAMEWORK_ID is omitted, shows calendars for all frameworks.
+    """
+    fw_ids = [framework_id] if framework_id else list(_FRAMEWORK_DISPLAY_NAMES.keys())
 
-    label = _FRAMEWORK_DISPLAY_NAMES.get(framework_id, framework_id)
-    table = Table(title=f"{label} Monitoring Calendar")
-    table.add_column("Frequency", style="cyan")
-    table.add_column("Controls", justify="right")
-    table.add_column("Sample Controls", style="dim")
+    for fw_id in fw_ids:
+        data = _load_framework_yaml(fw_id)
+        controls = _collect_controls(data)
 
-    order = ["daily", "weekly", "monthly", "quarterly", "annual", "not_specified"]
-    for freq in order:
-        if freq not in freq_map:
-            continue
-        ctrls = freq_map[freq]
-        sample = ", ".join(sorted(ctrls)[:5])
-        if len(ctrls) > 5:
-            sample += f" (+{len(ctrls) - 5} more)"
-        table.add_row(freq, str(len(ctrls)), sample)
+        freq_map: dict[str, list[str]] = {}
+        for ctrl_id, ctrl_data in controls.items():
+            freq = "not_specified"
+            if ctrl_data:
+                for check in ctrl_data.get("checks", []):
+                    if check.get("monitoring_frequency"):
+                        freq = check["monitoring_frequency"]
+                        break
+            freq_map.setdefault(freq, []).append(ctrl_id)
 
-    console.print(table)
+        label = _FRAMEWORK_DISPLAY_NAMES.get(fw_id, fw_id)
+        table = Table(title=f"{label} Monitoring Calendar")
+        table.add_column("Frequency", style="cyan")
+        table.add_column("Controls", justify="right")
+        table.add_column("Sample Controls", style="dim")
+
+        order = ["daily", "weekly", "monthly", "quarterly", "annual", "not_specified"]
+        for freq in order:
+            if freq not in freq_map:
+                continue
+            ctrls = freq_map[freq]
+            sample = ", ".join(sorted(ctrls)[:5])
+            if len(ctrls) > 5:
+                sample += f" (+{len(ctrls) - 5} more)"
+            table.add_row(freq, str(len(ctrls)), sample)
+
+        console.print(table)
 
 
 # ---------------------------------------------------------------------------

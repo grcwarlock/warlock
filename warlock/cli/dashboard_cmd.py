@@ -581,7 +581,11 @@ def dashboard_operations() -> None:
                 "running": "cyan",
             }.get(row.status, "")
             last_run = row.last_run
-            age = f"{(now - last_run).total_seconds() / 3600:.1f}h ago" if last_run else "—"
+            age = (
+                f"{(now - ensure_aware(last_run)).total_seconds() / 3600:.1f}h ago"
+                if last_run
+                else "—"
+            )
             table.add_row(
                 row.connector_name,
                 f"[{status_color}]{row.status}[/{status_color}]",

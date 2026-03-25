@@ -721,7 +721,13 @@ def orphan_controls(framework: str | None) -> None:
 
 
 @correlate.command("coverage-matrix")
-@click.option("--framework", "-f", required=True, help="Framework to analyze (e.g. nist_800_53)")
+@click.option(
+    "--framework",
+    "-f",
+    default="nist_800_53",
+    show_default=True,
+    help="Framework to analyze (e.g. nist_800_53)",
+)
 @click.option("--limit-controls", default=20, help="Max controls to show per row")
 def coverage_matrix(framework: str, limit_controls: int) -> None:
     """Matrix of connectors x controls showing coverage for a framework."""

@@ -519,9 +519,9 @@ def risk_board_report(framework: str | None, output: str | None, interactive: bo
 
 
 @risk_review.command("acceptance")
-@click.argument("finding_id")
+@click.argument("finding_id", required=False, default=None)
 @click.option("--interactive/--no-interactive", default=True)
-def risk_acceptance(finding_id: str, interactive: bool) -> None:
+def risk_acceptance(finding_id: str | None, interactive: bool) -> None:
     """Guided risk acceptance workflow for a finding.
 
     Captures justification, compensating controls, and expiry, then creates
@@ -531,6 +531,9 @@ def risk_acceptance(finding_id: str, interactive: bool) -> None:
     Examples:
         warlock risk-review acceptance <finding_id>
     """
+    if finding_id is None:
+        _error("Usage: warlock risk-review acceptance <FINDING_ID>")
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, ControlResult, Finding, RiskAcceptance
 

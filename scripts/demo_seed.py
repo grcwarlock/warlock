@@ -13378,6 +13378,28 @@ def seed_50_personnel(session) -> int:
             training_status=training_status,
             last_training_date=last_training,
             phishing_score=round(random.uniform(40.0, 100.0), 1),
+            training_completions=(
+                [
+                    {
+                        "campaign": random.choice(
+                            [
+                                "Security Awareness 2026",
+                                "GDPR Privacy Essentials",
+                                "Phishing Defense Workshop",
+                                "Insider Threat Recognition",
+                                "Secure Coding Fundamentals",
+                            ]
+                        ),
+                        "completed_date": (NOW - timedelta(days=random.randint(1, 180))).strftime(
+                            "%Y-%m-%d"
+                        ),
+                        "status": "completed",
+                    }
+                    for _ in range(random.randint(1, 3))
+                ]
+                if training_status == "current"
+                else []
+            ),
             last_access_review=NOW - timedelta(days=random.randint(10, 120)),
             access_review_status="completed" if random.random() < 0.7 else "overdue",
             flags=flags,
@@ -18550,6 +18572,10 @@ def _seed_alerts(session) -> int:
             "category": "new_finding",
             "status": "open",
             "rule_name": "critical_finding_detected",
+            "mitre_tactic": "Initial Access",
+            "mitre_technique": "T1078 - Valid Accounts",
+            "framework": "nist_800_53",
+            "control_id": "IA-2",
         },
         {
             "title": "Connector failure: tenable_io",
@@ -18585,6 +18611,10 @@ def _seed_alerts(session) -> int:
             "category": "new_finding",
             "status": "resolved",
             "rule_name": "critical_finding_detected",
+            "mitre_tactic": "Collection",
+            "mitre_technique": "T1530 - Data from Cloud Storage",
+            "framework": "nist_800_53",
+            "control_id": "AC-3",
         },
         {
             "title": "Control drift: SOC 2 CC6.1 regressed",
@@ -18621,6 +18651,8 @@ def _seed_alerts(session) -> int:
             "category": "new_finding",
             "status": "acknowledged",
             "rule_name": "critical_finding_detected",
+            "mitre_tactic": "Exfiltration",
+            "mitre_technique": "T1567 - Exfiltration Over Web Service",
         },
         {
             "title": "Stale connector: qualys_vmdr",
@@ -18640,6 +18672,52 @@ def _seed_alerts(session) -> int:
             "control_id": "A.9.2.3",
             "status": "open",
             "rule_name": "control_previously_passing_now_failing",
+            "mitre_tactic": "Privilege Escalation",
+            "mitre_technique": "T1078.004 - Cloud Accounts",
+        },
+        {
+            "title": "Lateral movement detected: Pass-the-Hash via compromised service account",
+            "description": "EDR detected NTLM relay attack from svc-deploy to prod-db-01.",
+            "severity": "critical",
+            "category": "new_finding",
+            "status": "open",
+            "rule_name": "edr_behavioral_detection",
+            "mitre_tactic": "Lateral Movement",
+            "mitre_technique": "T1550.002 - Pass the Hash",
+            "framework": "nist_800_53",
+            "control_id": "AC-17",
+        },
+        {
+            "title": "Credential stuffing campaign targeting SSO portal",
+            "description": "50K+ failed login attempts from rotating IPs against login.acme.com.",
+            "severity": "high",
+            "category": "new_finding",
+            "status": "open",
+            "rule_name": "siem_brute_force_detection",
+            "mitre_tactic": "Credential Access",
+            "mitre_technique": "T1110.004 - Credential Stuffing",
+            "framework": "nist_800_53",
+            "control_id": "AC-7",
+        },
+        {
+            "title": "Suspicious PowerShell execution on endpoint WIN-SRV-042",
+            "description": "Encoded PowerShell command downloading payload from external IP.",
+            "severity": "high",
+            "category": "new_finding",
+            "status": "acknowledged",
+            "rule_name": "edr_behavioral_detection",
+            "mitre_tactic": "Execution",
+            "mitre_technique": "T1059.001 - PowerShell",
+        },
+        {
+            "title": "Data exfiltration attempt to unauthorized cloud storage",
+            "description": "DLP alert: 2.3GB uploaded to personal Google Drive from corp device.",
+            "severity": "critical",
+            "category": "policy_violation",
+            "status": "open",
+            "rule_name": "dlp_exfiltration_detection",
+            "mitre_tactic": "Exfiltration",
+            "mitre_technique": "T1567.002 - Exfiltration to Cloud Storage",
         },
     ]
 
@@ -18656,6 +18734,8 @@ def _seed_alerts(session) -> int:
             framework=data.get("framework"),
             control_id=data.get("control_id"),
             connector_name=data.get("connector_name"),
+            mitre_tactic=data.get("mitre_tactic"),
+            mitre_technique=data.get("mitre_technique"),
             status=data["status"],
             rule_name=data.get("rule_name"),
             rule_metadata={"seeded": True},
@@ -18874,30 +18954,29 @@ def _seed_feature_coverage(session) -> dict:
     counts["access_review_campaigns"] = len(campaigns)
 
     # SEED-2: Group membership change audit entries
+    # CLI queries: action in ["group_membership_changed","idp_group_change","access_review_campaign"]
+    #              entity_type in ["personnel","idp","access_review"]
     group_changes = [
         {
-            "user": "alice.wong@acme.com",
-            "group": "prod-admins",
-            "change": "added",
+            "user_email": "alice.wong@acme.com",
+            "group_added": "prod-admins",
             "approved_by": "hassan.ali@acme.com",
         },
         {
-            "user": "bob.singh@acme.com",
-            "group": "security-readers",
-            "change": "removed",
+            "user_email": "bob.singh@acme.com",
+            "group_removed": "security-readers",
             "approved_by": "eve.nakamura@acme.com",
         },
         {
-            "user": "carol.park@acme.com",
-            "group": "database-admins",
-            "change": "added",
+            "user_email": "carol.park@acme.com",
+            "group_added": "database-admins",
             "approved_by": "hassan.ali@acme.com",
         },
     ]
     for i, gc in enumerate(group_changes):
         trail.record(
-            action="group_membership_change",
-            entity_type="Group",
+            action="group_membership_changed",
+            entity_type="personnel",
             entity_id=f"GRP-{i + 1:03d}",
             actor=gc["approved_by"],
             metadata=gc,
@@ -19127,147 +19206,270 @@ def _seed_feature_coverage(session) -> dict:
     counts["stale_finding_issues"] = stale_issue_count
 
     # SEED-11: BCP/DR test results
-    dr_tests = [
-        {
-            "test_name": "Full site failover to us-west-2",
-            "result": "pass",
-            "rto_target_hours": 4,
-            "rto_actual_hours": 2.5,
-            "rpo_target_hours": 1,
-            "rpo_actual_hours": 0.5,
-            "date": (now - timedelta(days=45)).isoformat(),
-            "participants": 12,
-        },
-        {
-            "test_name": "Database restore from backup",
-            "result": "pass_with_issues",
-            "rto_target_hours": 2,
-            "rto_actual_hours": 3.1,
-            "issues": "Restore took longer than RTO",
-            "date": (now - timedelta(days=20)).isoformat(),
-            "participants": 5,
-        },
-        {
-            "test_name": "Ransomware tabletop exercise",
-            "result": "pass",
-            "date": (now - timedelta(days=10)).isoformat(),
-            "participants": 25,
-            "notes": "Identified gap in weekend communication plan",
-        },
-    ]
-    for i, dt in enumerate(dr_tests):
-        trail.record(
-            action="dr_test",
-            entity_type="BCPTest",
-            entity_id=f"DR-{i + 1:03d}",
-            actor="bcp-team@acme.com",
-            metadata=dt,
-        )
-    counts["dr_tests"] = len(dr_tests)
+    # CLI queries AuditComment with target_type="dr_test", NOT AuditEntry.
+    # AuditComment requires an engagement_id, so use the first engagement.
+    import json as _json
+
+    from warlock.db.models import AuditComment, AuditEngagement, SystemProfile
+
+    engagement = session.query(AuditEngagement).first()
+    sys_profiles = session.query(SystemProfile).limit(3).all()
+    dr_count = 0
+    if engagement and sys_profiles:
+        dr_tests_data = [
+            {
+                "sys_idx": 0,
+                "test_type": "full_failover",
+                "test_result": "pass",
+                "rto_target_minutes": 240,
+                "rto_actual_minutes": 150,
+                "rpo_target_minutes": 60,
+                "rpo_actual_minutes": 30,
+                "tested_at": (now - timedelta(days=45)).isoformat(),
+                "tested_by": "bcp-lead@acme.com",
+                "notes": "Full site failover to us-west-2 completed successfully",
+                "days_ago": 45,
+            },
+            {
+                "sys_idx": 1,
+                "test_type": "backup_restore",
+                "test_result": "fail",
+                "rto_target_minutes": 120,
+                "rto_actual_minutes": 186,
+                "tested_at": (now - timedelta(days=20)).isoformat(),
+                "tested_by": "dba@acme.com",
+                "notes": "Database restore took longer than RTO target",
+                "days_ago": 20,
+            },
+            {
+                "sys_idx": 2 % len(sys_profiles),
+                "test_type": "tabletop",
+                "test_result": "pass",
+                "tested_at": (now - timedelta(days=10)).isoformat(),
+                "tested_by": "ciso@acme.com",
+                "notes": "Ransomware tabletop exercise - gap in weekend comms",
+                "days_ago": 10,
+            },
+        ]
+        for dt in dr_tests_data:
+            sp = sys_profiles[dt["sys_idx"]]
+            content = {
+                "system_name": sp.name,
+                "test_type": dt["test_type"],
+                "test_result": dt["test_result"],
+                "rto_target_minutes": dt.get("rto_target_minutes"),
+                "rto_actual_minutes": dt.get("rto_actual_minutes"),
+                "rpo_target_minutes": dt.get("rpo_target_minutes"),
+                "rpo_actual_minutes": dt.get("rpo_actual_minutes"),
+                "tested_at": dt["tested_at"],
+                "tested_by": dt["tested_by"],
+                "notes": dt["notes"],
+            }
+            comment = AuditComment(
+                engagement_id=engagement.id,
+                target_type="dr_test",
+                target_id=sp.id,
+                author=dt["tested_by"],
+                author_role="practitioner",
+                content=_json.dumps(content),
+                created_at=now - timedelta(days=dt["days_ago"]),
+            )
+            session.add(comment)
+            dr_count += 1
+        session.flush()
+    counts["dr_tests"] = dr_count
 
     # SEED-12: Calendar items
+    # CLI queries: action="calendar_item", entity_type="calendar"
+    # Extra must have "due_date" (ISO string), "title", "type", optional "recurring"
     cal_items = [
         {
             "title": "SOC 2 Type II Audit - Fieldwork Start",
-            "date": (now + timedelta(days=14)).isoformat(),
+            "due_date": (now + timedelta(days=14)).isoformat(),
             "type": "audit",
-            "assignee": "eve.nakamura@acme.com",
+            "recurring": None,
+            "created_by": "eve.nakamura@acme.com",
+            "created_at": now.isoformat(),
         },
         {
             "title": "Quarterly Access Review Deadline",
-            "date": (now + timedelta(days=7)).isoformat(),
+            "due_date": (now + timedelta(days=7)).isoformat(),
             "type": "review",
-            "assignee": "hassan.ali@acme.com",
+            "recurring": "quarterly",
+            "created_by": "hassan.ali@acme.com",
+            "created_at": now.isoformat(),
         },
         {
             "title": "PCI DSS Self-Assessment Due",
-            "date": (now + timedelta(days=30)).isoformat(),
+            "due_date": (now + timedelta(days=30)).isoformat(),
             "type": "deadline",
-            "assignee": "frank.torres@acme.com",
+            "recurring": "annual",
+            "created_by": "frank.torres@acme.com",
+            "created_at": now.isoformat(),
         },
         {
             "title": "ISO 27001 Surveillance Audit",
-            "date": (now + timedelta(days=60)).isoformat(),
+            "due_date": (now + timedelta(days=60)).isoformat(),
             "type": "audit",
-            "assignee": "eve.nakamura@acme.com",
+            "recurring": "annual",
+            "created_by": "eve.nakamura@acme.com",
+            "created_at": now.isoformat(),
         },
     ]
     for i, ci in enumerate(cal_items):
         trail.record(
             action="calendar_item",
-            entity_type="CalendarItem",
+            entity_type="calendar",
             entity_id=f"CAL-{i + 1:03d}",
-            actor=ci["assignee"],
+            actor=ci["created_by"],
             metadata=ci,
         )
     counts["calendar_items"] = len(cal_items)
 
     # SEED-13: Change requests
+    # CLI queries: action="change_request", entity_type="change_mgmt"
+    # Extra must have: type, title, impact, description, status, created_by, created_at, history
     change_reqs = [
         {
+            "type": "standard",
             "title": "Firewall rule change: allow port 8443 for API gateway",
+            "impact": "medium",
+            "description": "Open port 8443 on prod ALB for new API gateway endpoint.",
             "status": "approved",
-            "risk_level": "medium",
-            "requested_by": "devops@acme.com",
+            "created_by": "devops@acme.com",
+            "created_at": (now - timedelta(days=5)).isoformat(),
             "approved_by": "security-lead@acme.com",
-            "change_window": (now + timedelta(days=2)).isoformat(),
+            "approved_at": (now - timedelta(days=3)).isoformat(),
+            "history": [
+                {
+                    "action": "created",
+                    "by": "devops@acme.com",
+                    "at": (now - timedelta(days=5)).isoformat(),
+                },
+                {
+                    "action": "approved",
+                    "by": "security-lead@acme.com",
+                    "at": (now - timedelta(days=3)).isoformat(),
+                },
+            ],
         },
         {
+            "type": "normal",
             "title": "IAM policy update: restrict S3 cross-account access",
+            "impact": "high",
+            "description": "Tighten S3 bucket policies to deny cross-account access without explicit allow.",
             "status": "pending",
-            "risk_level": "high",
-            "requested_by": "cloud-team@acme.com",
-            "approved_by": None,
+            "created_by": "cloud-team@acme.com",
+            "created_at": (now - timedelta(days=2)).isoformat(),
+            "history": [
+                {
+                    "action": "created",
+                    "by": "cloud-team@acme.com",
+                    "at": (now - timedelta(days=2)).isoformat(),
+                },
+            ],
         },
         {
+            "type": "standard",
             "title": "TLS certificate rotation for *.acme.com",
-            "status": "completed",
-            "risk_level": "low",
-            "requested_by": "infra@acme.com",
-            "completed_at": (now - timedelta(days=3)).isoformat(),
+            "impact": "low",
+            "description": "Rotate wildcard TLS cert before expiry.",
+            "status": "implemented",
+            "created_by": "infra@acme.com",
+            "created_at": (now - timedelta(days=10)).isoformat(),
+            "history": [
+                {
+                    "action": "created",
+                    "by": "infra@acme.com",
+                    "at": (now - timedelta(days=10)).isoformat(),
+                },
+                {
+                    "action": "approved",
+                    "by": "security-lead@acme.com",
+                    "at": (now - timedelta(days=8)).isoformat(),
+                },
+                {
+                    "action": "implemented",
+                    "by": "infra@acme.com",
+                    "at": (now - timedelta(days=3)).isoformat(),
+                },
+            ],
+        },
+        {
+            "type": "emergency",
+            "title": "Emergency patch: log4j CVE-2024-XXXX mitigation",
+            "impact": "critical",
+            "description": "Apply emergency WAF rule to block exploit attempts.",
+            "status": "implemented",
+            "created_by": "security-ops@acme.com",
+            "created_at": (now - timedelta(days=1)).isoformat(),
+            "emergency_justified_by": "ciso@acme.com",
+            "history": [
+                {
+                    "action": "created",
+                    "by": "security-ops@acme.com",
+                    "at": (now - timedelta(days=1)).isoformat(),
+                },
+                {
+                    "action": "emergency_escalation",
+                    "by": "ciso@acme.com",
+                    "at": (now - timedelta(days=1)).isoformat(),
+                    "note": "Active exploitation in the wild",
+                },
+                {
+                    "action": "implemented",
+                    "by": "security-ops@acme.com",
+                    "at": (now - timedelta(hours=20)).isoformat(),
+                },
+            ],
         },
     ]
     for i, cr in enumerate(change_reqs):
         trail.record(
             action="change_request",
-            entity_type="ChangeRequest",
+            entity_type="change_mgmt",
             entity_id=f"CR-{i + 1:03d}",
-            actor=cr.get("requested_by", "system"),
+            actor=cr.get("created_by", "system"),
             metadata=cr,
         )
     counts["change_requests"] = len(change_reqs)
 
     # SEED-14: Regulatory changes
+    # RegulatoryChangeManager queries: action="regulatory_change", entity_type="regulatory_change"
+    # Extra must have: title, framework, description, effective_date, impact_level, status, created_by
     reg_changes = [
         {
             "title": "EU AI Act enforcement deadline approaching",
             "framework": "eu_ai_act",
             "status": "pending",
             "effective_date": "2026-08-01",
-            "impact": "high",
+            "impact_level": "high",
             "description": "High-risk AI systems must comply by Aug 2026",
+            "created_by": "compliance-intel@acme.com",
         },
         {
             "title": "NIST CSF 2.0 updated supply chain risk guidance",
             "framework": "nist_csf",
             "status": "pending",
             "effective_date": "2026-06-15",
-            "impact": "medium",
+            "impact_level": "medium",
             "description": "New GV.SC subcategories require updated controls",
+            "created_by": "compliance-intel@acme.com",
         },
         {
             "title": "PCI DSS 4.0 migration deadline",
             "framework": "pci_dss",
-            "status": "in_progress",
+            "status": "assessed",
             "effective_date": "2025-03-31",
-            "impact": "critical",
+            "impact_level": "critical",
             "description": "All organizations must be fully compliant with v4.0",
+            "created_by": "compliance-intel@acme.com",
         },
     ]
     for i, rc in enumerate(reg_changes):
         trail.record(
             action="regulatory_change",
-            entity_type="RegulatoryChange",
+            entity_type="regulatory_change",
             entity_id=f"REG-{i + 1:03d}",
             actor="compliance-intel@acme.com",
             metadata=rc,
@@ -19275,35 +19477,258 @@ def _seed_feature_coverage(session) -> dict:
     counts["regulatory_changes"] = len(reg_changes)
 
     # SEED-15: Shared dashboards
+    # CLI queries: action="shared_dashboard", entity_type="dashboard"
+    # Extra must have: name, type, owner, shared_with, created_at
     dashboards = [
         {
             "name": "Executive Compliance Overview",
+            "type": "posture",
+            "owner": "eve.nakamura@acme.com",
             "shared_with": ["ciso@acme.com", "cto@acme.com"],
-            "widgets": ["posture_score", "framework_coverage", "open_issues"],
-            "created_by": "eve.nakamura@acme.com",
+            "created_at": now.isoformat(),
+            "config": {},
         },
         {
             "name": "SOC 2 Audit Prep Board",
+            "type": "audit",
+            "owner": "hassan.ali@acme.com",
             "shared_with": ["audit-team@acme.com", "eve.nakamura@acme.com"],
-            "widgets": ["attestation_status", "evidence_gaps", "control_drift"],
-            "created_by": "hassan.ali@acme.com",
+            "created_at": now.isoformat(),
+            "config": {},
         },
         {
             "name": "Vulnerability Management Tracker",
+            "type": "risk",
+            "owner": "frank.torres@acme.com",
             "shared_with": ["security-ops@acme.com"],
-            "widgets": ["critical_findings", "sla_breaches", "remediation_progress"],
-            "created_by": "frank.torres@acme.com",
+            "created_at": now.isoformat(),
+            "config": {},
         },
     ]
     for i, db in enumerate(dashboards):
         trail.record(
             action="shared_dashboard",
-            entity_type="Dashboard",
+            entity_type="dashboard",
             entity_id=f"DASH-{i + 1:03d}",
-            actor=db["created_by"],
+            actor=db["owner"],
             metadata=db,
         )
     counts["shared_dashboards"] = len(dashboards)
+
+    # SEED-16a: False-positive findings
+    # CLI queries Finding.detail["_false_positive"] or ["_suppressed"]
+    from warlock.db.models import Finding as _Finding
+
+    fp_findings = session.query(_Finding).filter(_Finding.detail.isnot(None)).limit(5).all()
+    fp_count = 0
+    for i, f in enumerate(fp_findings):
+        detail = dict(f.detail) if isinstance(f.detail, dict) else {}
+        if i < 3:
+            detail["_false_positive"] = True
+            detail["_false_positive_reason"] = [
+                "Duplicate of finding in production scanner",
+                "Test environment artifact - not applicable to prod",
+                "Verified compensating control in place per CAB approval",
+            ][i]
+            detail["_false_positive_by"] = "security-analyst@acme.com"
+            detail["_false_positive_at"] = (now - timedelta(days=i + 1)).isoformat()
+        else:
+            detail["_suppressed"] = True
+            detail["_suppressed_reason"] = "Risk accepted per exception EXC-001"
+            detail["_suppressed_by"] = "ciso@acme.com"
+            detail["_suppressed_at"] = (now - timedelta(days=i + 1)).isoformat()
+        f.detail = detail
+        fp_count += 1
+    session.flush()
+    counts["false_positive_findings"] = fp_count
+
+    # SEED-16b: Privacy breach records
+    # CLI queries: entity_type="privacy_breach", action="breach_created"
+    breaches = [
+        {
+            "title": "Stolen laptop with customer PII",
+            "description": "Employee laptop containing customer PII stolen from vehicle",
+            "severity": "high",
+            "status": "investigating",
+            "individuals_affected": 2500,
+            "data_types": ["name", "email", "SSN"],
+            "reported_to_authority": True,
+            "authority_notification_date": (now - timedelta(days=3)).isoformat(),
+            "discovery_date": (now - timedelta(days=5)).strftime("%Y-%m-%d"),
+        },
+        {
+            "title": "S3 bucket exposure of customer invoices",
+            "description": "Misconfigured S3 bucket exposed customer invoices for 48 hours",
+            "severity": "medium",
+            "status": "contained",
+            "individuals_affected": 850,
+            "data_types": ["name", "email", "billing_address"],
+            "reported_to_authority": False,
+            "discovery_date": (now - timedelta(days=12)).strftime("%Y-%m-%d"),
+        },
+        {
+            "title": "HR shared drive compromised via phishing",
+            "description": "Phishing attack compromised HR shared drive with employee records",
+            "severity": "critical",
+            "status": "notified",
+            "individuals_affected": 5200,
+            "data_types": ["name", "SSN", "salary", "health_plan"],
+            "reported_to_authority": True,
+            "authority_notification_date": (now - timedelta(days=1)).isoformat(),
+            "discovery_date": (now - timedelta(days=2)).strftime("%Y-%m-%d"),
+        },
+    ]
+    for i, b in enumerate(breaches):
+        trail.record(
+            action="breach_created",
+            entity_type="privacy_breach",
+            entity_id=f"BREACH-{i + 1:03d}",
+            actor="privacy-officer@acme.com",
+            metadata=b,
+        )
+    counts["privacy_breaches"] = len(breaches)
+
+    # SEED-16c: DSAR records
+    # CLI queries: entity_type="dsar", action="dsar_created"
+    dsars = [
+        {
+            "subject": "john.doe@example.com",
+            "type": "access",
+            "status": "open",
+            "deadline": (now + timedelta(days=25)).isoformat(),
+            "notes": "Subject requesting copy of all personal data held",
+        },
+        {
+            "subject": "jane.smith@example.com",
+            "type": "erasure",
+            "status": "in_progress",
+            "deadline": (now + timedelta(days=10)).isoformat(),
+            "notes": "Right to be forgotten request - customer account closure",
+        },
+        {
+            "subject": "acme-employee-142@acme.com",
+            "type": "portability",
+            "status": "completed",
+            "deadline": (now - timedelta(days=5)).isoformat(),
+            "completed_at": (now - timedelta(days=7)).isoformat(),
+            "notes": "Employee data export for transfer to new employer",
+        },
+    ]
+    for i, d in enumerate(dsars):
+        trail.record(
+            action="dsar_created",
+            entity_type="dsar",
+            entity_id=f"DSAR-{i + 1:03d}",
+            actor="privacy-officer@acme.com",
+            metadata=d,
+        )
+    counts["dsars"] = len(dsars)
+
+    # SEED-16d: Data transfer records
+    # CLI queries: entity_type="data_transfer", action="transfer_recorded"
+    transfers = [
+        {
+            "source_country": "US",
+            "destination": "Germany (Acme GmbH)",
+            "mechanism": "SCCs",
+            "data_categories": ["customer_pii", "usage_analytics"],
+            "recipient": "Acme GmbH (subsidiary)",
+            "status": "active",
+            "pia_completed": True,
+        },
+        {
+            "source_country": "US",
+            "destination": "India (Acme India Pvt Ltd)",
+            "mechanism": "BCRs",
+            "data_categories": ["employee_data"],
+            "recipient": "Acme India Pvt Ltd (subsidiary)",
+            "status": "active",
+            "pia_completed": True,
+        },
+        {
+            "source_country": "EU",
+            "destination": "United States (Acme Corp HQ)",
+            "mechanism": "EU-US DPF",
+            "data_categories": ["customer_pii", "support_tickets"],
+            "recipient": "Acme Corp (HQ)",
+            "status": "active",
+            "pia_completed": True,
+        },
+    ]
+    for i, t in enumerate(transfers):
+        trail.record(
+            action="transfer_recorded",
+            entity_type="data_transfer",
+            entity_id=f"XFER-{i + 1:03d}",
+            actor="privacy-officer@acme.com",
+            metadata=t,
+        )
+    counts["data_transfers"] = len(transfers)
+
+    # SEED-16e: Audit workpapers
+    # CLI queries: action in ["workpaper_created","workpaper_reviewed","workpaper_signed_off"]
+    # Extra must have: engagement_id, control_id, template_type, reviewer
+    eng = session.query(AuditEngagement).first()
+    if eng:
+        workpapers = [
+            {
+                "engagement_id": eng.id,
+                "control_id": "AC-2",
+                "template_type": "test_of_design",
+                "reviewer": "sarah.chen@deloitte.com",
+                "status": "draft",
+            },
+            {
+                "engagement_id": eng.id,
+                "control_id": "AC-6",
+                "template_type": "test_of_effectiveness",
+                "reviewer": "marcus.johnson@ey.com",
+                "status": "reviewed",
+            },
+            {
+                "engagement_id": eng.id,
+                "control_id": "AU-2",
+                "template_type": "walkthrough",
+                "reviewer": "sarah.chen@deloitte.com",
+                "status": "signed_off",
+            },
+        ]
+        for i, wp in enumerate(workpapers):
+            wp_id = f"WP-{i + 1:03d}"
+            trail.record(
+                action="workpaper_created",
+                entity_type="workpaper",
+                entity_id=wp_id,
+                actor=wp["reviewer"],
+                metadata=wp,
+            )
+            # Add status-change entries for reviewed/signed_off workpapers
+            if wp["status"] == "reviewed":
+                trail.record(
+                    action="workpaper_reviewed",
+                    entity_type="workpaper",
+                    entity_id=wp_id,
+                    actor=wp["reviewer"],
+                    metadata=wp,
+                )
+            elif wp["status"] == "signed_off":
+                trail.record(
+                    action="workpaper_reviewed",
+                    entity_type="workpaper",
+                    entity_id=wp_id,
+                    actor=wp["reviewer"],
+                    metadata=wp,
+                )
+                trail.record(
+                    action="workpaper_signed_off",
+                    entity_type="workpaper",
+                    entity_id=wp_id,
+                    actor="lead-auditor@deloitte.com",
+                    metadata=wp,
+                )
+        counts["workpapers"] = len(workpapers)
+    else:
+        counts["workpapers"] = 0
 
     # SEED-17: AI-assessed control results (update 10 existing)
     ai_results = (

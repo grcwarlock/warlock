@@ -119,11 +119,14 @@ def lifecycle(ctx: click.Context) -> None:
 
 @lifecycle.command("audit")
 @click.option(
-    "--framework", "-f", required=True, help="Framework to audit (e.g. soc2, nist_800_53)"
+    "--framework",
+    "-f",
+    default=None,
+    help="Framework to audit (e.g. soc2, nist_800_53). Uses first available if omitted.",
 )
 @click.option("--date", "target_date_str", default=None, help="Target audit date (YYYY-MM-DD)")
 @click.option("--interactive/--no-interactive", default=True)
-def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bool) -> None:
+def audit_lifecycle(framework: str | None, target_date_str: str | None, interactive: bool) -> None:
     """Full audit lifecycle: readiness -> gaps -> evidence -> engagement -> findings -> POA&M -> export.
 
     Walks through every phase of an audit engagement from initial readiness
@@ -144,6 +147,14 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
     )
 
     init_db()
+
+    if framework is None:
+        from warlock.db.models import ControlResult as _CR
+
+        with get_session() as _sess:
+            _fw_row = _sess.query(_CR.framework).distinct().first()
+        framework = _fw_row[0] if _fw_row else "nist_800_53"
+        console.print(f"[dim]No --framework specified; using '{framework}'.[/dim]\n")
 
     if target_date_str:
         try:
@@ -480,13 +491,14 @@ def audit_lifecycle(framework: str, target_date_str: str | None, interactive: bo
 
 
 @lifecycle.command("finding")
-@click.argument("finding_id")
+@click.argument("finding_id", required=False, default=None)
 @click.option("--interactive/--no-interactive", default=True)
-def finding_lifecycle(finding_id: str, interactive: bool) -> None:
+def finding_lifecycle(finding_id: str | None, interactive: bool) -> None:
     """Finding lifecycle: state, issues, POA&Ms, evidence, remediation.
 
     Shows the full context of a finding and offers actions to progress it
-    through its lifecycle.
+    through its lifecycle.  When FINDING_ID is omitted, shows the most
+    recent finding.
 
     \b
     Examples:
@@ -504,7 +516,16 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
     init_db()
 
     with get_session() as session:
-        finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
+        if finding_id is None:
+            finding = session.query(Finding).order_by(Finding.ingested_at.desc()).first()
+            if not finding:
+                console.print("[dim]No findings in database.[/dim]")
+                return
+            console.print(
+                f"[dim]No FINDING_ID given; showing most recent: {finding.id[:8]}[/dim]\n"
+            )
+        else:
+            finding = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
         if not finding:
             console.print(f"[red]Finding not found: '{finding_id}'[/red]")
             raise SystemExit(1)
@@ -725,25 +746,43 @@ def finding_lifecycle(finding_id: str, interactive: bool) -> None:
 
 
 @lifecycle.command("vendor")
-@click.argument("vendor_name_or_id")
+@click.argument("vendor_name_or_id", required=False, default=None)
 @click.option("--interactive/--no-interactive", default=True)
-def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
+def vendor_lifecycle(vendor_name_or_id: str | None, interactive: bool) -> None:
     """Vendor lifecycle: status, SOC 2, reassessment, risk trend, offboarding.
 
     Shows vendor profile with compliance artifacts and offers lifecycle
-    management actions.
+    management actions.  When VENDOR_NAME_OR_ID is omitted, lists all vendors.
 
     \b
     Examples:
         warlock lifecycle vendor "Acme Corp"
         warlock lifecycle vendor abc12345
     """
+    from rich.markup import escape as _escape
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding, Vendor
 
     init_db()
 
     with get_session() as session:
+        if vendor_name_or_id is None:
+            vendors = session.query(Vendor).order_by(Vendor.name).limit(50).all()
+            if not vendors:
+                console.print("[dim]No vendors found.[/dim]")
+                return
+            table = Table(title=f"Vendors ({len(vendors)})")
+            table.add_column("ID", style="dim", max_width=8)
+            table.add_column("Name", style="cyan")
+            table.add_column("Tier")
+            table.add_column("Risk Score", justify="right")
+            for v in vendors:
+                score = f"{v.risk_score:.0f}" if v.risk_score is not None else "\u2014"
+                table.add_row(v.id[:8], _escape(v.name or ""), v.tier or "\u2014", score)
+            console.print(table)
+            return
+
         # Resolve vendor
         vendor = session.query(Vendor).filter(Vendor.id == vendor_name_or_id).first()
         if not vendor:
@@ -965,9 +1004,14 @@ def vendor_lifecycle(vendor_name_or_id: str, interactive: bool) -> None:
 
 
 @lifecycle.command("conmon")
-@click.option("--framework", "-f", required=True, help="Framework for continuous monitoring")
+@click.option(
+    "--framework",
+    "-f",
+    default=None,
+    help="Framework for continuous monitoring. Uses first available if omitted.",
+)
 @click.option("--interactive/--no-interactive", default=True)
-def conmon_lifecycle(framework: str, interactive: bool) -> None:
+def conmon_lifecycle(framework: str | None, interactive: bool) -> None:
     """Continuous monitoring lifecycle: collect -> compare -> identify changes -> deliverables.
 
     Monthly ConMon automation that walks through evidence collection,
@@ -989,6 +1033,12 @@ def conmon_lifecycle(framework: str, interactive: bool) -> None:
     )
 
     init_db()
+
+    if framework is None:
+        with get_session() as _sess:
+            _fw_row = _sess.query(ControlResult.framework).distinct().first()
+        framework = _fw_row[0] if _fw_row else "nist_800_53"
+        console.print(f"[dim]No --framework specified; using '{framework}'.[/dim]\n")
 
     now = _utcnow()
     month_ago = now - timedelta(days=30)

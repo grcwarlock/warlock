@@ -442,8 +442,13 @@ def reports_connector_health(limit: int) -> None:
 
 
 @reports.command("audit-readiness")
-@click.option("--framework", "-f", required=True, help="Framework to assess readiness for")
-def reports_audit_readiness(framework: str) -> None:
+@click.option(
+    "--framework",
+    "-f",
+    default=None,
+    help="Framework to assess readiness for. Uses first available if omitted.",
+)
+def reports_audit_readiness(framework: str | None) -> None:
     """Summarise audit readiness: evidence coverage, open issues, stale data."""
     from datetime import datetime, timedelta, timezone
 
@@ -451,6 +456,17 @@ def reports_audit_readiness(framework: str) -> None:
     from warlock.db.models import ControlResult, Issue
 
     init_db()
+
+    if framework is None:
+        with get_session() as _sess:
+            _fw_row = _sess.query(ControlResult.framework).distinct().first()
+        if _fw_row:
+            framework = _fw_row[0]
+            console.print(f"[dim]No --framework specified; using '{framework}'.[/dim]\n")
+        else:
+            console.print("[dim]No control results found in database.[/dim]")
+            return
+
     stale_cutoff = datetime.now(timezone.utc) - timedelta(days=90)
 
     with get_session() as session:

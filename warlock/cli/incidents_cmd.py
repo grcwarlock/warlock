@@ -545,16 +545,48 @@ def incidents_add_event(incident_id: str, event_type: str, description: str) -> 
 
 
 @incidents.command("report")
-@click.argument("incident_id")
+@click.argument("incident_id", required=False, default=None)
 @click.option(
     "--format", "fmt", default="md", type=click.Choice(["md", "json"]), help="Output format"
 )
-def incidents_report(incident_id: str, fmt: str) -> None:
-    """Generate a post-mortem report for an incident."""
+def incidents_report(incident_id: str | None, fmt: str) -> None:
+    """Generate a post-mortem report for an incident.
+
+    When INCIDENT_ID is omitted, shows a summary report of all incidents.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry, Issue, IssueComment
+    from warlock.utils import ensure_aware
 
     init_db()
+
+    if incident_id is None:
+        # Summary report of all incidents
+        with get_session() as session:
+            issues = session.query(Issue).order_by(Issue.created_at.desc()).limit(50).all()
+        if not issues:
+            console.print("[dim]No incidents found.[/dim]")
+            return
+
+        table = Table(title=f"Incident Summary ({len(issues)} most recent)")
+        table.add_column("ID", style="dim", max_width=8)
+        table.add_column("Title", max_width=50)
+        table.add_column("Priority")
+        table.add_column("Status")
+        table.add_column("Created", style="dim")
+
+        for i in issues:
+            ts = ensure_aware(i.created_at).strftime("%Y-%m-%d") if i.created_at else "\u2014"
+            table.add_row(
+                i.id[:8],
+                escape((i.title or "")[:50]),
+                i.priority or "\u2014",
+                i.status or "\u2014",
+                ts,
+            )
+        console.print(table)
+        return
+
     with get_session() as session:
         issue = session.query(Issue).filter(Issue.id.startswith(incident_id)).first()
         if not issue:

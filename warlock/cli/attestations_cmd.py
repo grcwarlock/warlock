@@ -391,7 +391,7 @@ def attestation_expiring(days: int) -> None:
     table.add_column("Days Left", justify="right")
 
     for a in expiring:
-        expiry = a.approved_at + one_year
+        expiry = ensure_aware(a.approved_at) + one_year
         days_left = (expiry - now).days
         colour = "yellow" if days_left <= 7 else "cyan"
         table.add_row(

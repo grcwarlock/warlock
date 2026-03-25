@@ -241,22 +241,32 @@ def findings_list(
 
 
 @findings.command("show")
-@click.argument("finding_id")
-def findings_show(finding_id: str) -> None:
-    """Show full detail for a finding."""
+@click.argument("finding_id", required=False, default=None)
+def findings_show(finding_id: str | None) -> None:
+    """Show full detail for a finding.
+
+    When FINDING_ID is omitted, shows the most recent finding.
+    """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
 
     init_db()
     with get_session() as session:
-        row = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
-        if not row:
-            # Try matching with LIKE %prefix% for cases where prefix doesn't
-            # align to the start (e.g. UUID with/without dashes)
-            row = session.query(Finding).filter(Finding.id.like(f"%{finding_id}%")).first()
+        if finding_id is None:
+            row = session.query(Finding).order_by(Finding.ingested_at.desc()).first()
+            if row:
+                console.print(
+                    f"[dim]No FINDING_ID given; showing most recent: {row.id[:8]}[/dim]\n"
+                )
+        else:
+            row = session.query(Finding).filter(Finding.id.startswith(finding_id)).first()
+            if not row:
+                # Try matching with LIKE %prefix% for cases where prefix doesn't
+                # align to the start (e.g. UUID with/without dashes)
+                row = session.query(Finding).filter(Finding.id.like(f"%{finding_id}%")).first()
 
     if not row:
-        _error(f"Finding '{finding_id}' not found.")
+        _error(f"Finding '{finding_id or 'N/A'}' not found.")
 
     from rich.panel import Panel
 
@@ -965,12 +975,12 @@ def findings_sla(window: str, severity: str | None) -> None:
 
 
 @findings.command("create-issue")
-@click.argument("finding_id")
+@click.argument("finding_id", required=False, default=None)
 @click.option(
     "--priority", "-p", default="high", type=click.Choice(["critical", "high", "medium", "low"])
 )
 @click.option("--title", "-t", default=None, help="Issue title (defaults to finding title)")
-def findings_create_issue(finding_id: str, priority: str, title: str | None) -> None:
+def findings_create_issue(finding_id: str | None, priority: str, title: str | None) -> None:
     """Create an incident/issue from a finding.
 
     \b
@@ -978,10 +988,13 @@ def findings_create_issue(finding_id: str, priority: str, title: str | None) -> 
 
     Links the new issue to the source finding via control_id and tags.
     """
+    if finding_id is None:
+        _error("Usage: warlock findings create-issue <FINDING_ID>")
+
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, Issue
+    from warlock.db.models import ControlMapping, Finding, Issue
 
     init_db()
     actor = _get_actor()
@@ -997,6 +1010,11 @@ def findings_create_issue(finding_id: str, priority: str, title: str | None) -> 
             or f"[{finding.severity}] {finding.title or finding.observation_type or 'Finding'}"
         )
 
+        mapping = (
+            session.query(ControlMapping).filter(ControlMapping.finding_id == finding.id).first()
+        )
+        mapped_control_id = mapping.control_id if mapping else "UNKNOWN"
+
         issue = Issue(
             id=str(uuid.uuid4()),
             title=issue_title[:255],
@@ -1006,7 +1024,7 @@ def findings_create_issue(finding_id: str, priority: str, title: str | None) -> 
             f"Resource: {finding.resource_id or '—'}",
             priority=priority,
             status="open",
-            control_id=finding.control_id,
+            control_id=mapped_control_id,
             created_by=actor,
             created_at=now,
             updated_at=now,
@@ -1017,5 +1035,5 @@ def findings_create_issue(finding_id: str, priority: str, title: str | None) -> 
     console.print(
         f"[green]Issue created:[/green] [cyan]{issue.id[:8]}[/cyan] "
         f"— {escape(issue_title[:60])}\n"
-        f"[dim]Linked to finding {finding.id[:8]} (control: {finding.control_id or 'none'})[/dim]"
+        f"[dim]Linked to finding {finding.id[:8]} (control: {mapped_control_id})[/dim]"
     )

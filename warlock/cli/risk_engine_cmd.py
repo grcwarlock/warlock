@@ -984,23 +984,33 @@ def treatment(ctx: click.Context) -> None:
 
 
 @treatment.command("list")
-@click.argument("risk_id")
-def treatment_list(risk_id: str) -> None:
-    """Show treatment plans for a given risk (RISK_ID prefix or full UUID)."""
+@click.argument("risk_id", required=False, default=None)
+def treatment_list(risk_id: str | None) -> None:
+    """Show treatment plans for a given risk (RISK_ID prefix or full UUID).
+
+    When RISK_ID is omitted, shows all treatment plans.
+    """
     from warlock.db.engine import get_session, init_db
 
     init_db()
     with get_session() as session:
         records = _load_records(session, "risk_treatment")
 
-    treatments = [r for r in records if r.get("risk_id", "").startswith(risk_id)]
+    if risk_id is not None:
+        treatments = [r for r in records if r.get("risk_id", "").startswith(risk_id)]
+    else:
+        treatments = records
 
     if not treatments:
-        console.print(f"[dim]No treatment plans for risk {risk_id}.[/dim]")
+        label = f"risk {risk_id}" if risk_id else "any risk"
+        console.print(f"[dim]No treatment plans for {label}.[/dim]")
         return
 
-    table = Table(title=f"Treatment Plans for Risk {risk_id[:8]}")
+    title = f"Treatment Plans for Risk {risk_id[:8]}" if risk_id else "All Treatment Plans"
+    table = Table(title=title)
     table.add_column("ID", max_width=8, style="dim")
+    if risk_id is None:
+        table.add_column("Risk ID", max_width=8, style="dim")
     table.add_column("Type", style="cyan")
     table.add_column("Description", max_width=50)
     table.add_column("Owner", style="dim")
@@ -1008,14 +1018,19 @@ def treatment_list(risk_id: str) -> None:
     table.add_column("Status")
 
     for t in treatments:
-        table.add_row(
-            t.get("_id", "")[:8],
-            t.get("treatment_type", ""),
-            t.get("description", "")[:50],
-            t.get("owner", ""),
-            t.get("deadline", "\u2014"),
-            t.get("status", "planned"),
+        cells = [t.get("_id", "")[:8]]
+        if risk_id is None:
+            cells.append(t.get("risk_id", "")[:8])
+        cells.extend(
+            [
+                t.get("treatment_type", ""),
+                t.get("description", "")[:50],
+                t.get("owner", ""),
+                t.get("deadline", "\u2014"),
+                t.get("status", "planned"),
+            ]
         )
+        table.add_row(*cells)
 
     console.print(table)
 

@@ -22,6 +22,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from warlock.cli import _get_actor, cli, console
+from warlock.utils import ensure_aware
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +119,7 @@ def _controls_for_framework(session, framework: str) -> list[dict]:
 
 
 @cli.command("evidence-sprint")
-@click.argument("framework")
+@click.argument("framework", required=False, default="nist_800_53")
 @click.option(
     "--days",
     "-d",
@@ -389,8 +390,8 @@ def evidence_collection(framework: str | None, assignee: str | None) -> None:
                         .first()
                     )
                     if eng and eng.period_end:
-                        due_str = eng.period_end.strftime("%Y-%m-%d")
-                        days_left = (eng.period_end - _utcnow()).days
+                        due_str = ensure_aware(eng.period_end).strftime("%Y-%m-%d")
+                        days_left = (ensure_aware(eng.period_end) - _utcnow()).days
                         if days_left < 0:
                             due_str += " [red](OVERDUE)[/red]"
                         elif days_left <= 3:
