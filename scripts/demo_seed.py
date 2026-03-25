@@ -56,6 +56,7 @@ from warlock.db.models import (
     LegalHold,
     Personnel,
     POAM,
+    Policy,
     PolicyOverride,
     PostureSnapshot,
     RawEvent,
@@ -18946,7 +18947,7 @@ def _seed_feature_coverage(session) -> dict:
     for i, c in enumerate(campaigns):
         trail.record(
             action="access_review_campaign",
-            entity_type="AccessReviewCampaign",
+            entity_type="access_review",
             entity_id=f"ARC-{i + 1:03d}",
             actor="identity-governance@acme.com",
             metadata=c,
@@ -20572,10 +20573,82 @@ def main():
             f"Evidence requests: {ae['evidence_requests']}, Attestations: {ae['attestations']}"
         )
 
-    print("[18/33] Seeding policy overrides...")
+    print("[18/33] Seeding policy overrides + operational policies...")
     with get_session() as session:
         n_po = seed_phase5_policy_overrides(session)
         print(f"       Policy overrides: {n_po}")
+
+        # Seed operational Policy records so `warlock policy list` shows data
+        op_policies = [
+            Policy(
+                policy_type="sla",
+                scope={"frameworks": ["nist_800_53", "soc2"]},
+                rules={"remediation_days": 30, "escalate_after": 14},
+                priority=10,
+                created_by="ciso@acme.com",
+                description="Default SLA for critical findings on NIST/SOC2 controls",
+            ),
+            Policy(
+                policy_type="retention",
+                scope={"frameworks": ["gdpr", "hipaa"]},
+                rules={"days": 2555, "owner": "dpo@acme.com"},
+                priority=5,
+                created_by="dpo@acme.com",
+                description="7-year evidence retention for regulated frameworks",
+            ),
+            Policy(
+                policy_type="risk-appetite",
+                scope={},
+                rules={"max_ale": 500000, "max_var95": 250000},
+                priority=1,
+                created_by="cfo@acme.com",
+                description="Enterprise risk appetite thresholds",
+            ),
+            Policy(
+                policy_type="cadence",
+                scope={"frameworks": ["nist_800_53"]},
+                rules={"frequency": "quarterly"},
+                priority=5,
+                created_by="compliance@acme.com",
+                description="Quarterly assessment cadence for NIST 800-53",
+            ),
+            Policy(
+                policy_type="escalation",
+                scope={"severity": ["critical", "high"]},
+                rules={"escalate_after": 7, "notify": "security-leads@acme.com"},
+                priority=20,
+                created_by="ciso@acme.com",
+                description="Auto-escalate critical/high findings after 7 days",
+            ),
+            Policy(
+                policy_type="confidence",
+                scope={"frameworks": ["soc2", "iso_27001"]},
+                rules={"floor": 0.7},
+                priority=5,
+                created_by="compliance@acme.com",
+                description="Minimum AI confidence floor for automated assessments",
+            ),
+            Policy(
+                policy_type="evidence-requirement",
+                scope={"frameworks": ["fedramp"]},
+                rules={"max_age_days": 90, "require_attestation": True},
+                priority=10,
+                created_by="isso@acme.com",
+                description="FedRAMP evidence must be <90 days old with attestation",
+            ),
+            Policy(
+                policy_type="classification",
+                scope={},
+                rules={"default_level": "confidential", "pii_level": "restricted"},
+                priority=1,
+                created_by="dpo@acme.com",
+                description="Default data classification levels",
+            ),
+        ]
+        for p in op_policies:
+            session.add(p)
+        session.commit()
+        print(f"       Operational policies: {len(op_policies)}")
 
     # --- Expand personnel ---
 
