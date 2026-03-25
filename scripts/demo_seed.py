@@ -20594,6 +20594,102 @@ def main():
         n_vendors = _seed_vendors(session)
         print(f"       Vendors: {n_vendors}")
 
+    # Enrich vendor metadata with SLA terms and sub-processors
+    with get_session() as session:
+        from warlock.db.models import Vendor as VendorModel
+
+        sla_data = {
+            "Stripe": {
+                "sla_uptime_pct": 99.99,
+                "sla_response_hours": 1,
+                "subprocessors": [
+                    {"name": "AWS", "purpose": "Infrastructure"},
+                    {"name": "Cloudflare", "purpose": "CDN/DDoS"},
+                ],
+            },
+            "Datadog": {
+                "sla_uptime_pct": 99.9,
+                "sla_response_hours": 4,
+                "subprocessors": [
+                    {"name": "AWS", "purpose": "Cloud hosting"},
+                    {"name": "Google Cloud", "purpose": "ML pipeline"},
+                ],
+            },
+            "CloudBackup Pro": {
+                "sla_uptime_pct": 99.95,
+                "sla_response_hours": 2,
+                "subprocessors": [{"name": "Azure", "purpose": "Storage backend"}],
+            },
+            "SecureAuth Corp": {
+                "sla_uptime_pct": 99.99,
+                "sla_response_hours": 1,
+                "subprocessors": [{"name": "Okta", "purpose": "Identity federation"}],
+            },
+            "GlobalPayments Ltd": {
+                "sla_uptime_pct": 99.999,
+                "sla_response_hours": 0.5,
+                "subprocessors": [
+                    {"name": "Visa", "purpose": "Card network"},
+                    {"name": "Mastercard", "purpose": "Card network"},
+                ],
+            },
+        }
+        for v in session.query(VendorModel).all():
+            if v.name in sla_data:
+                meta = dict(v.metadata_ or {})
+                meta.update(sla_data[v.name])
+                v.metadata_ = meta
+        session.commit()
+        print(f"       Vendor metadata enriched: {len(sla_data)} vendors with SLA + sub-processors")
+
+    # Seed webhook, user session events, and workpaper engagement links
+    with get_session() as session:
+        from warlock.db.audit import AuditTrail
+        from warlock.db.models import User, AuditEngagement, AuditEntry
+
+        trail = AuditTrail(session)
+        # Webhook (action must be "automation_webhook" to match CLI query)
+        trail.record(
+            action="automation_webhook",
+            entity_type="webhook",
+            entity_id="WH-001",
+            actor="admin@acme.com",
+            metadata={
+                "webhook_id": "WH-001",
+                "name": "Slack Alerts",
+                "url": "https://hooks.slack.com/services/T00/B00/xxx",
+                "events": ["alert.created", "finding.critical"],
+                "enabled": True,
+            },
+        )
+        # User sessions (action must be "login"/"logout" to match CLI query, entity_id must be user UUID)
+        for u in session.query(User).all():
+            trail.record(
+                action="login",
+                entity_type="user",
+                entity_id=u.id,
+                actor=u.email,
+                metadata={"ip": "10.0.1.50", "user_agent": "Mozilla/5.0"},
+            )
+            trail.record(
+                action="logout",
+                entity_type="user",
+                entity_id=u.id,
+                actor=u.email,
+                metadata={"ip": "10.0.1.50", "duration_minutes": 45},
+            )
+        # Link workpapers to first engagement
+        eng = session.query(AuditEngagement).first()
+        if eng:
+            for wp_entry in (
+                session.query(AuditEntry).filter(AuditEntry.action == "workpaper_created").all()
+            ):
+                extra = dict(wp_entry.extra or {})
+                extra["engagement_id"] = str(eng.id)
+                wp_entry.extra = extra
+        session.commit()
+        print("       Webhooks, sessions, workpaper links seeded")
+
     # --- PG-2: Alerts, remediations, pipeline runs ---
 
     print("[26/33] Seeding sample alerts...")
