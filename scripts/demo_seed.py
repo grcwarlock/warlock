@@ -11700,6 +11700,65 @@ def seed_phase2_poams(session) -> int:
     return len(poams)
 
 
+def link_issues_and_poams(session) -> dict:
+    """Cross-link Issues to POA&Ms and POA&Ms to ControlResults by framework + control_id.
+
+    After both Issues and POA&Ms are seeded, this step:
+    1. For each POA&M that has no control_result_id, finds a matching ControlResult
+       (same framework + control_id) and links it.
+    2. For each Issue that has no poam_id but shares a framework + control_id with
+       a POA&M, links the issue to that POA&M.
+
+    Returns a dict with counts of links created.
+    """
+    # --- Link POA&Ms to ControlResults ---
+    poams = session.query(POAM).filter(POAM.control_result_id.is_(None)).all()
+    poam_linked = 0
+    # Build a lookup: (framework, control_id) -> first matching ControlResult id
+    # Query all distinct (framework, control_id) pairs from POA&Ms to batch the lookup
+    poam_keys = {(p.framework, p.control_id) for p in poams}
+    cr_lookup: dict[tuple[str, str], str] = {}
+    for fw, cid in poam_keys:
+        cr = (
+            session.query(ControlResult)
+            .filter(
+                ControlResult.framework == fw,
+                ControlResult.control_id == cid,
+            )
+            .first()
+        )
+        if cr:
+            cr_lookup[(fw, cid)] = cr.id
+
+    for p in poams:
+        cr_id = cr_lookup.get((p.framework, p.control_id))
+        if cr_id:
+            p.control_result_id = cr_id
+            poam_linked += 1
+
+    # --- Link Issues to POA&Ms ---
+    # Build lookup: (framework, control_id) -> POA&M id (prefer non-completed POA&Ms)
+    all_poams = session.query(POAM).all()
+    poam_lookup: dict[tuple[str, str], str] = {}
+    for p in all_poams:
+        key = (p.framework, p.control_id)
+        # Prefer open/in_progress POA&Ms over completed ones
+        if key not in poam_lookup or p.status in ("open", "in_progress", "draft"):
+            poam_lookup[key] = p.id
+
+    issues = session.query(Issue).filter(Issue.poam_id.is_(None)).all()
+    issue_linked = 0
+    for issue in issues:
+        if issue.framework and issue.control_id:
+            poam_id = poam_lookup.get((issue.framework, issue.control_id))
+            if poam_id:
+                issue.poam_id = poam_id
+                issue_linked += 1
+
+    session.commit()
+    return {"poams_to_results": poam_linked, "issues_to_poams": issue_linked}
+
+
 def seed_phase2_compensating_controls(session) -> int:
     """Create 10 compensating controls with realistic lifecycle states."""
     prod = session.query(SystemProfile).filter(SystemProfile.acronym == "APP").first()
@@ -19853,11 +19912,11 @@ def main():
     print("=" * 60)
 
     # 1. Init DB
-    print("\n[1/33] Initializing database...")
+    print("\n[1/34] Initializing database...")
     init_db()
 
     # 2. Build pipeline with real framework configs + assertions
-    print("[2/33] Loading frameworks, assertions, and normalizers...")
+    print("[2/34] Loading frameworks, assertions, and normalizers...")
     bus = EventBus()
 
     # Register lake writer if enabled (WLK_LAKE_ENABLED=true)
@@ -20429,7 +20488,7 @@ def main():
 
     # 3. Run pipeline
     ai_label = " + AI reasoning" if ai_reasoner else ""
-    print(f"[3/33] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
+    print(f"[3/34] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
     with get_session() as session:
         stats = pipeline.run(session)
 
@@ -20444,7 +20503,7 @@ def main():
             )
 
     # 4. Print results
-    print("[4/33] Done with pipeline!\n")
+    print("[4/34] Done with pipeline!\n")
     print("-" * 60)
     print(f"  Raw events collected:   {stats.raw_events_collected}")
     print(f"  Findings normalized:    {stats.findings_normalized}")
@@ -20491,22 +20550,22 @@ def main():
         n_vendors = _seed_vendors(session)
         print(f"       Vendors created: {n_vendors}")
 
-    print("[5/33] Seeding system profiles...")
+    print("[5/34] Seeding system profiles...")
     with get_session() as session:
         n = seed_systems(session)
         print(f"       Created {n} system profiles")
 
-    print("[6/33] Syncing personnel from HR + IdP + training...")
+    print("[6/34] Syncing personnel from HR + IdP + training...")
     with get_session() as session:
         p = seed_personnel(session)
         print(f"       Personnel: {p['total']} records synced")
 
-    print("[7/33] Seeding questionnaire templates and instances...")
+    print("[7/34] Seeding questionnaire templates and instances...")
     with get_session() as session:
         q = seed_questionnaires(session)
         print(f"       Templates: {q['templates']}, Questionnaires: {len(q['questionnaires'])}")
 
-    print("[8/33] Seeding data silos, legal holds, and issues...")
+    print("[8/34] Seeding data silos, legal holds, and issues...")
     with get_session() as session:
         ds = seed_data_silos(session)
         print(
@@ -20519,53 +20578,61 @@ def main():
 
     # --- Phase 2: POA&Ms, compensating controls, risk acceptances ---
 
-    print("[9/33] Seeding POA&Ms...")
+    print("[9/34] Seeding POA&Ms...")
     with get_session() as session:
         n_poams = seed_phase2_poams(session)
         print(f"       POA&Ms: {n_poams}")
 
-    print("[10/33] Seeding compensating controls...")
+    print("[10/34] Seeding compensating controls...")
     with get_session() as session:
         n_cc = seed_phase2_compensating_controls(session)
         print(f"       Compensating controls: {n_cc}")
 
-    print("[11/33] Seeding risk acceptances...")
+    print("[11/34] Seeding risk acceptances...")
     with get_session() as session:
         n_ra = seed_phase2_risk_acceptances(session)
         print(f"       Risk acceptances: {n_ra}")
 
+    print("[12/34] Linking Issues <-> POA&Ms <-> ControlResults...")
+    with get_session() as session:
+        links = link_issues_and_poams(session)
+        print(
+            f"       POA&Ms linked to ControlResults: {links['poams_to_results']}, "
+            f"Issues linked to POA&Ms: {links['issues_to_poams']}"
+        )
+
     # --- Phase 3: Inheritance and dependencies ---
 
-    print("[12/33] Seeding control inheritance records...")
+    print("[13/34] Seeding control inheritance records...")
     with get_session() as session:
         n_ci = seed_phase3_inheritance(session)
         print(f"       Control inheritances: {n_ci}")
 
-    print("[13/33] Seeding system dependencies...")
+    print("[14/34] Seeding system dependencies...")
     with get_session() as session:
         n_sd = seed_phase3_dependencies(session)
         print(f"       System dependencies: {n_sd}")
 
     # --- Phase 4: Change events, posture snapshots, drift ---
 
-    print("[14/33] Seeding change events...")
+    print("[15/34] Seeding change events...")
     with get_session() as session:
         n_ce = seed_phase4_change_events(session)
         print(f"       Change events: {n_ce}")
 
-    print("[15/33] Seeding posture snapshots (30 days)...")
+    print("[16/34] Seeding posture snapshots (30 days)...")
     with get_session() as session:
         n_ps = seed_phase4_posture_snapshots(session)
         print(f"       Posture snapshots: {n_ps}")
 
-    print("[16/33] Seeding compliance drift records...")
+    print("[17/34] Seeding compliance drift records...")
     with get_session() as session:
         n_drift = seed_phase4_drift(session)
         print(f"       Compliance drifts: {n_drift}")
 
     # --- Phase 5: Auditor engagement, policy overrides ---
 
-    print("[17/33] Seeding auditor engagement and evidence requests...")
+    print("[18/34] Seeding auditor engagement and evidence requests...")
     with get_session() as session:
         ae = seed_phase5_auditor_engagement(session)
         print(
@@ -20573,7 +20640,7 @@ def main():
             f"Evidence requests: {ae['evidence_requests']}, Attestations: {ae['attestations']}"
         )
 
-    print("[18/33] Seeding policy overrides + operational policies...")
+    print("[19/34] Seeding policy overrides + operational policies...")
     with get_session() as session:
         n_po = seed_phase5_policy_overrides(session)
         print(f"       Policy overrides: {n_po}")
@@ -20652,45 +20719,45 @@ def main():
 
     # --- Expand personnel ---
 
-    print("[19/33] Expanding personnel to 50 users...")
+    print("[20/34] Expanding personnel to 50 users...")
     with get_session() as session:
         total_personnel = seed_50_personnel(session)
         print(f"       Total personnel: {total_personnel}")
 
     # --- Post-pipeline data enrichment ---
 
-    print("[20/33] Assigning findings to system profiles...")
+    print("[21/34] Assigning findings to system profiles...")
     with get_session() as session:
         assigned = _assign_findings_to_systems(session)
         print(f"       Findings assigned: {assigned}")
 
-    print("[21/33] Backfilling monitoring_frequency on control mappings...")
+    print("[22/34] Backfilling monitoring_frequency on control mappings...")
     with get_session() as session:
         backfilled = _backfill_monitoring_frequency(session)
         print(f"       Mappings updated: {backfilled}")
 
-    print("[22/33] Creating demo user accounts...")
+    print("[23/34] Creating demo user accounts...")
     with get_session() as session:
         users_created = _create_demo_users(session)
         print(f"       Users created: {users_created}")
 
     # --- GAP-9/GAP-10: Aged findings for SLA breach / aging demos ---
 
-    print("[23/33] Aging ~50 findings (7-90 days) for SLA demos...")
+    print("[24/34] Aging ~50 findings (7-90 days) for SLA demos...")
     with get_session() as session:
         n_aged = _age_findings(session)
         print(f"       Findings aged: {n_aged}")
 
     # --- GAP-5: Attestations ---
 
-    print("[24/33] Seeding attestation records...")
+    print("[25/34] Seeding attestation records...")
     with get_session() as session:
         n_attest = _seed_attestations(session)
         print(f"       Attestations: {n_attest}")
 
     # --- GAP-12: Vendors with varied risk scores ---
 
-    print("[25/33] Seeding vendor records...")
+    print("[26/34] Seeding vendor records...")
     with get_session() as session:
         n_vendors = _seed_vendors(session)
         print(f"       Vendors: {n_vendors}")
@@ -20793,29 +20860,29 @@ def main():
 
     # --- PG-2: Alerts, remediations, pipeline runs ---
 
-    print("[26/33] Seeding sample alerts...")
+    print("[27/34] Seeding sample alerts...")
     with get_session() as session:
         n_alerts = _seed_alerts(session)
         print(f"       Alerts: {n_alerts}")
 
-    print("[27/33] Seeding sample remediations...")
+    print("[28/34] Seeding sample remediations...")
     with get_session() as session:
         n_remediations = _seed_remediations(session)
         print(f"       Remediations: {n_remediations}")
 
-    print("[28/33] Seeding pipeline run history...")
+    print("[29/34] Seeding pipeline run history...")
     with get_session() as session:
         n_pipeline_runs = _seed_pipeline_runs(session)
         print(f"       Pipeline runs: {n_pipeline_runs}")
 
     # --- GAP-2: Audit trail (hash-chained) ---
 
-    print("[29/33] Populating audit trail (hash-chained)...")
+    print("[30/34] Populating audit trail (hash-chained)...")
     with get_session() as session:
         n_audit = _seed_audit_trail(session)
         print(f"       Audit entries: {n_audit}")
 
-    print("[30/33] Verifying audit chain integrity...")
+    print("[31/34] Verifying audit chain integrity...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -20830,7 +20897,7 @@ def main():
 
     # --- Feature coverage: seed data for 20 features showing 'no data' ---
 
-    print("[31/33] Seeding feature coverage data (20 features)...")
+    print("[32/34] Seeding feature coverage data (20 features)...")
     with get_session() as session:
         fc = _seed_feature_coverage(session)
         total_fc = sum(fc.values())
@@ -20838,7 +20905,7 @@ def main():
         for k, v in sorted(fc.items()):
             print(f"         {k}: {v}")
 
-    print("[32/33] Re-verifying audit chain after feature data...")
+    print("[33/34] Re-verifying audit chain after feature data...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -20851,7 +20918,7 @@ def main():
             for e in errors[:3]:
                 print(f"         - {e}")
 
-    print("[33/33] Seed complete!\n")
+    print("[34/34] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")

@@ -69,7 +69,7 @@ These 5 commands require `pip install -e ".[lake]"` (pyarrow, duckdb, pyiceberg)
 | `warlock lake maintenance` | pyarrow |
 | `warlock lake register` | pyiceberg |
 
-**TODO:** Add graceful `ModuleNotFoundError` handling so these print "Install with: pip install -e '.[lake]'" instead of crashing with a traceback.
+**DONE (2026-03-25):** Graceful `ModuleNotFoundError` handling added. All 5 commands now print "Install with: pip install -e '.[lake]'" instead of crashing.
 
 ## Test Coverage by Batch
 

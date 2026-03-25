@@ -219,6 +219,14 @@ def lake_reconcile(path: str | None, threshold: float) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def lake_aggregate(path: str | None) -> None:
     """Refresh materialized aggregation tables."""
+    try:
+        import pyarrow  # noqa: F401
+    except ImportError:
+        _error(
+            "pyarrow is required for lake operations but not installed.\n"
+            'Install it with: pip install -e ".[lake]"'
+        )
+
     from warlock.config import get_settings
     from warlock.lake.aggregations import refresh_aggregations
 
@@ -259,6 +267,14 @@ def lake_query(question: str, path: str | None) -> None:
 @click.option("--framework", default=None, help="Limit to specific framework")
 def lake_assess(path: str | None, framework: str | None) -> None:
     """Run batch aggregate control assessment from lake data."""
+    try:
+        import duckdb  # noqa: F401
+    except ImportError:
+        _error(
+            "duckdb is required for lake operations but not installed.\n"
+            'Install it with: pip install -e ".[lake]"'
+        )
+
     from collections import Counter
 
     from rich.table import Table
@@ -996,6 +1012,14 @@ def health_coverage(path: str | None) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def lake_register(path: str | None) -> None:
     """Register lake tables with the Iceberg catalog."""
+    try:
+        import pyiceberg  # noqa: F401
+    except ImportError:
+        _error(
+            "pyiceberg is required for lake operations but not installed.\n"
+            'Install it with: pip install -e ".[lake]"'
+        )
+
     from warlock.config import get_settings
     from warlock.lake.catalog import register_pipeline_tables
 
@@ -1013,6 +1037,14 @@ def lake_register(path: str | None) -> None:
 @click.option("--target-size", default=256, type=int, help="Target file size in MB")
 def lake_compact(path: str | None, target_size: int) -> None:
     """Compact small Parquet files into larger ones."""
+    try:
+        import pyarrow  # noqa: F401
+    except ImportError:
+        _error(
+            "pyarrow is required for lake operations but not installed.\n"
+            'Install it with: pip install -e ".[lake]"'
+        )
+
     from warlock.config import get_settings
     from warlock.lake.maintenance import compact
 
@@ -1030,6 +1062,14 @@ def lake_compact(path: str | None, target_size: int) -> None:
 @click.option("--path", default=None)
 def lake_maintenance(path: str | None) -> None:
     """Run all lake maintenance jobs (compact, expire, cleanup)."""
+    try:
+        import pyarrow  # noqa: F401
+    except ImportError:
+        _error(
+            "pyarrow is required for lake operations but not installed.\n"
+            'Install it with: pip install -e ".[lake]"'
+        )
+
     from warlock.config import get_settings
     from warlock.lake.maintenance import run_all_maintenance
 
