@@ -18830,6 +18830,558 @@ def _seed_pipeline_runs(session) -> int:
     return len(runs)
 
 
+def _seed_feature_coverage(session) -> dict:
+    """Seed data for 20 features that currently show 'no data' in the demo.
+
+    Returns a dict with counts of records created/updated per feature.
+    """
+    import uuid
+
+    from warlock.db.audit import AuditTrail
+    from warlock.db.models import ControlMapping, ControlResult, Finding, Issue
+
+    trail = AuditTrail(session)
+    now = NOW
+    counts = {}
+
+    # SEED-1: Access review campaigns (via AuditEntry)
+    campaigns = [
+        {
+            "name": "Q1-2026 Privileged Access Review",
+            "status": "completed",
+            "started": (now - timedelta(days=60)).isoformat(),
+            "completed": (now - timedelta(days=30)).isoformat(),
+            "users_reviewed": 35,
+            "findings": 2,
+        },
+        {
+            "name": "Q2-2026 SOX Critical Systems Review",
+            "status": "active",
+            "started": (now - timedelta(days=5)).isoformat(),
+            "completed": None,
+            "users_reviewed": 12,
+            "findings": 0,
+        },
+    ]
+    for i, c in enumerate(campaigns):
+        trail.record(
+            action="access_review_campaign",
+            entity_type="AccessReviewCampaign",
+            entity_id=f"ARC-{i + 1:03d}",
+            actor="identity-governance@acme.com",
+            metadata=c,
+        )
+    counts["access_review_campaigns"] = len(campaigns)
+
+    # SEED-2: Group membership change audit entries
+    group_changes = [
+        {
+            "user": "alice.wong@acme.com",
+            "group": "prod-admins",
+            "change": "added",
+            "approved_by": "hassan.ali@acme.com",
+        },
+        {
+            "user": "bob.singh@acme.com",
+            "group": "security-readers",
+            "change": "removed",
+            "approved_by": "eve.nakamura@acme.com",
+        },
+        {
+            "user": "carol.park@acme.com",
+            "group": "database-admins",
+            "change": "added",
+            "approved_by": "hassan.ali@acme.com",
+        },
+    ]
+    for i, gc in enumerate(group_changes):
+        trail.record(
+            action="group_membership_change",
+            entity_type="Group",
+            entity_id=f"GRP-{i + 1:03d}",
+            actor=gc["approved_by"],
+            metadata=gc,
+        )
+    counts["group_changes"] = len(group_changes)
+
+    # SEED-3: Attestation near expiry (update existing)
+    from warlock.db.models import Attestation
+
+    near_expiry_attest = session.query(Attestation).filter(Attestation.status == "approved").first()
+    if near_expiry_attest:
+        near_expiry_attest.approved_at = now - timedelta(days=335)
+        session.flush()
+        counts["attestation_near_expiry"] = 1
+    else:
+        counts["attestation_near_expiry"] = 0
+
+    # SEED-5: Additional audit trail entries (diverse actions)
+    extra_actions = [
+        (
+            "policy_updated",
+            "Policy",
+            "POL-SEC-001",
+            "eve.nakamura@acme.com",
+            {"policy": "Information Security Policy", "version": "3.2"},
+        ),
+        (
+            "policy_updated",
+            "Policy",
+            "POL-ACC-001",
+            "hassan.ali@acme.com",
+            {"policy": "Access Control Policy", "version": "2.1"},
+        ),
+        (
+            "risk_assessment_completed",
+            "RiskAssessment",
+            "RA-2026-Q1",
+            "grace.kim@acme.com",
+            {"framework": "nist_800_53", "scope": "production", "residual_risk": "medium"},
+        ),
+        (
+            "control_override",
+            "ControlResult",
+            "CO-001",
+            "eve.nakamura@acme.com",
+            {
+                "control_id": "AC-6",
+                "from_status": "non_compliant",
+                "to_status": "risk_accepted",
+                "justification": "Compensating control in place",
+            },
+        ),
+        (
+            "evidence_uploaded",
+            "Evidence",
+            "EV-2026-042",
+            "frank.torres@acme.com",
+            {"filename": "penetration_test_report_q1.pdf", "size_bytes": 2450000},
+        ),
+        (
+            "evidence_uploaded",
+            "Evidence",
+            "EV-2026-043",
+            "carol.park@acme.com",
+            {"filename": "access_review_q1.xlsx", "size_bytes": 185000},
+        ),
+        (
+            "system_registered",
+            "SystemProfile",
+            "SYS-NEW-001",
+            "hassan.ali@acme.com",
+            {"name": "AI Model Registry", "classification": "internal"},
+        ),
+        (
+            "vendor_assessed",
+            "Vendor",
+            "VND-005",
+            "grace.kim@acme.com",
+            {"vendor": "CloudBackup Pro", "risk_score": 45, "tier": "critical"},
+        ),
+        (
+            "training_completed",
+            "Personnel",
+            "PER-028",
+            "system",
+            {"course": "Security Awareness 2026", "score": 92},
+        ),
+        (
+            "training_completed",
+            "Personnel",
+            "PER-031",
+            "system",
+            {"course": "GDPR Privacy Essentials", "score": 88},
+        ),
+    ]
+    for action, etype, eid, actor, meta in extra_actions:
+        trail.record(
+            action=action,
+            entity_type=etype,
+            entity_id=eid,
+            actor=actor,
+            metadata=meta,
+        )
+    counts["extra_audit_entries"] = len(extra_actions)
+
+    # SEED-6: Automation rules
+    auto_rules = [
+        {
+            "rule_name": "auto_create_issue_on_critical",
+            "trigger": "finding.severity == critical",
+            "action": "create_issue",
+            "enabled": True,
+        },
+        {
+            "rule_name": "auto_notify_drift",
+            "trigger": "control.status_changed",
+            "action": "send_alert",
+            "channel": "slack:#grc-alerts",
+            "enabled": True,
+        },
+        {
+            "rule_name": "auto_assign_pci",
+            "trigger": "issue.framework == pci_dss",
+            "action": "assign_to",
+            "assignee": "pci-team@acme.com",
+            "enabled": False,
+        },
+    ]
+    for i, rule in enumerate(auto_rules):
+        trail.record(
+            action="automation_rule",
+            entity_type="AutomationRule",
+            entity_id=f"RULE-{i + 1:03d}",
+            actor="admin@acme.com",
+            metadata=rule,
+        )
+    counts["automation_rules"] = len(auto_rules)
+
+    # SEED-7: Automation schedules
+    schedules = [
+        {
+            "name": "nightly_pipeline_run",
+            "cron": "0 2 * * *",
+            "task": "pipeline.run",
+            "enabled": True,
+            "last_run": (now - timedelta(hours=8)).isoformat(),
+        },
+        {
+            "name": "weekly_posture_snapshot",
+            "cron": "0 6 * * 1",
+            "task": "posture.snapshot",
+            "enabled": True,
+            "last_run": (now - timedelta(days=3)).isoformat(),
+        },
+    ]
+    for i, sched in enumerate(schedules):
+        trail.record(
+            action="automation_schedule",
+            entity_type="Schedule",
+            entity_id=f"SCHED-{i + 1:03d}",
+            actor="admin@acme.com",
+            metadata=sched,
+        )
+    counts["automation_schedules"] = len(schedules)
+
+    # SEED-8: Automation webhooks
+    webhooks = [
+        {
+            "url": "https://hooks.slack.com/services/T00/B00/xxxx",
+            "events": ["alert.created", "alert.critical"],
+            "name": "Slack GRC Alerts",
+            "active": True,
+        },
+        {
+            "url": "https://api.pagerduty.com/webhooks/v3/grc",
+            "events": ["connector.failed", "pipeline.failed"],
+            "name": "PagerDuty Escalation",
+            "active": True,
+        },
+    ]
+    for i, wh in enumerate(webhooks):
+        trail.record(
+            action="webhook_registered",
+            entity_type="Webhook",
+            entity_id=f"WH-{i + 1:03d}",
+            actor="admin@acme.com",
+            metadata=wh,
+        )
+    counts["webhooks"] = len(webhooks)
+
+    # SEED-9: Unassigned open issues (update existing)
+    unassigned_issues = (
+        session.query(Issue)
+        .filter(Issue.assigned_to.isnot(None), Issue.status != "closed")
+        .limit(5)
+        .all()
+    )
+    for issue in unassigned_issues:
+        issue.assigned_to = None
+        issue.status = "open"
+    session.flush()
+    counts["unassigned_issues"] = len(unassigned_issues)
+
+    # SEED-10: Issues with stale linked findings
+    stale_findings = (
+        session.query(Finding).filter(Finding.created_at < now - timedelta(days=30)).limit(3).all()
+    )
+    stale_issue_count = 0
+    for sf in stale_findings:
+        stale_issue = Issue(
+            title=f"Stale finding requires re-scan: {sf.title[:60]}",
+            description=(
+                f"Finding from source '{sf.source}' is over 30 days old. "
+                "Re-scan required to validate current state."
+            ),
+            finding_id=sf.id,
+            framework=sf.framework if hasattr(sf, "framework") else None,
+            status="open",
+            priority="medium",
+            source="pipeline",
+            tags=["stale-finding", "re-scan-needed"],
+            created_by="system",
+        )
+        session.add(stale_issue)
+        stale_issue_count += 1
+    session.flush()
+    counts["stale_finding_issues"] = stale_issue_count
+
+    # SEED-11: BCP/DR test results
+    dr_tests = [
+        {
+            "test_name": "Full site failover to us-west-2",
+            "result": "pass",
+            "rto_target_hours": 4,
+            "rto_actual_hours": 2.5,
+            "rpo_target_hours": 1,
+            "rpo_actual_hours": 0.5,
+            "date": (now - timedelta(days=45)).isoformat(),
+            "participants": 12,
+        },
+        {
+            "test_name": "Database restore from backup",
+            "result": "pass_with_issues",
+            "rto_target_hours": 2,
+            "rto_actual_hours": 3.1,
+            "issues": "Restore took longer than RTO",
+            "date": (now - timedelta(days=20)).isoformat(),
+            "participants": 5,
+        },
+        {
+            "test_name": "Ransomware tabletop exercise",
+            "result": "pass",
+            "date": (now - timedelta(days=10)).isoformat(),
+            "participants": 25,
+            "notes": "Identified gap in weekend communication plan",
+        },
+    ]
+    for i, dt in enumerate(dr_tests):
+        trail.record(
+            action="dr_test",
+            entity_type="BCPTest",
+            entity_id=f"DR-{i + 1:03d}",
+            actor="bcp-team@acme.com",
+            metadata=dt,
+        )
+    counts["dr_tests"] = len(dr_tests)
+
+    # SEED-12: Calendar items
+    cal_items = [
+        {
+            "title": "SOC 2 Type II Audit - Fieldwork Start",
+            "date": (now + timedelta(days=14)).isoformat(),
+            "type": "audit",
+            "assignee": "eve.nakamura@acme.com",
+        },
+        {
+            "title": "Quarterly Access Review Deadline",
+            "date": (now + timedelta(days=7)).isoformat(),
+            "type": "review",
+            "assignee": "hassan.ali@acme.com",
+        },
+        {
+            "title": "PCI DSS Self-Assessment Due",
+            "date": (now + timedelta(days=30)).isoformat(),
+            "type": "deadline",
+            "assignee": "frank.torres@acme.com",
+        },
+        {
+            "title": "ISO 27001 Surveillance Audit",
+            "date": (now + timedelta(days=60)).isoformat(),
+            "type": "audit",
+            "assignee": "eve.nakamura@acme.com",
+        },
+    ]
+    for i, ci in enumerate(cal_items):
+        trail.record(
+            action="calendar_item",
+            entity_type="CalendarItem",
+            entity_id=f"CAL-{i + 1:03d}",
+            actor=ci["assignee"],
+            metadata=ci,
+        )
+    counts["calendar_items"] = len(cal_items)
+
+    # SEED-13: Change requests
+    change_reqs = [
+        {
+            "title": "Firewall rule change: allow port 8443 for API gateway",
+            "status": "approved",
+            "risk_level": "medium",
+            "requested_by": "devops@acme.com",
+            "approved_by": "security-lead@acme.com",
+            "change_window": (now + timedelta(days=2)).isoformat(),
+        },
+        {
+            "title": "IAM policy update: restrict S3 cross-account access",
+            "status": "pending",
+            "risk_level": "high",
+            "requested_by": "cloud-team@acme.com",
+            "approved_by": None,
+        },
+        {
+            "title": "TLS certificate rotation for *.acme.com",
+            "status": "completed",
+            "risk_level": "low",
+            "requested_by": "infra@acme.com",
+            "completed_at": (now - timedelta(days=3)).isoformat(),
+        },
+    ]
+    for i, cr in enumerate(change_reqs):
+        trail.record(
+            action="change_request",
+            entity_type="ChangeRequest",
+            entity_id=f"CR-{i + 1:03d}",
+            actor=cr.get("requested_by", "system"),
+            metadata=cr,
+        )
+    counts["change_requests"] = len(change_reqs)
+
+    # SEED-14: Regulatory changes
+    reg_changes = [
+        {
+            "title": "EU AI Act enforcement deadline approaching",
+            "framework": "eu_ai_act",
+            "status": "pending",
+            "effective_date": "2026-08-01",
+            "impact": "high",
+            "description": "High-risk AI systems must comply by Aug 2026",
+        },
+        {
+            "title": "NIST CSF 2.0 updated supply chain risk guidance",
+            "framework": "nist_csf",
+            "status": "pending",
+            "effective_date": "2026-06-15",
+            "impact": "medium",
+            "description": "New GV.SC subcategories require updated controls",
+        },
+        {
+            "title": "PCI DSS 4.0 migration deadline",
+            "framework": "pci_dss",
+            "status": "in_progress",
+            "effective_date": "2025-03-31",
+            "impact": "critical",
+            "description": "All organizations must be fully compliant with v4.0",
+        },
+    ]
+    for i, rc in enumerate(reg_changes):
+        trail.record(
+            action="regulatory_change",
+            entity_type="RegulatoryChange",
+            entity_id=f"REG-{i + 1:03d}",
+            actor="compliance-intel@acme.com",
+            metadata=rc,
+        )
+    counts["regulatory_changes"] = len(reg_changes)
+
+    # SEED-15: Shared dashboards
+    dashboards = [
+        {
+            "name": "Executive Compliance Overview",
+            "shared_with": ["ciso@acme.com", "cto@acme.com"],
+            "widgets": ["posture_score", "framework_coverage", "open_issues"],
+            "created_by": "eve.nakamura@acme.com",
+        },
+        {
+            "name": "SOC 2 Audit Prep Board",
+            "shared_with": ["audit-team@acme.com", "eve.nakamura@acme.com"],
+            "widgets": ["attestation_status", "evidence_gaps", "control_drift"],
+            "created_by": "hassan.ali@acme.com",
+        },
+        {
+            "name": "Vulnerability Management Tracker",
+            "shared_with": ["security-ops@acme.com"],
+            "widgets": ["critical_findings", "sla_breaches", "remediation_progress"],
+            "created_by": "frank.torres@acme.com",
+        },
+    ]
+    for i, db in enumerate(dashboards):
+        trail.record(
+            action="shared_dashboard",
+            entity_type="Dashboard",
+            entity_id=f"DASH-{i + 1:03d}",
+            actor=db["created_by"],
+            metadata=db,
+        )
+    counts["shared_dashboards"] = len(dashboards)
+
+    # SEED-17: AI-assessed control results (update 10 existing)
+    ai_results = (
+        session.query(ControlResult).filter(ControlResult.ai_confidence.is_(None)).limit(10).all()
+    )
+    ai_texts = [
+        "Control operating effectively per IAM policy and CloudTrail evidence.",
+        "MFA enforcement verified across all privileged accounts.",
+        "Encryption at rest enabled but key rotation exceeds policy threshold.",
+        "Network segmentation verified via VPC flow log analysis.",
+        "Endpoint protection at 98.5%. Two servers pending agent deployment.",
+        "Access review completed within SLA. Three dormant accounts flagged.",
+        "Backup restoration test passed. RTO within 4-hour SLA target.",
+        "Audit logging enabled across all production systems.",
+        "96% of critical patches applied within 14-day window.",
+        "Vendor risk score 72/100 meets minimum threshold.",
+    ]
+    for i, cr in enumerate(ai_results):
+        cr.ai_confidence = round(0.7 + random.random() * 0.25, 2)
+        cr.ai_model = "demo"
+        cr.ai_assessment = ai_texts[i % len(ai_texts)]
+    session.flush()
+    counts["ai_assessed_results"] = len(ai_results)
+
+    # SEED-18: Closed issues (update 5 existing)
+    closeable_issues = (
+        session.query(Issue)
+        .filter(Issue.status.in_(["open", "assigned", "in_progress", "remediated"]))
+        .limit(5)
+        .all()
+    )
+    for i, issue in enumerate(closeable_issues):
+        issue.status = "closed"
+        issue.closed_at = now - timedelta(days=random.randint(1, 14))
+        issue.remediated_at = issue.closed_at - timedelta(days=random.randint(1, 7))
+        issue.verification_notes = "Verified remediation through automated scan and manual review."
+    session.flush()
+    counts["closed_issues"] = len(closeable_issues)
+
+    # SEED-19: Control test gaps -- old assessed_at so gap queries find them
+    old_results = (
+        session.query(ControlResult).filter(ControlResult.status == "compliant").limit(8).all()
+    )
+    for cr in old_results:
+        cr.assessed_at = now - timedelta(days=random.randint(120, 365))
+    session.flush()
+    counts["stale_control_results"] = len(old_results)
+
+    # SEED-20: Orphan controls -- mappings with no corresponding result
+    anchor_finding = session.query(Finding).first()
+    orphan_count = 0
+    if anchor_finding:
+        orphan_controls = [
+            ("nist_800_53", "SA-22", "System and Services Acquisition"),
+            ("nist_800_53", "PM-32", "Program Management"),
+            ("iso_27001", "A.5.37", "Documented Operating Procedures"),
+            ("soc2", "PI1.5", "Processing Integrity"),
+        ]
+        for fw, cid, family in orphan_controls:
+            mapping = ControlMapping(
+                id=str(uuid.uuid4()),
+                finding_id=anchor_finding.id,
+                framework=fw,
+                control_id=cid,
+                control_family=family,
+                mapping_method="keyword",
+                confidence=0.4,
+                created_at=now - timedelta(days=90),
+            )
+            session.add(mapping)
+            orphan_count += 1
+    session.flush()
+    counts["orphan_controls"] = orphan_count
+
+    session.commit()
+    return counts
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -18847,11 +19399,11 @@ def main():
     print("=" * 60)
 
     # 1. Init DB
-    print("\n[1/31] Initializing database...")
+    print("\n[1/33] Initializing database...")
     init_db()
 
     # 2. Build pipeline with real framework configs + assertions
-    print("[2/31] Loading frameworks, assertions, and normalizers...")
+    print("[2/33] Loading frameworks, assertions, and normalizers...")
     bus = EventBus()
 
     # Register lake writer if enabled (WLK_LAKE_ENABLED=true)
@@ -19423,7 +19975,7 @@ def main():
 
     # 3. Run pipeline
     ai_label = " + AI reasoning" if ai_reasoner else ""
-    print(f"[3/31] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
+    print(f"[3/33] Running pipeline (collect -> normalize -> map -> assess{ai_label})...")
     with get_session() as session:
         stats = pipeline.run(session)
 
@@ -19438,7 +19990,7 @@ def main():
             )
 
     # 4. Print results
-    print("[4/31] Done with pipeline!\n")
+    print("[4/33] Done with pipeline!\n")
     print("-" * 60)
     print(f"  Raw events collected:   {stats.raw_events_collected}")
     print(f"  Findings normalized:    {stats.findings_normalized}")
@@ -19485,22 +20037,22 @@ def main():
         n_vendors = _seed_vendors(session)
         print(f"       Vendors created: {n_vendors}")
 
-    print("[5/31] Seeding system profiles...")
+    print("[5/33] Seeding system profiles...")
     with get_session() as session:
         n = seed_systems(session)
         print(f"       Created {n} system profiles")
 
-    print("[6/31] Syncing personnel from HR + IdP + training...")
+    print("[6/33] Syncing personnel from HR + IdP + training...")
     with get_session() as session:
         p = seed_personnel(session)
         print(f"       Personnel: {p['total']} records synced")
 
-    print("[7/31] Seeding questionnaire templates and instances...")
+    print("[7/33] Seeding questionnaire templates and instances...")
     with get_session() as session:
         q = seed_questionnaires(session)
         print(f"       Templates: {q['templates']}, Questionnaires: {len(q['questionnaires'])}")
 
-    print("[8/31] Seeding data silos, legal holds, and issues...")
+    print("[8/33] Seeding data silos, legal holds, and issues...")
     with get_session() as session:
         ds = seed_data_silos(session)
         print(
@@ -19513,53 +20065,53 @@ def main():
 
     # --- Phase 2: POA&Ms, compensating controls, risk acceptances ---
 
-    print("[9/31] Seeding POA&Ms...")
+    print("[9/33] Seeding POA&Ms...")
     with get_session() as session:
         n_poams = seed_phase2_poams(session)
         print(f"       POA&Ms: {n_poams}")
 
-    print("[10/31] Seeding compensating controls...")
+    print("[10/33] Seeding compensating controls...")
     with get_session() as session:
         n_cc = seed_phase2_compensating_controls(session)
         print(f"       Compensating controls: {n_cc}")
 
-    print("[11/31] Seeding risk acceptances...")
+    print("[11/33] Seeding risk acceptances...")
     with get_session() as session:
         n_ra = seed_phase2_risk_acceptances(session)
         print(f"       Risk acceptances: {n_ra}")
 
     # --- Phase 3: Inheritance and dependencies ---
 
-    print("[12/31] Seeding control inheritance records...")
+    print("[12/33] Seeding control inheritance records...")
     with get_session() as session:
         n_ci = seed_phase3_inheritance(session)
         print(f"       Control inheritances: {n_ci}")
 
-    print("[13/31] Seeding system dependencies...")
+    print("[13/33] Seeding system dependencies...")
     with get_session() as session:
         n_sd = seed_phase3_dependencies(session)
         print(f"       System dependencies: {n_sd}")
 
     # --- Phase 4: Change events, posture snapshots, drift ---
 
-    print("[14/31] Seeding change events...")
+    print("[14/33] Seeding change events...")
     with get_session() as session:
         n_ce = seed_phase4_change_events(session)
         print(f"       Change events: {n_ce}")
 
-    print("[15/31] Seeding posture snapshots (30 days)...")
+    print("[15/33] Seeding posture snapshots (30 days)...")
     with get_session() as session:
         n_ps = seed_phase4_posture_snapshots(session)
         print(f"       Posture snapshots: {n_ps}")
 
-    print("[16/31] Seeding compliance drift records...")
+    print("[16/33] Seeding compliance drift records...")
     with get_session() as session:
         n_drift = seed_phase4_drift(session)
         print(f"       Compliance drifts: {n_drift}")
 
     # --- Phase 5: Auditor engagement, policy overrides ---
 
-    print("[17/31] Seeding auditor engagement and evidence requests...")
+    print("[17/33] Seeding auditor engagement and evidence requests...")
     with get_session() as session:
         ae = seed_phase5_auditor_engagement(session)
         print(
@@ -19567,81 +20119,81 @@ def main():
             f"Evidence requests: {ae['evidence_requests']}, Attestations: {ae['attestations']}"
         )
 
-    print("[18/31] Seeding policy overrides...")
+    print("[18/33] Seeding policy overrides...")
     with get_session() as session:
         n_po = seed_phase5_policy_overrides(session)
         print(f"       Policy overrides: {n_po}")
 
     # --- Expand personnel ---
 
-    print("[19/31] Expanding personnel to 50 users...")
+    print("[19/33] Expanding personnel to 50 users...")
     with get_session() as session:
         total_personnel = seed_50_personnel(session)
         print(f"       Total personnel: {total_personnel}")
 
     # --- Post-pipeline data enrichment ---
 
-    print("[20/31] Assigning findings to system profiles...")
+    print("[20/33] Assigning findings to system profiles...")
     with get_session() as session:
         assigned = _assign_findings_to_systems(session)
         print(f"       Findings assigned: {assigned}")
 
-    print("[21/31] Backfilling monitoring_frequency on control mappings...")
+    print("[21/33] Backfilling monitoring_frequency on control mappings...")
     with get_session() as session:
         backfilled = _backfill_monitoring_frequency(session)
         print(f"       Mappings updated: {backfilled}")
 
-    print("[22/31] Creating demo user accounts...")
+    print("[22/33] Creating demo user accounts...")
     with get_session() as session:
         users_created = _create_demo_users(session)
         print(f"       Users created: {users_created}")
 
     # --- GAP-9/GAP-10: Aged findings for SLA breach / aging demos ---
 
-    print("[23/31] Aging ~50 findings (7-90 days) for SLA demos...")
+    print("[23/33] Aging ~50 findings (7-90 days) for SLA demos...")
     with get_session() as session:
         n_aged = _age_findings(session)
         print(f"       Findings aged: {n_aged}")
 
     # --- GAP-5: Attestations ---
 
-    print("[24/31] Seeding attestation records...")
+    print("[24/33] Seeding attestation records...")
     with get_session() as session:
         n_attest = _seed_attestations(session)
         print(f"       Attestations: {n_attest}")
 
     # --- GAP-12: Vendors with varied risk scores ---
 
-    print("[25/31] Seeding vendor records...")
+    print("[25/33] Seeding vendor records...")
     with get_session() as session:
         n_vendors = _seed_vendors(session)
         print(f"       Vendors: {n_vendors}")
 
     # --- PG-2: Alerts, remediations, pipeline runs ---
 
-    print("[26/31] Seeding sample alerts...")
+    print("[26/33] Seeding sample alerts...")
     with get_session() as session:
         n_alerts = _seed_alerts(session)
         print(f"       Alerts: {n_alerts}")
 
-    print("[27/31] Seeding sample remediations...")
+    print("[27/33] Seeding sample remediations...")
     with get_session() as session:
         n_remediations = _seed_remediations(session)
         print(f"       Remediations: {n_remediations}")
 
-    print("[28/31] Seeding pipeline run history...")
+    print("[28/33] Seeding pipeline run history...")
     with get_session() as session:
         n_pipeline_runs = _seed_pipeline_runs(session)
         print(f"       Pipeline runs: {n_pipeline_runs}")
 
     # --- GAP-2: Audit trail (hash-chained) ---
 
-    print("[29/31] Populating audit trail (hash-chained)...")
+    print("[29/33] Populating audit trail (hash-chained)...")
     with get_session() as session:
         n_audit = _seed_audit_trail(session)
         print(f"       Audit entries: {n_audit}")
 
-    print("[30/31] Verifying audit chain integrity...")
+    print("[30/33] Verifying audit chain integrity...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -19654,7 +20206,30 @@ def main():
             for e in errors[:3]:
                 print(f"         - {e}")
 
-    print("[31/31] Seed complete!\n")
+    # --- Feature coverage: seed data for 20 features showing 'no data' ---
+
+    print("[31/33] Seeding feature coverage data (20 features)...")
+    with get_session() as session:
+        fc = _seed_feature_coverage(session)
+        total_fc = sum(fc.values())
+        print(f"       Feature coverage records: {total_fc}")
+        for k, v in sorted(fc.items()):
+            print(f"         {k}: {v}")
+
+    print("[32/33] Re-verifying audit chain after feature data...")
+    with get_session() as session:
+        from warlock.db.audit import AuditTrail
+
+        trail = AuditTrail(session)
+        valid, errors = trail.verify_chain()
+        if valid:
+            print("       Chain integrity: VERIFIED")
+        else:
+            print(f"       Chain integrity: BROKEN ({len(errors)} errors)")
+            for e in errors[:3]:
+                print(f"         - {e}")
+
+    print("[33/33] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")

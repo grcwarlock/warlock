@@ -378,6 +378,11 @@ class Pipeline:
 
                     if stale:
                         log.warning("Reclaiming stale pipeline lock (holder process is dead)")
+                        # Remove stale lock file before re-acquiring
+                        try:
+                            os.unlink(lock_path)
+                        except OSError:
+                            pass
                         lock_file = open(lock_path, "w")
                         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     else:
@@ -709,8 +714,8 @@ class Pipeline:
     def _persist_result(self, session: Session, r: ControlResultData) -> models.ControlResult:
         db_result = models.ControlResult(
             id=r.id,
-            finding_id=r.finding_id,
-            control_mapping_id=r.control_mapping_id,
+            finding_id=r.finding_id or None,  # empty string → NULL for FK
+            control_mapping_id=r.control_mapping_id or None,  # empty string → NULL for FK
             framework=r.framework,
             control_id=r.control_id,
             status=r.status,
