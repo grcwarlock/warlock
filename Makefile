@@ -28,7 +28,7 @@ seed: ## Run demo seed
 	python scripts/demo_seed.py
 
 reset: ## Reset SQLite DB and seed fresh data
-	rm -f warlock.db
+	rm -f warlock.db warlock.db-shm warlock.db-wal
 	.venv/bin/alembic upgrade head
 	.venv/bin/python scripts/demo_seed.py
 
