@@ -20905,7 +20905,41 @@ def main():
         for k, v in sorted(fc.items()):
             print(f"         {k}: {v}")
 
-    print("[33/34] Re-verifying audit chain after feature data...")
+    # --- Seed expansions: richer demo data ---
+    print("[33/38] Seeding Phase 2 expansions (zero-data gaps)...")
+    try:
+        from seed_expansions.phase2_zero_data_gaps import seed_phase2
+
+        with get_session() as session:
+            p2 = seed_phase2(session)
+            for k, v in sorted(p2.items()):
+                print(f"       {k}: {v}")
+    except Exception as exc:
+        print(f"       Phase 2 expansion failed: {exc}")
+
+    print("[34/38] Seeding Phase 3 expansions (time depth)...")
+    try:
+        from seed_expansions.phase3_time_depth import seed_phase3
+
+        with get_session() as session:
+            p3 = seed_phase3(session)
+            for k, v in sorted(p3.items()):
+                print(f"       {k}: {v}")
+    except Exception as exc:
+        print(f"       Phase 3 expansion failed: {exc}")
+
+    print("[35/38] Seeding Phase 5 expansions (scenario richness)...")
+    try:
+        from seed_expansions.phase5_scenario_richness import seed_phase5
+
+        with get_session() as session:
+            p5 = seed_phase5(session)
+            for k, v in sorted(p5.items()):
+                print(f"       {k}: {v}")
+    except Exception as exc:
+        print(f"       Phase 5 expansion failed: {exc}")
+
+    print("[36/38] Re-verifying audit chain after expansions...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -20918,7 +20952,7 @@ def main():
             for e in errors[:3]:
                 print(f"         - {e}")
 
-    print("[34/34] Seed complete!\n")
+    print("[37/38] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")
