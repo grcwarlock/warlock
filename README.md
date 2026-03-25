@@ -71,26 +71,18 @@ Every finding traces back to its raw API response. Every control result traces b
 **Pentest Platforms:** Cobalt, HackerOne, PlexTrac
 **Ingest:** Webhook (generic)
 
-## Quick Start (Docker — recommended)
+## Quick Start
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
-docker compose up demo
+make demo
 ```
 
-That's it. Postgres, Redis, OPA, migrations, seed data, and API server — all in one command.
+That's it. Virtual environment, OPA, database, seed data, and API server — all in one command. You'll be dropped into a shell with the `warlock` CLI ready.
 
 - API: http://localhost:8000/docs
 - Login: admin@acme.com / WarlockAdmin2026!
-- Stop: `docker compose down`
-- Fresh reset: `docker compose down -v && docker compose up demo`
-
-### Quick Start (local Python)
-
-```bash
-git clone https://github.com/grcwarlock/warlock.git && cd warlock
-./scripts/demo.sh
-```
+- Stop: kill the PIDs shown in the demo output
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
@@ -171,8 +163,7 @@ warlock correlate blast-radius <finding_id>  # impact analysis
 ```bash
 # Start the API server
 warlock-api
-# or with docker
-docker compose up demo
+# or use make demo for the full experience
 
 # Health & readiness
 GET  /api/v1/health           # basic health check

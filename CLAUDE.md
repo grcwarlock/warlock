@@ -95,8 +95,10 @@ make verify-docs # documentation accuracy check only
 
 1. List EVERY file you changed and what specifically changed in each one
 2. Paste the actual QA gate output (not a summary)
-3. Ask: "Ready to push?"
-4. WAIT for explicit "yes" before running `git push`
+3. Verify README.md is accurate: `grep -n "Docker\|docker\|599\|42 \|68 module" README.md` — fix any stale counts or deprecated instructions
+4. Verify `make demo` works end-to-end (not just pytest)
+5. Ask: "Ready to push?"
+6. WAIT for explicit "yes" before running `git push`
 
 ### Pre-push hook (REQUIRED — installed in both repos)
 
