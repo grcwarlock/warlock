@@ -17,13 +17,9 @@ import IncidentDetail from "@/pages/incidents/IncidentDetail";
 import RiskOverview from "@/pages/risk/RiskOverview";
 import AuditOverview from "@/pages/audit/AuditOverview";
 import SettingsOverview from "@/pages/settings/SettingsOverview";
-import Login from "@/pages/Login";
-
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="pipeline" element={<PipelineOverview />} />

@@ -89,6 +89,43 @@ async function refreshOrFail(): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-login for demo mode — no login page needed
+// ---------------------------------------------------------------------------
+
+let autoLoginPromise: Promise<void> | null = null;
+
+async function ensureAuthenticated(): Promise<void> {
+  if (getAccessToken()) return;
+  if (autoLoginPromise) return autoLoginPromise;
+
+  autoLoginPromise = (async () => {
+    try {
+      const res = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "admin@acme.com",
+          password: "WarlockAdmin2026!",
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          access_token: string;
+          refresh_token: string;
+        };
+        setTokens(data.access_token, data.refresh_token);
+      }
+    } catch {
+      // API not reachable — requests will fail naturally
+    } finally {
+      autoLoginPromise = null;
+    }
+  })();
+
+  return autoLoginPromise;
+}
+
+// ---------------------------------------------------------------------------
 // Core fetch wrapper
 // ---------------------------------------------------------------------------
 
@@ -97,6 +134,9 @@ interface ApiOptions extends Omit<RequestInit, "body"> {
 }
 
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
+  // Auto-login on first API call
+  await ensureAuthenticated();
+
   const url = `/api/v1${path}`;
   const token = getAccessToken();
 
@@ -129,10 +169,16 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 
     if (res.status === 401) {
       clearTokens();
-      window.location.href = "/login";
-      // This throw will never be reached in practice due to redirect,
-      // but it satisfies the type system and handles edge cases.
-      throw new ApiError(401, { detail: "Session expired" });
+      // Re-attempt auto-login and retry once more
+      await ensureAuthenticated();
+      const retryToken2 = getAccessToken();
+      if (retryToken2) {
+        headers.set("Authorization", `Bearer ${retryToken2}`);
+        res = await fetch(url, { ...fetchOptions, headers });
+      }
+      if (res.status === 401) {
+        throw new ApiError(401, { detail: "Authentication failed" });
+      }
     }
   }
 
