@@ -1,4 +1,4 @@
-.PHONY: install test lint migrate clean seed reset help qa qa-quick verify-docs demo cli
+.PHONY: install test lint migrate clean seed reset help qa qa-quick verify-docs demo cli frontend-install frontend-dev frontend-build
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -41,6 +41,15 @@ cli: ## Activate venv and show available commands
 	@echo "  source .venv/bin/activate"
 	@echo "  warlock --help"
 	@echo ""
+
+frontend-install: ## Install frontend dependencies
+	cd frontend && npm install
+
+frontend-dev: ## Start frontend dev server (proxy to API on :8000)
+	cd frontend && npm run dev
+
+frontend-build: ## Build frontend for production
+	cd frontend && npm run build
 
 clean: ## Clean up DB and __pycache__
 	rm -f warlock.db warlock.db-shm warlock.db-wal
