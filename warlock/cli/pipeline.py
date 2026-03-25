@@ -20,17 +20,50 @@ def init() -> None:
 
 @cli.command()
 @click.option("--source", "-s", multiple=True, help="Limit to specific sources (e.g., aws)")
-def collect(source: tuple[str, ...]) -> None:
+@click.option(
+    "--demo", is_flag=True, help="Re-run with demo mock connectors (no real credentials needed)"
+)
+def collect(source: tuple[str, ...], demo: bool) -> None:
     """Run the full pipeline: collect -> normalize -> map -> assess."""
+    import subprocess
+    import sys
+
     from warlock.db.engine import get_session, init_db
     from warlock.pipeline.bus import EventBus
     from warlock.pipeline.loader import build_pipeline, register_lake_writer
+
+    # --demo mode: re-run demo seed as subprocess
+    if demo:
+        console.print("[bold cyan]Running demo pipeline (mock connectors)...[/bold cyan]")
+        script = str(
+            __import__("pathlib").Path(__file__).resolve().parent.parent.parent
+            / "scripts"
+            / "demo_seed.py"
+        )
+        result = subprocess.run([sys.executable, script], capture_output=False)
+        if result.returncode != 0:
+            console.print("[red]Demo seed failed.[/red]")
+            raise SystemExit(1)
+        return
 
     # Bootstrap
     init_db()
     bus = EventBus()
     lake_writer = register_lake_writer(bus)
     pipeline = build_pipeline(bus, sources=source or None)
+
+    # Check if any connectors are configured
+    if not pipeline.connectors.list_active():
+        console.print(
+            "\n[yellow]No connectors configured.[/yellow]\n\n"
+            "  [dim]Options:[/dim]\n"
+            "  • [cyan]warlock collect --demo[/cyan]  Re-run with demo mock connectors\n"
+            "  • Configure real connectors in [cyan].env[/cyan] (see [cyan].env.example[/cyan])\n\n"
+            "  [dim]Demo data was loaded by[/dim] [cyan]make demo[/cyan][dim]. Explore with:[/dim]\n"
+            "  • [cyan]warlock findings[/cyan]     • [cyan]warlock results[/cyan]\n"
+            "  • [cyan]warlock coverage[/cyan]      • [cyan]warlock briefing[/cyan]\n"
+        )
+        return
 
     # Wire up a simple event logger
     bus.subscribe_all(
