@@ -23,3 +23,10 @@ terraform/**/.terraform/
 terraform/**/.terraform.lock.hcl
 /lake/
 .worktrees/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Brainstorm mockups
+.superpowers/
