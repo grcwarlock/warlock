@@ -9,7 +9,7 @@ Compliance is still done in spreadsheets. Evidence is collected manually, assess
 Warlock treats compliance as a telemetry problem. It continuously ingests security data from the tools you already use, normalizes it, maps it to compliance controls, and produces auditable results — automatically, with a tamper-evident audit trail.
 
 ```
-82 Connectors → Normalize → Map to 1,996 Controls → Assess → Report
+166 Connectors → Normalize → Map to 1,996 Controls → Assess → Report
                   SHA-256 integrity hashing at every stage
 ```
 
@@ -17,9 +17,9 @@ Warlock treats compliance as a telemetry problem. It continuously ingests securi
 
 | Stage | What Happens | Output |
 |-------|-------------|--------|
-| **Collect** | Pull data from 165 sources (cloud, identity, EDR, scanners, HRIS, code security, etc.) | Raw events with verbatim API responses |
+| **Collect** | Pull data from 166 sources (cloud, identity, EDR, scanners, HRIS, code security, etc.) | Raw events with verbatim API responses |
 | **Normalize** | Transform provider-specific data into a universal finding format with automatic PII scrubbing | Clean, structured findings |
-| **Map** | Map findings to controls across 14 compliance frameworks via 1,843 crosswalk edges | Control mappings (assess once, satisfy many frameworks) |
+| **Map** | Map findings to controls across 14 compliance frameworks via 196 crosswalk edges | Control mappings (assess once, satisfy many frameworks) |
 | **Assess** | Evaluate controls using deterministic assertions, AI reasoning, OPA policies, and control inheritance | Auditable pass/fail results with full evidence chain |
 
 ## 14 Frameworks, 1,996 Controls
@@ -28,7 +28,7 @@ NIST 800-53 (1,176) | ISO 27001 (93) | ISO 27701 (95) | ISO 42001 (39) | SOC 2 (
 
 Crosswalks mean evidence collected for one framework automatically satisfies overlapping controls in others. One body of evidence, all frameworks.
 
-## 165 Source Connectors
+## 166 Source Connectors
 
 Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare) | Identity (Okta, Entra ID, CyberArk, SailPoint, Vault, JumpCloud, Auth0) | EDR (CrowdStrike, Defender, SentinelOne, Sophos) | Scanners (Tenable, Qualys, Wiz, Nessus) | Code Security (Snyk, GitHub, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode) | SIEM (Sentinel, Splunk, Elastic) | Network (Palo Alto, Fortinet, Zscaler) | HRIS (Workday, BambooHR, Gusto, Rippling) | CI/CD (Jenkins, GitHub Actions, GitLab CI, CircleCI) | and 20+ more across DLP, MDM, backup, email security, observability, GRC, and physical security.
 
@@ -36,7 +36,7 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 
 | Tier | Method | Coverage |
 |------|--------|----------|
-| 1 | **Deterministic assertions** (101 functions) | Fast, reproducible, auditable checks |
+| 1 | **Deterministic assertions** (102 functions) | Fast, reproducible, auditable checks |
 | 2 | **AI reasoning** (Anthropic, OpenAI, Gemini, Ollama) | Fills gaps with configurable confidence floor |
 | 3 | **OPA/Rego policies** (670 policies across 8 frameworks) | Policy-as-code compliance evaluation |
 | 4 | **Control inheritance** (FedRAMP CRM pattern) | Parent-to-child status propagation |
@@ -50,23 +50,23 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 - **OSCAL export** — machine-readable Assessment Results, SSP, and POA&M in OSCAL 1.1.2 format
 - **GRC data lake** — DuckDB/Parquet analytical layer with raw, enrichment, and curated zones plus RAG search
 - **Risk quantification** — FAIR Monte Carlo engine, vendor risk scoring, audit simulation
-- **Multi-framework crosswalking** — 1,843 edges connecting equivalent controls; assess once, satisfy everywhere
+- **Multi-framework crosswalking** — 196 edges connecting equivalent controls; assess once, satisfy everywhere
 - **Fail-closed security** — OPA gates, assertions, and ABAC all default to deny
 
 ## Architecture
 
 | Component | Technology |
 |-----------|-----------|
-| API | FastAPI — 163 REST endpoints, ABAC-scoped, rate-limited |
-| CLI | Click + Rich — 599 leaf commands across 68 modules |
-| Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 42 models |
+| API | FastAPI — 171 REST endpoints, ABAC-scoped, rate-limited |
+| CLI | Click + Rich — 686 leaf commands across 73 modules |
+| Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 47 models |
 | Data Lake | DuckDB + Parquet — 23 modules across 3 zones |
 | Policy Engine | OPA/Rego — 670 policies |
 | Infrastructure | Terraform — 12 IaC modules (AWS, Azure, GCP) |
 | AI | Pluggable — Anthropic, OpenAI, Gemini, Ollama |
 | Security | JWT + RBAC + ABAC + bcrypt + GDPR workflows |
 
-Python 3.12+. Docker Compose for one-command demo. Production-ready with PostgreSQL, Redis, and OPA.
+Python 3.12+. `make demo` for one-command setup. Production-ready with PostgreSQL, Redis, and OPA.
 
 ## Who It's For
 
@@ -81,7 +81,7 @@ Python 3.12+. Docker Compose for one-command demo. Production-ready with Postgre
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
-docker compose up demo
+make demo
 ```
 
 API at localhost:8000/docs. 165 connectors, ~5,475 findings, 373,000+ control results seeded automatically.

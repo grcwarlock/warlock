@@ -1,4 +1,4 @@
-.PHONY: install test lint migrate dev clean seed reset help qa qa-quick verify-docs demo cli
+.PHONY: install test lint migrate clean seed reset help qa qa-quick verify-docs demo cli
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -24,14 +24,6 @@ verify-docs: ## Check documentation counts match reality
 migrate: ## Run database migrations
 	alembic upgrade head
 
-dev: ## Start local dev environment (docker-compose)
-	docker compose up -d
-	@echo "Waiting for services..."
-	@sleep 3
-	@echo "Running migrations..."
-	WLK_DATABASE_URL=postgresql://warlock:warlock_dev@localhost:5432/warlock alembic upgrade head
-	@echo "Ready: http://localhost:8000/api/v1/health"
-
 seed: ## Run demo seed
 	python scripts/demo_seed.py
 
@@ -50,7 +42,6 @@ cli: ## Activate venv and show available commands
 	@echo "  warlock --help"
 	@echo ""
 
-clean: ## Stop dev environment and clean up
-	docker compose down -v
-	rm -f warlock.db
+clean: ## Clean up DB and __pycache__
+	rm -f warlock.db warlock.db-shm warlock.db-wal
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

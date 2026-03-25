@@ -30,13 +30,13 @@ Deterministic assertions are Python functions that evaluate finding data against
 
 **How they work**: Each assertion takes two arguments -- the finding's detail dictionary and the raw event data -- and returns a tuple of `(passed: bool, reasons: list[str])`. If `passed` is `True`, the control is compliant. If `False`, the reasons list explains why.
 
-**Current count**: 101 assertion functions across 14 control families.
+**Current count**: 102 assertion functions across 14 control families.
 
 **Key property**: Assertions are deterministic. Given the same input, they always produce the same output. No external calls, no randomness, no model inference. This makes them ideal for audit evidence -- an auditor can inspect the assertion code and verify the logic independently.
 
 #### Assertion Families
 
-The 101 assertions are organized into functional groups:
+The 102 assertions are organized into functional groups:
 
 | Family | Assertions | Example Checks |
 |---|---|---|

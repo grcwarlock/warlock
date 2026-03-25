@@ -1,16 +1,16 @@
 # Warlock Deployment Guide
 
-This guide covers deploying Warlock in Docker (recommended), local development, and production configuration.
+This guide covers deploying Warlock for local development and production configuration.
 
-## Quick Start -- Docker Demo
+## Quick Start
 
 The fastest way to run the complete platform:
 
 ```bash
-docker compose up demo
+make demo
 ```
 
-This starts the full stack (Postgres 16, Redis 7, OPA 0.62, Warlock API), runs database migrations, seeds demo data, and starts the API server on port 8000.
+This creates a virtualenv, installs dependencies, optionally starts OPA, seeds a SQLite database with demo data, and starts the API server on port 8000.
 
 **After startup:**
 
@@ -23,69 +23,11 @@ This starts the full stack (Postgres 16, Redis 7, OPA 0.62, Warlock API), runs d
 
 **Demo credentials:** `admin@acme.com` / `WarlockAdmin2026!`
 
-**Stop and reset:**
-
-```bash
-docker compose down          # stop all services
-docker compose down -v       # stop and delete all data (volumes)
-```
-
----
-
-## Docker Architecture
-
-The `docker-compose.yml` defines five services:
-
-### Services
-
-| Service | Image | Port | Purpose |
-|---------|-------|------|---------|
-| `db` | postgres:16-alpine | 5432 (localhost only) | Primary database |
-| `redis` | redis:7-alpine | 6379 (localhost only) | Queue backend and shared cache |
-| `opa` | openpolicyagent/opa:0.62.1-static | 8181 (localhost only) | Policy evaluation engine |
-| `api` | warlock (built) | 8000 | API server only (no demo data) |
-| `demo` | warlock (built) | 8000 | API server with migration + seed |
-
-### Which service to use
-
-- **`demo`** -- Full demo with sample data. For evaluation, demos, local development.
-- **`api`** -- Clean API server. For production-like deployments where you control data.
-
-The `api` and `demo` services both depend on `db`, `redis`, and `opa` being healthy before starting.
-
-### Volumes
-
-| Volume | Mount | Purpose |
-|--------|-------|---------|
-| `pgdata` | PostgreSQL data directory | Persistent database storage |
-| `lake` | `/app/lake` (demo only) | Data lake Parquet files |
-
----
-
-## Docker Build
-
-The Dockerfile uses a multi-stage build:
-
-1. **Builder stage** -- Installs Python dependencies with pip caching.
-2. **Runtime stage** -- Copies installed packages and application source. Runs as non-root user `warlock` (UID 1001).
-
-Build with optional extras:
-
-```bash
-# Standard build
-docker build -t warlock .
-
-# With AI, lake, and monitoring support
-docker build --build-arg EXTRAS="ai,lake,monitoring" -t warlock .
-```
-
-The image includes a health check that hits `/api/v1/health` every 30 seconds.
-
 ---
 
 ## Environment Variables
 
-All Warlock configuration is driven by environment variables prefixed with `WLK_`. Set them in your `.env` file, docker-compose.yml, or shell.
+All Warlock configuration is driven by environment variables prefixed with `WLK_`. Set them in your `.env` file or shell.
 
 ### Core Settings
 
@@ -222,53 +164,6 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 | `WLK_AI_TEMPERATURE` | `0.0` | Raising makes compliance results non-deterministic. |
 | `WLK_CORS_ORIGINS` | `[]` | Never add `*` wildcard. |
 
-### Recommended Production Stack
-
-```yaml
-# docker-compose.prod.yml
-services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: warlock
-      POSTGRES_USER: warlock
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-
-  opa:
-    image: openpolicyagent/opa:0.62.1-static
-    command: ["run", "--server", "--addr", ":8181", "--bundle", "/policies"]
-    volumes:
-      - ./policies:/policies:ro
-
-  api:
-    build:
-      context: .
-      args:
-        EXTRAS: "ai,lake,monitoring"
-    environment:
-      WLK_DATABASE_URL: postgresql://warlock:${DB_PASSWORD}@db:5432/warlock
-      WLK_QUEUE_BACKEND: redis
-      WLK_QUEUE_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      WLK_CACHE_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      WLK_JWT_SECRET: ${JWT_SECRET}
-      WLK_ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      WLK_TRUST_PORTAL_SECRET: ${TRUST_SECRET}
-      WLK_ENV: production
-      WLK_LOG_FORMAT: json
-      WLK_OPA_COMPLIANCE_ENABLED: "true"
-      WLK_OPA_COMPLIANCE_URL: http://opa:8181/v1/data
-    depends_on:
-      db: { condition: service_healthy }
-      redis: { condition: service_healthy }
-      opa: { condition: service_healthy }
-```
-
 ---
 
 ## Local Development
@@ -315,10 +210,9 @@ make test        # Run pytest
 make lint        # Run ruff linter
 make qa          # Full QA gate
 make qa-quick    # Quick QA (lint + test only)
-make dev         # Start docker compose + migrate
 make seed        # Run demo seed
 make demo        # Full one-command demo
-make clean       # Stop docker, remove DB
+make clean       # Remove DB, clean __pycache__
 ```
 
 ---
@@ -338,14 +232,6 @@ alembic current
 
 # View migration history
 alembic history
-```
-
-### Docker Migrations
-
-The demo service runs `Base.metadata.create_all()` for fresh Postgres databases. For upgrades to existing databases, exec into the container:
-
-```bash
-docker compose exec api alembic upgrade head
 ```
 
 ### SQLite vs PostgreSQL
@@ -370,8 +256,6 @@ Three health endpoints are available for load balancers and container orchestrat
 | `GET /api/v1/health` | Basic health | No | Process alive, returns version |
 | `GET /api/v1/health/live` | Liveness probe | No | Process alive |
 | `GET /api/v1/health/ready` | Readiness probe | No | Database connectivity + scheduler state |
-
-The Docker health check uses `/api/v1/health` with a 30-second interval and 15-second startup grace period.
 
 ### Kubernetes Probes
 
@@ -403,17 +287,11 @@ Install monitoring extras:
 pip install -e ".[monitoring]"
 ```
 
-Or build the Docker image with monitoring:
-
-```bash
-docker build --build-arg EXTRAS="monitoring" -t warlock .
-```
-
 ---
 
 ## Connector Configuration
 
-Warlock supports 165 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
+Warlock supports 166 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
 
 Example connector configuration:
 

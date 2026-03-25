@@ -7,7 +7,7 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 | Document | Description |
 |----------|-------------|
 | [Architecture](technical/architecture.md) | System architecture — 4-stage pipeline, storage, security model |
-| [Data Model](technical/data-model.md) | 42-table schema, relationships, JSON columns, pipeline data flow |
+| [Data Model](technical/data-model.md) | 47-table schema, relationships, JSON columns, pipeline data flow |
 | [Data Lake](technical/data-lake.md) | GRC Data Lake — 3 zones, 10 domains, DuckDB, Iceberg, RAG |
 | [Security](technical/security.md) | Auth (JWT/API keys/MFA), ABAC, OPA, audit trail, GDPR |
 
@@ -22,21 +22,20 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 
 | Document | Description |
 |----------|-------------|
-| [Connectors](features/connectors.md) | 165 source connectors across 24 categories |
+| [Connectors](features/connectors.md) | 166 source connectors across 24 categories |
 | [Assessment Engine](features/assessment-engine.md) | 4-tier assessment — assertions, AI, OPA, inheritance |
 
 ## API & CLI
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](api/reference.md) | 163 REST endpoints across 13 router files |
-| [CLI Reference](api/cli-reference.md) | 599 leaf commands across 68 modules |
+| [API Reference](api/reference.md) | 171 REST endpoints across 12 router files |
+| [CLI Reference](api/cli-reference.md) | 686 leaf commands across 73 modules |
 
 ## Operations
 
 | Document | Description |
 |----------|-------------|
-| [Deployment](operations/deployment.md) | Docker, local dev, environment variables, production config |
-| [Docker Setup](operations/docker-setup.md) | Docker prerequisites, services, build, health checks, troubleshooting |
+| [Deployment](operations/deployment.md) | Local dev, environment variables, production config |
 | [Developer Setup](operations/developer-setup.md) | Local Python setup, testing, linting, QA gate, project structure |
 | [Runbook](operations/runbook.md) | QA gate, pipeline ops, troubleshooting, monitoring |

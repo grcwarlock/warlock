@@ -1,6 +1,6 @@
 # Warlock Operations Runbook
 
-This runbook covers day-to-day operations: QA procedures, pipeline management, troubleshooting, database operations, Docker management, and monitoring.
+This runbook covers day-to-day operations: QA procedures, pipeline management, troubleshooting, database operations, and monitoring.
 
 ## QA Gate
 
@@ -37,7 +37,7 @@ The gate runs these checks in order. All must pass.
 | Check | What It Does |
 |-------|-------------|
 | Pytest Suite | `pytest tests/ --tb=short -q` -- all tests must pass |
-| Test Count Baseline | Must collect >= 657 tests (prevents accidental test deletion) |
+| Test Count Baseline | Must collect >= 509 tests (prevents accidental test deletion) |
 
 **Section 3: Integration**
 
@@ -138,21 +138,6 @@ Additionally, the seed creates:
 - System dependencies
 
 If any expected number changes after a code change, something is broken. Stop and investigate.
-
-### Docker Demo Seed
-
-The Docker demo service runs the seed automatically via `scripts/docker-demo.sh`:
-
-```bash
-docker compose up demo
-```
-
-This script:
-1. Waits for Postgres to be healthy
-2. Creates the database schema using `Base.metadata.create_all()`
-3. Runs the demo seed
-4. Validates connector counts
-5. Starts the API server
 
 ---
 
@@ -330,7 +315,6 @@ sqlite3 warlock.db "SELECT 1"
 
 **Common fixes:**
 - Verify `WLK_DATABASE_URL` is correct
-- Check if Postgres container is running: `docker compose ps db`
 - Check connection pool: if using PgBouncer, set `WLK_PGBOUNCER_MODE=true`
 
 ### Import Errors After Code Changes
@@ -360,20 +344,17 @@ pip install -e ".[dev,ai]"
 
 ```bash
 # Dump full database
-docker compose exec db pg_dump -U warlock warlock > backup.sql
+pg_dump $WLK_DATABASE_URL > backup.sql
 
 # Dump specific tables
-docker compose exec db pg_dump -U warlock -t control_results -t findings warlock > partial.sql
+pg_dump $WLK_DATABASE_URL -t control_results -t findings > partial.sql
 ```
 
 ### Restore (PostgreSQL)
 
 ```bash
-# Drop and recreate
-docker compose exec db psql -U warlock -c "DROP DATABASE warlock; CREATE DATABASE warlock;"
-
 # Restore from backup
-docker compose exec db psql -U warlock warlock < backup.sql
+psql $WLK_DATABASE_URL < backup.sql
 ```
 
 ### Backup (SQLite)
@@ -399,58 +380,6 @@ alembic upgrade <revision>
 
 # Generate a new migration (after model changes)
 alembic revision --autogenerate -m "description"
-```
-
----
-
-## Docker Operations
-
-### Start Services
-
-```bash
-docker compose up -d          # background (api service only)
-docker compose up demo        # foreground (demo with seed)
-docker compose up -d db redis opa  # infrastructure only
-```
-
-### Stop Services
-
-```bash
-docker compose down           # stop all, keep data
-docker compose down -v        # stop all, delete volumes (data loss)
-```
-
-### View Logs
-
-```bash
-docker compose logs api -f           # follow API logs
-docker compose logs demo -f          # follow demo logs
-docker compose logs db               # database logs
-docker compose logs --tail=100       # last 100 lines from all services
-```
-
-### Rebuild
-
-```bash
-docker compose build                 # rebuild all images
-docker compose build api             # rebuild API image only
-docker compose up --build demo       # rebuild and start demo
-```
-
-### Shell Access
-
-```bash
-docker compose exec api /bin/bash    # shell into running API container
-docker compose exec db psql -U warlock warlock  # psql into database
-docker compose exec redis redis-cli  # redis CLI
-```
-
-### Full Reset
-
-```bash
-docker compose down -v
-docker compose build --no-cache
-docker compose up demo
 ```
 
 ---
@@ -635,9 +564,6 @@ ps aux | grep warlock
 
 # 2. Kill the pipeline lock
 rm -f "${TMPDIR:-/tmp}/warlock_pipeline.lock"
-
-# 3. If using Docker, restart the API service
-docker compose restart api
 ```
 
 ### Database Corruption (SQLite)
@@ -662,7 +588,7 @@ If `WLK_OPA_FAIL_MODE=closed` (default) and OPA is down, all API requests (excep
 curl http://localhost:8181/health
 
 # 2. If OPA is down, restart it
-docker compose restart opa
+opa run --server --bundle policies/
 
 # 3. If OPA cannot be restarted immediately, temporarily disable the OPA gate
 #    (NOT recommended for production — this bypasses policy enforcement)
@@ -672,12 +598,11 @@ export WLK_OPA_URL=""
 ### Full System Recovery
 
 ```bash
-# Stop everything
-docker compose down -v
-
-# Rebuild from scratch
-docker compose build --no-cache
-docker compose up demo
+# Start fresh
+rm -f warlock.db
+alembic upgrade head
+python scripts/demo_seed.py
+warlock-api
 
 # Verify
 curl http://localhost:8000/api/v1/health

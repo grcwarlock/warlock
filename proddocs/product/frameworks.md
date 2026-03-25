@@ -22,7 +22,7 @@ This document covers every supported framework, how frameworks relate through cr
 | NIST CSF 2.0 | 101 | 6 | -- | -- | -- |
 | EU AI Act | 33 | 4 | -- | -- | -- |
 | SEC Cyber | 20 | 4 | -- | -- | -- |
-| **Total** | **1,996** | | **670** | **17 packages** | **1,843 edges** |
+| **Total** | **1,996** | | **670** | **27 packages** | **196 edges** |
 
 ## Framework Details
 
@@ -168,7 +168,7 @@ This document covers every supported framework, how frameworks relate through cr
 
 Crosswalks define relationships between controls in different frameworks. When two controls across two frameworks address the same security requirement, a crosswalk edge connects them with a confidence score.
 
-Warlock maintains 1,843 crosswalk edges. Key crosswalk relationships include:
+Warlock maintains 196 crosswalk edges. Key crosswalk relationships include:
 
 | Source Framework | Target Framework | Example |
 |---|---|---|
@@ -271,7 +271,7 @@ The mapper reads every framework YAML, matches finding event types to control ch
 
 For each finding-to-control mapping, the four-tier assessment runs:
 
-1. **Tier 1** -- Deterministic assertions: 101 registered assertion functions check specific conditions (e.g., `mfa_enabled`, `no_open_security_groups`, `encryption_at_rest`). A control can have multiple assertions; all must pass for a compliant status.
+1. **Tier 1** -- Deterministic assertions: 102 registered assertion functions check specific conditions (e.g., `mfa_enabled`, `no_open_security_groups`, `encryption_at_rest`). A control can have multiple assertions; all must pass for a compliant status.
 
 2. **Tier 2** -- AI reasoning: If no assertion is available or the result is inconclusive, an LLM evaluates the finding against the control with full compliance context (compensating controls, risk acceptances, posture trends). A confidence floor (default 0.7) rejects unreliable assessments.
 

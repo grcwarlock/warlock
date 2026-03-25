@@ -8,7 +8,6 @@ Thank you for considering a contribution to Warlock, the pipeline-first GRC plat
 - Python 3.12 or higher
 - pip and virtualenv
 - git
-- Docker (recommended for demo environment)
 - (Optional but recommended) OPA for policy evaluation
 
 ### Clone and Install
@@ -23,12 +22,6 @@ pip install -e ".[dev,ai]"
 
 ### Verify Installation
 
-**Docker (recommended):**
-```bash
-docker compose up demo          # Full demo: Postgres + Redis + OPA + seed + API
-```
-
-**Local Python:**
 ```bash
 make demo                      # Full demo: DB setup, seed data, API start
 ```
@@ -128,7 +121,7 @@ All pull requests must pass the full test suite:
 ```
 
 Expected output (as of this date):
-- 500+ tests across 32 files
+- 509 tests across 32 files
 - 0 failures
 - 0 errors
 - All green
@@ -271,7 +264,7 @@ Closes #123 (if applicable)
 - [ ] Linting passes
 - [ ] Docstrings added
 - [ ] Related files updated
-- [ ] Demo still works (`docker compose up demo` or `make demo`)
+- [ ] Demo still works (`make demo`)
 ```
 
 ---
@@ -281,8 +274,8 @@ Closes #123 (if applicable)
 Warlock's architecture is **pipeline-first**: evidence flows through four immutable stages with SHA-256 integrity hashing at every step.
 
 ```
-Stage 1: Connectors (165)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (165)  → FindingData          → transform to universal findings format
+Stage 1: Connectors (166)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (166)  → FindingData          → transform to universal findings format
 Stage 3: Control Mapper     → ControlMappingData   → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4) → ControlResultData  → deterministic assertions + optional AI reasoning
 ```
@@ -291,16 +284,16 @@ Every control result traces back to its raw API response — the hash chain is t
 
 ### Key Components
 
-- **Connectors** (`warlock/connectors/`) — 165 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
+- **Connectors** (`warlock/connectors/`) — 166 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
-- **API** (`warlock/api/`) — FastAPI REST endpoints (163 routes), ABAC-scoped access control
-- **CLI** (`warlock/cli/`) — Click CLI (686 leaf commands across 74 modules)
+- **API** (`warlock/api/`) — FastAPI REST endpoints (171 routes), ABAC-scoped access control
+- **CLI** (`warlock/cli/`) — Click CLI (686 leaf commands across 73 modules)
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
-- **Database** (`warlock/db/`) — SQLAlchemy ORM, 47 models, schema via Base.metadata.create_all()
-- **Frameworks** (`warlock/frameworks/`) — 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
+- **Database** (`warlock/db/`) — SQLAlchemy ORM, 48 models, schema via Base.metadata.create_all()
+- **Frameworks** (`warlock/frameworks/`) — 15 framework YAMLs, 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
 - **OPA** (`policies/`) — 670 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports
 - **Workflows** (`warlock/workflows/`) — POA&M, risk acceptance, compensating controls, GDPR

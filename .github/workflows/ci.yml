@@ -333,16 +333,3 @@ jobs:
       - run: pip install pip-audit
       - run: pip-audit --requirement <(pip freeze) --desc --ignore-vuln CVE-2026-4539  # pygments ReDoS in AdlLexer, local-only, no fix available
 
-  build:
-    runs-on: ubuntu-latest
-    needs: [lint, test, security, qa-gate]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          tags: warlock:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max

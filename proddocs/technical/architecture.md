@@ -5,7 +5,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
 ## High-Level Architecture
 
 ```
-                        165 Connectors
+                        166 Connectors
                               |
                     +---------v----------+
                     |  Stage 1: Collect  |  ConnectorRegistry.collect_all()
@@ -36,7 +36,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
          |                                       |
     +----v----+                          +-------v--------+
     | REST API|                          | Webhooks/Slack |
-    | 163 rts |                          | PagerDuty/Jira |
+    | 171 rts |                          | PagerDuty/Jira |
     +---------+                          +----------------+
 ```
 
@@ -157,7 +157,7 @@ The mapper determines which compliance controls a finding maps to across all 14 
 | 3 | `semantic` | Varies | RAG-based fallback when rules produce nothing |
 | 4 | `crosswalk` | min(parent, edge) | Expand to other frameworks via crosswalk graph |
 
-Rules are loaded from 14 framework YAML files in `warlock/frameworks/`. Each YAML defines control families, checks, event_types, and resource_types. The crosswalk graph contains 1,843 edges mapping controls between frameworks.
+Rules are loaded from 14 framework YAML files in `warlock/frameworks/`. Each YAML defines control families, checks, event_types, and resource_types. The crosswalk graph contains 196 edges mapping controls between frameworks.
 
 ### Performance Optimization
 
@@ -175,7 +175,7 @@ The assessor evaluates each mapped finding against its controls using a four-tie
 
 ### Tier 1: Deterministic Assertions
 
-101 registered assertion functions. Each takes `(finding_detail, raw_data)` and returns `(passed: bool, reasons: list[str])`. Multiple assertions can be bound to a single control; the control is compliant only if ALL assertions pass.
+102 registered assertion functions. Each takes `(finding_detail, raw_data)` and returns `(passed: bool, reasons: list[str])`. Multiple assertions can be bound to a single control; the control is compliant only if ALL assertions pass.
 
 ```python
 # Assertion binding (list-based, never overwrites)
@@ -249,7 +249,7 @@ The in-process bus is the default for development. Production deployments can sw
 
 ### OLTP Database (PostgreSQL / SQLite)
 
-42 SQLAlchemy models across 8 domains. PostgreSQL for production; SQLite for development and testing. JSON columns use `JSONB` on PostgreSQL (GIN-indexable) and plain `JSON` on SQLite.
+47 SQLAlchemy models across 8 domains. PostgreSQL for production; SQLite for development and testing. JSON columns use `JSONB` on PostgreSQL (GIN-indexable) and plain `JSON` on SQLite.
 
 See [Data Model Reference](data-model.md) for complete schema documentation.
 
@@ -282,21 +282,6 @@ See [Data Lake Architecture](data-lake.md) for complete lake documentation.
 See [Security Architecture](security.md) for complete security documentation.
 
 ## Deployment Models
-
-### Docker (Recommended for Production)
-
-```bash
-docker compose up demo
-```
-
-Starts PostgreSQL, Redis, OPA, runs migrations, seeds data, and launches the API server. All services in one command.
-
-| Service | Port | Purpose |
-|---|---|---|
-| PostgreSQL | 5432 | OLTP database |
-| Redis | 6379 | Cache, rate limiting, queue backend |
-| OPA | 8181 | Policy enforcement |
-| Warlock API | 8000 | FastAPI REST API |
 
 ### Local Development (SQLite)
 
@@ -331,11 +316,11 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 | EU AI Act | 33 | Yes | -- | -- |
 | SEC Cyber | 20 | Yes | -- | -- |
 
-670 OPA/Rego policy files across 8 frameworks in `policies/`. 17 OSCAL catalog/profile JSON packages in `frameworks-oscal/`.
+670 OPA/Rego policy files across 8 frameworks in `policies/`. 27 OSCAL catalog/profile JSON packages in `frameworks-oscal/`.
 
 ## CLI
 
-599 leaf commands across 68 modules in `warlock/cli/`:
+686 leaf commands across 73 modules in `warlock/cli/`:
 
 | Domain | Key Commands |
 |---|---|
@@ -350,7 +335,7 @@ Creates a virtualenv, uses SQLite (file-based), no external services required. O
 
 ## REST API
 
-163 routes across 13 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
+171 routes across 12 router files in `warlock/api/`. All routes require authentication (JWT or API key) and are ABAC-scoped.
 
 ## Key Design Patterns
 

@@ -1,55 +1,10 @@
 # Warlock Demo Setup
 
-**Requirements:** [Docker](https://docs.docker.com/get-docker/) (recommended) OR Python 3.12+ (local).
+**Requirements:** Python 3.12+
 
 ---
 
-## Docker (recommended)
-
-```bash
-git clone https://github.com/grcwarlock/warlock.git
-cd warlock
-docker compose up demo
-```
-
-That's it. The stack starts:
-- **Postgres 16** — production database
-- **Redis 7** — event bus / queue backend
-- **OPA** — 670 Rego policies across 8 frameworks
-- **Warlock** — migrations, seed data (165 connectors, ~5,475 findings, 373,852 control results), API server
-
-When it finishes:
-
-```
-============================================================
-  Demo is live!
-============================================================
-
-  API:    http://localhost:8000/api/v1/health
-  Docs:   http://localhost:8000/docs
-
-  Login:  admin@acme.com / WarlockAdmin2026!
-
-  Stop:   docker compose down
-  Reset:  docker compose down -v && docker compose up demo
-============================================================
-```
-
-### Docker Commands
-
-```bash
-docker compose up demo          # start everything
-docker compose down             # stop (data persists in volumes)
-docker compose down -v          # full reset (wipe all data)
-docker compose logs demo        # view seed + API logs
-docker compose ps               # check container health
-```
-
----
-
-## Local Python (alternative)
-
-### One Command
+## Quick Start
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git
@@ -130,4 +85,4 @@ curl -s http://localhost:8000/api/v1/compliance/findings?limit=5 \
 brew install opa
 ```
 
-With OPA installed, the local demo evaluates 670 Rego policies across 8 frameworks. Without OPA, it skips policy evaluation. The Docker demo always includes OPA.
+With OPA installed, the demo evaluates 670 Rego policies across 8 frameworks. Without OPA, it skips policy evaluation.

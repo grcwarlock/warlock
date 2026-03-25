@@ -1,6 +1,6 @@
 # Data Model Reference
 
-This document covers all 42 SQLAlchemy models in `warlock/db/models.py`, organized by domain. It describes the pipeline data flow, key relationships, JSON column contents, and how the OLTP schema relates to the GRC Data Lake.
+This document covers all 47 SQLAlchemy models in `warlock/db/models.py`, organized by domain. It describes the pipeline data flow, key relationships, JSON column contents, and how the OLTP schema relates to the GRC Data Lake.
 
 ## Overview
 

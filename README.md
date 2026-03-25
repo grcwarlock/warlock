@@ -5,8 +5,8 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (165 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (165 parsers) → FindingData       → transform to universal findings
+Stage 1: Connectors (166 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (166 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
@@ -17,7 +17,7 @@ Every finding traces back to its raw API response. Every control result traces b
 
 | Framework | Controls | Crosswalks | Status |
 |---|---|---|---|
-| NIST 800-53 Rev 5 | 1,176 | 1,843 edges | Full catalog (20 families + enhancements) |
+| NIST 800-53 Rev 5 | 1,176 | 196 edges | Full catalog (20 families + enhancements) |
 | ISO 27001:2022 | 93 | | Complete Annex A |
 | ISO 27701:2019 | 95 | | PIMS + Annex A + Annex B |
 | ISO 42001:2023 | 39 | | AI Management System |
@@ -31,9 +31,9 @@ Every finding traces back to its raw API response. Every control result traces b
 | NIST CSF 2.0 | 101 | | Govern, Identify, Protect, Detect, Respond, Recover |
 | EU AI Act | 33 | | High-risk AI system requirements |
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
-| **Total** | **1,996** | **1,843** | Per-control monitoring frequencies (NIST 800-53A) |
+| **Total** | **1,996** | **196** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (165)
+## Connectors (166)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare, Linode/Akamai, Hetzner, Spot.io
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos, Tanium
@@ -86,7 +86,7 @@ That's it. Virtual environment, OPA, database, seed data, and API server — all
 
 Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
 
-## CLI (686 leaf commands across 74 modules)
+## CLI (686 leaf commands across 73 modules)
 
 Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
@@ -95,7 +95,7 @@ Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERE
 | Domain | Group | Commands | Description |
 |---|---|---|---|
 | **Pipeline** | `warlock collect`, `pipeline`, `automation` | 25 | Collect, normalize, map, assess, schedule, replay |
-| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health check all 165 connectors |
+| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health check all 166 connectors |
 | **Findings** | `warlock findings`, `vulns` | 23 | List, search, suppress, export, aging, SLA, trends |
 | **Compliance** | `warlock comply`, `frameworks`, `assertions` | 47 | Auto-map, gap analysis, readiness scores, maturity model |
 | **Incidents** | `warlock incidents` | 11 | Create, triage, timeline, post-mortem, MTTR metrics |
@@ -262,12 +262,12 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 165 source connectors (Stage 1)
-├── normalizers/          # 165 normalizers (Stage 2)
+├── connectors/           # 166 source connectors (Stage 1)
+├── normalizers/          # 166 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
-│   ├── assertions.py     # 101 deterministic assertions across 14 control families
+│   ├── assertions.py     # 102 deterministic assertions across 14 control families
 │   ├── ai_reasoning.py   # Tier 2: LLM evaluation with full compliance context
 │   ├── ai_narrator.py    # SSP/POA&M narrative generation
 │   ├── posture.py        # Posture aggregation, sufficiency scoring, time-series
@@ -297,7 +297,7 @@ warlock/
 │   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
-│   ├── models.py         # 47 SQLAlchemy models
+│   ├── models.py         # 48 SQLAlchemy models
 │   ├── migrations/       # Schema via Base.metadata.create_all()
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
@@ -322,20 +322,20 @@ warlock/
 │   ├── oscal.py          # OSCAL 1.1.2 (AR, SSP, POA&M)
 │   ├── binder.py         # Audit evidence binder (ZIP)
 │   └── alerts.py         # Slack/PagerDuty/webhook routing
-├── frameworks/           # 14 framework YAMLs (1,996 controls total)
+├── frameworks/           # 15 framework YAMLs (1,996 controls total)
 │   ├── nist_800_53.yaml  # 1,176 controls with monitoring frequencies
 │   ├── iso_27001.yaml    # 93 controls
 │   ├── soc2.yaml         # 46 controls
 │   ├── pci_dss.yaml      # 63 controls
 │   ├── nist_csf.yaml     # 101 controls
 │   ├── ...               # + 8 more (ISO 27701, ISO 42001, UCF, FedRAMP, HIPAA, CMMC, GDPR, EU AI Act, SEC Cyber)
-│   ├── crosswalks.yaml   # 1,843 crosswalk edges
+│   ├── crosswalks.yaml   # 196 crosswalk edges
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
 ├── domains/          # 7 domain service modules (registry, event bus, policy engine)
 ├── integrations/     # Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
 ├── platform/         # Tenancy, white-label, delegation, sandbox, legacy/bulk import
-└── cli/              # Click CLI package (686 leaf commands, 74 modules)
+└── cli/              # Click CLI package (686 leaf commands, 73 modules)
 ```
 
 ## Database
@@ -366,8 +366,7 @@ warlock/
 - **CLI:** Click + Rich
 - **Validation:** Pydantic 2.0
 - **HTTP:** httpx (async-capable)
-- **Container:** Docker multi-stage build, docker-compose for local dev
-- **CI/CD:** GitHub Actions (lint + test + build)
+- **CI/CD:** GitHub Actions (lint + test)
 
 ## Development
 
@@ -378,8 +377,7 @@ make lint       # Run ruff linter
 make migrate    # Run Alembic migrations
 make seed       # Populate demo data
 make demo       # One-command full demo (DB + OPA + API + seed)
-make dev        # Start docker-compose (postgres + redis + api)
-make clean      # Tear down and clean up
+make clean      # Clean up DB and __pycache__
 ```
 
 ## License

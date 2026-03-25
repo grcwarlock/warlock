@@ -36,10 +36,6 @@ On 2026-03-19, Agent 3 wrote a migration and Agent 4 added columns to models.py.
 Half the bugs in this project were found by running the demo, not by running tests. After ANY change to pipeline, models, connectors, normalizers, seed, or config:
 
 ```bash
-# Docker (preferred)
-docker compose down -v && docker compose up demo
-
-# Or local (SQLite)
 rm -f warlock.db && .venv/bin/alembic upgrade head && .venv/bin/python scripts/demo_seed.py
 ```
 
@@ -73,7 +69,7 @@ Run the automated QA gate. It covers everything. No manual steps.
 ./scripts/qa.sh
 ```
 
-The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (165 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (18 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
+The script verifies: lint, format, imports, pytest (295+ baseline), demo seed (165 connectors, 0 failures), CLI smoke tests, TUI import, OPA policies, Terraform validate + fmt, OSCAL JSON, framework YAML, secrets scan, .env check, dependency audit, migration reversibility, documentation count accuracy, AI task prompt coverage, CLI --ai/--ask flags, AI service import, production docs completeness (13 required docs in proddocs/), and production docs accuracy (connector/framework counts match codebase).
 
 ALL checks must pass. If any fail, fix before committing.
 
@@ -95,7 +91,31 @@ make verify-docs # documentation accuracy check only
 
 1. List EVERY file you changed and what specifically changed in each one
 2. Paste the actual QA gate output (not a summary)
-3. Verify README.md is accurate: `grep -n "Docker\|docker\|599\|42 \|68 module" README.md` — fix any stale counts or deprecated instructions
+3. **Verify ALL doc counts match codebase truth.** Run these checks and fix any mismatches:
+   ```bash
+   # Automated subset
+   make verify-docs
+
+   # Manual checks (NOT covered by verify-docs — you MUST run these)
+   echo "CLI commands: $(python -c "import click; from warlock.cli import cli; c=0
+   def count(g):
+       global c
+       for n,cmd in g.commands.items():
+           c += count(cmd) if isinstance(cmd,click.Group) else 1
+       return c
+   count(cli); print(c)")"
+   echo "CLI modules: $(find warlock/cli -name '*.py' ! -name '__init__.py' | wc -l | tr -d ' ')"
+   echo "DB tables: $(python -c "from warlock.db.models import Base; print(len(Base.metadata.tables))")"
+   echo "API routes: $(python -c "from warlock.api.app import create_app; app=create_app(); print(len([r for r in app.routes if hasattr(r,'methods')]))")"
+   echo "API routers: $(ls warlock/api/routers/*.py | grep -v __init__ | wc -l | tr -d ' ')"
+   echo "Assertions: $(grep -c 'def ' warlock/assessors/assertions.py)"
+   echo "Tests: $(.venv/bin/pytest tests/ --collect-only -q 2>/dev/null | tail -1)"
+   echo "Crosswalk edges: $(python -c "import yaml; print(len(yaml.safe_load(open('warlock/frameworks/crosswalks.yaml'))['crosswalks']))")"
+   echo "OSCAL JSON: $(find frameworks-oscal/ -name '*.json' | wc -l | tr -d ' ')"
+   echo "Proddocs: $(find proddocs/ -name '*.md' | wc -l | tr -d ' ')"
+   ```
+   If ANY number doesn't match what docs say, fix EVERY doc that mentions it. Check: README.md, CLAUDE.md, DEMO.md, CONTRIBUTING.md, docs/warlock-one-pager.md, and all proddocs/.
+   **Note:** Demo seed outputs 165 connectors (hardcoded), but connector files number 166. Demo output docs say 165; codebase description docs say 166.
 4. Verify `make demo` works end-to-end (not just pytest)
 5. Ask: "Ready to push?"
 6. WAIT for explicit "yes" before running `git push`
@@ -138,7 +158,7 @@ Safe to run in parallel. No file conflicts. Dispatch as many as needed.
 | Assessor agent | `warlock/assessors/*.py` |
 | Database agent | `warlock/db/*.py`, `alembic/`, migrations |
 | Workflow agent | `warlock/workflows/*.py`, `warlock/export/*.py` |
-| CLI agent | `warlock/cli/*.py` (74 modules — assign by domain, not all at once) |
+| CLI agent | `warlock/cli/*.py` (73 modules — assign by domain, not all at once) |
 | Demo seed agent | `scripts/demo_seed.py`, `scripts/demo_connectors_new.py` |
 | Terraform agent | `terraform/**/*.tf` |
 | OSCAL agent | `frameworks-oscal/**/*`, `warlock/normalizers/*.py`, `warlock/connectors/*.py` |
@@ -176,7 +196,6 @@ When you change the left column, you MUST update every file in the right column.
 | Framework YAML (`warlock/frameworks/`) | Re-run demo seed, verify loader doesn't crash, update README.md framework table |
 | CLI command (`warlock/cli/*.py`) | `.github/workflows/ci.yml` CLI smoke test list, README.md, DEMO.md, CONTRIBUTING.md, CLI-REFERENCE.md |
 | CI workflows (`.github/workflows/`) | Verify command/group names match actual CLI, test locally before pushing — CI failures block all PRs |
-| Docker (`Dockerfile`, `docker-compose.yml`) | Rebuild image (`docker compose build demo`), verify `docker compose up demo` succeeds |
 | Connector/normalizer/framework count changes | Update `proddocs/features/connectors.md`, `proddocs/product/frameworks.md`, `proddocs/product/overview.md` counts |
 | API route changes | Update `proddocs/api/reference.md` endpoint list |
 | CLI command changes | Update `proddocs/api/cli-reference.md` command list |
@@ -190,13 +209,13 @@ When you change the left column, you MUST update every file in the right column.
 
 ```
 warlock/
-  connectors/    — 165 source connectors
-  normalizers/   — 165 parsers (raw → FindingData)
+  connectors/    — 166 source connectors
+  normalizers/   — 166 parsers (raw → FindingData)
   mappers/       — control mapping (findings → 1,996 controls across 14 frameworks)
-  assessors/     — assertion engine (101 assertions) + AI reasoning + OPA evaluator
-  api/           — FastAPI REST API (163 routes, ABAC-scoped, 11 domain routers)
-  cli/           — Click CLI package (686 leaf commands, 74 modules)
-  db/            — SQLAlchemy models (47), schema via Base.metadata.create_all()
+  assessors/     — assertion engine (102 assertions) + AI reasoning + OPA evaluator
+  api/           — FastAPI REST API (171 routes, ABAC-scoped, 12 domain routers)
+  cli/           — Click CLI package (686 leaf commands, 73 modules)
+  db/            — SQLAlchemy models (48), schema via Base.metadata.create_all()
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler
@@ -204,20 +223,19 @@ warlock/
   domains/       — 7 domain service modules (registry, event bus, policy engine, controls, issues, evidence)
   integrations/  — Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
   platform/      — Tenancy, white-label, delegation, sandbox, legacy/bulk import
-  frameworks/    — 14 framework YAMLs + crosswalks + baselines + inherited controls
+  frameworks/    — 15 framework YAMLs + crosswalks + baselines + inherited controls
   frameworks/reference/ — baselines.yaml (NIST Low/Mod/High), inherited_controls.yaml
-tests/           — 500 pytest tests (32 files)
+tests/           — 509 pytest tests (32 files)
 policies/        — 670 OPA/Rego files across 8 frameworks
-frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (17 JSON files)
+frameworks-oscal/ — OSCAL catalog/profile JSON for 11 frameworks (27 JSON files)
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
 .github/workflows/
-  ci.yml             — Python lint + test + Docker build
+  ci.yml             — Python lint + test + QA gate
   compliance-gate.yaml — OPA validation, Terraform validation, OSCAL + YAML checks
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
   demo_seed.py   — 165 mock connectors, ~5,475 findings, 373K+ results
   demo_api.sh    — API query helper with auto-auth
-  docker-demo.sh — Docker demo entrypoint (migrate + seed + serve)
 ```
 
 ## Key Patterns
@@ -227,7 +245,7 @@ scripts/
 - **Multiple assertions per control**: List-based bindings. Append, never overwrite.
 - **Timezone-aware datetimes**: Use `ensure_aware()` from `warlock/utils/`. No naive datetimes. SQLite returns naive datetimes even with `timezone=True` — always wrap DB values.
 - **Rich markup escaping**: Use `rich.markup.escape()` on ALL user-supplied text before passing to `console.print()`. Unescaped `[brackets]` in titles/descriptions crash Rich.
-- **Root health endpoints**: `/health`, `/healthz`, `/readyz` at app root (not just `/api/v1/health`). Required for k8s probes, load balancers, Docker HEALTHCHECK.
+- **Root health endpoints**: `/health`, `/healthz`, `/readyz` at app root (not just `/api/v1/health`). Required for k8s probes and load balancers.
 - **CLI groups show defaults**: All CLI groups use `invoke_without_command=True` and show a useful summary when called without a subcommand. Never error on bare group invocation.
 - **Prompt sanitization**: `<evidence>` tags + control character stripping in all LLM prompts.
 - **Gemini API key in header**: `x-goog-api-key`, never in URL query params.
@@ -238,8 +256,8 @@ Two GitHub Actions workflows run on every push/PR:
 
 ### `.github/workflows/ci.yml` — Python CI
 - **Triggers:** push to main, all PRs
-- **Jobs:** lint (ruff), test (pytest 500+ tests), build (Docker image)
-- If lint fails (like the 128 F401 errors on 2026-03-19), the whole pipeline is red. Run `ruff check warlock/` locally first.
+- **Jobs:** lint (ruff), test (pytest 509+ tests), security (pip-audit), QA gate
+- If lint fails, the whole pipeline is red. Run `ruff check warlock/` locally first.
 
 ### `.github/workflows/compliance-gate.yaml` — Compliance CI
 - **Triggers:** push/PR that touches `policies/`, `terraform/`, `frameworks-oscal/`, `warlock/frameworks/`, `warlock/assessors/`
@@ -270,7 +288,7 @@ If you touch policies or terraform, both CI workflows run. Fix failures locally 
 | EU AI Act | eu_ai_act.yaml (33 controls) | — | — | Yes |
 | SEC Cyber | sec_cyber.yaml (20 controls) | — | — | Yes |
 
-**"Active in Demo"** means the framework produces control results in the demo seed. All 14 frameworks are wired with event_types and produce control results.
+**"Active in Demo"** means the framework produces control results in the demo seed. All 15 framework YAMLs (14 frameworks + SOC 2 Points of Focus) are wired with event_types and produce control results.
 
 ## Security-Critical Config Defaults
 

@@ -123,23 +123,6 @@ psql postgresql://warlock:PASSWORD@localhost:5432/warlock -c "SELECT version FRO
 
 ## 3. Redis Setup
 
-### Option A: Docker (Recommended for Dev/Staging)
-
-```bash
-docker run -d \
-  --name warlock-redis \
-  -p 6379:6379 \
-  redis:7-alpine
-```
-
-Verify:
-
-```bash
-redis-cli ping    # Should return PONG
-```
-
-### Option B: Native Installation
-
 **macOS (Homebrew):**
 
 ```bash
@@ -197,18 +180,7 @@ chmod +x opa_linux_x86_64
 sudo mv opa_linux_x86_64 /usr/local/bin/opa
 ```
 
-**Docker:**
-
-```bash
-docker run -d \
-  --name warlock-opa \
-  -p 8181:8181 \
-  -v /path/to/warlock/policies:/policies \
-  openpolicyagent/opa:latest \
-  run --server --bundle /policies
-```
-
-### Start OPA Server (CLI)
+### Start OPA Server
 
 ```bash
 cd /path/to/warlock
@@ -465,107 +437,7 @@ kill -TERM <scheduler_pid>
 
 ---
 
-## 8. Docker Deployment
-
-### Using docker-compose (Development)
-
-```bash
-docker-compose up
-```
-
-This starts:
-- PostgreSQL (port 5432)
-- Redis (port 6379)
-- Warlock API (port 8000)
-
-Expected output:
-
-```
-db_1   | LOG: starting services
-redis_1 | Ready to accept connections
-api_1  | Uvicorn running on http://0.0.0.0:8000
-```
-
-### Multi-Stage Dockerfile (Production)
-
-The included Dockerfile uses multi-stage builds:
-
-1. **Builder stage** — Install dependencies, compile extensions
-2. **Runtime stage** — Minimal image with only runtime dependencies
-
-Build image:
-
-```bash
-docker build -t warlock:latest .
-
-# With optional connectors
-docker build --build-arg EXTRAS="aws,ai" -t warlock:latest .
-```
-
-Run container:
-
-```bash
-docker run -d \
-  --name warlock \
-  -p 8000:8000 \
-  -e WLK_DATABASE_URL=postgresql://warlock:pwd@db:5432/warlock \
-  -e WLK_QUEUE_BACKEND=redis \
-  -e WLK_QUEUE_URL=redis://redis:6379 \
-  -e WLK_JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))") \
-  warlock:latest
-```
-
-### Kubernetes Deployment
-
-Example manifest for Kubernetes (requires Helm):
-
-```yaml
-apiVersion: v1
-kind: Deployment
-metadata:
-  name: warlock-api
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: warlock
-  template:
-    metadata:
-      labels:
-        app: warlock
-    spec:
-      containers:
-      - name: api
-        image: warlock:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: WLK_DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: warlock-secrets
-              key: database-url
-        - name: WLK_QUEUE_URL
-          value: redis://warlock-redis:6379
-        livenessProbe:
-          httpGet:
-            path: /api/v1/health/live
-            port: 8000
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /api/v1/health/ready
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 10
-```
-
-For full Helm chart, see `./helm/` directory.
-
----
-
-## 9. Monitoring
+## 8. Monitoring
 
 ### Health Endpoints
 
@@ -618,7 +490,7 @@ Send to:
 
 ---
 
-## 10. Backup and Recovery
+## 9. Backup and Recovery
 
 ### Database Backups
 
@@ -669,7 +541,7 @@ Legal holds prevent automatic purging (see `WLK_CHANGE_EVENT_RETENTION_DAYS`).
 
 ---
 
-## 11. Upgrading
+## 10. Upgrading
 
 ### Backup First
 
@@ -745,7 +617,7 @@ curl http://localhost:8000/api/v1/health | jq .version
 
 ---
 
-## 12. Security Hardening Checklist
+## 11. Security Hardening Checklist
 
 Before production deployment, verify:
 
@@ -798,14 +670,8 @@ Before production deployment, verify:
 
 ### Deployment Security
 
-- [ ] **Image Scanning:** Docker image scanned for vulnerabilities
-  ```bash
-  docker scan warlock:latest
-  ```
-- [ ] **Minimal Base Image:** `python:3.12-slim` (no unnecessary packages)
-- [ ] **Non-Root User:** Container runs as `warlock:warlock` (UID 1001)
-- [ ] **Read-Only Filesystem:** Root filesystem read-only where possible
-- [ ] **Network Policies:** Kubernetes NetworkPolicies restrict traffic
+- [ ] **Dependency Scanning:** `pip-audit` run against installed packages
+- [ ] **Network Policies:** Restrict traffic to required ports only
 
 ### Audit & Compliance
 
@@ -816,7 +682,7 @@ Before production deployment, verify:
 
 ---
 
-## 13. Troubleshooting
+## 12. Troubleshooting
 
 ### Issue: API Won't Start
 

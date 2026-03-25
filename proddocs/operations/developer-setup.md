@@ -7,7 +7,6 @@ Set up a local Warlock development environment with Python, run the demo, execut
 - Python 3.12 or higher
 - pip and virtualenv (bundled with Python 3.12+)
 - git
-- Docker (optional, recommended for full-stack demo)
 - OPA CLI (optional, for policy evaluation -- `brew install opa`)
 
 Verify your Python version:
@@ -62,14 +61,6 @@ python scripts/demo_seed.py
 warlock-api
 ```
 
-### Docker demo (full stack with Postgres + Redis + OPA)
-
-```bash
-docker compose up demo
-```
-
-See [Docker Setup](docker-setup.md) for details.
-
 ### Expected demo output
 
 ```
@@ -96,7 +87,7 @@ If these numbers change, something is broken. Check the dependency chain table i
 pytest tests/ -v --tb=short
 ```
 
-Expected: 657 tests across 32 files, 0 failures. Run a quick subset:
+Expected: 509 tests across 32 files, 0 failures. Run a quick subset:
 
 ```bash
 pytest tests/test_api.py -v             # API tests only
@@ -202,11 +193,10 @@ make qa          # Full QA gate
 make qa-quick    # Quick QA (lint + test only)
 make verify-docs # Check documentation counts match codebase
 make migrate     # Run Alembic migrations
-make dev         # Start docker compose + migrate
 make seed        # Run demo seed
 make demo        # Full one-command demo
 make cli         # Show how to activate CLI
-make clean       # Stop docker, remove DB, clean __pycache__
+make clean       # Remove DB, clean __pycache__
 ```
 
 ---
@@ -217,20 +207,20 @@ For full architecture details, see [Architecture](../technical/architecture.md).
 
 ```
 warlock/
-  connectors/    -- 165 source connectors (Stage 1)
-  normalizers/   -- 165 parsers (Stage 2)
+  connectors/    -- 166 source connectors (Stage 1)
+  normalizers/   -- 166 parsers (Stage 2)
   mappers/       -- Control mapping (Stage 3)
   assessors/     -- Assertion engine + AI reasoning (Stage 4)
-  api/           -- FastAPI REST API (163 routes)
-  cli/           -- Click CLI (599 leaf commands across 68 modules)
-  db/            -- SQLAlchemy models (42), schema via Base.metadata.create_all()
+  api/           -- FastAPI REST API (171 routes)
+  cli/           -- Click CLI (686 leaf commands across 73 modules)
+  db/            -- SQLAlchemy models (47), schema via Base.metadata.create_all()
   export/        -- OSCAL, binder, alerts
   workflows/     -- POA&M, risk acceptance, GDPR, retention
   pipeline/      -- Orchestrator, event bus, queue backends, scheduler
   lake/          -- GRC Data Lake (DuckDB, Parquet, RAG)
   domains/       -- Domain service modules
   frameworks/    -- 14 framework YAMLs (1,996 controls)
-tests/           -- 657 tests across 32 files
+tests/           -- 509 tests across 32 files
 policies/        -- 670 OPA/Rego files
 frameworks-oscal/ -- OSCAL catalog/profile JSON
 terraform/       -- 12 IaC modules
