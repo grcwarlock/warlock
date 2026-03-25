@@ -160,10 +160,11 @@ The platform supports SQLite for development and PostgreSQL for production.
 **Quick Start (recommended)**:
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
-make demo
+make demo                              # backend + seed data
+cd frontend && npm install && npm run dev  # web UI at localhost:5173
 ```
 
-Requires Python 3.12+. Creates a virtualenv, seeds with SQLite, starts OPA (if installed), and launches the API server.
+Requires Python 3.12+ and Node.js 20+. Creates a virtualenv, seeds with SQLite, starts OPA (if installed), launches the API server, and the React frontend connects via proxy.
 
 **Production**: Deploy with environment variables prefixed `WLK_`. Configure `WLK_DATABASE_URL` (PostgreSQL), `WLK_JWT_SECRET` (32+ characters), `WLK_ENV=production`, and enable specific connectors by setting their API credentials.
 

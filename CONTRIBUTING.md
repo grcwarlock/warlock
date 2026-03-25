@@ -8,6 +8,7 @@ Thank you for considering a contribution to Warlock, the pipeline-first GRC plat
 - Python 3.12 or higher
 - pip and virtualenv
 - git
+- Node.js 20+ and npm (for the web UI)
 - (Optional but recommended) OPA for policy evaluation
 
 ### Clone and Install
@@ -24,6 +25,10 @@ pip install -e ".[dev,ai]"
 
 ```bash
 make demo                      # Full demo: DB setup, seed data, API start
+
+# In a second terminal — start the web UI:
+cd frontend && npm install && npm run dev
+# Open http://localhost:5173 — login: admin@acme.com / WarlockAdmin2026!
 ```
 
 Or run the demo manually:

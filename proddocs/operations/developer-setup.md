@@ -6,6 +6,7 @@ Set up a local Warlock development environment with Python, run the demo, execut
 
 - Python 3.12 or higher
 - pip and virtualenv (bundled with Python 3.12+)
+- Node.js 20+ and npm (for the web UI)
 - git
 - OPA CLI (optional, for policy evaluation -- `brew install opa`)
 
@@ -197,6 +198,11 @@ make seed        # Run demo seed
 make demo        # Full one-command demo
 make cli         # Show how to activate CLI
 make clean       # Remove DB, clean __pycache__
+
+# Frontend
+make frontend-install   # Install npm dependencies
+make frontend-dev       # Start dev server (proxy to API on :8000)
+make frontend-build     # Production build
 ```
 
 ---

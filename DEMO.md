@@ -1,6 +1,6 @@
 # Warlock Demo Setup
 
-**Requirements:** Python 3.12+
+**Requirements:** Python 3.12+, Node.js 20+ (for the web UI)
 
 ---
 
@@ -9,21 +9,55 @@
 ```bash
 git clone https://github.com/grcwarlock/warlock.git
 cd warlock
-./scripts/demo.sh
+make demo
 ```
 
-The script:
-1. Creates a virtualenv and installs dependencies
-2. Starts OPA with 670 Rego policies (if installed)
-3. Runs database migrations (SQLite)
-4. Seeds 165 connectors, ~5,475 findings, 373,852 control results across 14 frameworks
-5. Prompts for AI provider configuration (optional)
-6. Starts the API server on port 8000
-
-### Or use Make
+This starts the backend (API on port 8000) with seeded demo data. Then open the web UI:
 
 ```bash
-make demo
+# In a second terminal:
+cd frontend && npm install && npm run dev
+```
+
+Open **http://localhost:5173** in your browser.
+
+**Login:** `admin@acme.com` / `WarlockAdmin2026!` (pre-filled)
+
+---
+
+## Web UI
+
+The frontend is a React SPA (Vite + shadcn/ui) that connects to the FastAPI backend. It provides:
+
+| Page | What It Shows | Drill-Down Depth |
+|---|---|---|
+| **Dashboard** | KPIs, framework heatmap, posture trend, KRIs, drift events | Click any metric → detail |
+| **Pipeline** | Connectors → provider → service → resource → finding → remediation | 4 levels |
+| **Compliance** | Frameworks → control families → individual control → evidence + assessment | 3 levels |
+| **Findings** | Filterable/sortable table of all findings | Click → full detail |
+| **Remediation** | POA&Ms, compensating controls, risk acceptances | Lifecycle tracking |
+| **Incidents** | Security incidents with timeline and blast radius | Detail + comments |
+| **Risk** | Vendor risk scores, Monte Carlo analysis | Score breakdown |
+| **Audit** | Engagements, hash-chain audit trail, attestations | Verify chain integrity |
+| **Settings** | AI configuration, users, API keys, alerts | Real API key entry |
+
+### AI Configuration
+
+To enable AI-powered remediation and reasoning:
+
+1. Navigate to **Settings → AI Configuration**
+2. Select a provider (Anthropic, OpenAI, Gemini, or Ollama)
+3. Enter your API key
+4. Click **Test Connection**, then **Save**
+
+AI features light up across the platform (remediation suggestions, control explanations, conversational compliance).
+
+### Frontend Development
+
+```bash
+make frontend-install   # Install npm dependencies
+make frontend-dev       # Start dev server (proxy to API on :8000)
+make frontend-build     # Production build
 ```
 
 ---

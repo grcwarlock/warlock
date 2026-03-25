@@ -78,13 +78,17 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 make demo
 ```
 
-That's it. Virtual environment, OPA, database, seed data, and API server — all in one command. You'll be dropped into a shell with the `warlock` CLI ready.
+That's it. Virtual environment, OPA, database, seed data, and API server — all in one command. Then start the web UI:
 
+```bash
+cd frontend && npm install && npm run dev
+```
+
+- Web UI: http://localhost:5173 (login: `admin@acme.com` / `WarlockAdmin2026!`)
 - API: http://localhost:8000/docs
-- Login: admin@acme.com / WarlockAdmin2026!
 - Stop: kill the PIDs shown in the demo output
 
-Requires Python 3.12+, creates a venv, seeds with SQLite. See **[DEMO.md](DEMO.md)** for details.
+Requires Python 3.12+ and Node.js 20+. See **[DEMO.md](DEMO.md)** for full details.
 
 ## CLI (686 leaf commands across 73 modules)
 
@@ -366,11 +370,13 @@ warlock/
 - **CLI:** Click + Rich
 - **Validation:** Pydantic 2.0
 - **HTTP:** httpx (async-capable)
+- **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + Recharts
 - **CI/CD:** GitHub Actions (lint + test)
 
 ## Development
 
 ```bash
+# Backend
 make install    # Install dev dependencies
 make test       # Run tests
 make lint       # Run ruff linter
@@ -378,6 +384,11 @@ make migrate    # Run Alembic migrations
 make seed       # Populate demo data
 make demo       # One-command full demo (DB + OPA + API + seed)
 make clean      # Clean up DB and __pycache__
+
+# Frontend
+make frontend-install   # Install npm dependencies
+make frontend-dev       # Start dev server (proxy to API on :8000)
+make frontend-build     # Production build
 ```
 
 ## License

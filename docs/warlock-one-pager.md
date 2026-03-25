@@ -57,6 +57,7 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 
 | Component | Technology |
 |-----------|-----------|
+| Frontend | React 18 + TypeScript + Vite + shadcn/ui — 9 pages, 4-level drill-down |
 | API | FastAPI — 171 REST endpoints, ABAC-scoped, rate-limited |
 | CLI | Click + Rich — 686 leaf commands across 73 modules |
 | Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 47 models |
@@ -66,7 +67,7 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 | AI | Pluggable — Anthropic, OpenAI, Gemini, Ollama |
 | Security | JWT + RBAC + ABAC + bcrypt + GDPR workflows |
 
-Python 3.12+. `make demo` for one-command setup. Production-ready with PostgreSQL, Redis, and OPA.
+Python 3.12+ and Node.js 20+. `make demo` + `cd frontend && npm run dev` for full stack.
 
 ## Who It's For
 
@@ -81,7 +82,8 @@ Python 3.12+. `make demo` for one-command setup. Production-ready with PostgreSQ
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
-make demo
+make demo                              # backend + seed data
+cd frontend && npm install && npm run dev  # web UI
 ```
 
-API at localhost:8000/docs. 165 connectors, ~5,475 findings, 373,000+ control results seeded automatically.
+Web UI at localhost:5173 (login: admin@acme.com / WarlockAdmin2026!). API at localhost:8000/docs. 165 connectors, ~5,475 findings, 373,000+ control results seeded automatically.
