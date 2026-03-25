@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
-  Loader2,
   User,
 } from "lucide-react";
 
@@ -84,6 +83,15 @@ export default function POAMDetail() {
   const overdue = isOverdue(r.due_date, r.status);
   const transitions = STATUS_TRANSITIONS[r.status] ?? [];
   const steps = Array.isArray(r.remediation_steps) ? r.remediation_steps : [];
+  const evidence = Array.isArray(r.evidence) ? r.evidence : [];
+
+  // Build timeline entries from available timestamps
+  const timeline: { label: string; date: string | null; icon: React.ReactNode }[] = [
+    { label: "Created", date: r.created_at, icon: <Clock className="h-3 w-3" /> },
+    { label: "Assigned", date: r.assigned_at, icon: <User className="h-3 w-3" /> },
+    { label: "Verified", date: r.verified_at, icon: <CheckCircle2 className="h-3 w-3 text-green-400" /> },
+    { label: "Closed", date: r.closed_at, icon: <CheckCircle2 className="h-3 w-3 text-green-400" /> },
+  ].filter((t) => t.date);
 
   return (
     <div className="p-6 space-y-5 max-w-[1200px] mx-auto">
@@ -133,7 +141,10 @@ export default function POAMDetail() {
             <div className="flex items-center gap-2 shrink-0">
               {transitions.map((t) => (
                 <Button key={t} variant="outline" size="sm">
-                  {t.replace(/_/g, " ")}
+                  {t
+                    .split("_")
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(" ")}
                 </Button>
               ))}
             </div>
@@ -160,7 +171,7 @@ export default function POAMDetail() {
           {steps.length > 0 && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
               <h3 className="text-[11px] uppercase tracking-[0.06em] text-zinc-500 mb-3">
-                Milestones
+                Remediation Steps
               </h3>
               <div className="relative ml-3 border-l border-zinc-700 space-y-4 pl-6">
                 {steps.map((step, idx) => {
@@ -176,22 +187,57 @@ export default function POAMDetail() {
                       : false;
                   return (
                     <div key={idx} className="relative">
-                      <div
-                        className={cn(
-                          "absolute -left-[30px] top-0.5 h-3 w-3 rounded-full border-2",
-                          done
-                            ? "bg-green-400 border-green-400"
-                            : "bg-zinc-800 border-zinc-600"
-                        )}
-                      />
+                      <div className="absolute -left-[9px] top-0 flex items-center justify-center">
+                        <div className="flex items-center justify-center h-5 w-5 rounded-full bg-zinc-900">
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold",
+                              done ? "text-green-400" : "text-zinc-500",
+                            )}
+                          >
+                            {idx + 1}
+                          </span>
+                        </div>
+                      </div>
                       <p
                         className={cn(
-                          "text-sm",
-                          done ? "text-zinc-400 line-through" : "text-zinc-200"
+                          "text-sm ml-3",
+                          done ? "text-zinc-500 line-through" : "text-zinc-200",
                         )}
                       >
                         {String(label)}
                       </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Evidence */}
+          {evidence.length > 0 && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <h3 className="text-[11px] uppercase tracking-[0.06em] text-zinc-500 mb-3">
+                Evidence
+              </h3>
+              <div className="space-y-2">
+                {evidence.map((ev, idx) => {
+                  const label =
+                    typeof ev === "object" && ev !== null
+                      ? (ev as Record<string, unknown>).description ??
+                        (ev as Record<string, unknown>).title ??
+                        (ev as Record<string, unknown>).name ??
+                        JSON.stringify(ev)
+                      : String(ev);
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2 text-sm text-zinc-300 py-1.5 border-b border-zinc-800/50 last:border-0"
+                    >
+                      <span className="text-zinc-500 font-mono text-xs shrink-0">
+                        #{idx + 1}
+                      </span>
+                      <span className="break-words">{String(label)}</span>
                     </div>
                   );
                 })}
@@ -225,7 +271,6 @@ export default function POAMDetail() {
             <h3 className="text-[11px] uppercase tracking-[0.06em] text-zinc-500">
               Details
             </h3>
-
             <div className="space-y-2.5 text-sm">
               <div className="flex items-center gap-2 text-zinc-400">
                 <User className="h-3.5 w-3.5 text-zinc-500" />
@@ -234,33 +279,59 @@ export default function POAMDetail() {
                   {r.assigned_to ?? "Unassigned"}
                 </span>
               </div>
+              {r.assigned_by && (
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <User className="h-3.5 w-3.5 text-zinc-500" />
+                  <span>Assigned by:</span>
+                  <span className="text-zinc-200">{r.assigned_by}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-zinc-400">
                 <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                 <span>Due date:</span>
                 <span
-                  className={cn(
-                    overdue ? "text-red-400" : "text-zinc-200"
-                  )}
+                  className={cn(overdue ? "text-red-400" : "text-zinc-200")}
                 >
                   {formatDate(r.due_date)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-zinc-400">
-                <Clock className="h-3.5 w-3.5 text-zinc-500" />
-                <span>Created:</span>
-                <span className="text-zinc-200">{formatDate(r.created_at)}</span>
-              </div>
-              {r.closed_at && (
-                <div className="flex items-center gap-2 text-zinc-400">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                  <span>Closed:</span>
-                  <span className="text-zinc-200">
-                    {formatDate(r.closed_at)}
-                  </span>
+              {r.framework && (
+                <div className="text-zinc-400">
+                  Framework:{" "}
+                  <span className="text-zinc-300 font-mono">{r.framework}</span>
+                </div>
+              )}
+              {r.control_id && (
+                <div className="text-zinc-400">
+                  Control:{" "}
+                  <span className="text-zinc-300 font-mono">{r.control_id}</span>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Timeline */}
+          {timeline.length > 0 && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+              <h3 className="text-[11px] uppercase tracking-[0.06em] text-zinc-500">
+                Timeline
+              </h3>
+              <div className="relative ml-2 border-l border-zinc-700 space-y-3 pl-5">
+                {timeline.map((t, idx) => (
+                  <div key={idx} className="relative">
+                    <div className="absolute -left-[24px] top-0.5 h-3 w-3 rounded-full border-2 bg-zinc-800 border-zinc-600" />
+                    <div className="flex items-center gap-2 text-xs">
+                      {t.icon}
+                      <span className="text-zinc-300">{t.label}</span>
+                      <span className="text-zinc-500">
+                        {formatDateTime(t.date)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Linked finding */}
           {r.finding_id && (
@@ -284,12 +355,6 @@ export default function POAMDetail() {
               <div>
                 Created by:{" "}
                 <span className="text-zinc-300">{r.created_by}</span>
-              </div>
-            )}
-            {r.assigned_by && (
-              <div>
-                Assigned by:{" "}
-                <span className="text-zinc-300">{r.assigned_by}</span>
               </div>
             )}
             {r.updated_at && (

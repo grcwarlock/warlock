@@ -536,14 +536,11 @@ def get_control_detail_endpoint(
             detail=f"No results found for control '{control_id}'",
         )
 
-    # Map status_counts to the response model fields
-    sc = detail.get("status_counts", {})
-    compliant_count = sc.get("compliant", 0)
-    non_compliant_count = sc.get("non_compliant", 0)
-    partial_count = sc.get("partial", 0)
-    not_assessed_count = (
-        detail["total_resources"] - compliant_count - non_compliant_count - partial_count
-    )
+    # Extract counts directly from detail dict
+    compliant_count = detail.get("compliant_count", 0)
+    non_compliant_count = detail.get("non_compliant_count", 0)
+    partial_count = detail.get("partial_count", 0)
+    not_assessed_count = detail.get("not_assessed_count", 0)
 
     # Build resource lists
     passing = [
@@ -598,7 +595,7 @@ def get_control_detail_endpoint(
         control_id=detail["control_id"],
         frameworks=detail["frameworks"],
         description=detail.get("description"),
-        total_results=detail["total_resources"],
+        total_results=detail.get("total_results", 0),
         compliant_count=compliant_count,
         non_compliant_count=non_compliant_count,
         partial_count=partial_count,
@@ -1099,3 +1096,156 @@ def dashboard_summary(
             return enhanced
 
     return payload
+
+
+# ---------------------------------------------------------------------------
+# Routes — Resource Topology
+# ---------------------------------------------------------------------------
+
+
+class TopologyResource(BaseModel):
+    resource_id: str
+    finding_count: int
+    worst_severity: str
+    controls_affected: list[str]
+
+
+class TopologyService(BaseModel):
+    event_type: str
+    resource_type: str
+    finding_count: int
+    resources: list[TopologyResource]
+
+
+class TopologyProvider(BaseModel):
+    name: str
+    finding_count: int
+    services: list[TopologyService]
+
+
+class TopologySourceType(BaseModel):
+    name: str
+    finding_count: int
+    providers: list[TopologyProvider]
+
+
+class TopologyResponse(BaseModel):
+    source_types: list[TopologySourceType]
+    total_findings: int
+
+
+@router.get("/resources/topology", response_model=TopologyResponse)
+def resources_topology(
+    source_type: str | None = Query(None, description="Filter to a specific source type"),
+    provider: str | None = Query(None, description="Filter to a specific provider"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Resource topology: hierarchical view of source_type → provider → service → resource.
+
+    Built by aggregating Finding rows. Each level carries finding counts and
+    the leaf level includes affected controls and worst severity.
+    """
+    repos = get_repos(db)
+
+    # --- Step 1: aggregate findings by source_type, source, resource_type, resource_id ---
+    rows = repos.findings.topology_aggregate(source_type=source_type, provider=provider)
+
+    if not rows:
+        return TopologyResponse(source_types=[], total_findings=0)
+
+    # --- Step 2: collect unique resource_ids for control lookup ---
+    resource_ids = {r.resource_id for r in rows if r.resource_id}
+
+    # Batch query: resource_id → set of control_ids
+    ctrl_map: dict[str, set[str]] = {}
+    if resource_ids:
+        ctrl_rows = repos.findings.topology_controls(resource_ids)
+        for rid, cid in ctrl_rows:
+            ctrl_map.setdefault(rid, set()).add(cid)
+
+    # --- Step 3: build hierarchy in Python ---
+    _SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+    # Nested dict: source_type → provider → (event_type, resource_type) → resource_id → {count, worst_sev}
+    tree: dict[str, dict[str, dict[tuple[str, str], dict[str, dict]]]] = {}
+    total_findings = 0
+
+    for r in rows:
+        st = r.source_type or "unknown"
+        prov = r.source or "unknown"
+        svc_key = (r.observation_type or "unknown", r.resource_type or "unknown")
+        rid = r.resource_id or "unknown"
+        cnt = r.cnt
+
+        total_findings += cnt
+
+        st_node = tree.setdefault(st, {})
+        prov_node = st_node.setdefault(prov, {})
+        svc_node = prov_node.setdefault(svc_key, {})
+        res_node = svc_node.setdefault(rid, {"count": 0, "worst_sev": "info"})
+        res_node["count"] += cnt
+
+        # Track worst severity
+        if _SEV_ORDER.get(r.severity, 99) < _SEV_ORDER.get(res_node["worst_sev"], 99):
+            res_node["worst_sev"] = r.severity
+
+    # --- Step 4: convert tree to response models ---
+    source_types_out: list[TopologySourceType] = []
+
+    for st_name in sorted(tree.keys()):
+        st_finding_count = 0
+        providers_out: list[TopologyProvider] = []
+
+        for prov_name in sorted(tree[st_name].keys()):
+            prov_finding_count = 0
+            services_out: list[TopologyService] = []
+
+            for (evt, rtype), resources in sorted(tree[st_name][prov_name].items()):
+                svc_finding_count = 0
+                resources_out: list[TopologyResource] = []
+
+                for rid, info in sorted(resources.items(), key=lambda x: -x[1]["count"]):
+                    svc_finding_count += info["count"]
+                    resources_out.append(
+                        TopologyResource(
+                            resource_id=rid,
+                            finding_count=info["count"],
+                            worst_severity=info["worst_sev"],
+                            controls_affected=sorted(ctrl_map.get(rid, set())),
+                        )
+                    )
+
+                prov_finding_count += svc_finding_count
+                services_out.append(
+                    TopologyService(
+                        event_type=evt,
+                        resource_type=rtype,
+                        finding_count=svc_finding_count,
+                        resources=resources_out,
+                    )
+                )
+
+            # Sort services by finding count descending
+            services_out.sort(key=lambda s: -s.finding_count)
+            st_finding_count += prov_finding_count
+            providers_out.append(
+                TopologyProvider(
+                    name=prov_name,
+                    finding_count=prov_finding_count,
+                    services=services_out,
+                )
+            )
+
+        providers_out.sort(key=lambda p: -p.finding_count)
+        source_types_out.append(
+            TopologySourceType(
+                name=st_name,
+                finding_count=st_finding_count,
+                providers=providers_out,
+            )
+        )
+
+    source_types_out.sort(key=lambda s: -s.finding_count)
+
+    return TopologyResponse(source_types=source_types_out, total_findings=total_findings)

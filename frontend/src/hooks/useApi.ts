@@ -92,6 +92,8 @@ import {
   configureAI,
   getAlertConfig,
   updateAlertConfig,
+  getTopology,
+  generateRemediation,
 } from "@/api/endpoints";
 
 // ---------------------------------------------------------------------------
@@ -466,5 +468,27 @@ export function useAlertConfig() {
 export function useUpdateAlertConfig() {
   return useMutation({
     mutationFn: (config: AlertConfig) => updateAlertConfig(config),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Resource Topology
+// ---------------------------------------------------------------------------
+
+export function useTopology(sourceType?: string, provider?: string) {
+  return useQuery({
+    queryKey: ["topology", sourceType, provider] as const,
+    queryFn: () => getTopology(sourceType, provider),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Remediation Command Generator
+// ---------------------------------------------------------------------------
+
+export function useGenerateRemediation() {
+  return useMutation({
+    mutationFn: (request: import("@/api/types").RemediationGenerateRequest) =>
+      generateRemediation(request),
   });
 }

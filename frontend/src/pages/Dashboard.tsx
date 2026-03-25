@@ -9,17 +9,9 @@ import {
   Shield,
   ShieldCheck,
   TrendingDown,
-  TrendingUp,
+  Server,
+  Layers,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip as RechartsTooltip,
-  CartesianGrid,
-} from "recharts";
 
 import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/shared/KPICard";
@@ -30,6 +22,7 @@ import {
   useCoverage,
   useDrift,
   usePipelineStatus,
+  useTopology,
 } from "@/hooks/useApi";
 import type { CoverageData, DriftEvent } from "@/api/types";
 
@@ -113,7 +106,6 @@ function PipelineStatusBar() {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5">
       <div className="flex items-center gap-6 text-xs text-zinc-400 flex-wrap">
-        {/* Status dot */}
         <div className="flex items-center gap-2">
           <div
             className={cn(
@@ -126,13 +118,11 @@ function PipelineStatusBar() {
           </span>
         </div>
 
-        {/* Last run */}
         <div className="flex items-center gap-1.5">
           <Clock className="h-3 w-3 text-zinc-500" />
           <span>Last run: {relativeTime(lastRun?.completed_at ?? lastRun?.started_at)}</span>
         </div>
 
-        {/* Duration */}
         {lastRun?.duration_seconds != null && (
           <div className="flex items-center gap-1.5">
             <Activity className="h-3 w-3 text-zinc-500" />
@@ -140,7 +130,6 @@ function PipelineStatusBar() {
           </div>
         )}
 
-        {/* Connectors */}
         <div className="flex items-center gap-1.5">
           <Shield className="h-3 w-3 text-zinc-500" />
           <span>
@@ -148,13 +137,11 @@ function PipelineStatusBar() {
           </span>
         </div>
 
-        {/* Hash chain */}
         <div className="flex items-center gap-1.5">
           <Hash className="h-3 w-3 text-zinc-500" />
           <span className="text-green-400">Hash chain: verified</span>
         </div>
 
-        {/* Totals */}
         {pipeline?.totals && (
           <div className="ml-auto flex items-center gap-4 text-zinc-500">
             <span>{pipeline.totals.raw_events.toLocaleString()} events</span>
@@ -170,6 +157,17 @@ function PipelineStatusBar() {
 function KPIRow() {
   const { data: summary, isLoading } = useDashboardSummary();
   const { data: coverageList } = useCoverage();
+
+  const coverageArr = useMemo(
+    () => (Array.isArray(coverageList) ? coverageList : []),
+    [coverageList],
+  );
+
+  const avgRate = useMemo(() => {
+    if (coverageArr.length === 0) return summary?.posture_score ?? 0;
+    const totalRate = coverageArr.reduce((acc: number, c: CoverageData) => acc + (c.rate ?? 0), 0);
+    return Math.min(totalRate / coverageArr.length, 100);
+  }, [coverageArr, summary?.posture_score]);
 
   if (isLoading) {
     return (
@@ -187,25 +185,17 @@ function KPIRow() {
   const totalFindings =
     (issues.critical ?? 0) + (issues.high ?? 0) + (issues.medium ?? 0) + (issues.low ?? 0);
 
-  const complianceRate = summary.posture_score;
-
-  // Derive active POA&M count from issues (open issues serve as the proxy)
   const activePOAMs = totalFindings;
   const overduePOAMs = issues.critical + issues.high;
 
-  // Controls assessed across frameworks
   const frameworks = summary.frameworks ?? [];
   const totalControls = frameworks.reduce((acc, fw) => acc + fw.total_controls, 0);
   const frameworkCount = frameworks.length;
 
-  // Coverage data for compliance rate
-  const coverageArr = Array.isArray(coverageList) ? coverageList : [];
-  const avgRate =
-    coverageArr.length > 0
-      ? coverageArr.reduce((acc: number, c: CoverageData) => acc + c.rate, 0) / coverageArr.length
-      : complianceRate;
-
   const severityBreakdown = `C:${issues.critical} H:${issues.high} M:${issues.medium} L:${issues.low}`;
+
+  const improvingCount = frameworks.filter((f) => f.trend === "improving").length;
+  const degradingCount = frameworks.filter((f) => f.trend === "degrading").length;
 
   return (
     <div className="grid grid-cols-4 gap-4">
@@ -220,15 +210,10 @@ function KPIRow() {
         label="Compliance Rate"
         value={`${avgRate.toFixed(1)}%`}
         trend={{
-          text: frameworks.filter((f) => f.trend === "improving").length > 0
-            ? `${frameworks.filter((f) => f.trend === "improving").length} frameworks improving`
+          text: improvingCount > 0
+            ? `${improvingCount} frameworks improving`
             : "stable",
-          direction:
-            frameworks.filter((f) => f.trend === "improving").length > 0
-              ? "up"
-              : frameworks.filter((f) => f.trend === "degrading").length > 0
-                ? "down"
-                : "neutral",
+          direction: improvingCount > 0 ? "up" : degradingCount > 0 ? "down" : "neutral",
         }}
         href="/compliance"
         valueColor={pctColor(avgRate)}
@@ -317,6 +302,39 @@ function KRIPanel() {
   const { data: summary, isLoading } = useDashboardSummary();
   const { data: coverageList } = useCoverage();
 
+  const coverageArr = useMemo(
+    () => (Array.isArray(coverageList) ? coverageList : []),
+    [coverageList],
+  );
+
+  const kriValues = useMemo(() => {
+    const connectors = summary?.connectors ?? [];
+    const totalConnectors = connectors.length;
+    const errorConnectors = connectors.filter((c) => c.error_count > 0).length;
+    const issues = summary?.open_issues ?? { critical: 0, high: 0, medium: 0, low: 0 };
+    const totalIssues = issues.critical + issues.high + issues.medium + issues.low;
+
+    const avgRate =
+      coverageArr.length > 0
+        ? coverageArr.reduce((acc: number, c: CoverageData) => acc + c.rate, 0) / coverageArr.length
+        : summary?.posture_score ?? 0;
+
+    // Derive data freshness from pipeline last_assessment
+    let freshnessHours = 12;
+    if (summary?.last_assessment) {
+      const hoursAgo = (Date.now() - new Date(summary.last_assessment).getTime()) / 3_600_000;
+      freshnessHours = Math.round(hoursAgo);
+    }
+
+    return {
+      critical_finding_rate: totalIssues > 0 ? (issues.critical / totalIssues) * 100 : 0,
+      connector_error_rate: totalConnectors > 0 ? (errorConnectors / totalConnectors) * 100 : 0,
+      compliance_pass_rate: avgRate,
+      overdue_poam_count: issues.critical + issues.high,
+      data_freshness_hours: freshnessHours,
+    } as Record<string, number>;
+  }, [summary, coverageArr]);
+
   if (isLoading) {
     return (
       <div className="col-span-1 rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
@@ -329,27 +347,6 @@ function KRIPanel() {
       </div>
     );
   }
-
-  // Derive KRI values from available data
-  const connectors = summary?.connectors ?? [];
-  const totalConnectors = connectors.length;
-  const errorConnectors = connectors.filter((c) => c.error_count > 0).length;
-  const issues = summary?.open_issues ?? { critical: 0, high: 0, medium: 0, low: 0 };
-  const totalIssues = issues.critical + issues.high + issues.medium + issues.low;
-
-  const coverageArr = Array.isArray(coverageList) ? coverageList : [];
-  const avgRate =
-    coverageArr.length > 0
-      ? coverageArr.reduce((acc: number, c: CoverageData) => acc + c.rate, 0) / coverageArr.length
-      : summary?.posture_score ?? 0;
-
-  const kriValues: Record<string, number> = {
-    critical_finding_rate: totalIssues > 0 ? (issues.critical / totalIssues) * 100 : 0,
-    connector_error_rate: totalConnectors > 0 ? (errorConnectors / totalConnectors) * 100 : 0,
-    compliance_pass_rate: avgRate,
-    overdue_poam_count: issues.critical + issues.high,
-    data_freshness_hours: 12, // Derived from pipeline last run; placeholder if not available
-  };
 
   function kriColor(item: KRIItem, value: number): string {
     if (item.invert) {
@@ -387,97 +384,83 @@ function KRIPanel() {
   );
 }
 
-function PostureTrendChart() {
-  const { data: summary, isLoading } = useDashboardSummary();
+/** Source-type icon mapping for the infrastructure preview cards. */
+const SOURCE_TYPE_ICONS: Record<string, typeof Server> = {
+  cloud: Server,
+  scanner: ShieldCheck,
+  identity: Shield,
+  code: Layers,
+};
 
-  // Build chart data from the frameworks array (point-in-time snapshot).
-  // For a real trend we would call usePostureHistory for each framework,
-  // but the dashboard summary gives us framework-level compliance rates.
-  const chartData = useMemo(() => {
-    if (!summary?.frameworks) return [];
-    return summary.frameworks
-      .slice()
-      .sort((a, b) => a.framework.localeCompare(b.framework))
-      .map((fw) => ({
-        name: fw.framework.length > 12 ? fw.framework.slice(0, 12) + "..." : fw.framework,
-        compliance: Number(fw.compliance_rate.toFixed(1)),
-      }));
-  }, [summary?.frameworks]);
+function InfrastructurePreview() {
+  const { data: topology, isLoading } = useTopology();
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 h-[340px]">
-        <div className="h-full flex items-center justify-center">
-          <div className="text-xs text-zinc-600 animate-pulse">Loading chart...</div>
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
   }
 
-  if (chartData.length === 0) {
+  const sourceTypes = topology?.source_types ?? [];
+
+  if (sourceTypes.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 h-[340px]">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <EmptyState
-          icon={TrendingUp}
-          title="No posture data"
-          description="Run the pipeline to generate compliance posture data."
+          icon={Server}
+          title="No infrastructure data"
+          description="Run the pipeline to discover infrastructure source types."
         />
       </div>
     );
   }
 
+  const totalFindings = topology?.total_findings ?? 0;
+
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <h2 className="text-[11px] uppercase tracking-[0.06em] text-zinc-500 mb-3">
-        Compliance Posture by Framework
-      </h2>
-      <div className="h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-            <defs>
-              <linearGradient id="postureFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-            <XAxis
-              dataKey="name"
-              tick={{ fill: "#71717a", fontSize: 10 }}
-              axisLine={{ stroke: "#3f3f46" }}
-              tickLine={false}
-              interval={0}
-              angle={-30}
-              textAnchor="end"
-              height={60}
-            />
-            <YAxis
-              tick={{ fill: "#71717a", fontSize: 10 }}
-              axisLine={false}
-              tickLine={false}
-              domain={[0, 100]}
-              tickFormatter={(v: number) => `${v}%`}
-            />
-            <RechartsTooltip
-              contentStyle={{
-                backgroundColor: "#18181b",
-                border: "1px solid #3f3f46",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              labelStyle={{ color: "#a1a1aa" }}
-              itemStyle={{ color: "#818cf8" }}
-              formatter={(value) => [`${value}%`, "Compliance"]}
-            />
-            <Area
-              type="monotone"
-              dataKey="compliance"
-              stroke="#6366f1"
-              strokeWidth={2}
-              fill="url(#postureFill)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[11px] uppercase tracking-[0.06em] text-zinc-500">
+          Infrastructure Overview
+        </h2>
+        <Link
+          to="/infrastructure"
+          className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          {totalFindings.toLocaleString()} total findings &rarr;
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+        {sourceTypes.map((st) => {
+          const IconComponent = SOURCE_TYPE_ICONS[st.name.toLowerCase()] ?? Layers;
+          const providerCount = st.providers.length;
+          return (
+            <Link
+              key={st.name}
+              to="/infrastructure"
+              className="rounded-lg border border-zinc-800 bg-zinc-800/40 p-3 hover:border-zinc-700 hover:bg-zinc-800/60 transition-all group"
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <IconComponent className="h-3.5 w-3.5 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
+                <span className="text-[10px] uppercase tracking-wide text-zinc-400 truncate">
+                  {st.name}
+                </span>
+              </div>
+              <div className="text-xl font-bold text-zinc-100 tabular-nums">
+                {st.finding_count.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-zinc-500 mt-0.5">
+                {providerCount} provider{providerCount !== 1 ? "s" : ""}
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
@@ -494,7 +477,7 @@ function DriftEventsTable() {
 
   if (isError || events.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 h-full">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <EmptyState
           icon={TrendingDown}
           title="No drift events"
@@ -514,14 +497,15 @@ function DriftEventsTable() {
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-500">
               <th className="text-left py-2 pr-3 font-medium">Control</th>
-              <th className="text-left py-2 pr-3 font-medium">Change</th>
-              <th className="text-left py-2 pr-3 font-medium">Source</th>
+              <th className="text-left py-2 pr-3 font-medium">Direction</th>
+              <th className="text-left py-2 pr-3 font-medium">Status Change</th>
               <th className="text-right py-2 font-medium">When</th>
             </tr>
           </thead>
           <tbody>
             {events.map((evt) => {
-              const isDegraded = evt.drift_direction === "DEGRADED" || evt.drift_direction === "degraded";
+              const isDegraded =
+                evt.drift_direction === "DEGRADED" || evt.drift_direction === "degraded";
               return (
                 <tr
                   key={evt.id}
@@ -596,11 +580,11 @@ export default function Dashboard() {
         <KRIPanel />
       </div>
 
-      {/* Section 4: Posture Trend + Drift Events */}
-      <div className="grid grid-cols-2 gap-4">
-        <PostureTrendChart />
-        <DriftEventsTable />
-      </div>
+      {/* Section 4: Infrastructure Preview */}
+      <InfrastructurePreview />
+
+      {/* Section 5: Recent Drift Events */}
+      <DriftEventsTable />
     </div>
   );
 }

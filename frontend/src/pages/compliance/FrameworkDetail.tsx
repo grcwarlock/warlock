@@ -1,40 +1,31 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, ArrowLeft, ShieldCheck } from "lucide-react";
-import { useCoverage, useFrameworkControls, useResults } from "@/hooks/useApi";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import {
+  ChevronDown,
+  ChevronRight,
+  ArrowLeft,
+  ShieldCheck,
+} from "lucide-react";
+import { useCoverage, useFrameworkControls } from "@/hooks/useApi";
 import { CardSkeleton, LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import type { Control, ControlResult } from "@/api/types";
+import type { Control } from "@/api/types";
 
 // ---------------------------------------------------------------------------
-// Assessment method badge
+// Result count indicator
 // ---------------------------------------------------------------------------
 
-const METHOD_STYLES: Record<string, string> = {
-  assertion: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  ai: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  opa: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  inherited: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-};
-
-const METHOD_LABELS: Record<string, string> = {
-  assertion: "Assertion",
-  ai: "AI",
-  opa: "OPA",
-  inherited: "Inherited",
-};
-
-function AssessmentMethodBadge({ method }: { method: string }) {
-  const normalized = method.toLowerCase();
-  const style = METHOD_STYLES[normalized] ?? METHOD_STYLES.assertion;
-  const label = METHOD_LABELS[normalized] ?? method;
-
+function ResultCountPill({ count }: { count: number }) {
+  if (count === 0) {
+    return (
+      <span className="inline-flex items-center rounded-md border border-zinc-700/30 bg-zinc-800/50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
+        0 results
+      </span>
+    );
+  }
   return (
-    <span
-      className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${style}`}
-    >
-      {label}
+    <span className="inline-flex items-center rounded-md border border-zinc-700/40 bg-zinc-800/60 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+      {count} result{count !== 1 ? "s" : ""}
     </span>
   );
 }
@@ -43,29 +34,23 @@ function AssessmentMethodBadge({ method }: { method: string }) {
 // Family section
 // ---------------------------------------------------------------------------
 
-interface ControlFamily {
-  family: string;
-  controls: Control[];
-  results: Map<string, ControlResult>;
-}
-
 function FamilySection({
   family,
+  controls,
   frameworkId,
+  defaultExpanded,
 }: {
-  family: ControlFamily;
+  family: string;
+  controls: Control[];
   frameworkId: string;
+  defaultExpanded: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
-  const compliantCount = family.controls.filter((c) => {
-    const r = family.results.get(c.control_id);
-    return r?.status === "compliant";
-  }).length;
-
-  const passRate =
-    family.controls.length > 0
-      ? Math.round((compliantCount / family.controls.length) * 100)
+  const withResults = controls.filter((c) => c.result_count > 0).length;
+  const coveragePercent =
+    controls.length > 0
+      ? Math.round((withResults / controls.length) * 100)
       : 0;
 
   return (
@@ -79,49 +64,42 @@ function FamilySection({
         ) : (
           <ChevronRight className="h-4 w-4 text-zinc-500 shrink-0" />
         )}
-        <span className="font-medium text-sm text-zinc-200 flex-1">
-          {family.family}
+        <span className="font-medium text-sm text-zinc-200 flex-1 truncate">
+          {family}
         </span>
         <span className="text-xs text-zinc-500">
-          {family.controls.length} control{family.controls.length !== 1 ? "s" : ""}
+          {controls.length} control{controls.length !== 1 ? "s" : ""}
         </span>
         <span
           className={`text-xs font-medium ${
-            passRate > 50
+            coveragePercent > 50
               ? "text-green-400"
-              : passRate >= 25
+              : coveragePercent >= 25
                 ? "text-amber-400"
                 : "text-red-400"
           }`}
         >
-          {passRate}% pass
+          {coveragePercent}% assessed
         </span>
       </button>
 
       {expanded && (
         <div className="border-t border-zinc-800 divide-y divide-zinc-800/50">
-          {family.controls.map((ctrl) => {
-            const result = family.results.get(ctrl.control_id);
-            const status = result?.status ?? "not_assessed";
-            const assessor = result?.assessor ?? "assertion";
-
-            return (
-              <Link
-                key={ctrl.control_id}
-                to={`/compliance/${encodeURIComponent(frameworkId)}/${encodeURIComponent(ctrl.control_id)}`}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/30 transition-colors"
-              >
-                <span className="font-mono text-xs text-zinc-300 w-20 shrink-0">
-                  {ctrl.control_id}
-                </span>
-                <span className="text-sm text-zinc-400 flex-1 truncate min-w-0">
-                  {ctrl.control_family || ctrl.control_id}
-                </span>
-                <AssessmentMethodBadge method={assessor} />
-                <StatusBadge status={status} />
-              </Link>
-            );
-          })}
+          {controls.map((ctrl) => (
+            <Link
+              key={ctrl.control_id}
+              to={`/compliance/${encodeURIComponent(frameworkId)}/${encodeURIComponent(ctrl.control_id)}`}
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/30 transition-colors"
+            >
+              <span className="font-mono text-xs text-zinc-300 w-24 shrink-0">
+                {ctrl.control_id}
+              </span>
+              <span className="text-sm text-zinc-400 flex-1 truncate min-w-0">
+                {ctrl.control_family || ctrl.control_id}
+              </span>
+              <ResultCountPill count={ctrl.result_count} />
+            </Link>
+          ))}
         </div>
       )}
     </div>
@@ -145,29 +123,14 @@ export default function FrameworkDetail() {
   const { data: coverageList } = useCoverage(decodedId);
   const coverage = coverageList?.[0];
 
-  const { data: resultsData } = useResults({
-    framework: decodedId,
-    limit: 5000,
-  });
-
-  // Build a map of control_id -> latest result for status lookups
-  const resultMap = new Map<string, ControlResult>();
-  if (resultsData?.items) {
-    for (const r of resultsData.items) {
-      const existing = resultMap.get(r.control_id);
-      if (!existing || r.assessed_at > existing.assessed_at) {
-        resultMap.set(r.control_id, r);
-      }
-    }
-  }
-
   // Group controls by family
   const familyMap = new Map<string, Control[]>();
   if (controls) {
     for (const ctrl of controls) {
-      // Derive family from control_family field, or from control_id prefix (e.g., "AC" from "AC-2")
       const family =
-        ctrl.control_family || ctrl.control_id.replace(/-[\d.]+$/, "") || "Other";
+        ctrl.control_family ||
+        ctrl.control_id.replace(/-[\d.]+$/, "") ||
+        "Other";
       const existing = familyMap.get(family);
       if (existing) {
         existing.push(ctrl);
@@ -177,12 +140,13 @@ export default function FrameworkDetail() {
     }
   }
 
-  const families: ControlFamily[] = Array.from(familyMap.entries())
+  const families = Array.from(familyMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([family, ctrls]) => ({
       family,
-      controls: ctrls.sort((a, b) => a.control_id.localeCompare(b.control_id)),
-      results: resultMap,
+      controls: ctrls.sort((a, b) =>
+        a.control_id.localeCompare(b.control_id),
+      ),
     }));
 
   const rate = coverage?.rate ?? 0;
@@ -211,9 +175,12 @@ export default function FrameworkDetail() {
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-100">{decodedId}</h1>
+            <h1 className="text-xl font-semibold text-zinc-100">
+              {decodedId}
+            </h1>
             <p className="text-sm text-zinc-500 mt-1">
-              {total} controls across {families.length} famil{families.length !== 1 ? "ies" : "y"}
+              {total} controls across {families.length} famil
+              {families.length !== 1 ? "ies" : "y"}
             </p>
           </div>
           <div className="text-right">
@@ -312,11 +279,13 @@ export default function FrameworkDetail() {
       {/* Families list */}
       {!ctrlLoading && !ctrlError && families.length > 0 && (
         <div className="space-y-3">
-          {families.map((fam) => (
+          {families.map((fam, idx) => (
             <FamilySection
               key={fam.family}
-              family={fam}
+              family={fam.family}
+              controls={fam.controls}
               frameworkId={decodedId}
+              defaultExpanded={idx === 0}
             />
           ))}
         </div>

@@ -234,6 +234,52 @@ class FindingRepository(BaseRepository):
             query = scope_filter(query, Finding)
         return query.filter(Finding.id == finding_id).first()
 
+    # -- Topology aggregation --
+
+    def topology_aggregate(
+        self,
+        source_type: str | None = None,
+        provider: str | None = None,
+    ) -> list:
+        """Aggregate findings by source_type/source/observation_type/resource_type/resource_id/severity."""
+        from sqlalchemy import func
+
+        q = self.session.query(
+            Finding.source_type,
+            Finding.source,
+            Finding.observation_type,
+            Finding.resource_type,
+            Finding.resource_id,
+            Finding.severity,
+            func.count(Finding.id).label("cnt"),
+        ).group_by(
+            Finding.source_type,
+            Finding.source,
+            Finding.observation_type,
+            Finding.resource_type,
+            Finding.resource_id,
+            Finding.severity,
+        )
+        if source_type:
+            q = q.filter(Finding.source_type == source_type)
+        if provider:
+            q = q.filter(Finding.source == provider)
+        return q.all()
+
+    def topology_controls(self, resource_ids: set[str]) -> list:
+        """Return (resource_id, control_id) pairs for a set of resource_ids."""
+        from warlock.db.models import ControlResult
+
+        if not resource_ids:
+            return []
+        return (
+            self.session.query(Finding.resource_id, ControlResult.control_id)
+            .join(ControlResult, ControlResult.finding_id == Finding.id)
+            .filter(Finding.resource_id.in_(list(resource_ids)))
+            .group_by(Finding.resource_id, ControlResult.control_id)
+            .all()
+        )
+
 
 # ---------------------------------------------------------------------------
 # Control Result Repository

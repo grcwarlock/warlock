@@ -385,4 +385,33 @@ export function updateAlertConfig(config: AlertConfig): Promise<AlertConfig> {
 // Re-exports from auth
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Resource Topology
+// ---------------------------------------------------------------------------
+
+export function getTopology(
+  sourceType?: string,
+  provider?: string,
+): Promise<import("@/api/types").TopologyResponse> {
+  const params: Record<string, unknown> = {};
+  if (sourceType) params.source_type = sourceType;
+  if (provider) params.provider = provider;
+  return api<import("@/api/types").TopologyResponse>(
+    `/resources/topology${toSearchParams(params)}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Remediation Command Generator
+// ---------------------------------------------------------------------------
+
+export function generateRemediation(
+  request: import("@/api/types").RemediationGenerateRequest,
+): Promise<import("@/api/types").RemediationGenerateResponse> {
+  return api<import("@/api/types").RemediationGenerateResponse>(
+    "/remediation/generate",
+    { method: "POST", body: request },
+  );
+}
+
 export { login, logout } from "@/api/auth";

@@ -3,67 +3,32 @@ import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ShieldCheck,
-  FileText,
-  Clock,
-  ArrowRight,
-  Info,
-  Sparkles,
+  ShieldAlert,
+  ShieldOff,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Loader2,
+  Wrench,
+  BookOpen,
   CheckCircle2,
-  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import {
   useControlDetail,
-  useResults,
-  usePostureHistory,
+  useGenerateRemediation,
 } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { CodeBlock } from "@/components/shared/CodeBlock";
 import { CardSkeleton, LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import type { ControlResult, PostureHistoryPoint } from "@/api/types";
-
-// ---------------------------------------------------------------------------
-// Assessment tier badge
-// ---------------------------------------------------------------------------
-
-const TIER_CONFIG: Record<
-  string,
-  { label: string; tier: string; style: string }
-> = {
-  assertion: {
-    label: "Tier 1: Assertion",
-    tier: "1",
-    style: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  },
-  ai: {
-    label: "Tier 2: AI",
-    tier: "2",
-    style: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  },
-  opa: {
-    label: "Tier 3: OPA",
-    tier: "3",
-    style: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  },
-  inherited: {
-    label: "Tier 4: Inherited",
-    tier: "4",
-    style: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-  },
-};
-
-function TierBadge({ method }: { method: string }) {
-  const normalized = method.toLowerCase();
-  const config = TIER_CONFIG[normalized] ?? TIER_CONFIG.assertion;
-  return (
-    <span
-      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${config.style}`}
-    >
-      {config.label}
-    </span>
-  );
-}
+import { cn } from "@/lib/utils";
+import type {
+  ControlDetailResource,
+  ControlDetailRemediation,
+  RemediationGenerateResponse,
+} from "@/api/types";
 
 // ---------------------------------------------------------------------------
 // Section wrapper
@@ -73,13 +38,20 @@ function Section({
   title,
   icon: Icon,
   children,
+  className,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+    <div
+      className={cn(
+        "rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden",
+        className,
+      )}
+    >
       <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
         <Icon className="h-4 w-4 text-zinc-500" />
         <h2 className="text-sm font-medium text-zinc-300">{title}</h2>
@@ -90,387 +62,509 @@ function Section({
 }
 
 // ---------------------------------------------------------------------------
-// Assessment details panel
+// Status summary bar
 // ---------------------------------------------------------------------------
 
-function AssessmentPanel({ results }: { results: ControlResult[] }) {
-  if (results.length === 0) {
+function StatusSummaryBar({
+  total,
+  compliant,
+  nonCompliant,
+  partial,
+  notAssessed,
+}: {
+  total: number;
+  compliant: number;
+  nonCompliant: number;
+  partial: number;
+  notAssessed: number;
+}) {
+  if (total === 0) return null;
+
+  const segments = [
+    { count: compliant, color: "bg-green-500", label: "Compliant" },
+    { count: partial, color: "bg-amber-500", label: "Partial" },
+    { count: nonCompliant, color: "bg-red-500", label: "Non-Compliant" },
+    { count: notAssessed, color: "bg-zinc-700", label: "Not Assessed" },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex h-2.5 rounded-full overflow-hidden bg-zinc-800">
+        {segments.map(
+          (seg, i) =>
+            seg.count > 0 && (
+              <div
+                key={i}
+                className={cn(seg.color, "transition-all")}
+                style={{ width: `${(seg.count / total) * 100}%` }}
+                title={`${seg.label}: ${seg.count}`}
+              />
+            ),
+        )}
+      </div>
+      <div className="flex items-center gap-5 text-xs">
+        <span className="text-zinc-500">{total} total</span>
+        <span className="text-green-400">{compliant} compliant</span>
+        <span className="text-red-400">{nonCompliant} non-compliant</span>
+        <span className="text-amber-400">{partial} partial</span>
+        <span className="text-zinc-500">{notAssessed} not assessed</span>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Generated remediation panel (shown after clicking Remediate)
+// ---------------------------------------------------------------------------
+
+function GeneratedRemediationPanel({
+  data,
+  onClose,
+}: {
+  data: RemediationGenerateResponse;
+  onClose: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-5 space-y-4">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2">
+          <Wrench className="h-4 w-4 text-blue-400" />
+          <h3 className="text-sm font-medium text-blue-300">
+            Remediation for {data.resource_id}
+          </h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          Dismiss
+        </button>
+      </div>
+
+      {/* Playbook summary */}
+      {data.playbook.summary && (
+        <p className="text-sm text-zinc-300">{data.playbook.summary}</p>
+      )}
+
+      {/* Playbook steps */}
+      {data.playbook.steps.length > 0 && (
+        <div className="space-y-1.5">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Steps
+          </h4>
+          <ol className="list-decimal list-inside space-y-1 text-sm text-zinc-400">
+            {data.playbook.steps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Console path */}
+      {data.playbook.console_path && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Console Path
+          </h4>
+          <p className="text-sm text-zinc-400 font-mono">
+            {data.playbook.console_path}
+          </p>
+        </div>
+      )}
+
+      {/* CLI commands */}
+      {data.commands.cli && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            CLI Command
+          </h4>
+          <CodeBlock code={data.commands.cli} language="bash" />
+        </div>
+      )}
+
+      {/* Terraform */}
+      {data.commands.terraform && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Terraform
+          </h4>
+          <CodeBlock code={data.commands.terraform} language="terraform" />
+        </div>
+      )}
+
+      {/* Console URL */}
+      {data.commands.console_url && (
+        <a
+          href={data.commands.console_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Open in Cloud Console
+        </a>
+      )}
+
+      {/* Recommended reading */}
+      {data.playbook.recommended_reading.length > 0 && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Recommended Reading
+          </h4>
+          <ul className="list-disc list-inside text-xs text-zinc-400 space-y-0.5">
+            {data.playbook.recommended_reading.map((link, i) => (
+              <li key={i}>
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline"
+                >
+                  {link}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Failing resources table
+// ---------------------------------------------------------------------------
+
+function FailingResourcesTable({
+  resources,
+  controlId,
+  frameworkId,
+}: {
+  resources: ControlDetailResource[];
+  controlId: string;
+  frameworkId: string;
+}) {
+  const remediationMutation = useGenerateRemediation();
+  const [activeResourceId, setActiveResourceId] = useState<string | null>(null);
+  const [generatedData, setGeneratedData] =
+    useState<RemediationGenerateResponse | null>(null);
+
+  const handleRemediate = (resource: ControlDetailResource) => {
+    setActiveResourceId(resource.resource_id);
+    setGeneratedData(null);
+
+    remediationMutation.mutate(
+      {
+        control_id: controlId,
+        resource_id: resource.resource_id,
+        resource_type: resource.resource_type,
+        provider: resource.provider ?? "unknown",
+        framework: frameworkId,
+      },
+      {
+        onSuccess: (data) => {
+          setGeneratedData(data);
+        },
+      },
+    );
+  };
+
+  if (resources.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">
-        No assessment results available for this control.
-      </p>
+      <div className="flex items-center gap-2 text-sm text-zinc-500 py-2">
+        <CheckCircle2 className="h-4 w-4 text-green-400" />
+        No failing resources found for this control.
+      </div>
     );
   }
-
-  // Group by assessor type for display
-  const assertions = results.filter((r) => r.assessor === "assertion");
-  const aiResults = results.filter((r) => r.assessor === "ai");
-  const opaResults = results.filter((r) => r.assessor === "opa");
-  const inherited = results.filter(
-    (r) => r.assessor !== "assertion" && r.assessor !== "ai" && r.assessor !== "opa"
-  );
 
   return (
     <div className="space-y-4">
-      {assertions.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
-            Assertions
-          </h3>
-          {assertions.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-3 rounded-lg bg-zinc-800/40 px-3 py-2"
-            >
-              {r.assertion_passed ? (
-                <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />
-              ) : (
-                <XCircle className="h-4 w-4 text-red-400 shrink-0" />
-              )}
-              <span className="text-sm text-zinc-300 font-mono">
-                {r.assertion_name ?? "unnamed"}
-              </span>
-              <StatusBadge status={r.status} className="ml-auto" />
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-800">
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                Resource ID
+              </th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                Type
+              </th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                Provider
+              </th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                Region
+              </th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                Severity
+              </th>
+              <th className="text-right text-xs font-medium text-zinc-500 uppercase tracking-wide py-2">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800/50">
+            {resources.map((resource) => {
+              const isActive = activeResourceId === resource.resource_id;
+              const isLoading =
+                isActive && remediationMutation.isPending;
 
-      {aiResults.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
-            AI Assessment
-          </h3>
-          {aiResults.map((r) => (
-            <div
-              key={r.id}
-              className="rounded-lg bg-zinc-800/40 px-3 py-2 space-y-1"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-purple-400" />
-                <StatusBadge status={r.status} />
-              </div>
-              {r.remediation_summary && (
-                <p className="text-xs text-zinc-400 mt-1">
-                  {r.remediation_summary}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {opaResults.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
-            OPA Policy Evaluation
-          </h3>
-          {opaResults.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-3 rounded-lg bg-zinc-800/40 px-3 py-2"
-            >
-              <StatusBadge status={r.status} />
-              <span className="text-xs text-zinc-400">{r.severity} severity</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {inherited.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
-            Other / Inherited
-          </h3>
-          {inherited.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-3 rounded-lg bg-zinc-800/40 px-3 py-2"
-            >
-              <span className="text-sm text-zinc-400">{r.assessor}</span>
-              <StatusBadge status={r.status} className="ml-auto" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Evidence panel
-// ---------------------------------------------------------------------------
-
-function EvidencePanel({
-  results,
-  frameworkId,
-}: {
-  results: ControlResult[];
-  frameworkId: string;
-}) {
-  // De-duplicate findings from results
-  const seen = new Set<string>();
-  const findings = results
-    .filter((r) => {
-      if (!r.finding_id || seen.has(r.finding_id)) return false;
-      seen.add(r.finding_id);
-      return true;
-    })
-    .slice(0, 50);
-
-  if (findings.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500">
-        No evidence findings linked to this control.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-1">
-      {findings.map((r) => (
-        <Link
-          key={r.finding_id}
-          to={`/findings/${encodeURIComponent(r.finding_id)}`}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-800/40 transition-colors"
-        >
-          <span className="font-mono text-xs text-zinc-400 truncate flex-1 min-w-0">
-            {r.finding_id}
-          </span>
-          <SeverityBadge severity={r.severity} />
-          <span className="text-[10px] text-zinc-600 shrink-0">
-            {new Date(r.assessed_at).toLocaleDateString()}
-          </span>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Crosswalks panel
-// ---------------------------------------------------------------------------
-
-function CrosswalksPanel({
-  frameworks,
-  controlId,
-  currentFramework,
-}: {
-  frameworks: string[];
-  controlId: string;
-  currentFramework: string;
-}) {
-  const otherFrameworks = frameworks.filter((f) => f !== currentFramework);
-
-  if (otherFrameworks.length === 0) {
-    return (
-      <div className="flex items-start gap-2 text-sm text-zinc-500">
-        <Info className="h-4 w-4 shrink-0 mt-0.5" />
-        <span>Crosswalk data coming soon. This control is currently only mapped to {currentFramework}.</span>
+              return (
+                <tr
+                  key={resource.resource_id}
+                  className={cn(
+                    "hover:bg-zinc-800/30 transition-colors",
+                    isActive && generatedData && "bg-zinc-800/20",
+                  )}
+                >
+                  <td className="py-2.5 pr-3">
+                    <span className="font-mono text-xs text-zinc-300 break-all">
+                      {resource.resource_id}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <span className="text-xs text-zinc-400">
+                      {resource.resource_type}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <span className="text-xs text-zinc-400">
+                      {resource.provider ?? "-"}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <span className="text-xs text-zinc-500">
+                      {resource.region ?? "-"}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    {resource.severity ? (
+                      <SeverityBadge severity={resource.severity} />
+                    ) : (
+                      <span className="text-xs text-zinc-600">-</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <button
+                      onClick={() => handleRemediate(resource)}
+                      disabled={isLoading}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                        isActive && generatedData
+                          ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
+                          : "border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100",
+                        isLoading && "opacity-60 cursor-not-allowed",
+                      )}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Wrench className="h-3 w-3" />
+                          Remediate
+                        </>
+                      )}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    );
-  }
 
-  return (
-    <div className="space-y-1">
-      {otherFrameworks.map((fw) => (
-        <Link
-          key={fw}
-          to={`/compliance/${encodeURIComponent(fw)}/${encodeURIComponent(controlId)}`}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-800/40 transition-colors"
-        >
-          <span className="text-sm text-zinc-300">{fw}</span>
-          <ArrowRight className="h-3 w-3 text-zinc-600" />
-          <span className="font-mono text-xs text-zinc-400">{controlId}</span>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// History timeline panel
-// ---------------------------------------------------------------------------
-
-function HistoryPanel({ points }: { points: PostureHistoryPoint[] }) {
-  if (points.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500">
-        No posture history available for this control.
-      </p>
-    );
-  }
-
-  // Show most recent 20 entries
-  const recent = points.slice(-20).reverse();
-
-  return (
-    <div className="space-y-0">
-      {recent.map((point, i) => (
-        <div key={`${point.date}-${i}`} className="flex items-center gap-3 py-1.5">
-          {/* Timeline dot + line */}
-          <div className="relative flex flex-col items-center w-4">
-            <div
-              className={`h-2 w-2 rounded-full ${
-                point.status === "compliant"
-                  ? "bg-green-500"
-                  : point.status === "non_compliant"
-                    ? "bg-red-500"
-                    : point.status === "partial"
-                      ? "bg-amber-500"
-                      : "bg-zinc-600"
-              }`}
-            />
-            {i < recent.length - 1 && (
-              <div className="absolute top-3 w-px h-4 bg-zinc-800" />
-            )}
-          </div>
-          <span className="text-[10px] text-zinc-600 w-20 shrink-0">
-            {new Date(point.date).toLocaleDateString()}
-          </span>
-          <StatusBadge status={point.status} />
-          <span className="text-xs text-zinc-500">
-            score {Math.round(point.posture_score * 100)}%
-          </span>
+      {/* Mutation error */}
+      {remediationMutation.isError && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-sm text-red-400">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          Failed to generate remediation. Try again.
         </div>
-      ))}
+      )}
+
+      {/* Generated remediation */}
+      {generatedData && (
+        <GeneratedRemediationPanel
+          data={generatedData}
+          onClose={() => {
+            setActiveResourceId(null);
+            setGeneratedData(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Remediation panel
+// Static remediation panel
 // ---------------------------------------------------------------------------
 
-function RemediationPanel({
+function StaticRemediationPanel({
   remediation,
-  aiRemediation,
-  controlId,
 }: {
-  remediation: {
-    summary: string | null;
-    steps: string[];
-    console_path: string | null;
-    recommended_reading: string[];
-  } | null;
-  aiRemediation: Record<string, unknown> | null;
-  controlId: string;
+  remediation: ControlDetailRemediation | null;
 }) {
-  const [activeTab, setActiveTab] = useState<"playbook" | "ai">("playbook");
+  const hasContent =
+    remediation &&
+    (remediation.summary ||
+      remediation.steps.length > 0 ||
+      remediation.console_path ||
+      remediation.recommended_reading.length > 0);
 
-  const hasPlaybook =
-    remediation && (remediation.summary || remediation.steps.length > 0);
-  const hasAI = aiRemediation && Object.keys(aiRemediation).length > 0;
-
-  if (!hasPlaybook && !hasAI) {
+  if (!hasContent) {
     return (
-      <div className="space-y-3">
-        <p className="text-sm text-zinc-500">
-          No remediation guidance available yet for this control.
-        </p>
-        <Link
-          to={`/remediation?control_id=${encodeURIComponent(controlId)}`}
-          className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
-        >
-          Create POA&M
-        </Link>
-      </div>
+      <p className="text-sm text-zinc-500">
+        No static remediation guidance available for this control.
+      </p>
     );
   }
 
   return (
     <div className="space-y-3">
-      {/* Tab buttons */}
-      <div className="flex gap-1 rounded-lg bg-zinc-800/50 p-0.5 w-fit">
-        <button
-          onClick={() => setActiveTab("playbook")}
-          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-            activeTab === "playbook"
-              ? "bg-zinc-700 text-zinc-200"
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Playbook
-        </button>
-        <button
-          onClick={() => setActiveTab("ai")}
-          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-            activeTab === "ai"
-              ? "bg-zinc-700 text-zinc-200"
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          AI Remediation
-        </button>
-      </div>
+      {remediation.summary && (
+        <p className="text-sm text-zinc-300">{remediation.summary}</p>
+      )}
 
-      {/* Playbook tab */}
-      {activeTab === "playbook" && (
-        <div className="space-y-3">
-          {remediation?.summary && (
-            <p className="text-sm text-zinc-300">{remediation.summary}</p>
-          )}
-          {remediation?.steps && remediation.steps.length > 0 && (
-            <ol className="list-decimal list-inside space-y-1 text-sm text-zinc-400">
-              {remediation.steps.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          )}
-          {remediation?.console_path && (
-            <CodeBlock
-              code={remediation.console_path}
-              language="terraform"
-            />
-          )}
-          {remediation?.recommended_reading &&
-            remediation.recommended_reading.length > 0 && (
-              <div className="space-y-1">
-                <h4 className="text-xs text-zinc-500 font-medium">
-                  Recommended Reading
-                </h4>
-                <ul className="list-disc list-inside text-xs text-zinc-400 space-y-0.5">
-                  {remediation.recommended_reading.map((link, i) => (
-                    <li key={i}>
-                      <a
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:underline"
-                      >
-                        {link}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+      {remediation.steps.length > 0 && (
+        <div className="space-y-1.5">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Remediation Steps
+          </h4>
+          <ol className="list-decimal list-inside space-y-1 text-sm text-zinc-400">
+            {remediation.steps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
+          </ol>
         </div>
       )}
 
-      {/* AI tab */}
-      {activeTab === "ai" && (
-        <div className="space-y-2">
-          {hasAI ? (
-            <CodeBlock
-              code={JSON.stringify(aiRemediation, null, 2)}
-              language="json"
-            />
-          ) : (
-            <p className="text-sm text-zinc-500">
-              AI-generated remediation not available for this control.
-            </p>
-          )}
+      {remediation.console_path && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Console Path
+          </h4>
+          <CodeBlock code={remediation.console_path} language="text" />
         </div>
       )}
 
-      {/* Create POA&M */}
-      <Link
-        to={`/remediation?control_id=${encodeURIComponent(controlId)}`}
-        className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors w-fit"
+      {remediation.recommended_reading.length > 0 && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+            Recommended Reading
+          </h4>
+          <ul className="list-disc list-inside text-xs text-zinc-400 space-y-0.5">
+            {remediation.recommended_reading.map((link, i) => (
+              <li key={i}>
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline"
+                >
+                  {link}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Passing resources (collapsible)
+// ---------------------------------------------------------------------------
+
+function PassingResourcesSection({
+  resources,
+}: {
+  resources: ControlDetailResource[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (resources.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-zinc-800/50 transition-colors"
       >
-        Create POA&M
-      </Link>
+        {expanded ? (
+          <ChevronDown className="h-4 w-4 text-zinc-500 shrink-0" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-zinc-500 shrink-0" />
+        )}
+        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+        <span className="text-sm font-medium text-zinc-300">
+          Passing Resources
+        </span>
+        <span className="text-xs text-zinc-500 ml-auto">
+          {resources.length} resource{resources.length !== 1 ? "s" : ""}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-zinc-800 p-4">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                    Resource ID
+                  </th>
+                  <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                    Type
+                  </th>
+                  <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                    Provider
+                  </th>
+                  <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2 pr-3">
+                    Region
+                  </th>
+                  <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wide py-2">
+                    Source
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {resources.map((resource) => (
+                  <tr
+                    key={resource.resource_id}
+                    className="hover:bg-zinc-800/20 transition-colors"
+                  >
+                    <td className="py-2 pr-3">
+                      <span className="font-mono text-xs text-zinc-400 break-all">
+                        {resource.resource_id}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 text-xs text-zinc-500">
+                      {resource.resource_type}
+                    </td>
+                    <td className="py-2 pr-3 text-xs text-zinc-500">
+                      {resource.provider ?? "-"}
+                    </td>
+                    <td className="py-2 pr-3 text-xs text-zinc-600">
+                      {resource.region ?? "-"}
+                    </td>
+                    <td className="py-2 text-xs text-zinc-600">
+                      {resource.source}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -494,29 +588,7 @@ export default function ControlDetail() {
     isError: detailError,
   } = useControlDetail(decodedControl, decodedFramework);
 
-  const { data: resultsData, isLoading: resultsLoading } = useResults({
-    framework: decodedFramework,
-    control_id: decodedControl,
-    limit: 200,
-  });
-
-  const { data: historyData } = usePostureHistory(
-    decodedFramework,
-    decodedControl,
-    90
-  );
-
-  const results = resultsData?.items ?? [];
-  const isLoading = detailLoading || resultsLoading;
-
-  // Determine primary assessment method from latest result
-  const latestResult = results.length > 0
-    ? results.reduce((a, b) => (a.assessed_at > b.assessed_at ? a : b))
-    : null;
-
-  const primaryMethod = latestResult?.assessor ?? "assertion";
-
-  // Aggregate status
+  // Determine overall status from counts
   const overallStatus =
     detail && detail.non_compliant_count > 0
       ? "non_compliant"
@@ -525,9 +597,6 @@ export default function ControlDetail() {
         : detail && detail.compliant_count > 0
           ? "compliant"
           : "not_assessed";
-
-  // Get history points
-  const historyPoints: PostureHistoryPoint[] = historyData?.[0]?.points ?? [];
 
   return (
     <div className="p-6 space-y-6">
@@ -552,7 +621,7 @@ export default function ControlDetail() {
       </div>
 
       {/* Loading */}
-      {isLoading && (
+      {detailLoading && (
         <div className="space-y-4">
           <CardSkeleton />
           <LoadingState rows={8} />
@@ -560,7 +629,7 @@ export default function ControlDetail() {
       )}
 
       {/* Error */}
-      {!isLoading && detailError && (
+      {!detailLoading && detailError && (
         <EmptyState
           icon={ShieldCheck}
           title="Failed to load control"
@@ -569,13 +638,13 @@ export default function ControlDetail() {
       )}
 
       {/* Content */}
-      {!isLoading && !detailError && detail && (
+      {!detailLoading && !detailError && detail && (
         <>
           {/* Header card */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
+              <div className="space-y-2 flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-2xl font-bold font-mono text-zinc-100">
                     {detail.control_id}
                   </h1>
@@ -584,73 +653,83 @@ export default function ControlDetail() {
                   </span>
                 </div>
                 {detail.description && (
-                  <p className="text-sm text-zinc-400 max-w-2xl">
+                  <p className="text-sm text-zinc-400 max-w-3xl">
                     {detail.description}
                   </p>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-2 shrink-0">
-                <StatusBadge status={overallStatus} className="text-xs px-3 py-1" />
-                <TierBadge method={primaryMethod} />
+              <div className="shrink-0">
+                <StatusBadge
+                  status={overallStatus}
+                  className="text-xs px-3 py-1"
+                />
               </div>
             </div>
 
-            {/* Stats bar */}
-            <div className="mt-4 flex items-center gap-6 text-xs text-zinc-400">
-              <span>{detail.total_results} total results</span>
-              <span className="text-green-400">
-                {detail.compliant_count} compliant
-              </span>
-              <span className="text-red-400">
-                {detail.non_compliant_count} non-compliant
-              </span>
-              <span className="text-amber-400">
-                {detail.partial_count} partial
-              </span>
-              <span className="text-zinc-600">
-                {detail.not_assessed_count} not assessed
-              </span>
-            </div>
+            <StatusSummaryBar
+              total={detail.total_results}
+              compliant={detail.compliant_count}
+              nonCompliant={detail.non_compliant_count}
+              partial={detail.partial_count}
+              notAssessed={detail.not_assessed_count}
+            />
+
+            {/* Crosswalk frameworks */}
+            {detail.frameworks.length > 1 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-zinc-500">Also mapped to:</span>
+                {detail.frameworks
+                  .filter((f) => f !== decodedFramework)
+                  .map((fw) => (
+                    <Link
+                      key={fw}
+                      to={`/compliance/${encodeURIComponent(fw)}/${encodeURIComponent(detail.control_id)}`}
+                      className="inline-flex items-center rounded-md border border-zinc-700/40 bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition-colors"
+                    >
+                      {fw}
+                    </Link>
+                  ))}
+              </div>
+            )}
           </div>
 
-          {/* Panels grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Assessment details */}
-            <Section title="Assessment Details" icon={ShieldCheck}>
-              <AssessmentPanel results={results} />
-            </Section>
-
-            {/* Evidence */}
-            <Section title="Evidence" icon={FileText}>
-              <EvidencePanel
-                results={results}
-                frameworkId={decodedFramework}
-              />
-            </Section>
-
-            {/* Crosswalks */}
-            <Section title="Crosswalks" icon={ArrowRight}>
-              <CrosswalksPanel
-                frameworks={detail.frameworks}
-                controlId={detail.control_id}
-                currentFramework={decodedFramework}
-              />
-            </Section>
-
-            {/* History */}
-            <Section title="Posture History" icon={Clock}>
-              <HistoryPanel points={historyPoints} />
-            </Section>
-          </div>
-
-          {/* Remediation - full width */}
-          <Section title="Remediation" icon={Sparkles}>
-            <RemediationPanel
-              remediation={detail.remediation}
-              aiRemediation={detail.ai_remediation}
+          {/* Failing Resources -- THE CRITICAL FEATURE */}
+          <Section title="Failing Resources" icon={ShieldAlert}>
+            <FailingResourcesTable
+              resources={detail.failing_resources}
               controlId={detail.control_id}
+              frameworkId={decodedFramework}
             />
           </Section>
+
+          {/* Static Remediation Guidance */}
+          <Section title="Remediation Guidance" icon={BookOpen}>
+            <StaticRemediationPanel remediation={detail.remediation} />
+          </Section>
+
+          {/* AI Remediation (raw JSON if present) */}
+          {detail.ai_remediation &&
+            Object.keys(detail.ai_remediation).length > 0 && (
+              <Section title="AI Remediation Analysis" icon={ShieldOff}>
+                <CodeBlock
+                  code={JSON.stringify(detail.ai_remediation, null, 2)}
+                  language="json"
+                />
+              </Section>
+            )}
+
+          {/* Passing Resources */}
+          <PassingResourcesSection resources={detail.passing_resources} />
+
+          {/* POA&M link */}
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/remediation?control_id=${encodeURIComponent(detail.control_id)}&framework=${encodeURIComponent(decodedFramework)}`}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+            >
+              Create POA&M
+            </Link>
+          </div>
         </>
       )}
     </div>

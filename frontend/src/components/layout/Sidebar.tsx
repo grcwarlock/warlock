@@ -40,7 +40,7 @@ const mainSections: NavSection[] = [
     title: "OVERVIEW",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-      { icon: GitBranch, label: "Pipeline", path: "/pipeline" },
+      { icon: GitBranch, label: "Infrastructure", path: "/infrastructure" },
     ],
   },
   {

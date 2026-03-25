@@ -42,11 +42,26 @@ function relativeTime(iso: string | null | undefined): string {
 
 const PAGE_SIZE = 25;
 
-const SEVERITY_OPTIONS = ["", "critical", "high", "medium", "low", "info"];
-const SOURCE_OPTIONS = ["", "cloud_config", "vulnerability", "iam", "network", "code_scan", "container", "compliance"];
-const STATUS_OPTIONS = ["", "open", "in_progress", "resolved", "accepted"];
+const SEVERITY_OPTIONS = ["critical", "high", "medium", "low", "info"];
+const SOURCE_OPTIONS = [
+  "cloud_config",
+  "vulnerability",
+  "iam",
+  "network",
+  "code_scan",
+  "container",
+  "compliance",
+];
+const PROVIDER_OPTIONS = ["aws", "azure", "gcp", "github", "okta", "crowdstrike"];
+const OBS_TYPE_OPTIONS = [
+  "sighting",
+  "finding",
+  "policy_violation",
+  "misconfiguration",
+  "vulnerability",
+];
 
-type SortField = "title" | "severity" | "source" | "observed_at";
+type SortField = "title" | "severity" | "source" | "provider" | "observed_at";
 type SortDir = "asc" | "desc";
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -60,7 +75,7 @@ const SEVERITY_ORDER: Record<string, number> = {
 function sortFindings(
   items: Finding[],
   field: SortField,
-  dir: SortDir
+  dir: SortDir,
 ): Finding[] {
   const sorted = [...items].sort((a, b) => {
     if (field === "severity") {
@@ -81,6 +96,42 @@ function sortFindings(
 }
 
 // ---------------------------------------------------------------------------
+// Select component (shared styling)
+// ---------------------------------------------------------------------------
+
+function FilterSelect({
+  value,
+  onChange,
+  placeholder,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  options: string[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+    >
+      <option value="" className="bg-zinc-900">
+        {placeholder}
+      </option>
+      {options.map((s) => (
+        <option key={s} value={s} className="bg-zinc-900">
+          {s
+            .split("_")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -90,13 +141,17 @@ export default function FindingsTable() {
   const [page, setPage] = useState(0);
   const [severityFilter, setSeverityFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [providerFilter, setProviderFilter] = useState("");
+  const [obsTypeFilter, setObsTypeFilter] = useState("");
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("observed_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const { data, isLoading, isError } = useFindings({
     severity: severityFilter || undefined,
-    observation_type: sourceFilter || undefined,
+    source: sourceFilter || undefined,
+    provider: providerFilter || undefined,
+    observation_type: obsTypeFilter || undefined,
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
   });
@@ -105,13 +160,13 @@ export default function FindingsTable() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // Client-side search filter
+  // Client-side search filter on the current page
   const filtered = search
     ? items.filter(
         (f) =>
           f.title.toLowerCase().includes(search.toLowerCase()) ||
           (f.resource_id ?? "").toLowerCase().includes(search.toLowerCase()) ||
-          f.source.toLowerCase().includes(search.toLowerCase())
+          f.source.toLowerCase().includes(search.toLowerCase()),
       )
     : items;
 
@@ -125,6 +180,17 @@ export default function FindingsTable() {
       setSortDir("asc");
     }
   }
+
+  function resetFilters() {
+    setSeverityFilter("");
+    setSourceFilter("");
+    setProviderFilter("");
+    setObsTypeFilter("");
+    setSearch("");
+    setPage(0);
+  }
+
+  const hasFilters = !!(severityFilter || sourceFilter || providerFilter || obsTypeFilter || search);
 
   function SortIndicator({ field }: { field: SortField }) {
     if (sortField !== field) return null;
@@ -156,37 +222,51 @@ export default function FindingsTable() {
           />
         </div>
 
-        <select
+        <FilterSelect
           value={severityFilter}
-          onChange={(e) => {
-            setSeverityFilter(e.target.value);
+          onChange={(v) => {
+            setSeverityFilter(v);
             setPage(0);
           }}
-          className="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-        >
-          <option value="" className="bg-zinc-900">All Severities</option>
-          {SEVERITY_OPTIONS.filter(Boolean).map((s) => (
-            <option key={s} value={s} className="bg-zinc-900">
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
+          placeholder="All Severities"
+          options={SEVERITY_OPTIONS}
+        />
 
-        <select
+        <FilterSelect
           value={sourceFilter}
-          onChange={(e) => {
-            setSourceFilter(e.target.value);
+          onChange={(v) => {
+            setSourceFilter(v);
             setPage(0);
           }}
-          className="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-        >
-          <option value="" className="bg-zinc-900">All Sources</option>
-          {SOURCE_OPTIONS.filter(Boolean).map((s) => (
-            <option key={s} value={s} className="bg-zinc-900">
-              {s.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
+          placeholder="All Sources"
+          options={SOURCE_OPTIONS}
+        />
+
+        <FilterSelect
+          value={providerFilter}
+          onChange={(v) => {
+            setProviderFilter(v);
+            setPage(0);
+          }}
+          placeholder="All Providers"
+          options={PROVIDER_OPTIONS}
+        />
+
+        <FilterSelect
+          value={obsTypeFilter}
+          onChange={(v) => {
+            setObsTypeFilter(v);
+            setPage(0);
+          }}
+          placeholder="All Types"
+          options={OBS_TYPE_OPTIONS}
+        />
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
+            Clear filters
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -197,7 +277,7 @@ export default function FindingsTable() {
           icon={ShieldAlert}
           title="No findings found"
           description={
-            severityFilter || sourceFilter || search
+            hasFilters
               ? "Try adjusting your filters."
               : "Run the pipeline to generate findings."
           }
@@ -216,6 +296,13 @@ export default function FindingsTable() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
+                  onClick={() => handleSort("severity")}
+                >
+                  Severity
+                  <SortIndicator field="severity" />
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
                   onClick={() => handleSort("source")}
                 >
                   Source
@@ -223,12 +310,12 @@ export default function FindingsTable() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort("severity")}
+                  onClick={() => handleSort("provider")}
                 >
-                  Severity
-                  <SortIndicator field="severity" />
+                  Provider
+                  <SortIndicator field="provider" />
                 </TableHead>
-                <TableHead>Resource</TableHead>
+                <TableHead>Resource Type</TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
                   onClick={() => handleSort("observed_at")}
@@ -244,21 +331,24 @@ export default function FindingsTable() {
                   key={finding.id}
                   className={cn(
                     "border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer transition-colors",
-                    idx % 2 === 1 && "bg-zinc-900/50"
+                    idx % 2 === 1 && "bg-zinc-900/50",
                   )}
                   onClick={() => navigate(`/findings/${finding.id}`)}
                 >
                   <TableCell className="text-zinc-200 max-w-[300px] truncate">
                     {finding.title}
                   </TableCell>
-                  <TableCell className="text-zinc-400 font-mono text-xs">
-                    {finding.source}
-                  </TableCell>
                   <TableCell>
                     <SeverityBadge severity={finding.severity} />
                   </TableCell>
-                  <TableCell className="text-zinc-400 font-mono text-xs max-w-[200px] truncate">
-                    {finding.resource_id ?? "-"}
+                  <TableCell className="text-zinc-400 font-mono text-xs">
+                    {finding.source}
+                  </TableCell>
+                  <TableCell className="text-zinc-400 font-mono text-xs">
+                    {finding.provider}
+                  </TableCell>
+                  <TableCell className="text-zinc-400 text-xs">
+                    {finding.resource_type ?? "-"}
                   </TableCell>
                   <TableCell className="text-zinc-500">
                     {relativeTime(finding.observed_at)}

@@ -59,6 +59,37 @@ function ComplianceRing({
 }
 
 // ---------------------------------------------------------------------------
+// Proportion bar
+// ---------------------------------------------------------------------------
+
+function ProportionBar({ coverage }: { coverage: CoverageData }) {
+  const total = coverage.total;
+  if (total === 0) return null;
+
+  const segments = [
+    { count: coverage.compliant, color: "bg-green-500" },
+    { count: coverage.partial, color: "bg-amber-500" },
+    { count: coverage.non_compliant, color: "bg-red-500" },
+    { count: coverage.not_assessed, color: "bg-zinc-700" },
+  ];
+
+  return (
+    <div className="flex h-1.5 rounded-full overflow-hidden bg-zinc-800">
+      {segments.map(
+        (seg, i) =>
+          seg.count > 0 && (
+            <div
+              key={i}
+              className={seg.color}
+              style={{ width: `${(seg.count / total) * 100}%` }}
+            />
+          ),
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Framework card
 // ---------------------------------------------------------------------------
 
@@ -70,14 +101,19 @@ function FrameworkCard({
   coverage: CoverageData | undefined;
 }) {
   const rate = coverage?.rate ?? 0;
+  const ratePercent = rate * 100;
   const total = coverage?.total ?? framework.control_count ?? 0;
   const compliant = coverage?.compliant ?? 0;
   const nonCompliant = coverage?.non_compliant ?? 0;
+  const partial = coverage?.partial ?? 0;
   const notAssessed = coverage?.not_assessed ?? 0;
+
+  // Build URL-safe framework id: lowercase, spaces to underscores
+  const frameworkSlug = framework.name.toLowerCase().replace(/\s+/g, "_");
 
   return (
     <Link
-      to={`/compliance/${encodeURIComponent(framework.name)}`}
+      to={`/compliance/${encodeURIComponent(frameworkSlug)}`}
       className="group rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-zinc-700"
     >
       <div className="flex items-start justify-between">
@@ -89,10 +125,16 @@ function FrameworkCard({
             {total} control{total !== 1 ? "s" : ""}
           </p>
         </div>
-        <ComplianceRing percent={rate * 100} />
+        <ComplianceRing percent={ratePercent} />
       </div>
 
-      <div className="mt-4 flex items-center gap-4 text-xs">
+      {coverage && (
+        <div className="mt-3">
+          <ProportionBar coverage={coverage} />
+        </div>
+      )}
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-green-500" />
           <span className="text-zinc-400">{compliant} compliant</span>
@@ -100,6 +142,10 @@ function FrameworkCard({
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-red-500" />
           <span className="text-zinc-400">{nonCompliant} non-compliant</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-amber-500" />
+          <span className="text-zinc-400">{partial} partial</span>
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-zinc-600" />
@@ -115,7 +161,11 @@ function FrameworkCard({
 // ---------------------------------------------------------------------------
 
 export default function ComplianceOverview() {
-  const { data: frameworks, isLoading: fwLoading, isError: fwError } = useFrameworks();
+  const {
+    data: frameworks,
+    isLoading: fwLoading,
+    isError: fwError,
+  } = useFrameworks();
   const { data: coverageList, isLoading: covLoading } = useCoverage();
 
   const isLoading = fwLoading || covLoading;
@@ -128,10 +178,21 @@ export default function ComplianceOverview() {
     }
   }
 
+  // Sort frameworks by compliance rate (worst first) so users see highest-risk first
+  const sortedFrameworks = frameworks
+    ? [...frameworks].sort((a, b) => {
+        const rateA = coverageMap.get(a.name)?.rate ?? 0;
+        const rateB = coverageMap.get(b.name)?.rate ?? 0;
+        return rateA - rateB;
+      })
+    : [];
+
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-100">Compliance Frameworks</h1>
+        <h1 className="text-xl font-semibold text-zinc-100">
+          Compliance Frameworks
+        </h1>
         <p className="text-sm text-zinc-500 mt-1">
           Monitor compliance posture across all active frameworks
         </p>
@@ -153,7 +214,7 @@ export default function ComplianceOverview() {
         />
       )}
 
-      {!isLoading && !fwError && frameworks && frameworks.length === 0 && (
+      {!isLoading && !fwError && sortedFrameworks.length === 0 && (
         <EmptyState
           icon={ShieldCheck}
           title="No frameworks configured"
@@ -161,9 +222,9 @@ export default function ComplianceOverview() {
         />
       )}
 
-      {!isLoading && !fwError && frameworks && frameworks.length > 0 && (
+      {!isLoading && !fwError && sortedFrameworks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {frameworks.map((fw) => (
+          {sortedFrameworks.map((fw) => (
             <FrameworkCard
               key={fw.name}
               framework={fw}

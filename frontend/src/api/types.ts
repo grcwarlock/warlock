@@ -670,3 +670,71 @@ export interface AlertsParams {
   limit?: number;
   offset?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Resource Topology
+// ---------------------------------------------------------------------------
+
+export interface TopologyResource {
+  resource_id: string;
+  finding_count: number;
+  worst_severity: string;
+  controls_affected: string[];
+}
+
+export interface TopologyService {
+  event_type: string;
+  resource_type: string;
+  finding_count: number;
+  resources: TopologyResource[];
+}
+
+export interface TopologyProvider {
+  name: string;
+  finding_count: number;
+  services: TopologyService[];
+}
+
+export interface TopologySourceType {
+  name: string;
+  finding_count: number;
+  providers: TopologyProvider[];
+}
+
+export interface TopologyResponse {
+  source_types: TopologySourceType[];
+  total_findings: number;
+}
+
+// ---------------------------------------------------------------------------
+// Remediation Command Generator
+// ---------------------------------------------------------------------------
+
+export interface RemediationGenerateRequest {
+  control_id: string;
+  resource_id: string;
+  resource_type: string;
+  provider: string;
+  framework?: string;
+}
+
+export interface RemediationGeneratePlaybook {
+  summary: string | null;
+  steps: string[];
+  console_path: string | null;
+  recommended_reading: string[];
+}
+
+export interface RemediationGenerateCommands {
+  terraform: string | null;
+  cli: string | null;
+  console_url: string | null;
+}
+
+export interface RemediationGenerateResponse {
+  control_id: string;
+  resource_id: string;
+  playbook: RemediationGeneratePlaybook;
+  commands: RemediationGenerateCommands;
+  ai_remediation: Record<string, unknown> | null;
+}

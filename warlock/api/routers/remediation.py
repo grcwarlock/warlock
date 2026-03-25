@@ -52,6 +52,35 @@ def _check_transition(current: str, target: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+class RemediationGenerateRequest(BaseModel):
+    control_id: str
+    resource_id: str
+    resource_type: str
+    provider: str
+    framework: str | None = None
+
+
+class RemediationGenerateCommands(BaseModel):
+    terraform: str | None = None
+    cli: str | None = None
+    console_url: str | None = None
+
+
+class RemediationGeneratePlaybook(BaseModel):
+    summary: str | None = None
+    steps: list[str] = []
+    console_path: str | None = None
+    recommended_reading: list[str] = []
+
+
+class RemediationGenerateResponse(BaseModel):
+    control_id: str
+    resource_id: str
+    playbook: RemediationGeneratePlaybook
+    commands: RemediationGenerateCommands
+    ai_remediation: dict | None = None
+
+
 class RemediationCreateRequest(BaseModel):
     title: str
     description: str | None = None
@@ -330,3 +359,85 @@ def verify_remediation(
 
     db.flush()
     return _remediation_to_response(r)
+
+
+# ---------------------------------------------------------------------------
+# Remediation Command Generator
+# ---------------------------------------------------------------------------
+
+
+@router.post("/remediation/generate", response_model=RemediationGenerateResponse)
+def generate_remediation(
+    body: RemediationGenerateRequest,
+    ai: bool = Query(False, description="Include AI-enhanced remediation"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Generate remediation commands for a specific failing resource.
+
+    Combines the static KB playbook with provider-specific CLI/Terraform
+    command templates. Optionally includes AI-enhanced remediation when
+    ``ai=true`` and an AI provider is configured.
+    """
+    from warlock.assessors.remediation_loader import get_remediation
+    from warlock.assessors.command_templates import render_commands
+
+    # Look up KB playbook for this control
+    framework = body.framework or "nist_800_53"
+    guidance = get_remediation(framework, body.control_id)
+
+    playbook = RemediationGeneratePlaybook()
+    if guidance:
+        playbook = RemediationGeneratePlaybook(
+            summary=guidance.get("summary"),
+            steps=guidance.get("remediation_steps", []),
+            console_path=guidance.get("console_path"),
+            recommended_reading=guidance.get("recommended_reading", []),
+        )
+
+    # Render provider-specific commands
+    cmds = render_commands(
+        provider=body.provider,
+        resource_type=body.resource_type,
+        resource_id=body.resource_id,
+    )
+    commands = RemediationGenerateCommands(
+        terraform=cmds.get("terraform"),
+        cli=cmds.get("cli"),
+        console_url=cmds.get("console_url"),
+    )
+
+    # AI-enhanced remediation (optional)
+    ai_result = None
+    if ai:
+        try:
+            from warlock.assessors.remediation_loader import get_ai_remediation
+
+            ai_result = get_ai_remediation(
+                framework=framework,
+                control_id=body.control_id,
+                finding_data={
+                    "resource_id": body.resource_id,
+                    "resource_type": body.resource_type,
+                    "provider": body.provider,
+                },
+                environment_context={
+                    "provider": body.provider,
+                    "resource_type": body.resource_type,
+                },
+            )
+        except Exception:
+            log.warning(
+                "AI remediation generation failed for %s/%s",
+                body.control_id,
+                body.resource_id,
+                exc_info=True,
+            )
+
+    return RemediationGenerateResponse(
+        control_id=body.control_id,
+        resource_id=body.resource_id,
+        playbook=playbook,
+        commands=commands,
+        ai_remediation=ai_result,
+    )
