@@ -5774,7 +5774,7 @@ class DemoIBMCloudConnector(BaseConnector):
                                     {
                                         "id": "IA-5",
                                         "control_name": "Authenticator Management",
-                                        "status": "failed",
+                                        "status": "error",
                                         "severity": "medium",
                                         "assessment": {
                                             "description": "Service IDs using long-lived API keys without rotation"
@@ -18107,7 +18107,7 @@ class DemoGitLabCIConnector(BaseConnector):
                             "id": 720003,
                             "iid": 4503,
                             "project_id": 42,
-                            "status": "failed",
+                            "status": "error",
                             "ref": "feat/data-export",
                             "sha": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
                             "source": "merge_request_event",
@@ -18234,7 +18234,7 @@ class DemoCircleCIConnector(BaseConnector):
                             "project_slug": "gh/acme-corp/frontend-app",
                             "number": 1204,
                             "state": "created",
-                            "status": "failed",
+                            "status": "error",
                             "created_at": (NOW - timedelta(hours=6)).isoformat(),
                             "trigger": {"type": "webhook", "actor": {"login": "ci-dev-carol"}},
                             "vcs": {
@@ -19895,6 +19895,431 @@ def _seed_feature_coverage(session) -> dict:
     return counts
 
 
+def _seed_frontend_enrichment(session) -> dict:
+    """Enrich demo data for the frontend rebuild.
+
+    Adds:
+    - Failed connector runs (non-zero KRI error rate)
+    - More remediations with steps, due dates, and lifecycle variety
+    - Better issue status distribution (not all "open")
+    - Richer POA&M scenarios (overdue, approaching deadlines)
+    """
+    import uuid
+
+    from warlock.db.models import ConnectorRun, Issue, POAM, Remediation
+
+    now = NOW
+    counts: dict[str, int] = {}
+
+    # --- 1. Failed connector runs (makes KRI error rate ~3%) ---
+    failed_runs = [
+        {
+            "provider": "crowdstrike",
+            "source_type": "edr",
+            "status": "error",
+            "error_count": 1,
+            "event_count": 0,
+            "started_at": now - timedelta(days=2, hours=6),
+            "completed_at": now - timedelta(days=2, hours=6) + timedelta(seconds=5),
+        },
+        {
+            "provider": "splunk",
+            "source_type": "siem",
+            "status": "error",
+            "error_count": 3,
+            "event_count": 0,
+            "started_at": now - timedelta(days=5, hours=14),
+            "completed_at": now - timedelta(days=5, hours=14) + timedelta(seconds=2),
+        },
+        {
+            "provider": "tenable",
+            "source_type": "scanner",
+            "status": "error",
+            "error_count": 1,
+            "event_count": 12,
+            "started_at": now - timedelta(days=8, hours=3),
+            "completed_at": now - timedelta(days=8, hours=3) + timedelta(seconds=45),
+        },
+        {
+            "provider": "okta",
+            "source_type": "iam",
+            "status": "error",
+            "error_count": 2,
+            "event_count": 0,
+            "started_at": now - timedelta(days=12, hours=9),
+            "completed_at": now - timedelta(days=12, hours=9) + timedelta(seconds=3),
+        },
+        {
+            "provider": "wiz",
+            "source_type": "scanner",
+            "status": "error",
+            "error_count": 1,
+            "event_count": 5,
+            "started_at": now - timedelta(days=20),
+            "completed_at": now - timedelta(days=20) + timedelta(seconds=15),
+        },
+    ]
+    for fr in failed_runs:
+        session.add(
+            ConnectorRun(
+                id=str(uuid.uuid4()),
+                connector_name=f"demo-{fr['provider']}",
+                source=fr["provider"],
+                provider=fr["provider"],
+                source_type=fr["source_type"],
+                status=fr["status"],
+                error_count=fr["error_count"],
+                event_count=fr["event_count"],
+                errors=[f"Connection timed out to {fr['provider']} API"],
+                started_at=fr["started_at"],
+                completed_at=fr["completed_at"],
+                duration_seconds=int((fr["completed_at"] - fr["started_at"]).total_seconds()),
+            )
+        )
+    counts["failed_connector_runs"] = len(failed_runs)
+
+    # --- 2. Additional remediations with steps and due dates ---
+    extra_remediations = [
+        {
+            "title": "Enforce TLS 1.3 on all load balancers",
+            "description": "3 ALBs still allow TLS 1.0/1.1. Update security policies to require TLS 1.3.",
+            "framework": "pci_dss",
+            "control_id": "4.2.1",
+            "status": "in_progress",
+            "assigned_to": "network-team@acme.com",
+            "due_date": now + timedelta(days=7),
+            "remediation_steps": [
+                {"step": 1, "action": "Identify ALBs with TLS < 1.3", "status": "done"},
+                {"step": 2, "action": "Create TLS 1.3-only security policy", "status": "done"},
+                {"step": 3, "action": "Apply to staging ALB and test", "status": "in_progress"},
+                {
+                    "step": 4,
+                    "action": "Apply to production ALBs during maintenance window",
+                    "status": "pending",
+                },
+                {"step": 5, "action": "Verify with SSL Labs scan", "status": "pending"},
+            ],
+        },
+        {
+            "title": "Rotate all IAM access keys older than 90 days",
+            "description": "47 IAM users have access keys >90 days old. Per NIST AC-2, keys must rotate quarterly.",
+            "framework": "nist_800_53",
+            "control_id": "AC-2",
+            "status": "assigned",
+            "assigned_to": "iam-team@acme.com",
+            "due_date": now + timedelta(days=14),
+            "remediation_steps": [
+                {"step": 1, "action": "Export credential report from IAM", "status": "pending"},
+                {"step": 2, "action": "Identify keys >90 days", "status": "pending"},
+                {"step": 3, "action": "Notify users via Slack", "status": "pending"},
+                {"step": 4, "action": "Create new keys and deactivate old", "status": "pending"},
+                {
+                    "step": 5,
+                    "action": "Delete deactivated keys after 7-day grace",
+                    "status": "pending",
+                },
+            ],
+        },
+        {
+            "title": "Enable GuardDuty in ap-southeast-1 and eu-central-1",
+            "description": "GuardDuty only enabled in us-east-1 and us-west-2. Must cover all active regions.",
+            "framework": "nist_800_53",
+            "control_id": "SI-4",
+            "status": "open",
+            "due_date": now + timedelta(days=21),
+            "remediation_steps": [
+                {"step": 1, "action": "Enable GuardDuty in ap-southeast-1", "status": "pending"},
+                {"step": 2, "action": "Enable GuardDuty in eu-central-1", "status": "pending"},
+                {
+                    "step": 3,
+                    "action": "Configure delegated admin for multi-region",
+                    "status": "pending",
+                },
+                {"step": 4, "action": "Verify findings flow to SecurityHub", "status": "pending"},
+            ],
+        },
+        {
+            "title": "Remediate open S3 bucket policies (3 buckets)",
+            "description": "acme-public-assets, acme-logs-backup, acme-temp-uploads have overly permissive policies.",
+            "framework": "soc2",
+            "control_id": "CC6.1",
+            "status": "verification",
+            "assigned_to": "cloud-ops@acme.com",
+            "due_date": now - timedelta(days=2),
+            "remediation_steps": [
+                {"step": 1, "action": "Audit all S3 bucket policies", "status": "done"},
+                {
+                    "step": 2,
+                    "action": "Restrict acme-public-assets to CloudFront OAI",
+                    "status": "done",
+                },
+                {"step": 3, "action": "Move acme-logs-backup to private", "status": "done"},
+                {"step": 4, "action": "Delete acme-temp-uploads (unused)", "status": "done"},
+                {"step": 5, "action": "Re-scan with Wiz to confirm", "status": "in_progress"},
+            ],
+        },
+        {
+            "title": "Implement CMMC L2 encryption at rest for all databases",
+            "description": "3 RDS instances and 1 DynamoDB table lack encryption. CMMC SC.L2-3.13.16 requires it.",
+            "framework": "cmmc_l2",
+            "control_id": "SC.L2-3.13.16",
+            "status": "in_progress",
+            "assigned_to": "dba-team@acme.com",
+            "due_date": now + timedelta(days=3),
+            "remediation_steps": [
+                {"step": 1, "action": "Snapshot unencrypted RDS instances", "status": "done"},
+                {
+                    "step": 2,
+                    "action": "Restore snapshots with encryption enabled",
+                    "status": "done",
+                },
+                {
+                    "step": 3,
+                    "action": "Migrate application connections to new endpoints",
+                    "status": "in_progress",
+                },
+                {"step": 4, "action": "Enable encryption on DynamoDB table", "status": "pending"},
+                {"step": 5, "action": "Delete old unencrypted instances", "status": "pending"},
+            ],
+        },
+        {
+            "title": "Close unused security group rules (12 rules)",
+            "description": "12 security group rules reference deprecated CIDR ranges or unused ports.",
+            "framework": "nist_800_53",
+            "control_id": "SC-7",
+            "status": "closed",
+            "assigned_to": "infra-team@acme.com",
+            "due_date": now - timedelta(days=10),
+            "remediation_steps": [
+                {
+                    "step": 1,
+                    "action": "Identify unused SG rules via VPC Flow Logs",
+                    "status": "done",
+                },
+                {"step": 2, "action": "Remove 8 rules in dev/staging", "status": "done"},
+                {
+                    "step": 3,
+                    "action": "Remove 4 rules in production (change window)",
+                    "status": "done",
+                },
+                {"step": 4, "action": "Verify no connectivity impact", "status": "done"},
+            ],
+        },
+        {
+            "title": "Configure GDPR-compliant log retention policies",
+            "description": "CloudWatch log groups have indefinite retention. GDPR requires defined retention periods.",
+            "framework": "gdpr",
+            "control_id": "Art.5(1)(e)",
+            "status": "in_progress",
+            "assigned_to": "compliance@acme.com",
+            "due_date": now + timedelta(days=30),
+            "remediation_steps": [
+                {"step": 1, "action": "Inventory all CloudWatch log groups", "status": "done"},
+                {
+                    "step": 2,
+                    "action": "Classify by data type (PII, system, audit)",
+                    "status": "done",
+                },
+                {
+                    "step": 3,
+                    "action": "Set retention: PII=90d, system=365d, audit=2555d",
+                    "status": "in_progress",
+                },
+                {"step": 4, "action": "Apply via Terraform", "status": "pending"},
+            ],
+        },
+        {
+            "title": "Deploy WAF rules for OWASP Top 10 on API gateway",
+            "description": "API gateway has no WAF. Requires SQL injection and XSS protection.",
+            "framework": "nist_800_53",
+            "control_id": "SI-10",
+            "status": "assigned",
+            "assigned_to": "appsec@acme.com",
+            "due_date": now + timedelta(days=5),
+            "remediation_steps": [
+                {
+                    "step": 1,
+                    "action": "Create AWS WAF web ACL with managed rules",
+                    "status": "pending",
+                },
+                {"step": 2, "action": "Enable AWSManagedRulesCommonRuleSet", "status": "pending"},
+                {"step": 3, "action": "Enable AWSManagedRulesSQLiRuleSet", "status": "pending"},
+                {"step": 4, "action": "Associate with API Gateway stage", "status": "pending"},
+                {"step": 5, "action": "Test with OWASP ZAP scan", "status": "pending"},
+            ],
+        },
+    ]
+
+    for data in extra_remediations:
+        rem = Remediation(
+            id=str(uuid.uuid4()),
+            title=data["title"],
+            description=data.get("description"),
+            framework=data.get("framework"),
+            control_id=data.get("control_id"),
+            status=data["status"],
+            assigned_to=data.get("assigned_to"),
+            assigned_by="security-lead@acme.com" if data.get("assigned_to") else None,
+            assigned_at=now - timedelta(days=random.randint(1, 7))
+            if data.get("assigned_to")
+            else None,
+            due_date=data.get("due_date"),
+            remediation_plan=data.get("description"),
+            remediation_steps=data.get("remediation_steps"),
+            created_by="demo-seed@warlock",
+            created_at=now - timedelta(days=random.randint(3, 21)),
+            updated_at=now - timedelta(hours=random.randint(1, 72)),
+        )
+        if data["status"] == "closed":
+            rem.closed_at = now - timedelta(days=random.randint(1, 5))
+            rem.verified_by = "audit-lead@acme.com"
+            rem.verified_at = now - timedelta(days=random.randint(1, 5))
+            rem.verification_notes = "Verified via rescan. All findings resolved."
+        session.add(rem)
+    counts["extra_remediations"] = len(extra_remediations)
+
+    # --- 3. Fix issue status distribution (move ~100 from open to other states) ---
+    open_issues = (
+        session.query(Issue)
+        .filter(Issue.status == "open")
+        .order_by(Issue.created_at)
+        .limit(120)
+        .all()
+    )
+    transitions = [
+        ("assigned", 30),
+        ("in_progress", 25),
+        ("remediated", 20),
+        ("verified", 10),
+        ("closed", 25),
+        ("risk_accepted", 10),
+    ]
+    idx = 0
+    for target_status, count in transitions:
+        for i in range(count):
+            if idx >= len(open_issues):
+                break
+            issue = open_issues[idx]
+            issue.status = target_status
+            if target_status in ("assigned", "in_progress", "remediated"):
+                issue.assigned_to = random.choice(
+                    [
+                        "cloud-ops@acme.com",
+                        "iam-team@acme.com",
+                        "secops@acme.com",
+                        "compliance@acme.com",
+                        "dba-team@acme.com",
+                        "appsec@acme.com",
+                    ]
+                )
+                issue.assigned_by = "security-lead@acme.com"
+                issue.assigned_at = now - timedelta(days=random.randint(1, 14))
+            if target_status == "remediated":
+                issue.remediated_at = now - timedelta(days=random.randint(1, 7))
+            if target_status == "closed":
+                issue.closed_at = now - timedelta(days=random.randint(1, 10))
+                issue.verified_at = now - timedelta(days=random.randint(1, 10))
+            if target_status == "risk_accepted":
+                issue.risk_accepted = True
+                issue.risk_acceptance_owner = "ciso@acme.com"
+                issue.risk_acceptance_justification = (
+                    "Accepted per risk committee decision. Residual risk within tolerance."
+                )
+                issue.risk_acceptance_expiry = now + timedelta(days=90)
+            if target_status == "verified":
+                issue.verified_at = now - timedelta(days=random.randint(1, 7))
+            idx += 1
+    counts["issues_redistributed"] = idx
+
+    # --- 4. POA&M enrichment (approaching deadlines and overdue) ---
+    poam_scenarios = [
+        {
+            "framework": "pci_dss",
+            "control_id": "1.3.1",
+            "severity": "high",
+            "status": "in_progress",
+            "scheduled_completion": now + timedelta(days=5),
+            "weakness_description": "Flat network allows lateral movement within PCI CDE.",
+            "milestones": [
+                {
+                    "description": "Deploy micro-segmentation",
+                    "due_date": (now + timedelta(days=3)).isoformat(),
+                    "status": "pending",
+                },
+            ],
+        },
+        {
+            "framework": "nist_800_53",
+            "control_id": "IA-2",
+            "severity": "critical",
+            "status": "in_progress",
+            "scheduled_completion": now - timedelta(days=3),  # OVERDUE
+            "weakness_description": "12 privileged accounts lack MFA enforcement.",
+            "milestones": [
+                {
+                    "description": "Enforce Okta MFA policy",
+                    "due_date": (now - timedelta(days=10)).isoformat(),
+                    "status": "overdue",
+                },
+            ],
+        },
+        {
+            "framework": "nist_800_53",
+            "control_id": "SI-2",
+            "severity": "critical",
+            "status": "open",
+            "scheduled_completion": now + timedelta(days=2),
+            "weakness_description": "4 CVEs with CVSS > 9.0 on nginx and OpenSSL.",
+            "milestones": [
+                {
+                    "description": "Apply patches in maintenance window",
+                    "due_date": (now + timedelta(days=1)).isoformat(),
+                    "status": "pending",
+                },
+            ],
+        },
+        {
+            "framework": "hipaa",
+            "control_id": "164.312(a)(2)(iv)",
+            "severity": "high",
+            "status": "in_progress",
+            "scheduled_completion": now + timedelta(days=45),
+            "weakness_description": "Legacy Oracle 12c database stores PII without TDE.",
+            "milestones": [
+                {
+                    "description": "Enable TDE on tablespaces",
+                    "due_date": (now + timedelta(days=15)).isoformat(),
+                    "status": "pending",
+                },
+                {
+                    "description": "Migrate to Oracle 19c",
+                    "due_date": (now + timedelta(days=40)).isoformat(),
+                    "status": "pending",
+                },
+            ],
+        },
+    ]
+
+    for data in poam_scenarios:
+        poam = POAM(
+            id=str(uuid.uuid4()),
+            framework=data["framework"],
+            control_id=data["control_id"],
+            severity=data["severity"],
+            status=data["status"],
+            weakness_description=data["weakness_description"],
+            scheduled_completion=data.get("scheduled_completion"),
+            milestones=data.get("milestones", []),
+            created_at=now - timedelta(days=random.randint(10, 30)),
+            updated_at=now - timedelta(hours=random.randint(1, 48)),
+        )
+        session.add(poam)
+    counts["extra_poams"] = len(poam_scenarios)
+
+    session.commit()
+    return counts
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -20939,7 +21364,13 @@ def main():
     except Exception as exc:
         print(f"       Phase 5 expansion failed: {exc}")
 
-    print("[36/38] Re-verifying audit chain after expansions...")
+    print("[36/39] Enriching data for frontend demo...")
+    with get_session() as session:
+        fe = _seed_frontend_enrichment(session)
+        for k, v in sorted(fe.items()):
+            print(f"       {k}: {v}")
+
+    print("[37/39] Re-verifying audit chain after expansions...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -20952,7 +21383,7 @@ def main():
             for e in errors[:3]:
                 print(f"         - {e}")
 
-    print("[37/38] Seed complete!\n")
+    print("[38/39] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")
