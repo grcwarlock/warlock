@@ -19103,7 +19103,7 @@ def _seed_feature_coverage(session) -> dict:
 
     # SEED-10: Issues with stale linked findings
     stale_findings = (
-        session.query(Finding).filter(Finding.created_at < now - timedelta(days=30)).limit(3).all()
+        session.query(Finding).filter(Finding.observed_at < now - timedelta(days=30)).limit(3).all()
     )
     stale_issue_count = 0
     for sf in stale_findings:
@@ -19114,7 +19114,7 @@ def _seed_feature_coverage(session) -> dict:
                 "Re-scan required to validate current state."
             ),
             finding_id=sf.id,
-            framework=sf.framework if hasattr(sf, "framework") else None,
+            framework=None,
             status="open",
             priority="medium",
             source="pipeline",
