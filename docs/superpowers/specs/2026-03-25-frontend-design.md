@@ -13,6 +13,43 @@ The frontend must reflect this identity at every layer:
 
 The transition between these layers is seamless. Click a red KRI → see the failing control → see the specific S3 bucket → see the terraform fix. That drill-down IS the product.
 
+## Depth Requirement
+
+**Every click must go somewhere real.** Nothing is a dead end. If a value is displayed, it's clickable. If it's clickable, it leads to a detail view with more data. The deepest drill-down paths in the app:
+
+```
+Dashboard → KRI (overdue POA&Ms) → POA&M list → POA&M detail → linked finding → raw event JSON → mapped control → remediation terraform
+Dashboard → Framework heatmap (NIST) → AC family → AC-2 → assertion results → linked finding → source connector → resource detail
+Pipeline → AWS → S3 → acme-prod-data → finding (encryption) → control SC-7 → crosswalk to SOC 2 CC6.1 → remediation playbook → AI remediation
+Incidents → critical incident → linked finding → control mapping → POA&M created from it → milestones → evidence request
+```
+
+That's 7-8 levels deep. Every level renders real data from the API. If a link leads to a page that has no data or no functionality, that is a **spec gap that must be documented in the API Gaps section** before implementation — never silently omit it.
+
+## Framework Coverage
+
+All 13 non-privacy frameworks are fully supported in every view that shows framework data:
+
+| Framework | In Heatmap | In Drill-down | In Compliance Page | In Crosswalks |
+|---|---|---|---|---|
+| NIST 800-53 | ✓ | ✓ | ✓ | ✓ |
+| ISO 27001 | ✓ | ✓ | ✓ | ✓ |
+| ISO 27701 | ✓ | ✓ | ✓ | ✓ |
+| ISO 42001 | ✓ | ✓ | ✓ | ✓ |
+| SOC 2 | ✓ | ✓ | ✓ | ✓ |
+| UCF | ✓ | ✓ | ✓ | ✓ |
+| FedRAMP | ✓ | ✓ | ✓ | ✓ |
+| HIPAA | ✓ | ✓ | ✓ | ✓ |
+| CMMC L2 | ✓ | ✓ | ✓ | ✓ |
+| PCI DSS v4.0 | ✓ | ✓ | ✓ | ✓ |
+| NIST CSF 2.0 | ✓ | ✓ | ✓ | ✓ |
+| EU AI Act | ✓ | ✓ | ✓ | ✓ |
+| SEC Cyber | ✓ | ✓ | ✓ | ✓ |
+
+GDPR is included (it's a compliance framework, not privacy-specific UI). The Privacy MODULE (DSAR tracker, breach log, ROPA data map) is deferred — but GDPR controls appear in compliance views like any other framework.
+
+Framework selectors (dropdowns, filters, heatmap) are NEVER hardcoded — they call `GET /api/v1/frameworks` and render whatever comes back. If a 15th framework is added to the backend, it appears in the frontend automatically.
+
 ## Tech Stack
 
 - **Framework:** Vite + React 18 + TypeScript
@@ -437,6 +474,27 @@ frontend/
 8. **Incidents** — Table + detail
 9. **Risk** — Vendor scores
 10. **Audit** — Engagements + hash chain
+
+## Cross-Linking Rules
+
+Every entity displayed in the frontend links to every related entity. Nothing is an island.
+
+| When you see... | It links to... |
+|---|---|
+| A finding | Source connector, raw event, all mapped controls, any POA&Ms created from it |
+| A control result | The finding that produced it, the framework/control detail, the assertion that evaluated it |
+| A POA&M | The finding it remediates, the control it addresses, linked issues, milestones |
+| A connector | All findings it produced, health status, last run time |
+| A framework | All control families, drill into individual controls |
+| A control | Assessment details, linked findings, crosswalk to other frameworks, remediation |
+| An incident | Linked findings, affected controls, blast radius, response timeline |
+| A vendor | Risk score, sub-processors, linked questionnaires, assessment dates |
+| An alert | The entity that triggered it (finding, control, connector), acknowledge/resolve actions |
+| A remediation | Linked POA&M, linked finding, step-by-step progress, terraform/CLI code |
+| An audit engagement | Evidence requests, linked controls, package download, comments |
+| A user | Role, scopes, last login, API keys |
+
+**If any of these links cannot be resolved because the API doesn't return the necessary ID or data, document it in API Gaps below.**
 
 ## API Gaps (Must Fix Before or During Frontend Build)
 
