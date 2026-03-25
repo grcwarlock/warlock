@@ -12,7 +12,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import cli, console, _error, _get_actor, _parse_ai_response
 
 
 # ---------------------------------------------------------------------------
@@ -51,8 +51,14 @@ _SEVERITY_STYLES: dict[str, str] = {
 
 
 @cli.group("remediate", invoke_without_command=True)
+@click.option("--ai/--no-ai", "use_ai", default=None, help="AI-powered remediation suggestions")
+@click.option(
+    "--ask",
+    default=None,
+    help="Ask AI a question about remediations (e.g. 'What should I prioritize?')",
+)
 @click.pass_context
-def remediate(ctx: click.Context) -> None:
+def remediate(ctx: click.Context, use_ai: bool | None, ask: str | None) -> None:
     """Remediation lifecycle management (create, assign, track, close)."""
     if ctx.invoked_subcommand is not None:
         return
@@ -67,6 +73,8 @@ def remediate(ctx: click.Context) -> None:
 
     if not all_rem:
         console.print("[dim]No remediations found.[/dim]")
+        if ask is not None or use_ai:
+            console.print("[yellow]No remediation data available for AI analysis.[/yellow]")
         return
 
     counts: dict[str, int] = {}
@@ -82,6 +90,66 @@ def remediate(ctx: click.Context) -> None:
             style = _STATUS_STYLES.get(st, "")
             table.add_row(f"[{style}]{st}[/]", str(count))
     console.print(table)
+
+    # --ask: AI question about remediations
+    if ask is not None:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import ConversationContext
+
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print(
+                "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+            )
+            return
+
+        rem_data = [
+            {
+                "title": r.title,
+                "status": r.status,
+                "framework": r.framework,
+                "control_id": r.control_id,
+            }
+            for r in all_rem
+        ]
+        ai_ctx = ConversationContext(
+            domain="remediation",
+            entity_type="remediation",
+            entity_data={"remediations": rem_data, "count": len(all_rem)},
+        )
+        resp = svc.ask(ask, context=ai_ctx)
+        console.print()
+        _parse_ai_response(resp)
+
+    # --ai: AI-enhanced summary
+    elif use_ai:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import ConversationContext
+
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print(
+                "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+            )
+            return
+
+        rem_data = [
+            {
+                "title": r.title,
+                "status": r.status,
+                "framework": r.framework,
+                "control_id": r.control_id,
+            }
+            for r in all_rem
+        ]
+        ai_ctx = ConversationContext(
+            domain="remediation",
+            entity_type="remediation",
+            entity_data={"remediations": rem_data, "count": len(all_rem)},
+        )
+        resp = svc.analyze("remediation_summary", context=ai_ctx)
+        console.print()
+        _parse_ai_response(resp)
 
 
 # ---------------------------------------------------------------------------

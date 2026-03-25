@@ -259,7 +259,14 @@ def ai_reason(
             detail=f"Unknown task: {body.task!r}. Valid values: {valid}",
         )
 
-    result = svc.reason(task, body.context)
+    try:
+        result = svc.reason(task, body.context)
+    except Exception as exc:
+        log.warning("AI reason call failed: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service unavailable: {exc}",
+        ) from exc
 
     return AIReasonResponse(
         value=result.value,
@@ -358,11 +365,18 @@ def ai_converse(
         session_id=session_obj.session_id,
     )
 
-    result = svc.converse(
-        session_id=session_obj.session_id,
-        message=body.message,
-        context=ctx,
-    )
+    try:
+        result = svc.converse(
+            session_id=session_obj.session_id,
+            message=body.message,
+            context=ctx,
+        )
+    except Exception as exc:
+        log.warning("AI converse call failed: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service unavailable: {exc}",
+        ) from exc
 
     if not result.ai_used:
         raise HTTPException(

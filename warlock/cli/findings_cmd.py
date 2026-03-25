@@ -14,7 +14,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import cli, console, _error, _get_actor, _parse_ai_response
 
 
 # ---------------------------------------------------------------------------
@@ -23,11 +23,50 @@ from warlock.cli import cli, console, _error, _get_actor
 
 
 @cli.group("findings", invoke_without_command=True)
+@click.option(
+    "--ask",
+    default=None,
+    help="Ask AI a question about findings (e.g. 'What are the top risks?')",
+)
 @click.pass_context
-def findings(ctx: click.Context) -> None:
+def findings(ctx: click.Context, ask: str | None) -> None:
     """Query and manage normalized findings."""
-    if ctx.invoked_subcommand is None:
-        ctx.invoke(findings_list)
+    if ctx.invoked_subcommand is not None:
+        return
+
+    if ask is not None:
+        from warlock.ai.service import get_ai_service
+        from warlock.ai.types import ConversationContext
+
+        svc = get_ai_service()
+        if not svc.is_available():
+            console.print(
+                "[yellow]AI service not configured. Set WLK_AI_PROVIDER and WLK_AI_API_KEY.[/yellow]"
+            )
+            return
+
+        from warlock.db.engine import get_session, init_db
+        from warlock.db.models import Finding
+
+        init_db()
+        with get_session() as session:
+            rows = session.query(Finding).order_by(Finding.ingested_at.desc()).limit(50).all()
+
+        finding_data = [
+            {"title": r.title, "severity": r.severity, "provider": r.provider} for r in rows
+        ]
+
+        ai_ctx = ConversationContext(
+            domain="findings",
+            entity_type="finding",
+            entity_data={"findings": finding_data, "count": len(rows)},
+        )
+        resp = svc.ask(ask, context=ai_ctx)
+        console.print()
+        _parse_ai_response(resp)
+        return
+
+    ctx.invoke(findings_list)
 
 
 # ---------------------------------------------------------------------------
