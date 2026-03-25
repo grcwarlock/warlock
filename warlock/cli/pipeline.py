@@ -32,15 +32,30 @@ def collect(source: tuple[str, ...], demo: bool) -> None:
     from warlock.pipeline.bus import EventBus
     from warlock.pipeline.loader import build_pipeline, register_lake_writer
 
-    # --demo mode: re-run demo seed as subprocess
+    # --demo mode: reset DB and re-run demo seed
     if demo:
-        console.print("[bold cyan]Running demo pipeline (mock connectors)...[/bold cyan]")
-        script = str(
-            __import__("pathlib").Path(__file__).resolve().parent.parent.parent
-            / "scripts"
-            / "demo_seed.py"
+        import pathlib
+
+        project_root = pathlib.Path(__file__).resolve().parent.parent.parent
+        db_path = project_root / "warlock.db"
+        script = str(project_root / "scripts" / "demo_seed.py")
+
+        console.print("[bold cyan]Resetting database and running demo pipeline...[/bold cyan]")
+        # Clean SQLite files (seed assumes fresh DB)
+        for suffix in ("", "-shm", "-wal"):
+            p = db_path.parent / f"{db_path.name}{suffix}"
+            p.unlink(missing_ok=True)
+
+        # Run migrations
+        subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=str(project_root),
+            capture_output=True,
         )
-        result = subprocess.run([sys.executable, script], capture_output=False)
+
+        # Run seed
+        env = {**__import__("os").environ, "WLK_AI_ENABLED": "false"}
+        result = subprocess.run([sys.executable, script], capture_output=False, env=env)
         if result.returncode != 0:
             console.print("[red]Demo seed failed.[/red]")
             raise SystemExit(1)
