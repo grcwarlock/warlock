@@ -19768,14 +19768,42 @@ def _seed_feature_coverage(session) -> dict:
     session.flush()
     counts["closed_issues"] = len(closeable_issues)
 
-    # SEED-19: Control test gaps -- old assessed_at so gap queries find them
-    old_results = (
-        session.query(ControlResult).filter(ControlResult.status == "compliant").limit(8).all()
-    )
-    for cr in old_results:
-        cr.assessed_at = now - timedelta(days=random.randint(120, 365))
+    # SEED-19: Control test gaps — create mappings for controls with NO results at all
+    # These show up as "never_tested" in `warlock control-tests gaps`
+    anchor_finding_19 = session.query(Finding).first()
+    gap_count = 0
+    if anchor_finding_19:
+        never_tested_controls = [
+            ("nist_800_53", "AU-16", "Cross-Organizational Audit", "quarterly"),
+            ("nist_800_53", "SC-40", "Wireless Link Protection", "monthly"),
+            ("iso_27001", "A.8.28", "Secure Coding", "monthly"),
+            ("soc2", "CC9.2", "Risk Mitigation", "daily"),
+            ("hipaa", "164.312(e)(2)", "Encryption Mechanism", "weekly"),
+            ("pci_dss", "12.10.7", "Incident Response Testing", "quarterly"),
+        ]
+        for fw, cid, family, freq in never_tested_controls:
+            # Only add if no ControlResult exists for this fw/control_id
+            existing = (
+                session.query(ControlResult)
+                .filter(ControlResult.framework == fw, ControlResult.control_id == cid)
+                .first()
+            )
+            if not existing:
+                mapping = ControlMapping(
+                    id=str(uuid.uuid4()),
+                    finding_id=anchor_finding_19.id,
+                    framework=fw,
+                    control_id=cid,
+                    control_family=family,
+                    mapping_method="keyword",
+                    confidence=0.6,
+                    monitoring_frequency=freq,
+                    created_at=now - timedelta(days=60),
+                )
+                session.add(mapping)
+                gap_count += 1
     session.flush()
-    counts["stale_control_results"] = len(old_results)
+    counts["control_test_gaps"] = gap_count
 
     # SEED-20: Orphan controls -- mappings with no corresponding result
     anchor_finding = session.query(Finding).first()

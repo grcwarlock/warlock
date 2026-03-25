@@ -225,9 +225,9 @@ class ControlResult(Base):
     __tablename__ = "control_results"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False)
+    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=True)
     control_mapping_id = Column(
-        String(36), ForeignKey("control_mappings.id", ondelete="CASCADE"), nullable=False
+        String(36), ForeignKey("control_mappings.id", ondelete="CASCADE"), nullable=True
     )
     framework = Column(String(50), nullable=False)
     control_id = Column(String(50), nullable=False)
