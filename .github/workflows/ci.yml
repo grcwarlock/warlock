@@ -128,10 +128,10 @@ jobs:
             grep "Connectors succeeded" /tmp/demo_output.txt || true
             exit 1
           fi
-          if grep -q "Raw events collected:.*589" /tmp/demo_output.txt; then
-            echo "PASS: 589 raw events collected"
+          if grep -q "Raw events collected:.*1071" /tmp/demo_output.txt; then
+            echo "PASS: 1071 raw events collected"
           else
-            echo "FAIL: expected 589 raw events"
+            echo "FAIL: expected 1071 raw events"
             grep "Raw events" /tmp/demo_output.txt || true
             exit 1
           fi

@@ -120,8 +120,8 @@ The seed registers mock connectors that produce realistic events, then runs the 
 |--------|---------------|
 | Connectors succeeded | 351 |
 | Connectors failed | 0 |
-| Raw events collected | 589 |
-| Findings normalized | ~5,475 |
+| Raw events collected | 1,071 |
+| Findings normalized | ~7,325 |
 | Controls mapped | 373,852 |
 
 Additionally, the seed creates:

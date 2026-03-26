@@ -187,7 +187,7 @@ frameworks-oscal/ — OSCAL catalog/profile JSON
 terraform/       — 12 IaC modules (AWS, Azure, GCP)
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
-  demo_seed.py   — mock connectors, ~5,475 findings, 373K+ results
+  demo_seed.py   — mock connectors, ~7,325 findings, 373K+ results
   demo_api.sh    — API query helper with auto-auth
   qa.sh          — full QA gate
   verify_docs.py — doc count accuracy checker

@@ -9,7 +9,7 @@
 - [ ] `pytest tests/` passes (509+ baseline)
 - [ ] `ruff check warlock/` passes
 - [ ] `ruff format --check warlock/` passes
-- [ ] Demo seed produces expected numbers (165/0/589/~5475/373852)
+- [ ] Demo seed produces expected numbers (351/0/1071/~7325/373852)
 - [ ] No new security vulnerabilities introduced
 - [ ] QA gate passes (`./scripts/qa.sh`)
 
@@ -18,8 +18,8 @@
 ```
 Connectors succeeded:   351
 Connectors failed:      0
-Raw events collected:   589
-Findings normalized:    ~5,475
+Raw events collected:   1,071
+Findings normalized:    ~7,325
 Controls mapped:        373,852
 ```
 

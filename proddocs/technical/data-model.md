@@ -163,8 +163,8 @@ ConnectorRun (1) ---> RawEvent (N)
 
 A single pipeline run with 351 connectors produces approximately:
 - 351 ConnectorRun rows
-- 589 RawEvent rows
-- ~5,475 Finding rows
+- 1,071 RawEvent rows
+- ~7,325 Finding rows
 - 373,852 ControlMapping rows
 - 373,852 ControlResult rows
 
