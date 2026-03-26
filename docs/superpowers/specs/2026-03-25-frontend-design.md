@@ -357,7 +357,7 @@ Framework selectors (dropdowns, filters, heatmap) are NEVER hardcoded — they c
 - Create key button
 
 **Connectors tab:**
-- Table: all 165 connectors, enabled/disabled status, last health check
+- Table: all 351 connectors, enabled/disabled status, last health check
 - Click → connector detail: required env vars, test button
 
 **Alerts tab:**

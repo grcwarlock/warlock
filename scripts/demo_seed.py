@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Seed a full-stack demo environment with all 165 connectors.
+"""Seed a full-stack demo environment with all 351 connectors.
 
-No real credentials or API keys needed. 165 mock connectors produce realistic
+No real credentials or API keys needed. 351 mock connectors produce realistic
 events from cloud, IAM, EDR, SIEM, scanners, ITSM, code security, DLP, backup,
 physical security, and more. All events flow through the real pipeline
-(collect -> normalize -> map -> assess) exercising every normalizer (166),
+(collect -> normalize -> map -> assess) exercising every normalizer (352),
 every assertion (101), and every framework (14).
 
 Usage:
@@ -12,7 +12,7 @@ Usage:
     warlock coverage                     # compliance summary across 14 frameworks
     warlock findings                     # ~5,475 findings from 165 sources
     warlock results --status non_compliant
-    warlock sources                      # 165 connectors + 165 normalizers
+    warlock sources                      # 351 connectors + 351 normalizers
     warlock systems                      # 5 system profiles
     warlock issues                       # compliance issues
 """
@@ -40,6 +40,7 @@ from warlock.connectors.base import (
 )
 from warlock.db.engine import get_session, init_db
 from warlock.db.models import (
+    POAM,
     Attestation,
     AuditEngagement,
     AuditorEngagementAssignment,
@@ -55,7 +56,6 @@ from warlock.db.models import (
     Issue,
     LegalHold,
     Personnel,
-    POAM,
     Policy,
     PolicyOverride,
     PostureSnapshot,
@@ -65,163 +65,356 @@ from warlock.db.models import (
     SystemProfile,
     Vendor,
 )
-from warlock.normalizers.aws import AWSNormalizer
-from warlock.normalizers.base import NormalizerRegistry
-from warlock.normalizers.confluence import ConfluenceNormalizer
-from warlock.normalizers.crowdstrike import CrowdStrikeNormalizer
-from warlock.normalizers.generic import GenericNormalizer
-from warlock.normalizers.knowbe4 import KnowBe4Normalizer
-from warlock.normalizers.okta import OktaNormalizer
-from warlock.normalizers.securityscorecard import SecurityScorecardNormalizer
-from warlock.normalizers.cyberark import CyberArkNormalizer
-from warlock.normalizers.entra_id import EntraIDNormalizer
-from warlock.normalizers.sailpoint import SailPointNormalizer
-from warlock.normalizers.vault import VaultNormalizer
-from warlock.normalizers.alibaba import AlibabaNormalizer
-from warlock.normalizers.azure import AzureNormalizer
-from warlock.normalizers.cloudflare import CloudflareNormalizer
-from warlock.normalizers.defender import DefenderNormalizer
-from warlock.normalizers.digitalocean import DigitalOceanNormalizer
-from warlock.normalizers.elastic import ElasticNormalizer
-from warlock.normalizers.gcp import GCPNormalizer
-from warlock.normalizers.github import GitHubNormalizer
-from warlock.normalizers.huawei import HuaweiNormalizer
-from warlock.normalizers.ibm_cloud import IBMCloudNormalizer
-from warlock.normalizers.intune import IntuneNormalizer
-from warlock.normalizers.kubernetes import KubernetesNormalizer
-from warlock.normalizers.mlflow import MLflowNormalizer
-from warlock.normalizers.oci import OCINormalizer
-from warlock.normalizers.onetrust import OneTrustNormalizer
-from warlock.normalizers.ovh import OVHNormalizer
-from warlock.normalizers.prisma import PrismaNormalizer
-from warlock.normalizers.proofpoint import ProofpointNormalizer
-from warlock.normalizers.purview import PurviewNormalizer
-from warlock.normalizers.qualys import QualysNormalizer
-from warlock.normalizers.sentinel import SentinelNormalizer
-from warlock.normalizers.sentinelone import SentinelOneNormalizer
-from warlock.normalizers.servicenow import ServiceNowNormalizer
-from warlock.normalizers.snyk import SnykNormalizer
-from warlock.normalizers.splunk import SplunkNormalizer
-from warlock.normalizers.tenable import TenableNormalizer
-from warlock.normalizers.veeam import VeeamNormalizer
-from warlock.normalizers.verkada import VerkadaNormalizer
-from warlock.normalizers.wiz import WizNormalizer
-from warlock.normalizers.workday import WorkdayNormalizer
-from warlock.normalizers.palo_alto import PaloAltoNormalizer
-from warlock.normalizers.fortinet import FortinetNormalizer
-from warlock.normalizers.zscaler import ZscalerNormalizer
-from warlock.normalizers.jamf import JamfNormalizer
-from warlock.normalizers.duo import DuoNormalizer
-from warlock.normalizers.onepassword import OnePasswordNormalizer
-from warlock.normalizers.bitwarden import BitwardenNormalizer
-from warlock.normalizers.guardduty import GuardDutyNormalizer
-from warlock.normalizers.datadog import DatadogNormalizer
-from warlock.normalizers.newrelic import NewRelicNormalizer
-from warlock.normalizers.checkmarx import CheckmarxNormalizer
-from warlock.normalizers.sonarqube import SonarQubeNormalizer
 from warlock.normalizers.abnormal_security import AbnormalSecurityNormalizer
-from warlock.normalizers.netskope import NetskopeNormalizer
-from warlock.normalizers.nessus import NessusNormalizer
+from warlock.normalizers.accessowl import AccessOwlNormalizer
+from warlock.normalizers.addigy import AddigyNormalizer
+from warlock.normalizers.adp import ADPNormalizer
+from warlock.normalizers.aikido import AikidoNormalizer
+from warlock.normalizers.aircall import AircallNormalizer
+from warlock.normalizers.akamai import AkamaiNormalizer
+from warlock.normalizers.alibaba import AlibabaNormalizer
+from warlock.normalizers.ansible import AnsibleNormalizer
+from warlock.normalizers.anthropic_platform import AnthropicPlatformNormalizer
+from warlock.normalizers.appomni import AppOmniNormalizer
+from warlock.normalizers.archer import ArcherNormalizer
+from warlock.normalizers.argocd import ArgoCDNormalizer
+from warlock.normalizers.arnica import ArnicaNormalizer
+from warlock.normalizers.arthur_ai import ArthurAINormalizer
+from warlock.normalizers.asana import AsanaNormalizer
+from warlock.normalizers.ashby import AshbyNormalizer
+from warlock.normalizers.attio import AttioNormalizer
+from warlock.normalizers.automox import AutomoxNormalizer
+from warlock.normalizers.awarego import AwareGONormalizer
+from warlock.normalizers.aws import AWSNormalizer
+from warlock.normalizers.aws_acm import AwsAcmNormalizer
+from warlock.normalizers.aws_backup import AWSBackupNormalizer
+from warlock.normalizers.aws_bedrock import AWSBedrockNormalizer
+from warlock.normalizers.aws_codecommit import AWSCodeCommitNormalizer
+from warlock.normalizers.aws_govcloud import AWSGovCloudNormalizer
+from warlock.normalizers.aws_inspector import AWSInspectorNormalizer
+from warlock.normalizers.aws_secrets import AwsSecretsNormalizer
+from warlock.normalizers.axonius import AxoniusNormalizer
+from warlock.normalizers.azure import AzureNormalizer
+from warlock.normalizers.azure_devops import AzureDevOpsNormalizer
+from warlock.normalizers.azure_keyvault import AzureKeyVaultNormalizer
+from warlock.normalizers.azure_repos import AzureReposNormalizer
+from warlock.normalizers.backstage import BackstageNormalizer
 from warlock.normalizers.bamboohr import BambooHRNormalizer
-from warlock.normalizers.sophos import SophosNormalizer
+from warlock.normalizers.banyan import BanyanNormalizer
+from warlock.normalizers.barracuda import BarracudaNormalizer
+from warlock.normalizers.base import NormalizerRegistry
+from warlock.normalizers.basecamp import BasecampNormalizer
+from warlock.normalizers.bigeye import BigeyeNormalizer
+from warlock.normalizers.bigid import BigIDNormalizer
+from warlock.normalizers.bitbucket import BitbucketNormalizer
+from warlock.normalizers.bitwarden import BitwardenNormalizer
+from warlock.normalizers.boundary import BoundaryNormalizer
+from warlock.normalizers.box import BoxNormalizer
+from warlock.normalizers.brex import BrexNormalizer
+from warlock.normalizers.bugcrowd import BugcrowdNormalizer
+from warlock.normalizers.buildkite import BuildkiteNormalizer
+from warlock.normalizers.canva import CanvaNormalizer
+from warlock.normalizers.certn import CertnNormalizer
+from warlock.normalizers.chainguard import ChainguardNormalizer
+from warlock.normalizers.checkmarx import CheckmarxNormalizer
+from warlock.normalizers.checkr import CheckrNormalizer
+from warlock.normalizers.cisco_umbrella import CiscoUmbrellaNormalizer
+from warlock.normalizers.clickup import ClickUpNormalizer
+from warlock.normalizers.close_crm import CloseCRMNormalizer
+from warlock.normalizers.cloudflare import CloudflareNormalizer
+from warlock.normalizers.cloudhealth import CloudHealthNormalizer
+from warlock.normalizers.cobalt import CobaltNormalizer
+from warlock.normalizers.code42 import Code42Normalizer
+from warlock.normalizers.cohesity import CohesityNormalizer
+from warlock.normalizers.commvault import CommvaultNormalizer
+from warlock.normalizers.conductorone import ConductorOneNormalizer
+from warlock.normalizers.confluence import ConfluenceNormalizer
+from warlock.normalizers.contentful import ContentfulNormalizer
+from warlock.normalizers.cookiebot import CookiebotNormalizer
+from warlock.normalizers.copper import CopperNormalizer
+from warlock.normalizers.cornerstone import CornerstoneNormalizer
+from warlock.normalizers.coursera import CourseraNormalizer
+from warlock.normalizers.credo_ai import CredoAINormalizer
+from warlock.normalizers.crowdstrike import CrowdStrikeNormalizer
+from warlock.normalizers.crowdstrike_spotlight import CrowdStrikeSpotlightNormalizer
+from warlock.normalizers.cyberark import CyberArkNormalizer
+from warlock.normalizers.cybeready import CyberReadyNormalizer
+from warlock.normalizers.cyral import CyralNormalizer
+from warlock.normalizers.dashlane import DashlaneNormalizer
+from warlock.normalizers.datadog import DatadogNormalizer
+from warlock.normalizers.dayforce import DayforceNormalizer
+from warlock.normalizers.dbt_labs import DbtLabsNormalizer
+from warlock.normalizers.deel import DeelNormalizer
+from warlock.normalizers.defender import DefenderNormalizer
+from warlock.normalizers.dialpad import DialpadNormalizer
+from warlock.normalizers.digicert import DigiCertNormalizer
+from warlock.normalizers.digitalocean import DigitalOceanNormalizer
+from warlock.normalizers.docebo import DoceboNormalizer
+from warlock.normalizers.docusign import DocuSignNormalizer
+from warlock.normalizers.domo import DomoNormalizer
+from warlock.normalizers.doppler import DopplerNormalizer
+from warlock.normalizers.drata import DrataNormalizer
+from warlock.normalizers.drata_api import DrataApiNormalizer
+from warlock.normalizers.dropbox import DropboxNormalizer
+from warlock.normalizers.dropbox_sign import DropboxSignNormalizer
+from warlock.normalizers.druva import DruvaNormalizer
+from warlock.normalizers.duo import DuoNormalizer
+from warlock.normalizers.dynatrace import DynatraceNormalizer
+from warlock.normalizers.easyllama import EasyLlamaNormalizer
+from warlock.normalizers.egnyte import EgnyteNormalizer
+from warlock.normalizers.eight_x_eight import EightByEightNormalizer
+from warlock.normalizers.elastic import ElasticNormalizer
+from warlock.normalizers.employment_hero import EmploymentHeroNormalizer
+from warlock.normalizers.entra_id import EntraIDNormalizer
+from warlock.normalizers.envoy import EnvoyNormalizer
+from warlock.normalizers.ermetic import ErmeticNormalizer
+from warlock.normalizers.f5 import F5Normalizer
+from warlock.normalizers.fiddler_ai import FiddlerAINormalizer
+from warlock.normalizers.fifteenfive import FifteenFiveNormalizer
+from warlock.normalizers.firehydrant import FireHydrantNormalizer
+from warlock.normalizers.fivetran import FivetranNormalizer
+from warlock.normalizers.fleet import FleetNormalizer
+from warlock.normalizers.fortinet import FortinetNormalizer
+from warlock.normalizers.fortytwoCrunch import FortyTwoCrunchNormalizer
+from warlock.normalizers.fossa import FossaNormalizer
+from warlock.normalizers.freshdesk import FreshdeskNormalizer
+from warlock.normalizers.freshsales import FreshsalesNormalizer
+from warlock.normalizers.freshservice import FreshserviceNormalizer
+from warlock.normalizers.gcp import GCPNormalizer
+from warlock.normalizers.gcp_secrets import GcpSecretsNormalizer
+from warlock.normalizers.generic import GenericNormalizer
+from warlock.normalizers.github import GitHubNormalizer
+from warlock.normalizers.go1 import GO1Normalizer
+from warlock.normalizers.gong import GongNormalizer
+from warlock.normalizers.google_drive import GoogleDriveNormalizer
+from warlock.normalizers.greenhouse import GreenhouseNormalizer
+from warlock.normalizers.guardduty import GuardDutyNormalizer
+from warlock.normalizers.hackerone import HackerOneNormalizer
+from warlock.normalizers.halo_security import HaloSecurityNormalizer
+from warlock.normalizers.harness import HarnessNormalizer
+from warlock.normalizers.height import HeightNormalizer
+
+# --- New normalizers (186 expansion) ---
+from warlock.normalizers.heroku import HerokuNormalizer
+from warlock.normalizers.hetzner import HetznerNormalizer
+from warlock.normalizers.hexnode import HexnodeNormalizer
+from warlock.normalizers.hibob import HiBobNormalizer
+from warlock.normalizers.hireright import HireRightNormalizer
+from warlock.normalizers.horizon3 import Horizon3Normalizer
+from warlock.normalizers.hr_cloud import HRCloudNormalizer
+from warlock.normalizers.huawei import HuaweiNormalizer
+from warlock.normalizers.hubspot import HubSpotNormalizer
+from warlock.normalizers.humaans import HumaansNormalizer
+from warlock.normalizers.huntress import HuntressNormalizer
+from warlock.normalizers.ibm_cloud import IBMCloudNormalizer
+from warlock.normalizers.immuta import ImmutaNormalizer
+from warlock.normalizers.imperva import ImpervaNormalizer
+from warlock.normalizers.incident_io import IncidentIONormalizer
+from warlock.normalizers.indent import IndentNormalizer
+from warlock.normalizers.infisical import InfisicalNormalizer
+from warlock.normalizers.infosec_iq import InfosecIQNormalizer
+from warlock.normalizers.infracost import InfracostNormalizer
+from warlock.normalizers.intercom import IntercomNormalizer
+from warlock.normalizers.intigriti import IntigritiNormalizer
+from warlock.normalizers.intune import IntuneNormalizer
+from warlock.normalizers.ironclad import IroncladNormalizer
+from warlock.normalizers.isolved import ISolvedNormalizer
+from warlock.normalizers.ivanti import IvantiNormalizer
+from warlock.normalizers.ivanti_patch import IvantiPatchNormalizer
+from warlock.normalizers.jamf import JamfNormalizer
+from warlock.normalizers.jetbrains import JetBrainsNormalizer
+from warlock.normalizers.jit_security import JitSecurityNormalizer
+from warlock.normalizers.justworks import JustworksNormalizer
+from warlock.normalizers.keeper import KeeperNormalizer
+from warlock.normalizers.kenjo import KenjoNormalizer
+from warlock.normalizers.ketch import KetchNormalizer
+from warlock.normalizers.knowbe4 import KnowBe4Normalizer
+from warlock.normalizers.kolide import KolideNormalizer
+from warlock.normalizers.kubecost import KubecostNormalizer
+from warlock.normalizers.kubernetes import KubernetesNormalizer
+from warlock.normalizers.lacework import LaceworkNormalizer
+from warlock.normalizers.lastpass import LastPassNormalizer
+from warlock.normalizers.lattice import LatticeNormalizer
+from warlock.normalizers.launchdarkly import LaunchDarklyNormalizer
+from warlock.normalizers.leapsome import LeapsomeNormalizer
+from warlock.normalizers.lever import LeverNormalizer
+from warlock.normalizers.linear import LinearNormalizer
+from warlock.normalizers.linkedin_learning import LinkedInLearningNormalizer
+from warlock.normalizers.linode import LinodeNormalizer
+from warlock.normalizers.logrhythm import LogRhythmNormalizer
+from warlock.normalizers.manageengine import ManageEngineNormalizer
+from warlock.normalizers.microsoft_teams import MicrosoftTeamsNormalizer
+from warlock.normalizers.mimecast import MimecastNormalizer
+from warlock.normalizers.miradore import MiradoreNormalizer
+from warlock.normalizers.miro import MiroNormalizer
+from warlock.normalizers.mixpanel import MixpanelNormalizer
+from warlock.normalizers.mlflow import MLflowNormalizer
+from warlock.normalizers.monday import MondayNormalizer
+from warlock.normalizers.mongodb_atlas import MongoDBAtlasNormalizer
+from warlock.normalizers.monte_carlo import MonteCarloNormalizer
+from warlock.normalizers.moxso import MoxsoNormalizer
+from warlock.normalizers.namely import NamelyNormalizer
+from warlock.normalizers.nessus import NessusNormalizer
+from warlock.normalizers.netlify import NetlifyNormalizer
+from warlock.normalizers.netskope import NetskopeNormalizer
+from warlock.normalizers.netsuite import NetSuiteNormalizer
+from warlock.normalizers.newrelic import NewRelicNormalizer
+from warlock.normalizers.nightfall import NightfallNormalizer
+from warlock.normalizers.ninjaone import NinjaOneNormalizer
+from warlock.normalizers.noname import NonameNormalizer
+from warlock.normalizers.nordpass import NordPassNormalizer
+from warlock.normalizers.notion import NotionNormalizer
+from warlock.normalizers.nudge_security import NudgeSecurityNormalizer
+from warlock.normalizers.obsidian_security import ObsidianSecurityNormalizer
+from warlock.normalizers.oci import OCINormalizer
+from warlock.normalizers.okta import OktaNormalizer
+from warlock.normalizers.onelogin import OneLoginNormalizer
+from warlock.normalizers.onepassword import OnePasswordNormalizer
+from warlock.normalizers.onetrust import OneTrustNormalizer
+from warlock.normalizers.oomnitza import OomnitzaNormalizer
+from warlock.normalizers.openai_platform import OpenAIPlatformNormalizer
+from warlock.normalizers.openvpn import OpenVPNNormalizer
+from warlock.normalizers.opsgenie import OpsgenieNormalizer
+from warlock.normalizers.oracle_hcm import OracleHCMNormalizer
+from warlock.normalizers.orca import OrcaNormalizer
+from warlock.normalizers.osano import OsanoNormalizer
+from warlock.normalizers.ovh import OVHNormalizer
 
 # --- New normalizers (84) ---
 from warlock.normalizers.pagerduty import PagerDutyNormalizer
-from warlock.normalizers.opsgenie import OpsgenieNormalizer
-from warlock.normalizers.axonius import AxoniusNormalizer
-from warlock.normalizers.servicenow_cmdb import ServiceNowCMDBNormalizer
-from warlock.normalizers.runzero import RunZeroNormalizer
+from warlock.normalizers.palo_alto import PaloAltoNormalizer
 from warlock.normalizers.patch_mgmt_microsoft import MicrosoftPatchMgmtNormalizer
-from warlock.normalizers.ivanti import IvantiNormalizer
-from warlock.normalizers.venafi import VenafiNormalizer
-from warlock.normalizers.aws_acm import AwsAcmNormalizer
-from warlock.normalizers.digicert import DigiCertNormalizer
-from warlock.normalizers.aws_secrets import AwsSecretsNormalizer
-from warlock.normalizers.azure_keyvault import AzureKeyVaultNormalizer
-from warlock.normalizers.gcp_secrets import GcpSecretsNormalizer
-from warlock.normalizers.servicenow_grc import ServiceNowGRCNormalizer
-from warlock.normalizers.nightfall import NightfallNormalizer
-from warlock.normalizers.aws_backup import AWSBackupNormalizer
-from warlock.normalizers.orca import OrcaNormalizer
-from warlock.normalizers.lacework import LaceworkNormalizer
-from warlock.normalizers.rapid7 import Rapid7Normalizer
-from warlock.normalizers.crowdstrike_spotlight import CrowdStrikeSpotlightNormalizer
+from warlock.normalizers.paychex_flex import PaychexFlexNormalizer
+from warlock.normalizers.paylocity import PaylocityNormalizer
+from warlock.normalizers.pentera import PenteraNormalizer
+from warlock.normalizers.personio import PersonioNormalizer
 from warlock.normalizers.ping_identity import PingIdentityNormalizer
-from warlock.normalizers.onelogin import OneLoginNormalizer
-from warlock.normalizers.workspace_one import WorkspaceOneNormalizer
-from warlock.normalizers.sumo_logic import SumoLogicNormalizer
-from warlock.normalizers.cisco_umbrella import CiscoUmbrellaNormalizer
-from warlock.normalizers.drata import DrataNormalizer
-from warlock.normalizers.vanta import VantaNormalizer
-from warlock.normalizers.archer import ArcherNormalizer
-from warlock.normalizers.drata_api import DrataApiNormalizer
-from warlock.normalizers.vanta_api import VantaApiNormalizer
-from warlock.normalizers.secureframe import SecureframeNormalizer
+from warlock.normalizers.ping_identity_new import PingIdentityNewNormalizer
+from warlock.normalizers.pipedrive import PipedriveNormalizer
+from warlock.normalizers.plextrac import PlexTracNormalizer
+from warlock.normalizers.prisma import PrismaNormalizer
+from warlock.normalizers.proofpoint import ProofpointNormalizer
+from warlock.normalizers.purview import PurviewNormalizer
+from warlock.normalizers.qlik import QlikNormalizer
+from warlock.normalizers.qualys import QualysNormalizer
+from warlock.normalizers.ramp import RampNormalizer
+from warlock.normalizers.rapid7 import Rapid7Normalizer
+from warlock.normalizers.render import RenderNormalizer
+from warlock.normalizers.retool import RetoolNormalizer
+from warlock.normalizers.ringcentral import RingCentralNormalizer
+from warlock.normalizers.rollbar import RollbarNormalizer
+from warlock.normalizers.rootly import RootlyNormalizer
+from warlock.normalizers.rubrik import RubrikNormalizer
+from warlock.normalizers.rubrik_security import RubrikSecurityNormalizer
+from warlock.normalizers.runzero import RunZeroNormalizer
+from warlock.normalizers.sailpoint import SailPointNormalizer
 from warlock.normalizers.salesforce import SalesforceNormalizer
-from warlock.normalizers.teams_compliance import TeamsComplianceNormalizer
-from warlock.normalizers.zoom import ZoomNormalizer
-from warlock.normalizers.smarsh import SmarshNormalizer
-from warlock.normalizers.ansible import AnsibleNormalizer
-from warlock.normalizers.adp import ADPNormalizer
-from warlock.normalizers.ukg import UKGNormalizer
+from warlock.normalizers.salt_security import SaltSecurityNormalizer
 from warlock.normalizers.sap_successfactors import SAPSuccessFactorsNormalizer
-from warlock.normalizers.wandb import WandbNormalizer
-from warlock.normalizers.vertex_ai import VertexAINormalizer
-from warlock.normalizers.mimecast import MimecastNormalizer
-from warlock.normalizers.chainguard import ChainguardNormalizer
-from warlock.normalizers.syft_grype import SyftGrypeNormalizer
-from warlock.normalizers.fossa import FossaNormalizer
+from warlock.normalizers.saviynt import SaviyntNormalizer
+from warlock.normalizers.scaleway import ScalewayNormalizer
+from warlock.normalizers.secureframe import SecureframeNormalizer
+from warlock.normalizers.securityscorecard import SecurityScorecardNormalizer
+from warlock.normalizers.segment import SegmentNormalizer
+from warlock.normalizers.sendgrid import SendGridNormalizer
+from warlock.normalizers.sentinel import SentinelNormalizer
+from warlock.normalizers.sentinelone import SentinelOneNormalizer
+from warlock.normalizers.sentry import SentryNormalizer
+from warlock.normalizers.servicenow import ServiceNowNormalizer
+from warlock.normalizers.servicenow_cmdb import ServiceNowCMDBNormalizer
+from warlock.normalizers.servicenow_grc import ServiceNowGRCNormalizer
+from warlock.normalizers.servicenow_itam import ServiceNowITAMNormalizer
+from warlock.normalizers.shortcut import ShortcutNormalizer
+from warlock.normalizers.sigma_computing import SigmaComputingNormalizer
+from warlock.normalizers.smarsh import SmarshNormalizer
+from warlock.normalizers.smartrecruiters import SmartRecruitersNormalizer
+from warlock.normalizers.smartsheet import SmartsheetNormalizer
+from warlock.normalizers.snipe_it import SnipeITNormalizer
+from warlock.normalizers.snowflake import SnowflakeNormalizer
+from warlock.normalizers.snyk import SnykNormalizer
 from warlock.normalizers.snyk_container import SnykContainerNormalizer
 from warlock.normalizers.socketdev import SocketdevNormalizer
-from warlock.normalizers.salt_security import SaltSecurityNormalizer
-from warlock.normalizers.noname import NonameNormalizer
-from warlock.normalizers.wallarm import WallarmNormalizer
-from warlock.normalizers.fortytwoCrunch import FortyTwoCrunchNormalizer
-from warlock.normalizers.tailscale import TailscaleNormalizer
-from warlock.normalizers.twingate import TwingateNormalizer
-from warlock.normalizers.banyan import BanyanNormalizer
-from warlock.normalizers.code42 import Code42Normalizer
-from warlock.normalizers.varonis import VaronisNormalizer
-from warlock.normalizers.bigid import BigIDNormalizer
-from warlock.normalizers.rubrik_security import RubrikSecurityNormalizer
-from warlock.normalizers.commvault import CommvaultNormalizer
-from warlock.normalizers.rubrik import RubrikNormalizer
-from warlock.normalizers.cohesity import CohesityNormalizer
-from warlock.normalizers.druva import DruvaNormalizer
-from warlock.normalizers.ermetic import ErmeticNormalizer
-from warlock.normalizers.trustarc import TrustArcNormalizer
-from warlock.normalizers.cookiebot import CookiebotNormalizer
-from warlock.normalizers.osano import OsanoNormalizer
-from warlock.normalizers.vulcan import VulcanNormalizer
-from warlock.normalizers.tanium import TaniumNormalizer
-from warlock.normalizers.automox import AutomoxNormalizer
-from warlock.normalizers.fleet import FleetNormalizer
-from warlock.normalizers.cobalt import CobaltNormalizer
-from warlock.normalizers.hackerone import HackerOneNormalizer
-from warlock.normalizers.linode import LinodeNormalizer
-from warlock.normalizers.hetzner import HetznerNormalizer
-from warlock.normalizers.logrhythm import LogRhythmNormalizer
-from warlock.normalizers.barracuda import BarracudaNormalizer
-from warlock.normalizers.f5 import F5Normalizer
-from warlock.normalizers.paylocity import PaylocityNormalizer
-from warlock.normalizers.kubecost import KubecostNormalizer
-from warlock.normalizers.infracost import InfracostNormalizer
+from warlock.normalizers.sonarcloud import SonarCloudNormalizer
+from warlock.normalizers.sonarqube import SonarQubeNormalizer
+from warlock.normalizers.sophos import SophosNormalizer
+from warlock.normalizers.sosafe import SoSafeNormalizer
+from warlock.normalizers.splunk import SplunkNormalizer
+from warlock.normalizers.spot_netapp import SpotNetAppNormalizer
 from warlock.normalizers.spotio import SpotioNormalizer
-from warlock.normalizers.manageengine import ManageEngineNormalizer
-from warlock.normalizers.ivanti_patch import IvantiPatchNormalizer
-from warlock.normalizers.plextrac import PlexTracNormalizer
+from warlock.normalizers.sprinto import SprintoNormalizer
+from warlock.normalizers.sterling import SterlingNormalizer
+from warlock.normalizers.strongdm import StrongDMNormalizer
+from warlock.normalizers.sumo_logic import SumoLogicNormalizer
+from warlock.normalizers.sumo_logic_new import SumoLogicNewNormalizer
+from warlock.normalizers.supabase import SupabaseNormalizer
+from warlock.normalizers.syft_grype import SyftGrypeNormalizer
+from warlock.normalizers.tableau import TableauNormalizer
+from warlock.normalizers.tailscale import TailscaleNormalizer
+from warlock.normalizers.talentlms import TalentLMSNormalizer
+from warlock.normalizers.tanium import TaniumNormalizer
+from warlock.normalizers.teams_compliance import TeamsComplianceNormalizer
+from warlock.normalizers.teamtailor import TeamtailorNormalizer
+from warlock.normalizers.teamviewer import TeamViewerNormalizer
+from warlock.normalizers.teleport import TeleportNormalizer
+from warlock.normalizers.tenable import TenableNormalizer
+from warlock.normalizers.thoropass import ThoropassNormalizer
+from warlock.normalizers.three60learning import Three60LearningNormalizer
+from warlock.normalizers.traceable_ai import TraceableAINormalizer
+from warlock.normalizers.transcend import TranscendNormalizer
+from warlock.normalizers.trello import TrelloNormalizer
+from warlock.normalizers.trinet import TriNetNormalizer
+from warlock.normalizers.trustarc import TrustArcNormalizer
+from warlock.normalizers.twilio import TwilioNormalizer
+from warlock.normalizers.twingate import TwingateNormalizer
+from warlock.normalizers.udemy import UdemyNormalizer
+from warlock.normalizers.ukg import UKGNormalizer
+from warlock.normalizers.upwind import UpwindNormalizer
+from warlock.normalizers.vanta import VantaNormalizer
+from warlock.normalizers.vanta_api import VantaApiNormalizer
+from warlock.normalizers.vantage_finops import VantageFinOpsNormalizer
+from warlock.normalizers.varonis import VaronisNormalizer
+from warlock.normalizers.vault import VaultNormalizer
+from warlock.normalizers.veeam import VeeamNormalizer
+from warlock.normalizers.venafi import VenafiNormalizer
+from warlock.normalizers.vendr import VendrNormalizer
+from warlock.normalizers.vercel_cloud import VercelCloudNormalizer
+from warlock.normalizers.verkada import VerkadaNormalizer
+from warlock.normalizers.vertex_ai import VertexAINormalizer
+from warlock.normalizers.vulcan import VulcanNormalizer
+from warlock.normalizers.wallarm import WallarmNormalizer
+from warlock.normalizers.wandb import WandbNormalizer
+from warlock.normalizers.webex import WebexNormalizer
+from warlock.normalizers.webflow import WebflowNormalizer
+from warlock.normalizers.wiz import WizNormalizer
+from warlock.normalizers.wiz_code import WizCodeNormalizer
+from warlock.normalizers.workable import WorkableNormalizer
+from warlock.normalizers.workday import WorkdayNormalizer
+from warlock.normalizers.workspace_one import WorkspaceOneNormalizer
+from warlock.normalizers.wrike import WrikeNormalizer
+from warlock.normalizers.xero_payroll import XeroPayrollNormalizer
+from warlock.normalizers.zendesk import ZendeskNormalizer
+from warlock.normalizers.zentry import ZentryNormalizer
+from warlock.normalizers.zoho_desk import ZohoDeskNormalizer
+from warlock.normalizers.zoho_people import ZohoPeopleNormalizer
+from warlock.normalizers.zoom import ZoomNormalizer
+from warlock.normalizers.zscaler import ZscalerNormalizer
 
 # --- New demo connectors ---
 try:
     from scripts.demo_connectors_new import ALL_NEW_CONNECTORS
 except ImportError:
     from demo_connectors_new import ALL_NEW_CONNECTORS  # type: ignore[no-redef]
-from warlock.assessors.engine import Assessor, engine as assertion_engine
+
+try:
+    from scripts.demo_connectors_expansion import ALL_EXPANSION_CONNECTORS
+except ImportError:
+    from demo_connectors_expansion import ALL_EXPANSION_CONNECTORS  # type: ignore[no-redef]
+from warlock.assessors.engine import Assessor
+from warlock.assessors.engine import engine as assertion_engine
 from warlock.mappers.control_mapper import ControlMapper
 from warlock.pipeline.bus import EventBus
 from warlock.pipeline.loader import load_assertions, load_framework_configs
 from warlock.pipeline.orchestrator import Pipeline
-
 
 NOW = datetime.now(timezone.utc)
 
@@ -234,53 +427,53 @@ import threading  # noqa: E402
 
 try:  # noqa: E402
     from scripts.demo_data import (
-        generate_users,
-        generate_groups,
         generate_auth_logs,
-        generate_devices,
-        generate_endpoints_edr,
         generate_cloud_instances,
-        generate_iam_policies,
-        generate_security_groups,
-        generate_storage_buckets,
-        generate_vulnerabilities,
         generate_code_findings,
         generate_container_images,
-        generate_employees,
-        generate_training_records,
-        generate_security_alerts,
-        generate_incidents,
-        generate_vendor_assessments,
-        generate_policy_documents,
+        generate_devices,
         generate_dns_queries,
         generate_email_events,
-        generate_terraform_workspaces,
+        generate_employees,
+        generate_endpoints_edr,
+        generate_groups,
         generate_iac_misconfigs,
+        generate_iam_policies,
+        generate_incidents,
+        generate_policy_documents,
+        generate_security_alerts,
+        generate_security_groups,
+        generate_storage_buckets,
+        generate_terraform_workspaces,
+        generate_training_records,
+        generate_users,
+        generate_vendor_assessments,
+        generate_vulnerabilities,
     )
 except ImportError:
     from demo_data import (  # type: ignore[no-redef]  # noqa: E402
-        generate_users,
-        generate_groups,
         generate_auth_logs,
-        generate_devices,
-        generate_endpoints_edr,
         generate_cloud_instances,
-        generate_iam_policies,
-        generate_security_groups,
-        generate_storage_buckets,
-        generate_vulnerabilities,
         generate_code_findings,
         generate_container_images,
-        generate_employees,
-        generate_training_records,
-        generate_security_alerts,
-        generate_incidents,
-        generate_vendor_assessments,
-        generate_policy_documents,
+        generate_devices,
         generate_dns_queries,
         generate_email_events,
-        generate_terraform_workspaces,
+        generate_employees,
+        generate_endpoints_edr,
+        generate_groups,
         generate_iac_misconfigs,
+        generate_iam_policies,
+        generate_incidents,
+        generate_policy_documents,
+        generate_security_alerts,
+        generate_security_groups,
+        generate_storage_buckets,
+        generate_terraform_workspaces,
+        generate_training_records,
+        generate_users,
+        generate_vendor_assessments,
+        generate_vulnerabilities,
     )
 
 # Rich demo data — generated once, shared across connectors
@@ -18307,7 +18500,7 @@ class DemoCircleCIConnector(BaseConnector):
 def _seed_audit_trail(session) -> int:
     """Populate the hash-chained audit trail with representative entries."""
     from warlock.db.audit import AuditTrail
-    from warlock.db.models import Finding, ControlResult
+    from warlock.db.models import ControlResult, Finding
 
     trail = AuditTrail(session)
     count = 0
@@ -18916,16 +19109,16 @@ def _seed_remediations(session) -> int:
 
 def _seed_pipeline_runs(session) -> int:
     """Create sample PipelineRun records."""
-    from warlock.db.models import PipelineRun
-
     import uuid
+
+    from warlock.db.models import PipelineRun
 
     now = NOW
     runs = [
         PipelineRun(
             id=str(uuid.uuid4()),
             status="completed",
-            connectors_succeeded=165,
+            connectors_succeeded=351,
             connectors_failed=0,
             raw_events_collected=589,
             findings_normalized=5475,
@@ -18938,7 +19131,7 @@ def _seed_pipeline_runs(session) -> int:
         PipelineRun(
             id=str(uuid.uuid4()),
             status="completed",
-            connectors_succeeded=165,
+            connectors_succeeded=351,
             connectors_failed=0,
             raw_events_collected=589,
             findings_normalized=5472,
@@ -19906,7 +20099,7 @@ def _seed_frontend_enrichment(session) -> dict:
     """
     import uuid
 
-    from warlock.db.models import ConnectorRun, Issue, POAM, Remediation
+    from warlock.db.models import POAM, ConnectorRun, Issue, Remediation
 
     now = NOW
     counts: dict[str, int] = {}
@@ -20554,6 +20747,201 @@ def main():
         if _cls:
             connectors.register(_provider, _cls)
 
+    # Expansion connectors (186 new sources)
+    _expansion_provider_map = [
+        ("heroku", "DemoHerokuConnector"),
+        ("scaleway", "DemoScalewayConnector"),
+        ("render", "DemoRenderConnector"),
+        ("netlify", "DemoNetlifyConnector"),
+        ("vercel_cloud", "DemoVercelCloudConnector"),
+        ("mongodb_atlas", "DemoMongoDBAtlasConnector"),
+        ("supabase", "DemoSupabaseConnector"),
+        ("snowflake", "DemoSnowflakeConnector"),
+        ("aws_govcloud", "DemoAWSGovCloudConnector"),
+        ("aws_inspector", "DemoAWSInspectorConnector"),
+        ("akamai", "DemoAkamaiConnector"),
+        ("imperva", "DemoImpervaConnector"),
+        ("ping_identity_new", "DemoPingIdentityNewConnector"),
+        ("lastpass", "DemoLastPassConnector"),
+        ("dashlane", "DemoDashlaneConnector"),
+        ("nordpass", "DemoNordPassConnector"),
+        ("keeper", "DemoKeeperConnector"),
+        ("accessowl", "DemoAccessOwlConnector"),
+        ("indent", "DemoIndentConnector"),
+        ("saviynt", "DemoSaviyntConnector"),
+        ("conductorone", "DemoConductorOneConnector"),
+        ("boundary", "DemoBoundaryConnector"),
+        ("teleport", "DemoTeleportConnector"),
+        ("strongdm", "DemoStrongDMConnector"),
+        ("doppler", "DemoDopplerConnector"),
+        ("infisical", "DemoInfisicalConnector"),
+        ("bitbucket", "DemoBitbucketConnector"),
+        ("aws_codecommit", "DemoAWSCodeCommitConnector"),
+        ("azure_repos", "DemoAzureReposConnector"),
+        ("azure_devops", "DemoAzureDevOpsConnector"),
+        ("argocd", "DemoArgoCDConnector"),
+        ("harness", "DemoHarnessConnector"),
+        ("buildkite", "DemoBuildkiteConnector"),
+        ("launchdarkly", "DemoLaunchDarklyConnector"),
+        ("fivetran", "DemoFivetranConnector"),
+        ("dbt_labs", "DemoDbtLabsConnector"),
+        ("asana", "DemoAsanaConnector"),
+        ("linear", "DemoLinearConnector"),
+        ("clickup", "DemoClickUpConnector"),
+        ("trello", "DemoTrelloConnector"),
+        ("monday", "DemoMondayConnector"),
+        ("shortcut", "DemoShortcutConnector"),
+        ("notion", "DemoNotionConnector"),
+        ("smartsheet", "DemoSmartsheetConnector"),
+        ("wrike", "DemoWrikeConnector"),
+        ("basecamp", "DemoBasecampConnector"),
+        ("height", "DemoHeightConnector"),
+        ("freshservice", "DemoFreshserviceConnector"),
+        ("freshdesk", "DemoFreshdeskConnector"),
+        ("zendesk", "DemoZendeskConnector"),
+        ("zoho_desk", "DemoZohoDeskConnector"),
+        ("hibob", "DemoHiBobConnector"),
+        ("justworks", "DemoJustworksConnector"),
+        ("lattice", "DemoLatticeConnector"),
+        ("trinet", "DemoTriNetConnector"),
+        ("dayforce", "DemoDayforceConnector"),
+        ("oracle_hcm", "DemoOracleHCMConnector"),
+        ("personio", "DemoPersonioConnector"),
+        ("deel", "DemoDeelConnector"),
+        ("namely", "DemoNamelyConnector"),
+        ("paychex_flex", "DemoPaychexFlexConnector"),
+        ("humaans", "DemoHumaansConnector"),
+        ("xero_payroll", "DemoXeroPayrollConnector"),
+        ("fifteenfive", "DemoFifteenFiveConnector"),
+        ("leapsome", "DemoLeapsomeConnector"),
+        ("hr_cloud", "DemoHRCloudConnector"),
+        ("isolved", "DemoISolvedConnector"),
+        ("kenjo", "DemoKenjoConnector"),
+        ("employment_hero", "DemoEmploymentHeroConnector"),
+        ("zoho_people", "DemoZohoPeopleConnector"),
+        ("greenhouse", "DemoGreenhouseConnector"),
+        ("lever", "DemoLeverConnector"),
+        ("ashby", "DemoAshbyConnector"),
+        ("smartrecruiters", "DemoSmartRecruitersConnector"),
+        ("teamtailor", "DemoTeamtailorConnector"),
+        ("workable", "DemoWorkableConnector"),
+        ("checkr", "DemoCheckrConnector"),
+        ("certn", "DemoCertnConnector"),
+        ("hireright", "DemoHireRightConnector"),
+        ("sterling", "DemoSterlingConnector"),
+        ("three60learning", "DemoThree60LearningConnector"),
+        ("cornerstone", "DemoCornerstoneConnector"),
+        ("coursera", "DemoCourseraConnector"),
+        ("easyllama", "DemoEasyLlamaConnector"),
+        ("infosec_iq", "DemoInfosecIQConnector"),
+        ("linkedin_learning", "DemoLinkedInLearningConnector"),
+        ("talentlms", "DemoTalentLMSConnector"),
+        ("udemy", "DemoUdemyConnector"),
+        ("docebo", "DemoDoceboConnector"),
+        ("go1", "DemoGO1Connector"),
+        ("sosafe", "DemoSoSafeConnector"),
+        ("moxso", "DemoMoxsoConnector"),
+        ("awarego", "DemoAwareGOConnector"),
+        ("cybeready", "DemoCyberReadyConnector"),
+        ("hexnode", "DemoHexnodeConnector"),
+        ("ninjaone", "DemoNinjaOneConnector"),
+        ("kolide", "DemoKolideConnector"),
+        ("addigy", "DemoAddigyConnector"),
+        ("miradore", "DemoMiradoreConnector"),
+        ("aikido", "DemoAikidoConnector"),
+        ("sonarcloud", "DemoSonarCloudConnector"),
+        ("wiz_code", "DemoWizCodeConnector"),
+        ("huntress", "DemoHuntressConnector"),
+        ("jit_security", "DemoJitSecurityConnector"),
+        ("upwind", "DemoUpwindConnector"),
+        ("arnica", "DemoArnicaConnector"),
+        ("pentera", "DemoPenteraConnector"),
+        ("horizon3", "DemoHorizon3Connector"),
+        ("bugcrowd", "DemoBugcrowdConnector"),
+        ("intigriti", "DemoIntigritiConnector"),
+        ("halo_security", "DemoHaloSecurityConnector"),
+        ("traceable_ai", "DemoTraceableAIConnector"),
+        ("sentry", "DemoSentryConnector"),
+        ("rollbar", "DemoRollbarConnector"),
+        ("dynatrace", "DemoDynatraceConnector"),
+        ("sumo_logic_new", "DemoSumoLogicNewConnector"),
+        ("hubspot", "DemoHubSpotConnector"),
+        ("pipedrive", "DemoPipedriveConnector"),
+        ("intercom", "DemoIntercomConnector"),
+        ("gong", "DemoGongConnector"),
+        ("freshsales", "DemoFreshsalesConnector"),
+        ("attio", "DemoAttioConnector"),
+        ("copper", "DemoCopperConnector"),
+        ("close_crm", "DemoCloseCRMConnector"),
+        ("microsoft_teams", "DemoMicrosoftTeamsConnector"),
+        ("miro", "DemoMiroConnector"),
+        ("webex", "DemoWebexConnector"),
+        ("ringcentral", "DemoRingCentralConnector"),
+        ("aircall", "DemoAircallConnector"),
+        ("dialpad", "DemoDialpadConnector"),
+        ("eight_x_eight", "DemoEightByEightConnector"),
+        ("twilio", "DemoTwilioConnector"),
+        ("box", "DemoBoxConnector"),
+        ("dropbox", "DemoDropboxConnector"),
+        ("google_drive", "DemoGoogleDriveConnector"),
+        ("egnyte", "DemoEgnyteConnector"),
+        ("ramp", "DemoRampConnector"),
+        ("brex", "DemoBrexConnector"),
+        ("netsuite", "DemoNetSuiteConnector"),
+        ("vendr", "DemoVendrConnector"),
+        ("docusign", "DemoDocuSignConnector"),
+        ("ironclad", "DemoIroncladConnector"),
+        ("dropbox_sign", "DemoDropboxSignConnector"),
+        ("segment", "DemoSegmentConnector"),
+        ("mixpanel", "DemoMixpanelConnector"),
+        ("tableau", "DemoTableauConnector"),
+        ("domo", "DemoDomoConnector"),
+        ("qlik", "DemoQlikConnector"),
+        ("sigma_computing", "DemoSigmaComputingConnector"),
+        ("transcend", "DemoTranscendConnector"),
+        ("ketch", "DemoKetchConnector"),
+        ("openai_platform", "DemoOpenAIPlatformConnector"),
+        ("anthropic_platform", "DemoAnthropicPlatformConnector"),
+        ("aws_bedrock", "DemoAWSBedrockConnector"),
+        ("credo_ai", "DemoCredoAIConnector"),
+        ("arthur_ai", "DemoArthurAIConnector"),
+        ("fiddler_ai", "DemoFiddlerAIConnector"),
+        ("appomni", "DemoAppOmniConnector"),
+        ("obsidian_security", "DemoObsidianSecurityConnector"),
+        ("nudge_security", "DemoNudgeSecurityConnector"),
+        ("rootly", "DemoRootlyConnector"),
+        ("incident_io", "DemoIncidentIOConnector"),
+        ("firehydrant", "DemoFireHydrantConnector"),
+        ("snipe_it", "DemoSnipeITConnector"),
+        ("oomnitza", "DemoOomnitzaConnector"),
+        ("servicenow_itam", "DemoServiceNowITAMConnector"),
+        ("monte_carlo", "DemoMonteCarloConnector"),
+        ("bigeye", "DemoBigeyeConnector"),
+        ("vantage_finops", "DemoVantageFinOpsConnector"),
+        ("cloudhealth", "DemoCloudHealthConnector"),
+        ("spot_netapp", "DemoSpotNetAppConnector"),
+        ("zentry", "DemoZentryConnector"),
+        ("openvpn", "DemoOpenVPNConnector"),
+        ("teamviewer", "DemoTeamViewerConnector"),
+        ("cyral", "DemoCyralConnector"),
+        ("immuta", "DemoImmutaConnector"),
+        ("sprinto", "DemoSprintoConnector"),
+        ("thoropass", "DemoThoropassConnector"),
+        ("backstage", "DemoBackstageConnector"),
+        ("retool", "DemoRetoolConnector"),
+        ("sendgrid", "DemoSendGridConnector"),
+        ("envoy", "DemoEnvoyConnector"),
+        ("canva", "DemoCanvaConnector"),
+        ("jetbrains", "DemoJetBrainsConnector"),
+        ("webflow", "DemoWebflowConnector"),
+        ("contentful", "DemoContentfulConnector"),
+    ]
+    _expansion_cls_map = {cls.__name__: cls for cls in ALL_EXPANSION_CONNECTORS}
+    for _provider, _cls_name in _expansion_provider_map:
+        _cls = _expansion_cls_map.get(_cls_name)
+        if _cls:
+            connectors.register(_provider, _cls)
+
     # Create all connector instances
     _connector_configs = [
         ("demo-aws", SourceType.CLOUD, "aws"),
@@ -20728,6 +21116,198 @@ def main():
     for name, stype, provider in _connector_configs:
         connectors.create(ConnectorConfig(name=name, source_type=stype, provider=provider))
 
+    # --- Expansion connector configs (186) ---
+    _expansion_configs = [
+        ("demo-heroku", SourceType.CLOUD, "heroku"),
+        ("demo-scaleway", SourceType.CLOUD, "scaleway"),
+        ("demo-render", SourceType.CLOUD, "render"),
+        ("demo-netlify", SourceType.CLOUD, "netlify"),
+        ("demo-vercel-cloud", SourceType.CLOUD, "vercel_cloud"),
+        ("demo-mongodb-atlas", SourceType.CLOUD, "mongodb_atlas"),
+        ("demo-supabase", SourceType.CLOUD, "supabase"),
+        ("demo-snowflake", SourceType.DATA_GOVERNANCE, "snowflake"),
+        ("demo-aws-govcloud", SourceType.CLOUD, "aws_govcloud"),
+        ("demo-aws-inspector", SourceType.SCANNER, "aws_inspector"),
+        ("demo-akamai", SourceType.NETWORK, "akamai"),
+        ("demo-imperva", SourceType.NETWORK, "imperva"),
+        ("demo-ping-identity-new", SourceType.IAM, "ping_identity_new"),
+        ("demo-lastpass", SourceType.IAM, "lastpass"),
+        ("demo-dashlane", SourceType.IAM, "dashlane"),
+        ("demo-nordpass", SourceType.IAM, "nordpass"),
+        ("demo-keeper", SourceType.IAM, "keeper"),
+        ("demo-accessowl", SourceType.IAM, "accessowl"),
+        ("demo-indent", SourceType.IAM, "indent"),
+        ("demo-saviynt", SourceType.IAM, "saviynt"),
+        ("demo-conductorone", SourceType.IAM, "conductorone"),
+        ("demo-boundary", SourceType.IAM, "boundary"),
+        ("demo-teleport", SourceType.IAM, "teleport"),
+        ("demo-strongdm", SourceType.IAM, "strongdm"),
+        ("demo-doppler", SourceType.IAM, "doppler"),
+        ("demo-infisical", SourceType.IAM, "infisical"),
+        ("demo-bitbucket", SourceType.CODE, "bitbucket"),
+        ("demo-aws-codecommit", SourceType.CODE, "aws_codecommit"),
+        ("demo-azure-repos", SourceType.CODE, "azure_repos"),
+        ("demo-azure-devops", SourceType.CI_CD, "azure_devops"),
+        ("demo-argocd", SourceType.CI_CD, "argocd"),
+        ("demo-harness", SourceType.CI_CD, "harness"),
+        ("demo-buildkite", SourceType.CI_CD, "buildkite"),
+        ("demo-launchdarkly", SourceType.CI_CD, "launchdarkly"),
+        ("demo-fivetran", SourceType.INFRASTRUCTURE, "fivetran"),
+        ("demo-dbt-labs", SourceType.INFRASTRUCTURE, "dbt_labs"),
+        ("demo-asana", SourceType.PROJECT_MGMT, "asana"),
+        ("demo-linear", SourceType.PROJECT_MGMT, "linear"),
+        ("demo-clickup", SourceType.PROJECT_MGMT, "clickup"),
+        ("demo-trello", SourceType.PROJECT_MGMT, "trello"),
+        ("demo-monday", SourceType.PROJECT_MGMT, "monday"),
+        ("demo-shortcut", SourceType.PROJECT_MGMT, "shortcut"),
+        ("demo-notion", SourceType.PROJECT_MGMT, "notion"),
+        ("demo-smartsheet", SourceType.PROJECT_MGMT, "smartsheet"),
+        ("demo-wrike", SourceType.PROJECT_MGMT, "wrike"),
+        ("demo-basecamp", SourceType.PROJECT_MGMT, "basecamp"),
+        ("demo-height", SourceType.PROJECT_MGMT, "height"),
+        ("demo-freshservice", SourceType.ITSM, "freshservice"),
+        ("demo-freshdesk", SourceType.ITSM, "freshdesk"),
+        ("demo-zendesk", SourceType.ITSM, "zendesk"),
+        ("demo-zoho-desk", SourceType.ITSM, "zoho_desk"),
+        ("demo-hibob", SourceType.HRIS, "hibob"),
+        ("demo-justworks", SourceType.HRIS, "justworks"),
+        ("demo-lattice", SourceType.HRIS, "lattice"),
+        ("demo-trinet", SourceType.HRIS, "trinet"),
+        ("demo-dayforce", SourceType.HRIS, "dayforce"),
+        ("demo-oracle-hcm", SourceType.HRIS, "oracle_hcm"),
+        ("demo-personio", SourceType.HRIS, "personio"),
+        ("demo-deel", SourceType.HRIS, "deel"),
+        ("demo-namely", SourceType.HRIS, "namely"),
+        ("demo-paychex-flex", SourceType.HRIS, "paychex_flex"),
+        ("demo-humaans", SourceType.HRIS, "humaans"),
+        ("demo-xero-payroll", SourceType.HRIS, "xero_payroll"),
+        ("demo-fifteenfive", SourceType.HRIS, "fifteenfive"),
+        ("demo-leapsome", SourceType.HRIS, "leapsome"),
+        ("demo-hr-cloud", SourceType.HRIS, "hr_cloud"),
+        ("demo-isolved", SourceType.HRIS, "isolved"),
+        ("demo-kenjo", SourceType.HRIS, "kenjo"),
+        ("demo-employment-hero", SourceType.HRIS, "employment_hero"),
+        ("demo-zoho-people", SourceType.HRIS, "zoho_people"),
+        ("demo-greenhouse", SourceType.RECRUITING, "greenhouse"),
+        ("demo-lever", SourceType.RECRUITING, "lever"),
+        ("demo-ashby", SourceType.RECRUITING, "ashby"),
+        ("demo-smartrecruiters", SourceType.RECRUITING, "smartrecruiters"),
+        ("demo-teamtailor", SourceType.RECRUITING, "teamtailor"),
+        ("demo-workable", SourceType.RECRUITING, "workable"),
+        ("demo-checkr", SourceType.RECRUITING, "checkr"),
+        ("demo-certn", SourceType.RECRUITING, "certn"),
+        ("demo-hireright", SourceType.RECRUITING, "hireright"),
+        ("demo-sterling", SourceType.RECRUITING, "sterling"),
+        ("demo-three60learning", SourceType.LMS, "three60learning"),
+        ("demo-cornerstone", SourceType.LMS, "cornerstone"),
+        ("demo-coursera", SourceType.LMS, "coursera"),
+        ("demo-easyllama", SourceType.LMS, "easyllama"),
+        ("demo-infosec-iq", SourceType.LMS, "infosec_iq"),
+        ("demo-linkedin-learning", SourceType.LMS, "linkedin_learning"),
+        ("demo-talentlms", SourceType.LMS, "talentlms"),
+        ("demo-udemy", SourceType.LMS, "udemy"),
+        ("demo-docebo", SourceType.LMS, "docebo"),
+        ("demo-go1", SourceType.LMS, "go1"),
+        ("demo-sosafe", SourceType.LMS, "sosafe"),
+        ("demo-moxso", SourceType.LMS, "moxso"),
+        ("demo-awarego", SourceType.LMS, "awarego"),
+        ("demo-cybeready", SourceType.LMS, "cybeready"),
+        ("demo-hexnode", SourceType.MDM, "hexnode"),
+        ("demo-ninjaone", SourceType.MDM, "ninjaone"),
+        ("demo-kolide", SourceType.MDM, "kolide"),
+        ("demo-addigy", SourceType.MDM, "addigy"),
+        ("demo-miradore", SourceType.MDM, "miradore"),
+        ("demo-aikido", SourceType.SCANNER, "aikido"),
+        ("demo-sonarcloud", SourceType.CODE, "sonarcloud"),
+        ("demo-wiz-code", SourceType.CODE, "wiz_code"),
+        ("demo-huntress", SourceType.EDR, "huntress"),
+        ("demo-jit-security", SourceType.SCANNER, "jit_security"),
+        ("demo-upwind", SourceType.CSPM, "upwind"),
+        ("demo-arnica", SourceType.CODE, "arnica"),
+        ("demo-pentera", SourceType.SCANNER, "pentera"),
+        ("demo-horizon3", SourceType.SCANNER, "horizon3"),
+        ("demo-bugcrowd", SourceType.SCANNER, "bugcrowd"),
+        ("demo-intigriti", SourceType.SCANNER, "intigriti"),
+        ("demo-halo-security", SourceType.SCANNER, "halo_security"),
+        ("demo-traceable-ai", SourceType.NETWORK, "traceable_ai"),
+        ("demo-sentry", SourceType.OBSERVABILITY, "sentry"),
+        ("demo-rollbar", SourceType.OBSERVABILITY, "rollbar"),
+        ("demo-dynatrace", SourceType.OBSERVABILITY, "dynatrace"),
+        ("demo-sumo-logic-new", SourceType.SIEM, "sumo_logic_new"),
+        ("demo-hubspot", SourceType.CRM, "hubspot"),
+        ("demo-pipedrive", SourceType.CRM, "pipedrive"),
+        ("demo-intercom", SourceType.CRM, "intercom"),
+        ("demo-gong", SourceType.CRM, "gong"),
+        ("demo-freshsales", SourceType.CRM, "freshsales"),
+        ("demo-attio", SourceType.CRM, "attio"),
+        ("demo-copper", SourceType.CRM, "copper"),
+        ("demo-close-crm", SourceType.CRM, "close_crm"),
+        ("demo-microsoft-teams", SourceType.COLLABORATION, "microsoft_teams"),
+        ("demo-miro", SourceType.COLLABORATION, "miro"),
+        ("demo-webex", SourceType.COMMUNICATION, "webex"),
+        ("demo-ringcentral", SourceType.COMMUNICATION, "ringcentral"),
+        ("demo-aircall", SourceType.COMMUNICATION, "aircall"),
+        ("demo-dialpad", SourceType.COMMUNICATION, "dialpad"),
+        ("demo-eight-x-eight", SourceType.COMMUNICATION, "eight_x_eight"),
+        ("demo-twilio", SourceType.COMMUNICATION, "twilio"),
+        ("demo-box", SourceType.FILE_STORAGE, "box"),
+        ("demo-dropbox", SourceType.FILE_STORAGE, "dropbox"),
+        ("demo-google-drive", SourceType.FILE_STORAGE, "google_drive"),
+        ("demo-egnyte", SourceType.FILE_STORAGE, "egnyte"),
+        ("demo-ramp", SourceType.FINANCE, "ramp"),
+        ("demo-brex", SourceType.FINANCE, "brex"),
+        ("demo-netsuite", SourceType.FINANCE, "netsuite"),
+        ("demo-vendr", SourceType.FINANCE, "vendr"),
+        ("demo-docusign", SourceType.LEGAL, "docusign"),
+        ("demo-ironclad", SourceType.LEGAL, "ironclad"),
+        ("demo-dropbox-sign", SourceType.LEGAL, "dropbox_sign"),
+        ("demo-segment", SourceType.ANALYTICS, "segment"),
+        ("demo-mixpanel", SourceType.ANALYTICS, "mixpanel"),
+        ("demo-tableau", SourceType.ANALYTICS, "tableau"),
+        ("demo-domo", SourceType.ANALYTICS, "domo"),
+        ("demo-qlik", SourceType.ANALYTICS, "qlik"),
+        ("demo-sigma-computing", SourceType.ANALYTICS, "sigma_computing"),
+        ("demo-transcend", SourceType.GRC, "transcend"),
+        ("demo-ketch", SourceType.GRC, "ketch"),
+        ("demo-openai-platform", SourceType.AI_ML, "openai_platform"),
+        ("demo-anthropic-platform", SourceType.AI_ML, "anthropic_platform"),
+        ("demo-aws-bedrock", SourceType.AI_ML, "aws_bedrock"),
+        ("demo-credo-ai", SourceType.AI_GOVERNANCE, "credo_ai"),
+        ("demo-arthur-ai", SourceType.AI_GOVERNANCE, "arthur_ai"),
+        ("demo-fiddler-ai", SourceType.AI_GOVERNANCE, "fiddler_ai"),
+        ("demo-appomni", SourceType.SSPM, "appomni"),
+        ("demo-obsidian-security", SourceType.SSPM, "obsidian_security"),
+        ("demo-nudge-security", SourceType.SSPM, "nudge_security"),
+        ("demo-rootly", SourceType.INCIDENT_MGMT, "rootly"),
+        ("demo-incident-io", SourceType.INCIDENT_MGMT, "incident_io"),
+        ("demo-firehydrant", SourceType.INCIDENT_MGMT, "firehydrant"),
+        ("demo-snipe-it", SourceType.ITAM, "snipe_it"),
+        ("demo-oomnitza", SourceType.ITAM, "oomnitza"),
+        ("demo-servicenow-itam", SourceType.ITAM, "servicenow_itam"),
+        ("demo-monte-carlo", SourceType.DATA_OBSERVABILITY, "monte_carlo"),
+        ("demo-bigeye", SourceType.DATA_OBSERVABILITY, "bigeye"),
+        ("demo-vantage-finops", SourceType.FINOPS, "vantage_finops"),
+        ("demo-cloudhealth", SourceType.FINOPS, "cloudhealth"),
+        ("demo-spot-netapp", SourceType.FINOPS, "spot_netapp"),
+        ("demo-zentry", SourceType.IAM, "zentry"),
+        ("demo-openvpn", SourceType.NETWORK, "openvpn"),
+        ("demo-teamviewer", SourceType.COLLABORATION, "teamviewer"),
+        ("demo-cyral", SourceType.DATA_GOVERNANCE, "cyral"),
+        ("demo-immuta", SourceType.DATA_GOVERNANCE, "immuta"),
+        ("demo-sprinto", SourceType.GRC, "sprinto"),
+        ("demo-thoropass", SourceType.GRC, "thoropass"),
+        ("demo-backstage", SourceType.INFRASTRUCTURE, "backstage"),
+        ("demo-retool", SourceType.COLLABORATION, "retool"),
+        ("demo-sendgrid", SourceType.EMAIL, "sendgrid"),
+        ("demo-envoy", SourceType.PHYSICAL, "envoy"),
+        ("demo-canva", SourceType.COLLABORATION, "canva"),
+        ("demo-jetbrains", SourceType.CODE, "jetbrains"),
+        ("demo-webflow", SourceType.COLLABORATION, "webflow"),
+        ("demo-contentful", SourceType.COLLABORATION, "contentful"),
+    ]
+    for name, stype, provider in _expansion_configs:
+        connectors.create(ConnectorConfig(name=name, source_type=stype, provider=provider))
+
     normalizers = NormalizerRegistry()
     # Register all normalizers (order matters — specific before generic)
     normalizers.register(AWSNormalizer())
@@ -20872,6 +21452,193 @@ def main():
     normalizers.register(ManageEngineNormalizer())
     normalizers.register(IvantiPatchNormalizer())
     normalizers.register(PlexTracNormalizer())
+    # --- Expansion normalizers (186) ---
+    normalizers.register(HerokuNormalizer())
+    normalizers.register(ScalewayNormalizer())
+    normalizers.register(RenderNormalizer())
+    normalizers.register(NetlifyNormalizer())
+    normalizers.register(VercelCloudNormalizer())
+    normalizers.register(MongoDBAtlasNormalizer())
+    normalizers.register(SupabaseNormalizer())
+    normalizers.register(SnowflakeNormalizer())
+    normalizers.register(AWSGovCloudNormalizer())
+    normalizers.register(AWSInspectorNormalizer())
+    normalizers.register(AkamaiNormalizer())
+    normalizers.register(ImpervaNormalizer())
+    normalizers.register(PingIdentityNewNormalizer())
+    normalizers.register(LastPassNormalizer())
+    normalizers.register(DashlaneNormalizer())
+    normalizers.register(NordPassNormalizer())
+    normalizers.register(KeeperNormalizer())
+    normalizers.register(AccessOwlNormalizer())
+    normalizers.register(IndentNormalizer())
+    normalizers.register(SaviyntNormalizer())
+    normalizers.register(ConductorOneNormalizer())
+    normalizers.register(BoundaryNormalizer())
+    normalizers.register(TeleportNormalizer())
+    normalizers.register(StrongDMNormalizer())
+    normalizers.register(DopplerNormalizer())
+    normalizers.register(InfisicalNormalizer())
+    normalizers.register(BitbucketNormalizer())
+    normalizers.register(AWSCodeCommitNormalizer())
+    normalizers.register(AzureReposNormalizer())
+    normalizers.register(AzureDevOpsNormalizer())
+    normalizers.register(ArgoCDNormalizer())
+    normalizers.register(HarnessNormalizer())
+    normalizers.register(BuildkiteNormalizer())
+    normalizers.register(LaunchDarklyNormalizer())
+    normalizers.register(FivetranNormalizer())
+    normalizers.register(DbtLabsNormalizer())
+    normalizers.register(AsanaNormalizer())
+    normalizers.register(LinearNormalizer())
+    normalizers.register(ClickUpNormalizer())
+    normalizers.register(TrelloNormalizer())
+    normalizers.register(MondayNormalizer())
+    normalizers.register(ShortcutNormalizer())
+    normalizers.register(NotionNormalizer())
+    normalizers.register(SmartsheetNormalizer())
+    normalizers.register(WrikeNormalizer())
+    normalizers.register(BasecampNormalizer())
+    normalizers.register(HeightNormalizer())
+    normalizers.register(FreshserviceNormalizer())
+    normalizers.register(FreshdeskNormalizer())
+    normalizers.register(ZendeskNormalizer())
+    normalizers.register(ZohoDeskNormalizer())
+    normalizers.register(HiBobNormalizer())
+    normalizers.register(JustworksNormalizer())
+    normalizers.register(LatticeNormalizer())
+    normalizers.register(TriNetNormalizer())
+    normalizers.register(DayforceNormalizer())
+    normalizers.register(OracleHCMNormalizer())
+    normalizers.register(PersonioNormalizer())
+    normalizers.register(DeelNormalizer())
+    normalizers.register(NamelyNormalizer())
+    normalizers.register(PaychexFlexNormalizer())
+    normalizers.register(HumaansNormalizer())
+    normalizers.register(XeroPayrollNormalizer())
+    normalizers.register(FifteenFiveNormalizer())
+    normalizers.register(LeapsomeNormalizer())
+    normalizers.register(HRCloudNormalizer())
+    normalizers.register(ISolvedNormalizer())
+    normalizers.register(KenjoNormalizer())
+    normalizers.register(EmploymentHeroNormalizer())
+    normalizers.register(ZohoPeopleNormalizer())
+    normalizers.register(GreenhouseNormalizer())
+    normalizers.register(LeverNormalizer())
+    normalizers.register(AshbyNormalizer())
+    normalizers.register(SmartRecruitersNormalizer())
+    normalizers.register(TeamtailorNormalizer())
+    normalizers.register(WorkableNormalizer())
+    normalizers.register(CheckrNormalizer())
+    normalizers.register(CertnNormalizer())
+    normalizers.register(HireRightNormalizer())
+    normalizers.register(SterlingNormalizer())
+    normalizers.register(Three60LearningNormalizer())
+    normalizers.register(CornerstoneNormalizer())
+    normalizers.register(CourseraNormalizer())
+    normalizers.register(EasyLlamaNormalizer())
+    normalizers.register(InfosecIQNormalizer())
+    normalizers.register(LinkedInLearningNormalizer())
+    normalizers.register(TalentLMSNormalizer())
+    normalizers.register(UdemyNormalizer())
+    normalizers.register(DoceboNormalizer())
+    normalizers.register(GO1Normalizer())
+    normalizers.register(SoSafeNormalizer())
+    normalizers.register(MoxsoNormalizer())
+    normalizers.register(AwareGONormalizer())
+    normalizers.register(CyberReadyNormalizer())
+    normalizers.register(HexnodeNormalizer())
+    normalizers.register(NinjaOneNormalizer())
+    normalizers.register(KolideNormalizer())
+    normalizers.register(AddigyNormalizer())
+    normalizers.register(MiradoreNormalizer())
+    normalizers.register(AikidoNormalizer())
+    normalizers.register(SonarCloudNormalizer())
+    normalizers.register(WizCodeNormalizer())
+    normalizers.register(HuntressNormalizer())
+    normalizers.register(JitSecurityNormalizer())
+    normalizers.register(UpwindNormalizer())
+    normalizers.register(ArnicaNormalizer())
+    normalizers.register(PenteraNormalizer())
+    normalizers.register(Horizon3Normalizer())
+    normalizers.register(BugcrowdNormalizer())
+    normalizers.register(IntigritiNormalizer())
+    normalizers.register(HaloSecurityNormalizer())
+    normalizers.register(TraceableAINormalizer())
+    normalizers.register(SentryNormalizer())
+    normalizers.register(RollbarNormalizer())
+    normalizers.register(DynatraceNormalizer())
+    normalizers.register(SumoLogicNewNormalizer())
+    normalizers.register(HubSpotNormalizer())
+    normalizers.register(PipedriveNormalizer())
+    normalizers.register(IntercomNormalizer())
+    normalizers.register(GongNormalizer())
+    normalizers.register(FreshsalesNormalizer())
+    normalizers.register(AttioNormalizer())
+    normalizers.register(CopperNormalizer())
+    normalizers.register(CloseCRMNormalizer())
+    normalizers.register(MicrosoftTeamsNormalizer())
+    normalizers.register(MiroNormalizer())
+    normalizers.register(WebexNormalizer())
+    normalizers.register(RingCentralNormalizer())
+    normalizers.register(AircallNormalizer())
+    normalizers.register(DialpadNormalizer())
+    normalizers.register(EightByEightNormalizer())
+    normalizers.register(TwilioNormalizer())
+    normalizers.register(BoxNormalizer())
+    normalizers.register(DropboxNormalizer())
+    normalizers.register(GoogleDriveNormalizer())
+    normalizers.register(EgnyteNormalizer())
+    normalizers.register(RampNormalizer())
+    normalizers.register(BrexNormalizer())
+    normalizers.register(NetSuiteNormalizer())
+    normalizers.register(VendrNormalizer())
+    normalizers.register(DocuSignNormalizer())
+    normalizers.register(IroncladNormalizer())
+    normalizers.register(DropboxSignNormalizer())
+    normalizers.register(SegmentNormalizer())
+    normalizers.register(MixpanelNormalizer())
+    normalizers.register(TableauNormalizer())
+    normalizers.register(DomoNormalizer())
+    normalizers.register(QlikNormalizer())
+    normalizers.register(SigmaComputingNormalizer())
+    normalizers.register(TranscendNormalizer())
+    normalizers.register(KetchNormalizer())
+    normalizers.register(OpenAIPlatformNormalizer())
+    normalizers.register(AnthropicPlatformNormalizer())
+    normalizers.register(AWSBedrockNormalizer())
+    normalizers.register(CredoAINormalizer())
+    normalizers.register(ArthurAINormalizer())
+    normalizers.register(FiddlerAINormalizer())
+    normalizers.register(AppOmniNormalizer())
+    normalizers.register(ObsidianSecurityNormalizer())
+    normalizers.register(NudgeSecurityNormalizer())
+    normalizers.register(RootlyNormalizer())
+    normalizers.register(IncidentIONormalizer())
+    normalizers.register(FireHydrantNormalizer())
+    normalizers.register(SnipeITNormalizer())
+    normalizers.register(OomnitzaNormalizer())
+    normalizers.register(ServiceNowITAMNormalizer())
+    normalizers.register(MonteCarloNormalizer())
+    normalizers.register(BigeyeNormalizer())
+    normalizers.register(VantageFinOpsNormalizer())
+    normalizers.register(CloudHealthNormalizer())
+    normalizers.register(SpotNetAppNormalizer())
+    normalizers.register(ZentryNormalizer())
+    normalizers.register(OpenVPNNormalizer())
+    normalizers.register(TeamViewerNormalizer())
+    normalizers.register(CyralNormalizer())
+    normalizers.register(ImmutaNormalizer())
+    normalizers.register(SprintoNormalizer())
+    normalizers.register(ThoropassNormalizer())
+    normalizers.register(BackstageNormalizer())
+    normalizers.register(RetoolNormalizer())
+    normalizers.register(SendGridNormalizer())
+    normalizers.register(EnvoyNormalizer())
+    normalizers.register(CanvaNormalizer())
+    normalizers.register(JetBrainsNormalizer())
+    normalizers.register(WebflowNormalizer())
+    normalizers.register(ContentfulNormalizer())
     normalizers.register(GenericNormalizer())  # Generic must be last (fallback)
 
     mapper = ControlMapper()
@@ -20882,8 +21649,8 @@ def main():
     # Override with WLK_AI_PROVIDER, WLK_AI_API_KEY, WLK_AI_MODEL, WLK_AI_BASE_URL
     ai_reasoner = None
     try:
-        from warlock.config import get_settings
         from warlock.assessors.ai_reasoning import create_reasoner
+        from warlock.config import get_settings
 
         settings = get_settings()
         if getattr(settings, "ai_enabled", True) and settings.ai_provider and settings.ai_api_key:
@@ -21238,7 +22005,7 @@ def main():
     # Seed webhook, user session events, and workpaper engagement links
     with get_session() as session:
         from warlock.db.audit import AuditTrail
-        from warlock.db.models import User, AuditEngagement, AuditEntry
+        from warlock.db.models import AuditEngagement, AuditEntry, User
 
         trail = AuditTrail(session)
         # Webhook (action must be "automation_webhook" to match CLI query)

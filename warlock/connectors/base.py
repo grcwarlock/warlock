@@ -54,6 +54,21 @@ class SourceType(str, Enum):
     DATA_GOVERNANCE = "data_governance"  # Databricks, Snowflake
     EMAIL_SECURITY = "email_security"  # Exchange Online, Proofpoint
     CI_CD = "ci_cd"  # Jenkins, GitHub Actions, GitLab CI, CircleCI
+    FINOPS = "finops"  # Vantage, CloudHealth, Spot
+    SSPM = "sspm"  # AppOmni, Obsidian, Nudge Security
+    INCIDENT_MGMT = "incident_mgmt"  # Rootly, incident.io, FireHydrant
+    DATA_OBSERVABILITY = "data_observability"  # Monte Carlo, Bigeye
+    AI_GOVERNANCE = "ai_governance"  # Credo AI, Arthur, Fiddler
+    ITAM = "itam"  # Snipe-IT, Oomnitza
+    RECRUITING = "recruiting"  # Greenhouse, Checkr
+    LMS = "lms"  # Coursera, Udemy, LinkedIn Learning
+    PROJECT_MGMT = "project_mgmt"  # Asana, Linear, ClickUp
+    CRM = "crm"  # HubSpot, Salesforce CRM
+    FILE_STORAGE = "file_storage"  # Box, Dropbox, Google Drive
+    COMMUNICATION = "communication"  # RingCentral, Webex, Twilio
+    FINANCE = "finance"  # Ramp, Brex, NetSuite
+    LEGAL = "legal"  # DocuSign, Ironclad
+    ANALYTICS = "analytics"  # Mixpanel, Tableau, Segment
     CUSTOM = "custom"
 
 

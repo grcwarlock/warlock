@@ -6,7 +6,7 @@ Warlock now automatically detects and removes personally identifiable informatio
 
 ## Why it matters
 
-GRC platforms ingest data from 165 source connectors — vulnerability scanners, identity providers, HRIS systems, audit logs, cloud APIs. Many of these sources include personal data: email addresses, employee names, phone numbers. Before this change, that PII flowed through the pipeline and landed in findings, reports, and exports.
+GRC platforms ingest data from 352 source connectors — vulnerability scanners, identity providers, HRIS systems, audit logs, cloud APIs. Many of these sources include personal data: email addresses, employee names, phone numbers. Before this change, that PII flowed through the pipeline and landed in findings, reports, and exports.
 
 Now it doesn't.
 

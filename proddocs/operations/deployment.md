@@ -291,7 +291,7 @@ pip install -e ".[monitoring]"
 
 ## Connector Configuration
 
-Warlock supports 166 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
+Warlock supports 352 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
 
 Example connector configuration:
 

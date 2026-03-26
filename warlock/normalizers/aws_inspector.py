@@ -1,0 +1,88 @@
+"""AWS Inspector normalizer — transforms raw AWS Inspector API responses into Findings."""
+
+from __future__ import annotations
+
+from warlock.connectors.base import RawEventData, SourceType
+from warlock.normalizers.base import BaseNormalizer, FindingData, registry
+
+
+class AWSInspectorNormalizer(BaseNormalizer):
+    """Dispatches to event_type-specific handlers for AWS Inspector."""
+
+    HANDLERS: dict[str, str] = {
+        "inspector_findings": "_normalize_inspector_findings",
+        "inspector_coverage": "_normalize_inspector_coverage",
+    }
+
+    def can_handle(self, raw_event: RawEventData) -> bool:
+        return raw_event.source == "aws_inspector" and raw_event.event_type in self.HANDLERS
+
+    def normalize(self, raw_event: RawEventData) -> list[FindingData]:
+        handler_name = self.HANDLERS[raw_event.event_type]
+        handler = getattr(self, handler_name)
+        return handler(raw_event)
+
+    def _base(self, raw: RawEventData) -> dict:
+        return {
+            "raw_event_id": raw.id,
+            "source": "aws_inspector",
+            "source_type": SourceType.SCANNER,
+            "provider": "aws_inspector",
+            "observed_at": raw.observed_at,
+        }
+
+    def _normalize_inspector_findings(self, raw: RawEventData) -> list[FindingData]:
+        findings = []
+        items = raw.raw_data.get("response", [])
+        if isinstance(items, dict):
+            items = [items]
+
+        for item in items:
+            item_id = str(item.get("id", item.get("name", item.get("key", ""))))
+            item_name = str(item.get("name", item.get("label", item.get("title", item_id))))
+
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title="AWS Inspector inspector findings: " + item_name,
+                    detail=item,
+                    resource_id=item_id,
+                    resource_type="inspector_findings",
+                    resource_name=item_name,
+                    severity="high",
+                    confidence=1.0,
+                )
+            )
+
+        return findings
+
+    def _normalize_inspector_coverage(self, raw: RawEventData) -> list[FindingData]:
+        findings = []
+        items = raw.raw_data.get("response", [])
+        if isinstance(items, dict):
+            items = [items]
+
+        for item in items:
+            item_id = str(item.get("id", item.get("name", item.get("key", ""))))
+            item_name = str(item.get("name", item.get("label", item.get("title", item_id))))
+
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="vulnerability",
+                    title="AWS Inspector inspector coverage: " + item_name,
+                    detail=item,
+                    resource_id=item_id,
+                    resource_type="inspector_coverage",
+                    resource_name=item_name,
+                    severity="high",
+                    confidence=1.0,
+                )
+            )
+
+        return findings
+
+
+# Register
+registry.register(AWSInspectorNormalizer())

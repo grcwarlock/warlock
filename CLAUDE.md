@@ -59,10 +59,10 @@ make reset    # rm warlock.db + alembic upgrade + demo_seed.py
 
 Expected output — verify these numbers:
 ```
-Connectors succeeded:   165
+Connectors succeeded:   351
 Connectors failed:      0
-Raw events collected:   589
-Findings normalized:    5,470–5,485 (varies slightly)
+Raw events collected:   1,071
+Findings normalized:    7,300–7,330 (varies slightly)
 Controls mapped:        373,852
 ```
 
@@ -92,7 +92,7 @@ A CLI command that runs without a traceback but shows "no data found", "0 result
 
 After ANY change that adds/removes connectors, models, CLI commands, API routes, tests, assertions, framework YAMLs, or OSCAL files — run `make verify-docs` and fix EVERY doc that mentions the changed count. Check: README.md, CLAUDE.md, DEMO.md, CONTRIBUTING.md, docs/warlock-one-pager.md, and all proddocs/.
 
-**Note:** Demo seed outputs 165 connectors (hardcoded in seed stats), but connector files number 166. Demo output docs say 165; codebase description docs say 166.
+**Note:** Demo seed outputs 351 connectors, connector files number 352. Normalizer files also number 352.
 
 ---
 

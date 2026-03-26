@@ -118,7 +118,7 @@ The seed registers mock connectors that produce realistic events, then runs the 
 
 | Metric | Expected Value |
 |--------|---------------|
-| Connectors succeeded | 165 |
+| Connectors succeeded | 351 |
 | Connectors failed | 0 |
 | Raw events collected | 589 |
 | Findings normalized | ~5,475 |
@@ -465,7 +465,7 @@ warlock retention purge --execute
 
 - Run the full QA gate: `./scripts/qa.sh`
 - Run the demo seed on a clean database
-- Verify all 165 connectors succeed with 0 failures
+- Verify all 351 connectors succeed with 0 failures
 - Check that documented counts match reality: `make verify-docs`
 
 ---

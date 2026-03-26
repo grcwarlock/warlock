@@ -6,7 +6,6 @@ zero trust assessments.
 
 from __future__ import annotations
 
-
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 

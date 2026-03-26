@@ -85,7 +85,7 @@ def seed_phase3(session) -> dict:
                     raw_event_count=580 + random.randint(-10, 10),
                     finding_count=base_findings + random.randint(-50, 50),
                     control_result_count=370000 + random.randint(-5000, 5000),
-                    connector_count=165,
+                    connector_count=351,
                     error_count=0 if status == "success" else random.randint(1, 3),
                 )
             )

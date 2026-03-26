@@ -5,7 +5,7 @@ Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. It trea
 ## High-Level Architecture
 
 ```
-                        166 Connectors
+                        352 Connectors
                               |
                     +---------v----------+
                     |  Stage 1: Collect  |  ConnectorRegistry.collect_all()

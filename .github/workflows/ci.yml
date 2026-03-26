@@ -121,10 +121,10 @@ jobs:
             echo "FAIL: demo seed had connector failures"
             exit 1
           fi
-          if grep -q "Connectors succeeded:.*165" /tmp/demo_output.txt; then
-            echo "PASS: 165 connectors succeeded"
+          if grep -q "Connectors succeeded:.*351" /tmp/demo_output.txt; then
+            echo "PASS: 351 connectors succeeded"
           else
-            echo "FAIL: expected 165 connectors succeeded"
+            echo "FAIL: expected 351 connectors succeeded"
             grep "Connectors succeeded" /tmp/demo_output.txt || true
             exit 1
           fi

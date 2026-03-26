@@ -16,7 +16,7 @@
 ## Demo Verification
 <!-- If you changed pipeline, models, connectors, normalizers, seed, or config: -->
 ```
-Connectors succeeded:   165
+Connectors succeeded:   351
 Connectors failed:      0
 Raw events collected:   589
 Findings normalized:    ~5,475

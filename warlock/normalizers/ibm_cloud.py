@@ -6,7 +6,6 @@ specific API response and extracts structured observations from it.
 
 from __future__ import annotations
 
-
 from warlock.connectors.base import RawEventData, SourceType
 from warlock.normalizers.base import BaseNormalizer, FindingData, registry
 

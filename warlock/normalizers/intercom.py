@@ -1,0 +1,115 @@
+"""Intercom normalizer — transforms raw Intercom API responses into Findings."""
+
+from __future__ import annotations
+
+from warlock.connectors.base import RawEventData, SourceType
+from warlock.normalizers.base import BaseNormalizer, FindingData, registry
+
+
+class IntercomNormalizer(BaseNormalizer):
+    """Dispatches to event_type-specific handlers for Intercom."""
+
+    HANDLERS: dict[str, str] = {
+        "intercom_contacts": "_normalize_intercom_contacts",
+        "intercom_admins": "_normalize_intercom_admins",
+        "intercom_conversations": "_normalize_intercom_conversations",
+    }
+
+    def can_handle(self, raw_event: RawEventData) -> bool:
+        return raw_event.source == "intercom" and raw_event.event_type in self.HANDLERS
+
+    def normalize(self, raw_event: RawEventData) -> list[FindingData]:
+        handler_name = self.HANDLERS[raw_event.event_type]
+        handler = getattr(self, handler_name)
+        return handler(raw_event)
+
+    def _base(self, raw: RawEventData) -> dict:
+        return {
+            "raw_event_id": raw.id,
+            "source": "intercom",
+            "source_type": SourceType.CRM,
+            "provider": "intercom",
+            "observed_at": raw.observed_at,
+        }
+
+    def _normalize_intercom_contacts(self, raw: RawEventData) -> list[FindingData]:
+        findings = []
+        items = raw.raw_data.get("response", [])
+        if isinstance(items, dict):
+            items = [items]
+
+        for item in items:
+            item_id = str(item.get("id", item.get("name", item.get("key", ""))))
+            item_name = str(item.get("name", item.get("label", item.get("title", item_id))))
+
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title="Intercom intercom contacts: " + item_name,
+                    detail=item,
+                    resource_id=item_id,
+                    resource_type="intercom_contacts",
+                    resource_name=item_name,
+                    severity="info",
+                    confidence=1.0,
+                )
+            )
+
+        return findings
+
+    def _normalize_intercom_admins(self, raw: RawEventData) -> list[FindingData]:
+        findings = []
+        items = raw.raw_data.get("response", [])
+        if isinstance(items, dict):
+            items = [items]
+
+        for item in items:
+            item_id = str(item.get("id", item.get("name", item.get("key", ""))))
+            item_name = str(item.get("name", item.get("label", item.get("title", item_id))))
+
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="policy_violation",
+                    title="Intercom intercom admins: " + item_name,
+                    detail=item,
+                    resource_id=item_id,
+                    resource_type="intercom_admins",
+                    resource_name=item_name,
+                    severity="info",
+                    confidence=1.0,
+                )
+            )
+
+        return findings
+
+    def _normalize_intercom_conversations(self, raw: RawEventData) -> list[FindingData]:
+        findings = []
+        items = raw.raw_data.get("response", [])
+        if isinstance(items, dict):
+            items = [items]
+
+        for item in items:
+            item_id = str(item.get("id", item.get("name", item.get("key", ""))))
+            item_name = str(item.get("name", item.get("label", item.get("title", item_id))))
+
+            findings.append(
+                FindingData(
+                    **self._base(raw),
+                    observation_type="inventory",
+                    title="Intercom intercom conversations: " + item_name,
+                    detail=item,
+                    resource_id=item_id,
+                    resource_type="intercom_conversations",
+                    resource_name=item_name,
+                    severity="info",
+                    confidence=1.0,
+                )
+            )
+
+        return findings
+
+
+# Register
+registry.register(IntercomNormalizer())

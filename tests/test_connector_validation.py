@@ -1,6 +1,6 @@
 """Connector validation test infrastructure.
 
-Validates ALL 165 connectors are importable, registered, properly structured,
+Validates ALL 351 connectors are importable, registered, properly structured,
 aligned with normalizers, and that config validation returns errors (not crashes)
 when API keys are absent.
 """
@@ -30,7 +30,7 @@ from warlock.pipeline.loader import (
 # Fixtures — load registries once per module
 # ---------------------------------------------------------------------------
 
-EXPECTED_CONNECTOR_COUNT = 165
+EXPECTED_CONNECTOR_COUNT = 351
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -41,7 +41,7 @@ def _load_registries() -> None:
 
 
 # ===================================================================
-# 1. ALL 165 CONNECTORS IMPORTABLE AND REGISTERED
+# 1. ALL 351 CONNECTORS IMPORTABLE AND REGISTERED
 # ===================================================================
 
 

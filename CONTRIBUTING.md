@@ -40,7 +40,7 @@ warlock-api
 ```
 
 Expected demo output shows:
-- 165 connectors succeeded
+- 351 connectors succeeded
 - 0 connectors failed
 - 589 raw events collected
 - ~5,475 findings normalized
@@ -279,8 +279,8 @@ Closes #123 (if applicable)
 Warlock's architecture is **pipeline-first**: evidence flows through four immutable stages with SHA-256 integrity hashing at every step.
 
 ```
-Stage 1: Connectors (166)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (166)  → FindingData          → transform to universal findings format
+Stage 1: Connectors (352)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (352)  → FindingData          → transform to universal findings format
 Stage 3: Control Mapper     → ControlMappingData   → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4) → ControlResultData  → deterministic assertions + optional AI reasoning
 ```
@@ -289,7 +289,7 @@ Every control result traces back to its raw API response — the hash chain is t
 
 ### Key Components
 
-- **Connectors** (`warlock/connectors/`) — 166 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
+- **Connectors** (`warlock/connectors/`) — 352 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI

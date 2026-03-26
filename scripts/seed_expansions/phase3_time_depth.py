@@ -173,7 +173,7 @@ def _seed_pipeline_runs_90d(session: Session) -> int:
     """Create 90 PipelineRun records, one per day over the last 90 days.
 
     87 completed runs, 3 failed runs on days 12, 47, 73. Connector counts
-    gradually increase from 155 to 165 over the period.
+    gradually increase from 341 to 351 over the period.
     """
     existing = session.query(PipelineRun).count()
     if existing >= 30:
@@ -193,8 +193,8 @@ def _seed_pipeline_runs_90d(session: Session) -> int:
         duration = random.uniform(90.0, 120.0) if is_failed else random.uniform(30.0, 90.0)
         completed_at = started_at + timedelta(seconds=duration)
 
-        # Gradually increase from 155 to 165 connectors
-        connectors_succeeded = min(165, 155 + int(day_index * 10 / 89))
+        # Gradually increase from 341 to 351 connectors
+        connectors_succeeded = min(351, 155 + int(day_index * 10 / 89))
 
         if is_failed:
             status = "failed"

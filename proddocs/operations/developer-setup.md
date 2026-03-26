@@ -65,7 +65,7 @@ warlock-api
 ### Expected demo output
 
 ```
-Connectors succeeded:   165
+Connectors succeeded:   351
 Connectors failed:      0
 Raw events collected:   589
 Findings normalized:    ~5,475
@@ -213,8 +213,8 @@ For full architecture details, see [Architecture](../technical/architecture.md).
 
 ```
 warlock/
-  connectors/    -- 166 source connectors (Stage 1)
-  normalizers/   -- 166 parsers (Stage 2)
+  connectors/    -- 352 source connectors (Stage 1)
+  normalizers/   -- 352 parsers (Stage 2)
   mappers/       -- Control mapping (Stage 3)
   assessors/     -- Assertion engine + AI reasoning (Stage 4)
   api/           -- FastAPI REST API (171 routes)

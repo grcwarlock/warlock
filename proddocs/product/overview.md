@@ -25,8 +25,8 @@ Warlock eliminates all three problems by replacing manual processes with an auto
 Evidence flows through four immutable stages, each producing SHA-256 integrity hashes:
 
 ```
-Stage 1: Connectors (166 sources)  --> RawEventData      Collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (166 parsers) --> FindingData        Transform to universal findings
+Stage 1: Connectors (352 sources)  --> RawEventData      Collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (352 parsers) --> FindingData        Transform to universal findings
 Stage 3: Control Mapper            --> ControlMappingData  Map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)       --> ControlResultData   Deterministic assertions + AI reasoning
 ```
@@ -35,7 +35,7 @@ Every finding traces back to its raw API response. Every control result traces b
 
 ### Stage 1: Collection
 
-166 source connectors pull security telemetry from the tools your organization already uses -- cloud providers (AWS, Azure, GCP), identity providers (Okta, Entra ID), EDR platforms (CrowdStrike, SentinelOne), vulnerability scanners (Tenable, Qualys, Wiz), and dozens more. Each connector validates its configuration, verifies connectivity via health check, and produces raw events with the verbatim API response preserved.
+352 source connectors pull security telemetry from the tools your organization already uses -- cloud providers (AWS, Azure, GCP), identity providers (Okta, Entra ID), EDR platforms (CrowdStrike, SentinelOne), vulnerability scanners (Tenable, Qualys, Wiz), and dozens more. Each connector validates its configuration, verifies connectivity via health check, and produces raw events with the verbatim API response preserved.
 
 ### Stage 2: Normalization
 

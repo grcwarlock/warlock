@@ -116,7 +116,7 @@ GET /api/v1/controls/AC-2?framework=nist_800_53  → has failing_resources, reme
 GET /api/v1/controls/SC-7?framework=nist_800_53&ai=true  → has AI remediation
 GET /api/v1/findings?source=aws       → has findings for AWS
 GET /api/v1/findings/{id}             → has full detail with raw_data
-GET /api/v1/connectors                → has all 165 with source_type
+GET /api/v1/connectors                → has all 351 with source_type
 GET /api/v1/frameworks                → has all 13+ frameworks
 GET /api/v1/frameworks/nist_800_53/controls  → has control list
 GET /api/v1/drift                     → has drift events
