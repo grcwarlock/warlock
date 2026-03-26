@@ -27,6 +27,7 @@ from warlock.api.routers import (
     export,
     alerts,
     remediation,
+    evidence,
 )
 
 log = logging.getLogger(__name__)
@@ -184,6 +185,7 @@ def create_app() -> FastAPI:
     application.include_router(export.router, prefix=prefix, tags=["export"])
     application.include_router(alerts.router, prefix=prefix, tags=["alerts"])
     application.include_router(remediation.router, prefix=prefix, tags=["remediation"])
+    application.include_router(evidence.router, prefix=prefix, tags=["evidence"])
 
     # ------------------------------------------------------------------
     # Root-level health endpoints for k8s probes, load balancers, Docker

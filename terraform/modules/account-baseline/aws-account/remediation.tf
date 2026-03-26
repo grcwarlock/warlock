@@ -1,0 +1,10 @@
+locals {
+  warlock_remediation = {
+    risk_level    = "medium"
+    auto_approve  = false
+    rollback_safe = false
+    control_ids   = ["AU-2", "AU-6", "SC-28", "AC-6", "AC-3"]
+    connectors    = ["aws"]
+    limitations   = []
+  }
+}

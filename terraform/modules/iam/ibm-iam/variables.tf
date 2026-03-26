@@ -1,0 +1,47 @@
+variable "name_prefix" {
+  description = "Prefix applied to all resource names"
+  type        = string
+  default     = "warlock"
+
+  validation {
+    condition     = length(var.name_prefix) >= 2 && length(var.name_prefix) <= 20
+    error_message = "name_prefix must be between 2 and 20 characters."
+  }
+}
+
+variable "resource_group_id" {
+  description = "IBM Cloud resource group ID for scoping the viewer policy"
+  type        = string
+
+  validation {
+    condition     = length(var.resource_group_id) > 0
+    error_message = "resource_group_id must not be empty."
+  }
+}
+
+variable "tags" {
+  description = "List of tags applied to all resources in this module"
+  type        = list(string)
+  default     = []
+}
+
+# -- Warlock integration -------------------------------------------------------
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL. Null disables self-registration."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "warlock_remediation_id" {
+  description = "Remediation ID when triggered by closed-loop engine. Null = standalone."
+  type        = string
+  default     = null
+}

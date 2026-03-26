@@ -1,0 +1,64 @@
+# Version control
+.git
+.gitignore
+
+# Python artifacts
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv
+venv
+env
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+
+# Database files
+warlock.db
+*.db
+
+# Test and development
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov/
+tests/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (not needed in runtime image)
+docs/
+todo/
+*.md
+!pyproject.toml
+
+# Node (if any frontend tooling)
+node_modules/
+
+# Terraform (avoid recursive copy, but keep entrypoint)
+terraform/
+!terraform/modules/deploy/container-image/entrypoint.sh
+
+# CI/CD
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large/unnecessary directories
+scripts/
+proddocs/

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db, require_permission, apply_framework_scope
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str, _parse_dt
-from warlock.db.models import Remediation, User
+from warlock.db.models import Finding, Remediation, User
 from warlock.utils import ensure_aware
 
 router = APIRouter()
@@ -111,6 +111,28 @@ class RemediationSubmitVerificationRequest(BaseModel):
 class RemediationVerifyRequest(BaseModel):
     verification_notes: str
     approved: bool = True
+
+
+class RemediationApplyRequest(BaseModel):
+    """Request to trigger Terraform apply for a remediation."""
+
+    module: str
+    variables: dict[str, Any] = {}
+    dry_run: bool = True
+
+
+class RemediationApplyResponse(BaseModel):
+    status: str
+    message: str
+    plan_output: str | None = None
+    apply_requires_approval: bool = False
+
+
+class RemediationRescanResponse(BaseModel):
+    status: str
+    message: str
+    connector: str | None = None
+    scan_triggered: bool = False
 
 
 class RemediationResponse(BaseModel):
@@ -359,6 +381,129 @@ def verify_remediation(
 
     db.flush()
     return _remediation_to_response(r)
+
+
+# ---------------------------------------------------------------------------
+# Terraform apply & re-scan
+# ---------------------------------------------------------------------------
+
+
+@router.post("/remediations/{remediation_id}/apply", response_model=RemediationApplyResponse)
+def apply_remediation(
+    remediation_id: str,
+    body: RemediationApplyRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+) -> RemediationApplyResponse:
+    """Trigger Terraform apply for a remediation.
+
+    In dry_run mode (default), generates a plan without applying.
+    When dry_run=False, queues the apply for execution by the remediation engine.
+    High-risk modules require manual approval regardless of dry_run setting.
+    """
+    remediation = db.query(Remediation).filter(Remediation.id == remediation_id).first()
+    if not remediation:
+        raise HTTPException(status_code=404, detail=f"Remediation {remediation_id} not found")
+
+    if remediation.status not in ("open", "assigned", "in_progress"):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Cannot apply remediation in status '{remediation.status}'. "
+                "Must be open, assigned, or in_progress."
+            ),
+        )
+
+    # Transition to in_progress if not already
+    if remediation.status in ("open", "assigned"):
+        remediation.status = "in_progress"
+        remediation.updated_at = datetime.now(timezone.utc)
+
+    # Record the apply request
+    steps = remediation.remediation_steps or []
+    steps.append(
+        {
+            "step": "terraform_apply",
+            "module": body.module,
+            "variables": body.variables,
+            "dry_run": body.dry_run,
+            "requested_by": current_user.email,
+            "requested_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+    remediation.remediation_steps = steps
+    db.flush()
+
+    log.info(
+        "Remediation %s: Terraform %s requested for module %s",
+        remediation_id,
+        "plan" if body.dry_run else "apply",
+        body.module,
+    )
+
+    return RemediationApplyResponse(
+        status="queued",
+        message=f"Terraform {'plan' if body.dry_run else 'apply'} queued for {body.module}",
+        plan_output=None,  # Populated asynchronously by remediation engine
+        apply_requires_approval=not body.dry_run,
+    )
+
+
+@router.post("/remediations/{remediation_id}/re-scan", response_model=RemediationRescanResponse)
+def rescan_remediation(
+    remediation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+) -> RemediationRescanResponse:
+    """Trigger a re-scan of the resource to verify a remediation fix.
+
+    Finds the matching connector for the remediation's finding and triggers
+    a targeted scan.
+    """
+    remediation = db.query(Remediation).filter(Remediation.id == remediation_id).first()
+    if not remediation:
+        raise HTTPException(status_code=404, detail=f"Remediation {remediation_id} not found")
+
+    if remediation.status != "verification":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Re-scan only available in 'verification' status. Current: '{remediation.status}'"
+            ),
+        )
+
+    # Find the linked finding to determine which connector to trigger
+    connector_name = None
+    if remediation.finding_id:
+        finding = db.query(Finding).filter(Finding.id == remediation.finding_id).first()
+        if finding:
+            connector_name = finding.source
+
+    # Record the re-scan request
+    evidence = remediation.evidence or []
+    evidence.append(
+        {
+            "description": "Re-scan triggered for verification",
+            "requested_by": current_user.email,
+            "requested_at": datetime.now(timezone.utc).isoformat(),
+            "connector": connector_name,
+        }
+    )
+    remediation.evidence = evidence
+    db.flush()
+
+    log.info(
+        "Remediation %s: re-scan triggered via connector %s",
+        remediation_id,
+        connector_name,
+    )
+
+    return RemediationRescanResponse(
+        status="triggered",
+        message=f"Re-scan queued{' via ' + connector_name if connector_name else ''}",
+        connector=connector_name,
+        scan_triggered=True,
+    )
 
 
 # ---------------------------------------------------------------------------

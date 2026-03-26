@@ -1,0 +1,78 @@
+variable "name_prefix" {
+  description = "Prefix applied to all resource names"
+  type        = string
+  default     = "warlock"
+
+  validation {
+    condition     = length(var.name_prefix) >= 2 && length(var.name_prefix) <= 20
+    error_message = "name_prefix must be between 2 and 20 characters."
+  }
+}
+
+variable "region" {
+  description = "IBM Cloud region for Activity Tracker"
+  type        = string
+  default     = "us-south"
+
+  validation {
+    condition     = length(var.region) > 0
+    error_message = "region must not be empty."
+  }
+}
+
+variable "resource_group_id" {
+  description = "IBM Cloud resource group ID"
+  type        = string
+
+  validation {
+    condition     = length(var.resource_group_id) > 0
+    error_message = "resource_group_id must not be empty."
+  }
+}
+
+variable "cos_bucket_crn" {
+  description = "CRN of the COS bucket for Activity Tracker archive"
+  type        = string
+
+  validation {
+    condition     = can(regex("^crn:", var.cos_bucket_crn))
+    error_message = "cos_bucket_crn must be a valid IBM Cloud CRN."
+  }
+}
+
+variable "cos_bucket_name" {
+  description = "Name of the COS bucket for Activity Tracker archive"
+  type        = string
+
+  validation {
+    condition     = length(var.cos_bucket_name) > 0
+    error_message = "cos_bucket_name must not be empty."
+  }
+}
+
+variable "tags" {
+  description = "List of tags applied to all resources in this module"
+  type        = list(string)
+  default     = []
+}
+
+# -- Warlock integration -------------------------------------------------------
+
+variable "warlock_api_endpoint" {
+  description = "Warlock API base URL. Null disables self-registration."
+  type        = string
+  default     = null
+}
+
+variable "warlock_api_token" {
+  description = "Bearer token for Warlock API."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "warlock_remediation_id" {
+  description = "Remediation ID when triggered by closed-loop engine. Null = standalone."
+  type        = string
+  default     = null
+}

@@ -1,0 +1,116 @@
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Warlock API server
+  # ---------------------------------------------------------------------------
+  warlock-api:
+    build:
+      context: ../../../..
+      dockerfile: terraform/modules/deploy/container-image/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      WLK_DATABASE_URL: "postgresql://warlock:warlock@postgres:5432/warlock"
+      WLK_REDIS_URL: "redis://redis:6379/0"
+      WLK_JWT_SECRET: "dev-secret-change-in-production-32chars"
+      WLK_AI_ENABLED: "false"
+      WLK_OPA_URL: "http://opa:8181"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      opa:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Warlock background worker (pipeline scheduler)
+  # ---------------------------------------------------------------------------
+  warlock-worker:
+    build:
+      context: ../../../..
+      dockerfile: terraform/modules/deploy/container-image/Dockerfile
+    command: ["python", "-m", "warlock.pipeline.scheduler"]
+    environment:
+      WLK_DATABASE_URL: "postgresql://warlock:warlock@postgres:5432/warlock"
+      WLK_REDIS_URL: "redis://redis:6379/0"
+      WLK_JWT_SECRET: "dev-secret-change-in-production-32chars"
+      WLK_AI_ENABLED: "false"
+      WLK_OPA_URL: "http://opa:8181"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: warlock
+      POSTGRES_PASSWORD: warlock
+      POSTGRES_DB: warlock
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warlock -d warlock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Open Policy Agent
+  # ---------------------------------------------------------------------------
+  opa:
+    image: openpolicyagent/opa:latest
+    command: ["run", "--server", "--addr", "0.0.0.0:8181"]
+    volumes:
+      - ../../../../policies:/policies:ro
+    ports:
+      - "8181:8181"
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Nginx reverse proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      warlock-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:

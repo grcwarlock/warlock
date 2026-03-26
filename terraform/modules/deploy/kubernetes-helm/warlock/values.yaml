@@ -1,0 +1,95 @@
+# -- Global settings ---------------------------------------------------------
+
+nameOverride: ""
+fullnameOverride: ""
+
+# -- Warlock API deployment --------------------------------------------------
+
+api:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/warlock/warlock-api
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  port: 8000
+
+# -- Warlock Worker deployment -----------------------------------------------
+
+worker:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/warlock/warlock-worker
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+# -- Warlock environment variables -------------------------------------------
+
+env:
+  WLK_AI_ENABLED: "false"
+  WLK_OPA_URL: "http://opa:8181"
+  WLK_LOG_LEVEL: "INFO"
+  WLK_OPA_FAIL_MODE: "closed"
+
+# -- Secrets (override in your values-secret.yaml or external secrets) -------
+
+secrets:
+  WLK_JWT_SECRET: "CHANGE-ME-IN-PRODUCTION-32-CHARS-MIN"
+  WLK_DATABASE_URL: "postgresql://warlock:warlock@warlock-postgresql:5432/warlock"
+  WLK_REDIS_URL: "redis://warlock-redis-master:6379/0"
+
+# -- Ingress -----------------------------------------------------------------
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: warlock.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# -- Service account ---------------------------------------------------------
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# -- Autoscaling -------------------------------------------------------------
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+# -- Network policy ----------------------------------------------------------
+
+networkPolicy:
+  enabled: true
+
+# -- Image pull secrets ------------------------------------------------------
+
+imagePullSecrets: []
+
+# -- Node selector, tolerations, affinity ------------------------------------
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
