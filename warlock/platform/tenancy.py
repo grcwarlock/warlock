@@ -85,7 +85,7 @@ class TenantManager:
         tenant = self._get_tenant(tenant_id)
         return {
             "tenant_id": tenant_id,
-            "filter_column": "account_id",
+            "filter_column": "tenant_id",
             "config_overrides": dict(tenant.get("config_overrides", {})),
             "is_active": tenant["is_active"],
         }
@@ -110,7 +110,7 @@ class TenantManager:
             self._persist(tenant_id)
         log.info("Deactivated tenant %s", tenant_id)
 
-    def isolate_query(self, query: Query, tenant_id: str, *, column: str = "account_id") -> Query:
+    def isolate_query(self, query: Query, tenant_id: str, *, column: str = "tenant_id") -> Query:
         """Add a tenant isolation filter to a SQLAlchemy query.
 
         Parameters
@@ -121,7 +121,7 @@ class TenantManager:
             The tenant whose data should be visible.
         column:
             The model attribute name used for tenant scoping.  Defaults to
-            ``account_id`` which exists on :class:`Finding`.
+            ``tenant_id`` which exists on all tenant-scoped models.
 
         Returns the query with an additional ``.filter()`` clause.  If the
         query's primary entity does not have *column*, the query is returned

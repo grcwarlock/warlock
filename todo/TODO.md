@@ -38,7 +38,7 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 ### Platform
 
-- [ ] **Design multi-tenancy data isolation** — Add `tenant_id` FK to all models, composite indexes, row-level security. *(GAP-008, STUB-030, ARCH-023)* `XL`
+- [x] **~~Design multi-tenancy data isolation~~** — Tenant model, TenantMixin on all 47 models, ContextVar-based session filtering, API middleware, Alembic migration with backfill. *(GAP-008, STUB-030, ARCH-023)* `XL`
 
 ### False Confidence (EXTREME — Fix Immediately)
 
@@ -272,7 +272,7 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 | Priority | Count | Description |
 |----------|-------|-------------|
-| P0 | 1 (was 13, 12 resolved) | Multi-tenancy remains — all others fixed |
+| P0 | 0 (was 13, all resolved) | All P0 items complete |
 | P1 | 49 | Broken workflows, dead UI, missing models — blocks usage |
 | P2 | 75 | Incomplete features, weak coverage — limits credibility |
 | P3 | 10 | Future roadmap — no current impact |

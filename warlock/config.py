@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     database_read_url: str = ""  # Read replica URL; falls back to database_url when empty
     pgbouncer_mode: bool = False  # When True: pool_size=1, max_overflow=0, no prepared stmts
 
+    # Multi-tenancy
+    multi_tenancy_enabled: bool = False  # When True, all queries are tenant-scoped
+    default_tenant_id: str = "00000000-0000-0000-0000-000000000000"  # System tenant
+    tenant_jwt_claim: str = "tenant_id"  # JWT claim that holds the tenant identifier
+
     # Pipeline
     pipeline_batch_size: int = 500
     pipeline_timeout_seconds: int = 300

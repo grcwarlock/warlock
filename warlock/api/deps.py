@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from fastapi import Depends, HTTPException, Header, Query, Request, status
 from sqlalchemy.orm import Session
 
-from warlock.db.engine import get_session as _get_session
-from warlock.db.models import User
+from warlock.db.engine import get_session as _get_session, current_tenant_id
+from warlock.db.models import User, DEFAULT_TENANT_ID
 from warlock.api.auth import (
     authenticate_api_key,
     decode_access_token,
@@ -72,6 +72,8 @@ def get_current_user(
             effective = role_perms
         # S-9: Set request.state.user so OPA policy gate can read it
         request.state.user = user
+        # Set tenant context from user's tenant_id
+        _set_tenant_from_user(user)
         return AuthContext(
             user=user,
             effective_permissions=effective,
@@ -114,6 +116,8 @@ def get_current_user(
                 )
         # S-9: Set request.state.user so OPA policy gate can read it
         request.state.user = user
+        # Set tenant context — prefer JWT claim, fall back to user's tenant_id
+        _set_tenant_from_jwt_or_user(payload, user)
         return AuthContext(
             user=user,
             effective_permissions=PERMISSIONS.get(user.role, set()),
@@ -123,6 +127,23 @@ def get_current_user(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
     )
+
+
+def _set_tenant_from_user(user: User) -> None:
+    """Set the current tenant ContextVar from the user's tenant_id."""
+    tid = getattr(user, "tenant_id", None) or DEFAULT_TENANT_ID
+    current_tenant_id.set(tid)
+
+
+def _set_tenant_from_jwt_or_user(payload: dict, user: User) -> None:
+    """Set tenant from JWT claim if present, otherwise from user record."""
+    from warlock.config import get_settings
+
+    settings = get_settings()
+    tid = payload.get(settings.tenant_jwt_claim)
+    if not tid:
+        tid = getattr(user, "tenant_id", None) or DEFAULT_TENANT_ID
+    current_tenant_id.set(tid)
 
 
 def require_permission(permission: str):

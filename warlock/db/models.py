@@ -51,11 +51,59 @@ class Base(DeclarativeBase):
 
 
 # ---------------------------------------------------------------------------
+# Multi-tenancy: Tenant model and mixin
+# ---------------------------------------------------------------------------
+
+DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000000"
+"""Well-known UUID for the default/system tenant.
+
+All data created before multi-tenancy was enabled is backfilled to this
+tenant.  Single-tenant deployments use this tenant exclusively.
+"""
+
+
+class Tenant(Base):
+    """Organisation-level tenant for data isolation."""
+
+    __tablename__ = "tenants"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False, unique=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    config_overrides = Column(JSONType, default=dict)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_tenant_slug", "slug", unique=True),
+        Index("idx_tenant_active", "is_active"),
+    )
+
+
+class TenantMixin:
+    """Mixin that adds ``tenant_id`` FK to every tenant-scoped model.
+
+    All models in the system inherit this so that row-level data isolation
+    can be enforced via a session-level filter.  The column defaults to
+    :data:`DEFAULT_TENANT_ID` for backwards compatibility with existing data.
+    """
+
+    tenant_id = Column(
+        String(36),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+        default=DEFAULT_TENANT_ID,
+        index=True,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Stage 0: Connector runs — tracks each collection execution
 # ---------------------------------------------------------------------------
 
 
-class ConnectorRun(Base):
+class ConnectorRun(TenantMixin, Base):
     __tablename__ = "connector_runs"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -88,7 +136,7 @@ class ConnectorRun(Base):
 # ---------------------------------------------------------------------------
 
 
-class RawEvent(Base):
+class RawEvent(TenantMixin, Base):
     __tablename__ = "raw_events"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -121,7 +169,7 @@ class RawEvent(Base):
 # ---------------------------------------------------------------------------
 
 
-class Finding(Base):
+class Finding(TenantMixin, Base):
     __tablename__ = "findings"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -191,7 +239,7 @@ class Finding(Base):
 # ---------------------------------------------------------------------------
 
 
-class ControlMapping(Base):
+class ControlMapping(TenantMixin, Base):
     __tablename__ = "control_mappings"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -221,7 +269,7 @@ class ControlMapping(Base):
 # ---------------------------------------------------------------------------
 
 
-class ControlResult(Base):
+class ControlResult(TenantMixin, Base):
     __tablename__ = "control_results"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -301,7 +349,7 @@ class ControlResult(Base):
 # ---------------------------------------------------------------------------
 
 
-class AuditEntry(Base):
+class AuditEntry(TenantMixin, Base):
     """Append-only audit log with hash chaining for tamper evidence.
 
     Each entry's hash includes the previous entry's hash, creating a
@@ -345,7 +393,7 @@ class AuditEntry(Base):
 # ---------------------------------------------------------------------------
 
 
-class PostureSnapshot(Base):
+class PostureSnapshot(TenantMixin, Base):
     """Point-in-time compliance posture per control per framework.
 
     Created periodically (daily/weekly) to enable trend analysis,
@@ -408,7 +456,7 @@ class PostureSnapshot(Base):
 # ---------------------------------------------------------------------------
 
 
-class User(Base):
+class User(TenantMixin, Base):
     """Platform user with role-based access control."""
 
     __tablename__ = "users"
@@ -456,7 +504,7 @@ class User(Base):
     __table_args__ = (Index("idx_user_role", "role"),)
 
 
-class APIKey(Base):
+class APIKey(TenantMixin, Base):
     """API keys for programmatic access."""
 
     __tablename__ = "api_keys"
@@ -482,7 +530,7 @@ class APIKey(Base):
 # ---------------------------------------------------------------------------
 
 
-class RiskAnalysis(Base):
+class RiskAnalysis(TenantMixin, Base):
     """FAIR Monte Carlo risk quantification results."""
 
     __tablename__ = "risk_analyses"
@@ -508,7 +556,7 @@ class RiskAnalysis(Base):
     )
 
 
-class AuditEngagement(Base):
+class AuditEngagement(TenantMixin, Base):
     """Represents a scoped audit period for evidence packaging.
 
     e.g., "SOC 2 Type II 2025" covering Jan 1 - Dec 31 2025 for SOC 2 framework.
@@ -546,7 +594,7 @@ class AuditEngagement(Base):
 # ---------------------------------------------------------------------------
 
 
-class POAM(Base):
+class POAM(TenantMixin, Base):
     """First-class POA&M entity for tracking remediation plans."""
 
     __tablename__ = "poams"
@@ -610,7 +658,7 @@ class POAM(Base):
 # ---------------------------------------------------------------------------
 
 
-class CompensatingControl(Base):
+class CompensatingControl(TenantMixin, Base):
     """Documents alternative controls when primary control is non-compliant."""
 
     __tablename__ = "compensating_controls"
@@ -657,7 +705,7 @@ class CompensatingControl(Base):
 # ---------------------------------------------------------------------------
 
 
-class RiskAcceptance(Base):
+class RiskAcceptance(TenantMixin, Base):
     """Formal risk acceptance with AO-level approval and expiry."""
 
     __tablename__ = "risk_acceptances"
@@ -707,7 +755,7 @@ class RiskAcceptance(Base):
 # ---------------------------------------------------------------------------
 
 
-class Issue(Base):
+class Issue(TenantMixin, Base):
     """Tracks remediation of non-compliant findings through their lifecycle."""
 
     __tablename__ = "issues"
@@ -783,7 +831,7 @@ class Issue(Base):
     )
 
 
-class IssueComment(Base):
+class IssueComment(TenantMixin, Base):
     """Comments on issues for collaboration."""
 
     __tablename__ = "issue_comments"
@@ -805,7 +853,7 @@ class IssueComment(Base):
 # ---------------------------------------------------------------------------
 
 
-class Attestation(Base):
+class Attestation(TenantMixin, Base):
     """Sign-off workflow for control assessments."""
 
     __tablename__ = "attestations"
@@ -850,7 +898,7 @@ class Attestation(Base):
     )
 
 
-class AuditComment(Base):
+class AuditComment(TenantMixin, Base):
     """Auditor-practitioner collaboration comments."""
 
     __tablename__ = "audit_comments"
@@ -892,7 +940,7 @@ class AuditComment(Base):
 # ---------------------------------------------------------------------------
 
 
-class LegalHold(Base):
+class LegalHold(TenantMixin, Base):
     """Legal hold that prevents data purging during investigations or litigation."""
 
     __tablename__ = "legal_holds"
@@ -926,7 +974,7 @@ class LegalHold(Base):
 # ---------------------------------------------------------------------------
 
 
-class TrustAccessRequest(Base):
+class TrustAccessRequest(TenantMixin, Base):
     """Tracks requests for compliance documentation via the trust portal."""
 
     __tablename__ = "trust_access_requests"
@@ -949,7 +997,7 @@ class TrustAccessRequest(Base):
     )
 
 
-class TrustDocument(Base):
+class TrustDocument(TenantMixin, Base):
     """NDA-gated compliance documents (SOC 2 reports, pen test summaries, etc.).
 
     Classification tiers:
@@ -984,7 +1032,7 @@ class TrustDocument(Base):
 # ---------------------------------------------------------------------------
 
 
-class SystemProfile(Base):
+class SystemProfile(TenantMixin, Base):
     """Defines an authorization boundary / system for assessment scoping."""
 
     __tablename__ = "system_profiles"
@@ -1050,7 +1098,7 @@ class SystemProfile(Base):
 # ---------------------------------------------------------------------------
 
 
-class Personnel(Base):
+class Personnel(TenantMixin, Base):
     """Unified personnel record cross-referencing HR + IdP + training data."""
 
     __tablename__ = "personnel"
@@ -1114,7 +1162,7 @@ class Personnel(Base):
 # ---------------------------------------------------------------------------
 
 
-class QuestionnaireTemplate(Base):
+class QuestionnaireTemplate(TenantMixin, Base):
     """Reusable questionnaire templates (SIG, DDQ, CAIQ, custom)."""
 
     __tablename__ = "questionnaire_templates"
@@ -1135,7 +1183,7 @@ class QuestionnaireTemplate(Base):
     __table_args__ = (Index("idx_template_type", "template_type"),)
 
 
-class Questionnaire(Base):
+class Questionnaire(TenantMixin, Base):
     """A questionnaire sent to a specific vendor."""
 
     __tablename__ = "questionnaires"
@@ -1184,7 +1232,7 @@ class Questionnaire(Base):
 # ---------------------------------------------------------------------------
 
 
-class DataSilo(Base):
+class DataSilo(TenantMixin, Base):
     """Tracks discovered data stores and their sensitive data classification."""
 
     __tablename__ = "data_silos"
@@ -1250,7 +1298,7 @@ class DataSilo(Base):
 # ---------------------------------------------------------------------------
 
 
-class ControlInheritance(Base):
+class ControlInheritance(TenantMixin, Base):
     """Maps control responsibility: inherited, shared, common, or system-specific."""
 
     __tablename__ = "control_inheritances"
@@ -1285,7 +1333,7 @@ class ControlInheritance(Base):
 # ---------------------------------------------------------------------------
 
 
-class SystemDependency(Base):
+class SystemDependency(TenantMixin, Base):
     """Models cross-system control inheritance dependencies."""
 
     __tablename__ = "system_dependencies"
@@ -1313,7 +1361,7 @@ class SystemDependency(Base):
 # ---------------------------------------------------------------------------
 
 
-class ChangeEvent(Base):
+class ChangeEvent(TenantMixin, Base):
     """Generic change event from cloud audit logs, CI/CD, ITSM, IaC."""
 
     __tablename__ = "change_events"
@@ -1344,7 +1392,7 @@ class ChangeEvent(Base):
 # ---------------------------------------------------------------------------
 
 
-class ComplianceDrift(Base):
+class ComplianceDrift(TenantMixin, Base):
     """Records compliance status changes with correlated change events."""
 
     __tablename__ = "compliance_drifts"
@@ -1380,7 +1428,7 @@ class ComplianceDrift(Base):
 # ---------------------------------------------------------------------------
 
 
-class PolicyOverride(Base):
+class PolicyOverride(TenantMixin, Base):
     """Custom Rego policies for ABAC escalation via OPA."""
 
     __tablename__ = "policy_overrides"
@@ -1401,7 +1449,7 @@ class PolicyOverride(Base):
 # ---------------------------------------------------------------------------
 
 
-class ExternalAuditor(Base):
+class ExternalAuditor(TenantMixin, Base):
     """Lightweight auditor account with magic-link authentication."""
 
     __tablename__ = "external_auditors"
@@ -1424,7 +1472,7 @@ class ExternalAuditor(Base):
     )
 
 
-class AuditorEngagementAssignment(Base):
+class AuditorEngagementAssignment(TenantMixin, Base):
     """Junction table: auditor ↔ engagement (many-to-many)."""
 
     __tablename__ = "auditor_engagement_assignments"
@@ -1434,7 +1482,7 @@ class AuditorEngagementAssignment(Base):
     assigned_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
 
-class EvidenceRequest(Base):
+class EvidenceRequest(TenantMixin, Base):
     """Auditor request for additional evidence during an engagement."""
 
     __tablename__ = "evidence_requests"
@@ -1468,7 +1516,7 @@ class EvidenceRequest(Base):
 # ---------------------------------------------------------------------------
 
 
-class Embedding(Base):
+class Embedding(TenantMixin, Base):
     """Stored embedding vectors for semantic search over controls and findings.
 
     Vectors are stored as JSON arrays (list[float]) for SQLite compatibility.
@@ -1495,7 +1543,7 @@ class Embedding(Base):
 # ---------------------------------------------------------------------------
 
 
-class Policy(Base):
+class Policy(TenantMixin, Base):
     __tablename__ = "policies"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1513,7 +1561,7 @@ class Policy(Base):
     __table_args__ = (Index("ix_policies_type_enabled", "policy_type", "enabled"),)
 
 
-class PolicyHistory(Base):
+class PolicyHistory(TenantMixin, Base):
     __tablename__ = "policy_history"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1529,7 +1577,7 @@ class PolicyHistory(Base):
     policy = relationship("Policy", backref="history")
 
 
-class Asset(Base):
+class Asset(TenantMixin, Base):
     __tablename__ = "assets"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1550,7 +1598,7 @@ class Asset(Base):
     system = relationship("SystemProfile", backref="assets")
 
 
-class Vendor(Base):
+class Vendor(TenantMixin, Base):
     __tablename__ = "vendors"
 
     id = Column(String(36), primary_key=True, default=_uuid)
@@ -1574,7 +1622,7 @@ class Vendor(Base):
 # ---------------------------------------------------------------------------
 
 
-class WatchSubscription(Base):
+class WatchSubscription(TenantMixin, Base):
     """Tracks user subscriptions to entity status changes."""
 
     __tablename__ = "watch_subscriptions"
@@ -1600,7 +1648,7 @@ class WatchSubscription(Base):
 # ---------------------------------------------------------------------------
 
 
-class EscalationPolicy(Base):
+class EscalationPolicy(TenantMixin, Base):
     """Defines escalation chains for overdue items."""
 
     __tablename__ = "escalation_policies"
@@ -1632,7 +1680,7 @@ class EscalationPolicy(Base):
 # ---------------------------------------------------------------------------
 
 
-class SavedQuery(Base):
+class SavedQuery(TenantMixin, Base):
     """Saved lake/analytics queries for reuse."""
 
     __tablename__ = "saved_queries"
@@ -1662,7 +1710,7 @@ class SavedQuery(Base):
 # ---------------------------------------------------------------------------
 
 
-class IPAllowlistEntry(Base):
+class IPAllowlistEntry(TenantMixin, Base):
     """IP allowlist entries for API access restriction."""
 
     __tablename__ = "ip_allowlist"
@@ -1683,7 +1731,7 @@ class IPAllowlistEntry(Base):
 # ---------------------------------------------------------------------------
 
 
-class RiskDependency(Base):
+class RiskDependency(TenantMixin, Base):
     """Maps dependencies and cascade effects between risks."""
 
     __tablename__ = "risk_dependencies"
@@ -1712,7 +1760,7 @@ class RiskDependency(Base):
 # ---------------------------------------------------------------------------
 
 
-class Alert(Base):
+class Alert(TenantMixin, Base):
     """Alert generated by rule engine, threshold breach, or policy violation."""
 
     __tablename__ = "alerts"
@@ -1780,7 +1828,7 @@ class Alert(Base):
 # ---------------------------------------------------------------------------
 
 
-class Remediation(Base):
+class Remediation(TenantMixin, Base):
     """Tracks remediation of findings/alerts through a 5-stage workflow."""
 
     __tablename__ = "remediations"
@@ -1841,7 +1889,7 @@ class Remediation(Base):
 # ---------------------------------------------------------------------------
 
 
-class PipelineRun(Base):
+class PipelineRun(TenantMixin, Base):
     """Tracks pipeline execution runs with stats and timing."""
 
     __tablename__ = "pipeline_runs"

@@ -1,14 +1,29 @@
-"""Database engine and session management."""
+"""Database engine and session management.
+
+Multi-tenancy
+-------------
+When ``WLK_MULTI_TENANCY_ENABLED=true``, every ORM SELECT issued through
+:func:`get_session` or :func:`get_read_session` is automatically filtered
+by the *current tenant*.  The tenant is determined by the :data:`current_tenant_id`
+ContextVar which API middleware sets per-request.
+
+CLI commands and the demo seed run outside the request cycle and therefore
+always use the default tenant (``DEFAULT_TENANT_ID``).
+"""
 
 from __future__ import annotations
 
 from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Generator
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from warlock.config import get_settings
+
+# Tenant context — set per-request by API middleware, defaults to system tenant.
+current_tenant_id: ContextVar[str | None] = ContextVar("current_tenant_id", default=None)
 
 _engine = None
 _session_factory = None
@@ -171,3 +186,48 @@ def init_db():
     from warlock.db.models import Base  # noqa: F811
 
     Base.metadata.create_all(get_engine())
+    _install_tenant_filter()
+
+
+_tenant_filter_installed = False
+
+
+def _install_tenant_filter() -> None:
+    """Install a session-level ORM event that auto-applies tenant_id filters.
+
+    Only active when ``WLK_MULTI_TENANCY_ENABLED=true``.  The filter is a
+    ``do_orm_execute`` event that appends ``WHERE tenant_id = :tid`` to every
+    SELECT whose primary entity has a ``tenant_id`` column.
+    """
+    global _tenant_filter_installed  # noqa: PLW0603
+    if _tenant_filter_installed:
+        return
+    _tenant_filter_installed = True
+
+    settings = get_settings()
+    if not settings.multi_tenancy_enabled:
+        return
+
+    from warlock.db.models import Tenant, TenantMixin  # noqa: F811
+
+    @event.listens_for(Session, "do_orm_execute")
+    def _apply_tenant_filter(orm_execute_state):
+        """Auto-apply ``WHERE tenant_id = ?`` to every tenant-scoped SELECT."""
+        if not orm_execute_state.is_select:
+            return
+        if orm_execute_state.execution_options.get("skip_tenant_filter", False):
+            return
+        tid = current_tenant_id.get()
+        if tid is None:
+            tid = settings.default_tenant_id
+
+        mapper = orm_execute_state.bind_mapper
+        if mapper is None:
+            return
+        entity = mapper.class_
+        if entity is Tenant:
+            return
+        if not isinstance(entity, type) or not issubclass(entity, TenantMixin):
+            return
+        # Use filter_criteria to add the tenant condition
+        orm_execute_state.statement = orm_execute_state.statement.where(entity.tenant_id == tid)
