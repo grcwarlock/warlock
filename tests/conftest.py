@@ -59,6 +59,7 @@ def db_engine():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
+    # Default tenant is auto-inserted via Tenant.__table__ after_create event
     yield engine
     engine.dispose()
 

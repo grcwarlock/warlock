@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db, require_permission
-from warlock.db.models import ControlResult, Finding, User
+from warlock.db.models import User
 from warlock.db.repository import get_repos
 
 router = APIRouter()
@@ -140,8 +140,8 @@ def pipeline_status(
         raw_count = repos.connector_runs.total_event_count()
     else:
         raw_count = 0
-    finding_count = db.query(Finding).count()
-    result_count = db.query(ControlResult).count()
+    finding_count = repos.findings.count()
+    result_count = repos.control_results.count()
 
     return {
         "running": is_running,

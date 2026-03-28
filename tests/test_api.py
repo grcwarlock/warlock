@@ -295,7 +295,7 @@ class TestHealthRoutes:
         data = resp.json()
         assert "status" in data
         assert "checks" in data
-        assert "database" in data["checks"]
+        assert "db" in data["checks"]
 
 
 # ===========================================================================

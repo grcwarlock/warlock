@@ -41,6 +41,7 @@ def engine():
 def session(engine):
     Session = sessionmaker(bind=engine)
     s = Session()
+    # Default tenant is auto-inserted via Tenant.__table__ after_create event
     yield s
     s.close()
 

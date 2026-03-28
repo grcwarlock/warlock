@@ -20531,23 +20531,7 @@ def main():
 
     # 1. Init DB
     print("\n[1/34] Initializing database...")
-    init_db()
-
-    # Ensure default tenant exists (multi-tenancy foundation)
-    from warlock.db.models import DEFAULT_TENANT_ID, Tenant
-
-    with get_session() as session:
-        existing = session.query(Tenant).filter(Tenant.id == DEFAULT_TENANT_ID).first()
-        if not existing:
-            session.add(
-                Tenant(
-                    id=DEFAULT_TENANT_ID,
-                    name="System",
-                    slug="system",
-                    is_active=True,
-                )
-            )
-            session.flush()
+    init_db()  # Also creates default tenant automatically
 
     # 2. Build pipeline with real framework configs + assertions
     print("[2/34] Loading frameworks, assertions, and normalizers...")

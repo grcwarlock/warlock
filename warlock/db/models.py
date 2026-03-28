@@ -32,6 +32,7 @@ from sqlalchemy import (
 )  # Generic JSON: maps to JSONB on PostgreSQL, JSON on SQLite
 from sqlalchemy import JSON
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import event as _sa_event
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 # High-volume columns: JSONB on PostgreSQL (GIN-indexable, faster operators), JSON on SQLite (dev)
@@ -79,6 +80,31 @@ class Tenant(Base):
         Index("idx_tenant_slug", "slug", unique=True),
         Index("idx_tenant_active", "is_active"),
     )
+
+
+@_sa_event.listens_for(Tenant.__table__, "after_create")
+def _insert_default_tenant(target, connection, **kw):
+    """Auto-insert the default system tenant when the tenants table is created.
+
+    Uses a SELECT guard instead of INSERT OR IGNORE for cross-DB compatibility.
+    """
+    from sqlalchemy import text as _text
+
+    row = connection.execute(
+        _text("SELECT id FROM tenants WHERE id = :tid"),
+        {"tid": DEFAULT_TENANT_ID},
+    ).first()
+    if row is None:
+        connection.execute(
+            target.insert(),
+            {
+                "id": DEFAULT_TENANT_ID,
+                "name": "System",
+                "slug": "system",
+                "is_active": True,
+                "created_at": _utcnow(),
+            },
+        )
 
 
 class TenantMixin:

@@ -191,11 +191,30 @@ def get_read_session() -> Generator[Session, None, None]:
 
 
 def init_db():
-    """Create all tables. For development — use Alembic in production."""
-    from warlock.db.models import Base  # noqa: F811
+    """Create all tables. For development — use Alembic in production.
+
+    Also ensures the default system tenant exists so that FK constraints
+    on ``tenant_id`` columns are satisfied for all subsequent inserts.
+    """
+    from warlock.db.models import Base, DEFAULT_TENANT_ID, Tenant  # noqa: F811
 
     Base.metadata.create_all(get_engine())
+    _ensure_default_tenant(Tenant, DEFAULT_TENANT_ID)
     _install_tenant_filter()
+
+
+def _ensure_default_tenant(tenant_cls, default_id: str) -> None:
+    """Insert the default system tenant if it doesn't exist."""
+    session = get_session_factory()()
+    try:
+        existing = session.query(tenant_cls).filter(tenant_cls.id == default_id).first()
+        if not existing:
+            session.add(tenant_cls(id=default_id, name="System", slug="system", is_active=True))
+            session.commit()
+    except Exception:
+        session.rollback()
+    finally:
+        session.close()
 
 
 _tenant_filter_installed = False

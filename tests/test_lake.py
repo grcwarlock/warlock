@@ -4,11 +4,11 @@ import pytest
 
 
 class TestLakeConfig:
-    def test_lake_disabled_by_default(self):
+    def test_lake_enabled_by_default(self):
         from warlock.config import get_settings
 
         s = get_settings()
-        assert s.lake_enabled is False
+        assert s.lake_enabled is True
 
     def test_lake_path_default(self):
         from warlock.config import get_settings
