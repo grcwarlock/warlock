@@ -1,4 +1,4 @@
-.PHONY: install test lint migrate clean seed reset help qa qa-quick verify-docs demo cli frontend-install frontend-dev frontend-build
+.PHONY: install test lint migrate clean seed reset help qa qa-quick verify-docs demo cli frontend-install frontend-dev frontend-build tui warlock
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -31,6 +31,12 @@ reset: ## Reset SQLite DB and seed fresh data
 	rm -f warlock.db warlock.db-shm warlock.db-wal
 	.venv/bin/alembic upgrade head
 	WLK_AI_ENABLED=false .venv/bin/python scripts/demo_seed.py
+
+warlock: reset ## Reset DB, seed, and launch the TUI
+	.venv/bin/warlock
+
+tui: ## Launch the TUI (assumes DB is seeded)
+	.venv/bin/warlock
 
 demo: ## Spin up full demo (DB + OPA + API + seed) and drop into CLI-ready shell
 	@./scripts/demo.sh
