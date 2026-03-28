@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 
 import click
 from rich.console import Console
@@ -161,12 +162,39 @@ def _print_stats(stats) -> None:
     default=None,
     help="Override output format for all commands",
 )
+@click.option("--no-tui", is_flag=True, help="Force traditional CLI mode (skip TUI)")
 @click.pass_context
-def cli(ctx: click.Context, verbose: bool, quiet: bool, global_format: str | None) -> None:
+def cli(
+    ctx: click.Context, verbose: bool, quiet: bool, global_format: str | None, no_tui: bool
+) -> None:
     """Warlock -- compliance telemetry pipeline."""
     ctx.ensure_object(dict)
     ctx.obj["quiet"] = quiet
     ctx.obj["global_format"] = global_format
+
+    # Launch TUI when: no subcommand, TTY detected, not explicitly disabled
+    if (
+        ctx.invoked_subcommand is None
+        and not no_tui
+        and sys.stdout.isatty()
+        and sys.stdin.isatty()
+        and not os.environ.get("WARLOCK_NO_TUI")
+    ):
+        try:
+            from warlock.tui import WarlockApp
+
+            app = WarlockApp()
+            app.run()
+            raise SystemExit(0)
+        except ImportError:
+            # Textual not installed — fall through to CLI help
+            pass
+        except SystemExit:
+            raise
+        except Exception:
+            # TUI crashed — fall through to CLI help
+            pass
+
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
     level = logging.DEBUG if verbose else logging.WARNING if quiet else logging.INFO

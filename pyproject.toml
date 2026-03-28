@@ -22,6 +22,7 @@ dependencies = [
     "cryptography>=42.0",   # #14: Fernet field encryption (was optional, now required)
     "openpyxl>=3.1",        # RPT-3: Excel export
     "python-jose[cryptography]>=3.3",  # INT-1: OIDC JWT validation
+    "textual>=3.0",                    # TUI: interactive terminal dashboard
 ]
 
 [project.optional-dependencies]

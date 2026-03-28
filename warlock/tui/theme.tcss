@@ -1,0 +1,393 @@
+/* Warlock TUI — Arcane Elegance Theme */
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+
+$bg: #08081a;
+$surface: #0c0c20;
+$surface-bright: #0f0f28;
+$border: #1e1e3a;
+$border-bright: #2a2a4a;
+
+$accent: #a78bfa;
+$accent-dim: #7c5cbf;
+$accent-bg: #141428;
+
+$text: #e0e0e0;
+$text-secondary: #888888;
+$text-muted: #555555;
+
+$critical: #ef4444;
+$high: #f59e0b;
+$medium: #eab308;
+$low: #555555;
+$success: #22c55e;
+$info: #3b82f6;
+$verify: #8b5cf6;
+
+/* ------------------------------------------------------------------ */
+/* App root                                                            */
+/* ------------------------------------------------------------------ */
+
+Screen {
+    background: $bg;
+    color: $text;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar                                                             */
+/* ------------------------------------------------------------------ */
+
+#sidebar {
+    width: 14;
+    background: #0a0a1e;
+    border-right: solid $border;
+    dock: left;
+}
+
+#sidebar-logo {
+    text-align: center;
+    padding: 1 0;
+    color: $accent;
+    text-style: bold;
+    border-bottom: solid $border;
+}
+
+.nav-item {
+    text-align: center;
+    padding: 1 0;
+    color: $text-muted;
+    height: 3;
+}
+
+.nav-item:hover {
+    background: $accent-bg;
+    color: $text-secondary;
+}
+
+.nav-item.--active {
+    background: $accent-bg;
+    color: $accent;
+    border-left: thick $accent;
+}
+
+#sidebar-footer {
+    dock: bottom;
+    border-top: solid $border;
+    padding: 1 0;
+    text-align: center;
+    color: $text-muted;
+    height: auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main content area                                                   */
+/* ------------------------------------------------------------------ */
+
+#main-content {
+    width: 1fr;
+}
+
+/* Header bar */
+#header-bar {
+    background: $surface;
+    border-bottom: solid $border;
+    height: 3;
+    padding: 1 2;
+}
+
+#header-title {
+    text-style: bold;
+    color: $text;
+}
+
+#header-badges {
+    dock: right;
+}
+
+.badge {
+    padding: 0 1;
+    margin: 0 1;
+}
+
+.badge-critical {
+    color: $critical;
+    background: #2a1010;
+}
+
+.badge-warning {
+    color: $high;
+    background: #2a2000;
+}
+
+.badge-success {
+    color: $success;
+    background: #0a2a0a;
+}
+
+/* Filter bar */
+#filter-bar {
+    background: #0a0a1c;
+    border-bottom: solid #1a1a30;
+    height: 1;
+    padding: 0 2;
+    color: $text-secondary;
+}
+
+.filter-pill {
+    color: $accent;
+    background: #1a1430;
+    padding: 0 1;
+    margin: 0 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* List panel                                                          */
+/* ------------------------------------------------------------------ */
+
+#list-panel {
+    width: 1fr;
+}
+
+.list-row {
+    height: 1;
+    padding: 0 2;
+    color: $text;
+}
+
+.list-row:hover {
+    background: #0e0e24;
+}
+
+.list-row.--selected {
+    background: $accent-bg;
+    border-left: thick $accent;
+}
+
+.severity-critical { color: $critical; text-style: bold; }
+.severity-high { color: $high; }
+.severity-medium { color: $medium; }
+.severity-low { color: $text-muted; }
+
+.status-open { color: $high; }
+.status-assigned { color: #06b6d4; }
+.status-in_progress { color: $info; }
+.status-verification { color: $verify; }
+.status-closed { color: $success; }
+.status-draft { color: $text-muted; }
+.status-compliant { color: $success; }
+.status-non_compliant { color: $critical; }
+.status-partial { color: $high; }
+
+/* ------------------------------------------------------------------ */
+/* Detail pane                                                         */
+/* ------------------------------------------------------------------ */
+
+#detail-pane {
+    width: 42;
+    background: #0b0b1e;
+    border-left: solid $border;
+    dock: right;
+}
+
+#detail-pane.--expanded {
+    width: 1fr;
+}
+
+#detail-header {
+    background: #0d0d22;
+    border-bottom: solid $border;
+    padding: 1 2;
+    height: auto;
+}
+
+#detail-title {
+    color: $accent;
+    text-style: bold;
+}
+
+#detail-description {
+    color: $text;
+    margin-top: 1;
+}
+
+.detail-section {
+    padding: 1 2;
+    border-bottom: solid $border;
+}
+
+.detail-section-title {
+    color: $accent;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.detail-row {
+    height: 1;
+}
+
+.detail-label {
+    color: $text-muted;
+    width: 14;
+}
+
+.detail-value {
+    color: $text;
+}
+
+/* ------------------------------------------------------------------ */
+/* Code blocks                                                         */
+/* ------------------------------------------------------------------ */
+
+.code-block {
+    background: #0a0a18;
+    border: solid #1a1a30;
+    padding: 1 2;
+    margin: 1 0;
+    color: $text;
+}
+
+.code-block.--current {
+    background: #0c0c22;
+    border: solid $accent-dim;
+}
+
+.code-hint {
+    color: $text-muted;
+    margin-top: 0;
+    padding: 0 2;
+}
+
+/* ------------------------------------------------------------------ */
+/* Step progress                                                       */
+/* ------------------------------------------------------------------ */
+
+.step-done {
+    color: $success;
+}
+
+.step-current {
+    color: $accent;
+    text-style: bold;
+}
+
+.step-pending {
+    color: $text-muted;
+}
+
+/* ------------------------------------------------------------------ */
+/* Timeline                                                            */
+/* ------------------------------------------------------------------ */
+
+.timeline-entry {
+    height: auto;
+    padding: 0 0 0 2;
+    border-left: solid $border;
+    margin: 0 0 0 1;
+}
+
+.timeline-dot {
+    color: $accent;
+}
+
+.timeline-text {
+    color: $text-secondary;
+}
+
+.timeline-date {
+    color: $text-muted;
+}
+
+/* ------------------------------------------------------------------ */
+/* Command palette                                                     */
+/* ------------------------------------------------------------------ */
+
+#command-palette {
+    align: center middle;
+    background: #000008;
+}
+
+#palette-container {
+    background: $surface-bright;
+    border: solid $accent-dim;
+    width: 70;
+    max-height: 24;
+    padding: 0;
+}
+
+#palette-input {
+    background: transparent;
+    border-bottom: solid $border;
+    padding: 1 2;
+    color: $text;
+}
+
+#palette-results {
+    height: auto;
+    max-height: 18;
+    padding: 0;
+}
+
+.palette-result {
+    height: 2;
+    padding: 0 2;
+    color: $text;
+}
+
+.palette-result:hover {
+    background: $accent-bg;
+}
+
+.palette-result.--selected {
+    background: $accent-bg;
+    border-left: thick $accent;
+}
+
+.palette-category {
+    padding: 0 1;
+    margin: 0 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* Footer                                                              */
+/* ------------------------------------------------------------------ */
+
+#footer-bar {
+    dock: bottom;
+    height: 1;
+    background: #0a0a1c;
+    border-top: solid $border;
+    padding: 0 2;
+    color: $text-muted;
+}
+
+.key-hint {
+    color: $accent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Impact table                                                        */
+/* ------------------------------------------------------------------ */
+
+.impact-row {
+    height: 2;
+    padding: 0 2;
+    border-bottom: solid #1a1a30;
+}
+
+.impact-row:hover {
+    background: #0e0e24;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scrollbar                                                           */
+/* ------------------------------------------------------------------ */
+
+* {
+    scrollbar-color: $border;
+    scrollbar-color-hover: $accent-dim;
+    scrollbar-color-active: $accent;
+    scrollbar-background: $bg;
+    scrollbar-size-vertical: 1;
+}
