@@ -119,4 +119,4 @@ curl -s http://localhost:8000/api/v1/compliance/findings?limit=5 \
 brew install opa
 ```
 
-With OPA installed, the demo evaluates 670 Rego policies across 8 frameworks. Without OPA, it skips policy evaluation.
+With OPA installed, the demo evaluates 676 Rego policies across 14 frameworks. Without OPA, it skips policy evaluation.

@@ -265,6 +265,8 @@ from warlock.cli import security_posture_cmd as _security_posture_cmd  # noqa: F
 from warlock.cli import collaboration_cmd as _collaboration_cmd  # noqa: F401, E402
 from warlock.cli import search_cmd as _search_cmd  # noqa: F401, E402
 from warlock.cli import audit_cmd as _audit_cmd  # noqa: F401, E402
+from warlock.cli import soa_cmd as _soa_cmd  # noqa: F401, E402
+from warlock.cli import model_cmds as _model_cmds  # noqa: F401, E402
 
 
 # ---------------------------------------------------------------------------

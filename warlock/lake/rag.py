@@ -20,6 +20,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+try:
+    import faiss
+    import numpy as np
+
+    _HAS_FAISS = True
+except ImportError:
+    _HAS_FAISS = False
+
 log = logging.getLogger(__name__)
 
 
@@ -53,6 +61,7 @@ class LakeRAG:
         self._documents: list[RAGDocument] = []
         self._tfidf_index: dict[str, dict[int, float]] = {}  # term -> {doc_idx: tfidf}
         self._doc_count = 0
+        self._vector_store = VectorStore()
 
     @property
     def document_count(self) -> int:
@@ -77,14 +86,22 @@ class LakeRAG:
         # Build TF-IDF index
         self._build_tfidf()
 
+        # Build vector store (uses FAISS if available, else brute-force)
+        self._vector_store.build(self._documents, self._tfidf_index)
+
         self._doc_count = len(self._documents)
-        log.info("RAG index built: %d documents", self._doc_count)
+        log.info(
+            "RAG index built: %d documents (backend=%s)",
+            self._doc_count,
+            self._vector_store.backend,
+        )
         return self._doc_count
 
     def query(self, query_text: str, top_k: int = 10) -> list[RAGResult]:
         """Search the index for documents matching the query.
 
-        Uses TF-IDF cosine similarity for ranking.
+        Uses FAISS vector search when available, falling back to TF-IDF
+        cosine similarity.
         """
         if not self._documents:
             return []
@@ -93,28 +110,19 @@ class LakeRAG:
         if not query_terms:
             return []
 
-        # Score each document
-        scores: list[tuple[int, float]] = []
-        for doc_idx in range(len(self._documents)):
-            score = 0.0
-            for term in query_terms:
-                if term in self._tfidf_index:
-                    score += self._tfidf_index[term].get(doc_idx, 0.0)
-            if score > 0:
-                scores.append((doc_idx, score))
+        # Use vector store for search (FAISS or brute-force TF-IDF)
+        scored = self._vector_store.search(query_terms, top_k)
 
-        # Sort by score descending
-        scores.sort(key=lambda x: x[1], reverse=True)
-
-        # Return top_k results
+        # Return results
         results = []
-        for doc_idx, score in scores[:top_k]:
-            results.append(
-                RAGResult(
-                    document=self._documents[doc_idx],
-                    score=score,
+        for doc_idx, score in scored:
+            if doc_idx < len(self._documents):
+                results.append(
+                    RAGResult(
+                        document=self._documents[doc_idx],
+                        score=score,
+                    )
                 )
-            )
 
         return results
 
@@ -285,3 +293,141 @@ def _tokenize(text: str) -> list[str]:
         "does",
     }
     return [w for w in words if w not in stopwords and len(w) > 1]
+
+
+# ---------------------------------------------------------------------------
+# Vector store — optional FAISS backend, falls back to TF-IDF
+# ---------------------------------------------------------------------------
+
+
+class VectorStore:
+    """Sparse-to-dense vector store with optional FAISS acceleration.
+
+    When FAISS is available, builds a dense index for fast approximate
+    nearest-neighbor search. Otherwise falls back to brute-force TF-IDF
+    cosine similarity (the existing default).
+    """
+
+    def __init__(self) -> None:
+        self._use_faiss = _HAS_FAISS
+        self._index: Any = None  # faiss.IndexFlatIP when available
+        self._dimension: int = 0
+        self._vocabulary: dict[str, int] = {}
+        self._doc_vectors: list[dict[int, float]] = []
+
+    @property
+    def backend(self) -> str:
+        return "faiss" if self._use_faiss and self._index is not None else "tfidf"
+
+    def build(
+        self,
+        documents: list[RAGDocument],
+        tfidf_index: dict[str, dict[int, float]],
+    ) -> None:
+        """Build the vector index from TF-IDF data.
+
+        If FAISS is available, converts sparse TF-IDF vectors to dense
+        and indexes them. Otherwise stores sparse vectors for brute-force.
+        """
+        if not documents or not tfidf_index:
+            return
+
+        # Build vocabulary mapping
+        self._vocabulary = {term: idx for idx, term in enumerate(tfidf_index.keys())}
+        self._dimension = len(self._vocabulary)
+
+        if self._use_faiss and self._dimension > 0:
+            self._build_faiss(documents, tfidf_index)
+        else:
+            # Store sparse vectors for brute-force fallback
+            self._doc_vectors = []
+            for doc_idx in range(len(documents)):
+                vec: dict[int, float] = {}
+                for term, term_idx in self._vocabulary.items():
+                    score = tfidf_index.get(term, {}).get(doc_idx, 0.0)
+                    if score > 0:
+                        vec[term_idx] = score
+                self._doc_vectors.append(vec)
+
+    def _build_faiss(
+        self,
+        documents: list[RAGDocument],
+        tfidf_index: dict[str, dict[int, float]],
+    ) -> None:
+        """Build FAISS index from TF-IDF vectors."""
+        n_docs = len(documents)
+        dim = self._dimension
+
+        # Convert sparse TF-IDF to dense matrix
+        matrix = np.zeros((n_docs, dim), dtype=np.float32)
+        for term, postings in tfidf_index.items():
+            term_idx = self._vocabulary[term]
+            for doc_idx, score in postings.items():
+                matrix[doc_idx, term_idx] = score
+
+        # L2-normalize for cosine similarity via inner product
+        norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        matrix = matrix / norms
+
+        self._index = faiss.IndexFlatIP(dim)  # type: ignore[union-attr]
+        self._index.add(matrix)  # type: ignore[union-attr]
+        log.info("FAISS index built: %d docs, %d dimensions", n_docs, dim)
+
+    def search(
+        self,
+        query_terms: list[str],
+        top_k: int = 10,
+    ) -> list[tuple[int, float]]:
+        """Search for similar documents. Returns (doc_idx, score) pairs."""
+        if self._use_faiss and self._index is not None:
+            return self._search_faiss(query_terms, top_k)
+        return self._search_brute(query_terms, top_k)
+
+    def _search_faiss(
+        self,
+        query_terms: list[str],
+        top_k: int,
+    ) -> list[tuple[int, float]]:
+        """Search using FAISS inner product."""
+        query_vec = np.zeros((1, self._dimension), dtype=np.float32)
+        for term in query_terms:
+            if term in self._vocabulary:
+                query_vec[0, self._vocabulary[term]] = 1.0
+
+        # Normalize query vector
+        norm = np.linalg.norm(query_vec)
+        if norm > 0:
+            query_vec = query_vec / norm
+
+        k = min(top_k, self._index.ntotal)  # type: ignore[union-attr]
+        if k == 0:
+            return []
+
+        scores, indices = self._index.search(query_vec, k)  # type: ignore[union-attr]
+        results = []
+        for i in range(k):
+            idx = int(indices[0][i])
+            score = float(scores[0][i])
+            if score > 0 and idx >= 0:
+                results.append((idx, score))
+        return results
+
+    def _search_brute(
+        self,
+        query_terms: list[str],
+        top_k: int,
+    ) -> list[tuple[int, float]]:
+        """Brute-force search over sparse TF-IDF vectors."""
+        query_indices = {self._vocabulary[t] for t in query_terms if t in self._vocabulary}
+        if not query_indices:
+            return []
+
+        scores: list[tuple[int, float]] = []
+        for doc_idx, vec in enumerate(self._doc_vectors):
+            score = sum(vec.get(qi, 0.0) for qi in query_indices)
+            if score > 0:
+                scores.append((doc_idx, score))
+
+        scores.sort(key=lambda x: x[1], reverse=True)
+        return scores[:top_k]

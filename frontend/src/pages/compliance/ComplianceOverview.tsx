@@ -1,6 +1,15 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
-import { useCoverage, useFrameworks } from "@/hooks/useApi";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Download,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
+import { useCoverage, useFrameworks, useExportOscal } from "@/hooks/useApi";
+import { Button } from "@/components/ui/button";
 import { CardSkeleton } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { CoverageData, Framework } from "@/api/types";
@@ -167,6 +176,8 @@ export default function ComplianceOverview() {
     isError: fwError,
   } = useFrameworks();
   const { data: coverageList, isLoading: covLoading } = useCoverage();
+  const exportMutation = useExportOscal();
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
 
   const isLoading = fwLoading || covLoading;
 
@@ -187,16 +198,110 @@ export default function ComplianceOverview() {
       })
     : [];
 
+  function handleExportOscal() {
+    exportMutation.mutate(
+      { format: "json", system_name: "Warlock GRC" },
+      {
+        onSuccess: (data) => {
+          const blob = new Blob([JSON.stringify(data, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "warlock-oscal-export.json";
+          a.click();
+          URL.revokeObjectURL(url);
+          setExportMsg("OSCAL export downloaded");
+          setTimeout(() => setExportMsg(null), 3000);
+        },
+        onError: () => {
+          setExportMsg("Export failed");
+          setTimeout(() => setExportMsg(null), 3000);
+        },
+      },
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-zinc-100">
-          Compliance Frameworks
-        </h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          Monitor compliance posture across all active frameworks
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-100">
+            Compliance Frameworks
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Monitor compliance posture across all active frameworks
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {exportMsg && (
+            <span className="text-xs text-zinc-400">{exportMsg}</span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportOscal}
+            disabled={exportMutation.isPending}
+          >
+            {exportMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            ) : (
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            Export OSCAL
+          </Button>
+        </div>
       </div>
+
+      {/* Aggregate stats bar */}
+      {!isLoading && !fwError && coverageList && coverageList.length > 0 && (() => {
+        const totals = coverageList.reduce(
+          (acc, c) => ({
+            controls: acc.controls + c.total,
+            compliant: acc.compliant + c.compliant,
+            nonCompliant: acc.nonCompliant + c.non_compliant,
+            partial: acc.partial + c.partial,
+            notAssessed: acc.notAssessed + c.not_assessed,
+          }),
+          { controls: 0, compliant: 0, nonCompliant: 0, partial: 0, notAssessed: 0 },
+        );
+        const overallPct = totals.controls > 0
+          ? Math.round((totals.compliant / totals.controls) * 100)
+          : 0;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Overall Compliance
+              </div>
+              <p className="mt-1 text-lg font-semibold text-zinc-100">{overallPct}%</p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                Compliant
+              </div>
+              <p className="mt-1 text-lg font-semibold text-green-400">{totals.compliant}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+                Non-Compliant
+              </div>
+              <p className="mt-1 text-lg font-semibold text-red-400">{totals.nonCompliant}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <Clock className="h-3.5 w-3.5 text-zinc-500" />
+                Not Assessed
+              </div>
+              <p className="mt-1 text-lg font-semibold text-zinc-400">{totals.notAssessed}</p>
+            </div>
+          </div>
+        );
+      })()}
 
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

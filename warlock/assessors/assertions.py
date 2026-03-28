@@ -5166,6 +5166,133 @@ def mobile_device_management(detail: dict, raw_data: dict) -> tuple[bool, list[s
     return True, []
 
 
+@engine.assertion("business_continuity_plan")
+def business_continuity_plan(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that systems have documented business continuity / recovery plans.
+
+    Verifies that critical systems have associated BCP documents, recovery
+    objectives (RTO/RPO), and plan review dates within the last year.
+    """
+    reasons: list[str] = []
+
+    # Check for BCP document existence
+    bcp_exists = (
+        detail.get("bcp_documented") or detail.get("continuity_plan") or detail.get("recovery_plan")
+    )
+    if bcp_exists is False:
+        resource = detail.get("system_name") or detail.get("name") or "unknown"
+        reasons.append(f"System {resource} has no business continuity plan documented")
+        return False, reasons
+
+    # Check RTO/RPO defined
+    rto = detail.get("rto_hours") or detail.get("recovery_time_objective")
+    rpo = detail.get("rpo_hours") or detail.get("recovery_point_objective")
+    if bcp_exists and (rto is None and rpo is None):
+        resource = detail.get("system_name") or detail.get("name") or "unknown"
+        reasons.append(f"System {resource} BCP has no RTO/RPO defined")
+
+    # Check plan review date (should be within 365 days)
+    review_date = detail.get("plan_review_date") or detail.get("last_review")
+    if review_date:
+        days = _days_since(review_date)
+        if days is not None and days > 365:
+            reasons.append(f"BCP last reviewed {days} days ago (exceeds 365-day policy)")
+
+    # Check plan test date
+    test_date = detail.get("last_test_date") or detail.get("last_exercise")
+    if test_date:
+        days = _days_since(test_date)
+        if days is not None and days > 365:
+            reasons.append(f"BCP last tested {days} days ago (exceeds annual requirement)")
+
+    if reasons:
+        return False, reasons
+
+    # Issues list fallback
+    issues = detail.get("issues", [])
+    if isinstance(issues, list):
+        if "no_bcp" in issues or "bcp_missing" in issues:
+            reasons.append("No business continuity plan on record")
+            return False, reasons
+
+    if bcp_exists:
+        return True, []
+
+    return True, []
+
+
+@engine.assertion("vendor_due_diligence")
+def vendor_due_diligence(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that vendors have undergone due diligence assessment.
+
+    Verifies that third-party vendors have completed security questionnaires,
+    have current assessment dates, and risk ratings within acceptable thresholds.
+    """
+    reasons: list[str] = []
+
+    # Check for assessment completion
+    assessed = (
+        detail.get("due_diligence_completed")
+        or detail.get("assessment_completed")
+        or detail.get("security_review_status")
+    )
+    if assessed is False:
+        vendor = detail.get("vendor_name") or detail.get("name") or "unknown"
+        reasons.append(f"Vendor {vendor} has not completed due diligence assessment")
+        return False, reasons
+
+    # Check assessment recency (should be within 365 days)
+    assessment_date = (
+        detail.get("last_assessment_date")
+        or detail.get("assessment_date")
+        or detail.get("review_date")
+    )
+    if assessment_date:
+        days = _days_since(assessment_date)
+        if days is not None and days > 365:
+            vendor = detail.get("vendor_name") or detail.get("name") or "unknown"
+            reasons.append(
+                f"Vendor {vendor} assessment is {days} days old (exceeds annual requirement)"
+            )
+
+    # Check security questionnaire
+    questionnaire = (
+        detail.get("questionnaire_completed")
+        or detail.get("sig_completed")
+        or detail.get("caiq_completed")
+    )
+    if questionnaire is False:
+        vendor = detail.get("vendor_name") or detail.get("name") or "unknown"
+        reasons.append(f"Vendor {vendor} has not completed security questionnaire")
+
+    # Check risk rating
+    risk_rating = detail.get("risk_rating") or detail.get("risk_tier")
+    if isinstance(risk_rating, str) and risk_rating.lower() in ("critical", "unacceptable"):
+        vendor = detail.get("vendor_name") or detail.get("name") or "unknown"
+        reasons.append(f"Vendor {vendor} has unacceptable risk rating: {risk_rating}")
+
+    # Check SOC 2 or ISO cert
+    has_cert = detail.get("soc2_report") or detail.get("iso_27001_certified")
+    if has_cert is False and not questionnaire:
+        vendor = detail.get("vendor_name") or detail.get("name") or "unknown"
+        reasons.append(f"Vendor {vendor} has no SOC 2 report or ISO 27001 certification")
+
+    if reasons:
+        return False, reasons
+
+    # Issues list fallback
+    issues = detail.get("issues", [])
+    if isinstance(issues, list):
+        if "no_assessment" in issues or "due_diligence_missing" in issues:
+            reasons.append("Vendor due diligence not performed")
+            return False, reasons
+
+    if assessed:
+        return True, []
+
+    return True, []
+
+
 # ============================================================================
 # BINDINGS — New assertions to frameworks
 # ============================================================================
@@ -5292,7 +5419,11 @@ _NIST_NEW_BINDINGS: list[tuple[str, str]] = [
     ("SR-6", "vendor_risk_assessed"),
     ("SR-3", "third_party_sla_monitored"),
     ("SA-9", "vendor_risk_assessed"),
+    ("SA-9", "vendor_due_diligence"),
     ("SA-10", "infrastructure_as_code_validated"),
+    # CP — Contingency Planning (BCP)
+    ("CP-2", "business_continuity_plan"),
+    ("CP-6", "business_continuity_plan"),
     # PT — Privacy (PII controls in NIST)
     ("PT-3", "data_minimization_verified"),
     ("PT-4", "consent_mechanism_active"),
@@ -5856,6 +5987,7 @@ _UCF_NEW_BINDINGS: list[tuple[str, str]] = [
     ("UCF-CFG-3", "configuration_change_tracked"),
     ("UCF-CFG-4", "unauthorized_software_blocked"),
     ("UCF-BCP-1", "disaster_recovery_tested"),
+    ("UCF-BCP-2", "business_continuity_plan"),
     ("UCF-BCP-3", "backup_encryption_enabled"),
     ("UCF-BCP-4", "backup_offsite_stored"),
     ("UCF-BCP-5", "recovery_time_achievable"),
@@ -5878,6 +6010,7 @@ _UCF_NEW_BINDINGS: list[tuple[str, str]] = [
     ("UCF-DEV-4", "container_image_signed"),
     ("UCF-DEV-5", "input_validation_enforced"),
     ("UCF-VEN-1", "vendor_risk_assessed"),
+    ("UCF-VEN-1", "vendor_due_diligence"),
     ("UCF-VEN-2", "third_party_sla_monitored"),
     ("UCF-GOV-1", "risk_assessment_current"),
     ("UCF-GOV-2", "penetration_test_current"),
@@ -6052,5 +6185,33 @@ engine.set_remediation(
             "Redirect users to sanctioned AI platforms with enterprise governance",
         ],
         "console_path": "Zscaler > URL & Cloud App Control",
+    },
+)
+
+engine.set_remediation(
+    "business_continuity_plan",
+    {
+        "summary": "Document business continuity plans with RTO/RPO for critical systems.",
+        "steps": [
+            "Identify all critical systems and classify by business impact",
+            "Define RTO and RPO objectives for each critical system",
+            "Document recovery procedures including failover and data restoration",
+            "Schedule annual BCP review and tabletop exercise",
+        ],
+        "console_path": "GRC > Business Continuity > Plans",
+    },
+)
+
+engine.set_remediation(
+    "vendor_due_diligence",
+    {
+        "summary": "Complete security assessments for all third-party vendors.",
+        "steps": [
+            "Send security questionnaire (SIG or CAIQ) to vendor",
+            "Request and review SOC 2 Type II report or ISO 27001 certificate",
+            "Assign risk tier based on data access and criticality",
+            "Schedule annual reassessment and track remediation items",
+        ],
+        "console_path": "GRC > Vendor Risk > Assessments",
     },
 )

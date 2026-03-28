@@ -820,3 +820,45 @@ def audit_trail_user_activity(actor: str | None, since: str | None, limit: int) 
                 table.add_row(actor_name, str(count), _format_dt(last_seen))
 
             console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# audit-trail anchor — publish / verify external chain anchor
+# ---------------------------------------------------------------------------
+
+
+@audit_trail_grp.command("anchor")
+@click.option("--verify", is_flag=True, help="Verify existing anchor instead of publishing")
+@click.option(
+    "--path", default="", help="File path for anchor (default: warlock_chain_anchor.json)"
+)
+def anchor_cmd(verify: bool, path: str) -> None:
+    """Publish or verify the audit trail hash chain anchor."""
+    from rich.markup import escape as _esc
+
+    from warlock.db.engine import get_read_session
+    from warlock.export.chain_anchor import ChainAnchor
+
+    anchor = ChainAnchor()
+
+    with get_read_session() as session:
+        if verify:
+            result = anchor.verify_anchor(session, target="file", path=path)
+            if result.get("valid"):
+                console.print(
+                    f"[green]Anchor verified[/green] at sequence "
+                    f"{result['sequence']} — hash matches."
+                )
+            else:
+                err = result.get("error", "unknown error")
+                console.print(f"[red]Anchor verification FAILED:[/red] {_esc(str(err))}")
+                raise SystemExit(1)
+        else:
+            try:
+                result = anchor.publish(session, target="file", path=path)
+                console.print(
+                    f"[green]Anchor published[/green] — seq={result['sequence']}, "
+                    f"hash={_esc(result['chain_head'][:16])}..."
+                )
+            except ValueError as exc:
+                _error(str(exc))

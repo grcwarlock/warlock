@@ -11,6 +11,11 @@ test_compliant_system_ops if {
 			"guardduty_enabled": true,
 			"security_hub_enabled": true,
 			"trails": [{"is_multi_region": true, "is_logging": true}],
+			"file_integrity_monitoring_enabled": true,
+			"incident_response": {
+				"plan_documented": true,
+				"root_cause_analysis_required": true,
+			},
 		},
 	}
 	result.compliant == true
@@ -22,6 +27,11 @@ test_noncompliant_no_monitoring if {
 		"provider": "aws",
 		"normalized_data": {
 			"trails": [],
+			"file_integrity_monitoring_enabled": true,
+			"incident_response": {
+				"plan_documented": true,
+				"root_cause_analysis_required": true,
+			},
 		},
 	}
 	result.compliant == false

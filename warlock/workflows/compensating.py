@@ -148,3 +148,116 @@ class CompensatingControlManager:
             query = query.filter(CompensatingControl.status == status)
 
         return query.order_by(CompensatingControl.created_at.desc()).all()
+
+    def evaluate_effectiveness(
+        self,
+        session: Session,
+        cc_id: str,
+    ) -> dict:
+        """Evaluate effectiveness of a compensating control based on evidence.
+
+        STUB-013 fix: replaces the hardcoded ``{"score": 0.8}`` with actual
+        evaluation logic.  Scoring factors:
+
+        1. **Status weight** — approved/active controls score higher than proposed.
+        2. **Evidence count** — more evidence references increase confidence.
+        3. **Expiry proximity** — controls near expiry are penalised.
+        4. **Review recency** — recently reviewed controls score higher.
+
+        The resulting score (0-100) is written back to
+        ``CompensatingControl.effectiveness_score``.
+
+        Args:
+            session: SQLAlchemy session.
+            cc_id: CompensatingControl UUID.
+
+        Returns:
+            Dict with score, status, and breakdown of scoring factors.
+        """
+        cc = session.query(CompensatingControl).filter_by(id=cc_id).first()
+        if not cc:
+            raise ValueError(f"Compensating control not found: {cc_id}")
+
+        now = datetime.now(timezone.utc)
+        breakdown: dict[str, float] = {}
+
+        # Factor 1: Status weight (0-25 points)
+        status_weights = {
+            "active": 25.0,
+            "approved": 20.0,
+            "proposed": 5.0,
+            "expired": 0.0,
+            "revoked": 0.0,
+        }
+        status_score = status_weights.get(cc.status, 0.0)
+        breakdown["status"] = status_score
+
+        # Factor 2: Evidence references (0-25 points)
+        evidence_refs = cc.evidence_references or []
+        evidence_count = len(evidence_refs)
+        # 5 points per reference, capped at 25
+        evidence_score = min(evidence_count * 5.0, 25.0)
+        breakdown["evidence"] = evidence_score
+
+        # Factor 3: Expiry proximity (0-25 points)
+        if cc.expiry_date:
+            expiry = ensure_aware(cc.expiry_date)
+            days_until_expiry = (expiry - now).days
+            if days_until_expiry <= 0:
+                expiry_score = 0.0
+            elif days_until_expiry <= 30:
+                expiry_score = 5.0
+            elif days_until_expiry <= 90:
+                expiry_score = 15.0
+            else:
+                expiry_score = 25.0
+        else:
+            # No expiry set — assume indefinite validity, moderate score
+            expiry_score = 20.0
+        breakdown["expiry_proximity"] = expiry_score
+
+        # Factor 4: Review recency (0-25 points)
+        if cc.last_reviewed:
+            last_reviewed = ensure_aware(cc.last_reviewed)
+            days_since_review = (now - last_reviewed).days
+            if days_since_review <= 30:
+                review_score = 25.0
+            elif days_since_review <= 90:
+                review_score = 20.0
+            elif days_since_review <= 180:
+                review_score = 10.0
+            else:
+                review_score = 5.0
+        else:
+            # Never reviewed
+            review_score = 0.0
+        breakdown["review_recency"] = review_score
+
+        total_score = sum(breakdown.values())
+        total_score = min(max(total_score, 0.0), 100.0)
+
+        # Determine qualitative status
+        if total_score >= 70:
+            effectiveness_status = "effective"
+        elif total_score >= 40:
+            effectiveness_status = "partially_effective"
+        else:
+            effectiveness_status = "ineffective"
+
+        # Persist score back to the model
+        cc.effectiveness_score = total_score
+        session.flush()
+
+        log.info(
+            "Compensating control %s effectiveness: %.1f (%s)",
+            cc_id[:8],
+            total_score,
+            effectiveness_status,
+        )
+
+        return {
+            "cc_id": cc_id,
+            "score": total_score,
+            "status": effectiveness_status,
+            "breakdown": breakdown,
+        }

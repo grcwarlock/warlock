@@ -22,6 +22,7 @@ from warlock.db.models import (
     AuditEngagement,
     ControlResult,
     Finding,
+    Workpaper,
 )
 from warlock.utils import ensure_aware
 
@@ -177,29 +178,28 @@ class AuditManager:
         if not eng:
             raise ValueError(f"Engagement not found: {engagement_id}")
 
-        workpaper_id = str(uuid4())
         now = datetime.now(timezone.utc)
 
-        workpaper = {
-            "id": workpaper_id,
-            "engagement_id": engagement_id,
-            "framework": eng.framework,
-            "control_id": control_id,
-            "template_type": template_type,
-            "status": "draft",
-            "reviewer": reviewer,
-            "notes": "",
-            "created_at": now.isoformat(),
-            "updated_at": now.isoformat(),
-            "review_history": [],
-        }
+        # STUB-009 fix: persist workpaper to database instead of in-memory dict
+        wp = Workpaper(
+            engagement_id=engagement_id,
+            framework=eng.framework,
+            control_id=control_id,
+            template_type=template_type,
+            status="draft",
+            reviewer=reviewer,
+            notes="",
+            review_history=[],
+        )
+        session.add(wp)
+        session.flush()
 
         # Record in audit trail
         audit = AuditTrail(session)
         audit.record(
             action="workpaper_created",
             entity_type="workpaper",
-            entity_id=workpaper_id,
+            entity_id=wp.id,
             actor=actor,
             metadata={
                 "engagement_id": engagement_id,
@@ -211,11 +211,23 @@ class AuditManager:
 
         log.info(
             "Workpaper %s created for control %s in engagement %s",
-            workpaper_id[:8],
+            wp.id[:8],
             control_id,
             engagement_id[:8],
         )
-        return workpaper
+        return {
+            "id": wp.id,
+            "engagement_id": engagement_id,
+            "framework": eng.framework,
+            "control_id": control_id,
+            "template_type": template_type,
+            "status": "draft",
+            "reviewer": reviewer,
+            "notes": "",
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+            "review_history": [],
+        }
 
     def review_workpaper(
         self,

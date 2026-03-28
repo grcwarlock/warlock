@@ -124,41 +124,52 @@ def _register_default_subscribers(bus: "EventBus") -> None:
             len([u for u in webhook_urls.split(",") if u.strip()]),
         )
 
-    # Slack
+    # Slack — non_compliant findings + alerts + all assessed controls
     slack_url = os.environ.get("WLK_SLACK_WEBHOOK_URL", "").strip()
     if slack_url:
         from warlock.integrations.slack import SlackNotifier
 
         subscriber = SlackNotifier()
-        for event_type in ("finding.normalized", "control.assessed"):
+        for event_type in (
+            "finding.normalized",
+            "control.assessed",
+            "alert.triggered",
+        ):
             bus.subscribe(event_type, subscriber)
         log.info("SlackNotifier registered")
 
-    # PagerDuty
+    # PagerDuty — non_compliant controls + alerts
     pd_key = os.environ.get("WLK_PAGERDUTY_ROUTING_KEY", "").strip()
     if pd_key:
         from warlock.integrations.pagerduty import PagerDutyNotifier
 
         subscriber = PagerDutyNotifier()
-        bus.subscribe("control.assessed", subscriber)
+        for event_type in ("control.assessed", "alert.triggered"):
+            bus.subscribe(event_type, subscriber)
         log.info("PagerDutyNotifier registered")
 
-    # Jira
+    # Jira — new issues + assessed controls
     jira_url = os.environ.get("WLK_JIRA_BASE_URL", "").strip()
     if jira_url:
         from warlock.integrations.jira_integration import JiraNotifier
 
         subscriber = JiraNotifier()
-        bus.subscribe("control.assessed", subscriber)
+        for event_type in ("control.assessed", "issue.created"):
+            bus.subscribe(event_type, subscriber)
         log.info("JiraNotifier registered")
 
-    # ServiceNow
+    # ServiceNow — alerts + issues + assessed controls
     snow_instance = os.environ.get("WLK_SERVICENOW_INSTANCE", "").strip()
     if snow_instance:
         from warlock.integrations.servicenow_integration import ServiceNowNotifier
 
         subscriber = ServiceNowNotifier()
-        bus.subscribe("control.assessed", subscriber)
+        for event_type in (
+            "control.assessed",
+            "alert.triggered",
+            "issue.created",
+        ):
+            bus.subscribe(event_type, subscriber)
         log.info("ServiceNowNotifier registered")
 
     # Email notifications

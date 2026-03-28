@@ -106,4 +106,46 @@ class EvidenceDomainService:
         ]
 
     def handle_event(self, event: DomainEvent) -> list[DomainEvent]:
-        return []
+        """On new finding, emit an evidence-request event for stale controls."""
+        if event.event_type != "finding.created":
+            return []
+
+        control_id = event.payload.get("control_id", "")
+        framework = event.payload.get("framework", "")
+        if not control_id:
+            return []
+
+        # Check if the linked control has stale evidence
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self._stale_days)
+        latest = (
+            self._session.query(func.max(ControlResult.assessed_at))
+            .filter(
+                ControlResult.control_id == control_id,
+                ControlResult.framework == framework,
+            )
+            .scalar()
+        )
+        if latest is not None:
+            latest = ensure_aware(latest)
+            if latest >= cutoff:
+                return []  # Evidence is fresh — no action needed
+
+        log.info(
+            "Evidence request triggered for %s/%s (stale or missing)",
+            framework,
+            control_id,
+        )
+        return [
+            DomainEvent(
+                event_type="evidence.request_created",
+                domain="evidence",
+                entity_type="control",
+                entity_id=control_id,
+                actor="system",
+                payload={
+                    "framework": framework,
+                    "reason": "stale_evidence",
+                    "finding_id": event.entity_id,
+                },
+            )
+        ]

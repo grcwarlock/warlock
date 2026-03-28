@@ -13,8 +13,11 @@ from warlock.api.auth import (
     create_access_token,
     create_user,
     generate_api_key,
+    hash_password,
     login_with_tokens,
     rotate_refresh_token,
+    validate_password,
+    verify_password,
     verify_mfa_login,
     PERMISSIONS,
 )
@@ -309,14 +312,56 @@ def get_current_user(
     )
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/auth/change-password", response_model=MessageResponse)
+def change_password(
+    body: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Change the current user's password and invalidate all existing sessions.
+
+    GAP-095: Sets token_valid_after to now so all previously issued JWTs
+    are rejected.  The caller must re-authenticate to obtain a new token.
+    """
+    # Verify current password
+    if not verify_password(body.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect",
+        )
+
+    # Validate new password complexity
+    issues = validate_password(body.new_password)
+    if issues:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Password validation failed: {'; '.join(issues)}",
+        )
+
+    # Update password
+    current_user.hashed_password = hash_password(body.new_password)
+
+    # GAP-095: Invalidate all existing tokens / sessions
+    current_user.token_valid_after = datetime.now(timezone.utc)
+
+    # Clear refresh token so old refresh tokens cannot be replayed
+    current_user.refresh_token_hash = None
+
+    db.flush()
+    return MessageResponse(message="Password changed. All existing sessions have been invalidated.")
+
+
 @router.post("/auth/logout")
 def logout(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("read")),
 ):
     """Revoke all tokens for the current user."""
-    from datetime import datetime, timezone
-
     current_user.token_valid_after = datetime.now(timezone.utc)
     db.flush()
     return {"message": "All tokens revoked"}

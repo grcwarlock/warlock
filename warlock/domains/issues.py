@@ -122,4 +122,63 @@ class IssuesDomainService:
         return items
 
     def handle_event(self, event: DomainEvent) -> list[DomainEvent]:
-        return []
+        """On critical finding, auto-create an issue."""
+        if event.event_type != "finding.created":
+            return []
+
+        severity = event.payload.get("severity", "")
+        if severity not in ("critical", "high"):
+            return []
+
+        control_id = event.payload.get("control_id", "")
+        framework = event.payload.get("framework", "")
+        title = event.payload.get("title", "Untitled finding")
+
+        # Check if an open issue already exists for this control
+        existing = (
+            self._session.query(Issue)
+            .filter(
+                Issue.control_id == control_id,
+                Issue.framework == framework,
+                Issue.status.in_(["open", "assigned", "in_progress"]),
+            )
+            .first()
+        )
+        if existing:
+            return []  # Already tracked
+
+        issue = Issue(
+            title=f"Auto: {title[:80]}",
+            description=(
+                f"Automatically created from {severity} finding "
+                f"{event.entity_id} on {framework}/{control_id}."
+            ),
+            finding_id=event.entity_id,
+            framework=framework,
+            control_id=control_id,
+            status="open",
+            priority=severity,
+        )
+        self._session.add(issue)
+
+        log.info(
+            "Auto-created issue for %s finding on %s/%s",
+            severity,
+            framework,
+            control_id,
+        )
+        return [
+            DomainEvent(
+                event_type="issue.created",
+                domain="issues",
+                entity_type="issue",
+                entity_id=issue.id,
+                actor="system",
+                payload={
+                    "framework": framework,
+                    "control_id": control_id,
+                    "severity": severity,
+                    "auto_created": True,
+                },
+            )
+        ]

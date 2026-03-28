@@ -380,6 +380,9 @@ class Settings(BaseSettings):
     ccm_stale_threshold_hours: int = 24
     ccm_reassess_on_finding: bool = True
 
+    # Observability — Sentry
+    sentry_dsn: str = ""  # Sentry DSN for error tracking (optional)
+
     # Logging
     log_level: str = "INFO"
     log_format: str = "text"  # "text" or "json" for structured logging
@@ -416,7 +419,7 @@ class Settings(BaseSettings):
     escalation_check_interval_minutes: int = 60  # how often to scan for overdue items
 
     # --- Data Lake ---
-    lake_enabled: bool = False
+    lake_enabled: bool = True
     lake_path: str = "lake"  # Local filesystem path or object store prefix
     lake_catalog_type: str = "sqlite"  # "sqlite" (dev) or "rest" (cloud)
     lake_catalog_url: str = ""  # REST catalog URL (cloud only)
@@ -461,20 +464,46 @@ def validate_production_config(settings: Settings) -> None:
 
     Call this from your ASGI lifespan or CLI startup hook *before*
     the application begins serving traffic.
+
+    GAP-094: Expanded to cover jwt_secret length, GDPR secret, CORS wildcard,
+    and encryption key.
     """
     if settings.env != "production":
         return
 
     errors: list[str] = []
 
+    # JWT secret: must exist and be 32+ chars
     if not settings.jwt_secret:
         errors.append("WLK_JWT_SECRET must be set in production (min 32 chars)")
+    elif len(settings.jwt_secret) < 32:
+        errors.append(
+            f"WLK_JWT_SECRET is only {len(settings.jwt_secret)} chars — "
+            "minimum 32 characters required in production"
+        )
+
+    # GDPR HMAC secret: required when GDPR features may be invoked
+    if not settings.gdpr_hmac_secret:
+        errors.append(
+            "WLK_GDPR_HMAC_SECRET must be set in production for GDPR erasure/export (min 32 chars)"
+        )
+    elif len(settings.gdpr_hmac_secret) < 32:
+        errors.append(
+            f"WLK_GDPR_HMAC_SECRET is only {len(settings.gdpr_hmac_secret)} chars — "
+            "minimum 32 characters required"
+        )
+
+    # CORS: never allow wildcard in production
+    if "*" in settings.cors_origins:
+        errors.append(
+            "WLK_CORS_ORIGINS contains '*' wildcard — this is unsafe in production. "
+            "Specify exact allowed origins."
+        )
 
     # Encryption key is required when field-level crypto features are active.
     # An empty key with encryption_key="" means Fernet encrypt/decrypt will
     # crash at runtime — catch it at startup instead.
-    crypto_features_enabled = settings.encryption_key != ""
-    if not crypto_features_enabled:
+    if not settings.encryption_key:
         errors.append("WLK_ENCRYPTION_KEY must be set in production for field-level encryption")
 
     if errors:

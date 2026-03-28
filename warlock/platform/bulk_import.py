@@ -11,7 +11,10 @@ import csv
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
 
@@ -341,6 +344,58 @@ class BulkImporter:
             normalized["tier"] = str(normalized["tier"]).lower()
 
         return normalized
+
+    # ------------------------------------------------------------------
+    # Persistence (STUB-008 fix: actually write to DB)
+    # ------------------------------------------------------------------
+
+    def persist_batch(
+        self,
+        session: "Session",
+        records: list[dict[str, Any]],
+        entity_type: str,
+    ) -> dict[str, Any]:
+        """Persist a validated batch of records to the database.
+
+        Maps entity_type to the correct SQLAlchemy model and calls
+        session.add() for each record.
+
+        Args:
+            session: SQLAlchemy session (caller manages commit).
+            records: Validated and normalised record dicts.
+            entity_type: One of finding, vendor, personnel, control.
+
+        Returns:
+            Dict with status, count of records persisted.
+        """
+        from warlock.db.models import Personnel, Vendor
+
+        model_map: dict[str, type] = {
+            "vendor": Vendor,
+            "personnel": Personnel,
+        }
+
+        model_cls = model_map.get(entity_type)
+        if model_cls is None:
+            log.warning(
+                "persist_batch: entity_type '%s' does not have a direct model mapping; "
+                "returning records for caller to handle",
+                entity_type,
+            )
+            return {"status": "unsupported_entity", "count": len(records)}
+
+        persisted = 0
+        for record in records:
+            # Filter to only columns that exist on the model
+            valid_cols = {c.key for c in model_cls.__table__.columns}
+            filtered = {k: v for k, v in record.items() if k in valid_cols}
+            obj = model_cls(**filtered)
+            session.add(obj)
+            persisted += 1
+
+        session.flush()
+        log.info("Batch persisted: %d %s record(s)", persisted, entity_type)
+        return {"status": "success", "count": persisted}
 
     # ------------------------------------------------------------------
     # Safety

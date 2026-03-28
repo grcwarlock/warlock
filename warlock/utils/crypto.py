@@ -209,6 +209,53 @@ def mask_sensitive(
     return result
 
 
+# ---------------------------------------------------------------------------
+# GAP-079: Standalone encrypt/decrypt convenience functions
+# ---------------------------------------------------------------------------
+#
+# Fields that SHOULD be encrypted at rest when stored in the database:
+#   - jwt_secret (Settings / env)
+#   - api key raw values (never stored, but if cached)
+#   - user.mfa_secret (TOTP shared secret)
+#   - PII fields subject to GDPR (email, name when flagged)
+#   - Any connector credential (client_secret, api_token)
+#
+# Usage:
+#   from warlock.utils.crypto import encrypt_field, decrypt_field
+#   encrypted = encrypt_field("sensitive-value")
+#   plaintext = decrypt_field(encrypted)
+
+
+def encrypt_field(value: str, key: str | None = None) -> str:
+    """Encrypt a field value for storage at rest.
+
+    Uses FieldEncryptor (Fernet when available, stdlib fallback in dev).
+    Returns an ``enc:...`` prefixed string.
+
+    Args:
+        value: Plaintext string to encrypt.
+        key: Encryption key. Defaults to WLK_ENCRYPTION_KEY from settings.
+    """
+    enc = FieldEncryptor(key=key)
+    return enc.encrypt(value)
+
+
+def decrypt_field(encrypted: str, key: str | None = None) -> str:
+    """Decrypt a field value previously encrypted with ``encrypt_field``.
+
+    Args:
+        encrypted: The ``enc:...`` prefixed ciphertext.
+        key: Encryption key. Defaults to WLK_ENCRYPTION_KEY from settings.
+    """
+    enc = FieldEncryptor(key=key)
+    return enc.decrypt(encrypted)
+
+
+def is_encrypted(value: str) -> bool:
+    """Return True if the value has the ``enc:`` prefix indicating encryption."""
+    return isinstance(value, str) and value.startswith("enc:")
+
+
 def detect_sensitive_fields(data: dict) -> list[str]:
     """Heuristic detection of fields containing sensitive data.
 

@@ -1410,3 +1410,62 @@ def list_risk_acceptances(
         }
         for r in rows
     ]
+
+
+# ---------------------------------------------------------------------------
+# STUB-012: SoD Analysis API endpoint
+# ---------------------------------------------------------------------------
+
+# SoD conflict rule definitions (mirrors CLI sod_cmd.py)
+_SOD_RULES: list[tuple[str, str, str]] = [
+    ("admin", "auditor", "Admins should not perform self-audits"),
+    ("admin", "owner", "Admin and system owner create unilateral control"),
+    ("owner", "auditor", "System owners auditing their own systems lack independence"),
+    ("admin", "viewer", "Admin-viewer duality is low risk but non-standard"),
+]
+
+_ROLE_PERMISSIONS: dict[str, list[str]] = {
+    "admin": ["manage_users", "configure_systems", "delete_data", "approve_changes"],
+    "auditor": ["read_all", "export_results", "create_findings", "sign_reports"],
+    "owner": ["update_controls", "accept_risks", "manage_poams", "approve_exceptions"],
+    "viewer": ["read_results", "read_findings"],
+}
+
+
+@router.get("/sod-analysis")
+def sod_analysis_endpoint(
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_permission("read")),
+) -> dict:
+    """Segregation of Duties analysis across all active users."""
+    users = db.query(User).filter(User.is_active.is_(True)).all()
+
+    conflicts: list[dict] = []
+    for user in users:
+        user_roles: list[str] = [user.role]
+        perms = set(user.allowed_actions or [])
+        for role, role_perms in _ROLE_PERMISSIONS.items():
+            if role != user.role and perms.issuperset(role_perms):
+                user_roles.append(role)
+
+        for rule_a, rule_b, desc in _SOD_RULES:
+            roles_normalized = [r.split("(")[0] for r in user_roles]
+            if rule_a in roles_normalized and rule_b in roles_normalized:
+                conflicts.append(
+                    {
+                        "email": user.email,
+                        "name": user.name,
+                        "role": user.role,
+                        "conflict": f"{rule_a} + {rule_b}",
+                        "description": desc,
+                    }
+                )
+
+    return {
+        "summary": {
+            "total_users": len(users),
+            "users_with_conflicts": len({c["email"] for c in conflicts}),
+            "total_conflicts": len(conflicts),
+        },
+        "conflicts": conflicts,
+    }

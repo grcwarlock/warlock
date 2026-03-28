@@ -65,8 +65,14 @@ function AIConfigTab() {
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
-  const [confidenceFloor, setConfidenceFloor] = useState(0.7);
-  const [temperature, setTemperature] = useState(0.0);
+  const [confidenceFloor, setConfidenceFloor] = useState(() => {
+    const stored = localStorage.getItem("wlk_ai_confidence_floor");
+    return stored ? parseFloat(stored) : 0.7;
+  });
+  const [temperature, setTemperature] = useState(() => {
+    const stored = localStorage.getItem("wlk_ai_temperature");
+    return stored ? parseFloat(stored) : 0.0;
+  });
   const [showKey, setShowKey] = useState(false);
   const [testResult, setTestResult] = useState<{
     success: boolean;
@@ -74,11 +80,19 @@ function AIConfigTab() {
   } | null>(null);
 
   function handleSave() {
+    // Persist slider values to localStorage as fallback
+    // TODO: Wire to PATCH /api/v1/settings when backend endpoint exists
+    localStorage.setItem("wlk_ai_confidence_floor", String(confidenceFloor));
+    localStorage.setItem("wlk_ai_temperature", String(temperature));
+
     configureMutation.mutate(
       {
         provider,
         api_key: apiKey,
+        ...(model ? { model } : {}),
         ...(baseUrl ? { base_url: baseUrl } : {}),
+        confidence_floor: confidenceFloor,
+        temperature,
       },
       {
         onSuccess: (res) => {

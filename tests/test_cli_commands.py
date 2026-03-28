@@ -310,3 +310,74 @@ class TestStandaloneCommands:
     def test_policy_list(self, runner):
         result = runner.invoke(cli, ["policy", "list"])
         assert result.exit_code == 0
+
+
+# ---------------------------------------------------------------------------
+# GAP-072: Output content verification tests
+# ---------------------------------------------------------------------------
+
+
+class TestOutputContent:
+    """Verify CLI commands produce meaningful output, not just exit 0."""
+
+    def test_coverage_contains_framework_names(self, runner):
+        """Coverage command should mention at least one framework."""
+        result = runner.invoke(cli, ["coverage"])
+        assert result.exit_code == 0
+        # Seeded data includes nist_800_53 mappings
+        output = result.output.lower()
+        assert any(fw in output for fw in ["nist", "soc", "iso", "framework", "coverage"]), (
+            f"Expected framework reference in coverage output, got: {result.output[:200]}"
+        )
+
+    def test_findings_shows_data(self, runner):
+        """Findings group default view should show finding data from seed."""
+        result = runner.invoke(cli, ["findings"])
+        assert result.exit_code == 0
+        output = result.output.lower()
+        # The seeded DB has at least one finding; output should contain
+        # finding-related content (severity, source, count, etc.)
+        assert any(
+            term in output for term in ["finding", "high", "aws", "total", "severity", "source"]
+        ), f"Expected finding data in output, got: {result.output[:200]}"
+
+    def test_connectors_shows_data(self, runner):
+        """Connectors group should show connector info."""
+        result = runner.invoke(cli, ["connectors"])
+        assert result.exit_code == 0
+        output = result.output.lower()
+        assert any(term in output for term in ["connector", "aws", "success", "total", "source"]), (
+            f"Expected connector data in output, got: {result.output[:200]}"
+        )
+
+    def test_results_shows_data(self, runner):
+        """Results command should show control result data."""
+        result = runner.invoke(cli, ["results", "--limit", "5"])
+        assert result.exit_code == 0
+        output = result.output.lower()
+        assert any(
+            term in output for term in ["compliant", "nist", "ac-2", "result", "control", "status"]
+        ), f"Expected result data in output, got: {result.output[:200]}"
+
+    def test_sod_shows_analysis(self, runner):
+        """SoD default view should run analysis output."""
+        result = runner.invoke(cli, ["sod"])
+        assert result.exit_code == 0
+        output = result.output.lower()
+        assert any(term in output for term in ["sod", "conflict", "no sod", "user"]), (
+            f"Expected SoD analysis in output, got: {result.output[:200]}"
+        )
+
+    def test_sod_analysis_shows_summary(self, runner):
+        """sod-analysis top-level command should show summary."""
+        result = runner.invoke(cli, ["sod-analysis"])
+        assert result.exit_code == 0
+        output = result.output.lower()
+        assert any(term in output for term in ["sod", "analysis", "conflict", "user", "scanned"]), (
+            f"Expected SoD analysis summary, got: {result.output[:200]}"
+        )
+
+    def test_soa_command_runs(self, runner):
+        """SoA command should produce output."""
+        result = runner.invoke(cli, ["soa"])
+        assert result.exit_code == 0

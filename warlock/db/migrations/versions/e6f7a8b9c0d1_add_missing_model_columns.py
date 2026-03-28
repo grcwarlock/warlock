@@ -29,7 +29,9 @@ def upgrade() -> None:
         batch_op.add_column(
             sa.Column("escalation_level", sa.Integer(), nullable=True, server_default="0")
         )
-        batch_op.add_column(sa.Column("escalation_sent_at", sa.DateTime(), nullable=True))
+        batch_op.add_column(
+            sa.Column("escalation_sent_at", sa.DateTime(timezone=True), nullable=True)
+        )
         batch_op.add_column(sa.Column("resource_allocation", sa.Text(), nullable=True))
 
     with op.batch_alter_table("risk_analyses") as batch_op:
@@ -42,7 +44,9 @@ def upgrade() -> None:
             sa.Column("max_concurrent_sessions", sa.Integer(), nullable=True, server_default="5")
         )
         batch_op.add_column(sa.Column("parent_role", sa.String(50), nullable=True))
-        batch_op.add_column(sa.Column("session_expires_at", sa.DateTime(), nullable=True))
+        batch_op.add_column(
+            sa.Column("session_expires_at", sa.DateTime(timezone=True), nullable=True)
+        )
         batch_op.add_column(sa.Column("sso_provider", sa.String(50), nullable=True))
         batch_op.add_column(sa.Column("sso_subject_id", sa.String(255), nullable=True))
 

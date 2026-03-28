@@ -150,6 +150,7 @@ export function useDashboardSummary(
   return useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: getDashboardSummary,
+    refetchInterval: 30_000, // GAP-091: live dashboard polling every 30s
     ...options,
   });
 }
@@ -158,6 +159,7 @@ export function useCoverage(framework?: string) {
   return useQuery({
     queryKey: queryKeys.coverage(framework),
     queryFn: () => getCoverage(framework),
+    refetchInterval: 30_000, // GAP-091: live dashboard polling every 30s
   });
 }
 

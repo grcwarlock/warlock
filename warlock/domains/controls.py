@@ -116,4 +116,38 @@ class ControlsDomainService:
         return items
 
     def handle_event(self, event: DomainEvent) -> list[DomainEvent]:
-        return []
+        """On assessment completion, emit control status change events."""
+        if event.event_type != "assessment.completed":
+            return []
+
+        control_id = event.payload.get("control_id", "")
+        framework = event.payload.get("framework", "")
+        new_status = event.payload.get("status", "")
+        if not control_id or not new_status:
+            return []
+
+        events: list[DomainEvent] = []
+
+        # Emit status-change event so other domains can react
+        if new_status == "non_compliant":
+            log.info(
+                "Control %s/%s assessed as non_compliant — emitting drift event",
+                framework,
+                control_id,
+            )
+            events.append(
+                DomainEvent(
+                    event_type="control.status_changed",
+                    domain="controls",
+                    entity_type="control",
+                    entity_id=control_id,
+                    actor="system",
+                    payload={
+                        "framework": framework,
+                        "status": new_status,
+                        "previous_status": event.payload.get("previous_status", ""),
+                    },
+                )
+            )
+
+        return events

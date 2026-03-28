@@ -1006,3 +1006,31 @@ def create_bus_from_settings() -> EventBus | RedisStreamBus | KafkaBus | SQSBus 
         batch_size=settings.queue_batch_size,
     )
     return create_bus(config)
+
+
+def create_queue_backend(
+    backend_type: str = "",
+) -> EventBus | RedisStreamBus | KafkaBus | SQSBus | NATSBus:
+    """Convenience factory: select a queue backend by name.
+
+    When *backend_type* is empty, reads ``WLK_QUEUE_BACKEND`` from config.
+    Falls back to the in-memory EventBus if the requested backend's
+    dependency is not installed.
+    """
+    from warlock.config import get_settings
+
+    settings = get_settings()
+    effective = (backend_type or settings.queue_backend).lower()
+
+    if effective == "memory":
+        return EventBus()
+
+    config = QueueConfig(
+        backend=effective,
+        url=settings.queue_url,
+        stream_prefix=settings.queue_prefix,
+        consumer_group=settings.queue_consumer_group,
+        max_retries=settings.queue_max_retries,
+        batch_size=settings.queue_batch_size,
+    )
+    return create_bus(config)

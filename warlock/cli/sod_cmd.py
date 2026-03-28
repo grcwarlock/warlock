@@ -211,3 +211,98 @@ def sod_matrix() -> None:
     console.print("\n[bold]Incompatible Role Pairs:[/bold]")
     for rule_a, rule_b, desc in _SOD_RULES:
         console.print(f"  [red]{rule_a}[/red] + [red]{rule_b}[/red] — {desc}")
+
+
+# ---------------------------------------------------------------------------
+# STUB-012: Top-level sod-analysis command (wires SoD engine)
+# ---------------------------------------------------------------------------
+
+
+@cli.command("sod-analysis")
+@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+def sod_analysis(fmt: str) -> None:
+    """Run full Segregation of Duties analysis across all users.
+
+    STUB-012: Wires the SoD analysis engine to a top-level command.
+    Detects role conflicts and summarises violations.
+    """
+    import json as _json
+
+    from rich.markup import escape
+
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.db.models import User
+
+    init_db()
+
+    with get_read_session() as session:
+        users = session.query(User).filter(User.is_active.is_(True)).all()
+
+    if not users:
+        console.print("[dim]No active users found.[/dim]")
+        return
+
+    conflicts: list[dict] = []
+    for user in users:
+        user_roles: list[str] = [user.role]
+        perms = set(user.allowed_actions or [])
+        for role, role_perms in _ROLE_PERMISSIONS.items():
+            if role != user.role and perms.issuperset(role_perms):
+                user_roles.append(role)
+
+        for rule_a, rule_b, desc in _SOD_RULES:
+            roles_normalized = [r.split("(")[0] for r in user_roles]
+            if rule_a in roles_normalized and rule_b in roles_normalized:
+                conflicts.append(
+                    {
+                        "email": user.email,
+                        "name": user.name,
+                        "role": user.role,
+                        "conflict": f"{rule_a} + {rule_b}",
+                        "description": desc,
+                        "severity": "high" if "admin" in (rule_a, rule_b) else "medium",
+                    }
+                )
+
+    summary = {
+        "total_users": len(users),
+        "users_with_conflicts": len({c["email"] for c in conflicts}),
+        "total_conflicts": len(conflicts),
+        "rules_checked": len(_SOD_RULES),
+    }
+
+    if fmt == "json":
+        console.print_json(_json.dumps({"summary": summary, "conflicts": conflicts}, default=str))
+        return
+
+    # Summary panel
+    console.print("\n[bold]SoD Analysis Summary[/bold]")
+    console.print(f"  Users scanned:       {summary['total_users']}")
+    console.print(f"  Rules checked:       {summary['rules_checked']}")
+    console.print(f"  Users with conflicts: {summary['users_with_conflicts']}")
+    console.print(f"  Total conflicts:     {summary['total_conflicts']}\n")
+
+    if not conflicts:
+        console.print("[green]No SoD conflicts detected.[/green]")
+        return
+
+    table = Table(title=f"SoD Conflicts ({len(conflicts)} found)")
+    table.add_column("Email", style="cyan", max_width=30)
+    table.add_column("Name", max_width=20)
+    table.add_column("Role")
+    table.add_column("Conflict")
+    table.add_column("Severity")
+    table.add_column("Description", max_width=40)
+
+    for c in conflicts:
+        sev_style = "[red]high[/red]" if c["severity"] == "high" else "[yellow]medium[/yellow]"
+        table.add_row(
+            escape(c["email"][:30]),
+            escape(c["name"][:20]),
+            c["role"],
+            f"[red]{c['conflict']}[/red]",
+            sev_style,
+            c["description"],
+        )
+
+    console.print(table)

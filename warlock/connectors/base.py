@@ -11,7 +11,6 @@ import functools
 import hashlib
 import json
 import logging
-import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -161,6 +160,15 @@ class BaseConnector(ABC):
     def __init__(self, config: ConnectorConfig) -> None:
         self.config = config
 
+        # Circuit breaker — wraps collect_safe() to prevent cascading failures.
+        from warlock.connectors.circuit_breaker import CircuitBreaker
+
+        self._circuit_breaker = CircuitBreaker(
+            name=config.name,
+            failure_threshold=5,
+            recovery_timeout=60.0,
+        )
+
     @property
     def name(self) -> str:
         return self.config.name
@@ -192,9 +200,37 @@ class BaseConnector(ABC):
         """Can we reach the source?"""
         ...
 
+    def collect_safe(self) -> ConnectorResult:
+        """Execute ``collect()`` through the circuit breaker.
+
+        When the circuit is open, returns an error result immediately
+        instead of calling the remote source.
+        """
+        from warlock.connectors.circuit_breaker import CircuitOpenError
+
+        try:
+            return self._circuit_breaker.call(self.collect)
+        except CircuitOpenError:
+            log.warning(
+                "Circuit breaker open for connector %s — skipping collection",
+                self.name,
+            )
+            result = ConnectorResult(
+                connector_name=self.name,
+                source=self.source,
+                source_type=self.source_type,
+                provider=self.provider,
+            )
+            result.errors.append(f"Circuit breaker open for {self.name} — skipped")
+            result.complete("error")
+            return result
+
     def get_secret(self, env_var: str) -> str:
-        """Retrieve a secret from the environment. Never log the value."""
-        value = os.environ.get(env_var, "")
+        """Retrieve a secret via the configured secrets backend. Never log the value."""
+        from warlock.connectors.secrets_backend import get_secrets_backend
+
+        backend = get_secrets_backend()
+        value = backend.get_secret(env_var)
         if not value:
             log.warning("Secret env var %s is not set for connector %s", env_var, self.name)
         return value

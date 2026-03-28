@@ -31,10 +31,46 @@ findings := array.concat(
 	[f | some f in deny_no_audit_trail],
 )
 
+# CC7.3: Change detection mechanisms
+deny_no_fim contains msg if {
+	not input.normalized_data.file_integrity_monitoring_enabled
+	msg := "CC7.3: No file integrity monitoring — unauthorized changes to critical files not detected"
+}
+
+# CC7.4: Incident response procedures
+deny_no_incident_response contains msg if {
+	not input.normalized_data.incident_response.plan_documented
+	msg := "CC7.4: No incident response plan documented"
+}
+
+# CC7.5: Root cause analysis and remediation
+deny_no_root_cause_process contains msg if {
+	not input.normalized_data.incident_response.root_cause_analysis_required
+	msg := "CC7.5: No root cause analysis requirement — incidents may recur without remediation"
+}
+
+all_findings := array.concat(
+	findings,
+	array.concat(
+		[f | some f in deny_no_fim],
+		array.concat(
+			[f | some f in deny_no_incident_response],
+			[f | some f in deny_no_root_cause_process],
+		),
+	),
+)
+
 result := {
 	"control_id": "CC7",
 	"framework": "SOC 2",
 	"compliant": compliant,
-	"findings": findings,
+	"sub_controls": {
+		"CC7.1": count(deny_no_monitoring) == 0,
+		"CC7.2": count(deny_no_audit_trail) == 0,
+		"CC7.3": count(deny_no_fim) == 0,
+		"CC7.4": count(deny_no_incident_response) == 0,
+		"CC7.5": count(deny_no_root_cause_process) == 0,
+	},
+	"findings": all_findings,
 	"severity": "high",
 }

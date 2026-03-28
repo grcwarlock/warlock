@@ -47,7 +47,7 @@ def health_live():
 
 @router.get("/health/ready")
 def health_ready(db: Session = Depends(get_db)):
-    """Readiness probe — checks DB connectivity and scheduler state."""
+    """Readiness probe — checks DB, OPA, and scheduler connectivity."""
     import logging
 
     from fastapi.responses import JSONResponse
@@ -57,17 +57,45 @@ def health_ready(db: Session = Depends(get_db)):
     checks: dict[str, str] = {}
     all_ok = True
 
-    # DB check
+    # DB check — execute a trivial query to verify connectivity
     try:
         from sqlalchemy import text
 
         db.execute(text("SELECT 1"))
-        checks["database"] = "ok"
+        checks["db"] = "ok"
     except Exception as e:
         # S-8: Don't leak internal error details in health probe response
         log.error("Readiness probe database check failed: %s", e)
-        checks["database"] = "failed"
+        checks["db"] = "failed"
         all_ok = False
+
+    # OPA check — HTTP GET to OPA health endpoint (when configured)
+    from warlock.config import get_settings
+
+    settings = get_settings()
+    if settings.opa_url:
+        try:
+            import urllib.request
+
+            # Derive OPA health URL from the decision endpoint
+            # e.g. http://localhost:8181/v1/data/... -> http://localhost:8181/health
+            from urllib.parse import urlparse
+
+            parsed = urlparse(settings.opa_url)
+            opa_health_url = f"{parsed.scheme}://{parsed.netloc}/health"
+            req = urllib.request.Request(opa_health_url, method="GET")
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                if resp.status == 200:
+                    checks["opa"] = "ok"
+                else:
+                    checks["opa"] = "degraded"
+                    all_ok = False
+        except Exception as e:
+            log.error("Readiness probe OPA check failed: %s", e)
+            checks["opa"] = "failed"
+            all_ok = False
+    else:
+        checks["opa"] = "not_configured"
 
     # Scheduler check
     try:

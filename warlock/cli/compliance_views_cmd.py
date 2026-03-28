@@ -308,7 +308,8 @@ def peer_benchmark(industry: str, fmt: str) -> None:
     delta = round(org_score - bench, 1)
     delta_style = "green" if delta >= 0 else "red"
 
-    table = Table(title="Peer Benchmark Comparison")
+    # STUB-026: Clearly label benchmarks as simulated
+    table = Table(title="Peer Benchmark Comparison (SIMULATED)")
     table.add_column("Metric", style="bold")
     table.add_column("Value", justify="right")
 
@@ -321,10 +322,17 @@ def peer_benchmark(industry: str, fmt: str) -> None:
     table.add_row("Compliant Controls", str(compliant))
 
     table.add_section()
-    table.add_row("[dim]All Benchmarks[/dim]", "")
+    table.add_row("[dim]All Benchmarks (simulated)[/dim]", "")
     for ind, avg in sorted(_INDUSTRY_BENCHMARKS.items()):
         marker = " <-- you" if ind == industry else ""
         table.add_row(f"  {escape(ind)}", f"{avg}%{marker}")
+
+    table.add_section()
+    table.add_row(
+        "[dim italic]Note[/dim italic]",
+        "[dim italic]Benchmarks are simulated from static industry averages, "
+        "not sourced from real peer data.[/dim italic]",
+    )
 
     data = [
         {
@@ -335,6 +343,7 @@ def peer_benchmark(industry: str, fmt: str) -> None:
             "total_assessed": total,
             "compliant": compliant,
             "benchmarks": _INDUSTRY_BENCHMARKS,
+            "simulated": True,
         }
     ]
     _format_output(data, fmt, table)
@@ -923,7 +932,7 @@ def forecast_cmd(framework: str | None, target_score: float, fmt: str) -> None:
 @click.option("--framework", default=None, help="Filter to a specific framework.")
 @click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
 def multi_cloud(framework: str | None, fmt: str) -> None:
-    """Unified compliance posture across AWS, Azure, and GCP."""
+    """Unified compliance posture across all sources (cloud, SaaS, on-prem)."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Finding
 
@@ -952,8 +961,8 @@ def multi_cloud(framework: str | None, fmt: str) -> None:
         elif status == "non_compliant":
             agg[cloud]["non_compliant"] += 1
 
-    table = Table(title="Multi-Cloud Compliance Posture")
-    table.add_column("Cloud", style="bold")
+    table = Table(title="Multi-Source Compliance Posture")
+    table.add_column("Source", style="bold")
     table.add_column("Total", justify="right")
     table.add_column("Compliant", justify="right", style="green")
     table.add_column("Non-Compliant", justify="right", style="red")
@@ -969,7 +978,7 @@ def multi_cloud(framework: str | None, fmt: str) -> None:
             str(counts["non_compliant"]),
             f"[{_score_style(score)}]{score}%[/{_score_style(score)}]",
         )
-        data.append({"cloud": cloud, **counts, "score_pct": score})
+        data.append({"source": cloud, **counts, "score_pct": score})
 
     _format_output(data, fmt, table)
 

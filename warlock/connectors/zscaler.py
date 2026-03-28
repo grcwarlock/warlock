@@ -7,7 +7,6 @@ and sandbox submissions via Zscaler Internet Access (ZIA) API.
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime, timezone
 
 from warlock.connectors.base import (
@@ -35,7 +34,7 @@ class ZscalerConnector(BaseConnector):
             errors.append("httpx not installed. Install with: pip install warlock[zscaler]")
         if not self.get_secret("WLK_ZSCALER_API_KEY"):
             errors.append("WLK_ZSCALER_API_KEY not set")
-        if not os.environ.get("WLK_ZSCALER_CLOUD", ""):
+        if not self.get_secret("WLK_ZSCALER_CLOUD"):
             errors.append("WLK_ZSCALER_CLOUD not set (e.g. zscloud.net)")
         return errors
 
@@ -96,8 +95,8 @@ class ZscalerConnector(BaseConnector):
     # -- Auth & Client --
 
     def _zscaler_base_url(self) -> str:
-        cloud = os.environ.get("WLK_ZSCALER_CLOUD", "zscloud.net").strip()
-        return f"https://zsapi.{cloud}"
+        cloud = self.get_secret("WLK_ZSCALER_CLOUD") or "zscloud.net"
+        return f"https://zsapi.{cloud.strip()}"
 
     def _client(self) -> httpx.Client:
         return httpx.Client(

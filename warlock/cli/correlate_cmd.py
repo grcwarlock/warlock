@@ -755,9 +755,9 @@ def coverage_matrix(framework: str, limit_controls: int) -> None:
     covered: set[tuple[str, str]] = {(r.source, r.control_id) for r in rows}
 
     table = Table(title=f"Coverage matrix: {framework} (first {len(controls)} controls)")
-    table.add_column("Source", style="cyan")
+    table.add_column("Source", style="cyan", min_width=12)
     for c in controls:
-        table.add_column(c, max_width=8, justify="center")
+        table.add_column(c, min_width=6, max_width=10, justify="center")
 
     for src in sources[:30]:  # cap rows at 30
         row_cells = [

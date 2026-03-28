@@ -185,19 +185,33 @@ def compliance_forecast(
     # Cap simulations to a reasonable range
     simulations = min(max(simulations, 100), 50_000)
 
-    # Run Monte Carlo simulations
-    # For each month, simulate how many controls get remediated
+    # STUB-019 fix: Monte Carlo simulation with stochastic remediation AND
+    # regression (new non-compliant controls can appear each month).
+    # Models both improvement (remediation) and degradation (new findings)
+    # as independent random processes.
     monthly_scores: list[list[float]] = [[] for _ in range(months)]
     days_per_month = 30
 
+    # Estimate regression rate: assume ~2% of non-compliant controls recur
+    # or new ones appear per month, with variance.
+    regression_rate = max(non_compliant * 0.02 / days_per_month, 0.01)
+    regression_std = regression_rate * 0.5
+
     for _ in range(simulations):
         sim_compliant = compliant
+        sim_total = total
         for month_idx in range(months):
-            # Sample daily rate from normal distribution, floor at 0
-            daily = max(random.gauss(mean_rate, std_rate), 0.0)
-            remediated = int(daily * days_per_month)
-            sim_compliant = min(sim_compliant + remediated, total)
-            score = sim_compliant / total * 100.0
+            # Remediation: sample daily rate from normal distribution
+            daily_fix = max(random.gauss(mean_rate, std_rate), 0.0)
+            remediated = int(daily_fix * days_per_month)
+
+            # Regression: new non-compliant controls appearing
+            daily_regress = max(random.gauss(regression_rate, regression_std), 0.0)
+            regressed = int(daily_regress * days_per_month)
+
+            sim_compliant = min(sim_compliant + remediated - regressed, sim_total)
+            sim_compliant = max(sim_compliant, 0)
+            score = sim_compliant / sim_total * 100.0 if sim_total > 0 else 0.0
             monthly_scores[month_idx].append(score)
 
     # Compute percentiles for each month

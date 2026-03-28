@@ -56,11 +56,19 @@ class PolicyGate:
         self.fail_mode = fail_mode or settings.opa_fail_mode or "closed"
         # S-2: Warn when fail-open in production
         if settings.env == "production" and self.fail_mode == "open":
-            log.warning(
-                "OPA policy gate is set to fail-open in production. "
-                "This means OPA outages will bypass all policy enforcement. "
+            log.critical(
+                "GAP-061: OPA policy gate is set to fail-open in PRODUCTION. "
+                "This means OPA outages will bypass ALL policy enforcement. "
                 "Set WLK_OPA_FAIL_MODE=closed for production."
             )
+        # GAP-061: Also warn about opa_compliance_fail_mode
+        if settings.opa_compliance_fail_mode == "open":
+            if settings.env != "development":
+                log.critical(
+                    "GAP-061: OPA compliance fail_mode is 'open' in a non-development "
+                    "environment (env=%s). All requests pass when OPA is unavailable.",
+                    settings.env,
+                )
         self.enabled = bool(self.opa_url)
         self._session = None
 
@@ -126,9 +134,15 @@ class PolicyGate:
                 return result.get("allow", result.get("result", False))
             return bool(result)
         except Exception as exc:
-            log.warning("OPA evaluation failed: %s (fail_mode=%s)", exc, self.fail_mode)
             if self.fail_mode == "open":
+                # GAP-061: Clearly warn when OPA bypass is active
+                log.warning(
+                    "OPA fail-open mode active — all requests pass when OPA is "
+                    "unavailable (error: %s)",
+                    exc,
+                )
                 return True
+            log.warning("OPA evaluation failed: %s (fail_mode=%s)", exc, self.fail_mode)
             return False
 
     async def _call_opa(self, opa_input: dict) -> Any:

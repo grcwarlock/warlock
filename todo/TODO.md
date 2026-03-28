@@ -143,113 +143,113 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 ### Policy / OPA
 
-- [ ] **Add Rego policies for 6 zero-coverage frameworks** — ISO 27701, ISO 42001, FedRAMP, GDPR, EU AI Act, SEC Cyber. *(GAP-056)* `XL`
-- [ ] **Improve SOC 2 Rego coverage** — Currently 13 of 46 controls (28%). *(GAP-057)* `L`
-- [ ] **Add assertions for administrative controls** — SoD, data classification, training, background checks, BCP, vendor due diligence. *(GAP-058)* `L`
+- [x] **~~Add Rego policies for 6 zero-coverage frameworks~~** — ISO 27701, ISO 42001, FedRAMP, GDPR, EU AI Act, SEC Cyber. *(GAP-056)* `XL`
+- [x] **~~Improve SOC 2 Rego coverage~~** — Currently 13 of 46 controls (28%). *(GAP-057)* `L`
+- [x] **~~Add assertions for administrative controls~~** — SoD, data classification, training, background checks, BCP, vendor due diligence. *(GAP-058)* `L`
 
 ### Connectors
 
-- [ ] **Convert 84 mock connectors to real implementations** — Prioritize ASSET_MGMT, GRC, API_SECURITY, COST, BACKUP categories. *(GAP-059, STUB-001)* `XL`
-- [ ] **Add connector credential rotation** — Secrets backend abstraction with rotation support (Vault, AWS Secrets Manager). *(GAP-076)* `M`
-- [ ] **Add Proofpoint TAP connector** — Email threat data beyond URL defense. *(GAP-085)* `M`
-- [ ] **Add Zscaler connector** — ZIA/ZPA/ZDX for zero trust evidence. *(GAP-086)* `M`
-- [ ] **Add physical security connectors** — Lenel/S2, Genetec, HID Global, Brivo, Envoy. *(GAP-087)* `L`
-- [ ] **Add GovCloud connector variants** — AWS GovCloud, Azure Government, GCP Assured Workloads endpoints. *(GAP-088)* `M`
-- [ ] **Add ICS/OT, mainframe, and GRC connectors** — Claroty, Dragos, Nozomi, z/OS RACF, Archer export. *(GAP-093)* `XL`
+- [x] **~~Convert 84 mock connectors to real implementations~~** — Prioritize ASSET_MGMT, GRC, API_SECURITY, COST, BACKUP categories. *(GAP-059, STUB-001)* `XL`
+- [x] **~~Add connector credential rotation~~** — Secrets backend abstraction with rotation support (Vault, AWS Secrets Manager). *(GAP-076)* `M`
+- [x] **~~Add Proofpoint TAP connector~~** — Email threat data beyond URL defense. *(GAP-085)* `M`
+- [x] **~~Add Zscaler connector~~** — ZIA/ZPA/ZDX for zero trust evidence. *(GAP-086)* `M`
+- [x] **~~Add physical security connectors~~** — Lenel/S2, Genetec, HID Global, Brivo, Envoy. *(GAP-087)* `L`
+- [x] **~~Add GovCloud connector variants~~** — AWS GovCloud, Azure Government, GCP Assured Workloads endpoints. *(GAP-088)* `M`
+- [x] **~~Add ICS/OT, mainframe, and GRC connectors~~** — Claroty, Dragos, Nozomi, z/OS RACF, Archer export. *(GAP-093)* `XL`
 
 ### API
 
-- [ ] **Standardize API pagination** — Consistent limit/offset, total_count in all list endpoints. *(GAP-060)* `M`
+- [x] **~~Standardize API pagination~~** — Consistent limit/offset, total_count in all list endpoints. *(GAP-060)* `M`
 
 ### Security
 
-- [ ] **Fix OPA bypass on unknown endpoints** — `opa_compliance_fail_mode = "open"` allows all requests when OPA is down. Document and warn. *(GAP-061, ARCH-011)* `S`
-- [ ] **Improve PII scrubbing** — Add international phone, URL params, nested JSON, address heuristics. *(GAP-062, ARCH-012)* `M`
-- [ ] **Fix API key hashing** — Use HMAC with per-key salt instead of unsalted SHA-256. *(GAP-078)* `S`
-- [ ] **Add field-level encryption at rest** — Wire `encryption_key` config to sensitive model columns. *(GAP-079)* `M`
-- [ ] **Fix SSO state storage** — Move `_pending_states` from in-memory dict to Redis/DB. *(GAP-077)* `S`
-- [ ] **Add session invalidation on password change** — Verify `token_valid_after` is updated on password change. *(GAP-095)* `S`
+- [x] **~~Fix OPA bypass on unknown endpoints~~** — `opa_compliance_fail_mode = "open"` allows all requests when OPA is down. Document and warn. *(GAP-061, ARCH-011)* `S`
+- [x] **~~Improve PII scrubbing~~** — Add international phone, URL params, nested JSON, address heuristics. *(GAP-062, ARCH-012)* `M`
+- [x] **~~Fix API key hashing~~** — Use HMAC with per-key salt instead of unsalted SHA-256. *(GAP-078)* `S`
+- [x] **~~Add field-level encryption at rest~~** — Wire `encryption_key` config to sensitive model columns. *(GAP-079)* `M`
+- [x] **~~Fix SSO state storage~~** — Move `_pending_states` from in-memory dict to Redis/DB. *(GAP-077)* `S`
+- [x] **~~Add session invalidation on password change~~** — Verify `token_valid_after` is updated on password change. *(GAP-095)* `S`
 
 ### Export / OSCAL
 
-- [ ] **Replace OSCAL placeholder HREFs** — Real evidence links instead of `#` and `example.com/placeholder`. *(GAP-063)* `M`
-- [ ] **Add OSCAL export UI** — Frontend buttons for one-click OSCAL package generation. *(GAP-069)* `M`
+- [x] **~~Replace OSCAL placeholder HREFs~~** — Real evidence links instead of `#` and `example.com/placeholder`. *(GAP-063)* `M`
+- [x] **~~Add OSCAL export UI~~** — Frontend buttons for one-click OSCAL package generation. *(GAP-069)* `M`
 
 ### Architecture / Pipeline
 
-- [ ] **Wire event bus subscribers** — Connect Slack/Jira/PagerDuty integrations to pipeline events. *(GAP-064, STUB-002, ARCH-004)* `M`
-- [ ] **Add circuit breaker pattern** — Per-connector circuit breaker (closed/open/half-open) with cooldown. *(GAP-067, ARCH-002)* `M`
-- [ ] **Wire queue backends as selectable** — Add config setting to choose Redis/Kafka/SQS/NATS instead of hardwired in-memory EventBus. *(STUB-014)* `S`
+- [x] **~~Wire event bus subscribers~~** — Connect Slack/Jira/PagerDuty integrations to pipeline events. *(GAP-064, STUB-002, ARCH-004)* `M`
+- [x] **~~Add circuit breaker pattern~~** — Per-connector circuit breaker (closed/open/half-open) with cooldown. *(GAP-067, ARCH-002)* `M`
+- [x] **~~Wire queue backends as selectable~~** — Add config setting to choose Redis/Kafka/SQS/NATS instead of hardwired in-memory EventBus. *(STUB-014)* `S`
 
 ### Frontend
 
-- [ ] **Add ~40 missing frontend pages** — Assessment, pipeline mgmt, framework config, user/role mgmt, reporting, vendor mgmt, GDPR workflows. *(GAP-068)* `XL`
-- [ ] **Fix dashboard hardcoded data** — Replace static values with real API calls. *(GAP-070)* `M`
-- [ ] **Add personnel/HR frontend pages** — View 50 personnel records, access reviews, training status. *(GAP-089)* `M`
-- [ ] **Improve drill-down depth** — Add region/account grouping, finding-level drill-down to compliance. *(GAP-090)* `L`
-- [ ] **Add real-time/live dashboard** — WebSocket or SSE-based live updates. *(GAP-091)* `M`
-- [ ] **Fix settings sliders** — Wire AI confidence and temperature sliders to actual API calls. *(STUB-025)* `S`
+- [x] **~~Add ~40 missing frontend pages~~** — Assessment, pipeline mgmt, framework config, user/role mgmt, reporting, vendor mgmt, GDPR workflows. *(GAP-068)* `XL`
+- [x] **~~Fix dashboard hardcoded data~~** — Replace static values with real API calls. *(GAP-070)* `M`
+- [x] **~~Add personnel/HR frontend pages~~** — View 50 personnel records, access reviews, training status. *(GAP-089)* `M`
+- [x] **~~Improve drill-down depth~~** — Add region/account grouping, finding-level drill-down to compliance. *(GAP-090)* `L`
+- [x] **~~Add real-time/live dashboard~~** — WebSocket or SSE-based live updates. *(GAP-091)* `M`
+- [x] **~~Fix settings sliders~~** — Wire AI confidence and temperature sliders to actual API calls. *(STUB-025)* `S`
 
 ### Workflows
 
-- [ ] **Add vendor lifecycle monitoring** — Reassessment scheduling, offboarding workflow, sub-processor tracking. *(GAP-065)* `L`
-- [ ] **Add cATO workflow** — Authorization lifecycle management for FedRAMP. *(GAP-080)* `L`
-- [ ] **Add system authorization state machine** — Enforce valid transitions instead of arbitrary status setting. *(GAP-082)* `M`
-- [ ] **Implement GDPR right to rectification** — Add `rectify_subject_data()` method (Article 16). *(GAP-083)* `S`
+- [x] **~~Add vendor lifecycle monitoring~~** — Reassessment scheduling, offboarding workflow, sub-processor tracking. *(GAP-065)* `L`
+- [x] **~~Add cATO workflow~~** — Authorization lifecycle management for FedRAMP. *(GAP-080)* `L`
+- [x] **~~Add system authorization state machine~~** — Enforce valid transitions instead of arbitrary status setting. *(GAP-082)* `M`
+- [x] **~~Implement GDPR right to rectification~~** — Add `rectify_subject_data()` method (Article 16). *(GAP-083)* `S`
 
 ### Database / Models
 
-- [ ] **Fix asset-finding disconnect** — Add FK between Asset.resource_id and Finding.resource_id. *(GAP-066)* `M`
-- [ ] **Add compliance calendar model** — Recurring obligations with due dates, owner assignment, completion tracking. *(GAP-084)* `M`
-- [ ] **Add change request model with CAB approval** — Separate from ChangeEvent, with approval workflow fields. *(GAP-092)* `M`
-- [ ] **Fix DateTime timezone mismatch** — 2 migration columns use DateTime() without timezone=True. *(GAP-096)* `S`
-- [ ] **Persist delegation records to DB** — Add DelegationGrant model, replace in-memory dict. *(GAP-097, STUB-031)* `M`
-- [ ] **Persist sandbox state to DB** — Add SandboxEnvironment model, replace in-memory dict. *(GAP-098, STUB-032)* `M`
+- [x] **~~Fix asset-finding disconnect~~** — Add FK between Asset.resource_id and Finding.resource_id. *(GAP-066)* `M`
+- [x] **~~Add compliance calendar model~~** — Recurring obligations with due dates, owner assignment, completion tracking. *(GAP-084)* `M`
+- [x] **~~Add change request model with CAB approval~~** — Separate from ChangeEvent, with approval workflow fields. *(GAP-092)* `M`
+- [x] **~~Fix DateTime timezone mismatch~~** — 2 migration columns use DateTime() without timezone=True. *(GAP-096)* `S`
+- [x] **~~Persist delegation records to DB~~** — Add DelegationGrant model, replace in-memory dict. *(GAP-097, STUB-031)* `M`
+- [x] **~~Persist sandbox state to DB~~** — Add SandboxEnvironment model, replace in-memory dict. *(GAP-098, STUB-032)* `M`
 
 ### Testing
 
-- [ ] **Add tests for critical paths** — Hash chain, POA&M state machine, GDPR erasure, OSCAL export, ABAC, rate limiting. *(GAP-071, ARCH-034)* `L`
-- [ ] **Improve CLI tests** — Verify output content against seeded data, not just exit codes. *(GAP-072)* `M`
-- [ ] **Fix coverage matrix readability** — Rich table column widths for framework names. *(GAP-073)* `S`
+- [x] **~~Add tests for critical paths~~** — Hash chain, POA&M state machine, GDPR erasure, OSCAL export, ABAC, rate limiting. *(GAP-071, ARCH-034)* `L`
+- [x] **~~Improve CLI tests~~** — Verify output content against seeded data, not just exit codes. *(GAP-072)* `M`
+- [x] **~~Fix coverage matrix readability~~** — Rich table column widths for framework names. *(GAP-073)* `S`
 
 ### CLI
 
-- [ ] **Add SoA command** — Expose existing `warlock/export/soa.py` via CLI. *(GAP-074)* `S`
-- [ ] **Add CLI commands for 13 uncovered models** — PostureSnapshot, CompensatingControl, RiskAcceptance, etc. *(GAP-075)* `L`
-- [ ] **Fix multi-cloud view label** — Rename to "multi-source" or filter to actual cloud providers only. *(GAP-099)* `S`
+- [x] **~~Add SoA command~~** — Expose existing `warlock/export/soa.py` via CLI. *(GAP-074)* `S`
+- [x] **~~Add CLI commands for 13 uncovered models~~** — PostureSnapshot, CompensatingControl, RiskAcceptance, etc. *(GAP-075)* `L`
+- [x] **~~Fix multi-cloud view label~~** — Rename to "multi-source" or filter to actual cloud providers only. *(GAP-099)* `S`
 
 ### Reporting
 
-- [ ] **Add scheduled report delivery** — Cron-based report generation with email/Slack delivery. *(GAP-081)* `M`
+- [x] **~~Add scheduled report delivery~~** — Cron-based report generation with email/Slack delivery. *(GAP-081)* `M`
 
 ### Configuration
 
-- [ ] **Expand production config validation** — Check gdpr_hmac_secret, trust_portal_secret, cache_url, cors_origins. *(GAP-094)* `S`
+- [x] **~~Expand production config validation~~** — Check gdpr_hmac_secret, trust_portal_secret, cache_url, cors_origins. *(GAP-094)* `S`
 
 ### Observability (Architecture)
 
-- [ ] **Add structured JSON logging** — Switch to structlog or JSON formatter with correlation_id, tenant_id, user_id. *(ARCH-024)* `M`
-- [ ] **Add OpenTelemetry distributed tracing** — Auto-instrumentation for FastAPI, SQLAlchemy, HTTP clients. *(ARCH-025)* `L`
-- [ ] **Add Sentry error tracking** — With environment, release version, and user context. *(ARCH-026)* `S`
-- [ ] **Add Prometheus metrics** — `prometheus-fastapi-instrumentator` + custom pipeline counters. *(ARCH-027)* `M`
-- [ ] **Add health check depth** — `/readyz` should check DB ping, OPA ping, queue backend ping. *(ARCH-028)* `S`
-- [ ] **Implement alerting framework** — Evaluate AlertRule conditions on pipeline completion and timer. *(ARCH-029)* `L`
-- [ ] **Add external hash chain anchor** — Publish chain head hash to S3/external DB for independent verification. *(ARCH-030)* `M`
+- [x] **~~Add structured JSON logging~~** — Switch to structlog or JSON formatter with correlation_id, tenant_id, user_id. *(ARCH-024)* `M`
+- [x] **~~Add OpenTelemetry distributed tracing~~** — Auto-instrumentation for FastAPI, SQLAlchemy, HTTP clients. *(ARCH-025)* `L`
+- [x] **~~Add Sentry error tracking~~** — With environment, release version, and user context. *(ARCH-026)* `S`
+- [x] **~~Add Prometheus metrics~~** — `prometheus-fastapi-instrumentator` + custom pipeline counters. *(ARCH-027)* `M`
+- [x] **~~Add health check depth~~** — `/readyz` should check DB ping, OPA ping, queue backend ping. *(ARCH-028)* `S`
+- [x] **~~Implement alerting framework~~** — Evaluate AlertRule conditions on pipeline completion and timer. *(ARCH-029)* `L`
+- [x] **~~Add external hash chain anchor~~** — Publish chain head hash to S3/external DB for independent verification. *(ARCH-030)* `M`
 
 ### Stubs to Complete
 
-- [ ] **Implement domain event handlers** — Evidence, Controls, Issues handlers should react to cross-domain events. *(STUB-002)* `M`
-- [ ] **Implement bulk/legacy import persistence** — `persist_batch()` should actually call `session.add()`. *(STUB-008)* `M`
-- [ ] **Persist workpapers to DB** — Add Workpaper model, save workpaper dicts to database. *(STUB-009)* `M`
-- [ ] **Wire SoD analysis engine** — Add CLI command and API endpoint for existing `sod.py` code. *(STUB-012)* `S`
-- [ ] **Fix compensating control evaluation** — Replace hardcoded `{"score": 0.8}` with actual evaluation logic. *(STUB-013)* `M`
-- [ ] **Implement lake NL query beyond keywords** — Replace keyword routing with LLM-based intent classification. *(STUB-005)* `L`
-- [ ] **Implement regulatory filing templates** — Replace "To be determined" placeholders with real content generation. *(STUB-006)* `M`
-- [ ] **Implement questionnaire automation persistence** — Save questionnaire responses and scores to DB. *(STUB-007)* `M`
-- [ ] **Upgrade RAG from TF-IDF to vector search** — Integrate pgvector or FAISS instead of dict-based TF-IDF. *(STUB-015)* `L`
-- [ ] **Enable lake by default** — Set `WLK_LAKE_ENABLED=true` in demo/default config. *(STUB-016)* `S`
-- [ ] **Fix forecast model** — Replace linear extrapolation with proper Monte Carlo using remediation curves. *(STUB-019)* `M`
-- [ ] **Fix peer benchmark** — Replace synthetic data with actual anonymized cohort data or clearly label as simulated. *(STUB-026)* `M`
+- [x] **~~Implement domain event handlers~~** — Evidence, Controls, Issues handlers should react to cross-domain events. *(STUB-002)* `M`
+- [x] **~~Implement bulk/legacy import persistence~~** — `persist_batch()` should actually call `session.add()`. *(STUB-008)* `M`
+- [x] **~~Persist workpapers to DB~~** — Add Workpaper model, save workpaper dicts to database. *(STUB-009)* `M`
+- [x] **~~Wire SoD analysis engine~~** — Add CLI command and API endpoint for existing `sod.py` code. *(STUB-012)* `S`
+- [x] **~~Fix compensating control evaluation~~** — Replace hardcoded `{"score": 0.8}` with actual evaluation logic. *(STUB-013)* `M`
+- [x] **~~Implement lake NL query beyond keywords~~** — Replace keyword routing with LLM-based intent classification. *(STUB-005)* `L`
+- [x] **~~Implement regulatory filing templates~~** — Replace "To be determined" placeholders with real content generation. *(STUB-006)* `M`
+- [x] **~~Implement questionnaire automation persistence~~** — Save questionnaire responses and scores to DB. *(STUB-007)* `M`
+- [x] **~~Upgrade RAG from TF-IDF to vector search~~** — Integrate pgvector or FAISS instead of dict-based TF-IDF. *(STUB-015)* `L`
+- [x] **~~Enable lake by default~~** — Set `WLK_LAKE_ENABLED=true` in demo/default config. *(STUB-016)* `S`
+- [x] **~~Fix forecast model~~** — Replace linear extrapolation with proper Monte Carlo using remediation curves. *(STUB-019)* `M`
+- [x] **~~Fix peer benchmark~~** — Replace synthetic data with actual anonymized cohort data or clearly label as simulated. *(STUB-026)* `M`
 
 ---
 

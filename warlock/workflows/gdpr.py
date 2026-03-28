@@ -410,3 +410,95 @@ class GDPRManager:
 
         log.info("GDPR erasure complete for %s: %s", anon_id, result["affected"])
         return result
+
+    def rectify_subject_data(
+        self,
+        session: Session,
+        email: str,
+        corrections: dict[str, Any],
+        rectified_by: str = "system",
+    ) -> dict[str, Any]:
+        """Rectify (correct) personal data for a data subject (Article 16).
+
+        Unlike erasure, rectification *updates* specific PII fields to
+        corrected values rather than anonymising them.
+
+        Args:
+            session: SQLAlchemy session.
+            email: Email address identifying the data subject.
+            corrections: Dict mapping field names to corrected values.
+                Supported fields on Personnel: full_name, department, title,
+                manager_email, hr_employee_id.
+                Supported fields on User: name.
+            rectified_by: Actor performing the rectification.
+
+        Returns:
+            Dict summarising what was rectified.
+        """
+        if not corrections:
+            raise ValueError("corrections dict must not be empty")
+
+        result: dict[str, Any] = {
+            "email": email,
+            "rectified_at": datetime.now(timezone.utc).isoformat(),
+            "corrections_applied": {},
+        }
+
+        # Personnel corrections
+        _PERSONNEL_RECTIFIABLE = {
+            "full_name",
+            "department",
+            "title",
+            "manager_email",
+            "hr_employee_id",
+        }
+        personnel = session.query(Personnel).filter(Personnel.email == email).first()
+        if personnel:
+            applied: dict[str, Any] = {}
+            for field, new_value in corrections.items():
+                if field in _PERSONNEL_RECTIFIABLE and hasattr(personnel, field):
+                    old_value = getattr(personnel, field)
+                    setattr(personnel, field, new_value)
+                    applied[field] = {"old": old_value, "new": new_value}
+            if applied:
+                result["corrections_applied"]["personnel"] = applied
+
+        # User corrections
+        _USER_RECTIFIABLE = {"name"}
+        user = session.query(User).filter(User.email == email).first()
+        if user:
+            applied_user: dict[str, Any] = {}
+            for field, new_value in corrections.items():
+                if field in _USER_RECTIFIABLE and hasattr(user, field):
+                    old_value = getattr(user, field)
+                    setattr(user, field, new_value)
+                    applied_user[field] = {"old": old_value, "new": new_value}
+            if applied_user:
+                result["corrections_applied"]["user"] = applied_user
+
+        if not result["corrections_applied"]:
+            log.info("GDPR rectification: no matching records for %s", email)
+            return result
+
+        session.flush()
+
+        # Audit trail — never log the real email
+        anon_id = _anonymize_value("email", email)
+        audit = AuditTrail(session)
+        audit.record(
+            action="gdpr_rectification",
+            entity_type="data_subject",
+            entity_id=anon_id,
+            actor=rectified_by,
+            metadata={
+                "fields_rectified": list(corrections.keys()),
+                "tables_affected": list(result["corrections_applied"].keys()),
+            },
+        )
+
+        log.info(
+            "GDPR rectification complete for %s: %d field(s) corrected",
+            anon_id,
+            len(corrections),
+        )
+        return result

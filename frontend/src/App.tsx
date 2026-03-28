@@ -18,6 +18,12 @@ import IncidentDetail from "@/pages/incidents/IncidentDetail";
 import RiskOverview from "@/pages/risk/RiskOverview";
 import AuditOverview from "@/pages/audit/AuditOverview";
 import SettingsOverview from "@/pages/settings/SettingsOverview";
+import AssessmentOverview from "@/pages/assessment/AssessmentOverview";
+import VendorOverview from "@/pages/vendors/VendorOverview";
+import PersonnelOverview from "@/pages/personnel/PersonnelOverview";
+import UserManagement from "@/pages/settings/UserManagement";
+import GDPROverview from "@/pages/gdpr/GDPROverview";
+import PipelineOverview from "@/pages/pipeline/PipelineOverview";
 
 export default function App() {
   return (
@@ -50,10 +56,15 @@ export default function App() {
         <Route path="risk" element={<RiskOverview />} />
         <Route path="audit" element={<AuditOverview />} />
         <Route path="settings" element={<SettingsOverview />} />
+        <Route path="settings/users" element={<UserManagement />} />
+        <Route path="assessment" element={<AssessmentOverview />} />
+        <Route path="vendors" element={<VendorOverview />} />
+        <Route path="personnel" element={<PersonnelOverview />} />
+        <Route path="gdpr" element={<GDPROverview />} />
+        <Route path="pipeline" element={<PipelineOverview />} />
       </Route>
 
       {/* Legacy redirect */}
-      <Route path="/pipeline/*" element={<Navigate to="/infrastructure" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

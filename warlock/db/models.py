@@ -219,6 +219,13 @@ class Finding(TenantMixin, Base):
     raw_event = relationship("RawEvent", back_populates="findings")
     control_mappings = relationship("ControlMapping", back_populates="finding")
 
+    # GAP-066: Link findings to assets via resource_id natural join
+    assets = relationship(
+        "Asset",
+        primaryjoin="foreign(Asset.resource_id) == Finding.resource_id",
+        viewonly=True,
+    )
+
     __table_args__ = (
         CheckConstraint(
             "severity IN ('critical','high','medium','low','info')",
@@ -1955,4 +1962,153 @@ class DeadLetterEntry(TenantMixin, Base):
         Index("idx_dlq_status", "status"),
         Index("idx_dlq_event_type", "event_type"),
         Index("idx_dlq_created_at", "created_at"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-084: Compliance Calendar — obligation tracking
+# ---------------------------------------------------------------------------
+
+
+class ComplianceObligation(TenantMixin, Base):
+    """Tracks recurring compliance obligations (audits, filings, assessments)."""
+
+    __tablename__ = "compliance_obligations"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    title = Column(String(500), nullable=False)
+    framework = Column(String(50))
+    control_id = Column(String(50))
+    obligation_type = Column(String(50))  # audit, assessment, report, filing
+    frequency = Column(String(20))  # monthly, quarterly, annual
+    next_due = Column(DateTime(timezone=True))
+    owner = Column(String(255))
+    status = Column(String(20), default="pending")  # pending, in_progress, completed, overdue
+    completed_at = Column(DateTime(timezone=True))
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','in_progress','completed','overdue')",
+            name="ck_compliance_obligations_status",
+        ),
+        Index("idx_obligation_status", "status"),
+        Index("idx_obligation_next_due", "next_due"),
+        Index("idx_obligation_framework", "framework"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-092: Change Requests with CAB approval
+# ---------------------------------------------------------------------------
+
+
+class ChangeRequest(TenantMixin, Base):
+    """Change request with Change Advisory Board (CAB) approval workflow."""
+
+    __tablename__ = "change_requests"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    title = Column(String(500), nullable=False)
+    description = Column(Text)
+    change_type = Column(String(50))  # standard, normal, emergency
+    risk_level = Column(String(20))
+    system_profile_id = Column(String(36), ForeignKey("system_profiles.id", ondelete="SET NULL"))
+    requester = Column(String(255), nullable=False)
+    status = Column(String(20), default="draft")
+    cab_decision = Column(String(20))  # approved, rejected, deferred
+    cab_notes = Column(Text)
+    cab_date = Column(DateTime(timezone=True))
+    implementation_date = Column(DateTime(timezone=True))
+    rollback_plan = Column(Text)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_change_request_status", "status"),
+        Index("idx_change_request_system", "system_profile_id"),  # #20: FK index
+        Index("idx_change_request_cab_decision", "cab_decision"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-097: Delegation Grants — persisted to DB
+# ---------------------------------------------------------------------------
+
+
+class DelegationGrant(TenantMixin, Base):
+    """Persistent record of delegated admin authority between users."""
+
+    __tablename__ = "delegation_grants"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    delegator_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    delegate_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    permissions = Column(JSONType, default=list)
+    expires_at = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_delegation_delegator", "delegator_id"),  # #20: FK index
+        Index("idx_delegation_delegate", "delegate_id"),  # #20: FK index
+        Index("idx_delegation_active", "is_active"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-098: Sandbox Environments — persisted to DB
+# ---------------------------------------------------------------------------
+
+
+class SandboxEnvironment(TenantMixin, Base):
+    """Persistent sandbox/staging environment for policy testing."""
+
+    __tablename__ = "sandbox_environments"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    owner_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    config = Column(JSONType, default=dict)
+    status = Column(String(20), default="active")
+    expires_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_sandbox_owner", "owner_id"),  # #20: FK index
+        Index("idx_sandbox_status", "status"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# STUB-009: Workpaper — persisted audit workpapers
+# ---------------------------------------------------------------------------
+
+
+class Workpaper(TenantMixin, Base):
+    """Persistent audit workpaper linked to an engagement and control."""
+
+    __tablename__ = "workpapers"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    engagement_id = Column(
+        String(36), ForeignKey("audit_engagements.id", ondelete="CASCADE"), nullable=False
+    )
+    control_id = Column(String(50), nullable=False)
+    framework = Column(String(50))
+    template_type = Column(String(50))  # test_of_design, test_of_effectiveness, walkthrough
+    status = Column(String(20), default="draft")  # draft, reviewed, signed_off
+    reviewer = Column(String(255))
+    notes = Column(Text)
+    review_history = Column(JSONType, default=list)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('draft','reviewed','signed_off')",
+            name="ck_workpapers_status",
+        ),
+        Index("idx_workpaper_engagement", "engagement_id"),  # #20: FK index
+        Index("idx_workpaper_status", "status"),
     )

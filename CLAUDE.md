@@ -181,7 +181,7 @@ warlock/
   integrations/  — Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
   platform/      — tenancy, white-label, delegation, sandbox, legacy/bulk import
   frameworks/    — framework YAMLs + crosswalks + baselines + inherited controls
-tests/           — pytest tests (32 files)
+tests/           — pytest tests (33 files)
 policies/        — OPA/Rego files across 9 framework dirs
 frameworks-oscal/ — OSCAL catalog/profile JSON
 terraform/       — 135 IaC modules (AWS, Azure, GCP, + 12 more providers)

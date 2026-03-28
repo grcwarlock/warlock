@@ -5,8 +5,8 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (352 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (352 parsers) → FindingData       → transform to universal findings
+Stage 1: Connectors (361 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (358 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
 ```
@@ -33,7 +33,7 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **196** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (352)
+## Connectors (361)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare, Linode/Akamai, Hetzner, Spot.io
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos, Tanium
@@ -99,7 +99,7 @@ Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERE
 | Domain | Group | Commands | Description |
 |---|---|---|---|
 | **Pipeline** | `warlock collect`, `pipeline`, `automation` | 25 | Collect, normalize, map, assess, schedule, replay |
-| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health check all 352 connectors |
+| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health check all 361 connectors |
 | **Findings** | `warlock findings`, `vulns` | 23 | List, search, suppress, export, aging, SLA, trends |
 | **Compliance** | `warlock comply`, `frameworks`, `assertions` | 47 | Auto-map, gap analysis, readiness scores, maturity model |
 | **Incidents** | `warlock incidents` | 11 | Create, triage, timeline, post-mortem, MTTR metrics |
@@ -266,8 +266,8 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 352 source connectors (Stage 1)
-├── normalizers/          # 352 normalizers (Stage 2)
+├── connectors/           # 361 source connectors (Stage 1)
+├── normalizers/          # 358 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
@@ -301,7 +301,7 @@ warlock/
 │   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
-│   ├── models.py         # 50 SQLAlchemy models
+│   ├── models.py         # 55 SQLAlchemy models
 │   ├── migrations/       # Schema via Base.metadata.create_all()
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern

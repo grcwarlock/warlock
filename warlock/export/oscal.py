@@ -243,7 +243,7 @@ class OscalExporter:
             "assessment-results": {
                 "uuid": doc_uuid,
                 "metadata": _build_metadata(f"Warlock GRC Assessment Results — {system_name}"),
-                "import-ap": {"href": "#"},
+                "import-ap": {"href": "/api/v1/assessment-plans/latest"},
                 "results": oscal_results,
             }
         }
@@ -377,6 +377,13 @@ class OscalExporter:
                 oscal_finding["props"].append(
                     {"name": "ai-confidence", "value": str(cr.ai_confidence)}
                 )
+            # Add evidence links (GAP-063: replace placeholder HREFs)
+            links: list[dict[str, str]] = [
+                {"href": f"/api/v1/control-results/{cr.id}", "rel": "reference"},
+            ]
+            if finding:
+                links.append({"href": f"/api/v1/findings/{finding.id}", "rel": "evidence"})
+            oscal_finding["links"] = links
             oscal_findings.append(oscal_finding)
 
         result_block: dict[str, Any] = {
@@ -936,7 +943,7 @@ class OscalExporter:
             "plan-of-action-and-milestones": {
                 "uuid": str(uuid4()),
                 "metadata": _build_metadata(f"Warlock GRC POA&M — {system_name}"),
-                "import-ssp": {"href": "#"},
+                "import-ssp": {"href": "/api/v1/oscal/ssp/latest"},
                 "poam-items": poam_items,
             }
         }

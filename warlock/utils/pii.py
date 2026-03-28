@@ -16,6 +16,7 @@ Usage::
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from typing import Any
 
@@ -27,10 +28,25 @@ _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PHONE_RE = re.compile(r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b")
 
+# GAP-062: International phone numbers (e.g. +44 20 7946 0958, +91-9876543210)
+_INTL_PHONE_RE = re.compile(
+    r"\+(?:2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9])"
+    r"[-.\s]?\d{1,4}[-.\s]?\d{2,4}[-.\s]?\d{2,4}(?:[-.\s]?\d{1,4})?"
+)
+
+# GAP-062: Emails and tokens leaked in URL query parameters
+_URL_QUERY_PII_RE = re.compile(
+    r"(?:email|token|key|secret|password|api_key|access_token)"
+    r"=[^&\s]{3,}",
+    re.IGNORECASE,
+)
+
 _PII_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (_EMAIL_RE, "email"),
     (_SSN_RE, "ssn"),
     (_PHONE_RE, "phone"),
+    (_INTL_PHONE_RE, "intl_phone"),
+    (_URL_QUERY_PII_RE, "url_param"),
 ]
 
 # Field keys that are known to contain PII values.  When a dict key matches
@@ -116,6 +132,47 @@ def scrub_string(value: str) -> tuple[str, bool]:
 
 
 # ---------------------------------------------------------------------------
+# JSON string scrubbing (GAP-062)
+# ---------------------------------------------------------------------------
+
+
+def _try_scrub_json_string(value: str) -> tuple[str | None, bool]:
+    """Attempt to parse a string as JSON, scrub it, and re-serialize.
+
+    Returns (scrubbed_json_string, pii_found) if the value was valid JSON
+    containing a dict or list.  Returns (None, False) if the value is not
+    parseable JSON so the caller can fall back to plain string scrubbing.
+    """
+    if not value or value[0] not in ("{", "["):
+        return None, False
+    try:
+        parsed = json.loads(value)
+    except (json.JSONDecodeError, ValueError):
+        return None, False
+    if isinstance(parsed, dict):
+        scrubbed, found = scrub_detail(parsed)
+        return json.dumps(scrubbed, default=str), found
+    if isinstance(parsed, list):
+        result_list = []
+        any_found = False
+        for item in parsed:
+            if isinstance(item, dict):
+                s, f = scrub_detail(item)
+                result_list.append(s)
+                if f:
+                    any_found = True
+            elif isinstance(item, str):
+                s, f = scrub_string(item)
+                result_list.append(s)
+                if f:
+                    any_found = True
+            else:
+                result_list.append(item)
+        return json.dumps(result_list, default=str), any_found
+    return None, False
+
+
+# ---------------------------------------------------------------------------
 # Dict-level scrubbing
 # ---------------------------------------------------------------------------
 
@@ -171,10 +228,17 @@ def scrub_detail(detail: dict[str, Any]) -> tuple[dict[str, Any], bool]:
             cleaned[key] = new_list
         # Scan plain string values for PII patterns
         elif isinstance(value, str):
-            scrubbed_str, str_found = scrub_string(value)
-            cleaned[key] = scrubbed_str
-            if str_found:
-                found = True
+            # GAP-062: Try parsing JSON strings and recursively scrubbing
+            scrubbed_val, str_found = _try_scrub_json_string(value)
+            if scrubbed_val is not None:
+                cleaned[key] = scrubbed_val
+                if str_found:
+                    found = True
+            else:
+                scrubbed_str, str_found = scrub_string(value)
+                cleaned[key] = scrubbed_str
+                if str_found:
+                    found = True
         else:
             cleaned[key] = value
 

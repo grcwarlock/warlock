@@ -30,9 +30,22 @@ router = APIRouter(prefix="/api/v1/auth/sso", tags=["sso"])
 _WELL_KNOWN = "/.well-known/openid-configuration"
 
 # In-memory nonce/state store (short-lived, keyed by state param).
-# In production with multiple workers, use Redis or a DB table.
+# GAP-077: This MUST be backed by Redis in production. In-memory storage
+# breaks with multiple workers (each worker has its own dict, so a callback
+# hitting a different worker than the login redirect will fail).
 _pending_states: dict[str, dict[str, Any]] = {}
 _STATE_TTL_SECONDS = 600  # 10 minutes
+
+
+def _warn_sso_state_storage() -> None:
+    """Log a warning at startup if SSO is enabled but no cache backend is configured."""
+    settings = _get_settings()
+    if settings.sso_enabled and not settings.cache_url:
+        log.warning(
+            "GAP-077: SSO is enabled but WLK_CACHE_URL is empty. "
+            "SSO state is stored in-memory, which breaks with multiple workers. "
+            "Configure WLK_CACHE_URL (Redis) for production SSO deployments."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -210,6 +223,9 @@ def _extract_user_info(claims: dict, provider: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
+_sso_startup_warned = False
+
+
 @router.get("/login")
 async def sso_login(
     request: Request,
@@ -220,6 +236,11 @@ async def sso_login(
     Generates a cryptographic state and nonce, stores them server-side,
     and redirects the user's browser to the provider's authorization endpoint.
     """
+    global _sso_startup_warned
+    if not _sso_startup_warned:
+        _warn_sso_state_storage()
+        _sso_startup_warned = True
+
     settings = _get_settings()
 
     if not settings.sso_enabled:
