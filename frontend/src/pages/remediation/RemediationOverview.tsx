@@ -4,10 +4,23 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Plus,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -19,7 +32,8 @@ import {
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableSkeleton } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useRemediations } from "@/hooks/useApi";
+import { useRemediations, useCreateRemediation } from "@/hooks/useApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -49,8 +63,12 @@ function isOverdue(dueDate: string | null | undefined, status: string): boolean 
 
 export default function RemediationOverview() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({ title: "", description: "", framework: "", control_id: "", due_date: "" });
+  const createMutation = useCreateRemediation();
 
   const { data, isLoading, isError } = useRemediations({
     status: statusFilter || undefined,
@@ -62,13 +80,114 @@ export default function RemediationOverview() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  function handleCreate() {
+    if (!form.title.trim()) return;
+    createMutation.mutate(
+      {
+        title: form.title,
+        description: form.description || undefined,
+        framework: form.framework || undefined,
+        control_id: form.control_id || undefined,
+        due_date: form.due_date || undefined,
+      },
+      {
+        onSuccess: (created) => {
+          setCreateOpen(false);
+          setForm({ title: "", description: "", framework: "", control_id: "", due_date: "" });
+          queryClient.invalidateQueries({ queryKey: ["remediations"] });
+          navigate(`/remediation/${created.id}`);
+        },
+      },
+    );
+  }
+
   return (
     <div className="p-6 space-y-5 max-w-[1440px] mx-auto">
-      <div>
-        <h1 className="text-xl font-semibold text-zinc-100">Remediation</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">
-          Plans of Action and Milestones ({total.toLocaleString()} total)
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-100">Remediation</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">
+            Plans of Action and Milestones ({total.toLocaleString()} total)
+          </p>
+        </div>
+
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1.5" />
+              New POA&M
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create POA&M</DialogTitle>
+              <DialogDescription>
+                Create a new Plan of Action and Milestones to track remediation.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="poam-title">Title *</Label>
+                <Input
+                  id="poam-title"
+                  placeholder="e.g. Remediate MFA finding for AC-7"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="poam-desc">Description</Label>
+                <Textarea
+                  id="poam-desc"
+                  placeholder="Describe the weakness and remediation approach..."
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="poam-fw">Framework</Label>
+                  <Input
+                    id="poam-fw"
+                    placeholder="e.g. nist_800_53"
+                    value={form.framework}
+                    onChange={(e) => setForm({ ...form, framework: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="poam-ctrl">Control ID</Label>
+                  <Input
+                    id="poam-ctrl"
+                    placeholder="e.g. AC-7"
+                    value={form.control_id}
+                    onChange={(e) => setForm({ ...form, control_id: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="poam-due">Due Date</Label>
+                <Input
+                  id="poam-due"
+                  type="date"
+                  value={form.due_date}
+                  onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={!form.title.trim() || createMutation.isPending}
+              >
+                {createMutation.isPending ? "Creating..." : "Create POA&M"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filter bar */}

@@ -114,7 +114,7 @@ class AuditTrail:
                 "entity_type": entity_type,
                 "entity_id": entity_id,
                 "actor": actor,
-                "evidence_sha256": evidence_sha256,
+                "evidence_sha256": evidence_sha256 or "",
             },
             sort_keys=True,
         )

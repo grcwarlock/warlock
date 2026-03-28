@@ -230,6 +230,45 @@ export function getRemediationDetail(id: string): Promise<Remediation> {
   return api<Remediation>(`/remediations/${encodeURIComponent(id)}`);
 }
 
+export function createRemediation(body: {
+  title: string;
+  description?: string;
+  framework?: string;
+  control_id?: string;
+  finding_id?: string;
+  due_date?: string;
+}): Promise<Remediation> {
+  return api<Remediation>("/remediations", {
+    method: "POST",
+    body,
+  });
+}
+
+export function transitionRemediation(
+  id: string,
+  targetStatus: string,
+  payload?: Record<string, unknown>,
+): Promise<Remediation> {
+  const enc = encodeURIComponent(id);
+  // Map target status to the correct backend endpoint
+  const endpointMap: Record<string, { path: string; method: string }> = {
+    assigned: { path: `/remediations/${enc}/assign`, method: "PATCH" },
+    in_progress: { path: `/remediations/${enc}/start`, method: "PATCH" },
+    pending_verification: { path: `/remediations/${enc}/submit-verification`, method: "PATCH" },
+    verification: { path: `/remediations/${enc}/submit-verification`, method: "PATCH" },
+    closed: { path: `/remediations/${enc}/verify`, method: "PATCH" },
+    verified: { path: `/remediations/${enc}/verify`, method: "PATCH" },
+  };
+  const ep = endpointMap[targetStatus];
+  if (!ep) {
+    return Promise.reject(new Error(`Unknown transition target: ${targetStatus}`));
+  }
+  return api<Remediation>(ep.path, {
+    method: ep.method,
+    body: payload ?? {},
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Governance — Issues
 // ---------------------------------------------------------------------------

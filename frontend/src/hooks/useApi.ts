@@ -73,6 +73,8 @@ import {
   getFindingDetail,
   getRemediations,
   getRemediationDetail,
+  createRemediation,
+  transitionRemediation,
   getIssues,
   getIssueDetail,
   getIssueSummary,
@@ -303,6 +305,33 @@ export function useRemediationDetail(id: string) {
     queryKey: queryKeys.remediationDetail(id),
     queryFn: () => getRemediationDetail(id),
     enabled: !!id,
+  });
+}
+
+export function useTransitionRemediation() {
+  return useMutation({
+    mutationFn: ({
+      id,
+      targetStatus,
+      payload,
+    }: {
+      id: string;
+      targetStatus: string;
+      payload?: Record<string, unknown>;
+    }) => transitionRemediation(id, targetStatus, payload),
+  });
+}
+
+export function useCreateRemediation() {
+  return useMutation({
+    mutationFn: (body: {
+      title: string;
+      description?: string;
+      framework?: string;
+      control_id?: string;
+      finding_id?: string;
+      due_date?: string;
+    }) => createRemediation(body),
   });
 }
 

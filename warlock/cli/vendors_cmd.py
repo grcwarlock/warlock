@@ -40,11 +40,11 @@ def vendor_mgmt(ctx: click.Context) -> None:
 @click.option("--limit", "-n", default=50, help="Max results")
 def vendor_list(tier: str | None, limit: int) -> None:
     """List all vendors."""
-    from warlock.db.engine import get_session, init_db
+    from warlock.db.engine import get_read_session, init_db
     from warlock.db.models import Vendor
 
     init_db()
-    with get_session() as session:
+    with get_read_session() as session:
         q = session.query(Vendor)
         if tier:
             q = q.filter(Vendor.tier == tier)

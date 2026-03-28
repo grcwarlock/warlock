@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableSkeleton } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useRemediationDetail } from "@/hooks/useApi";
+import { useRemediationDetail, useTransitionRemediation } from "@/hooks/useApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,7 +58,9 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
 
 export default function POAMDetail() {
   const { poamId } = useParams();
+  const queryClient = useQueryClient();
   const { data: remediation, isLoading, isError } = useRemediationDetail(poamId ?? "");
+  const transition = useTransitionRemediation();
 
   if (isLoading) {
     return (
@@ -140,8 +143,30 @@ export default function POAMDetail() {
           {transitions.length > 0 && (
             <div className="flex items-center gap-2 shrink-0">
               {transitions.map((t) => (
-                <Button key={t} variant="outline" size="sm">
-                  {t
+                <Button
+                  key={t}
+                  variant="outline"
+                  size="sm"
+                  disabled={transition.isPending}
+                  onClick={() => {
+                    const payload: Record<string, unknown> = {};
+                    if (t === "closed" || t === "verified") {
+                      payload.verification_notes = "Verified via dashboard";
+                      payload.approved = true;
+                    }
+                    transition.mutate(
+                      { id: r.id, targetStatus: t, payload },
+                      {
+                        onSuccess: () => {
+                          queryClient.invalidateQueries({
+                            queryKey: ["remediations"],
+                          });
+                        },
+                      },
+                    );
+                  }}
+                >
+                  {transition.isPending ? "..." : t
                     .split("_")
                     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                     .join(" ")}
