@@ -83,7 +83,8 @@ warlock retention report               # data retention
 warlock lake status                    # data lake zone sizes
 warlock lake query "SOC 2 readiness"   # natural language query
 warlock ask "are we HIPAA ready?"      # conversational compliance
-warlock dashboard                      # interactive TUI dashboard
+warlock                                # launch interactive TUI (Arcane Elegance)
+warlock --no-tui dashboard posture     # traditional CLI dashboard
 ```
 
 ## API

@@ -78,17 +78,18 @@ git clone https://github.com/grcwarlock/warlock.git && cd warlock
 make demo
 ```
 
-That's it. Virtual environment, OPA, database, seed data, and API server — all in one command. Then start the web UI:
+That's it. Virtual environment, OPA, database, seed data, and API server — all in one command. Then launch the interactive TUI:
 
 ```bash
-cd frontend && npm install && npm run dev
+warlock                    # launches the Arcane Elegance TUI dashboard
+warlock --no-tui collect   # traditional CLI mode for scripting
 ```
 
-- Web UI: http://localhost:5173 (login: `admin@acme.com` / `WarlockAdmin2026!`)
+- TUI: type `warlock` after `make demo` — remediation-first dashboard with 7 screens, `Ctrl+K` command palette
 - API: http://localhost:8000/docs
 - Stop: kill the PIDs shown in the demo output
 
-Requires Python 3.12+ and Node.js 20+. See **[DEMO.md](DEMO.md)** for full details.
+Requires Python 3.12+. See **[DEMO.md](DEMO.md)** for full details.
 
 ## CLI (686 leaf commands across 73 modules)
 
@@ -287,6 +288,12 @@ warlock/
 │   ├── queue.py          # Redis/Kafka/SQS backends
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
+├── tui/                  # Interactive TUI dashboard (Textual, 7 screens)
+│   ├── app.py            # WarlockApp entry point, screen routing, keybindings
+│   ├── theme.tcss        # Arcane Elegance theme (purple-accented dark)
+│   ├── screens/          # 7 screens: remediations, findings, controls, poam, pipeline, frameworks, vendors
+│   ├── widgets/          # Sidebar, command palette, detail pane components
+│   └── data/             # Direct SQLAlchemy queries, actions, fix templates
 ├── lake/                 # GRC Data Lake (23 modules)
 │   ├── writer.py         # Event-sourced Parquet writer
 │   ├── readers.py        # DuckDB analytical queries with ABAC
@@ -367,7 +374,7 @@ warlock/
 - **Queue:** Redis Streams / Kafka / SQS (pluggable)
 - **Data Lake:** DuckDB + PyArrow + Parquet (analytical layer)
 - **AI:** Anthropic, OpenAI, Gemini, Ollama (optional Tier 2 + narrative generation)
-- **CLI:** Click + Rich
+- **CLI:** Click + Rich, **TUI:** Textual (Arcane Elegance theme)
 - **Validation:** Pydantic 2.0
 - **HTTP:** httpx (async-capable)
 - **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + Recharts

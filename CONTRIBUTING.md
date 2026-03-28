@@ -295,6 +295,7 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
 - **API** (`warlock/api/`) — FastAPI REST endpoints (171 routes), ABAC-scoped access control
 - **CLI** (`warlock/cli/`) — Click CLI (686 leaf commands across 73 modules)
+- **TUI** (`warlock/tui/`) — Interactive Textual dashboard (7 screens, command palette, Arcane Elegance theme)
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
 - **Database** (`warlock/db/`) — SQLAlchemy ORM, 56 models, schema via Base.metadata.create_all()

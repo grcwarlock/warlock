@@ -9,6 +9,11 @@ conmon-monthly, evidence-sprint, onboard-system, system-review.
 
 Generated from `warlock --help` on 2026-03-22.
 
+> **TUI mode:** Running `warlock` without arguments in a terminal launches the
+> interactive TUI dashboard (Textual). Use `warlock --no-tui` to force
+> traditional CLI output, or set `WARLOCK_NO_TUI=1`. Non-TTY environments
+> (pipes, CI) auto-detect and use CLI mode.
+
 ---
 
 ### warlock access-review

@@ -172,6 +172,7 @@ warlock/
   assessors/     — assertions + AI reasoning + OPA evaluator (Stage 4)
   api/           — FastAPI REST API, ABAC-scoped
   cli/           — Click CLI package
+  tui/           — Interactive Textual TUI (7 screens, command palette, Arcane Elegance)
   db/            — SQLAlchemy models, schema via Base.metadata.create_all()
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
