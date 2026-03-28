@@ -184,7 +184,7 @@ warlock/
 tests/           — pytest tests (32 files)
 policies/        — OPA/Rego files across 9 framework dirs
 frameworks-oscal/ — OSCAL catalog/profile JSON
-terraform/       — 12 IaC modules (AWS, Azure, GCP)
+terraform/       — 135 IaC modules (AWS, Azure, GCP, + 12 more providers)
 scripts/
   demo.sh        — one-command local demo (DB + OPA + seed + API)
   demo_seed.py   — mock connectors, ~7,325 findings, 373K+ results

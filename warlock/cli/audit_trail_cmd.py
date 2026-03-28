@@ -31,20 +31,26 @@ from warlock.cli import cli, console, _error
 
 
 def _recompute_hash(entry) -> str:
-    """Recompute SHA-256 for an AuditEntry using the same fields the pipeline uses."""
-    payload = "|".join(
-        [
-            str(entry.sequence),
-            entry.previous_hash or "genesis",
-            entry.action,
-            entry.entity_type,
-            entry.entity_id,
-            entry.actor,
-            entry.evidence_sha256 or "",
-            entry.created_at.isoformat() if entry.created_at else "",
-        ]
+    """Recompute SHA-256 for an AuditEntry using the same fields as audit.py record().
+
+    Must match the serialization in ``AuditTrail.record()`` and
+    ``AuditTrail.verify_chain()`` exactly: JSON with ``sort_keys=True``,
+    no ``created_at`` (timestamp is deliberately excluded for deterministic
+    recomputation).
+    """
+    content = json.dumps(
+        {
+            "sequence": int(entry.sequence),
+            "previous_hash": entry.previous_hash,
+            "action": entry.action,
+            "entity_type": entry.entity_type,
+            "entity_id": entry.entity_id,
+            "actor": entry.actor,
+            "evidence_sha256": entry.evidence_sha256 or "",
+        },
+        sort_keys=True,
     )
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return hashlib.sha256(content.encode()).hexdigest()
 
 
 def _format_dt(dt: datetime | None) -> str:

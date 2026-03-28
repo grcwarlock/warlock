@@ -546,47 +546,86 @@ def evidence_freshness(framework: str | None, threshold_days: int) -> None:
 @evidence.command("gaps")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 def evidence_gaps(framework: str | None) -> None:
-    """Show controls missing evidence (no evidence_ids attached)."""
-    from warlock.db.engine import get_session, init_db
+    """Show controls missing uploaded evidence documents.
+
+    NOTE: ``evidence_ids`` on ControlResult contains raw-event UUIDs from
+    pipeline processing (computed lineage), NOT uploaded evidence artifacts.
+    A control with evidence_ids populated but no uploaded evidence document
+    still has an evidence gap.  Until an Evidence model is implemented, ALL
+    controls are reported as lacking real evidence — this is the correct,
+    conservative behaviour for auditors.
+    """
+    from warlock.db.engine import get_read_session, init_db
     from warlock.db.models import ControlResult
 
     init_db()
-    with get_session() as session:
+    with get_read_session() as session:
         q = session.query(ControlResult)
         if framework:
             q = q.filter(ControlResult.framework == framework)
         rows = q.all()
 
-    gaps = [r for r in rows if not r.evidence_ids]
-
-    if not gaps:
-        console.print("[green]No evidence gaps — all controls have evidence attached.[/green]")
+    if not rows:
+        console.print("[dim]No control results found.[/dim]")
         return
 
-    table = Table(title=f"Evidence Gaps ({len(gaps)} controls)")
+    # Categorise: controls with zero pipeline lineage vs those with lineage
+    # but no real evidence.  Both are gaps — the distinction helps prioritise.
+    no_lineage = []
+    lineage_only = []
+    for r in rows:
+        if not r.evidence_ids:
+            no_lineage.append(r)
+        else:
+            # Has pipeline lineage (raw-event UUIDs) but no uploaded evidence
+            lineage_only.append(r)
+
+    total_gaps = len(no_lineage) + len(lineage_only)
+
+    console.print(
+        f"\n[bold yellow]Evidence gap summary:[/bold yellow] "
+        f"{total_gaps} of {len(rows)} controls lack uploaded evidence documents."
+    )
+    if lineage_only:
+        console.print(
+            f"  [dim]{len(lineage_only)} have computed pipeline hashes "
+            f"(not a substitute for auditor-grade evidence).[/dim]"
+        )
+    console.print()
+
+    # Show the most actionable gaps first: no lineage at all
+    display = no_lineage[:200]  # cap for readability
+    label = "no_lineage"
+    if not display:
+        display = lineage_only[:200]
+        label = "lineage_only"
+
+    table = Table(title=f"Evidence Gaps — {label} ({len(display)} shown)")
     table.add_column("Framework", style="cyan")
     table.add_column("Control", style="cyan")
     table.add_column("Status")
     table.add_column("Severity")
-    table.add_column("Assessor", style="dim", max_width=30)
+    table.add_column("Evidence Type", style="dim")
 
-    for r in gaps:
+    for r in display:
         status_style = {
             "non_compliant": "red",
             "partial": "yellow",
             "compliant": "green",
         }.get(r.status, "")
+        ev_type = "none" if not r.evidence_ids else "pipeline hash only"
         table.add_row(
             r.framework,
             r.control_id,
             f"[{status_style}]{r.status}[/]",
             r.severity,
-            (r.assessor or "")[:30],
+            ev_type,
         )
 
     console.print(table)
     console.print(
-        "\n[dim]Attach evidence with: warlock evidence attach <control_id> --file <path> --description '...'[/dim]"
+        "\n[dim]Attach evidence with: warlock evidence attach <control_id> "
+        "--file <path> --description '...'[/dim]"
     )
 
 

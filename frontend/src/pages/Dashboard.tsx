@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -23,6 +23,7 @@ import {
   useDrift,
   usePipelineStatus,
   useTopology,
+  useVerifyAuditTrail,
 } from "@/hooks/useApi";
 import type { CoverageData, DriftEvent } from "@/api/types";
 
@@ -85,6 +86,14 @@ const KRI_REGISTRY: KRIItem[] = [
 function PipelineStatusBar() {
   const { data: pipeline, isLoading } = usePipelineStatus();
   const { data: summary } = useDashboardSummary();
+  const { data: chainStatus, refetch: verifyChain } = useVerifyAuditTrail();
+
+  // Trigger chain verification once pipeline data is loaded
+  useEffect(() => {
+    if (!isLoading) {
+      verifyChain();
+    }
+  }, [isLoading, verifyChain]);
 
   if (isLoading) {
     return (
@@ -139,7 +148,13 @@ function PipelineStatusBar() {
 
         <div className="flex items-center gap-1.5">
           <Hash className="h-3 w-3 text-zinc-500" />
-          <span className="text-green-400">Hash chain: verified</span>
+          {chainStatus ? (
+            <span className={chainStatus.valid ? "text-green-400" : "text-red-400"}>
+              Hash chain: {chainStatus.valid ? "verified" : `broken (${chainStatus.errors.length} errors)`}
+            </span>
+          ) : (
+            <span className="text-zinc-500">Hash chain: checking...</span>
+          )}
         </div>
 
         {pipeline?.totals && (

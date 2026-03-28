@@ -22074,22 +22074,14 @@ def main():
         n_audit = _seed_audit_trail(session)
         print(f"       Audit entries: {n_audit}")
 
-    print("[31/34] Verifying audit chain integrity...")
-    with get_session() as session:
-        from warlock.db.audit import AuditTrail
-
-        trail = AuditTrail(session)
-        valid, errors = trail.verify_chain()
-        if valid:
-            print("       Chain integrity: VERIFIED")
-        else:
-            print(f"       Chain integrity: BROKEN ({len(errors)} errors)")
-            for e in errors[:3]:
-                print(f"         - {e}")
+    # NOTE: Chain verification moved to step 37 (after ALL audit entries are
+    # seeded, including feature coverage and phase expansions).  Verifying here
+    # was premature — _seed_feature_coverage() and phase-5 expansions add more
+    # audit entries, so an early "VERIFIED" was misleading (STUB-027).
 
     # --- Feature coverage: seed data for 20 features showing 'no data' ---
 
-    print("[32/34] Seeding feature coverage data (20 features)...")
+    print("[31/34] Seeding feature coverage data (20 features)...")
     with get_session() as session:
         fc = _seed_feature_coverage(session)
         total_fc = sum(fc.values())
@@ -22098,7 +22090,7 @@ def main():
             print(f"         {k}: {v}")
 
     # --- Seed expansions: richer demo data ---
-    print("[33/38] Seeding Phase 2 expansions (zero-data gaps)...")
+    print("[32/38] Seeding Phase 2 expansions (zero-data gaps)...")
     try:
         from seed_expansions.phase2_zero_data_gaps import seed_phase2
 
@@ -22109,7 +22101,7 @@ def main():
     except Exception as exc:
         print(f"       Phase 2 expansion failed: {exc}")
 
-    print("[34/38] Seeding Phase 3 expansions (time depth)...")
+    print("[33/38] Seeding Phase 3 expansions (time depth)...")
     try:
         from seed_expansions.phase3_time_depth import seed_phase3
 
@@ -22120,7 +22112,7 @@ def main():
     except Exception as exc:
         print(f"       Phase 3 expansion failed: {exc}")
 
-    print("[35/38] Seeding Phase 5 expansions (scenario richness)...")
+    print("[34/38] Seeding Phase 5 expansions (scenario richness)...")
     try:
         from seed_expansions.phase5_scenario_richness import seed_phase5
 
@@ -22131,13 +22123,13 @@ def main():
     except Exception as exc:
         print(f"       Phase 5 expansion failed: {exc}")
 
-    print("[36/39] Enriching data for frontend demo...")
+    print("[35/39] Enriching data for frontend demo...")
     with get_session() as session:
         fe = _seed_frontend_enrichment(session)
         for k, v in sorted(fe.items()):
             print(f"       {k}: {v}")
 
-    print("[37/39] Re-verifying audit chain after expansions...")
+    print("[36/39] Verifying audit chain integrity (all entries)...")
     with get_session() as session:
         from warlock.db.audit import AuditTrail
 
@@ -22150,7 +22142,7 @@ def main():
             for e in errors[:3]:
                 print(f"         - {e}")
 
-    print("[38/39] Seed complete!\n")
+    print("[37/39] Seed complete!\n")
 
     print("=" * 60)
     print("  Try these commands:")

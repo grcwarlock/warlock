@@ -660,6 +660,8 @@ def gaps(framework: str | None, output_format: str) -> None:
 
     'Past-due' means the last assessment is older than the monitoring_frequency
     set on the control mapping.  'Never tested' means no ControlResult exists.
+    'No manual test' means automated assessments exist but no auditor has
+    examined the control (examined_at is NULL for all results).
     Controls with no frequency set are excluded from past-due detection.
     """
     from datetime import datetime, timezone
@@ -683,19 +685,28 @@ def gaps(framework: str | None, output_format: str) -> None:
             q = q.filter(ControlMapping.framework == framework)
         mappings = q.all()
 
-        # Latest assessed_at per (framework, control_id)
+        # Latest assessed_at and examined_at per (framework, control_id)
         rq = session.query(
-            ControlResult.framework, ControlResult.control_id, ControlResult.assessed_at
+            ControlResult.framework,
+            ControlResult.control_id,
+            ControlResult.assessed_at,
+            ControlResult.examined_at,
         )
         if framework:
             rq = rq.filter(ControlResult.framework == framework)
         result_rows = rq.order_by(ControlResult.assessed_at.desc()).all()
 
         last_assessed: dict[tuple[str, str], datetime | None] = {}
-        for fw, ctrl, assessed_at in result_rows:
+        last_examined: dict[tuple[str, str], datetime | None] = {}
+        for fw, ctrl, assessed_at, examined_at in result_rows:
             key = (fw, ctrl)
             if key not in last_assessed:
                 last_assessed[key] = assessed_at
+            # Track latest examined_at across all results for this control
+            if examined_at is not None:
+                prev = last_examined.get(key)
+                if prev is None or ensure_aware(examined_at) > ensure_aware(prev):
+                    last_examined[key] = examined_at
 
     gap_rows = []
     seen_keys: set[tuple[str, str]] = set()
@@ -707,6 +718,7 @@ def gaps(framework: str | None, output_format: str) -> None:
         seen_keys.add(key)
 
         la = last_assessed.get(key)
+        le = last_examined.get(key)
         if la is None:
             gap_rows.append(
                 {
@@ -718,24 +730,39 @@ def gaps(framework: str | None, output_format: str) -> None:
                     "overdue_days": "",
                 }
             )
-        elif m.monitoring_frequency:
-            freq_days = frequency_days.get(m.monitoring_frequency, 365)
-            overdue_by = (now - ensure_aware(la)).days - freq_days
-            if overdue_by > 0:
+        else:
+            # Check for past-due automated assessment
+            if m.monitoring_frequency:
+                freq_days = frequency_days.get(m.monitoring_frequency, 365)
+                overdue_by = (now - ensure_aware(la)).days - freq_days
+                if overdue_by > 0:
+                    gap_rows.append(
+                        {
+                            "framework": m.framework,
+                            "control_id": m.control_id,
+                            "cadence": m.monitoring_frequency,
+                            "last_assessed": str(la)[:10],
+                            "gap_type": "past_due",
+                            "overdue_days": str(overdue_by),
+                        }
+                    )
+            # Flag controls with automated assessment but no manual examination
+            if le is None:
                 gap_rows.append(
                     {
                         "framework": m.framework,
                         "control_id": m.control_id,
-                        "cadence": m.monitoring_frequency,
+                        "cadence": m.monitoring_frequency or "\u2014",
                         "last_assessed": str(la)[:10],
-                        "gap_type": "past_due",
-                        "overdue_days": str(overdue_by),
+                        "gap_type": "no_manual_test",
+                        "overdue_days": "",
                     }
                 )
 
     if not gap_rows:
         console.print(
-            "[green]No gaps found. All controls are within their testing cadence.[/green]"
+            "[green]No gaps found. All controls have been tested "
+            "(both automated and manual examination).[/green]"
         )
         return
 
@@ -754,7 +781,9 @@ def gaps(framework: str | None, output_format: str) -> None:
     table.add_column("Overdue Days", justify="right")
 
     for r in gap_rows:
-        gap_style = "red" if r["gap_type"] == "never_tested" else "yellow"
+        gap_style = {"never_tested": "red", "past_due": "yellow", "no_manual_test": "magenta"}.get(
+            r["gap_type"], "dim"
+        )
         table.add_row(
             r["framework"],
             r["control_id"],
