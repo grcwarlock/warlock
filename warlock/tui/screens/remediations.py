@@ -1,4 +1,4 @@
-"""Remediations screen — the home dashboard.
+"""Remediations view — the home dashboard.
 
 Three states:
 1. List view — all remediations with summary detail pane
@@ -13,7 +13,6 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
-from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Static, ListView, ListItem
 
@@ -206,12 +205,9 @@ class DetailPane(Widget):
         return lines
 
     def _get_fix_commands(self, d: dict) -> list[dict] | None:
-        # Priority 1: steps from the remediation itself
         steps = d.get("steps") or []
         if steps and any(s.get("commands") for s in steps):
             return steps
-
-        # Priority 2: template from finding source
         source = d.get("finding_source", "")
         if source:
             try:
@@ -236,38 +232,39 @@ class DetailPane(Widget):
 
 
 # ------------------------------------------------------------------ #
-# Screen                                                               #
+# View (mounted inside the app, not a Screen)                          #
 # ------------------------------------------------------------------ #
 
 
-class RemediationsScreen(Screen):
-    """Home screen — remediation list with detail pane."""
+class RemediationsView(Vertical):
+    """Home view — remediation list with detail pane."""
 
     BINDINGS = [
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
-        Binding("enter", "toggle_expand", "Expand"),
+        Binding("enter", "toggle_expand", "Expand", show=False),
         Binding("escape", "collapse", "Back", show=False),
-        Binding("t", "transition", "Transition"),
-        Binding("a", "assign", "Assign"),
+        Binding("t", "transition", "Transition", show=False),
+        Binding("a", "assign", "Assign", show=False),
         Binding("slash", "focus_search", "Search", show=False),
-        Binding("f", "filter", "Filter"),
-        Binding("r", "refresh_data", "Refresh"),
+        Binding("f", "filter", "Filter", show=False),
+        Binding("r", "refresh_data", "Refresh", show=False),
     ]
 
+    can_focus = True
+
     _items: reactive[list[dict]] = reactive(list, layout=True)
-    _selected_idx: reactive[int] = reactive(0)
 
     def compose(self) -> ComposeResult:
+        yield Static("", id="header-bar")
+        yield Static("", id="filter-bar")
         with Horizontal(id="main-content"):
-            with Vertical(id="list-panel"):
-                yield Static("", id="header-bar")
-                yield Static("", id="filter-bar")
-                yield ListView(id="rem-list")
-                yield Static("", id="footer-bar")
+            yield ListView(id="rem-list")
             yield VerticalScroll(DetailPane(id="detail-view"), id="detail-pane")
+        yield Static("", id="footer-bar")
 
     def on_mount(self) -> None:
+        self.focus()
         self._load_data()
 
     def _load_data(self) -> None:
@@ -282,7 +279,7 @@ class RemediationsScreen(Screen):
             try:
                 self.app.call_from_thread(self._set_data, items, counts)
             except Exception:
-                pass  # Screen may have been popped
+                pass
         except Exception as e:
             try:
                 self.app.call_from_thread(self._set_error, str(e))
@@ -292,7 +289,6 @@ class RemediationsScreen(Screen):
     def _set_data(self, items: list[dict], counts: dict) -> None:
         self._items = items
 
-        # Update header
         header = self.query_one("#header-bar", Static)
         c = counts
         header.update(
@@ -302,19 +298,16 @@ class RemediationsScreen(Screen):
             f"  [on #003300] {c['closed']} closed [/]"
         )
 
-        # Update footer
         footer = self.query_one("#footer-bar", Static)
         footer.update(
             " [#a78bfa]j[/]/[#a78bfa]k[/] move  "
             "[#a78bfa]Enter[/] expand  "
             "[#a78bfa]t[/] transition  "
             "[#a78bfa]a[/] assign  "
-            "[#a78bfa]f[/] filter  "
             "[#a78bfa]r[/] refresh  "
             "[#a78bfa]Ctrl+K[/] commands"
         )
 
-        # Populate list
         lv = self.query_one("#rem-list", ListView)
         lv.clear()
         for item in items:
@@ -328,8 +321,10 @@ class RemediationsScreen(Screen):
         header.update(f" [bold red]Error loading remediations:[/] {error}")
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Enter key pressed on a list item — expand detail."""
         if isinstance(event.item, RemediationRow):
             self._update_detail(event.item.data)
+            self._do_expand(event.item.data["id"])
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         if event.item and isinstance(event.item, RemediationRow):
@@ -340,14 +335,12 @@ class RemediationsScreen(Screen):
         detail.item = item
         detail.expanded = False
 
-    def action_toggle_expand(self) -> None:
-        detail = self.query_one("#detail-view", DetailPane)
-        if detail.item and not detail.expanded:
-            # Fetch full detail with impacted systems and commands
-            self.run_worker(
-                lambda: self._fetch_detail(detail.item["id"]),
-                thread=True,
-            )
+    def _do_expand(self, rem_id: str) -> None:
+        """Fetch full detail and expand the pane."""
+        self.run_worker(
+            lambda: self._fetch_detail(rem_id),
+            thread=True,
+        )
 
     def _fetch_detail(self, rem_id: str) -> None:
         try:
@@ -366,9 +359,14 @@ class RemediationsScreen(Screen):
         detail = self.query_one("#detail-view", DetailPane)
         detail.item = full_data
         detail.expanded = True
-        # Expand the pane width
         pane = self.query_one("#detail-pane")
         pane.add_class("--expanded")
+
+    def action_toggle_expand(self) -> None:
+        """Manual Enter binding — expand the currently highlighted item."""
+        lv = self.query_one("#rem-list", ListView)
+        if lv.highlighted_child and isinstance(lv.highlighted_child, RemediationRow):
+            self._do_expand(lv.highlighted_child.data["id"])
 
     def action_collapse(self) -> None:
         detail = self.query_one("#detail-view", DetailPane)
@@ -376,22 +374,17 @@ class RemediationsScreen(Screen):
             detail.expanded = False
             pane = self.query_one("#detail-pane")
             pane.remove_class("--expanded")
-        else:
-            self.app.pop_screen()
 
     def action_cursor_down(self) -> None:
-        lv = self.query_one("#rem-list", ListView)
-        lv.action_cursor_down()
+        self.query_one("#rem-list", ListView).action_cursor_down()
 
     def action_cursor_up(self) -> None:
-        lv = self.query_one("#rem-list", ListView)
-        lv.action_cursor_up()
+        self.query_one("#rem-list", ListView).action_cursor_up()
 
     def action_transition(self) -> None:
         detail = self.query_one("#detail-view", DetailPane)
         if not detail.item:
             return
-        # Show valid transitions
         current = detail.item["status"]
         valid = {
             "open": ["assigned"],
@@ -404,7 +397,6 @@ class RemediationsScreen(Screen):
         if not transitions:
             self.notify(f"No transitions from {current}", severity="warning")
             return
-        # For now, transition to the first valid state
         new_status = transitions[0]
         self.run_worker(
             lambda: self._do_transition(detail.item["id"], new_status),
@@ -416,9 +408,15 @@ class RemediationsScreen(Screen):
 
         error = transition_remediation(rem_id, new_status, "cli@warlock")
         if error:
-            self.app.call_from_thread(self.notify, error, severity="error")
+            try:
+                self.app.call_from_thread(self.notify, error, severity="error")
+            except Exception:
+                pass
         else:
-            self.app.call_from_thread(self.notify, f"Transitioned to {new_status}")
+            try:
+                self.app.call_from_thread(self.notify, f"Transitioned to {new_status}")
+            except Exception:
+                pass
             self._fetch_data()
 
     def action_assign(self) -> None:

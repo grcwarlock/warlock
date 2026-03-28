@@ -7,9 +7,9 @@ from typing import Any
 from rich.markup import escape
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.containers import Vertical, VerticalScroll
 from textual.reactive import reactive
-from textual.screen import Screen
+
 from textual.widget import Widget
 from textual.widgets import Static, ListView, ListItem
 
@@ -103,7 +103,8 @@ class POAMDetailPane(Widget):
         return "\n".join(lines)
 
 
-class POAMScreen(Screen):
+class POAMView(Vertical):
+    can_focus = True
     """POA&M list with detail pane."""
 
     BINDINGS = [
@@ -117,14 +118,15 @@ class POAMScreen(Screen):
     _items: reactive[list[dict]] = reactive(list, layout=True)
 
     def compose(self) -> ComposeResult:
-        with Horizontal(id="main-content"):
-            with Vertical(id="list-panel"):
-                yield Static("", id="header-bar")
-                yield ListView(id="poam-list")
-                yield Static("", id="footer-bar")
-            yield VerticalScroll(POAMDetailPane(id="detail-view"), id="detail-pane")
+
+        with Vertical(id="list-panel"):
+            yield Static("", id="header-bar")
+            yield ListView(id="poam-list")
+            yield Static("", id="footer-bar")
+        yield VerticalScroll(POAMDetailPane(id="detail-view"), id="detail-pane")
 
     def on_mount(self) -> None:
+        self.focus()
         self._load_data()
 
     def _load_data(self) -> None:
@@ -187,7 +189,7 @@ class POAMScreen(Screen):
             self._update_detail(lv.highlighted_child.data)
 
     def action_go_back(self) -> None:
-        self.app.pop_screen()
+        pass
 
     def action_cursor_down(self) -> None:
         self.query_one("#poam-list", ListView).action_cursor_down()

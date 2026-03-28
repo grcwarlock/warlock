@@ -1,6 +1,7 @@
 """WarlockApp — the main Textual application.
 
-Registers all screens, global keybindings, and the Arcane Elegance theme.
+Single-screen architecture: the sidebar is always visible, and the main
+content area swaps between different view widgets (remediations, findings, etc.)
 """
 
 from __future__ import annotations
@@ -9,11 +10,10 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.containers import Horizontal, Vertical
 
 from warlock.tui.widgets.sidebar import Sidebar
 
-
-# Path to the theme CSS file
 THEME_CSS = Path(__file__).parent / "theme.tcss"
 
 
@@ -40,32 +40,17 @@ class WarlockApp(App):
     def __init__(self) -> None:
         super().__init__()
         self._sidebar: Sidebar | None = None
-        self._current_screen_id = "remed"
+        self._current_view: str = ""
+
+    def compose(self) -> ComposeResult:
+        self._sidebar = Sidebar()
+        yield self._sidebar
+        yield Horizontal(id="view-container")
 
     def on_mount(self) -> None:
-        """Initialize DB and install screens."""
-        # Init DB in background thread to avoid blocking UI
         self.run_worker(self._init_db, thread=True)
-
-        # Install named screens (lazy loaded)
-        from warlock.tui.screens.remediations import RemediationsScreen
-        from warlock.tui.screens.findings import FindingsScreen
-        from warlock.tui.screens.controls import ControlsScreen
-        from warlock.tui.screens.poam import POAMScreen
-        from warlock.tui.screens.pipeline import PipelineScreen
-        from warlock.tui.screens.frameworks import FrameworksScreen
-        from warlock.tui.screens.vendors import VendorsScreen
-
-        self.install_screen(RemediationsScreen, name="remed")
-        self.install_screen(FindingsScreen, name="findings")
-        self.install_screen(ControlsScreen, name="controls")
-        self.install_screen(POAMScreen, name="poam")
-        self.install_screen(PipelineScreen, name="pipeline")
-        self.install_screen(FrameworksScreen, name="frameworks")
-        self.install_screen(VendorsScreen, name="vendors")
-
-        # Push the home screen
-        self.push_screen("remed")
+        # Load the home screen
+        self._switch_view("remed")
 
     def _init_db(self) -> None:
         try:
@@ -75,41 +60,68 @@ class WarlockApp(App):
         except Exception:
             pass
 
-    def compose(self) -> ComposeResult:
-        self._sidebar = Sidebar()
-        yield self._sidebar
+    def _switch_view(self, view_id: str) -> None:
+        """Swap the main content area to a different view."""
+        if view_id == self._current_view:
+            return
+        self._current_view = view_id
+        if self._sidebar:
+            self._sidebar.active_screen = view_id
+
+        container = self.query_one("#view-container", Horizontal)
+        container.remove_children()
+
+        view_widget = self._build_view(view_id)
+        container.mount(view_widget)
+
+    def _build_view(self, view_id: str) -> Vertical:
+        """Build the content widget for a view."""
+        from warlock.tui.screens.remediations import RemediationsView
+        from warlock.tui.screens.findings import FindingsView
+        from warlock.tui.screens.controls import ControlsView
+        from warlock.tui.screens.poam import POAMView
+        from warlock.tui.screens.pipeline import PipelineView
+        from warlock.tui.screens.frameworks import FrameworksView
+        from warlock.tui.screens.vendors import VendorsView
+
+        views = {
+            "remed": RemediationsView,
+            "findings": FindingsView,
+            "controls": ControlsView,
+            "poam": POAMView,
+            "pipeline": PipelineView,
+            "frameworks": FrameworksView,
+            "vendors": VendorsView,
+        }
+        cls = views.get(view_id, RemediationsView)
+        return cls()
 
     def switch_screen_by_id(self, screen_id: str) -> None:
-        """Switch to a named screen, updating the sidebar."""
-        if screen_id == self._current_screen_id:
-            return
-        self._current_screen_id = screen_id
-        if self._sidebar:
-            self._sidebar.active_screen = screen_id
-        self.switch_screen(screen_id)
+        """Public API for sidebar clicks."""
+        self._switch_view(screen_id)
 
     # ---- Screen switching actions ----
 
     def action_switch_remed(self) -> None:
-        self.switch_screen_by_id("remed")
+        self._switch_view("remed")
 
     def action_switch_findings(self) -> None:
-        self.switch_screen_by_id("findings")
+        self._switch_view("findings")
 
     def action_switch_controls(self) -> None:
-        self.switch_screen_by_id("controls")
+        self._switch_view("controls")
 
     def action_switch_poam(self) -> None:
-        self.switch_screen_by_id("poam")
+        self._switch_view("poam")
 
     def action_switch_pipeline(self) -> None:
-        self.switch_screen_by_id("pipeline")
+        self._switch_view("pipeline")
 
     def action_switch_frameworks(self) -> None:
-        self.switch_screen_by_id("frameworks")
+        self._switch_view("frameworks")
 
     def action_switch_vendors(self) -> None:
-        self.switch_screen_by_id("vendors")
+        self._switch_view("vendors")
 
     # ---- Global actions ----
 
@@ -119,16 +131,16 @@ class WarlockApp(App):
         def handle_result(result: dict | None) -> None:
             if result is None:
                 return
-            if result.get("type") == "command":
-                # Run CLI command inline
+            rtype = result.get("type", "")
+            if rtype == "command":
                 cmd_name = result.get("id", "")
                 self.notify(f"Command: warlock {cmd_name}")
-            elif result.get("type") == "remediation":
-                self.switch_screen_by_id("remed")
-            elif result.get("type") == "finding":
-                self.switch_screen_by_id("findings")
-            elif result.get("type") == "control":
-                self.switch_screen_by_id("controls")
+            elif rtype == "remediation":
+                self._switch_view("remed")
+            elif rtype == "finding":
+                self._switch_view("findings")
+            elif rtype == "control":
+                self._switch_view("controls")
 
         self.push_screen(CommandPalette(), handle_result)
 

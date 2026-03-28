@@ -1,4 +1,4 @@
-"""Pipeline runs screen — list/detail view of pipeline executions."""
+"""Pipeline runs view — list/detail view of pipeline executions."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
-from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Static, ListView, ListItem
 
@@ -134,32 +133,35 @@ class PipelineDetailPane(Widget):
 
 
 # ------------------------------------------------------------------ #
-# Screen                                                               #
+# View                                                                 #
 # ------------------------------------------------------------------ #
 
 
-class PipelineScreen(Screen):
+class PipelineView(Vertical):
     """Pipeline runs list with detail pane."""
+
+    can_focus = True
 
     BINDINGS = [
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
-        Binding("enter", "select_run", "Select"),
+        Binding("enter", "select_run", "Select", show=False),
         Binding("escape", "go_back", "Back", show=False),
-        Binding("r", "refresh_data", "Refresh"),
+        Binding("r", "refresh_data", "Refresh", show=False),
     ]
 
     _items: reactive[list[dict]] = reactive(list, layout=True)
 
     def compose(self) -> ComposeResult:
-        with Horizontal(id="main-content"):
+        yield Static("", id="header-bar")
+        with Horizontal():
             with Vertical(id="list-panel"):
-                yield Static("", id="header-bar")
                 yield ListView(id="pipeline-list")
-                yield Static("", id="footer-bar")
             yield VerticalScroll(PipelineDetailPane(id="detail-view"), id="detail-pane")
+        yield Static("", id="footer-bar")
 
     def on_mount(self) -> None:
+        self.focus()
         self._load_data()
 
     def _load_data(self) -> None:
@@ -218,7 +220,7 @@ class PipelineScreen(Screen):
             self._update_detail(lv.highlighted_child.data)
 
     def action_go_back(self) -> None:
-        self.app.pop_screen()
+        pass
 
     def action_cursor_down(self) -> None:
         self.query_one("#pipeline-list", ListView).action_cursor_down()
