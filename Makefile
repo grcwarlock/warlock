@@ -25,12 +25,12 @@ migrate: ## Run database migrations
 	alembic upgrade head
 
 seed: ## Run demo seed
-	python scripts/demo_seed.py
+	WLK_AI_ENABLED=false python scripts/demo_seed.py
 
 reset: ## Reset SQLite DB and seed fresh data
 	rm -f warlock.db warlock.db-shm warlock.db-wal
 	.venv/bin/alembic upgrade head
-	.venv/bin/python scripts/demo_seed.py
+	WLK_AI_ENABLED=false .venv/bin/python scripts/demo_seed.py
 
 demo: ## Spin up full demo (DB + OPA + API + seed) and drop into CLI-ready shell
 	@./scripts/demo.sh
