@@ -206,7 +206,7 @@ def get_remediation_detail(rem_id: str) -> dict[str, Any] | None:
                     {
                         "framework": cr.framework or "",
                         "control_id": cr.control_id or "",
-                        "control_title": cr.control_title or "",
+                        "control_title": cr.assertion_name or "",
                         "status": cr.status or "not_assessed",
                     }
                 )
@@ -224,7 +224,7 @@ def get_remediation_detail(rem_id: str) -> dict[str, Any] | None:
                     {
                         "framework": cr.framework or "",
                         "control_id": cr.control_id or "",
-                        "control_title": cr.control_title or "",
+                        "control_title": cr.assertion_name or "",
                         "status": cr.status or "not_assessed",
                     }
                 )
@@ -324,7 +324,7 @@ def get_control_results(
                 "id": cr.id,
                 "framework": cr.framework or "",
                 "control_id": cr.control_id or "",
-                "control_title": cr.control_title or "",
+                "control_title": cr.assertion_name or "",
                 "status": cr.status or "not_assessed",
             }
             for cr in rows

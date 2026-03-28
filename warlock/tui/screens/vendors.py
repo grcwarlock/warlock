@@ -206,6 +206,8 @@ class VendorsView(Vertical):
             lv.append(VendorRow(item))
 
         if items:
+            lv.index = 0
+            lv.focus()
             self._update_detail(items[0])
 
     def _set_error(self, error: str) -> None:

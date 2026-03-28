@@ -59,8 +59,11 @@ def _due_label(item: dict) -> str:
 
 
 def _step_icon(step: dict) -> str:
-    if step.get("completed"):
+    status = step.get("status", "")
+    if step.get("completed") or status == "done":
         return "[green]\u2713[/]"
+    if status == "in_progress":
+        return "[#a78bfa]\u25b6[/]"
     return "[dim]\u25cb[/]"
 
 
@@ -120,7 +123,11 @@ class DetailPane(Widget):
             lines.append("[bold #a78bfa]\u25c6 REMEDIATION STEPS[/]")
             for i, step in enumerate(steps):
                 icon = _step_icon(step)
-                desc = step.get("description", step.get("step", f"Step {i + 1}"))
+                desc = (
+                    step.get("description")
+                    or step.get("action")
+                    or f"Step {step.get('step', i + 1)}"
+                )
                 lines.append(f"  {icon} {desc}")
             lines.append("")
 
@@ -166,7 +173,7 @@ class DetailPane(Widget):
             lines.append("")
             for step in fix_cmds:
                 step_num = step.get("step", "?")
-                desc = step.get("description", "")
+                desc = step.get("description") or step.get("action") or ""
                 lines.append(f"  [bold]Step {step_num}[/] \u2014 {desc}")
                 for cmd in step.get("commands", []):
                     if cmd.startswith("#"):
@@ -322,6 +329,8 @@ class RemediationsView(Vertical):
             lv.append(RemediationRow(item))
 
         if items:
+            lv.index = 0  # Highlight first item so Enter works immediately
+            lv.focus()  # Give list focus so keyboard works
             self._update_detail(items[0])
 
     def _set_error(self, error: str) -> None:

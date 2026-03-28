@@ -159,6 +159,8 @@ class FindingsView(Vertical):
             lv.append(FindingRow(item))
 
         if items:
+            lv.index = 0
+            lv.focus()
             self._update_detail(items[0])
 
     def _set_error(self, error: str) -> None:
