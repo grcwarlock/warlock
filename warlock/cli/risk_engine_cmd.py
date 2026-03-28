@@ -935,6 +935,25 @@ def appetite_check() -> None:
         )
         return
 
+    # FAIR-style ALE estimates by risk score bracket for dollar/FAIR_ALE comparisons
+    _score_to_ale: dict[int, float] = {
+        25: 2_500_000.0,
+        20: 1_500_000.0,
+        15: 500_000.0,
+        12: 250_000.0,
+        10: 80_000.0,
+        6: 40_000.0,
+        3: 10_000.0,
+        1: 1_000.0,
+    }
+
+    def _estimate_ale(score: int) -> float:
+        """Map a likelihood*impact score to an estimated ALE dollar value."""
+        for threshold_score, ale in sorted(_score_to_ale.items(), reverse=True):
+            if score >= threshold_score:
+                return ale
+        return 0.0
+
     # Calculate current score-based exposure per category
     cat_scores: dict[str, list[int]] = {}
     for r in register_entries:
@@ -954,7 +973,12 @@ def appetite_check() -> None:
         limit = float(t.get("threshold", 0))
         unit = t.get("unit", "score")
         scores = cat_scores.get(cat, [])
-        current = max(scores) if scores else 0.0
+        if unit.lower() in ("fair_ale", "dollar", "dollars", "usd"):
+            # Compare estimated ALE values, not raw scores
+            ale_values = [_estimate_ale(s) for s in scores]
+            current = max(ale_values) if ale_values else 0.0
+        else:
+            current = max(scores) if scores else 0.0
         within = current <= limit
         status_label = (
             "[green]Within appetite[/green]" if within else "[red bold]EXCEEDS appetite[/red bold]"

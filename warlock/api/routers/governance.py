@@ -26,6 +26,7 @@ from warlock.db.models import (
     ControlResult,
     Finding,
     Issue,
+    POAM,
     User,
 )
 from warlock.db.repository import get_repos
@@ -300,6 +301,28 @@ class POAMResponse(BaseModel):
     created_at: str
 
     model_config = {"from_attributes": True}
+
+
+class POAMCreateRequest(BaseModel):
+    title: str
+    framework: str
+    control_id: str
+    weakness_description: str
+    severity: str = "medium"
+    scheduled_completion: str | None = None
+
+
+class POAMUpdateRequest(BaseModel):
+    weakness_description: str | None = None
+    severity: str | None = None
+    risk_level: str | None = None
+    resources_required: str | None = None
+    vendor_dependency: str | None = None
+
+
+class POAMTransitionRequest(BaseModel):
+    status: str
+    notes: str | None = None
 
 
 class POAMExtendRequest(BaseModel):
@@ -1204,6 +1227,124 @@ def extend_poam(
     new_date = dt.fromisoformat(req.new_completion_date)
     poam = mgr.extend(db, poam_id, req.justification, new_date, req.approved_by)
     return {"id": poam.id, "status": poam.status, "delay_count": poam.delay_count}
+
+
+@router.get("/poams/{poam_id}", response_model=POAMResponse)
+def get_poam(
+    poam_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("read")),
+):
+    """Get a single POA&M by ID."""
+    poam = db.get(POAM, poam_id)
+    if not poam:
+        raise HTTPException(status_code=404, detail="POA&M not found")
+    return POAMResponse(
+        id=poam.id,
+        framework=poam.framework,
+        control_id=poam.control_id,
+        weakness_description=poam.weakness_description,
+        severity=poam.severity,
+        status=poam.status,
+        scheduled_completion=(
+            poam.scheduled_completion.isoformat() if poam.scheduled_completion else None
+        ),
+        delay_count=poam.delay_count or 0,
+        milestones=poam.milestones,
+        created_at=poam.created_at.isoformat() if poam.created_at else "",
+    )
+
+
+@router.post("/poams", response_model=POAMResponse, status_code=201)
+def create_poam(
+    body: POAMCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    """Create a new POA&M."""
+    poam = POAM(
+        framework=body.framework,
+        control_id=body.control_id,
+        weakness_description=body.weakness_description,
+        severity=body.severity,
+        status="draft",
+        created_by=current_user.email,
+    )
+    if body.scheduled_completion:
+        poam.scheduled_completion = _parse_dt(body.scheduled_completion)
+    db.add(poam)
+    db.flush()
+    return POAMResponse(
+        id=poam.id,
+        framework=poam.framework,
+        control_id=poam.control_id,
+        weakness_description=poam.weakness_description,
+        severity=poam.severity,
+        status=poam.status,
+        scheduled_completion=(
+            poam.scheduled_completion.isoformat() if poam.scheduled_completion else None
+        ),
+        delay_count=poam.delay_count or 0,
+        milestones=poam.milestones,
+        created_at=poam.created_at.isoformat() if poam.created_at else "",
+    )
+
+
+@router.patch("/poams/{poam_id}", response_model=POAMResponse)
+def update_poam(
+    poam_id: str,
+    body: POAMUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    """Update mutable fields on a POA&M."""
+    poam = db.get(POAM, poam_id)
+    if not poam:
+        raise HTTPException(status_code=404, detail="POA&M not found")
+    if body.weakness_description is not None:
+        poam.weakness_description = body.weakness_description
+    if body.severity is not None:
+        poam.severity = body.severity
+    if body.risk_level is not None:
+        poam.risk_level = body.risk_level
+    if body.resources_required is not None:
+        poam.resources_required = body.resources_required
+    if body.vendor_dependency is not None:
+        poam.vendor_dependency = body.vendor_dependency
+    poam.updated_by = current_user.email
+    db.flush()
+    return POAMResponse(
+        id=poam.id,
+        framework=poam.framework,
+        control_id=poam.control_id,
+        weakness_description=poam.weakness_description,
+        severity=poam.severity,
+        status=poam.status,
+        scheduled_completion=(
+            poam.scheduled_completion.isoformat() if poam.scheduled_completion else None
+        ),
+        delay_count=poam.delay_count or 0,
+        milestones=poam.milestones,
+        created_at=poam.created_at.isoformat() if poam.created_at else "",
+    )
+
+
+@router.post("/poams/{poam_id}/transition", response_model=MessageResponse)
+def transition_poam(
+    poam_id: str,
+    body: POAMTransitionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("write")),
+):
+    """Transition a POA&M to a new status."""
+    from warlock.workflows.poam import POAMManager
+
+    mgr = POAMManager()
+    try:
+        poam = mgr.transition(db, poam_id, body.status, actor=current_user.email)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return MessageResponse(message=f"POA&M {poam.id} transitioned to '{poam.status}'")
 
 
 # ---------------------------------------------------------------------------

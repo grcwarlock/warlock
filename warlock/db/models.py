@@ -1595,6 +1595,9 @@ class Asset(TenantMixin, Base):
     last_seen = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     metadata_ = Column("metadata", JSONType, default=dict)
 
+    # GAP-055: Finding UUIDs linked to this asset (JSON list, like evidence_ids on ControlResult)
+    finding_ids = Column(JSONType, default=list)
+
     system = relationship("SystemProfile", backref="assets")
 
 
@@ -1921,4 +1924,35 @@ class PipelineRun(TenantMixin, Base):
         ),
         Index("idx_pipeline_run_status", "status"),
         Index("idx_pipeline_run_started_at", "started_at"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Dead Letter Queue — failed pipeline events for retry/inspection
+# ---------------------------------------------------------------------------
+
+
+class DeadLetterEntry(TenantMixin, Base):
+    """Captures pipeline events that failed processing for later retry."""
+
+    __tablename__ = "dead_letter_queue"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    event_type = Column(String(100), nullable=False)
+    payload = Column(JSONType, nullable=False)
+    error_message = Column(Text, nullable=False)
+    retry_count = Column(Integer, default=0)
+    status = Column(String(20), default="failed")  # failed, retried, purged
+    original_event_id = Column(String(36))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    last_retry_at = Column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('failed','retried','purged')",
+            name="ck_dlq_status",
+        ),
+        Index("idx_dlq_status", "status"),
+        Index("idx_dlq_event_type", "event_type"),
+        Index("idx_dlq_created_at", "created_at"),
     )

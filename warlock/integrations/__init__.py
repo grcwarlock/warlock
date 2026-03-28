@@ -51,6 +51,10 @@ _INTEGRATION_REGISTRY: dict[str, tuple[str, str]] = {
         "warlock.integrations.terraform_provider",
         "TerraformProvider",
     ),
+    "email_notifications": (
+        "warlock.integrations.email_notifications",
+        "EmailNotifier",
+    ),
 }
 
 

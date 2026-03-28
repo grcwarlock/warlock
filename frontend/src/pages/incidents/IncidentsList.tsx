@@ -41,7 +41,7 @@ function relativeTime(iso: string | null | undefined): string {
 }
 
 const SEVERITY_OPTIONS = ["", "critical", "high", "medium", "low"];
-const STATUS_OPTIONS = ["", "open", "investigating", "mitigating", "resolved", "closed"];
+const STATUS_OPTIONS = ["", "open", "assigned", "in_progress", "remediated", "verified", "closed", "risk_accepted"];
 
 // ---------------------------------------------------------------------------
 // Component

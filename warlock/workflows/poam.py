@@ -7,7 +7,7 @@ extension workflows with delay tracking, and overdue detection.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,14 @@ log = logging.getLogger(__name__)
 
 # Terminal statuses that should not be considered "open"
 _CLOSED_STATUSES = frozenset({"completed", "verified", "closed", "risk_accepted", "cancelled"})
+
+# GAP-034: SLA defaults by severity (days until scheduled_completion)
+_SLA_DAYS: dict[str, int] = {
+    "critical": 30,
+    "high": 60,
+    "moderate": 90,
+    "low": 180,
+}
 
 # W-2: Valid POA&M status transitions
 VALID_TRANSITIONS: dict[str, set[str]] = {
@@ -35,6 +43,25 @@ _ANY_STATE_TARGETS = {"risk_accepted", "cancelled"}
 
 class POAMManager:
     """Manages POA&M lifecycle: creation, extension, querying."""
+
+    def apply_sla_defaults(self, poam: POAM) -> None:
+        """Set ``scheduled_completion`` based on severity if not already set.
+
+        Uses ``_SLA_DAYS`` mapping: critical=30d, high=60d, moderate=90d,
+        low=180d.  Unknown severities fall back to 90 days.
+        """
+        if poam.scheduled_completion is not None:
+            return
+        severity = (poam.severity or "").lower()
+        days = _SLA_DAYS.get(severity, 90)
+        poam.scheduled_completion = datetime.now(timezone.utc) + timedelta(days=days)
+        log.debug(
+            "SLA default: POA&M %s severity=%s -> %d days (due %s)",
+            poam.id,
+            severity,
+            days,
+            poam.scheduled_completion.isoformat(),
+        )
 
     def auto_create_from_result(
         self,
@@ -100,6 +127,10 @@ class POAMManager:
             status="draft",
         )
         session.add(poam)
+        session.flush()
+
+        # GAP-034: apply SLA-based deadline if not explicitly set
+        self.apply_sla_defaults(poam)
         session.flush()
 
         audit = AuditTrail(session)

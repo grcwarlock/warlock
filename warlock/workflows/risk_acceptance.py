@@ -79,6 +79,59 @@ class RiskAcceptanceManager:
         )
         return ra
 
+    def review(
+        self,
+        session: Session,
+        ra_id: str,
+        reviewed_by: str,
+        review_notes: str | None = None,
+    ) -> RiskAcceptance:
+        """Review a risk acceptance, transitioning from 'requested' to 'reviewed'.
+
+        Args:
+            session: SQLAlchemy session.
+            ra_id: ID of the risk acceptance.
+            reviewed_by: Who performed the review.
+            review_notes: Optional notes from the reviewer.
+
+        Returns:
+            Updated RiskAcceptance.
+
+        Raises:
+            ValueError: If not found or not in 'requested' status.
+        """
+        ra = session.query(RiskAcceptance).filter_by(id=ra_id).first()
+        if not ra:
+            raise ValueError(f"Risk acceptance not found: {ra_id}")
+        if ra.status != "requested":
+            raise ValueError(f"Cannot review from status '{ra.status}' — must be 'requested'")
+        ra.status = "reviewed"
+        ra.reviewed_by = reviewed_by
+        ra.reviewed_at = datetime.now(timezone.utc)
+        session.flush()
+
+        audit = AuditTrail(session)
+        audit.record(
+            action="risk_acceptance_reviewed",
+            entity_type="risk_acceptance",
+            entity_id=str(ra.id),
+            actor=reviewed_by,
+            metadata={
+                "framework": ra.framework,
+                "control_id": ra.control_id,
+                "review_notes": review_notes,
+            },
+        )
+
+        log.info(
+            "Reviewed risk acceptance %s for %s/%s by %s",
+            ra.id,
+            ra.framework,
+            ra.control_id,
+            reviewed_by,
+        )
+        return ra
+
     def approve(self, session: Session, ra_id: str, approved_by: str) -> RiskAcceptance:
         """Approve a risk acceptance. Must be in 'reviewed' status."""
         ra = session.query(RiskAcceptance).filter_by(id=ra_id).first()

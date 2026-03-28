@@ -279,6 +279,36 @@ def revoke_api_key(
     return MessageResponse(message="API key revoked")
 
 
+class CurrentUserResponse(BaseModel):
+    """Response model for /auth/me endpoint."""
+
+    id: str
+    email: str
+    name: str
+    role: str
+    allowed_frameworks: list[str]
+    allowed_sources: list[str]
+    tenant_id: str | None
+
+    model_config = {"from_attributes": True}
+
+
+@router.get("/auth/me", response_model=CurrentUserResponse)
+def get_current_user(
+    current_user: User = Depends(require_permission("read")),
+):
+    """Return the authenticated user's profile information."""
+    return CurrentUserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        role=current_user.role,
+        allowed_frameworks=current_user.allowed_frameworks or [],
+        allowed_sources=current_user.allowed_sources or [],
+        tenant_id=getattr(current_user, "tenant_id", None),
+    )
+
+
 @router.post("/auth/logout")
 def logout(
     db: Session = Depends(get_db),

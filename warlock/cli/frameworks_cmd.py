@@ -787,7 +787,18 @@ def frameworks_inheritance(framework_id: str, provider: str | None) -> None:
     table.add_column("Controls", justify="right")
     table.add_column("Sample", style="dim")
 
-    for prov, prov_data in sorted(idata.items()):
+    # The YAML may have a top-level grouping key (e.g. "cloud_inherited") or
+    # provider keys directly.  Detect and flatten one level if needed.
+    providers: dict = {}
+    for key, val in idata.items():
+        if isinstance(val, dict) and all(isinstance(v, dict) for v in val.values()):
+            # Nested: top-level grouping → provider dicts
+            providers.update(val)
+        else:
+            # Flat: key is already a provider name
+            providers[key] = val
+
+    for prov, prov_data in sorted(providers.items()):
         if provider and prov != provider:
             continue
         for inherit_type, ctrl_list in (prov_data or {}).items():
@@ -1386,3 +1397,136 @@ def frameworks_gap_analysis(framework_id: str, limit: int, fmt: str) -> None:
         )
 
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# frameworks coverage-gaps  (GAP-031)
+# ---------------------------------------------------------------------------
+
+
+@frameworks_grp.command("coverage-gaps")
+@click.option(
+    "--framework",
+    "-f",
+    default=None,
+    help="Filter to a single framework_id (e.g. nist_800_53). Omit for all.",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format.",
+)
+def coverage_gaps(framework: str | None, fmt: str) -> None:
+    """Show controls with no automated checks defined.
+
+    Reads framework YAMLs and reports which controls have empty or missing
+    ``checks`` arrays.  Useful for identifying where automated coverage
+    needs to be added.
+    """
+    from rich.markup import escape
+
+    if framework:
+        frameworks_to_check = [_load_framework_yaml(framework)]
+        frameworks_to_check[0].setdefault("_file", framework)
+    else:
+        frameworks_to_check = _iter_all_frameworks()
+
+    summary_rows: list[dict[str, Any]] = []
+
+    for fw_data in frameworks_to_check:
+        fw_id = fw_data.get("framework_id", fw_data.get("_file", "unknown"))
+        controls = _collect_controls(fw_data)
+        total = len(controls)
+
+        with_checks = 0
+        without_checks = 0
+        missing_ids: list[str] = []
+
+        for ctrl_id, ctrl_data in sorted(controls.items()):
+            checks = ctrl_data.get("checks") or []
+            if checks:
+                with_checks += 1
+            else:
+                without_checks += 1
+                missing_ids.append(ctrl_id)
+
+        pct = (with_checks / total * 100) if total else 0.0
+        summary_rows.append(
+            {
+                "framework_id": fw_id,
+                "display_name": _FRAMEWORK_DISPLAY_NAMES.get(fw_id, fw_id),
+                "total_controls": total,
+                "with_checks": with_checks,
+                "without_checks": without_checks,
+                "coverage_pct": round(pct, 1),
+                "missing_control_ids": missing_ids,
+            }
+        )
+
+    if fmt == "json":
+        console.print_json(json.dumps(summary_rows, indent=2))
+        return
+
+    # Summary table
+    table = Table(title="Framework Check Coverage")
+    table.add_column("Framework", style="cyan")
+    table.add_column("Total", justify="right")
+    table.add_column("With Checks", justify="right", style="green")
+    table.add_column("Without Checks", justify="right", style="red")
+    table.add_column("Coverage %", justify="right")
+
+    total_all = 0
+    total_with = 0
+    total_without = 0
+
+    for row in summary_rows:
+        total_all += row["total_controls"]
+        total_with += row["with_checks"]
+        total_without += row["without_checks"]
+
+        pct_str = f"{row['coverage_pct']:.1f}%"
+        if row["coverage_pct"] >= 80:
+            pct_str = f"[green]{pct_str}[/green]"
+        elif row["coverage_pct"] >= 50:
+            pct_str = f"[yellow]{pct_str}[/yellow]"
+        else:
+            pct_str = f"[red]{pct_str}[/red]"
+
+        table.add_row(
+            escape(row["display_name"]),
+            str(row["total_controls"]),
+            str(row["with_checks"]),
+            str(row["without_checks"]),
+            pct_str,
+        )
+
+    # Footer totals
+    overall_pct = (total_with / total_all * 100) if total_all else 0.0
+    table.add_section()
+    table.add_row(
+        "[bold]TOTAL[/bold]",
+        str(total_all),
+        str(total_with),
+        str(total_without),
+        f"[bold]{overall_pct:.1f}%[/bold]",
+    )
+
+    console.print(table)
+
+    # Detail: show controls without checks for each framework (if single fw)
+    if framework and summary_rows:
+        row = summary_rows[0]
+        if row["missing_control_ids"]:
+            detail = Table(title=f"Controls Without Checks -- {escape(row['display_name'])}")
+            detail.add_column("#", justify="right", style="dim")
+            detail.add_column("Control ID", style="yellow")
+            for i, ctrl_id in enumerate(row["missing_control_ids"], 1):
+                detail.add_row(str(i), escape(ctrl_id))
+            console.print(detail)
+        else:
+            console.print(
+                f"\n[green]All controls in {escape(row['display_name'])} "
+                f"have checks defined.[/green]"
+            )

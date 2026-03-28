@@ -28,6 +28,10 @@ from warlock.api.routers import (
     alerts,
     remediation,
     evidence,
+    evidence_api,
+    resources,
+    trust_portal as trust_portal_router,
+    webhooks,
 )
 
 log = logging.getLogger(__name__)
@@ -186,6 +190,10 @@ def create_app() -> FastAPI:
     application.include_router(alerts.router, prefix=prefix, tags=["alerts"])
     application.include_router(remediation.router, prefix=prefix, tags=["remediation"])
     application.include_router(evidence.router, prefix=prefix, tags=["evidence"])
+    application.include_router(evidence_api.router, prefix=prefix, tags=["evidence-portal"])
+    application.include_router(resources.router, prefix=prefix, tags=["resources"])
+    application.include_router(webhooks.router, prefix=prefix, tags=["webhooks"])
+    application.include_router(trust_portal_router.router, prefix=prefix, tags=["trust-portal"])
 
     # ------------------------------------------------------------------
     # Root-level health endpoints for k8s probes, load balancers, Docker

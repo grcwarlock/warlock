@@ -408,5 +408,5 @@ class GDPRManager:
             },
         )
 
-        log.info("GDPR erasure complete for %s: %s", email, result["affected"])
+        log.info("GDPR erasure complete for %s: %s", anon_id, result["affected"])
         return result

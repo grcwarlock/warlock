@@ -297,7 +297,7 @@ Every control result traces back to its raw API response — the hash chain is t
 - **CLI** (`warlock/cli/`) — Click CLI (686 leaf commands across 73 modules)
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
-- **Database** (`warlock/db/`) — SQLAlchemy ORM, 49 models, schema via Base.metadata.create_all()
+- **Database** (`warlock/db/`) — SQLAlchemy ORM, 50 models, schema via Base.metadata.create_all()
 - **Frameworks** (`warlock/frameworks/`) — 15 framework YAMLs, 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
 - **OPA** (`policies/`) — 670 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports

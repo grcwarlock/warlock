@@ -324,8 +324,12 @@ def system_controls(system_id: str, framework: str | None, limit: int) -> None:
             _error(f"System not found: {system_id}")
 
         q = session.query(ControlResult).filter(ControlResult.system_profile_id == system.id)
+        # Filter to system-associated frameworks if the profile defines them
+        system_frameworks = getattr(system, "frameworks", None) or []
         if framework:
             q = q.filter(ControlResult.framework == framework)
+        elif system_frameworks:
+            q = q.filter(ControlResult.framework.in_(system_frameworks))
         results = q.order_by(ControlResult.framework, ControlResult.control_id).limit(limit).all()
 
     if not results:

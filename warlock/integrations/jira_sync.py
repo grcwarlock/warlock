@@ -374,3 +374,101 @@ class JiraClient:
             return bool(settings.jira_base_url and settings.jira_email and settings.jira_api_token)
         except Exception:
             return False
+
+
+# ---------------------------------------------------------------------------
+# Inbound webhook handler (GAP-045)
+# ---------------------------------------------------------------------------
+
+
+def handle_jira_webhook(payload: dict, session) -> dict:
+    """Process incoming Jira webhook for issue status changes.
+
+    When a Jira issue transitions, finds the matching Warlock Issue by
+    ``tags`` JSON field (which stores ``jira_key``) and updates its status
+    using the ``JIRA_TO_WARLOCK`` mapping.
+
+    Args:
+        payload: Raw Jira webhook payload (``webhookEvent``, ``issue``, etc.).
+        session: SQLAlchemy session for DB operations.
+
+    Returns:
+        Dict with ``matched``, ``updated``, and ``details``.
+    """
+    # Lazy import to avoid circular dependency at module level
+    from warlock.db.models import Issue
+
+    event = payload.get("webhookEvent", "")
+    issue_data = payload.get("issue", {})
+    jira_key = issue_data.get("key", "")
+    fields = issue_data.get("fields", {})
+
+    result: dict = {
+        "matched": False,
+        "updated": False,
+        "jira_key": jira_key,
+        "event": event,
+        "details": "",
+    }
+
+    if not jira_key:
+        result["details"] = "No issue key in payload"
+        return result
+
+    # Extract Jira status
+    status_obj = fields.get("status", {})
+    jira_status_name = (status_obj.get("name") or "").lower()
+    warlock_status = JIRA_TO_WARLOCK.get(jira_status_name)
+
+    if not warlock_status:
+        result["details"] = f"Unmapped Jira status: {status_obj.get('name', '?')}"
+        log.warning("Jira webhook: unmapped status '%s' for %s", jira_status_name, jira_key)
+        return result
+
+    # Find matching Warlock Issue.
+    # Issues don't have a dedicated jira_key column, so we search the
+    # tags JSON array for a "jira:<KEY>" entry, or match by title prefix.
+    issues = session.query(Issue).all()
+    matched_issue = None
+
+    for iss in issues:
+        tags = iss.tags or []
+        if f"jira:{jira_key}" in tags:
+            matched_issue = iss
+            break
+
+    if not matched_issue:
+        # Fallback: match by title containing the Jira key
+        matched_issue = session.query(Issue).filter(Issue.title.contains(jira_key)).first()
+
+    if not matched_issue:
+        result["details"] = f"No Warlock issue found for Jira key {jira_key}"
+        log.info("Jira webhook: no matching issue for %s", jira_key)
+        return result
+
+    result["matched"] = True
+    old_status = matched_issue.status
+
+    if old_status == warlock_status:
+        result["details"] = f"Status already {warlock_status}, no update needed"
+        return result
+
+    matched_issue.status = warlock_status
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
+
+    matched_issue.updated_at = _dt.now(_tz.utc)
+    session.flush()
+
+    result["updated"] = True
+    result["details"] = f"Status changed: {old_status} -> {warlock_status}"
+    log.info(
+        "Jira webhook: issue %s (%s) status %s -> %s via Jira %s",
+        matched_issue.id[:8],
+        jira_key,
+        old_status,
+        warlock_status,
+        jira_status_name,
+    )
+
+    return result

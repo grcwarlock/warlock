@@ -76,6 +76,28 @@ def _safe_call(handler: Handler, event: PipelineEvent) -> None:
         handler(event)
     except Exception:
         log.exception("Handler %s failed for event %s", handler.__name__, event.event_type)
+        _record_dead_letter(event, handler)
+
+
+def _record_dead_letter(event: PipelineEvent, handler: Handler) -> None:
+    """Persist a failed event to the dead letter queue for later retry."""
+    import traceback
+
+    try:
+        from warlock.db.engine import get_session
+        from warlock.db.models import DeadLetterEntry
+
+        error_msg = traceback.format_exc()
+        with get_session() as session:
+            entry = DeadLetterEntry(
+                event_type=event.event_type,
+                payload=event.metadata,
+                error_message=f"{handler.__name__}: {error_msg[:2000]}",
+                original_event_id=event.id,
+            )
+            session.add(entry)
+    except Exception:
+        log.exception("Failed to record dead letter entry for event %s", event.id)
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +160,18 @@ def _register_default_subscribers(bus: "EventBus") -> None:
         subscriber = ServiceNowNotifier()
         bus.subscribe("control.assessed", subscriber)
         log.info("ServiceNowNotifier registered")
+
+    # Email notifications
+    email_enabled = os.environ.get("WLK_EMAIL_ENABLED", "").strip().lower()
+    if email_enabled == "true":
+        try:
+            from warlock.integrations.email_notifications import EmailNotifier
+
+            subscriber = EmailNotifier()
+            bus.subscribe("control.assessed", subscriber)
+            log.info("EmailNotifier registered")
+        except Exception:
+            log.exception("Failed to register EmailNotifier")
 
     # Audit event subscriber — wire when an external sink backend is configured.
     # Guards against default test runs by checking for WLK_AUDIT_SINK_BACKEND.

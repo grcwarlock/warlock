@@ -132,11 +132,10 @@ def generate_executive_summary(
     # ------------------------------------------------------------------
     # Trend from PostureSnapshot
     # ------------------------------------------------------------------
-    snap_query = (
-        session.query(PostureSnapshot).order_by(PostureSnapshot.snapshot_date.desc()).limit(200)
-    )
+    snap_query = session.query(PostureSnapshot)
     if framework:
         snap_query = snap_query.filter(PostureSnapshot.framework == framework)
+    snap_query = snap_query.order_by(PostureSnapshot.snapshot_date.desc()).limit(200)
     snapshots = snap_query.all()
 
     trend = _compute_trend(snapshots)

@@ -49,11 +49,13 @@ function relativeTime(iso: string | null | undefined): string {
 }
 
 const STATUS_TRANSITIONS: Record<string, string[]> = {
-  open: ["investigating"],
-  investigating: ["mitigating", "resolved"],
-  mitigating: ["resolved"],
-  resolved: ["closed", "open"],
+  open: ["assigned"],
+  assigned: ["in_progress", "closed"],
+  in_progress: ["remediated", "closed"],
+  remediated: ["verified", "in_progress"],
+  verified: ["closed"],
   closed: ["open"],
+  risk_accepted: ["open"],
 };
 
 // ---------------------------------------------------------------------------

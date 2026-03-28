@@ -127,44 +127,43 @@ def reports_executive(framework: str | None, out_format: str, output: str | None
 
 
 @reports.command("pdf")
-@click.option("--framework", "-f", required=True, help="Framework to generate PDF for")
+@click.option("--framework", "-f", default=None, help="Framework to generate PDF for")
+@click.option(
+    "--type",
+    "report_type",
+    default="compliance",
+    type=click.Choice(["compliance", "poam", "executive"]),
+    help="Type of PDF report to generate",
+)
 @click.option(
     "--output",
     "-o",
     default=None,
-    help="Output file path (default: report_{framework}_{date}.pdf)",
+    help="Output file path (auto-generated if not specified)",
 )
-@click.option("--organization", default="Warlock GRC", help="Organization name for cover page")
-def reports_pdf(framework: str, output: str | None, organization: str) -> None:
-    """Generate a production-ready PDF compliance report with cover page and TOC."""
-    from datetime import datetime, timezone
-
-    from warlock.db.engine import get_session, init_db
-    from warlock.export.reports import ReportGenerator
-
-    if output is None:
-        date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
-        output = f"report_{framework}_{date_str}.pdf"
+def reports_pdf(framework: str | None, report_type: str, output: str | None) -> None:
+    """Generate a PDF report (compliance, POA&M, or executive summary)."""
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.export.pdf_report import (
+        generate_compliance_pdf,
+        generate_executive_pdf,
+        generate_poam_pdf,
+    )
 
     init_db()
-    gen = ReportGenerator()
-
-    with get_session() as session:
+    with get_read_session() as session:
         try:
-            pdf_bytes = gen.generate_pdf(
-                session,
-                framework,
-                organization=organization,
-            )
-        except ImportError as exc:
+            if report_type == "compliance":
+                path = generate_compliance_pdf(session, framework=framework, output_path=output)
+            elif report_type == "poam":
+                path = generate_poam_pdf(session, framework=framework, output_path=output)
+            else:
+                path = generate_executive_pdf(session, output_path=output)
+        except RuntimeError as exc:
             console.print(f"[red]Error:[/red] {exc}")
             raise SystemExit(1) from exc
 
-    with open(output, "wb") as fh:
-        fh.write(pdf_bytes)
-
-    size_kb = len(pdf_bytes) / 1024
-    console.print(f"[green]PDF report written to {output} ({size_kb:.1f} KB)[/green]")
+    console.print(f"[green]PDF report generated: {path}[/green]")
 
 
 # ---------------------------------------------------------------------------

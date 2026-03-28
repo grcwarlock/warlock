@@ -223,10 +223,13 @@ def verify_chain(limit: int) -> None:
             f"{entry.sequence}:{entry.previous_hash}:{entry.action}:"
             f"{entry.entity_type}:{entry.entity_id}:{entry.actor}"
         )
-        hashlib.sha256(payload.encode()).hexdigest()
+        expected_hash = hashlib.sha256(payload.encode()).hexdigest()
 
         if entry.previous_hash != prev_hash:
             broken.append((entry.sequence, f"previous_hash mismatch at seq {entry.sequence}"))
+
+        if expected_hash != entry.entry_hash:
+            broken.append((entry.sequence, f"entry_hash mismatch at seq {entry.sequence}"))
 
         prev_hash = entry.entry_hash
 
@@ -568,7 +571,7 @@ def hash_verify(run_id: str) -> None:
     bad: list[str] = []
 
     for evt in events:
-        payload = json.dumps(evt.raw_data, sort_keys=True, separators=(",", ":"))
+        payload = json.dumps(evt.raw_data, sort_keys=True, default=str)
         computed = hashlib.sha256(payload.encode()).hexdigest()
         if computed == evt.sha256:
             ok += 1
@@ -584,3 +587,131 @@ def hash_verify(run_id: str) -> None:
             f"[green]All {ok} raw events verified:[/green] SHA-256 hashes match for run "
             f"{run.connector_name} ({run.id[:8]})"
         )
+
+
+# ---------------------------------------------------------------------------
+# dlq sub-group — Dead Letter Queue management
+# ---------------------------------------------------------------------------
+
+
+@pipeline_group.group("dlq", invoke_without_command=True)
+@click.pass_context
+def dlq_group(ctx: click.Context) -> None:
+    """Dead letter queue: inspect, retry, and purge failed pipeline events."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@dlq_group.command("list")
+@click.option("--status", "-s", default=None, help="Filter by status (failed, retried, purged)")
+@click.option("--limit", "-n", default=25, help="Max entries to show")
+def dlq_list(status: str | None, limit: int) -> None:
+    """List dead letter queue entries."""
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.db.models import DeadLetterEntry
+
+    init_db()
+    with get_read_session() as session:
+        q = session.query(DeadLetterEntry)
+        if status:
+            q = q.filter(DeadLetterEntry.status == status)
+        rows = q.order_by(DeadLetterEntry.created_at.desc()).limit(limit).all()
+
+    if not rows:
+        console.print("[dim]No dead letter queue entries found.[/dim]")
+        return
+
+    table = Table(title=f"Dead Letter Queue ({len(rows)} entries)")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Event Type", max_width=30)
+    table.add_column("Status")
+    table.add_column("Retries", justify="right")
+    table.add_column("Error", max_width=50)
+    table.add_column("Created")
+
+    for entry in rows:
+        status_style = {
+            "failed": "red",
+            "retried": "yellow",
+            "purged": "dim",
+        }.get(entry.status, "white")
+        created = entry.created_at.strftime("%Y-%m-%d %H:%M:%S") if entry.created_at else "\u2014"
+        table.add_row(
+            entry.id[:8],
+            entry.event_type[:30],
+            f"[{status_style}]{entry.status}[/{status_style}]",
+            str(entry.retry_count or 0),
+            (entry.error_message or "")[:50],
+            created,
+        )
+
+    console.print(table)
+
+
+@dlq_group.command("retry")
+@click.argument("entry_id")
+def dlq_retry(entry_id: str) -> None:
+    """Retry a failed dead letter queue entry.
+
+    ENTRY_ID: DLQ entry ID (or prefix) to retry.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import DeadLetterEntry
+    from warlock.pipeline.bus import EventBus, PipelineEvent
+
+    init_db()
+    with get_session() as session:
+        entry = (
+            session.query(DeadLetterEntry).filter(DeadLetterEntry.id.startswith(entry_id)).first()
+        )
+        if not entry:
+            _error(f"DLQ entry not found: {entry_id}")
+        if entry.status != "failed":
+            _error(f"Entry {entry_id} is in '{entry.status}' status, not 'failed'.")
+
+        bus = EventBus()
+        event = PipelineEvent(
+            event_type=entry.event_type,
+            payload_id=entry.original_event_id or entry.id,
+            metadata=entry.payload or {},
+        )
+        try:
+            bus.publish(event)
+            entry.status = "retried"
+            entry.retry_count = (entry.retry_count or 0) + 1
+            entry.last_retry_at = datetime.now(timezone.utc)
+            session.flush()
+            console.print(
+                f"[green]Retried DLQ entry {entry.id[:8]}[/green] (event_type={entry.event_type})"
+            )
+        except Exception as exc:
+            entry.retry_count = (entry.retry_count or 0) + 1
+            entry.error_message = str(exc)
+            entry.last_retry_at = datetime.now(timezone.utc)
+            session.flush()
+            _error(f"Retry failed: {exc}")
+
+
+@dlq_group.command("purge")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+def dlq_purge(yes: bool) -> None:
+    """Purge all failed entries from the dead letter queue."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import DeadLetterEntry
+
+    init_db()
+    with get_session() as session:
+        count = session.query(DeadLetterEntry).filter(DeadLetterEntry.status == "failed").count()
+
+        if count == 0:
+            console.print("[dim]No failed entries to purge.[/dim]")
+            return
+
+        if not yes:
+            click.confirm(f"Purge {count} failed DLQ entries?", abort=True)
+
+        session.query(DeadLetterEntry).filter(DeadLetterEntry.status == "failed").update(
+            {"status": "purged"}
+        )
+        session.flush()
+        console.print(f"[green]Purged {count} failed DLQ entries.[/green]")

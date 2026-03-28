@@ -54,88 +54,88 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 ### Database / Migrations
 
-- [ ] **Add Alembic migration for Evidence model** *(GAP-009)* `M`
-- [ ] **Add Alembic migration for Policy model** *(GAP-010)* `M`
-- [ ] **Add Alembic migration for Workpaper model** *(GAP-013)* `M`
-- [ ] **Add Alembic migration for Incident model** *(GAP-014)* `M`
-- [ ] **Add Alembic migrations for 9+ remaining models** — PostureSnapshot, ChangeEvent, SystemProfile, CompensatingControl, RiskAcceptance, VendorAssessment, DataProcessingActivity, PrivacyImpactAssessment, AIModelCard, Embedding. *(GAP-015, GAP-016, ARCH-006)* `L`
-- [ ] **Fix POA&M date columns** — Change `scheduled_completion_date` and `actual_completion_date` from String to Date columns. *(GAP-011)* `M`
-- [ ] **Add DB connection pooling config for PostgreSQL** — pool_size, max_overflow, pool_pre_ping, pool_recycle. *(GAP-048)* `S`
-- [ ] **Add Asset model with FK to Finding** — Proper asset inventory model, not just string matching on resource_id. *(GAP-055)* `L`
+- [x] **~~Add Alembic migration for Evidence model~~** *(GAP-009)* `M`
+- [x] **~~Add Alembic migration for Policy model~~** *(GAP-010)* `M`
+- [x] **~~Add Alembic migration for Workpaper model~~** *(GAP-013)* `M`
+- [x] **~~Add Alembic migration for Incident model~~** *(GAP-014)* `M`
+- [x] **~~Add Alembic migrations for 9+ remaining models~~** — PostureSnapshot, ChangeEvent, SystemProfile, CompensatingControl, RiskAcceptance, VendorAssessment, DataProcessingActivity, PrivacyImpactAssessment, AIModelCard, Embedding. *(GAP-015, GAP-016, ARCH-006)* `L`
+- [x] **~~Fix POA&M date columns~~** — Change `scheduled_completion_date` and `actual_completion_date` from String to Date columns. *(GAP-011)* `M`
+- [x] **~~Add DB connection pooling config for PostgreSQL~~** — pool_size, max_overflow, pool_pre_ping, pool_recycle. *(GAP-048)* `S`
+- [x] **~~Add Asset model with FK to Finding~~** — Proper asset inventory model, not just string matching on resource_id. *(GAP-055)* `L`
 
 ### Workflows
 
-- [ ] **Fix risk acceptance lifecycle** — Add `review()` method to transition pending → reviewed, or accept pending in `approve()`. *(GAP-012)* `M`
-- [ ] **Fix SLA model enforcement** — SLA model tracks but doesn't enforce. Add auto-due-date on POA&M creation. *(GAP-034)* `M`
-- [ ] **Build approval workflow engine** — Multi-level approval chains, SLA tracking on approvals, escalation on stale approvals. *(GAP-042)* `L`
-- [ ] **Add evidence collection scheduling** — Automated "collect screenshot every 30 days" for recurring evidence. *(GAP-043)* `L`
+- [x] **~~Fix risk acceptance lifecycle~~** — Add `review()` method to transition pending → reviewed, or accept pending in `approve()`. *(GAP-012)* `M`
+- [x] **~~Fix SLA model enforcement~~** — SLA model tracks but doesn't enforce. Add auto-due-date on POA&M creation. *(GAP-034)* `M`
+- [x] **~~Build approval workflow engine~~** — Multi-level approval chains, SLA tracking on approvals, escalation on stale approvals. *(GAP-042)* `L`
+- [x] **~~Add evidence collection scheduling~~** — Automated "collect screenshot every 30 days" for recurring evidence. *(GAP-043)* `L`
 
 ### API
 
-- [ ] **Fix HTTP 429 to return JSON** — Rate limit responses return HTML instead of JSON. *(GAP-017)* `S`
-- [ ] **Add pagination to 6+ list endpoints** — Users, systems, attestations, engagements, API keys, connectors. *(GAP-018)* `M`
-- [ ] **Add API routes for 18 unexposed models** — RawEvent, ControlInheritance, SystemDependency, Vendor, Asset, PipelineRun, etc. *(GAP-020)* `XL`
-- [ ] **Add `/auth/me` endpoint** — Return current user's role, permissions, allowed frameworks. *(GAP-021)* `S`
-- [ ] **Add POA&M create/update/transition API endpoints** — POST, PATCH, and transition endpoints for POAMManager. *(GAP-022)* `M`
-- [ ] **Fix pipeline status endpoint** — Return actual queue depth, processing state, and throughput instead of hardcoded zeros. *(GAP-023, STUB-029)* `S`
+- [x] **~~Fix HTTP 429 to return JSON~~** — Rate limit responses return HTML instead of JSON. *(GAP-017)* `S`
+- [x] **~~Add pagination to 6+ list endpoints~~** — Users, systems, attestations, engagements, API keys, connectors. *(GAP-018)* `M`
+- [x] **~~Add API routes for 18 unexposed models~~** — RawEvent, ControlInheritance, SystemDependency, Vendor, Asset, PipelineRun, etc. *(GAP-020)* `XL`
+- [x] **~~Add `/auth/me` endpoint~~** — Return current user's role, permissions, allowed frameworks. *(GAP-021)* `S`
+- [x] **~~Add POA&M create/update/transition API endpoints~~** — POST, PATCH, and transition endpoints for POAMManager. *(GAP-022)* `M`
+- [x] **~~Fix pipeline status endpoint~~** — Return actual queue depth, processing state, and throughput instead of hardcoded zeros. *(GAP-023, STUB-029)* `S`
 
 ### Frontend
 
-- [ ] **Fix or remove login page** — Either wire it to the auth API or remove since auto-auth is in place. *(GAP-025)* `S`
-- [ ] **Wire frontend forms to API** — Replace `console.log("TODO")` submit handlers with actual API calls. *(GAP-026)* `L`
-- [ ] **Fix frontend incident statuses** — Align frontend status values (investigating, mitigating) with backend-accepted values (assigned, in_progress). *(GAP-037)* `S`
-- [ ] **Build auditor self-service portal** — Consume existing trust portal API endpoints. *(GAP-047)* `L`
-- [ ] **Build user self-service evidence submission portal** — Control owners can upload evidence without CLI. *(GAP-054)* `L`
+- [x] **~~Fix or remove login page~~** — Either wire it to the auth API or remove since auto-auth is in place. *(GAP-025)* `S`
+- [x] **~~Wire frontend forms to API~~** — Replace `console.log("TODO")` submit handlers with actual API calls. *(GAP-026)* `L`
+- [x] **~~Fix frontend incident statuses~~** — Align frontend status values (investigating, mitigating) with backend-accepted values (assigned, in_progress). *(GAP-037)* `S`
+- [x] **~~Build auditor self-service portal~~** — Consume existing trust portal API endpoints. *(GAP-047)* `L`
+- [x] **~~Build user self-service evidence submission portal~~** — Control owners can upload evidence without CLI. *(GAP-054)* `L`
 
 ### Security
 
-- [ ] **Add CSRF protection** — Double-submit cookie or synchronizer token for state-changing requests. *(GAP-027, ARCH-014)* `S`
-- [ ] **Add Redis-backed rate limiting** — Replace per-worker in-memory counters with shared Redis backend. *(GAP-028, ARCH-010)* `M`
-- [ ] **Fix GDPR erasure logging** — Log HMAC pseudonym instead of plaintext email after anonymization. *(GAP-029, ARCH-013)* `S`
-- [ ] **Add session invalidation / token revocation** — Token blacklist in Redis/DB with TTL matching JWT expiry. *(GAP-050)* `M`
+- [x] **~~Add CSRF protection~~** — Double-submit cookie or synchronizer token for state-changing requests. *(GAP-027, ARCH-014)* `S`
+- [x] **~~Add Redis-backed rate limiting~~** — Replace per-worker in-memory counters with shared Redis backend. *(GAP-028, ARCH-010)* `M`
+- [x] **~~Fix GDPR erasure logging~~** — Log HMAC pseudonym instead of plaintext email after anonymization. *(GAP-029, ARCH-013)* `S`
+- [x] **~~Add session invalidation / token revocation~~** — Token blacklist in Redis/DB with TTL matching JWT expiry. *(GAP-050)* `M`
 
 ### CLI
 
-- [ ] **Fix `audit hash-verify` and `audit chain` crashes** *(GAP-035)* `S`
-- [ ] **Fix `system-controls` showing wrong framework** — Filter to system-associated frameworks only. *(GAP-036)* `S`
-- [ ] **Fix `reports executive-export -f` crash** — Fix `filter()` after `limit()` SQLAlchemy error. *(GAP-038)* `S`
-- [ ] **Fix pipeline hash-verify false mismatches** — Use same hash algorithm as pipeline storage. *(GAP-039)* `S`
-- [ ] **Fix risk appetite unit comparison** — Compare against FAIR ALE, not raw risk score vs dollar threshold. *(GAP-040)* `S`
-- [ ] **Fix `frameworks inheritance` to read reference file** — Wire CLI to `reference/inherited_controls.yaml`. *(GAP-041)* `S`
+- [x] **~~Fix `audit hash-verify` and `audit chain` crashes~~** *(GAP-035)* `S`
+- [x] **~~Fix `system-controls` showing wrong framework~~** — Filter to system-associated frameworks only. *(GAP-036)* `S`
+- [x] **~~Fix `reports executive-export -f` crash~~** — Fix `filter()` after `limit()` SQLAlchemy error. *(GAP-038)* `S`
+- [x] **~~Fix pipeline hash-verify false mismatches~~** — Use same hash algorithm as pipeline storage. *(GAP-039)* `S`
+- [x] **~~Fix risk appetite unit comparison~~** — Compare against FAIR ALE, not raw risk score vs dollar threshold. *(GAP-040)* `S`
+- [x] **~~Fix `frameworks inheritance` to read reference file~~** — Wire CLI to `reference/inherited_controls.yaml`. *(GAP-041)* `S`
 
 ### Connectors
 
-- [ ] **Fix Veracode HMAC signing** — Recompute signature per request, use `secrets.token_hex()` for nonce. *(GAP-019)* `S`
-- [ ] **Add HTTP 429 retry to BaseConnector** — Exponential backoff with jitter on 429/5xx responses. *(ARCH-002)* `M`
-- [ ] **Add Palo Alto Networks connector** — Dominant NGFW, needed for PCI/NIST/ISO. *(GAP-051)* `M`
-- [ ] **Add ServiceNow CMDB connector** — Pull CIs and relationships for CM-8 compliance. *(GAP-052)* `L`
+- [x] **~~Fix Veracode HMAC signing~~** — Recompute signature per request, use `secrets.token_hex()` for nonce. *(GAP-019)* `S`
+- [x] **~~Add HTTP 429 retry to BaseConnector~~** — Exponential backoff with jitter on 429/5xx responses. *(ARCH-002)* `M`
+- [x] **~~Add Palo Alto Networks connector~~** — Dominant NGFW, needed for PCI/NIST/ISO. *(GAP-051)* `M`
+- [x] **~~Add ServiceNow CMDB connector~~** — Pull CIs and relationships for CM-8 compliance. *(GAP-052)* `L`
 
 ### Pipeline
 
-- [ ] **Fix demo seed phases 2-5** — Fix `AuditTrail.append()` AttributeError and `raw_event_count` invalid kwarg. *(GAP-030, STUB-020)* `S`
-- [ ] **Add dead letter queue** — DLQ table with failed event payload, error message, retry count, status. CLI for list/retry/purge. *(GAP-033, ARCH-001)* `M`
+- [x] **~~Fix demo seed phases 2-5~~** — Fix `AuditTrail.append()` AttributeError and `raw_event_count` invalid kwarg. *(GAP-030, STUB-020)* `S`
+- [x] **~~Add dead letter queue~~** — DLQ table with failed event payload, error message, retry count, status. CLI for list/retry/purge. *(GAP-033, ARCH-001)* `M`
 
 ### Policy / OPA
 
-- [ ] **Fill NIST 800-53 empty checks** — 694 of 1,176 controls have empty `checks` arrays, always `not_assessed`. *(GAP-031)* `XL`
+- [x] **~~Fill NIST 800-53 empty checks~~** — 694 of 1,176 controls have empty `checks` arrays, always `not_assessed`. *(GAP-031)* `XL`
 
 ### DevOps
 
-- [ ] **Create Dockerfile and docker-compose** — Multi-stage Dockerfile, docker-compose with app + PostgreSQL + OPA + Redis. *(GAP-024, ARCH-018)* `M`
+- [x] **~~Create Dockerfile and docker-compose~~** — Multi-stage Dockerfile, docker-compose with app + PostgreSQL + OPA + Redis. *(GAP-024, ARCH-018)* `M`
 
 ### Reporting
 
-- [ ] **Add PDF report generation** — WeasyPrint or ReportLab for board reports and audit packages. *(GAP-044)* `M`
+- [x] **~~Add PDF report generation~~** — WeasyPrint or ReportLab for board reports and audit packages. *(GAP-044)* `M`
 
 ### Integrations
 
-- [ ] **Add bi-directional Jira sync** — Webhook receiver for Jira status changes back to Warlock. *(GAP-045)* `M`
-- [ ] **Add email notification system** — SMTP/SES integration with templates for alerts, digests, evidence requests. *(GAP-046)* `M`
+- [x] **~~Add bi-directional Jira sync~~** — Webhook receiver for Jira status changes back to Warlock. *(GAP-045)* `M`
+- [x] **~~Add email notification system~~** — SMTP/SES integration with templates for alerts, digests, evidence requests. *(GAP-046)* `M`
 
 ### Platform
 
-- [ ] **Add document management / policy repository** — Track policy documents with version history, approval workflow, review scheduling. *(GAP-053)* `L`
-- [ ] **Add webhook-based real-time ingestion** — EventBridge/Event Grid receivers alongside batch collection. *(GAP-049)* `L`
+- [x] **~~Add document management / policy repository~~** — Track policy documents with version history, approval workflow, review scheduling. *(GAP-053)* `L`
+- [x] **~~Add webhook-based real-time ingestion~~** — EventBridge/Event Grid receivers alongside batch collection. *(GAP-049)* `L`
 
 ---
 

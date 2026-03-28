@@ -391,6 +391,8 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_tls: bool = True  # use STARTTLS
     smtp_from: str = "warlock@localhost"  # From address
+    email_from: str = "warlock@example.com"  # Default sender for email notifications
+    email_enabled: bool = False  # Master switch for email notifications
 
     # --- SSO/OIDC (INT-1) ---
     sso_enabled: bool = False
