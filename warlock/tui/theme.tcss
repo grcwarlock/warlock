@@ -103,7 +103,8 @@ Screen {
 #header-bar {
     background: $surface;
     border-bottom: solid $border;
-    height: 3;
+    min-height: 3;
+    max-height: 3;
     padding: 1 2;
 }
 
@@ -140,7 +141,8 @@ Screen {
 #filter-bar {
     background: #0a0a1c;
     border-bottom: solid #1a1a30;
-    height: 1;
+    min-height: 1;
+    max-height: 1;
     padding: 0 2;
     color: $text-secondary;
 }
@@ -364,8 +366,8 @@ Screen {
 /* ------------------------------------------------------------------ */
 
 #footer-bar {
-    dock: bottom;
-    height: 1;
+    min-height: 1;
+    max-height: 1;
     background: #0a0a1c;
     border-top: solid $border;
     padding: 0 2;

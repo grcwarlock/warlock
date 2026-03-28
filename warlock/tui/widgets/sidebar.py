@@ -5,7 +5,6 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.reactive import reactive
-from textual.widget import Widget
 from textual.widgets import Static
 
 
@@ -34,17 +33,19 @@ class NavItem(Static):
         self.app.switch_screen_by_id(self.screen_id)
 
 
-class Sidebar(Widget):
-    """Persistent left navigation sidebar."""
+class Sidebar(Vertical):
+    """Persistent left navigation sidebar. IS the #sidebar element."""
 
     active_screen: reactive[str] = reactive("remed")
 
+    def __init__(self) -> None:
+        super().__init__(id="sidebar")
+
     def compose(self) -> ComposeResult:
-        with Vertical(id="sidebar"):
-            yield Static("\u25c6 WRLK", id="sidebar-logo")
-            for i, (screen_id, label, _full_name) in enumerate(NAV_ITEMS):
-                yield NavItem(screen_id, label, _full_name, i)
-            yield Static("\u2318K  ?", id="sidebar-footer")
+        yield Static("\u25c6 WRLK", id="sidebar-logo")
+        for i, (screen_id, label, _full_name) in enumerate(NAV_ITEMS):
+            yield NavItem(screen_id, label, _full_name, i)
+        yield Static("\u2318K  ?", id="sidebar-footer")
 
     def watch_active_screen(self, value: str) -> None:
         for child in self.query(NavItem):

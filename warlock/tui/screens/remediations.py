@@ -256,12 +256,20 @@ class RemediationsView(Vertical):
     _items: reactive[list[dict]] = reactive(list, layout=True)
 
     def compose(self) -> ComposeResult:
-        yield Static("", id="header-bar")
-        yield Static("", id="filter-bar")
+        yield Static(
+            " [bold]Remediations[/]  [dim]loading...[/]",
+            id="header-bar",
+        )
         with Horizontal(id="main-content"):
             yield ListView(id="rem-list")
             yield VerticalScroll(DetailPane(id="detail-view"), id="detail-pane")
-        yield Static("", id="footer-bar")
+        yield Static(
+            " [#a78bfa]j[/]/[#a78bfa]k[/] move  "
+            "[#a78bfa]Enter[/] expand  "
+            "[#a78bfa]t[/] transition  "
+            "[#a78bfa]Ctrl+K[/] commands",
+            id="footer-bar",
+        )
 
     def on_mount(self) -> None:
         self.focus()
