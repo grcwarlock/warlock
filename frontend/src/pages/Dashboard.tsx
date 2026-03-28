@@ -157,6 +157,36 @@ function PipelineStatusBar() {
           )}
         </div>
 
+        {pipeline?.lake && (
+          <div className="flex items-center gap-1.5">
+            <Layers className="h-3 w-3 text-zinc-500" />
+            <span
+              className={
+                pipeline.lake.startsWith("ok")
+                  ? "text-green-400"
+                  : pipeline.lake === "disabled"
+                    ? "text-zinc-500"
+                    : "text-red-400"
+              }
+            >
+              Lake: {pipeline.lake}
+            </span>
+          </div>
+        )}
+
+        {summary?.data_source && (
+          <div className="flex items-center gap-1.5">
+            <Server className="h-3 w-3 text-zinc-500" />
+            <span
+              className={
+                summary.data_source === "lake" ? "text-indigo-400" : "text-zinc-500"
+              }
+            >
+              Source: {summary.data_source}
+            </span>
+          </div>
+        )}
+
         {pipeline?.totals && (
           <div className="ml-auto flex items-center gap-4 text-zinc-500">
             <span>{pipeline.totals.raw_events.toLocaleString()} events</span>

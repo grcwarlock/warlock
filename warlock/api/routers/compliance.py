@@ -1057,6 +1057,12 @@ def dashboard_summary(
     # -----------------------------------------------------------------
     # Assemble and cache
     # -----------------------------------------------------------------
+    # Determine data source — lake when reads are routed there, else oltp
+    from warlock.config import get_settings as _get_settings
+
+    _settings = _get_settings()
+    data_source = "lake" if _settings.lake_reads_enabled("dashboard_framework_summary") else "oltp"
+
     payload: dict[str, Any] = {
         "frameworks": frameworks_out,
         "top_risks": top_risks,
@@ -1065,6 +1071,7 @@ def dashboard_summary(
         "posture_score": posture_score,
         "connectors": connectors,
         "last_assessment": last_assessment,
+        "data_source": data_source,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "cache_ttl_seconds": _DASHBOARD_CACHE_TTL,
     }

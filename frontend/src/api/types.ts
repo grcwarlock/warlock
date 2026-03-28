@@ -116,6 +116,7 @@ export interface DashboardSummary {
   posture_score: number;
   connectors: DashboardConnector[];
   last_assessment: string | null;
+  data_source?: string;
   generated_at: string;
   cache_ttl_seconds: number;
   ai_narrative?: string | null;
@@ -320,6 +321,7 @@ export interface PipelineStatus {
   running: boolean;
   last_run: PipelineLastRun | null;
   totals: PipelineTotals;
+  lake?: string;
 }
 
 export interface HashChainVerification {
