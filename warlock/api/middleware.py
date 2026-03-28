@@ -195,24 +195,59 @@ class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
 # ---------------------------------------------------------------------------
 
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Inject standard security headers into every response."""
+def _generate_nonce() -> str:
+    """Generate a cryptographic nonce for CSP inline script whitelisting."""
+    import base64
+    import secrets
 
-    HEADERS = {
+    return base64.b64encode(secrets.token_bytes(16)).decode("ascii")
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Inject standard security headers into every response.
+
+    GAP-101: Tightened CSP from bare ``default-src 'self'`` to a
+    granular directive set.  A per-request nonce is generated and
+    stored on ``request.state.csp_nonce`` for any inline scripts that
+    require whitelisting.
+    """
+
+    _STATIC_HEADERS = {
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "X-XSS-Protection": "1; mode=block",
         "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-        "Content-Security-Policy": "default-src 'self'",
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Permissions-Policy": "geolocation=(), camera=(), microphone=()",
     }
 
+    _CSP_TEMPLATE = (
+        "default-src 'self'; "
+        "script-src 'self' 'nonce-{nonce}'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Generate a per-request nonce and expose it via request.state
+        nonce = _generate_nonce()
+        request.state.csp_nonce = nonce
+
         response: Response = await call_next(request)
 
-        for header, value in self.HEADERS.items():
+        for header, value in self._STATIC_HEADERS.items():
             response.headers.setdefault(header, value)
+
+        # Set CSP with the per-request nonce
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            self._CSP_TEMPLATE.format(nonce=nonce),
+        )
 
         # API responses should never be cached by default
         if request.url.path.startswith("/api/"):

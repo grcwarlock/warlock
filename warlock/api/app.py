@@ -210,6 +210,18 @@ def create_app() -> FastAPI:
         """Alias for /health/ready — standard k8s readiness probe path."""
         return health.health_ready(db)
 
+    # ------------------------------------------------------------------
+    # ARCH-020: Mount frontend SPA static files (if built)
+    # ------------------------------------------------------------------
+    from pathlib import Path
+
+    _static_dir = Path(__file__).resolve().parent.parent.parent / "static"
+    if _static_dir.is_dir() and (_static_dir / "index.html").exists():
+        from starlette.staticfiles import StaticFiles
+
+        application.mount("/", StaticFiles(directory=str(_static_dir), html=True), name="frontend")
+        log.info("Frontend SPA mounted from %s", _static_dir)
+
     return application
 
 

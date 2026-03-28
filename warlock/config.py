@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # Pipeline
     pipeline_batch_size: int = 500
     pipeline_timeout_seconds: int = 300
+    pipeline_mode: str = "full"  # "full" or "incremental" (ARCH-003)
+
+    # Query timeout (ARCH-009)
+    query_timeout_ms: int = 30000  # statement timeout for PostgreSQL (ms)
 
     # Cloud providers — disabled by default, enabled by setting credentials
     aws_enabled: bool = False
@@ -306,6 +310,9 @@ class Settings(BaseSettings):
 
     # Shared cache (multi-worker state)
     cache_url: str = ""  # redis://localhost:6379 for multi-worker; empty = in-memory
+
+    # ARCH-019: Leader election backend for scheduler
+    leader_election_backend: str = "file"  # "file" (dev/SQLite) or "redis" (production)
 
     # Queue backend
     queue_backend: str = "memory"  # "memory", "redis", "kafka", "sqs"

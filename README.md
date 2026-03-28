@@ -301,7 +301,7 @@ warlock/
 │   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
-│   ├── models.py         # 55 SQLAlchemy models
+│   ├── models.py         # 56 SQLAlchemy models
 │   ├── migrations/       # Schema via Base.metadata.create_all()
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern

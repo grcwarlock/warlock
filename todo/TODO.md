@@ -255,16 +255,16 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 ## P3 — NICE-TO-HAVE (Future Roadmap)
 
-- [ ] **Persist white-label branding to DB** — Add BrandingConfig model, replace in-memory dict. *(GAP-100, STUB-033)* `M`
-- [ ] **Tighten CSP headers** — Add nonce or hash validation instead of permissive `default-src 'self'`. *(GAP-101)* `S`
-- [ ] **Add batch-only pipeline incremental mode** — Store high-water marks per connector for change-detection. *(ARCH-003)* `L`
-- [ ] **Add table partitioning strategy** — Monthly partitioning for findings, control_results, audit_trail on PostgreSQL. *(ARCH-008)* `L`
-- [ ] **Add query timeout configuration** — `statement_timeout` for PostgreSQL, `timeout` for SQLite. *(ARCH-009)* `S`
-- [ ] **Add query result caching** — Redis-backed caching for dashboard aggregations with pipeline-completion invalidation. *(ARCH-021)* `M`
-- [ ] **Integrate data lake into default pipeline** — Populate lake on every pipeline run, use for analytics queries. *(ARCH-022)* `L`
-- [ ] **Add SAML/OIDC for enterprise SSO** — Table stakes for enterprise customers. *(ARCH-033)* `L`
-- [ ] **Add single-process scheduler leader election** — PostgreSQL advisory lock or Redis SETNX for multi-instance. *(ARCH-019)* `M`
-- [ ] **Integrate frontend build with backend deployment** — Unified deployment or CDN + API proxy config. *(ARCH-020)* `M`
+- [x] **~~Persist white-label branding to DB~~** — Add BrandingConfig model, replace in-memory dict. *(GAP-100, STUB-033)* `M`
+- [x] **~~Tighten CSP headers~~** — Add nonce or hash validation instead of permissive `default-src 'self'`. *(GAP-101)* `S`
+- [x] **~~Add batch-only pipeline incremental mode~~** — Store high-water marks per connector for change-detection. *(ARCH-003)* `L`
+- [x] **~~Add table partitioning strategy~~** — Monthly partitioning for findings, control_results, audit_trail on PostgreSQL. *(ARCH-008)* `L`
+- [x] **~~Add query timeout configuration~~** — `statement_timeout` for PostgreSQL, `timeout` for SQLite. *(ARCH-009)* `S`
+- [x] **~~Add query result caching~~** — Redis-backed caching for dashboard aggregations with pipeline-completion invalidation. *(ARCH-021)* `M`
+- [x] **~~Integrate data lake into default pipeline~~** — Populate lake on every pipeline run, use for analytics queries. *(ARCH-022)* `L`
+- [x] **~~Add SAML/OIDC for enterprise SSO~~** — Table stakes for enterprise customers. *(ARCH-033)* `L`
+- [x] **~~Add single-process scheduler leader election~~** — PostgreSQL advisory lock or Redis SETNX for multi-instance. *(ARCH-019)* `M`
+- [x] **~~Integrate frontend build with backend deployment~~** — Unified deployment or CDN + API proxy config. *(ARCH-020)* `M`
 
 ---
 

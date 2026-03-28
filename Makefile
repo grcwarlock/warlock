@@ -49,7 +49,7 @@ frontend-dev: ## Start frontend dev server (proxy to API on :8000)
 	cd frontend && npm run dev
 
 frontend-build: ## Build frontend for production
-	cd frontend && npm run build
+	cd frontend && npm ci && npm run build
 
 clean: ## Clean up DB and __pycache__
 	rm -f warlock.db warlock.db-shm warlock.db-wal

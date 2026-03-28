@@ -1,3 +1,12 @@
+# ---------- frontend ----------
+FROM node:20-alpine AS frontend
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --ignore-scripts
+COPY frontend/ ./
+RUN npm run build
+
 # ---------- builder ----------
 FROM python:3.12-slim AS builder
 
@@ -24,6 +33,9 @@ RUN groupadd -r warlock && useradd -r -g warlock -d /app -s /sbin/nologin warloc
 
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
+
+# Copy built frontend (if available)
+COPY --from=frontend /app/frontend/dist /app/static
 
 # Copy application code
 COPY warlock/ ./warlock/

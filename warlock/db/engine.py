@@ -76,7 +76,6 @@ def get_engine():
         )
         # Enable FK enforcement on SQLite (it's off by default)
         if settings.database_url.startswith("sqlite"):
-            from sqlalchemy import event
 
             @event.listens_for(_engine, "connect")
             def _set_sqlite_pragma(dbapi_conn, connection_record):
@@ -84,6 +83,16 @@ def get_engine():
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.execute("PRAGMA journal_mode=WAL")
                 cursor.execute("PRAGMA busy_timeout=5000")
+                cursor.close()
+
+        else:
+            # ARCH-009: Set statement timeout for PostgreSQL connections.
+            timeout_ms = getattr(settings, "query_timeout_ms", 30000)
+
+            @event.listens_for(_engine, "connect")
+            def _set_pg_statement_timeout(dbapi_conn, connection_record):
+                cursor = dbapi_conn.cursor()
+                cursor.execute(f"SET statement_timeout = '{timeout_ms}'")
                 cursor.close()
 
     return _engine

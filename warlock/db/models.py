@@ -2112,3 +2112,30 @@ class Workpaper(TenantMixin, Base):
         Index("idx_workpaper_engagement", "engagement_id"),  # #20: FK index
         Index("idx_workpaper_status", "status"),
     )
+
+
+# ---------------------------------------------------------------------------
+# PLT-2 / GAP-100: White-label branding configuration
+# ---------------------------------------------------------------------------
+
+
+class BrandingConfig(TenantMixin, Base):
+    """Persisted per-tenant branding configuration for white-label deployments."""
+
+    __tablename__ = "branding_configs"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    tenant_id_unique = Column(String(36), unique=True)  # one config per tenant
+    logo_url = Column(String(500))
+    primary_color = Column(String(20), default="#6366f1")
+    accent_color = Column(String(20), default="#8b5cf6")
+    app_name = Column(String(100), default="Warlock")
+    favicon_url = Column(String(500))
+    custom_css = Column(Text)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index("idx_branding_tenant", "tenant_id"),  # #20: FK index
+        Index("idx_branding_tenant_unique", "tenant_id_unique", unique=True),
+    )

@@ -267,6 +267,7 @@ from warlock.cli import search_cmd as _search_cmd  # noqa: F401, E402
 from warlock.cli import audit_cmd as _audit_cmd  # noqa: F401, E402
 from warlock.cli import soa_cmd as _soa_cmd  # noqa: F401, E402
 from warlock.cli import model_cmds as _model_cmds  # noqa: F401, E402
+from warlock.cli import db_cmd as _db_cmd  # noqa: F401, E402
 
 
 # ---------------------------------------------------------------------------

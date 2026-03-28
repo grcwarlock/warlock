@@ -303,6 +303,34 @@ class Pipeline:
 
         session.flush()
         session.commit()
+
+        # ARCH-022: Populate data lake after pipeline completes (if enabled).
+        # Runs after OLTP commit so the lake reads committed data.
+        from warlock.config import get_settings as _get_lake_settings
+
+        _lake_settings = _get_lake_settings()
+        if _lake_settings.lake_enabled:
+            try:
+                from warlock.lake.writer import LakeWriter
+
+                lake_writer = LakeWriter(_lake_settings.lake_path)
+                self.bus.subscribe_all(lake_writer.handle_event)
+                # Replay accumulated events — the bus already published them above,
+                # but the lake writer was not subscribed yet. Re-flush from IDs
+                # collected during the run by calling flush directly.
+                lake_writer.flush(stats.run_id, session)
+                log.info("Lake write complete for run %s", stats.run_id)
+            except Exception:
+                log.exception("Lake write failed (non-fatal) for run %s", stats.run_id)
+
+        # ARCH-021: Invalidate dashboard query cache after pipeline completion.
+        try:
+            from warlock.db.query_cache import get_query_cache
+
+            get_query_cache().invalidate_tag("dashboard")
+        except Exception:
+            log.debug("Query cache invalidation skipped", exc_info=True)
+
         stats.completed_at = datetime.now(timezone.utc)
         log.info(
             "Pipeline run complete: %d raw events → %d findings → %d mappings → %d results (%.1fs)",
