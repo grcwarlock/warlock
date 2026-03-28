@@ -143,6 +143,26 @@ def pipeline_status(
     finding_count = repos.findings.count()
     result_count = repos.control_results.count()
 
+    # Lake health check
+    lake_status = "disabled"
+    from warlock.config import get_settings
+
+    settings = get_settings()
+    if settings.lake_enabled:
+        try:
+            from pathlib import Path
+
+            lake_base = Path(settings.lake_path)
+            parquet_files = list(lake_base.rglob("*.parquet")) if lake_base.exists() else []
+            # Count distinct top-level table dirs in curated zone
+            curated = lake_base / "curated"
+            table_dirs = (
+                [d.name for d in curated.iterdir() if d.is_dir()] if curated.exists() else []
+            )
+            lake_status = f"ok ({len(table_dirs)} tables, {len(parquet_files)} files)"
+        except Exception:
+            lake_status = "error"
+
     return {
         "running": is_running,
         "last_run": {
@@ -163,6 +183,7 @@ def pipeline_status(
             "findings": finding_count,
             "control_results": result_count,
         },
+        "lake": lake_status,
     }
 
 

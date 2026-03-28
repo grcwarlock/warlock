@@ -327,6 +327,105 @@ class LakeReaders:
         )
         return result
 
+    def findings_list(
+        self,
+        severity: str | None = None,
+        source: str | None = None,
+        source_type: str | None = None,
+        observation_type: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """General-purpose findings list with optional filters."""
+        glob = self._findings_glob()
+        parts: list[str] = []
+        params: list[Any] = []
+        if severity:
+            parts.append("severity = ?")
+            params.append(severity)
+        if source:
+            parts.append("source = ?")
+            params.append(source)
+        if source_type:
+            parts.append("source_type = ?")
+            params.append(source_type)
+        if observation_type:
+            parts.append("observation_type = ?")
+            params.append(observation_type)
+        where = ("WHERE " + " AND ".join(parts)) if parts else ""
+        params.append(limit)
+        result = self._engine.query(
+            f"""
+            SELECT *
+            FROM read_parquet('{glob}', union_by_name=true)
+            {where}
+            ORDER BY observed_at DESC
+            LIMIT ?
+        """,
+            params,
+        )
+        return result
+
+    def findings_stats(self) -> dict[str, Any]:
+        """Aggregate stats: by severity, source_type, observation_type."""
+        glob = self._findings_glob()
+        total = self._engine.query(
+            f"SELECT COUNT(*) as cnt FROM read_parquet('{glob}', union_by_name=true)"
+        )
+        sev = self._engine.query(f"""
+            SELECT severity, COUNT(*) as cnt
+            FROM read_parquet('{glob}', union_by_name=true)
+            GROUP BY severity ORDER BY cnt DESC
+        """)
+        src = self._engine.query(f"""
+            SELECT source_type, COUNT(*) as cnt
+            FROM read_parquet('{glob}', union_by_name=true)
+            GROUP BY source_type ORDER BY cnt DESC
+            LIMIT 15
+        """)
+        obs = self._engine.query(f"""
+            SELECT observation_type, COUNT(*) as cnt
+            FROM read_parquet('{glob}', union_by_name=true)
+            GROUP BY observation_type ORDER BY cnt DESC
+            LIMIT 10
+        """)
+        return {
+            "total": total[0]["cnt"] if total else 0,
+            "by_severity": {r["severity"]: r["cnt"] for r in sev},
+            "by_source_type": {r["source_type"]: r["cnt"] for r in src},
+            "by_observation_type": {r["observation_type"]: r["cnt"] for r in obs},
+        }
+
+    def results_list(
+        self,
+        framework: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """Control results list with optional framework/status filters."""
+        glob = self._cr_glob()
+        parts: list[str] = []
+        params: list[Any] = []
+        if framework:
+            parts.append("framework = ?")
+            params.append(framework)
+        if status:
+            parts.append("status = ?")
+            params.append(status)
+        where = ("WHERE " + " AND ".join(parts)) if parts else ""
+        params.append(limit)
+        result = self._engine.query(
+            f"""
+            SELECT framework, control_id, status, severity, assessor,
+                   assessed_at
+            FROM read_parquet('{glob}', union_by_name=true)
+            {where}
+            ORDER BY assessed_at DESC
+            LIMIT ?
+        """,
+            params,
+        )
+        return result
+
     # --- PostureSnapshotRepository equivalents ---
 
     def _posture_glob(self) -> str:

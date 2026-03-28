@@ -22,6 +22,53 @@ from warlock.cli import cli, console, _error, _check_ai_available, _parse_ai_res
 @click.option("--limit", "-n", default=50, type=click.IntRange(min=1), help="Max results")
 def results(framework: str | None, status: str | None, system: str | None, limit: int) -> None:
     """Query control results from the last pipeline run."""
+    from warlock.config import get_settings
+
+    settings = get_settings()
+
+    # Lake-first path (no system filter — lake has no system profile join)
+    if not system and settings.lake_reads_enabled("results_list"):
+        try:
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            lake_rows = readers.results_list(framework=framework, status=status, limit=limit)
+            readers.close()
+            if lake_rows:
+                table = Table(title=f"Control Results ({len(lake_rows)}) [lake]")
+                table.add_column("Framework", style="cyan")
+                table.add_column("Control", style="cyan")
+                table.add_column("Status")
+                table.add_column("Severity")
+                table.add_column("Assessor", style="dim")
+                for r in lake_rows:
+                    st = r.get("status", "")
+                    status_style = {
+                        "compliant": "green",
+                        "non_compliant": "red",
+                        "partial": "yellow",
+                        "not_assessed": "dim",
+                    }.get(st, "")
+                    sev = r.get("severity", "")
+                    sev_style = {
+                        "critical": "red bold",
+                        "high": "red",
+                        "medium": "yellow",
+                        "low": "dim",
+                        "info": "dim",
+                    }.get(sev, "")
+                    table.add_row(
+                        r.get("framework", ""),
+                        r.get("control_id", ""),
+                        f"[{status_style}]{st}[/]",
+                        f"[{sev_style}]{sev}[/]",
+                        r.get("assessor", ""),
+                    )
+                console.print(table)
+                return
+        except Exception:
+            pass  # Fall back to OLTP
+
     from warlock.db.engine import get_session
     from warlock.db.models import ControlResult, SystemProfile
 
@@ -91,21 +138,40 @@ def results(framework: str | None, status: str | None, system: str | None, limit
 )
 def coverage(framework: str | None, use_ai: bool | None) -> None:
     """Show compliance coverage summary."""
-    from sqlalchemy import func
-    from warlock.db.engine import get_session
-    from warlock.db.models import ControlResult
+    from warlock.config import get_settings
 
-    with get_session() as session:
-        q = session.query(
-            ControlResult.framework,
-            ControlResult.status,
-            func.count(ControlResult.id),
-        ).group_by(ControlResult.framework, ControlResult.status)
+    settings = get_settings()
+    rows: list[tuple] = []
 
-        if framework:
-            q = q.filter(ControlResult.framework == framework)
+    # Lake-first path
+    if settings.lake_reads_enabled("coverage_by_status"):
+        try:
+            from warlock.lake.readers import LakeReaders
 
-        rows = q.all()
+            readers = LakeReaders(settings.lake_path)
+            rows = readers.coverage_by_status(
+                framework=framework,
+            )
+            readers.close()
+        except Exception:
+            rows = []  # Fall back to OLTP
+
+    if not rows:
+        from sqlalchemy import func
+        from warlock.db.engine import get_session
+        from warlock.db.models import ControlResult
+
+        with get_session() as session:
+            q = session.query(
+                ControlResult.framework,
+                ControlResult.status,
+                func.count(ControlResult.id),
+            ).group_by(ControlResult.framework, ControlResult.status)
+
+            if framework:
+                q = q.filter(ControlResult.framework == framework)
+
+            rows = q.all()
 
     if not rows:
         console.print("[dim]No results found. Run 'warlock collect' first.[/dim]")

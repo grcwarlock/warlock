@@ -208,46 +208,80 @@ def findings_list(
     interactive: bool,
 ) -> None:
     """List normalized findings."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding
+    from warlock.config import get_settings
 
-    init_db()
-    with get_session() as session:
-        q = session.query(Finding)
-        if severity:
-            q = q.filter(Finding.severity == severity)
-        if source:
-            q = q.filter(Finding.source == source)
-        if source_type:
-            q = q.filter(Finding.source_type == source_type)
-        if observation_type:
-            q = q.filter(Finding.observation_type == observation_type)
-        q = q.order_by(Finding.observed_at.desc()).limit(limit)
-        rows = q.all()
+    settings = get_settings()
+    rows = None
+    _lake_mode = False
+
+    # Lake-first path (interactive mode needs ORM objects for mutations)
+    if not interactive and settings.lake_reads_enabled("findings_list"):
+        try:
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            lake_rows = readers.findings_list(
+                severity=severity,
+                source=source,
+                source_type=source_type,
+                observation_type=observation_type,
+                limit=limit,
+            )
+            readers.close()
+            if lake_rows:
+                rows = lake_rows
+                _lake_mode = True
+        except Exception:
+            pass  # Fall back to OLTP
+
+    if rows is None:
+        from warlock.db.engine import get_session, init_db
+        from warlock.db.models import Finding
+
+        init_db()
+        with get_session() as session:
+            q = session.query(Finding)
+            if severity:
+                q = q.filter(Finding.severity == severity)
+            if source:
+                q = q.filter(Finding.source == source)
+            if source_type:
+                q = q.filter(Finding.source_type == source_type)
+            if observation_type:
+                q = q.filter(Finding.observation_type == observation_type)
+            q = q.order_by(Finding.observed_at.desc()).limit(limit)
+            rows = q.all()
 
     if not rows:
         console.print("[dim]No findings found.[/dim]")
         return
 
+    def _g(row, key, default=""):
+        """Get attribute from ORM object or dict."""
+        if isinstance(row, dict):
+            return row.get(key, default)
+        return getattr(row, key, default)
+
     if fmt == "json":
         data = [
             {
-                "id": r.id,
-                "title": r.title,
-                "severity": r.severity,
-                "observation_type": r.observation_type,
-                "source": r.source,
-                "source_type": r.source_type,
-                "provider": r.provider,
-                "resource_id": r.resource_id,
-                "observed_at": str(r.observed_at),
+                "id": _g(r, "id", ""),
+                "title": _g(r, "title", ""),
+                "severity": _g(r, "severity", ""),
+                "observation_type": _g(r, "observation_type", ""),
+                "source": _g(r, "source", ""),
+                "source_type": _g(r, "source_type", ""),
+                "provider": _g(r, "provider", ""),
+                "resource_id": _g(r, "resource_id", ""),
+                "observed_at": str(_g(r, "observed_at", "")),
             }
             for r in rows
         ]
         console.print(json.dumps(data, indent=2))
         return
 
-    table = Table(title=f"Findings ({len(rows)})")
+    tag = " [lake]" if _lake_mode else ""
+    table = Table(title=f"Findings ({len(rows)}){tag}")
     table.add_column("#", style="dim", justify="right")
     table.add_column("ID", style="dim", max_width=8)
     table.add_column("Severity")
@@ -257,15 +291,22 @@ def findings_list(
     table.add_column("Observed At")
 
     for idx, r in enumerate(rows, 1):
-        sty = _severity_style(r.severity)
+        sev = _g(r, "severity", "")
+        sty = _severity_style(sev)
+        rid = str(_g(r, "id", ""))[:8]
+        title = _g(r, "title", "") or ""
+        obs_type = _g(r, "observation_type", "")
+        src = _g(r, "source", "")
+        prov = _g(r, "provider", "")
+        obs_at = _g(r, "observed_at", "")
         table.add_row(
             str(idx) if interactive else "",
-            r.id[:8],
-            f"[{sty}]{r.severity}[/{sty}]" if sty else r.severity,
-            r.observation_type,
-            escape(r.title[:50] if r.title else ""),
-            f"{r.source}/{r.provider}",
-            str(r.observed_at)[:19] if r.observed_at else "\u2014",
+            rid,
+            f"[{sty}]{sev}[/{sty}]" if sty else sev,
+            obs_type,
+            escape(title[:50]),
+            f"{src}/{prov}",
+            str(obs_at)[:19] if obs_at else "\u2014",
         )
 
     console.print(table)
@@ -427,6 +468,59 @@ def findings_timeline(days: int, severity: str | None) -> None:
 @findings.command("stats")
 def findings_stats() -> None:
     """Aggregate finding statistics by severity, source type, and observation type."""
+    from warlock.config import get_settings
+
+    settings = get_settings()
+
+    # Lake-first path
+    if settings.lake_reads_enabled("findings_stats"):
+        try:
+            from warlock.lake.readers import LakeReaders
+
+            readers = LakeReaders(settings.lake_path)
+            stats = readers.findings_stats()
+            readers.close()
+            if stats["total"]:
+                console.print(f"\n[bold]Total findings: {stats['total']}[/bold] [lake]\n")
+
+                sev_table = Table(title="By Severity")
+                sev_table.add_column("Severity", style="cyan")
+                sev_table.add_column("Count", justify="right")
+                for sev in ["critical", "high", "medium", "low", "info"]:
+                    cnt = stats["by_severity"].get(sev, 0)
+                    if cnt:
+                        sty = _severity_style(sev)
+                        sev_table.add_row(
+                            f"[{sty}]{sev}[/{sty}]" if sty else sev,
+                            str(cnt),
+                        )
+                console.print(sev_table)
+
+                src_table = Table(title="By Source Type")
+                src_table.add_column("Source Type", style="cyan")
+                src_table.add_column("Count", justify="right")
+                for st, cnt in sorted(
+                    stats["by_source_type"].items(),
+                    key=lambda x: x[1],
+                    reverse=True,
+                ):
+                    src_table.add_row(st, str(cnt))
+                console.print(src_table)
+
+                obs_table = Table(title="By Observation Type")
+                obs_table.add_column("Observation Type", style="cyan")
+                obs_table.add_column("Count", justify="right")
+                for ot, cnt in sorted(
+                    stats["by_observation_type"].items(),
+                    key=lambda x: x[1],
+                    reverse=True,
+                ):
+                    obs_table.add_row(ot, str(cnt))
+                console.print(obs_table)
+                return
+        except Exception:
+            pass  # Fall back to OLTP
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
 

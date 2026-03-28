@@ -20525,6 +20525,12 @@ def main():
     # Deterministic seed for reproducible demo data across all phases
     random.seed(42)
 
+    # Always enable the lake for demo seed — the platform tagline is
+    # "signals datalake of enterprises".
+    import os as _lake_os
+
+    _lake_os.environ.setdefault("WLK_LAKE_ENABLED", "true")
+
     print("=" * 60)
     print("  Warlock Demo Seed")
     print("=" * 60)
@@ -21731,6 +21737,34 @@ def main():
             print("\n  Results by status:")
             for status, count in sorted(statuses):
                 print(f"    {status:20s}  {count}")
+
+    # Verify lake was populated (if lake writer was active)
+    if lake_writer is not None:
+        print("[4a/34] Verifying lake population...")
+        try:
+            from warlock.lake.query import LakeQueryEngine as _LQE
+
+            _lake_s = _get_settings()
+            _lqe = _LQE(_lake_s.lake_path)
+            _lake_base = Path(_lake_s.lake_path)
+            _lake_dirs = [
+                d.name for d in _lake_base.iterdir() if d.is_dir() and not d.name.startswith(".")
+            ]
+            print(f"       Lake partitions: {len(_lake_dirs)}")
+            for _ld in sorted(_lake_dirs):
+                _parquets = list((_lake_base / _ld).rglob("*.parquet"))
+                if _parquets:
+                    _tbl_glob = str(_lake_base / _ld / "**" / "*.parquet")
+                    _cnt = _lqe.query(
+                        f"SELECT COUNT(*) as cnt FROM read_parquet('{_tbl_glob}',"
+                        " union_by_name=true)"
+                    )
+                    print(f"         {_ld}: {_cnt[0]['cnt'] if _cnt else 0} rows")
+                else:
+                    print(f"         {_ld}: (no parquet files)")
+            _lqe.close()
+        except Exception as _lake_exc:
+            print(f"       Lake verification skipped: {_lake_exc}")
 
     print("[4b/20] Aging 50 findings for SLA breach demo...")
     with get_session() as session:

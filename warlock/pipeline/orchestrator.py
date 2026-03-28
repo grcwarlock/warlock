@@ -320,8 +320,116 @@ class Pipeline:
                 # collected during the run by calling flush directly.
                 lake_writer.flush(stats.run_id, session)
                 log.info("Lake write complete for run %s", stats.run_id)
+            except Exception as exc:
+                log.error(
+                    "Lake write failed for run %s — recording in DLQ",
+                    stats.run_id,
+                )
+                try:
+                    from warlock.db.models import DeadLetterEntry
+
+                    dlq_entry = DeadLetterEntry(
+                        event_type="lake_write_failure",
+                        payload={
+                            "run_id": stats.run_id,
+                            "lake_path": str(_lake_settings.lake_path),
+                        },
+                        error_message=str(exc),
+                        status="failed",
+                        original_event_id=stats.run_id,
+                    )
+                    session.add(dlq_entry)
+                    session.flush()
+
+                    dlq_count = (
+                        session.query(DeadLetterEntry)
+                        .filter(
+                            DeadLetterEntry.event_type == "lake_write_failure",
+                            DeadLetterEntry.status == "failed",
+                        )
+                        .count()
+                    )
+                    if dlq_count > 5:
+                        log.critical(
+                            "Lake has %d unresolved write failures — investigate immediately",
+                            dlq_count,
+                        )
+                except Exception:
+                    log.exception("Failed to record lake failure in DLQ")
+
+            # Lake domain writers: posture snapshots, compliance drift,
+            # governance facts (audit entries) for curated zone.
+            try:
+                from warlock.db.models import (
+                    AuditEntry,
+                    ComplianceDrift,
+                    PostureSnapshot,
+                )
+                from warlock.lake.domains import (
+                    write_governance_facts,
+                    write_temporal_facts,
+                )
+                from warlock.lake.utils import model_to_dict as _lake_m2d
+
+                snap_dicts: list[dict] = []
+                drift_dicts: list[dict] = []
+                audit_dicts: list[dict] = []
+                try:
+                    snaps = session.query(PostureSnapshot).all()
+                    snap_dicts = [_lake_m2d(r) for r in snaps] if snaps else []
+                except Exception:
+                    pass
+                try:
+                    drifts = session.query(ComplianceDrift).all()
+                    drift_dicts = [_lake_m2d(r) for r in drifts] if drifts else []
+                except Exception:
+                    pass
+                try:
+                    audits = session.query(AuditEntry).all()
+                    audit_dicts = [_lake_m2d(r) for r in audits] if audits else []
+                except Exception:
+                    pass
+
+                if snap_dicts or drift_dicts:
+                    write_temporal_facts(
+                        _lake_settings.lake_path,
+                        stats.run_id,
+                        posture_snapshots=snap_dicts or None,
+                        compliance_drifts=drift_dicts or None,
+                    )
+                    log.info(
+                        "Lake domain: %d posture snapshots, %d drifts",
+                        len(snap_dicts),
+                        len(drift_dicts),
+                    )
+                if audit_dicts:
+                    write_governance_facts(
+                        _lake_settings.lake_path,
+                        stats.run_id,
+                        audit_entries=audit_dicts,
+                    )
+                    log.info(
+                        "Lake domain: %d audit entries",
+                        len(audit_dicts),
+                    )
             except Exception:
-                log.exception("Lake write failed (non-fatal) for run %s", stats.run_id)
+                log.debug(
+                    "Lake domain writers skipped for run %s",
+                    stats.run_id,
+                    exc_info=True,
+                )
+
+            # Refresh lake materialized views after pipeline completion
+            try:
+                from warlock.lake.aggregations import refresh_aggregations
+
+                refresh_aggregations(_lake_settings.lake_path)
+                log.info(
+                    "Lake materialized views refreshed for run %s",
+                    stats.run_id,
+                )
+            except Exception:
+                log.exception("Materialized view refresh failed (non-fatal)")
 
         # ARCH-021: Invalidate dashboard query cache after pipeline completion.
         try:

@@ -195,13 +195,13 @@ class TestLakeDemo:
 
 
 class TestLakeReadFlags:
-    def test_lake_reads_disabled_by_default(self):
+    def test_lake_reads_enabled_by_default(self):
         import warlock.config as _cfg
 
         _cfg._settings = None
         try:
             s = _cfg.get_settings()
-            assert s.lake_reads_enabled("dashboard_framework_summary") is False
+            assert s.lake_reads_enabled("dashboard_framework_summary") is True
         finally:
             _cfg._settings = None
 

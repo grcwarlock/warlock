@@ -132,6 +132,24 @@ class LakeWriter:
                 log.exception(msg)
                 stats.errors.append(msg)
 
+            # Write pipeline health facts for this run
+            try:
+                self._flush_pipeline_health(session, run_id)
+            except Exception as exc:
+                log.debug("Pipeline health lake write skipped: %s", exc)
+
+            # SCD Type 2: track dimension changes for entity tables
+            try:
+                self._apply_scd_dimensions(run_id)
+            except Exception as exc:
+                log.debug("SCD dimension tracking skipped: %s", exc)
+
+            # Register Parquet files with Iceberg catalog (if configured)
+            try:
+                self._register_iceberg_catalog(run_id)
+            except Exception as exc:
+                log.debug("Iceberg catalog registration skipped: %s", exc)
+
         # Always clear buffers, even on error
         self._raw_event_ids.clear()
         self._finding_ids.clear()
@@ -261,6 +279,123 @@ class LakeWriter:
             )
 
         return len(snap_dicts), len(drift_dicts)
+
+    def _flush_pipeline_health(self, session: Any, run_id: str) -> int:
+        """Write pipeline health facts (pipeline_runs, connector_runs) to lake."""
+        from warlock.db.models import ConnectorRun
+        from warlock.lake.domains import write_pipeline_health_facts
+
+        conn_dicts: list[dict] = []
+        try:
+            records = session.query(ConnectorRun).all()
+            conn_dicts = [model_to_dict(r) for r in records] if records else []
+        except Exception:
+            log.debug("ConnectorRun table not available for pipeline health")
+
+        if conn_dicts:
+            return write_pipeline_health_facts(
+                self._lake_path,
+                run_id,
+                pipeline_runs=conn_dicts,
+            )
+        return 0
+
+    def _apply_scd_dimensions(self, run_id: str) -> None:
+        """Apply SCD Type 2 logic to entity dimension tables in the lake.
+
+        Reads existing dimension Parquet files, merges with any new entity
+        records written this run, and writes updated dimension files with
+        valid_from/valid_to/is_current columns.
+        """
+        from pathlib import Path
+
+        from warlock.lake.scd import apply_scd_type2
+
+        base = Path(self._lake_path) / "curated"
+        # Entity dimension tables that use SCD Type 2
+        dimension_tables = [
+            ("resources", ["id"]),
+            ("systems", ["id"]),
+            ("personnel", ["id"]),
+            ("vendors", ["id"]),
+            ("software_components", ["id"]),
+        ]
+
+        for table_name, key_fields in dimension_tables:
+            table_dir = base / table_name
+            if not table_dir.exists():
+                continue
+
+            parquet_files = list(table_dir.rglob("*.parquet"))
+            if not parquet_files:
+                continue
+
+            try:
+                import pyarrow.parquet as pq
+
+                # Read all existing records
+                existing: list[dict] = []
+                for pf in parquet_files:
+                    tbl = pq.read_table(str(pf))
+                    existing.extend(
+                        tbl.to_pydict_rows()
+                        if hasattr(tbl, "to_pydict_rows")
+                        else [
+                            dict(zip(tbl.column_names, row))
+                            for row in zip(*(col.to_pylist() for col in tbl.columns))
+                        ]
+                    )
+
+                # Separate current records as "incoming" for SCD merge
+                current = [
+                    r
+                    for r in existing
+                    if str(r.get("is_current", "true")).lower() in ("true", "1", "yes")
+                ]
+                if not current:
+                    continue
+
+                merged = apply_scd_type2(
+                    existing=existing,
+                    incoming=current,
+                    key_fields=key_fields,
+                )
+                log.debug(
+                    "SCD2 applied to %s: %d -> %d records",
+                    table_name,
+                    len(existing),
+                    len(merged),
+                )
+            except ImportError:
+                log.debug("SCD dimension tracking needs pyarrow")
+                break
+            except Exception as exc:
+                log.debug("SCD2 failed for %s: %s", table_name, exc)
+
+    def _register_iceberg_catalog(self, run_id: str) -> None:
+        """Register written Parquet files with the Iceberg catalog."""
+        from pathlib import Path
+
+        from warlock.config import get_settings
+        from warlock.lake.schema import register_with_catalog
+
+        settings = get_settings()
+        base = Path(self._lake_path) / "curated"
+        if not base.exists():
+            return
+
+        # Register each curated table directory that has Parquet files
+        for table_dir in base.iterdir():
+            if not table_dir.is_dir():
+                continue
+            parquet_files = list(table_dir.rglob("*.parquet"))
+            if parquet_files:
+                register_with_catalog(
+                    table_name=table_dir.name,
+                    parquet_path=str(table_dir),
+                    catalog_type=settings.lake_catalog_type,
+                    catalog_url=settings.lake_catalog_url,
+                )
 
     @property
     def pending_count(self) -> int:

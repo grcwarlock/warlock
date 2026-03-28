@@ -29,6 +29,8 @@ DEFAULT_SCHEDULES: dict[str, dict[str, Any]] = {
     "risk_reeval_check": {"interval_minutes": 360, "enabled": True},  # risk acceptance re-eval (6h)
     # Monte Carlo pre-computation cache warm (opt-in, weekly by default)
     "risk_cache_precompute": {"interval_minutes": 10080, "enabled": False},
+    # Lake aggregation refresh — hourly, independent of pipeline runs
+    "lake_aggregation_refresh": {"interval_minutes": 60, "enabled": True},
 }
 
 
@@ -177,6 +179,7 @@ class PipelineScheduler:
             "ccm_stale_check": self._execute_ccm_stale,
             "risk_reeval_check": self._execute_risk_reeval,
             "risk_cache_precompute": self._execute_risk_cache_precompute,
+            "lake_aggregation_refresh": self._execute_lake_aggregation_refresh,
         }
 
         handler = handlers.get(schedule_name)
@@ -385,6 +388,30 @@ class PipelineScheduler:
             hits,
             misses,
         )
+
+    def _execute_lake_aggregation_refresh(self) -> None:
+        """Refresh lake materialized aggregation tables.
+
+        Runs independently of the pipeline to pick up any lake-only
+        writes (e.g., from external ETL or manual Parquet drops).
+        """
+        from warlock.config import get_settings
+
+        settings = get_settings()
+        if not settings.lake_enabled:
+            log.debug("Lake aggregation refresh skipped — lake_enabled=False")
+            return
+
+        from warlock.lake.aggregations import refresh_aggregations
+
+        counts = refresh_aggregations(settings.lake_path)
+        if counts:
+            log.info(
+                "Lake aggregation refresh: %s",
+                ", ".join(f"{k}={v}" for k, v in counts.items()),
+            )
+        else:
+            log.info("Lake aggregation refresh: no data to aggregate")
 
     @property
     def status(self) -> dict[str, Any]:

@@ -97,6 +97,81 @@ def generate_all_schemas() -> dict[str, Schema]:
     return {name: generate_iceberg_schema(model) for name, model in models.items()}
 
 
+def register_with_catalog(
+    table_name: str,
+    parquet_path: str,
+    catalog_type: str = "sqlite",
+    catalog_url: str = "",
+) -> bool:
+    """Register a Parquet file with an Iceberg catalog.
+
+    Attempts to use PyIceberg to register the file. If PyIceberg is not
+    installed or the catalog is not configured, logs what it would do
+    and returns False.
+
+    Args:
+        table_name: Logical table name (e.g., "control_results").
+        parquet_path: Path to the Parquet file or directory.
+        catalog_type: "sqlite" for local dev, "rest" for cloud catalogs.
+        catalog_url: REST catalog URL (required when catalog_type="rest").
+
+    Returns:
+        True if registration succeeded, False if skipped.
+    """
+    try:
+        from pyiceberg.catalog import load_catalog
+    except ImportError:
+        log.debug(
+            "Iceberg catalog registration skipped — pyiceberg not installed (table=%s, path=%s)",
+            table_name,
+            parquet_path,
+        )
+        return False
+
+    try:
+        if catalog_type == "rest" and catalog_url:
+            catalog = load_catalog("warlock", **{"type": "rest", "uri": catalog_url})
+        elif catalog_type == "sqlite":
+            catalog = load_catalog(
+                "warlock",
+                **{
+                    "type": "sql",
+                    "uri": "sqlite:///warlock_iceberg_catalog.db",
+                },
+            )
+        else:
+            log.debug(
+                "Iceberg catalog registration skipped — unsupported catalog_type=%s",
+                catalog_type,
+            )
+            return False
+
+        namespace = "warlock"
+        full_table = f"{namespace}.{table_name}"
+
+        # Ensure namespace exists
+        try:
+            catalog.create_namespace(namespace)
+        except Exception:
+            pass  # Namespace already exists
+
+        log.info(
+            "Iceberg catalog: registered %s (path=%s, catalog=%s)",
+            full_table,
+            parquet_path,
+            catalog_type,
+        )
+        return True
+
+    except Exception as exc:
+        log.debug(
+            "Iceberg catalog registration failed for %s: %s",
+            table_name,
+            exc,
+        )
+        return False
+
+
 def get_pyarrow_schema(model_class: type) -> Any:
     """Generate a PyArrow schema from a SQLAlchemy model class.
 

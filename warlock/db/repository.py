@@ -451,13 +451,16 @@ class ControlResultRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("coverage_by_status"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.coverage_by_status(framework)
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.coverage_by_status(framework)
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         query = self.session.query(ControlResult)
         if scope_filter is not None:
             query = scope_filter(query, ControlResult)
@@ -476,13 +479,16 @@ class ControlResultRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("distinct_frameworks"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.distinct_frameworks()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.distinct_frameworks()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         rows = self.session.query(distinct(ControlResult.framework)).all()
         return [fw for (fw,) in rows]
 
@@ -495,13 +501,16 @@ class ControlResultRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("dashboard_framework_summary"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.dashboard_framework_summary()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.dashboard_framework_summary()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         return (
             self.session.query(
                 ControlResult.framework,
@@ -521,13 +530,16 @@ class ControlResultRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("top_non_compliant_risks"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.top_non_compliant_risks()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.top_non_compliant_risks()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         return (
             self.session.query(
                 ControlResult.framework,
@@ -546,13 +558,16 @@ class ControlResultRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("last_assessed_at"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.last_assessed_at()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.last_assessed_at()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         row = (
             self.session.query(ControlResult.assessed_at)
             .order_by(ControlResult.assessed_at.desc())
@@ -637,13 +652,16 @@ class PostureSnapshotRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("latest_snapshot_date"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.latest_snapshot_date()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.latest_snapshot_date()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         return self.session.query(func.max(PostureSnapshot.snapshot_date)).scalar()
 
     def list_latest_posture(
@@ -685,13 +703,16 @@ class PostureSnapshotRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("framework_avg_scores_at"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.framework_avg_scores_at(snapshot_date)
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.framework_avg_scores_at(snapshot_date)
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         return (
             self.session.query(
                 PostureSnapshot.framework,
@@ -837,13 +858,16 @@ class ConnectorRunRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("latest_per_connector"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.latest_per_connector()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.latest_per_connector()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         subq = (
             self.session.query(
                 ConnectorRun.provider,
@@ -890,13 +914,16 @@ class ConnectorRunRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("latest_per_provider"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.latest_per_provider()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.latest_per_provider()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         subq = (
             self.session.query(
                 ConnectorRun.provider,
@@ -942,13 +969,16 @@ class ConnectorRunRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("total_event_count"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.total_event_count()
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.total_event_count()
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         return int(self.session.query(func.sum(ConnectorRun.event_count)).scalar() or 0)
 
 
@@ -1432,13 +1462,16 @@ class ControlMappingRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("list_frameworks"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.list_frameworks(limit, offset)
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.list_frameworks(limit, offset)
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         query = self.session.query(ControlMapping)
         if scope_filter is not None:
             query = scope_filter(query, ControlMapping)
@@ -1470,13 +1503,16 @@ class ControlMappingRepository(BaseRepository):
 
         settings = get_settings()
         if settings.lake_reads_enabled("list_controls"):
-            from warlock.lake.readers import LakeReaders
-
-            readers = LakeReaders(settings.lake_path)
             try:
-                return readers.list_controls(framework_id, limit, offset)
-            finally:
-                readers.close()
+                from warlock.lake.readers import LakeReaders
+
+                readers = LakeReaders(settings.lake_path)
+                try:
+                    return readers.list_controls(framework_id, limit, offset)
+                finally:
+                    readers.close()
+            except Exception:
+                pass  # Fall back to OLTP
         query = self.session.query(ControlMapping)
         if scope_filter is not None:
             query = scope_filter(query, ControlMapping)

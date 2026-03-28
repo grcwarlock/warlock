@@ -433,7 +433,7 @@ class Settings(BaseSettings):
     lake_storage_backend: str = "local"  # "local", "s3", "azure"
     lake_storage_url: str = ""  # S3 bucket URL or Azure container URL
     lake_storage_region: str = ""  # For S3-compatible stores
-    lake_reads: bool = False  # Master switch for lake reads (requires lake_enabled too)
+    lake_reads: bool = True  # Master switch for lake reads (requires lake_enabled too)
     lake_read_overrides: str = "{}"  # JSON dict of per-query overrides {"method_name": false}
     retention_purge_frozen: bool = False  # Freeze automated OLTP retention purging during Phase 2
     ai_inline_disabled: bool = (
