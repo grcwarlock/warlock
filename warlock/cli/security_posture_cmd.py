@@ -1415,3 +1415,88 @@ def patch_compliance(limit: int, severity: str | None) -> None:
             )
         console.print(detail_tbl)
         console.print(f"\n[dim]{len(patch_findings)} patch-related finding(s) total.[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# quantum-readiness
+# ---------------------------------------------------------------------------
+
+
+@security_posture.command("quantum-readiness")
+@click.option("--limit", default=20, type=int, help="Max findings to display per category")
+def quantum_readiness(limit: int) -> None:
+    """Assess cryptographic quantum readiness across findings.
+
+    Scans all findings for cryptographic algorithm usage and flags
+    algorithms vulnerable to quantum computing attacks.
+    """
+    from warlock.assessors.quantum_readiness import assess_quantum_readiness
+    from warlock.db.engine import get_read_session, init_db
+
+    init_db()
+    with get_read_session() as session:
+        report = assess_quantum_readiness(session)
+
+    # Summary
+    score_style = (
+        "green"
+        if report.readiness_score >= 80
+        else "yellow"
+        if report.readiness_score >= 50
+        else "red"
+    )
+    console.print("\n[bold]Quantum Readiness Assessment[/bold]")
+    console.print(f"  Findings scanned:      {report.total_findings_scanned:,}")
+    console.print(f"  Crypto references:     {report.crypto_findings}")
+    console.print(f"  Quantum-broken:        [red]{report.quantum_broken_count}[/red]")
+    console.print(f"  Quantum-weakened:      [yellow]{report.quantum_weakened_count}[/yellow]")
+    console.print(f"  PQC/Safe detected:     [green]{report.pqc_ready_count}[/green]")
+    console.print(
+        f"  Readiness score:       [{score_style}]{report.readiness_score:.0f}%[/{score_style}]"
+    )
+
+    # Broken algorithms
+    if report.broken_algorithms:
+        table = Table(title=f"Quantum-Broken Algorithms ({report.quantum_broken_count})")
+        table.add_column("#", style="dim")
+        table.add_column("Algorithm", style="red")
+        table.add_column("Resource")
+        table.add_column("PQC Replacement")
+
+        for i, qf in enumerate(report.broken_algorithms[:limit], 1):
+            table.add_row(
+                str(i),
+                qf.algorithm,
+                escape(qf.resource[:40]) if qf.resource else "--",
+                qf.algorithm_info.pqc_replacement[:50],
+            )
+        console.print(table)
+        if len(report.broken_algorithms) > limit:
+            console.print(f"[dim]... and {len(report.broken_algorithms) - limit} more[/dim]")
+
+    # Weakened algorithms
+    if report.weakened_algorithms:
+        table = Table(title=f"Quantum-Weakened Algorithms ({report.quantum_weakened_count})")
+        table.add_column("#", style="dim")
+        table.add_column("Algorithm", style="yellow")
+        table.add_column("Resource")
+        table.add_column("Recommendation")
+
+        for i, qf in enumerate(report.weakened_algorithms[:limit], 1):
+            table.add_row(
+                str(i),
+                qf.algorithm,
+                escape(qf.resource[:40]) if qf.resource else "--",
+                qf.algorithm_info.pqc_replacement[:50],
+            )
+        console.print(table)
+
+    # PQC-ready
+    if report.pqc_detected:
+        console.print(f"\n[green]PQC/Safe algorithms detected: {report.pqc_ready_count}[/green]")
+
+    # Recommendations
+    if report.recommendations:
+        console.print("\n[bold]Recommendations:[/bold]")
+        for rec in report.recommendations:
+            console.print(f"  [dim]\u2022 {escape(rec)}[/dim]")

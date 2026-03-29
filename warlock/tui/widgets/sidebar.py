@@ -9,13 +9,26 @@ from textual.widgets import Static
 
 
 NAV_ITEMS = [
+    ("dashboard", "\u25c6 Dash", "Dashboard"),
     ("remed", "\u2699 Remed", "Remediations"),
     ("findings", "\u26a0 Finds", "Findings"),
     ("controls", "\u25a0 Ctrls", "Controls"),
     ("poam", "\u2630 POA&M", "POA&M"),
-    ("pipeline", "\u25b2 Pipe", "Pipeline"),
-    ("frameworks", "\u2605 Frmwk", "Frameworks"),
-    ("vendors", "\u25c6 Vendor", "Vendors"),
+    ("incidents", "\u2605 Issue", "Incidents"),
+    ("alerts", "\u25b2 Alert", "Alerts"),
+    ("evidence", "\u25a3 Evid", "Evidence"),
+    ("privacy", "\u25c8 Priv", "Privacy"),
+    ("pipeline", "\u25b6 Pipe", "Pipeline"),
+    ("frameworks", "\u2606 Frmwk", "Frameworks"),
+    ("vendors", "\u25c7 Vendr", "Vendors"),
+    ("personnel", "\u263b Ppl", "Personnel"),
+    ("training", "\u2713 Train", "Training"),
+    ("audits", "\u2611 Audit", "Audits"),
+    ("changes", "\u21c4 Chg", "Changes"),
+    ("calendar", "\u25d2 Cal", "Calendar"),
+    ("search", "\u2315 Srch", "Search"),
+    ("reports", "\u2261 Rpt", "Reports"),
+    ("risk", "\u2622 Risk", "Risk"),
 ]
 
 

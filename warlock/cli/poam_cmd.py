@@ -190,24 +190,17 @@ def poam_list(
 ) -> None:
     """List POA&M entries with optional filters."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import POAM
+    from warlock.workflows.poam import POAMManager
 
     init_db()
+    mgr = POAMManager()
+
     with get_session() as session:
-        q = session.query(POAM)
-        if framework:
-            q = q.filter(POAM.framework == framework)
-        if status:
-            q = q.filter(POAM.status == status)
-        else:
-            q = q.filter(POAM.status.notin_(["closed", "verified"]))
         if overdue:
-            now = datetime.now(timezone.utc)
-            q = q.filter(
-                POAM.scheduled_completion < now,
-                POAM.status.notin_(["completed", "verified", "closed"]),
-            )
-        rows = q.order_by(POAM.scheduled_completion.asc()).limit(limit).all()
+            rows = mgr.get_overdue(session)
+        else:
+            rows = mgr.list_poams(session, framework=framework, status=status)
+        rows = rows[:limit]
 
     if not rows:
         console.print("[dim]No POA&Ms found.[/dim]")
@@ -304,8 +297,11 @@ def poam_show(poam_id: str) -> None:
             Panel(
                 f"[bold]{escape(poam.framework)}/{escape(poam.control_id)}[/bold]\n\n"
                 f"ID: {poam.id}\n"
-                f"Severity: [{sev_style}]{poam.severity}[/]  |  "
-                f"Status: [{st_style}]{poam.status}[/]  |  "
+                f"Severity: "
+                f"{'[' + sev_style + ']' + poam.severity + '[/' + sev_style + ']' if sev_style else poam.severity}"
+                f"  |  Status: "
+                f"{'[' + st_style + ']' + poam.status + '[/' + st_style + ']' if st_style else poam.status}"
+                f"  |  "
                 f"Risk Level: {poam.risk_level or 'n/a'}\n"
                 f"Scheduled: {due_str}  |  Actual: {actual_str}\n"
                 f"Created by: {escape(poam.created_by or 'n/a')}  |  "
@@ -722,9 +718,10 @@ def poam_cost(framework: str | None, fmt: str) -> None:
     grand_count = 0
     for row in sorted(rows, key=lambda r: (r["framework"], r["status"])):
         st_style = _ST_STYLES.get(row["status"], "")
+        st_text = f"[{st_style}]{row['status']}[/{st_style}]" if st_style else escape(row["status"])
         table.add_row(
             escape(row["framework"]),
-            f"[{st_style}]{row['status']}[/]",
+            st_text,
             str(row["count"]),
             f"${row['total_cost']:,.2f}",
         )

@@ -29,6 +29,7 @@ seed: ## Run demo seed
 
 reset: ## Reset SQLite DB and seed fresh data
 	rm -f warlock.db warlock.db-shm warlock.db-wal
+	rm -rf lake/
 	.venv/bin/alembic upgrade head
 	WLK_AI_ENABLED=false .venv/bin/python scripts/demo_seed.py
 
@@ -57,6 +58,7 @@ frontend-dev: ## Start frontend dev server (proxy to API on :8000)
 frontend-build: ## Build frontend for production
 	cd frontend && npm ci && npm run build
 
-clean: ## Clean up DB and __pycache__
+clean: ## Clean up DB, lake, and __pycache__
 	rm -f warlock.db warlock.db-shm warlock.db-wal
+	rm -rf lake/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

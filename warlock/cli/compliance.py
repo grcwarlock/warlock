@@ -20,13 +20,49 @@ from warlock.cli import cli, console, _error, _check_ai_available, _parse_ai_res
 )
 @click.option("--system", default=None, help="Filter by system profile name or ID")
 @click.option("--limit", "-n", default=50, type=click.IntRange(min=1), help="Max results")
-def results(framework: str | None, status: str | None, system: str | None, limit: int) -> None:
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default=None)
+@click.option("--export", "export_path", default=None, help="Export to file (json/csv)")
+@click.pass_context
+def results(
+    ctx: click.Context,
+    framework: str | None,
+    status: str | None,
+    system: str | None,
+    limit: int,
+    fmt: str | None,
+    export_path: str | None,
+) -> None:
     """Query control results from the last pipeline run."""
+    from warlock.cli.output import format_output, get_output_format
     from warlock.config import get_settings
 
     settings = get_settings()
+    effective_fmt = get_output_format(ctx, fmt)
 
-    # Lake-first path (no system filter — lake has no system profile join)
+    _COLUMNS = [
+        {"key": "framework", "header": "Framework", "style": "cyan"},
+        {"key": "control_id", "header": "Control", "style": "cyan"},
+        {"key": "status", "header": "Status"},
+        {"key": "severity", "header": "Severity"},
+        {"key": "assessor", "header": "Assessor", "style": "dim"},
+    ]
+    _STYLE_MAP = {
+        "status": {
+            "compliant": "green",
+            "non_compliant": "red",
+            "partial": "yellow",
+            "not_assessed": "dim",
+        },
+        "severity": {
+            "critical": "red bold",
+            "high": "red",
+            "medium": "yellow",
+            "low": "dim",
+            "info": "dim",
+        },
+    }
+
+    # Lake-first path (no system filter -- lake has no system profile join)
     if not system and settings.lake_reads_enabled("results_list"):
         try:
             from warlock.lake.readers import LakeReaders
@@ -35,36 +71,14 @@ def results(framework: str | None, status: str | None, system: str | None, limit
             lake_rows = readers.results_list(framework=framework, status=status, limit=limit)
             readers.close()
             if lake_rows:
-                table = Table(title=f"Control Results ({len(lake_rows)}) [lake]")
-                table.add_column("Framework", style="cyan")
-                table.add_column("Control", style="cyan")
-                table.add_column("Status")
-                table.add_column("Severity")
-                table.add_column("Assessor", style="dim")
-                for r in lake_rows:
-                    st = r.get("status", "")
-                    status_style = {
-                        "compliant": "green",
-                        "non_compliant": "red",
-                        "partial": "yellow",
-                        "not_assessed": "dim",
-                    }.get(st, "")
-                    sev = r.get("severity", "")
-                    sev_style = {
-                        "critical": "red bold",
-                        "high": "red",
-                        "medium": "yellow",
-                        "low": "dim",
-                        "info": "dim",
-                    }.get(sev, "")
-                    table.add_row(
-                        r.get("framework", ""),
-                        r.get("control_id", ""),
-                        f"[{status_style}]{st}[/]",
-                        f"[{sev_style}]{sev}[/]",
-                        r.get("assessor", ""),
-                    )
-                console.print(table)
+                format_output(
+                    lake_rows,
+                    _COLUMNS,
+                    fmt=effective_fmt,
+                    title=f"Control Results ({len(lake_rows)}) [lake]",
+                    style_map=_STYLE_MAP,
+                    export_path=export_path,
+                )
                 return
         except Exception:
             pass  # Fall back to OLTP
@@ -99,36 +113,25 @@ def results(framework: str | None, status: str | None, system: str | None, limit
         console.print("[dim]No results found.[/dim]")
         return
 
-    table = Table(title=f"Control Results ({len(rows)})")
-    table.add_column("Framework", style="cyan")
-    table.add_column("Control", style="cyan")
-    table.add_column("Status")
-    table.add_column("Severity")
-    table.add_column("Assessor", style="dim")
+    data = [
+        {
+            "framework": r.framework or "",
+            "control_id": r.control_id or "",
+            "status": r.status or "",
+            "severity": r.severity or "",
+            "assessor": r.assessor or "",
+        }
+        for r in rows
+    ]
 
-    for r in rows:
-        status_style = {
-            "compliant": "green",
-            "non_compliant": "red",
-            "partial": "yellow",
-            "not_assessed": "dim",
-        }.get(r.status, "")
-        sev_style = {
-            "critical": "red bold",
-            "high": "red",
-            "medium": "yellow",
-            "low": "dim",
-            "info": "dim",
-        }.get(r.severity, "")
-        table.add_row(
-            r.framework,
-            r.control_id,
-            f"[{status_style}]{r.status}[/]",
-            f"[{sev_style}]{r.severity}[/]",
-            r.assessor,
-        )
-
-    console.print(table)
+    format_output(
+        data,
+        _COLUMNS,
+        fmt=effective_fmt,
+        title=f"Control Results ({len(rows)})",
+        style_map=_STYLE_MAP,
+        export_path=export_path,
+    )
 
 
 @cli.command()

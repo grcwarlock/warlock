@@ -1144,3 +1144,73 @@ def treatment_update(risk_id: str, treatment_id: str, status: str) -> None:
         _store_record(session, "risk_treatment", "updated", full_id, t, actor)
 
     console.print(f"[green]Treatment {full_id[:8]} status updated to '{status}'.[/green]")
+
+
+# ---------------------------------------------------------------------------
+# scenario — FAIR Monte Carlo simulation with custom parameters
+# ---------------------------------------------------------------------------
+
+
+@risk_engine.command("scenario")
+@click.option("--description", "-d", required=True, help="Threat scenario description")
+@click.option("--asset-value", type=float, required=True, help="Asset value in dollars")
+@click.option(
+    "--threat-frequency",
+    type=float,
+    required=True,
+    help="Expected annual threat event frequency",
+)
+@click.option("--control-effectiveness", type=float, default=0.5, help="Control effectiveness 0-1")
+@click.option("--iterations", type=int, default=10000, help="Monte Carlo iterations")
+def risk_scenario(
+    description: str,
+    asset_value: float,
+    threat_frequency: float,
+    control_effectiveness: float,
+    iterations: int,
+) -> None:
+    """Run a custom FAIR Monte Carlo scenario with specified parameters.
+
+    Example: warlock risk-engine scenario -d "Ransomware attack" \\
+             --asset-value 5000000 --threat-frequency 3 --control-effectiveness 0.7
+    """
+    from warlock.assessors.risk_engine import (
+        RiskEngine,
+        ThreatScenario,
+    )
+
+    scenario = ThreatScenario(
+        name="custom_scenario",
+        description=description,
+        frequency_min=max(threat_frequency * 0.3, 0.1),
+        frequency_mode=threat_frequency,
+        frequency_max=threat_frequency * 3.0,
+        impact_min=asset_value * 0.05,
+        impact_mode=asset_value * 0.2,
+        impact_max=asset_value * 0.8,
+        control_effectiveness=control_effectiveness,
+    )
+
+    engine = RiskEngine()
+    result = engine.simulate_scenario(scenario, iterations=iterations)
+
+    from rich.panel import Panel
+
+    lines = [
+        f"[bold]Scenario:[/bold]  {escape(description)}",
+        f"[bold]Asset Value:[/bold] {_fmt_dollars(asset_value)}",
+        f"[bold]Threat Frequency:[/bold] {threat_frequency:.1f} events/year",
+        f"[bold]Control Effectiveness:[/bold] {control_effectiveness:.0%}",
+        f"[bold]Iterations:[/bold] {iterations:,}",
+        "",
+        "[bold]FAIR Results[/bold]",
+        f"  Mean ALE:     [bold]{_fmt_dollars(result.mean_ale)}[/bold]",
+        f"  Median ALE:   {_fmt_dollars(result.median_ale)}",
+        f"  VaR 90th:     {_fmt_dollars(result.var_90)}",
+        f"  VaR 95th:     {_fmt_dollars(result.var_95)}",
+        f"  VaR 99th:     {_fmt_dollars(result.var_99)}",
+        f"  Min:          {_fmt_dollars(result.min_ale)}",
+        f"  Max:          {_fmt_dollars(result.max_ale)}",
+        f"  Std Dev:      {_fmt_dollars(result.std_dev)}",
+    ]
+    console.print(Panel("\n".join(lines), title="FAIR Risk Quantification", border_style="cyan"))

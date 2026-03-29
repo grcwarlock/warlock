@@ -29,6 +29,74 @@ def training(ctx: click.Context) -> None:
 # ---------------------------------------------------------------------------
 
 
+@training.command("list")
+@click.option("--department", "-d", default=None, help="Filter by department")
+@click.option("--limit", "-n", default=50, help="Max results")
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+def training_list(department: str | None, limit: int, output_format: str) -> None:
+    """List individual personnel training records."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Personnel
+
+    init_db()
+    with get_session() as session:
+        q = session.query(Personnel).filter(
+            Personnel.is_active == True  # noqa: E712
+        )
+        if department:
+            q = q.filter(Personnel.department.ilike(f"%{department}%"))
+        rows = q.order_by(Personnel.full_name).limit(limit).all()
+
+        data = [
+            {
+                "email": r.email,
+                "full_name": r.full_name or "",
+                "department": r.department or "",
+                "training_status": r.training_status or "unknown",
+                "last_training_date": str(r.last_training_date)[:10]
+                if r.last_training_date
+                else "\u2014",
+                "phishing_score": f"{r.phishing_score:.1f}"
+                if r.phishing_score is not None
+                else "\u2014",
+            }
+            for r in rows
+        ]
+
+    if not data:
+        console.print("[dim]No personnel found.[/dim]")
+        return
+
+    if output_format == "json":
+        import json
+
+        console.print(json.dumps(data, indent=2))
+        return
+
+    table = Table(title=f"Training Records ({len(data)})")
+    table.add_column("Name", max_width=25)
+    table.add_column("Email", max_width=30)
+    table.add_column("Department", max_width=20)
+    table.add_column("Status")
+    table.add_column("Last Trained")
+    table.add_column("Phishing Score", justify="right")
+
+    for r in data:
+        st = r["training_status"]
+        st_style = {"current": "green", "overdue": "red", "not_enrolled": "dim"}.get(st, "")
+        st_text = f"[{st_style}]{st}[/{st_style}]" if st_style else st
+        table.add_row(
+            r["full_name"][:25],
+            r["email"][:30],
+            r["department"][:20],
+            st_text,
+            r["last_training_date"],
+            r["phishing_score"],
+        )
+
+    console.print(table)
+
+
 @training.command("status")
 @click.option("--department", "-d", default=None, help="Filter by department")
 @click.option("--role", "-r", default=None, help="Filter by employee type/role")

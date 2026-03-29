@@ -1,0 +1,132 @@
+framework_id: esg
+control_families:
+  ENV:
+    name: Environmental
+    controls:
+      ENV.1:
+        checks:
+        - id: esg_ghg_emissions
+          event_types:
+          - sustainability_reports
+          resource_types:
+          - emissions_data
+        monitoring_frequency: annually
+      ENV.2:
+        checks:
+        - id: esg_energy_consumption
+          event_types:
+          - sustainability_reports
+          resource_types:
+          - energy_data
+        monitoring_frequency: annually
+      ENV.3:
+        checks:
+        - id: esg_water_usage
+          event_types:
+          - sustainability_reports
+          resource_types:
+          - water_data
+        monitoring_frequency: annually
+      ENV.4:
+        checks:
+        - id: esg_waste_management
+          event_types:
+          - sustainability_reports
+          resource_types:
+          - waste_data
+        monitoring_frequency: annually
+      ENV.5:
+        checks:
+        - id: esg_data_center_efficiency
+          event_types:
+          - aws_config
+          - azure_policy
+          resource_types:
+          - compute_instance
+        monitoring_frequency: quarterly
+  SOC:
+    name: Social
+    controls:
+      SOC.1:
+        checks:
+        - id: esg_dei_metrics
+          event_types:
+          - hr_reports
+          resource_types:
+          - workforce_data
+        monitoring_frequency: annually
+      SOC.2:
+        checks:
+        - id: esg_data_privacy
+          event_types:
+          - privacy_assessments
+          resource_types:
+          - pia_report
+        monitoring_frequency: annually
+      SOC.3:
+        checks:
+        - id: esg_supply_chain_labor
+          event_types:
+          - vendor_assessments
+          resource_types:
+          - vendor_assessment
+        monitoring_frequency: annually
+      SOC.4:
+        checks:
+        - id: esg_community_impact
+          event_types:
+          - sustainability_reports
+          resource_types:
+          - community_data
+        monitoring_frequency: annually
+      SOC.5:
+        checks:
+        - id: esg_employee_health_safety
+          event_types:
+          - hr_reports
+          resource_types:
+          - safety_data
+        monitoring_frequency: annually
+  GOV:
+    name: Governance
+    controls:
+      GOV.1:
+        checks:
+        - id: esg_board_oversight
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: annually
+      GOV.2:
+        checks:
+        - id: esg_ethics_compliance
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: annually
+      GOV.3:
+        checks:
+        - id: esg_risk_management
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: annually
+      GOV.4:
+        checks:
+        - id: esg_cybersecurity_governance
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: annually
+      GOV.5:
+        checks:
+        - id: esg_stakeholder_engagement
+          event_types:
+          - confluence_pages
+          resource_types:
+          - grc_document
+        monitoring_frequency: annually

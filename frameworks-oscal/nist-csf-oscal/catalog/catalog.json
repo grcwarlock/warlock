@@ -1,0 +1,3329 @@
+{
+  "catalog": {
+    "uuid": "4f0ee261-03b3-5432-9c9f-17b966f1f28e",
+    "metadata": {
+      "title": "NIST Cybersecurity Framework (CSF) 2.0",
+      "version": "2.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-29T00:00:00Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://www.nist.gov/cyberframework"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "nist_csf"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "gv",
+        "title": "Govern",
+        "props": [
+          {
+            "name": "label",
+            "value": "GV"
+          }
+        ],
+        "controls": [
+          {
+            "id": "gv-oc-01",
+            "title": "GV - OC-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.OC-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-oc-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-oc-01_smt",
+                "name": "statement",
+                "prose": "GV.OC-01: Govern control requirement."
+              },
+              {
+                "id": "gv-oc-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_oc_01_org_context evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-oc-02",
+            "title": "GV - OC-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.OC-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-oc-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-oc-02_smt",
+                "name": "statement",
+                "prose": "GV.OC-02: Govern control requirement."
+              },
+              {
+                "id": "gv-oc-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_oc_02_stakeholder_expectations evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-oc-03",
+            "title": "GV - OC-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.OC-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-oc-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-oc-03_smt",
+                "name": "statement",
+                "prose": "GV.OC-03: Govern control requirement."
+              },
+              {
+                "id": "gv-oc-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_oc_03_legal_regulatory evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,compliance_audits"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-oc-04",
+            "title": "GV - OC-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.OC-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-oc-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-oc-04_smt",
+                "name": "statement",
+                "prose": "GV.OC-04: Govern control requirement."
+              },
+              {
+                "id": "gv-oc-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_oc_04_critical_objectives evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-oc-05",
+            "title": "GV - OC-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.OC-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-oc-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-oc-05_smt",
+                "name": "statement",
+                "prose": "GV.OC-05: Govern control requirement."
+              },
+              {
+                "id": "gv-oc-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_oc_05_risk_outcomes evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-01",
+            "title": "GV - RM-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-01_smt",
+                "name": "statement",
+                "prose": "GV.RM-01: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_01_risk_mgmt_objectives evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-02",
+            "title": "GV - RM-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-02_smt",
+                "name": "statement",
+                "prose": "GV.RM-02: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_02_risk_appetite evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-03",
+            "title": "GV - RM-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-03_smt",
+                "name": "statement",
+                "prose": "GV.RM-03: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_03_risk_mgmt_activities evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,vuln_export,wiz_issues"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-04",
+            "title": "GV - RM-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-04_smt",
+                "name": "statement",
+                "prose": "GV.RM-04: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_04_strategic_direction evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-05",
+            "title": "GV - RM-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-05_smt",
+                "name": "statement",
+                "prose": "GV.RM-05: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_05_communication_lines evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-06",
+            "title": "GV - RM-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-06_smt",
+                "name": "statement",
+                "prose": "GV.RM-06: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_06_standardized_method evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rm-07",
+            "title": "GV - RM-07",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RM-07"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rm-07"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rm-07_smt",
+                "name": "statement",
+                "prose": "GV.RM-07: Govern control requirement."
+              },
+              {
+                "id": "gv-rm-07-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rm_07_strategic_opportunities evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rr-01",
+            "title": "GV - RR-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RR-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rr-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rr-01_smt",
+                "name": "statement",
+                "prose": "GV.RR-01: Govern control requirement."
+              },
+              {
+                "id": "gv-rr-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rr_01_leadership_accountable evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sailpoint_identities,sailpoint_roles,workday_employees"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rr-02",
+            "title": "GV - RR-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RR-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rr-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rr-02_smt",
+                "name": "statement",
+                "prose": "GV.RR-02: Govern control requirement."
+              },
+              {
+                "id": "gv-rr-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rr_02_roles_communicated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sailpoint_identities,sailpoint_roles"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rr-03",
+            "title": "GV - RR-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RR-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rr-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rr-03_smt",
+                "name": "statement",
+                "prose": "GV.RR-03: Govern control requirement."
+              },
+              {
+                "id": "gv-rr-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rr_03_resources_adequate evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "workday_employees"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-rr-04",
+            "title": "GV - RR-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.RR-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-rr-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-rr-04_smt",
+                "name": "statement",
+                "prose": "GV.RR-04: Govern control requirement."
+              },
+              {
+                "id": "gv-rr-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_rr_04_cybersecurity_in_hr evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "workday_employees,kb4_training_enrollments"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-po-01",
+            "title": "GV - PO-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.PO-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-po-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-po-01_smt",
+                "name": "statement",
+                "prose": "GV.PO-01: Govern control requirement."
+              },
+              {
+                "id": "gv-po-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_po_01_policy_established evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-po-02",
+            "title": "GV - PO-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.PO-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-po-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-po-02_smt",
+                "name": "statement",
+                "prose": "GV.PO-02: Govern control requirement."
+              },
+              {
+                "id": "gv-po-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_po_02_policy_communicated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-01",
+            "title": "GV - SC-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-01_smt",
+                "name": "statement",
+                "prose": "GV.SC-01: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_01_supply_chain_program evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-02",
+            "title": "GV - SC-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-02_smt",
+                "name": "statement",
+                "prose": "GV.SC-02: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_02_supplier_roles evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-03",
+            "title": "GV - SC-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-03_smt",
+                "name": "statement",
+                "prose": "GV.SC-03: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_03_supply_chain_integrated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-04",
+            "title": "GV - SC-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-04_smt",
+                "name": "statement",
+                "prose": "GV.SC-04: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_04_supplier_prioritized evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-05",
+            "title": "GV - SC-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-05_smt",
+                "name": "statement",
+                "prose": "GV.SC-05: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_05_supplier_requirements evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-06",
+            "title": "GV - SC-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-06_smt",
+                "name": "statement",
+                "prose": "GV.SC-06: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_06_supplier_planning evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-07",
+            "title": "GV - SC-07",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-07"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-07"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-07_smt",
+                "name": "statement",
+                "prose": "GV.SC-07: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-07-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_07_supply_chain_risk_managed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-08",
+            "title": "GV - SC-08",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-08"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-08"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-08_smt",
+                "name": "statement",
+                "prose": "GV.SC-08: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-08-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_08_supplier_assessed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-09",
+            "title": "GV - SC-09",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-09"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-09"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-09_smt",
+                "name": "statement",
+                "prose": "GV.SC-09: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-09-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_09_supply_chain_monitored evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gv-sc-10",
+            "title": "GV - SC-10",
+            "props": [
+              {
+                "name": "label",
+                "value": "GV.SC-10"
+              },
+              {
+                "name": "sort-id",
+                "value": "gv-sc-10"
+              }
+            ],
+            "parts": [
+              {
+                "id": "gv-sc-10_smt",
+                "name": "statement",
+                "prose": "GV.SC-10: Govern control requirement."
+              },
+              {
+                "id": "gv-sc-10-1",
+                "name": "assessment-objective",
+                "prose": "Verify gv_sc_10_supplier_post_contract evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "id",
+        "title": "Identify",
+        "props": [
+          {
+            "name": "label",
+            "value": "ID"
+          }
+        ],
+        "controls": [
+          {
+            "id": "id-am-01",
+            "title": "ID - AM-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-01_smt",
+                "name": "statement",
+                "prose": "ID.AM-01: Identify control requirement."
+              },
+              {
+                "id": "id-am-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_01_asset_inventory evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "prisma_assets,asset_export,asset_inventory,falcon_devices,defender_machines,s1_agents"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-am-02",
+            "title": "ID - AM-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-02_smt",
+                "name": "statement",
+                "prose": "ID.AM-02: Identify control requirement."
+              },
+              {
+                "id": "id-am-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_02_software_inventory evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "falcon_device_details,defender_machines,s1_agents"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-am-03",
+            "title": "ID - AM-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-03_smt",
+                "name": "statement",
+                "prose": "ID.AM-03: Identify control requirement."
+              },
+              {
+                "id": "id-am-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_03_data_flows evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "onetrust_data_maps,ec2_security_groups,network_security_groups"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-am-04",
+            "title": "ID - AM-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-04_smt",
+                "name": "statement",
+                "prose": "ID.AM-04: Identify control requirement."
+              },
+              {
+                "id": "id-am-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_04_external_services evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors,entra_service_principals"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-am-05",
+            "title": "ID - AM-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-05_smt",
+                "name": "statement",
+                "prose": "ID.AM-05: Identify control requirement."
+              },
+              {
+                "id": "id-am-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_05_asset_prioritization evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "prisma_assets,asset_inventory"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-am-07",
+            "title": "ID - AM-07",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-07"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-07"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-07_smt",
+                "name": "statement",
+                "prose": "ID.AM-07: Identify control requirement."
+              },
+              {
+                "id": "id-am-07-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_07_asset_ownership evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "prisma_assets,asset_inventory"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-am-08",
+            "title": "ID - AM-08",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.AM-08"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-am-08"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-am-08_smt",
+                "name": "statement",
+                "prose": "ID.AM-08: Identify control requirement."
+              },
+              {
+                "id": "id-am-08-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_am_08_systems_decommissioned evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "asset_inventory,asset_export"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-01",
+            "title": "ID - RA-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-01_smt",
+                "name": "statement",
+                "prose": "ID.RA-01: Identify control requirement."
+              },
+              {
+                "id": "id-ra-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_01_vuln_identified evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "vuln_export,wiz_vuln_findings,defender_vulnerabilities,falcon_vulnerabilities"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-02",
+            "title": "ID - RA-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-02_smt",
+                "name": "statement",
+                "prose": "ID.RA-02: Identify control requirement."
+              },
+              {
+                "id": "id-ra-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_02_threat_intel evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "falcon_detection_details,defender_alerts,scc_findings"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-03",
+            "title": "ID - RA-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-03_smt",
+                "name": "statement",
+                "prose": "ID.RA-03: Identify control requirement."
+              },
+              {
+                "id": "id-ra-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_03_threats_identified evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "guardduty_detectors,securityhub_hub,scc_findings"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-04",
+            "title": "ID - RA-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-04_smt",
+                "name": "statement",
+                "prose": "ID.RA-04: Identify control requirement."
+              },
+              {
+                "id": "id-ra-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_04_impact_likelihood evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,wiz_issues,prisma_alerts"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-05",
+            "title": "ID - RA-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-05_smt",
+                "name": "statement",
+                "prose": "ID.RA-05: Identify control requirement."
+              },
+              {
+                "id": "id-ra-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_05_risk_responses evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,wiz_issues"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-06",
+            "title": "ID - RA-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-06_smt",
+                "name": "statement",
+                "prose": "ID.RA-06: Identify control requirement."
+              },
+              {
+                "id": "id-ra-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_06_risk_prioritized evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-07",
+            "title": "ID - RA-07",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-07"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-07"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-07_smt",
+                "name": "statement",
+                "prose": "ID.RA-07: Identify control requirement."
+              },
+              {
+                "id": "id-ra-07-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_07_risk_changes_managed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,snow_change_requests"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-08",
+            "title": "ID - RA-08",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-08"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-08"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-08_smt",
+                "name": "statement",
+                "prose": "ID.RA-08: Identify control requirement."
+              },
+              {
+                "id": "id-ra-08-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_08_vuln_disclosure evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-09",
+            "title": "ID - RA-09",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-09"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-09"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-09_smt",
+                "name": "statement",
+                "prose": "ID.RA-09: Identify control requirement."
+              },
+              {
+                "id": "id-ra-09-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_09_procurement_risk evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-ra-10",
+            "title": "ID - RA-10",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.RA-10"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-ra-10"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-ra-10_smt",
+                "name": "statement",
+                "prose": "ID.RA-10: Identify control requirement."
+              },
+              {
+                "id": "id-ra-10-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_ra_10_critical_suppliers evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-im-01",
+            "title": "ID - IM-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.IM-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-im-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-im-01_smt",
+                "name": "statement",
+                "prose": "ID.IM-01: Identify control requirement."
+              },
+              {
+                "id": "id-im-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_im_01_improvements_identified evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "compliance_audits,compliance_posture"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-im-02",
+            "title": "ID - IM-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.IM-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-im-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-im-02_smt",
+                "name": "statement",
+                "prose": "ID.IM-02: Identify control requirement."
+              },
+              {
+                "id": "id-im-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_im_02_improvements_prioritized evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,defender_recommendations"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-im-03",
+            "title": "ID - IM-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.IM-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-im-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-im-03_smt",
+                "name": "statement",
+                "prose": "ID.IM-03: Identify control requirement."
+              },
+              {
+                "id": "id-im-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_im_03_improvements_implemented evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_change_requests"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "id-im-04",
+            "title": "ID - IM-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "ID.IM-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "id-im-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "id-im-04_smt",
+                "name": "statement",
+                "prose": "ID.IM-04: Identify control requirement."
+              },
+              {
+                "id": "id-im-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify id_im_04_improvements_communicated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pr",
+        "title": "Protect",
+        "props": [
+          {
+            "name": "label",
+            "value": "PR"
+          }
+        ],
+        "controls": [
+          {
+            "id": "pr-aa-01",
+            "title": "PR - AA-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AA-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-aa-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-aa-01_smt",
+                "name": "statement",
+                "prose": "PR.AA-01: Protect control requirement."
+              },
+              {
+                "id": "pr-aa-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_aa_01_identity_mgmt evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_credential_report,iam_users,okta_users,entra_users,sailpoint_identities"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-aa-02",
+            "title": "PR - AA-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AA-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-aa-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-aa-02_smt",
+                "name": "statement",
+                "prose": "PR.AA-02: Protect control requirement."
+              },
+              {
+                "id": "pr-aa-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_aa_02_identity_proofing evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "okta_users,entra_users,sailpoint_identities"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-aa-03",
+            "title": "PR - AA-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AA-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-aa-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-aa-03_smt",
+                "name": "statement",
+                "prose": "PR.AA-03: Protect control requirement."
+              },
+              {
+                "id": "pr-aa-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_aa_03_authentication evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_credential_report,okta_users,okta_policies,entra_users,entra_conditional_access_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-aa-04",
+            "title": "PR - AA-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AA-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-aa-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-aa-04_smt",
+                "name": "statement",
+                "prose": "PR.AA-04: Protect control requirement."
+              },
+              {
+                "id": "pr-aa-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_aa_04_access_assertions evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_policies,okta_policies,entra_conditional_access_policies,sailpoint_roles"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-aa-05",
+            "title": "PR - AA-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AA-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-aa-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-aa-05_smt",
+                "name": "statement",
+                "prose": "PR.AA-05: Protect control requirement."
+              },
+              {
+                "id": "pr-aa-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_aa_05_access_permissions evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "iam_credential_report,sailpoint_identities,sailpoint_certifications"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-aa-06",
+            "title": "PR - AA-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AA-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-aa-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-aa-06_smt",
+                "name": "statement",
+                "prose": "PR.AA-06: Protect control requirement."
+              },
+              {
+                "id": "pr-aa-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_aa_06_physical_access evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "verkada_access_events,verkada_doors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-at-01",
+            "title": "PR - AT-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AT-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-at-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-at-01_smt",
+                "name": "statement",
+                "prose": "PR.AT-01: Protect control requirement."
+              },
+              {
+                "id": "pr-at-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_at_01_awareness_training evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "kb4_training_enrollments,kb4_phishing_results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-at-02",
+            "title": "PR - AT-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.AT-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-at-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-at-02_smt",
+                "name": "statement",
+                "prose": "PR.AT-02: Protect control requirement."
+              },
+              {
+                "id": "pr-at-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_at_02_privileged_training evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "kb4_training_enrollments"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ds-01",
+            "title": "PR - DS-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.DS-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ds-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ds-01_smt",
+                "name": "statement",
+                "prose": "PR.DS-01: Protect control requirement."
+              },
+              {
+                "id": "pr-ds-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ds_01_data_at_rest evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "s3_buckets,storage_accounts,storage_buckets,key_vault"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ds-02",
+            "title": "PR - DS-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.DS-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ds-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ds-02_smt",
+                "name": "statement",
+                "prose": "PR.DS-02: Protect control requirement."
+              },
+              {
+                "id": "pr-ds-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ds_02_data_in_transit evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ec2_security_groups,network_security_groups,compute_firewall_rules"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ds-10",
+            "title": "PR - DS-10",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.DS-10"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ds-10"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ds-10_smt",
+                "name": "statement",
+                "prose": "PR.DS-10: Protect control requirement."
+              },
+              {
+                "id": "pr-ds-10-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ds_10_data_in_use evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "purview_dlp_policies"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ds-11",
+            "title": "PR - DS-11",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.DS-11"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ds-11"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ds-11_smt",
+                "name": "statement",
+                "prose": "PR.DS-11: Protect control requirement."
+              },
+              {
+                "id": "pr-ds-11-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ds_11_backups evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "veeam_backup_sessions,veeam_restore_points"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ps-01",
+            "title": "PR - PS-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.PS-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ps-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ps-01_smt",
+                "name": "statement",
+                "prose": "PR.PS-01: Protect control requirement."
+              },
+              {
+                "id": "pr-ps-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ps_01_config_mgmt evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "config_recorders,policy_compliance,wiz_config_findings"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ps-02",
+            "title": "PR - PS-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.PS-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ps-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ps-02_smt",
+                "name": "statement",
+                "prose": "PR.PS-02: Protect control requirement."
+              },
+              {
+                "id": "pr-ps-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ps_02_software_maintained evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "vuln_export,wiz_vuln_findings,defender_vulnerabilities"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ps-03",
+            "title": "PR - PS-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.PS-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ps-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ps-03_smt",
+                "name": "statement",
+                "prose": "PR.PS-03: Protect control requirement."
+              },
+              {
+                "id": "pr-ps-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ps_03_hardware_maintained evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "asset_inventory,asset_export"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ps-04",
+            "title": "PR - PS-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.PS-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ps-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ps-04_smt",
+                "name": "statement",
+                "prose": "PR.PS-04: Protect control requirement."
+              },
+              {
+                "id": "pr-ps-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ps_04_log_generation evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "cloudtrail_trails,audit_logs,activity_log"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ps-05",
+            "title": "PR - PS-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.PS-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ps-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ps-05_smt",
+                "name": "statement",
+                "prose": "PR.PS-05: Protect control requirement."
+              },
+              {
+                "id": "pr-ps-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ps_05_installation_execution evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "falcon_device_details,defender_machines"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ps-06",
+            "title": "PR - PS-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.PS-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ps-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ps-06_smt",
+                "name": "statement",
+                "prose": "PR.PS-06: Protect control requirement."
+              },
+              {
+                "id": "pr-ps-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ps_06_secure_development evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snyk_issues,sonarqube_issues"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ir-01",
+            "title": "PR - IR-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.IR-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ir-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ir-01_smt",
+                "name": "statement",
+                "prose": "PR.IR-01: Protect control requirement."
+              },
+              {
+                "id": "pr-ir-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ir_01_network_protected evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ec2_security_groups,ec2_network_acls,network_security_groups,compute_firewall_rules"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ir-02",
+            "title": "PR - IR-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.IR-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ir-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ir-02_smt",
+                "name": "statement",
+                "prose": "PR.IR-02: Protect control requirement."
+              },
+              {
+                "id": "pr-ir-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ir_02_tech_resilience evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "veeam_backup_sessions,config_recorders"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ir-03",
+            "title": "PR - IR-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.IR-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ir-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ir-03_smt",
+                "name": "statement",
+                "prose": "PR.IR-03: Protect control requirement."
+              },
+              {
+                "id": "pr-ir-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ir_03_platform_security evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "config_recorders,policy_compliance"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "pr-ir-04",
+            "title": "PR - IR-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "PR.IR-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "pr-ir-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "pr-ir-04_smt",
+                "name": "statement",
+                "prose": "PR.IR-04: Protect control requirement."
+              },
+              {
+                "id": "pr-ir-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify pr_ir_04_resource_adequacy evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "asset_inventory"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "de",
+        "title": "Detect",
+        "props": [
+          {
+            "name": "label",
+            "value": "DE"
+          }
+        ],
+        "controls": [
+          {
+            "id": "de-cm-01",
+            "title": "DE - CM-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.CM-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-cm-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-cm-01_smt",
+                "name": "statement",
+                "prose": "DE.CM-01: Detect control requirement."
+              },
+              {
+                "id": "de-cm-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_cm_01_network_monitoring evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "guardduty_detectors,securityhub_hub,sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-cm-02",
+            "title": "DE - CM-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.CM-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-cm-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-cm-02_smt",
+                "name": "statement",
+                "prose": "DE.CM-02: Detect control requirement."
+              },
+              {
+                "id": "de-cm-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_cm_02_physical_env_monitoring evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "verkada_access_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-cm-03",
+            "title": "DE - CM-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.CM-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-cm-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-cm-03_smt",
+                "name": "statement",
+                "prose": "DE.CM-03: Detect control requirement."
+              },
+              {
+                "id": "de-cm-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_cm_03_personnel_activity evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "okta_system_log,entra_sign_ins,entra_risky_users"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-cm-06",
+            "title": "DE - CM-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.CM-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-cm-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-cm-06_smt",
+                "name": "statement",
+                "prose": "DE.CM-06: Detect control requirement."
+              },
+              {
+                "id": "de-cm-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_cm_06_external_service_monitoring evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-cm-09",
+            "title": "DE - CM-09",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.CM-09"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-cm-09"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-cm-09_smt",
+                "name": "statement",
+                "prose": "DE.CM-09: Detect control requirement."
+              },
+              {
+                "id": "de-cm-09-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_cm_09_computing_monitoring evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "falcon_detection_details,defender_alerts,s1_threats,wiz_issues"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-ae-02",
+            "title": "DE - AE-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.AE-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-ae-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-ae-02_smt",
+                "name": "statement",
+                "prose": "DE.AE-02: Detect control requirement."
+              },
+              {
+                "id": "de-ae-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_ae_02_events_analyzed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "splunk_notable_events,splunk_correlation_rules,sentinel_incidents,sentinel_analytics_rules"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-ae-03",
+            "title": "DE - AE-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.AE-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-ae-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-ae-03_smt",
+                "name": "statement",
+                "prose": "DE.AE-03: Detect control requirement."
+              },
+              {
+                "id": "de-ae-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_ae_03_events_correlated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "splunk_correlation_rules,sentinel_analytics_rules,elastic_detection_rules"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-ae-04",
+            "title": "DE - AE-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.AE-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-ae-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-ae-04_smt",
+                "name": "statement",
+                "prose": "DE.AE-04: Detect control requirement."
+              },
+              {
+                "id": "de-ae-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_ae_04_impact_estimated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-ae-06",
+            "title": "DE - AE-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.AE-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-ae-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-ae-06_smt",
+                "name": "statement",
+                "prose": "DE.AE-06: Detect control requirement."
+              },
+              {
+                "id": "de-ae-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_ae_06_events_declared evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-ae-07",
+            "title": "DE - AE-07",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.AE-07"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-ae-07"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-ae-07_smt",
+                "name": "statement",
+                "prose": "DE.AE-07: Detect control requirement."
+              },
+              {
+                "id": "de-ae-07-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_ae_07_events_aggregated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "splunk_notable_events,sentinel_incidents"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "de-ae-08",
+            "title": "DE - AE-08",
+            "props": [
+              {
+                "name": "label",
+                "value": "DE.AE-08"
+              },
+              {
+                "name": "sort-id",
+                "value": "de-ae-08"
+              }
+            ],
+            "parts": [
+              {
+                "id": "de-ae-08_smt",
+                "name": "statement",
+                "prose": "DE.AE-08: Detect control requirement."
+              },
+              {
+                "id": "de-ae-08-1",
+                "name": "assessment-objective",
+                "prose": "Verify de_ae_08_events_declared_incidents evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rs",
+        "title": "Respond",
+        "props": [
+          {
+            "name": "label",
+            "value": "RS"
+          }
+        ],
+        "controls": [
+          {
+            "id": "rs-ma-01",
+            "title": "RS - MA-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.MA-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-ma-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-ma-01_smt",
+                "name": "statement",
+                "prose": "RS.MA-01: Respond control requirement."
+              },
+              {
+                "id": "rs-ma-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_ma_01_incident_managed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-ma-02",
+            "title": "RS - MA-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.MA-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-ma-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-ma-02_smt",
+                "name": "statement",
+                "prose": "RS.MA-02: Respond control requirement."
+              },
+              {
+                "id": "rs-ma-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_ma_02_incidents_triaged evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-ma-03",
+            "title": "RS - MA-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.MA-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-ma-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-ma-03_smt",
+                "name": "statement",
+                "prose": "RS.MA-03: Respond control requirement."
+              },
+              {
+                "id": "rs-ma-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_ma_03_incidents_escalated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-ma-04",
+            "title": "RS - MA-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.MA-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-ma-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-ma-04_smt",
+                "name": "statement",
+                "prose": "RS.MA-04: Respond control requirement."
+              },
+              {
+                "id": "rs-ma-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_ma_04_incidents_mitigated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-ma-05",
+            "title": "RS - MA-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.MA-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-ma-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-ma-05_smt",
+                "name": "statement",
+                "prose": "RS.MA-05: Respond control requirement."
+              },
+              {
+                "id": "rs-ma-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_ma_05_new_vulns_mitigated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "vuln_export,wiz_vuln_findings"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-an-03",
+            "title": "RS - AN-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.AN-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-an-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-an-03_smt",
+                "name": "statement",
+                "prose": "RS.AN-03: Respond control requirement."
+              },
+              {
+                "id": "rs-an-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_an_03_analysis_performed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-an-06",
+            "title": "RS - AN-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.AN-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-an-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-an-06_smt",
+                "name": "statement",
+                "prose": "RS.AN-06: Respond control requirement."
+              },
+              {
+                "id": "rs-an-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_an_06_actions_recorded evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-an-07",
+            "title": "RS - AN-07",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.AN-07"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-an-07"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-an-07_smt",
+                "name": "statement",
+                "prose": "RS.AN-07: Respond control requirement."
+              },
+              {
+                "id": "rs-an-07-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_an_07_data_collected evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "cloudtrail_trails,audit_logs,activity_log"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-an-08",
+            "title": "RS - AN-08",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.AN-08"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-an-08"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-an-08_smt",
+                "name": "statement",
+                "prose": "RS.AN-08: Respond control requirement."
+              },
+              {
+                "id": "rs-an-08-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_an_08_integrity_declared evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-co-02",
+            "title": "RS - CO-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.CO-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-co-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-co-02_smt",
+                "name": "statement",
+                "prose": "RS.CO-02: Respond control requirement."
+              },
+              {
+                "id": "rs-co-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_co_02_internal_stakeholders evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rs-co-03",
+            "title": "RS - CO-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "RS.CO-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "rs-co-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rs-co-03_smt",
+                "name": "statement",
+                "prose": "RS.CO-03: Respond control requirement."
+              },
+              {
+                "id": "rs-co-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify rs_co_03_external_stakeholders evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rc",
+        "title": "Recover",
+        "props": [
+          {
+            "name": "label",
+            "value": "RC"
+          }
+        ],
+        "controls": [
+          {
+            "id": "rc-rp-01",
+            "title": "RC - RP-01",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.RP-01"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-rp-01"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-rp-01_smt",
+                "name": "statement",
+                "prose": "RC.RP-01: Recover control requirement."
+              },
+              {
+                "id": "rc-rp-01-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_rp_01_recovery_executed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "veeam_backup_sessions,veeam_restore_points"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-rp-02",
+            "title": "RC - RP-02",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.RP-02"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-rp-02"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-rp-02_smt",
+                "name": "statement",
+                "prose": "RC.RP-02: Recover control requirement."
+              },
+              {
+                "id": "rc-rp-02-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_rp_02_recovery_actions evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-rp-03",
+            "title": "RC - RP-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.RP-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-rp-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-rp-03_smt",
+                "name": "statement",
+                "prose": "RC.RP-03: Recover control requirement."
+              },
+              {
+                "id": "rc-rp-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_rp_03_data_integrity_verified evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "config_recorders,cloudtrail_trails"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-rp-04",
+            "title": "RC - RP-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.RP-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-rp-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-rp-04_smt",
+                "name": "statement",
+                "prose": "RC.RP-04: Recover control requirement."
+              },
+              {
+                "id": "rc-rp-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_rp_04_operations_restored evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "veeam_backup_sessions"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-rp-05",
+            "title": "RC - RP-05",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.RP-05"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-rp-05"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-rp-05_smt",
+                "name": "statement",
+                "prose": "RC.RP-05: Recover control requirement."
+              },
+              {
+                "id": "rc-rp-05-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_rp_05_integrity_of_restored evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "config_recorders"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-rp-06",
+            "title": "RC - RP-06",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.RP-06"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-rp-06"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-rp-06_smt",
+                "name": "statement",
+                "prose": "RC.RP-06: Recover control requirement."
+              },
+              {
+                "id": "rc-rp-06-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_rp_06_end_of_recovery evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-co-03",
+            "title": "RC - CO-03",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.CO-03"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-co-03"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-co-03_smt",
+                "name": "statement",
+                "prose": "RC.CO-03: Recover control requirement."
+              },
+              {
+                "id": "rc-co-03-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_co_03_recovery_communicated evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "rc-co-04",
+            "title": "RC - CO-04",
+            "props": [
+              {
+                "name": "label",
+                "value": "RC.CO-04"
+              },
+              {
+                "name": "sort-id",
+                "value": "rc-co-04"
+              }
+            ],
+            "parts": [
+              {
+                "id": "rc-co-04_smt",
+                "name": "statement",
+                "prose": "RC.CO-04: Recover control requirement."
+              },
+              {
+                "id": "rc-co-04-1",
+                "name": "assessment-objective",
+                "prose": "Verify rc_co_04_public_updates evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

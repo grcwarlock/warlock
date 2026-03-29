@@ -1,0 +1,701 @@
+{
+  "catalog": {
+    "uuid": "da4e1c64-4e2a-5e8a-a03d-478cbdf4650a",
+    "metadata": {
+      "title": "SEC Cybersecurity Risk Management, Strategy, Governance, and Incident Disclosure",
+      "version": "2023",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-29T00:00:00Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://www.sec.gov/rules/final/2023/33-11216.pdf"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "sec_cyber"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "item105",
+        "title": "Item 1.05 - Material Cybersecurity Incidents",
+        "props": [
+          {
+            "name": "label",
+            "value": "ITEM105"
+          }
+        ],
+        "controls": [
+          {
+            "id": "item105-1",
+            "title": "ITEM105 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM105.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "item105-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item105-1_smt",
+                "name": "statement",
+                "prose": "ITEM105.1: Item 1.05 - Material Cybersecurity Incidents control requirement."
+              },
+              {
+                "id": "item105-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_105_1_incident_determination evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events,defender_alerts"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item105-2",
+            "title": "ITEM105 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM105.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "item105-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item105-2_smt",
+                "name": "statement",
+                "prose": "ITEM105.2: Item 1.05 - Material Cybersecurity Incidents control requirement."
+              },
+              {
+                "id": "item105-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_105_2_incident_disclosure_4day evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item105-3",
+            "title": "ITEM105 - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM105.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "item105-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item105-3_smt",
+                "name": "statement",
+                "prose": "ITEM105.3: Item 1.05 - Material Cybersecurity Incidents control requirement."
+              },
+              {
+                "id": "item105-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_105_3_incident_nature_scope evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events,cloudtrail_trails"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item105-4",
+            "title": "ITEM105 - 4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM105.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "item105-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item105-4_smt",
+                "name": "statement",
+                "prose": "ITEM105.4: Item 1.05 - Material Cybersecurity Incidents control requirement."
+              },
+              {
+                "id": "item105-4-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_105_4_material_impact evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item105-5",
+            "title": "ITEM105 - 5",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM105.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "item105-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item105-5_smt",
+                "name": "statement",
+                "prose": "ITEM105.5: Item 1.05 - Material Cybersecurity Incidents control requirement."
+              },
+              {
+                "id": "item105-5-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_105_5_remediation_status evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events,vuln_export"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "item106",
+        "title": "Item 106 - Risk Management, Strategy, and Governance",
+        "props": [
+          {
+            "name": "label",
+            "value": "ITEM106"
+          }
+        ],
+        "controls": [
+          {
+            "id": "item106-b1",
+            "title": "ITEM106 - B1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.B1"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-b1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-b1_smt",
+                "name": "statement",
+                "prose": "ITEM106.B1: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-b1-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_b1_risk_mgmt_program evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,snow_policies,snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-b2",
+            "title": "ITEM106 - B2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.B2"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-b2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-b2_smt",
+                "name": "statement",
+                "prose": "ITEM106.B2: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-b2-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_b2_risk_assessment_process evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "vuln_export,wiz_issues,snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-b3",
+            "title": "ITEM106 - B3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.B3"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-b3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-b3_smt",
+                "name": "statement",
+                "prose": "ITEM106.B3: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-b3-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_b3_third_party_risk evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "ssc_companies,ssc_factors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-b4",
+            "title": "ITEM106 - B4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.B4"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-b4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-b4_smt",
+                "name": "statement",
+                "prose": "ITEM106.B4: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-b4-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_b4_previous_incidents evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-b5",
+            "title": "ITEM106 - B5",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.B5"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-b5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-b5_smt",
+                "name": "statement",
+                "prose": "ITEM106.B5: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-b5-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_b5_risk_material_impact evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c1",
+            "title": "ITEM106 - C1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C1"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c1_smt",
+                "name": "statement",
+                "prose": "ITEM106.C1: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c1-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c1_board_oversight evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,sailpoint_identities,sailpoint_roles"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c2",
+            "title": "ITEM106 - C2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C2"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c2_smt",
+                "name": "statement",
+                "prose": "ITEM106.C2: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c2-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c2_board_committee evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c3",
+            "title": "ITEM106 - C3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C3"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c3_smt",
+                "name": "statement",
+                "prose": "ITEM106.C3: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c3-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c3_board_informed evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c4",
+            "title": "ITEM106 - C4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C4"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c4_smt",
+                "name": "statement",
+                "prose": "ITEM106.C4: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c4-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c4_mgmt_role evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "workday_employees,sailpoint_identities"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c5",
+            "title": "ITEM106 - C5",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C5"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c5_smt",
+                "name": "statement",
+                "prose": "ITEM106.C5: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c5-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c5_mgmt_expertise evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "workday_employees,kb4_training_enrollments"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c6",
+            "title": "ITEM106 - C6",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C6"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c6"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c6_smt",
+                "name": "statement",
+                "prose": "ITEM106.C6: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c6-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c6_mgmt_incident_process evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events,confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "item106-c7",
+            "title": "ITEM106 - C7",
+            "props": [
+              {
+                "name": "label",
+                "value": "ITEM106.C7"
+              },
+              {
+                "name": "sort-id",
+                "value": "item106-c7"
+              }
+            ],
+            "parts": [
+              {
+                "id": "item106-c7_smt",
+                "name": "statement",
+                "prose": "ITEM106.C7: Item 106 - Risk Management, Strategy, and Governance control requirement."
+              },
+              {
+                "id": "item106-c7-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_106_c7_mgmt_reporting evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ann-rpt",
+        "title": "Annual Reporting Requirements (10-K)",
+        "props": [
+          {
+            "name": "label",
+            "value": "ANN_RPT"
+          }
+        ],
+        "controls": [
+          {
+            "id": "ann-1",
+            "title": "ANN - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ANN.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "ann-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ann-1_smt",
+                "name": "statement",
+                "prose": "ANN.1: Annual Reporting Requirements (10-K) control requirement."
+              },
+              {
+                "id": "ann-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_ann_1_annual_cyber_disclosure evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,compliance_audits"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ann-2",
+            "title": "ANN - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ANN.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "ann-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ann-2_smt",
+                "name": "statement",
+                "prose": "ANN.2: Annual Reporting Requirements (10-K) control requirement."
+              },
+              {
+                "id": "ann-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_ann_2_prior_incidents_update evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ann-3",
+            "title": "ANN - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ANN.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "ann-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "ann-3_smt",
+                "name": "statement",
+                "prose": "ANN.3: Annual Reporting Requirements (10-K) control requirement."
+              },
+              {
+                "id": "ann-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify sec_ann_3_aggregated_incidents evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "sentinel_incidents,splunk_notable_events"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

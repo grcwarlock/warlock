@@ -1490,3 +1490,174 @@ def ai_governance(status_filter: str | None, fmt: str) -> None:
             f"[yellow]{privacy_flagged} control(s) have privacy implications. "
             f"Ensure DPIA is completed for affected AI processing activities.[/yellow]"
         )
+
+
+# ---------------------------------------------------------------------------
+# data-flow — data flow diagram generation
+# ---------------------------------------------------------------------------
+
+
+@privacy.command("data-flow")
+@click.option("--system", "-s", default=None, help="System ID to scope the diagram")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "mermaid", "json"]),
+    default="table",
+    help="Output format",
+)
+def privacy_data_flow(system: str | None, output_format: str) -> None:
+    """Generate a data flow diagram from data silos and system dependencies.
+
+    Shows how personal data flows between systems, including cross-border
+    transfers and data classification levels.
+    """
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.workflows.privacy_engineering import DataFlowMapper
+
+    init_db()
+    mapper = DataFlowMapper()
+
+    with get_read_session() as session:
+        diagram = mapper.generate(session, system_id=system)
+
+    if output_format == "mermaid":
+        console.print(f"[bold]Data Flow Diagram[/bold] -- {escape(diagram.title)}\n")
+        console.print(diagram.mermaid)
+        return
+
+    if output_format == "json":
+        import dataclasses
+        import json as _json
+
+        data = dataclasses.asdict(diagram)
+        console.print(_json.dumps(data, indent=2, default=str))
+        return
+
+    # Table output
+    console.print(f"\n[bold]Data Flow Diagram[/bold] -- {escape(diagram.title)}")
+
+    if diagram.silos:
+        silo_table = Table(title=f"Data Silos ({len(diagram.silos)})")
+        silo_table.add_column("Name", style="cyan")
+        silo_table.add_column("Classification")
+        silo_table.add_column("Categories")
+        silo_table.add_column("Location")
+        silo_table.add_column("Retention (days)", justify="right")
+
+        _class_styles = {
+            "restricted": "red",
+            "confidential": "yellow",
+            "internal": "dim",
+            "public": "green",
+        }
+
+        for silo in diagram.silos:
+            cls_style = _class_styles.get(silo.classification, "")
+            cls_display = (
+                f"[{cls_style}]{silo.classification}[/{cls_style}]"
+                if cls_style
+                else silo.classification
+            )
+            silo_table.add_row(
+                escape(silo.name),
+                cls_display,
+                escape(", ".join(silo.data_categories)),
+                escape(silo.location or "\u2014"),
+                str(silo.retention_days) if silo.retention_days else "\u2014",
+            )
+
+        console.print(silo_table)
+
+    if diagram.flows:
+        flow_table = Table(title=f"Data Flows ({len(diagram.flows)})")
+        flow_table.add_column("Source", style="cyan")
+        flow_table.add_column("Destination", style="cyan")
+        flow_table.add_column("Purpose")
+        flow_table.add_column("Legal Basis")
+        flow_table.add_column("Cross-Border", justify="center")
+        flow_table.add_column("Encrypted", justify="center")
+
+        for flow in diagram.flows:
+            xb = "[red]YES[/red]" if flow.cross_border else "[dim]no[/dim]"
+            enc = "[green]yes[/green]" if flow.encrypted else "[red]no[/red]"
+            flow_table.add_row(
+                escape(flow.source),
+                escape(flow.destination),
+                escape(flow.purpose or "\u2014"),
+                escape(flow.legal_basis or "\u2014"),
+                xb,
+                enc,
+            )
+
+        console.print(flow_table)
+
+    if not diagram.silos and not diagram.flows:
+        console.print("[dim]No data silos or flows found.[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# pia-prefill — pre-populate Privacy Impact Assessment
+# ---------------------------------------------------------------------------
+
+
+@privacy.command("pia-prefill")
+@click.option("--system", "-s", required=True, help="System name to assess")
+@click.option(
+    "--categories",
+    "-c",
+    default=None,
+    help="Comma-separated data categories (e.g. PII,PHI)",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Output format",
+)
+def privacy_pia_prefill(system: str, categories: str | None, output_format: str) -> None:
+    """Pre-fill a Privacy Impact Assessment template for a system.
+
+    Generates a structured PIA with sections pre-populated from
+    system metadata and data classification. Sections marked
+    [To be completed] require manual input.
+    """
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.workflows.privacy_engineering import PIAPrefiller
+
+    init_db()
+    prefiller = PIAPrefiller()
+
+    cat_list = [c.strip() for c in categories.split(",")] if categories else None
+
+    with get_read_session() as session:
+        pia = prefiller.prefill(session, system_name=system, data_categories=cat_list)
+
+    if output_format == "json":
+        import dataclasses
+        import json as _json
+
+        data = dataclasses.asdict(pia)
+        console.print(_json.dumps(data, indent=2, default=str))
+        return
+
+    # Text output
+    _risk_styles = {"high": "red", "medium": "yellow", "low": "green"}
+    risk_style = _risk_styles.get(pia.risk_level, "")
+    risk_display = (
+        f"[{risk_style}]{pia.risk_level.upper()}[/{risk_style}]"
+        if risk_style
+        else pia.risk_level.upper()
+    )
+
+    console.print(f"\n[bold]Privacy Impact Assessment[/bold] -- {escape(pia.system_name)}")
+    console.print(f"  Risk Level: {risk_display}")
+    console.print(f"  PIA ID:     {pia.id[:8]}")
+    console.print()
+
+    for section in pia.sections:
+        console.print(f"[bold cyan]{section.title}[/bold cyan]")
+        for line in section.content.split("\n"):
+            console.print(f"  {escape(line)}")
+        console.print()

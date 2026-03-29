@@ -269,3 +269,89 @@ def scheduler_stop(
     sched = get_scheduler()
     sched.stop()
     return SchedulerStatusResponse(**sched.status)
+
+
+# ---------------------------------------------------------------------------
+# Metrics — Prometheus-compatible export
+# ---------------------------------------------------------------------------
+
+
+class PipelineMetricsResponse(BaseModel):
+    total_events: int = 0
+    total_errors: int = 0
+    throughput_eps: float = 0.0
+    uptime_seconds: float = 0.0
+    queue_depth: int = 0
+    active_connectors: int = 0
+    last_run_id: str | None = None
+    last_run_at: str | None = None
+    stages: dict = {}
+
+
+@router.get("/metrics", response_model=PipelineMetricsResponse)
+def pipeline_metrics_json(
+    current_user: User = Depends(require_permission("view_pipeline")),
+):
+    """Pipeline metrics as JSON."""
+    from warlock.pipeline.metrics import get_metrics_from_db, get_pipeline_metrics
+
+    live = get_pipeline_metrics()
+    snap = live.snapshot()
+    if snap.total_events == 0:
+        snap = get_metrics_from_db()
+
+    return PipelineMetricsResponse(
+        total_events=snap.total_events,
+        total_errors=snap.total_errors,
+        throughput_eps=round(snap.throughput_eps, 2),
+        uptime_seconds=round(snap.uptime_seconds, 1),
+        queue_depth=snap.queue_depth,
+        active_connectors=snap.active_connectors,
+        last_run_id=snap.last_run_id,
+        last_run_at=snap.last_run_at.isoformat() if snap.last_run_at else None,
+        stages={
+            name: {
+                "events_processed": m.events_processed,
+                "events_errored": m.events_errored,
+                "avg_latency_ms": round(m.avg_latency_ms, 2),
+                "error_rate": round(m.error_rate, 4),
+            }
+            for name, m in snap.stages.items()
+        },
+    )
+
+
+@router.get("/metrics/prometheus")
+def pipeline_metrics_prometheus(
+    current_user: User = Depends(require_permission("view_pipeline")),
+):
+    """Pipeline metrics in Prometheus text exposition format."""
+    from fastapi.responses import PlainTextResponse
+
+    from warlock.pipeline.metrics import get_metrics_from_db, get_pipeline_metrics
+
+    live = get_pipeline_metrics()
+    snap = live.snapshot()
+
+    # Use live metrics if available, otherwise derive from DB snapshot
+    if snap.total_events == 0:
+        snap = get_metrics_from_db()
+        # Build prometheus text directly from snapshot
+        lines: list[str] = []
+        lines.append("# HELP warlock_pipeline_events_total Total events per stage")
+        lines.append("# TYPE warlock_pipeline_events_total counter")
+        for name, m in snap.stages.items():
+            lines.append(f'warlock_pipeline_events_total{{stage="{name}"}} {m.events_processed}')
+        lines.append("# HELP warlock_pipeline_events_total_all Total events")
+        lines.append("# TYPE warlock_pipeline_events_total_all counter")
+        lines.append(f"warlock_pipeline_events_total_all {snap.total_events}")
+        lines.append("")
+        return PlainTextResponse(
+            content="\n".join(lines),
+            media_type="text/plain; version=0.0.4; charset=utf-8",
+        )
+
+    return PlainTextResponse(
+        content=live.to_prometheus(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )

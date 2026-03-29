@@ -5294,6 +5294,1284 @@ def vendor_due_diligence(detail: dict, raw_data: dict) -> tuple[bool, list[str]]
 
 
 # ============================================================================
+# NEW ASSERTIONS — Expanded coverage (P1 Item 36)
+# Target: increase from ~103 to ~153+ assertions
+# ============================================================================
+
+
+# ---------------------------------------------------------------------------
+# Access Control — Session, Remote, Wireless
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("session_lock_enforced")
+def session_lock_enforced(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that session lock is enforced after inactivity period (AC-11)."""
+    reasons: list[str] = []
+
+    timeout = detail.get("session_lock_timeout") or detail.get("lock_timeout_minutes")
+    if timeout is not None:
+        if int(timeout) > 15:
+            reasons.append(f"Session lock timeout is {timeout} minutes — exceeds 15-minute maximum")
+            return False, reasons
+        return True, []
+
+    enabled = detail.get("session_lock_enabled") or detail.get("screen_lock_enabled")
+    if enabled is False:
+        reasons.append("Session lock not enabled — workstations accessible after inactivity")
+        return False, reasons
+
+    idle_policy = detail.get("idle_timeout_policy")
+    if idle_policy is False:
+        reasons.append("No idle timeout policy configured")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "no_session_lock" in issues:
+        reasons.append("Session lock not configured")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("wireless_access_restricted")
+def wireless_access_restricted(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check wireless access is restricted and authorized (AC-18)."""
+    reasons: list[str] = []
+
+    auth_type = detail.get("authentication_type") or detail.get("wifi_auth")
+    if isinstance(auth_type, str) and auth_type.lower() in ("open", "wep", "none"):
+        ssid = detail.get("ssid") or detail.get("network_name") or "unknown"
+        reasons.append(f"Wireless network '{ssid}' uses insecure authentication: {auth_type}")
+        return False, reasons
+
+    encryption = detail.get("encryption_protocol") or detail.get("wifi_encryption")
+    if isinstance(encryption, str) and encryption.lower() in ("wep", "tkip", "none"):
+        reasons.append(f"Wireless encryption protocol is insecure: {encryption}")
+        return False, reasons
+
+    authorized = detail.get("authorized") or detail.get("approved")
+    if authorized is False:
+        ssid = detail.get("ssid") or detail.get("network_name") or "unknown"
+        reasons.append(f"Wireless network '{ssid}' is not authorized")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "unauthorized_wireless" in issues:
+        reasons.append("Unauthorized wireless access point detected")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("concurrent_session_controlled")
+def concurrent_session_controlled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that concurrent session limits are enforced (AC-10)."""
+    reasons: list[str] = []
+
+    max_sessions = detail.get("max_concurrent_sessions") or detail.get("session_limit")
+    if max_sessions is not None and int(max_sessions) > 10:
+        reasons.append(f"Max concurrent sessions ({max_sessions}) exceeds reasonable limit")
+        return False, reasons
+
+    enabled = detail.get("concurrent_session_control") or detail.get("session_limit_enabled")
+    if enabled is False:
+        reasons.append("Concurrent session control not enabled")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("access_agreement_signed")
+def access_agreement_signed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that users have signed access agreements before access (AC-8/PS-6)."""
+    reasons: list[str] = []
+
+    signed = (
+        detail.get("access_agreement_signed")
+        or detail.get("acceptable_use_signed")
+        or detail.get("agreement_acknowledged")
+    )
+    if signed is False:
+        user = detail.get("user") or detail.get("username") or detail.get("email") or "unknown"
+        reasons.append(f"User {user} has not signed access agreement")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "no_access_agreement" in issues:
+        reasons.append("Access agreement not signed")
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Audit — Review, Reduction, Timestamps
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("audit_review_analysis")
+def audit_review_analysis(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that audit logs are reviewed and analyzed regularly (AU-6)."""
+    reasons: list[str] = []
+
+    review_enabled = (
+        detail.get("audit_review_enabled")
+        or detail.get("log_review_scheduled")
+        or detail.get("siem_review_configured")
+    )
+    if review_enabled is False:
+        reasons.append("Audit log review and analysis not configured")
+        return False, reasons
+
+    last_review = detail.get("last_review_date") or detail.get("last_audit_review")
+    if last_review:
+        days = _days_since(last_review)
+        if days is not None and days > 7:
+            reasons.append(f"Last audit review was {days} days ago — weekly review required")
+            return False, reasons
+
+    automated = detail.get("automated_analysis") or detail.get("siem_correlation_enabled")
+    if automated is True:
+        return True, []
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "no_audit_review" in issues:
+        reasons.append("Audit review process not established")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("audit_reduction_capability")
+def audit_reduction_capability(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check audit reduction and report generation capability (AU-7)."""
+    reasons: list[str] = []
+
+    has_reduction = (
+        detail.get("audit_reduction_enabled")
+        or detail.get("log_search_available")
+        or detail.get("siem_configured")
+        or detail.get("log_analytics_enabled")
+    )
+    if has_reduction is False:
+        reasons.append("No audit reduction capability — cannot filter or search audit records")
+        return False, reasons
+
+    report_gen = detail.get("report_generation_enabled") or detail.get("dashboards_configured")
+    if report_gen is False:
+        reasons.append("Audit report generation not available")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("audit_timestamp_reliable")
+def audit_timestamp_reliable(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that audit records have reliable timestamps from authoritative source (AU-8)."""
+    reasons: list[str] = []
+
+    ntp_enabled = (
+        detail.get("ntp_configured")
+        or detail.get("time_sync_enabled")
+        or detail.get("chrony_enabled")
+    )
+    if ntp_enabled is False:
+        reasons.append("Time synchronization (NTP) not configured — audit timestamps unreliable")
+        return False, reasons
+
+    ntp_source = detail.get("ntp_source") or detail.get("time_source")
+    if isinstance(ntp_source, str) and ntp_source.lower() in ("none", "local", ""):
+        reasons.append(f"NTP source is '{ntp_source}' — must use authoritative time source")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "time_drift_detected" in issues:
+        reasons.append("Time drift detected across systems — timestamps may be inconsistent")
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Configuration Management — Baseline, Change Control
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("security_baseline_applied")
+def security_baseline_applied(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that CIS/STIG security baselines are applied (CM-2/CM-6)."""
+    reasons: list[str] = []
+
+    baseline_applied = (
+        detail.get("cis_benchmark_applied")
+        or detail.get("stig_applied")
+        or detail.get("baseline_compliant")
+        or detail.get("hardened")
+    )
+    if baseline_applied is False:
+        host = detail.get("hostname") or detail.get("instance_id") or "unknown"
+        reasons.append(f"System {host} has no security baseline applied (CIS/STIG)")
+        return False, reasons
+
+    compliance_pct = detail.get("compliance_percentage") or detail.get("benchmark_score")
+    if compliance_pct is not None:
+        try:
+            pct = float(compliance_pct)
+            if pct < 80:
+                host = detail.get("hostname") or detail.get("instance_id") or "unknown"
+                reasons.append(f"System {host} baseline compliance at {pct}% — below 80% threshold")
+                return False, reasons
+        except (ValueError, TypeError):
+            pass
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list):
+        if "no_baseline" in issues or "not_hardened" in issues:
+            reasons.append("Security baseline not applied")
+            return False, reasons
+
+    return True, []
+
+
+@engine.assertion("change_impact_analyzed")
+def change_impact_analyzed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that security impact analysis is performed for changes (CM-4)."""
+    reasons: list[str] = []
+
+    impact_analyzed = (
+        detail.get("security_impact_analyzed")
+        or detail.get("impact_assessment_completed")
+        or detail.get("change_risk_assessed")
+    )
+    if impact_analyzed is False:
+        change_id = detail.get("change_id") or detail.get("ticket_id") or "unknown"
+        reasons.append(f"Change {change_id} — security impact analysis not performed")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "no_impact_analysis" in issues:
+        reasons.append("Security impact analysis missing for configuration change")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("software_inventory_maintained")
+def software_inventory_maintained(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that authorized software inventory is maintained (CM-8)."""
+    reasons: list[str] = []
+
+    inventory = (
+        detail.get("software_inventory_maintained")
+        or detail.get("asset_inventory_includes_software")
+        or detail.get("cmdb_software_tracked")
+    )
+    if inventory is False:
+        reasons.append("Authorized software inventory not maintained")
+        return False, reasons
+
+    last_updated = detail.get("inventory_last_updated") or detail.get("last_scan_date")
+    if last_updated:
+        days = _days_since(last_updated)
+        if days is not None and days > 30:
+            reasons.append(
+                f"Software inventory last updated {days} days ago — exceeds 30-day limit"
+            )
+            return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Contingency Planning — Backup, Recovery, Testing
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("backup_schedule_compliant")
+def backup_schedule_compliant(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that backups run on schedule per policy (CP-9)."""
+    reasons: list[str] = []
+
+    last_backup = detail.get("last_backup_date") or detail.get("last_successful_backup")
+    if last_backup:
+        days = _days_since(last_backup)
+        if days is not None and days > 1:
+            resource = detail.get("resource_id") or detail.get("database_name") or "unknown"
+            reasons.append(f"Resource {resource} — last backup {days} days ago (daily required)")
+            return False, reasons
+        return True, []
+
+    status = detail.get("backup_status") or detail.get("job_status")
+    if isinstance(status, str) and status.lower() in ("failed", "error", "missed"):
+        resource = detail.get("resource_id") or detail.get("database_name") or "unknown"
+        reasons.append(f"Resource {resource} — backup status: {status}")
+        return False, reasons
+
+    enabled = detail.get("backup_enabled") or detail.get("automated_backup")
+    if enabled is False:
+        reasons.append("Automated backup not enabled")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("recovery_point_validated")
+def recovery_point_validated(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that recovery point objective (RPO) is achievable (CP-9/CP-10)."""
+    reasons: list[str] = []
+
+    rpo_hours = detail.get("rpo_hours") or detail.get("recovery_point_objective")
+    actual_gap = detail.get("actual_backup_gap_hours") or detail.get("backup_interval_hours")
+
+    if rpo_hours is not None and actual_gap is not None:
+        try:
+            if float(actual_gap) > float(rpo_hours):
+                reasons.append(f"Backup interval ({actual_gap}h) exceeds RPO target ({rpo_hours}h)")
+                return False, reasons
+        except (ValueError, TypeError):
+            pass
+
+    restore_tested = detail.get("restore_tested") or detail.get("recovery_test_passed")
+    if restore_tested is False:
+        reasons.append("Backup restore has not been tested — RPO not validated")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "rpo_exceeded" in issues:
+        reasons.append("Recovery point objective exceeded")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("contingency_plan_reviewed")
+def contingency_plan_reviewed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that contingency plan is reviewed and updated annually (CP-2)."""
+    reasons: list[str] = []
+
+    last_review = detail.get("last_review_date") or detail.get("plan_review_date")
+    if last_review:
+        days = _days_since(last_review)
+        if days is not None and days > 365:
+            reasons.append(
+                f"Contingency plan last reviewed {days} days ago — annual review required"
+            )
+            return False, reasons
+        return True, []
+
+    reviewed = detail.get("plan_reviewed") or detail.get("contingency_plan_current")
+    if reviewed is False:
+        reasons.append("Contingency plan not reviewed within required period")
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Identification & Authentication — MFA, Password, Credentials
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("password_complexity_enforced")
+def password_complexity_enforced(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that password complexity requirements are enforced (IA-5)."""
+    reasons: list[str] = []
+
+    min_length = detail.get("minimum_password_length") or detail.get("min_length")
+    if min_length is not None:
+        try:
+            if int(min_length) < 12:
+                reasons.append(f"Minimum password length is {min_length} — requires 12+")
+                return False, reasons
+        except (ValueError, TypeError):
+            pass
+
+    complexity = detail.get("complexity_enabled") or detail.get("password_complexity")
+    if complexity is False:
+        reasons.append("Password complexity requirements not enforced")
+        return False, reasons
+
+    reuse_prevention = detail.get("password_reuse_prevention") or detail.get("history_count")
+    if reuse_prevention is not None:
+        try:
+            if int(reuse_prevention) < 12:
+                reasons.append(
+                    f"Password history is {reuse_prevention} — should prevent reuse of last 12"
+                )
+        except (ValueError, TypeError):
+            pass
+
+    if reasons:
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "weak_password_policy" in issues:
+        reasons.append("Weak password policy detected")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("credential_rotation_enforced")
+def credential_rotation_enforced(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that credentials (keys, tokens) are rotated per policy (IA-5)."""
+    reasons: list[str] = []
+
+    last_rotated = detail.get("last_rotated") or detail.get("key_last_rotated")
+    max_age_days = detail.get("max_key_age_days") or 90
+    if last_rotated:
+        days = _days_since(last_rotated)
+        if days is not None and days > int(max_age_days):
+            cred_id = detail.get("key_id") or detail.get("credential_id") or "unknown"
+            reasons.append(
+                f"Credential {cred_id} last rotated {days} days ago — exceeds {max_age_days}-day policy"
+            )
+            return False, reasons
+        return True, []
+
+    rotation_enabled = detail.get("auto_rotation_enabled") or detail.get("rotation_policy_active")
+    if rotation_enabled is False:
+        reasons.append("Credential auto-rotation not enabled")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "credential_stale" in issues:
+        reasons.append("Stale credentials detected — rotation required")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("authenticator_management")
+def authenticator_management(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check authenticator lifecycle management (IA-5(1))."""
+    reasons: list[str] = []
+
+    managed = (
+        detail.get("authenticator_managed")
+        or detail.get("token_lifecycle_managed")
+        or detail.get("mfa_device_managed")
+    )
+    if managed is False:
+        reasons.append("Authenticator lifecycle not managed — no provisioning/revocation process")
+        return False, reasons
+
+    hardware_token = detail.get("hardware_token_inventory")
+    if hardware_token is False:
+        reasons.append("Hardware token inventory not maintained")
+
+    expired_tokens = detail.get("expired_tokens_revoked")
+    if expired_tokens is False:
+        reasons.append("Expired authentication tokens not revoked")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Incident Response — Handling, Monitoring, Reporting
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("incident_response_plan_current")
+def incident_response_plan_current(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that incident response plan is current and reviewed (IR-1/IR-8)."""
+    reasons: list[str] = []
+
+    last_review = detail.get("plan_review_date") or detail.get("last_updated")
+    if last_review:
+        days = _days_since(last_review)
+        if days is not None and days > 365:
+            reasons.append(f"IR plan last reviewed {days} days ago — annual review required")
+            return False, reasons
+        return True, []
+
+    plan_exists = detail.get("ir_plan_documented") or detail.get("plan_exists")
+    if plan_exists is False:
+        reasons.append("No documented incident response plan")
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "no_ir_plan" in issues:
+        reasons.append("Incident response plan not found")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("incident_communication_plan")
+def incident_communication_plan(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that incident communication procedures exist (IR-7)."""
+    reasons: list[str] = []
+
+    comm_plan = (
+        detail.get("communication_plan_documented")
+        or detail.get("notification_procedures")
+        or detail.get("escalation_procedures")
+    )
+    if comm_plan is False:
+        reasons.append("No incident communication/escalation plan documented")
+        return False, reasons
+
+    external_contacts = detail.get("external_contacts_maintained")
+    if external_contacts is False:
+        reasons.append("External incident contacts (law enforcement, CERT) not maintained")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("forensic_readiness")
+def forensic_readiness(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check forensic investigation readiness (IR-4/IR-10)."""
+    reasons: list[str] = []
+
+    forensic_capability = (
+        detail.get("forensic_capability")
+        or detail.get("forensic_tools_available")
+        or detail.get("edr_forensic_enabled")
+    )
+    if forensic_capability is False:
+        reasons.append("No forensic investigation capability — cannot perform incident analysis")
+        return False, reasons
+
+    evidence_preservation = detail.get("evidence_preservation_policy")
+    if evidence_preservation is False:
+        reasons.append("No evidence preservation policy for incident investigations")
+
+    chain_of_custody = detail.get("chain_of_custody_process")
+    if chain_of_custody is False:
+        reasons.append("No chain-of-custody process for forensic evidence")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Personnel Security — Screening, Termination, Transfer
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("personnel_screening_complete")
+def personnel_screening_complete(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that personnel screening is completed before access (PS-3)."""
+    reasons: list[str] = []
+
+    screening = (
+        detail.get("screening_completed")
+        or detail.get("background_check_passed")
+        or detail.get("vetting_status")
+    )
+    if screening is False:
+        person = detail.get("employee_name") or detail.get("username") or "unknown"
+        reasons.append(f"Personnel screening not completed for {person}")
+        return False, reasons
+
+    if isinstance(screening, str) and screening.lower() in ("failed", "pending", "incomplete"):
+        person = detail.get("employee_name") or detail.get("username") or "unknown"
+        reasons.append(f"Personnel screening status for {person}: {screening}")
+        return False, reasons
+
+    rescreening = detail.get("rescreening_current")
+    if rescreening is False:
+        reasons.append("Periodic rescreening not current")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("termination_checklist_complete")
+def termination_checklist_complete(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check termination procedures followed (PS-4)."""
+    reasons: list[str] = []
+
+    access_revoked = detail.get("access_revoked") or detail.get("accounts_disabled")
+    if access_revoked is False:
+        person = detail.get("employee_name") or detail.get("username") or "unknown"
+        reasons.append(f"System access not revoked for terminated employee {person}")
+        return False, reasons
+
+    assets_returned = detail.get("assets_returned") or detail.get("equipment_returned")
+    if assets_returned is False:
+        person = detail.get("employee_name") or detail.get("username") or "unknown"
+        reasons.append(f"Company assets not returned by {person}")
+
+    exit_interview = detail.get("exit_interview_conducted")
+    if exit_interview is False:
+        reasons.append("Exit interview not conducted")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("transfer_access_reviewed")
+def transfer_access_reviewed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that access is reviewed and adjusted for personnel transfers (PS-5)."""
+    reasons: list[str] = []
+
+    reviewed = detail.get("access_reviewed") or detail.get("transfer_review_completed")
+    if reviewed is False:
+        person = detail.get("employee_name") or detail.get("username") or "unknown"
+        reasons.append(f"Access not reviewed for transferred employee {person}")
+        return False, reasons
+
+    old_access_revoked = detail.get("previous_access_revoked")
+    if old_access_revoked is False:
+        reasons.append("Previous role access not revoked after transfer")
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Physical Security — Access, Monitoring, Environmental
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("physical_access_monitored")
+def physical_access_monitored(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check physical access monitoring is active (PE-6)."""
+    reasons: list[str] = []
+
+    monitoring = (
+        detail.get("cctv_active")
+        or detail.get("video_surveillance_enabled")
+        or detail.get("physical_monitoring_active")
+    )
+    if monitoring is False:
+        facility = detail.get("facility_name") or detail.get("location") or "unknown"
+        reasons.append(f"Physical access monitoring not active at {facility}")
+        return False, reasons
+
+    access_logs = detail.get("access_logs_reviewed") or detail.get("badge_logs_monitored")
+    if access_logs is False:
+        reasons.append("Physical access logs not reviewed regularly")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("environmental_controls_active")
+def environmental_controls_active(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check environmental protection controls (PE-10/PE-12/PE-13/PE-14)."""
+    reasons: list[str] = []
+
+    fire_suppression = detail.get("fire_suppression_active") or detail.get("fire_protection")
+    if fire_suppression is False:
+        reasons.append("Fire suppression system not active")
+
+    climate_control = detail.get("hvac_monitored") or detail.get("temperature_controlled")
+    if climate_control is False:
+        reasons.append("Climate/temperature monitoring not active")
+
+    water_detection = detail.get("water_detection_active") or detail.get("flood_sensors")
+    if water_detection is False:
+        reasons.append("Water/flood detection not active")
+
+    power_protection = detail.get("ups_active") or detail.get("generator_available")
+    if power_protection is False:
+        reasons.append("Power protection (UPS/generator) not available")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("delivery_receiving_controlled")
+def delivery_receiving_controlled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that deliveries are controlled and inspected (PE-16)."""
+    reasons: list[str] = []
+
+    controlled = (
+        detail.get("delivery_receiving_controlled")
+        or detail.get("shipping_receiving_secured")
+        or detail.get("delivery_inspection_process")
+    )
+    if controlled is False:
+        reasons.append("Delivery/receiving area not controlled — unauthorized equipment may enter")
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Risk Assessment — Scanning, Monitoring
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("vulnerability_scan_authenticated")
+def vulnerability_scan_authenticated(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that authenticated vulnerability scans are performed (RA-5)."""
+    reasons: list[str] = []
+
+    authenticated = (
+        detail.get("authenticated_scan")
+        or detail.get("credentialed_scan")
+        or detail.get("scan_type")
+    )
+    if authenticated is False:
+        reasons.append(
+            "Only unauthenticated vulnerability scans performed — credentialed scans required"
+        )
+        return False, reasons
+
+    if isinstance(authenticated, str) and authenticated.lower() == "unauthenticated":
+        reasons.append(
+            "Vulnerability scans are unauthenticated — higher coverage with credentialed scans"
+        )
+        return False, reasons
+
+    scan_frequency = detail.get("scan_frequency_days") or detail.get("scan_interval_days")
+    if scan_frequency is not None:
+        try:
+            if int(scan_frequency) > 30:
+                reasons.append(
+                    f"Vulnerability scan frequency is {scan_frequency} days — monthly required"
+                )
+                return False, reasons
+        except (ValueError, TypeError):
+            pass
+
+    return True, []
+
+
+@engine.assertion("threat_intelligence_integrated")
+def threat_intelligence_integrated(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that threat intelligence feeds are integrated (RA-3/RA-5)."""
+    reasons: list[str] = []
+
+    ti_integrated = (
+        detail.get("threat_intelligence_enabled")
+        or detail.get("ti_feeds_active")
+        or detail.get("stix_taxii_enabled")
+    )
+    if ti_integrated is False:
+        reasons.append("Threat intelligence not integrated into risk assessment process")
+        return False, reasons
+
+    feed_current = detail.get("ti_feed_current") or detail.get("last_ti_update")
+    if feed_current is False:
+        reasons.append("Threat intelligence feeds are not current")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# System & Communications — Encryption, Boundary
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("boundary_protection_devices")
+def boundary_protection_devices(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check boundary protection devices are configured (SC-7)."""
+    reasons: list[str] = []
+
+    firewall = detail.get("firewall_enabled") or detail.get("network_firewall_active")
+    if firewall is False:
+        reasons.append("Network firewall not enabled at system boundary")
+        return False, reasons
+
+    deny_by_default = detail.get("default_deny") or detail.get("deny_all_inbound")
+    if deny_by_default is False:
+        reasons.append(
+            "Boundary protection does not default to deny — allow-by-default is insecure"
+        )
+        return False, reasons
+
+    issues = detail.get("issues", [])
+    if isinstance(issues, list) and "no_boundary_protection" in issues:
+        reasons.append("No boundary protection devices configured")
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("cryptographic_key_established")
+def cryptographic_key_established(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check cryptographic key establishment and management (SC-12/SC-13)."""
+    reasons: list[str] = []
+
+    kms_used = (
+        detail.get("kms_enabled")
+        or detail.get("key_management_system")
+        or detail.get("hsm_integrated")
+    )
+    if kms_used is False:
+        reasons.append("No key management system — cryptographic keys not centrally managed")
+        return False, reasons
+
+    key_strength = detail.get("key_length") or detail.get("key_size_bits")
+    if key_strength is not None:
+        try:
+            if int(key_strength) < 256:
+                reasons.append(f"Cryptographic key length is {key_strength} bits — 256+ required")
+                return False, reasons
+        except (ValueError, TypeError):
+            pass
+
+    algorithm = detail.get("algorithm") or detail.get("encryption_algorithm")
+    if isinstance(algorithm, str):
+        weak = {"des", "3des", "rc4", "md5", "sha1"}
+        if algorithm.lower() in weak:
+            reasons.append(f"Weak cryptographic algorithm in use: {algorithm}")
+            return False, reasons
+
+    return True, []
+
+
+@engine.assertion("denial_of_service_protection")
+def denial_of_service_protection(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check DoS protection mechanisms (SC-5)."""
+    reasons: list[str] = []
+
+    ddos_protection = (
+        detail.get("ddos_protection_enabled")
+        or detail.get("cloudflare_enabled")
+        or detail.get("aws_shield_enabled")
+        or detail.get("waf_ddos_enabled")
+    )
+    if ddos_protection is False:
+        reasons.append("DDoS protection not enabled — system vulnerable to denial-of-service")
+        return False, reasons
+
+    rate_limiting = detail.get("rate_limiting_enabled") or detail.get("throttling_configured")
+    if rate_limiting is False:
+        reasons.append("Rate limiting not configured — application-layer DoS risk")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("public_key_infrastructure")
+def public_key_infrastructure(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check PKI certificate management (SC-17)."""
+    reasons: list[str] = []
+
+    pki_managed = (
+        detail.get("pki_managed")
+        or detail.get("certificate_authority_used")
+        or detail.get("acm_managed")
+    )
+    if pki_managed is False:
+        reasons.append("PKI not managed — certificates not issued from trusted authority")
+        return False, reasons
+
+    cert_monitoring = detail.get("certificate_monitoring_enabled")
+    if cert_monitoring is False:
+        reasons.append("Certificate expiration monitoring not enabled")
+
+    auto_renewal = detail.get("auto_renewal_enabled")
+    if auto_renewal is False and cert_monitoring is False:
+        reasons.append("No certificate auto-renewal and no monitoring — expiration risk")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# SOC 2 Trust Services — Additional CC Criteria
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("risk_mitigation_activities")
+def risk_mitigation_activities(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that risk mitigation activities are performed (CC3/CC9)."""
+    reasons: list[str] = []
+
+    mitigation_active = (
+        detail.get("risk_mitigation_active")
+        or detail.get("risk_treatment_plan_implemented")
+        or detail.get("controls_operating_effectively")
+    )
+    if mitigation_active is False:
+        reasons.append("Risk mitigation activities not active — identified risks not being treated")
+        return False, reasons
+
+    risk_register = detail.get("risk_register_maintained")
+    if risk_register is False:
+        reasons.append("Risk register not maintained")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("change_management_controlled")
+def change_management_controlled(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check formal change management controls (CC8)."""
+    reasons: list[str] = []
+
+    change_process = (
+        detail.get("change_management_process")
+        or detail.get("change_control_board")
+        or detail.get("cab_review_required")
+    )
+    if change_process is False:
+        reasons.append("No formal change management process — changes not controlled")
+        return False, reasons
+
+    testing_required = detail.get("testing_before_deployment") or detail.get("pre_deploy_testing")
+    if testing_required is False:
+        reasons.append("Changes not tested before production deployment")
+
+    rollback_plan = detail.get("rollback_plan_required") or detail.get("rollback_capability")
+    if rollback_plan is False:
+        reasons.append("No rollback plan required for changes")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("system_monitoring_comprehensive")
+def system_monitoring_comprehensive(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check comprehensive system monitoring (CC7)."""
+    reasons: list[str] = []
+
+    infra_monitoring = (
+        detail.get("infrastructure_monitoring")
+        or detail.get("cloud_monitoring_enabled")
+        or detail.get("apm_enabled")
+    )
+    if infra_monitoring is False:
+        reasons.append("Infrastructure monitoring not enabled")
+
+    security_monitoring = (
+        detail.get("security_monitoring_enabled")
+        or detail.get("siem_active")
+        or detail.get("edr_monitoring")
+    )
+    if security_monitoring is False:
+        reasons.append("Security monitoring not active")
+
+    alert_routing = detail.get("alert_routing_configured") or detail.get("pager_duty_integrated")
+    if alert_routing is False:
+        reasons.append("Alert routing not configured — security events may go unnoticed")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# HIPAA — Additional Technical/Administrative Safeguards
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("phi_access_audit_trail")
+def phi_access_audit_trail(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check that PHI access is logged and auditable (164.312(b))."""
+    reasons: list[str] = []
+
+    phi_logging = (
+        detail.get("phi_access_logging_enabled")
+        or detail.get("hipaa_audit_trail_active")
+        or detail.get("database_access_logging")
+    )
+    if phi_logging is False:
+        reasons.append("PHI access not logged — HIPAA audit trail requirement not met")
+        return False, reasons
+
+    log_review = detail.get("phi_access_review_conducted")
+    if log_review is False:
+        reasons.append("PHI access logs not reviewed regularly")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("phi_encryption_required")
+def phi_encryption_required(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check PHI is encrypted at rest and in transit (164.312(a)(2)(iv), 164.312(e)(1))."""
+    reasons: list[str] = []
+
+    at_rest = (
+        detail.get("encryption_at_rest")
+        or detail.get("phi_encrypted_at_rest")
+        or detail.get("tde_enabled")
+    )
+    if at_rest is False:
+        reasons.append("PHI not encrypted at rest — HIPAA addressable requirement")
+        return False, reasons
+
+    in_transit = (
+        detail.get("encryption_in_transit")
+        or detail.get("phi_encrypted_in_transit")
+        or detail.get("tls_enabled")
+    )
+    if in_transit is False:
+        reasons.append("PHI not encrypted in transit — HIPAA addressable requirement")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("baa_executed")
+def baa_executed(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check Business Associate Agreements are executed (164.314(a))."""
+    reasons: list[str] = []
+
+    baa = (
+        detail.get("baa_executed")
+        or detail.get("business_associate_agreement")
+        or detail.get("baa_signed")
+    )
+    if baa is False:
+        vendor = detail.get("vendor_name") or detail.get("business_associate") or "unknown"
+        reasons.append(f"BAA not executed with business associate: {vendor}")
+        return False, reasons
+
+    baa_current = detail.get("baa_current") or detail.get("baa_review_date")
+    if isinstance(baa_current, str):
+        days = _days_since(baa_current)
+        if days is not None and days > 365:
+            vendor = detail.get("vendor_name") or detail.get("business_associate") or "unknown"
+            reasons.append(
+                f"BAA with {vendor} not reviewed in {days} days — annual review required"
+            )
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("hipaa_workforce_training")
+def hipaa_workforce_training(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check HIPAA workforce training completed (164.308(a)(5))."""
+    reasons: list[str] = []
+
+    training = (
+        detail.get("hipaa_training_completed")
+        or detail.get("privacy_training_current")
+        or detail.get("security_awareness_training")
+    )
+    if training is False:
+        person = detail.get("employee_name") or detail.get("username") or "unknown"
+        reasons.append(f"HIPAA workforce training not completed for {person}")
+        return False, reasons
+
+    completion_rate = detail.get("training_completion_rate") or detail.get("completion_percentage")
+    if completion_rate is not None:
+        try:
+            pct = float(completion_rate)
+            if pct < 95:
+                reasons.append(f"HIPAA training completion rate {pct}% — below 95% threshold")
+                return False, reasons
+        except (ValueError, TypeError):
+            pass
+
+    return True, []
+
+
+@engine.assertion("minimum_necessary_enforced")
+def minimum_necessary_enforced(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check minimum necessary standard for PHI access (164.502(b))."""
+    reasons: list[str] = []
+
+    role_based = (
+        detail.get("role_based_phi_access")
+        or detail.get("minimum_necessary_policy")
+        or detail.get("phi_access_restricted")
+    )
+    if role_based is False:
+        reasons.append("Minimum necessary standard not enforced — PHI access not role-based")
+        return False, reasons
+
+    access_reviewed = detail.get("phi_access_reviewed")
+    if access_reviewed is False:
+        reasons.append("PHI access not reviewed for minimum necessary compliance")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Privacy — Data Retention, Subject Rights
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("data_retention_enforced")
+def data_retention_enforced(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check data retention policies are enforced with automated lifecycle."""
+    reasons: list[str] = []
+
+    retention_policy = (
+        detail.get("retention_policy_defined")
+        or detail.get("data_lifecycle_policy")
+        or detail.get("retention_schedule_active")
+    )
+    if retention_policy is False:
+        reasons.append("Data retention policy not defined — data may persist beyond lawful basis")
+        return False, reasons
+
+    automated_deletion = (
+        detail.get("automated_deletion")
+        or detail.get("lifecycle_rules_active")
+        or detail.get("auto_purge_enabled")
+    )
+    if automated_deletion is False:
+        reasons.append("Automated data deletion not enabled — manual deletion is error-prone")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("privacy_notice_current")
+def privacy_notice_current(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check privacy notices are current and accurate."""
+    reasons: list[str] = []
+
+    notice_published = detail.get("privacy_notice_published") or detail.get("notice_active")
+    if notice_published is False:
+        reasons.append("Privacy notice not published")
+        return False, reasons
+
+    last_updated = detail.get("notice_last_updated") or detail.get("privacy_policy_date")
+    if last_updated:
+        days = _days_since(last_updated)
+        if days is not None and days > 365:
+            reasons.append(f"Privacy notice last updated {days} days ago — annual review required")
+            return False, reasons
+
+    return True, []
+
+
+@engine.assertion("cross_border_transfer_compliant")
+def cross_border_transfer_compliant(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check cross-border data transfers have appropriate safeguards."""
+    reasons: list[str] = []
+
+    safeguards = (
+        detail.get("transfer_safeguards")
+        or detail.get("sccs_in_place")
+        or detail.get("adequacy_decision")
+        or detail.get("bcr_approved")
+    )
+    if safeguards is False:
+        destination = (
+            detail.get("destination_country") or detail.get("transfer_destination") or "unknown"
+        )
+        reasons.append(
+            f"Cross-border transfer to {destination} lacks appropriate safeguards (SCCs/adequacy/BCRs)"
+        )
+        return False, reasons
+
+    tia_conducted = detail.get("transfer_impact_assessment")
+    if tia_conducted is False:
+        reasons.append("Transfer impact assessment not conducted for cross-border data flow")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ---------------------------------------------------------------------------
+# Supply Chain Security
+# ---------------------------------------------------------------------------
+
+
+@engine.assertion("sbom_maintained")
+def sbom_maintained(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check Software Bill of Materials is maintained (SR-4/SA-17)."""
+    reasons: list[str] = []
+
+    sbom_exists = (
+        detail.get("sbom_generated")
+        or detail.get("sbom_maintained")
+        or detail.get("dependency_inventory")
+    )
+    if sbom_exists is False:
+        app = detail.get("application_name") or detail.get("service_name") or "unknown"
+        reasons.append(f"SBOM not maintained for {app} — supply chain visibility gap")
+        return False, reasons
+
+    sbom_format = detail.get("sbom_format")
+    if isinstance(sbom_format, str) and sbom_format.lower() not in (
+        "cyclonedx",
+        "spdx",
+        "cyclonedx-json",
+        "spdx-json",
+    ):
+        reasons.append(f"SBOM format '{sbom_format}' — use CycloneDX or SPDX for interoperability")
+
+    sbom_current = detail.get("sbom_last_generated") or detail.get("last_scan")
+    if sbom_current:
+        days = _days_since(sbom_current)
+        if days is not None and days > 7:
+            reasons.append(f"SBOM last generated {days} days ago — should regenerate on each build")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+@engine.assertion("supply_chain_integrity")
+def supply_chain_integrity(detail: dict, raw_data: dict) -> tuple[bool, list[str]]:
+    """Check software supply chain integrity controls (SR-3/SR-11)."""
+    reasons: list[str] = []
+
+    artifact_signing = (
+        detail.get("artifact_signing_enabled")
+        or detail.get("sigstore_enabled")
+        or detail.get("code_signing_active")
+    )
+    if artifact_signing is False:
+        reasons.append("Software artifact signing not enabled — supply chain integrity risk")
+
+    dependency_pinning = (
+        detail.get("dependency_pinning")
+        or detail.get("lockfile_used")
+        or detail.get("version_pinned")
+    )
+    if dependency_pinning is False:
+        reasons.append("Dependencies not pinned — vulnerable to dependency confusion attacks")
+
+    provenance_tracked = detail.get("provenance_tracked") or detail.get("slsa_level")
+    if provenance_tracked is False:
+        reasons.append("Build provenance not tracked — cannot verify software origin")
+
+    if reasons:
+        return False, reasons
+
+    return True, []
+
+
+# ============================================================================
 # BINDINGS — New assertions to frameworks
 # ============================================================================
 
@@ -6215,3 +7493,454 @@ engine.set_remediation(
         "console_path": "GRC > Vendor Risk > Assessments",
     },
 )
+
+
+# ============================================================================
+# BINDINGS — Expanded assertions (P1 Item 36)
+# ============================================================================
+
+
+# ---------------------------------------------------------------------------
+# NIST 800-53 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_NIST_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    # AC — Access Control (expanded)
+    ("AC-10", "concurrent_session_controlled"),
+    ("AC-11", "session_lock_enforced"),
+    ("AC-18", "wireless_access_restricted"),
+    ("AC-8", "access_agreement_signed"),
+    # AU — Audit (expanded)
+    ("AU-6", "audit_review_analysis"),
+    ("AU-7", "audit_reduction_capability"),
+    ("AU-8", "audit_timestamp_reliable"),
+    # CM — Configuration Management (expanded)
+    ("CM-2", "security_baseline_applied"),
+    ("CM-4", "change_impact_analyzed"),
+    ("CM-6", "security_baseline_applied"),
+    ("CM-8", "software_inventory_maintained"),
+    # CP — Contingency Planning (expanded)
+    ("CP-2", "contingency_plan_reviewed"),
+    ("CP-9", "backup_schedule_compliant"),
+    ("CP-9", "recovery_point_validated"),
+    # IA — Identification & Authentication (expanded)
+    ("IA-5", "password_complexity_enforced"),
+    ("IA-5", "credential_rotation_enforced"),
+    ("IA-5", "authenticator_management"),
+    # IR — Incident Response (expanded)
+    ("IR-1", "incident_response_plan_current"),
+    ("IR-7", "incident_communication_plan"),
+    ("IR-4", "forensic_readiness"),
+    ("IR-10", "forensic_readiness"),
+    # PS — Personnel Security (expanded)
+    ("PS-3", "personnel_screening_complete"),
+    ("PS-4", "termination_checklist_complete"),
+    ("PS-5", "transfer_access_reviewed"),
+    # PE — Physical and Environmental (expanded)
+    ("PE-6", "physical_access_monitored"),
+    ("PE-10", "environmental_controls_active"),
+    ("PE-12", "environmental_controls_active"),
+    ("PE-13", "environmental_controls_active"),
+    ("PE-14", "environmental_controls_active"),
+    ("PE-16", "delivery_receiving_controlled"),
+    # RA — Risk Assessment (expanded)
+    ("RA-5", "vulnerability_scan_authenticated"),
+    ("RA-3", "threat_intelligence_integrated"),
+    # SC — System and Communications (expanded)
+    ("SC-5", "denial_of_service_protection"),
+    ("SC-7", "boundary_protection_devices"),
+    ("SC-12", "cryptographic_key_established"),
+    ("SC-13", "cryptographic_key_established"),
+    ("SC-17", "public_key_infrastructure"),
+    # SR — Supply Chain
+    ("SR-4", "sbom_maintained"),
+    ("SR-3", "supply_chain_integrity"),
+    ("SR-11", "supply_chain_integrity"),
+    ("SA-17", "sbom_maintained"),
+]
+
+for _ctrl, _assertion in _NIST_EXPANDED_BINDINGS:
+    engine.bind_control("nist_800_53", _ctrl, _assertion)
+
+
+# FedRAMP gets same expanded bindings
+for _ctrl, _assertion in _NIST_EXPANDED_BINDINGS:
+    engine.bind_control("fedramp", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# SOC 2 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_SOC2_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("CC3.1", "risk_mitigation_activities"),
+    ("CC3.2", "threat_intelligence_integrated"),
+    ("CC5.1", "security_baseline_applied"),
+    ("CC5.2", "change_impact_analyzed"),
+    ("CC5.3", "change_management_controlled"),
+    ("CC6.1", "session_lock_enforced"),
+    ("CC6.1", "concurrent_session_controlled"),
+    ("CC6.1", "access_agreement_signed"),
+    ("CC6.1", "password_complexity_enforced"),
+    ("CC6.2", "personnel_screening_complete"),
+    ("CC6.2", "termination_checklist_complete"),
+    ("CC6.3", "transfer_access_reviewed"),
+    ("CC6.6", "boundary_protection_devices"),
+    ("CC6.6", "denial_of_service_protection"),
+    ("CC6.8", "wireless_access_restricted"),
+    ("CC7.1", "system_monitoring_comprehensive"),
+    ("CC7.2", "audit_review_analysis"),
+    ("CC7.2", "audit_reduction_capability"),
+    ("CC7.4", "incident_response_plan_current"),
+    ("CC7.4", "incident_communication_plan"),
+    ("CC7.4", "forensic_readiness"),
+    ("CC8.1", "change_management_controlled"),
+    ("CC9.1", "risk_mitigation_activities"),
+    ("CC9.2", "supply_chain_integrity"),
+    ("CC9.2", "sbom_maintained"),
+    ("A1.1", "contingency_plan_reviewed"),
+    ("A1.2", "backup_schedule_compliant"),
+    ("A1.2", "recovery_point_validated"),
+    ("C1.1", "cryptographic_key_established"),
+    ("C1.1", "public_key_infrastructure"),
+    ("P1.1", "data_retention_enforced"),
+    ("P1.1", "privacy_notice_current"),
+    ("P1.2", "cross_border_transfer_compliant"),
+]
+
+for _ctrl, _assertion in _SOC2_EXPANDED_BINDINGS:
+    engine.bind_control("soc2", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# ISO 27001:2022 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_ISO27001_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("A.5.3", "concurrent_session_controlled"),
+    ("A.5.10", "privacy_notice_current"),
+    ("A.5.13", "access_agreement_signed"),
+    ("A.5.15", "session_lock_enforced"),
+    ("A.5.17", "password_complexity_enforced"),
+    ("A.5.17", "credential_rotation_enforced"),
+    ("A.5.17", "authenticator_management"),
+    ("A.5.24", "incident_response_plan_current"),
+    ("A.5.24", "incident_communication_plan"),
+    ("A.5.25", "forensic_readiness"),
+    ("A.5.29", "contingency_plan_reviewed"),
+    ("A.5.34", "cross_border_transfer_compliant"),
+    ("A.6.1", "personnel_screening_complete"),
+    ("A.6.4", "termination_checklist_complete"),
+    ("A.6.5", "transfer_access_reviewed"),
+    ("A.7.1", "physical_access_monitored"),
+    ("A.7.3", "environmental_controls_active"),
+    ("A.7.4", "delivery_receiving_controlled"),
+    ("A.8.1", "wireless_access_restricted"),
+    ("A.8.6", "software_inventory_maintained"),
+    ("A.8.8", "vulnerability_scan_authenticated"),
+    ("A.8.9", "security_baseline_applied"),
+    ("A.8.10", "data_retention_enforced"),
+    ("A.8.13", "backup_schedule_compliant"),
+    ("A.8.13", "recovery_point_validated"),
+    ("A.8.20", "boundary_protection_devices"),
+    ("A.8.21", "denial_of_service_protection"),
+    ("A.8.24", "cryptographic_key_established"),
+    ("A.8.24", "public_key_infrastructure"),
+    ("A.8.25", "sbom_maintained"),
+    ("A.8.32", "change_impact_analyzed"),
+    ("A.8.32", "change_management_controlled"),
+]
+
+for _ctrl, _assertion in _ISO27001_EXPANDED_BINDINGS:
+    engine.bind_control("iso_27001", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# HIPAA bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_HIPAA_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    # 164.308 — Administrative Safeguards
+    ("164.308(a)(1)(i)", "threat_intelligence_integrated"),
+    ("164.308(a)(3)(ii)(A)", "access_agreement_signed"),
+    ("164.308(a)(3)(ii)(C)", "termination_checklist_complete"),
+    ("164.308(a)(4)(ii)(C)", "transfer_access_reviewed"),
+    ("164.308(a)(5)(i)", "hipaa_workforce_training"),
+    ("164.308(a)(5)(ii)(A)", "hipaa_workforce_training"),
+    ("164.308(a)(6)(i)", "incident_response_plan_current"),
+    ("164.308(a)(6)(i)", "forensic_readiness"),
+    ("164.308(a)(6)(ii)", "incident_communication_plan"),
+    ("164.308(a)(7)(ii)(A)", "contingency_plan_reviewed"),
+    ("164.308(a)(7)(ii)(B)", "backup_schedule_compliant"),
+    # 164.310 — Physical Safeguards
+    ("164.310(a)(2)(iii)", "physical_access_monitored"),
+    ("164.310(a)(2)(iv)", "environmental_controls_active"),
+    # 164.312 — Technical Safeguards
+    ("164.312(a)(2)(iii)", "session_lock_enforced"),
+    ("164.312(a)(2)(iv)", "phi_encryption_required"),
+    ("164.312(b)", "phi_access_audit_trail"),
+    ("164.312(b)", "audit_review_analysis"),
+    ("164.312(d)", "password_complexity_enforced"),
+    ("164.312(d)", "authenticator_management"),
+    ("164.312(e)(1)", "phi_encryption_required"),
+    # 164.314 — Business Associates
+    ("164.314(a)(1)", "baa_executed"),
+    # 164.502 — Minimum Necessary
+    ("164.502(b)", "minimum_necessary_enforced"),
+]
+
+for _ctrl, _assertion in _HIPAA_EXPANDED_BINDINGS:
+    engine.bind_control("hipaa", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# PCI DSS 4.0 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_PCI_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("R1.1", "boundary_protection_devices"),
+    ("R1.2", "denial_of_service_protection"),
+    ("R2.2", "security_baseline_applied"),
+    ("R3.4", "cryptographic_key_established"),
+    ("R3.6", "cryptographic_key_established"),
+    ("R3.7", "credential_rotation_enforced"),
+    ("R4.1", "public_key_infrastructure"),
+    ("R6.2", "sbom_maintained"),
+    ("R6.3", "change_impact_analyzed"),
+    ("R6.5", "change_management_controlled"),
+    ("R7.1", "access_agreement_signed"),
+    ("R8.2", "session_lock_enforced"),
+    ("R8.3", "password_complexity_enforced"),
+    ("R8.3", "authenticator_management"),
+    ("R8.6", "credential_rotation_enforced"),
+    ("R9.1", "physical_access_monitored"),
+    ("R9.2", "environmental_controls_active"),
+    ("R10.2", "audit_review_analysis"),
+    ("R10.4", "audit_timestamp_reliable"),
+    ("R10.7", "audit_reduction_capability"),
+    ("R11.1", "wireless_access_restricted"),
+    ("R11.3", "vulnerability_scan_authenticated"),
+    ("R12.1", "risk_mitigation_activities"),
+    ("R12.3", "threat_intelligence_integrated"),
+    ("R12.5", "software_inventory_maintained"),
+    ("R12.10", "incident_response_plan_current"),
+    ("R12.10", "forensic_readiness"),
+]
+
+for _ctrl, _assertion in _PCI_EXPANDED_BINDINGS:
+    engine.bind_control("pci_dss", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# CMMC L2 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_CMMC_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("AC.L2-3.1.10", "concurrent_session_controlled"),
+    ("AC.L2-3.1.11", "session_lock_enforced"),
+    ("AC.L2-3.1.9", "privacy_notice_current"),
+    ("AU.L2-3.3.1", "audit_review_analysis"),
+    ("AU.L2-3.3.4", "audit_review_analysis"),
+    ("AU.L2-3.3.6", "audit_reduction_capability"),
+    ("AU.L2-3.3.7", "audit_timestamp_reliable"),
+    ("CM.L2-3.4.1", "security_baseline_applied"),
+    ("CM.L2-3.4.3", "change_impact_analyzed"),
+    ("CM.L2-3.4.4", "change_impact_analyzed"),
+    ("CM.L2-3.4.9", "software_inventory_maintained"),
+    ("IA.L2-3.5.7", "password_complexity_enforced"),
+    ("IA.L2-3.5.8", "credential_rotation_enforced"),
+    ("IA.L2-3.5.10", "authenticator_management"),
+    ("IR.L2-3.6.1", "incident_response_plan_current"),
+    ("IR.L2-3.6.1", "forensic_readiness"),
+    ("PS.L2-3.9.1", "personnel_screening_complete"),
+    ("PS.L2-3.9.2", "termination_checklist_complete"),
+    ("PE.L2-3.10.2", "physical_access_monitored"),
+    ("PE.L2-3.10.3", "environmental_controls_active"),
+    ("PE.L2-3.10.6", "environmental_controls_active"),
+    ("RA.L2-3.11.2", "vulnerability_scan_authenticated"),
+    ("SC.L2-3.13.1", "boundary_protection_devices"),
+    ("SC.L2-3.13.6", "denial_of_service_protection"),
+    ("SC.L2-3.13.10", "cryptographic_key_established"),
+    ("SC.L2-3.13.11", "cryptographic_key_established"),
+    ("SI.L2-3.14.3", "threat_intelligence_integrated"),
+]
+
+for _ctrl, _assertion in _CMMC_EXPANDED_BINDINGS:
+    engine.bind_control("cmmc_l2", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# GDPR bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_GDPR_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("Art5-1e", "data_retention_enforced"),
+    ("Art12-1", "privacy_notice_current"),
+    ("Art13-1", "privacy_notice_current"),
+    ("Art25-1", "data_retention_enforced"),
+    ("Art32-1", "cryptographic_key_established"),
+    ("Art32-1", "boundary_protection_devices"),
+    ("Art32-1", "session_lock_enforced"),
+    ("Art32-1", "forensic_readiness"),
+    ("Art33-1", "incident_response_plan_current"),
+    ("Art33-1", "incident_communication_plan"),
+    ("Art44-1", "cross_border_transfer_compliant"),
+    ("Art46-1", "cross_border_transfer_compliant"),
+]
+
+for _ctrl, _assertion in _GDPR_EXPANDED_BINDINGS:
+    engine.bind_control("gdpr", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# NIST CSF 2.0 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_NIST_CSF_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("GV.RM-02", "risk_mitigation_activities"),
+    ("GV.SC-03", "supply_chain_integrity"),
+    ("GV.SC-04", "sbom_maintained"),
+    ("ID.AM-01", "software_inventory_maintained"),
+    ("ID.RA-02", "threat_intelligence_integrated"),
+    ("PR.AA-01", "session_lock_enforced"),
+    ("PR.AA-01", "concurrent_session_controlled"),
+    ("PR.AA-02", "access_agreement_signed"),
+    ("PR.AA-03", "password_complexity_enforced"),
+    ("PR.AA-03", "credential_rotation_enforced"),
+    ("PR.AA-03", "authenticator_management"),
+    ("PR.DS-01", "cryptographic_key_established"),
+    ("PR.DS-02", "boundary_protection_devices"),
+    ("PR.IR-01", "denial_of_service_protection"),
+    ("PR.PS-01", "security_baseline_applied"),
+    ("PR.PS-04", "audit_timestamp_reliable"),
+    ("PR.PS-04", "audit_review_analysis"),
+    ("DE.CM-03", "physical_access_monitored"),
+    ("DE.CM-06", "audit_reduction_capability"),
+    ("DE.AE-02", "system_monitoring_comprehensive"),
+    ("RS.MA-01", "incident_response_plan_current"),
+    ("RS.MA-01", "forensic_readiness"),
+    ("RS.CO-02", "incident_communication_plan"),
+    ("RC.RP-01", "contingency_plan_reviewed"),
+    ("RC.RP-02", "backup_schedule_compliant"),
+    ("RC.RP-02", "recovery_point_validated"),
+]
+
+for _ctrl, _assertion in _NIST_CSF_EXPANDED_BINDINGS:
+    engine.bind_control("nist_csf", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# UCF bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_UCF_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("UCF-ACC-1", "session_lock_enforced"),
+    ("UCF-ACC-1", "concurrent_session_controlled"),
+    ("UCF-ACC-2", "access_agreement_signed"),
+    ("UCF-ACC-5", "password_complexity_enforced"),
+    ("UCF-AUD-1", "audit_review_analysis"),
+    ("UCF-AUD-2", "audit_reduction_capability"),
+    ("UCF-AUD-3", "audit_timestamp_reliable"),
+    ("UCF-AUT-1", "credential_rotation_enforced"),
+    ("UCF-AUT-1", "authenticator_management"),
+    ("UCF-CFG-1", "security_baseline_applied"),
+    ("UCF-CFG-2", "change_impact_analyzed"),
+    ("UCF-CFG-2", "change_management_controlled"),
+    ("UCF-CFG-4", "software_inventory_maintained"),
+    ("UCF-BCP-1", "contingency_plan_reviewed"),
+    ("UCF-BCP-3", "backup_schedule_compliant"),
+    ("UCF-BCP-3", "recovery_point_validated"),
+    ("UCF-NET-1", "boundary_protection_devices"),
+    ("UCF-NET-1", "denial_of_service_protection"),
+    ("UCF-NET-3", "cryptographic_key_established"),
+    ("UCF-NET-3", "public_key_infrastructure"),
+    ("UCF-NET-8", "wireless_access_restricted"),
+    ("UCF-GOV-1", "risk_mitigation_activities"),
+    ("UCF-GOV-3", "vulnerability_scan_authenticated"),
+    ("UCF-GOV-3", "threat_intelligence_integrated"),
+    ("UCF-GOV-7", "incident_response_plan_current"),
+    ("UCF-GOV-7", "incident_communication_plan"),
+    ("UCF-GOV-7", "forensic_readiness"),
+    ("UCF-HRS-4", "termination_checklist_complete"),
+    ("UCF-HRS-5", "transfer_access_reviewed"),
+    ("UCF-HRS-6", "personnel_screening_complete"),
+    ("UCF-PHY-1", "physical_access_monitored"),
+    ("UCF-PHY-1", "environmental_controls_active"),
+    ("UCF-DAT-1", "data_retention_enforced"),
+    ("UCF-DAT-2", "privacy_notice_current"),
+    ("UCF-DAT-2", "cross_border_transfer_compliant"),
+    ("UCF-DEV-1", "sbom_maintained"),
+    ("UCF-DEV-1", "supply_chain_integrity"),
+]
+
+for _ctrl, _assertion in _UCF_EXPANDED_BINDINGS:
+    engine.bind_control("ucf", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# ISO 27701 bindings for expanded privacy assertions
+# ---------------------------------------------------------------------------
+
+_ISO27701_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("A.7.2.1", "privacy_notice_current"),
+    ("A.7.2.2", "data_retention_enforced"),
+    ("A.7.2.8", "data_retention_enforced"),
+    ("A.7.4.9", "cross_border_transfer_compliant"),
+    ("A.7.5.1", "cross_border_transfer_compliant"),
+    ("B.8.2.2", "baa_executed"),
+    ("B.8.4.3", "phi_encryption_required"),
+]
+
+for _ctrl, _assertion in _ISO27701_EXPANDED_BINDINGS:
+    engine.bind_control("iso_27701", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# ISO 42001 bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_ISO42001_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("A.6.2.5", "data_retention_enforced"),
+    ("A.6.2.8", "change_management_controlled"),
+    ("A.6.2.12", "system_monitoring_comprehensive"),
+    ("A.9.4", "sbom_maintained"),
+    ("A.10.2", "supply_chain_integrity"),
+]
+
+for _ctrl, _assertion in _ISO42001_EXPANDED_BINDINGS:
+    engine.bind_control("iso_42001", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# EU AI Act bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_EU_AI_ACT_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("ART9.1", "risk_mitigation_activities"),
+    ("ART10.1", "data_retention_enforced"),
+    ("ART15.4", "denial_of_service_protection"),
+    ("ART15.4", "boundary_protection_devices"),
+    ("ART17.1", "change_management_controlled"),
+    ("ART26.5", "supply_chain_integrity"),
+]
+
+for _ctrl, _assertion in _EU_AI_ACT_EXPANDED_BINDINGS:
+    engine.bind_control("eu_ai_act", _ctrl, _assertion)
+
+
+# ---------------------------------------------------------------------------
+# SEC Cyber bindings for expanded assertions
+# ---------------------------------------------------------------------------
+
+_SEC_CYBER_EXPANDED_BINDINGS: list[tuple[str, str]] = [
+    ("ITEM105.1", "incident_response_plan_current"),
+    ("ITEM105.1", "incident_communication_plan"),
+    ("ITEM105.1", "forensic_readiness"),
+    ("ITEM106.B1", "threat_intelligence_integrated"),
+    ("ITEM106.B1", "risk_mitigation_activities"),
+    ("ITEM106.B3", "supply_chain_integrity"),
+    ("ITEM106.C6", "system_monitoring_comprehensive"),
+]
+
+for _ctrl, _assertion in _SEC_CYBER_EXPANDED_BINDINGS:
+    engine.bind_control("sec_cyber", _ctrl, _assertion)

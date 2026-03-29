@@ -402,3 +402,156 @@ def remediate_close(remediation_id: str, notes: str | None) -> None:
     console.print(f"[green]Remediation {remediation_id[:8]} closed[/green]")
     if notes:
         console.print(f"  Notes: {escape(notes)}")
+
+
+# ---------------------------------------------------------------------------
+# wizard — guided remediation
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("wizard")
+@click.argument("finding_id")
+@click.option("--complete", is_flag=True, default=False, help="Mark as complete after review")
+def remediate_wizard(finding_id: str, complete: bool) -> None:
+    """Guided remediation wizard for a finding."""
+    from rich.panel import Panel
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.remediation_wizard import RemediationWizard
+
+    init_db()
+    actor = _get_actor()
+
+    with get_session() as session:
+        wizard = RemediationWizard()
+
+        try:
+            result = wizard.generate_steps(session, finding_id)
+        except ValueError as e:
+            _error(str(e))
+            return  # unreachable
+
+        console.print(
+            Panel(
+                f"[bold]{escape(result['finding_title'])}[/bold]",
+                title="Remediation Wizard",
+                border_style="cyan",
+            )
+        )
+
+        for step_data in result["steps"]:
+            step_num = step_data["step"]
+            title = step_data["title"]
+            content = step_data["content"]
+
+            console.print(f"\n[cyan bold]Step {step_num}: {title}[/cyan bold]")
+
+            if isinstance(content, dict):
+                for key, val in content.items():
+                    if isinstance(val, list):
+                        console.print(f"  [dim]{key}:[/dim]")
+                        for item in val:
+                            if isinstance(item, dict):
+                                parts = [f"{k}={v}" for k, v in item.items() if v]
+                                console.print(f"    - {escape(', '.join(parts))}")
+                            else:
+                                console.print(f"    - {escape(str(item))}")
+                    elif val and val != "N/A":
+                        console.print(f"  [dim]{key}:[/dim] {escape(str(val))}")
+            elif isinstance(content, list):
+                for item in content:
+                    if isinstance(item, dict):
+                        fw = item.get("framework", "")
+                        ctrl = item.get("control_id", "")
+                        label = f"{fw}/{ctrl}" if fw else "General"
+                        console.print(f"  [cyan]{escape(label)}[/cyan]")
+                        if item.get("summary"):
+                            console.print(f"    {escape(item['summary'])}")
+                        for rs in item.get("remediation_steps", []):
+                            console.print(f"    - {escape(str(rs))}")
+                    else:
+                        console.print(f"  {escape(str(item))}")
+
+        if complete:
+            try:
+                comp = wizard.mark_complete(session, finding_id, actor=actor)
+                console.print(
+                    f"\n[green bold]Remediation marked complete[/green bold] "
+                    f"(remediation {comp['remediation_id'][:8]})"
+                )
+            except ValueError as e:
+                _error(str(e))
+        else:
+            console.print("\n[dim]Run with --complete to mark this remediation as done.[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# auto — automated remediation with dry-run default
+# ---------------------------------------------------------------------------
+
+
+@remediate.command("auto")
+@click.option("-f", "--framework", default=None, help="Scope to a framework")
+@click.option(
+    "--execute",
+    is_flag=True,
+    default=False,
+    help="Actually execute actions (default is dry-run)",
+)
+@click.option("--limit", "-n", default=100, help="Max findings to scan")
+def remediate_auto(framework: str | None, execute: bool, limit: int) -> None:
+    """Run automated remediation (dry-run by default).
+
+    Scans high/critical findings and maps them to remediation actions:
+    s3_public_access, security_group_open, unencrypted_volume, mfa_disabled,
+    logging_disabled.
+
+    Pass --execute to actually apply changes. Without it, only a preview
+    plan is shown.
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.auto_remediate import AutoRemediator
+
+    init_db()
+    dry_run = not execute
+    remediator = AutoRemediator(dry_run=dry_run)
+
+    with get_session() as session:
+        plan = remediator.build_plan(session, framework=framework, limit=limit)
+
+    mode_label = "[yellow]DRY RUN[/yellow]" if dry_run else "[red bold]LIVE[/red bold]"
+    console.print(f"\n[bold]Auto-Remediation Plan[/bold] ({mode_label})")
+
+    if not plan.actions:
+        console.print("[dim]No actionable findings found.[/dim]")
+        console.print(
+            f"[dim]Scanned {plan.summary.get('total_findings_scanned', 0)} "
+            f"high/critical findings.[/dim]"
+        )
+        return
+
+    table = Table(title=f"Remediation Actions ({len(plan.actions)})")
+    table.add_column("Action", style="cyan")
+    table.add_column("Resource", max_width=30)
+    table.add_column("Description", max_width=50)
+    table.add_column("Result")
+
+    for action in plan.actions:
+        table.add_row(
+            action.action_type,
+            escape(action.resource_id[:30]),
+            escape(action.description[:50]),
+            escape(action.result[:60]) if action.result else "\u2014",
+        )
+
+    console.print(table)
+
+    summary = plan.summary
+    console.print("\n[bold]Summary:[/bold]")
+    console.print(f"  Findings scanned: {summary.get('total_findings_scanned', 0)}")
+    console.print(f"  Actions planned:  {summary.get('actions_planned', 0)}")
+    for atype, count in summary.get("action_counts", {}).items():
+        console.print(f"    {atype}: {count}")
+
+    if dry_run:
+        console.print("\n[dim]This was a dry run. Pass --execute to apply changes.[/dim]")

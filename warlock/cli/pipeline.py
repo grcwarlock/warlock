@@ -23,7 +23,13 @@ def init() -> None:
 @click.option(
     "--demo", is_flag=True, help="Re-run with demo mock connectors (no real credentials needed)"
 )
-def collect(source: tuple[str, ...], demo: bool) -> None:
+@click.option(
+    "--mode",
+    type=click.Choice(["full", "incremental"]),
+    default=None,
+    help="Pipeline mode: full (default) or incremental (delta collection)",
+)
+def collect(source: tuple[str, ...], demo: bool, mode: str | None) -> None:
     """Run the full pipeline: collect -> normalize -> map -> assess."""
     import subprocess
     import sys
@@ -63,6 +69,18 @@ def collect(source: tuple[str, ...], demo: bool) -> None:
 
     # Bootstrap
     init_db()
+
+    # Apply incremental mode override if specified
+    if mode == "incremental":
+        import os
+
+        os.environ["WLK_PIPELINE_MODE"] = "incremental"
+        # Reset settings singleton so it picks up the new env var
+        from warlock.config import get_settings
+
+        get_settings.cache_clear() if hasattr(get_settings, "cache_clear") else None
+        console.print("[cyan]Pipeline mode: incremental (delta collection)[/cyan]")
+
     bus = EventBus()
     lake_writer = register_lake_writer(bus)
     pipeline = build_pipeline(bus, sources=source or None)
@@ -86,11 +104,36 @@ def collect(source: tuple[str, ...], demo: bool) -> None:
     )
 
     # Run with progress indicator
-    with console.status(
-        "[bold cyan]Running pipeline (collect → normalize → map → assess)...[/bold cyan]"
-    ):
+    from rich.progress import (
+        Progress,
+        SpinnerColumn,
+        TextColumn,
+        BarColumn,
+        MofNCompleteColumn,
+    )
+
+    active_connectors = pipeline.connectors.list_active()
+    connector_names = [c.name for c in active_connectors] if active_connectors else []
+    n_connectors = len(connector_names)
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[bold cyan]{task.description}"),
+        BarColumn(bar_width=30),
+        MofNCompleteColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task(
+            f"Collecting from {n_connectors} connector{'s' if n_connectors != 1 else ''}",
+            total=n_connectors or 1,
+        )
         with get_session() as session:
             stats = pipeline.run(session)
+        progress.update(
+            task,
+            completed=n_connectors or 1,
+            description="Pipeline complete",
+        )
 
     # Flush lake writer if enabled
     if lake_writer is not None:
@@ -259,3 +302,199 @@ def scheduler_status() -> None:
     console.print(f"  Next run:   {st['next_run'] or 'n/a'}")
     if st["last_error"]:
         console.print(f"  Last error: [red]{st['last_error']}[/red]")
+
+
+# ---------------------------------------------------------------------------
+# init-project — GRC-as-Code scaffolding
+# ---------------------------------------------------------------------------
+
+
+@cli.command("init-project")
+@click.argument("directory", default=".")
+@click.option("--framework", "-f", multiple=True, help="Frameworks to include (repeatable)")
+def init_project(directory: str, framework: tuple[str, ...]) -> None:
+    """Scaffold a compliance-as-code project directory.
+
+    Creates framework definitions, OPA policies, CI gates, and a warlock.yaml
+    project config in the target DIRECTORY.
+    """
+    import os
+
+    target = os.path.abspath(directory)
+
+    dirs = [
+        os.path.join(target, "frameworks"),
+        os.path.join(target, "policies"),
+        os.path.join(target, ".github", "workflows"),
+    ]
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
+
+    # warlock.yaml
+    frameworks_list = list(framework) if framework else ["nist_800_53", "soc2"]
+    fw_yaml = "\n".join(f"  - {f}" for f in frameworks_list)
+    warlock_yaml = (
+        "# Warlock GRC-as-Code project config\n"
+        "version: 1\n"
+        "\n"
+        "project:\n"
+        '  name: "my-grc-project"\n'
+        '  description: "Compliance-as-code managed by Warlock"\n'
+        "\n"
+        "frameworks:\n"
+        f"{fw_yaml}\n"
+        "\n"
+        "pipeline:\n"
+        '  mode: "full"\n'
+        "  schedule: daily\n"
+        "\n"
+        "policies:\n"
+        "  path: policies/\n"
+        '  fail_mode: "closed"\n'
+    )
+    _write_if_missing(os.path.join(target, "warlock.yaml"), warlock_yaml)
+
+    # Sample framework YAML
+    for fw in frameworks_list:
+        fw_content = (
+            f"# {fw} framework definition\n"
+            f"framework_id: {fw}\n"
+            f'name: "{fw}"\n'
+            "version: 1\n"
+            "control_families: {}\n"
+        )
+        _write_if_missing(os.path.join(target, "frameworks", f"{fw}.yaml"), fw_content)
+
+    # Sample Rego policy
+    rego_content = (
+        "package grc.assertions.example\n"
+        "\n"
+        "import rego.v1\n"
+        "\n"
+        "default pass := false\n"
+        "\n"
+        "pass if {\n"
+        "    input.detail.compliant == true\n"
+        "}\n"
+        "\n"
+        "reasons contains msg if {\n"
+        "    not input.detail.compliant\n"
+        '    msg := sprintf("Resource %s is non-compliant", [input.detail.resource_id])\n'
+        "}\n"
+    )
+    _write_if_missing(os.path.join(target, "policies", "example.rego"), rego_content)
+
+    # Rego test
+    rego_test = (
+        "package grc.assertions.example_test\n"
+        "\n"
+        "import rego.v1\n"
+        "\n"
+        "import data.grc.assertions.example\n"
+        "\n"
+        "test_pass if {\n"
+        '    example.pass with input as {"detail": {"compliant": true, "resource_id": "r-1"}}\n'
+        "}\n"
+        "\n"
+        "test_fail if {\n"
+        '    not example.pass with input as {"detail": {"compliant": false, "resource_id": "r-1"}}\n'
+        "}\n"
+    )
+    _write_if_missing(os.path.join(target, "policies", "example_test.rego"), rego_test)
+
+    # CI workflow
+    ci_content = (
+        "name: Compliance Gate\n"
+        "on:\n"
+        "  push:\n"
+        "    paths:\n"
+        "      - 'policies/**'\n"
+        "      - 'frameworks/**'\n"
+        "      - 'warlock.yaml'\n"
+        "  pull_request:\n"
+        "    paths:\n"
+        "      - 'policies/**'\n"
+        "      - 'frameworks/**'\n"
+        "      - 'warlock.yaml'\n"
+        "\n"
+        "jobs:\n"
+        "  compliance:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - uses: actions/checkout@v4\n"
+        "      - name: Install OPA\n"
+        "        run: |\n"
+        "          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static\n"
+        "          chmod +x opa && sudo mv opa /usr/local/bin/\n"
+        "      - name: OPA Check\n"
+        "        run: opa check policies/\n"
+        "      - name: OPA Test\n"
+        "        run: opa test policies/ -v\n"
+        "      - name: Validate Frameworks\n"
+        "        run: |\n"
+        "          pip install pyyaml\n"
+        '          python -c "\n'
+        "          import yaml, glob, sys\n"
+        "          ok = True\n"
+        "          for f in glob.glob('frameworks/*.yaml'):\n"
+        "            try:\n"
+        "              yaml.safe_load(open(f))\n"
+        "            except Exception as e:\n"
+        "              print(f'FAIL: {f}: {e}')\n"
+        "              ok = False\n"
+        "          sys.exit(0 if ok else 1)\n"
+        '          "\n'
+    )
+    _write_if_missing(
+        os.path.join(target, ".github", "workflows", "compliance-gate.yaml"),
+        ci_content,
+    )
+
+    # .warlock/compliance.yaml — org-specific compliance settings (Item 88)
+    warlock_dir = os.path.join(target, ".warlock")
+    os.makedirs(warlock_dir, exist_ok=True)
+    compliance_yaml = (
+        "# Warlock compliance configuration\n"
+        "# Org-specific settings for compliance-as-code\n"
+        "\n"
+        "organization:\n"
+        '  name: "My Organization"\n'
+        '  industry: "technology"\n'
+        '  environment: "development"\n'
+        "\n"
+        "compliance:\n"
+        "  frameworks:\n"
+        f"{fw_yaml}\n"
+        "  gate:\n"
+        "    threshold: 80  # minimum compliance score (0-100)\n"
+        "    block_on_critical: true  # block if any critical findings\n"
+        "    exit_code: 1  # exit code on failure\n"
+        "\n"
+        "evidence:\n"
+        "  collection_interval_days: 30\n"
+        "  staleness_threshold_days: 90\n"
+        "\n"
+        "notifications:\n"
+        "  compliance_drift: true\n"
+        "  finding_critical: true\n"
+    )
+    _write_if_missing(os.path.join(warlock_dir, "compliance.yaml"), compliance_yaml)
+
+    console.print(f"[green]GRC-as-Code project scaffolded in {target}[/green]")
+    console.print("[dim]Files created:[/dim]")
+    console.print("  warlock.yaml")
+    console.print("  .warlock/compliance.yaml")
+    for fw in frameworks_list:
+        console.print(f"  frameworks/{fw}.yaml")
+    console.print("  policies/example.rego")
+    console.print("  policies/example_test.rego")
+    console.print("  .github/workflows/compliance-gate.yaml")
+
+
+def _write_if_missing(path: str, content: str) -> None:
+    """Write file only if it doesn't already exist."""
+    import os
+
+    if not os.path.exists(path):
+        with open(path, "w") as f:
+            f.write(content)

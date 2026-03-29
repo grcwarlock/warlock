@@ -472,3 +472,89 @@ def conmon_checklist(framework: str | None) -> None:
         console.print("[green]All checklist items complete.[/green]")
     else:
         console.print(f"[yellow]{todo_count} item(s) still require attention.[/yellow]")
+
+
+# ---------------------------------------------------------------------------
+# cato-status — continuous authorization posture (Item 92)
+# ---------------------------------------------------------------------------
+
+
+@conmon.command("cato-status")
+@click.option("--framework", "-f", default="fedramp", help="Framework (default: fedramp)")
+@click.option("--system", "-s", default=None, help="System profile ID or acronym")
+@click.option(
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json"]),
+    help="Output format",
+)
+def cato_status(framework: str, system: str | None, fmt: str) -> None:
+    """Show continuous ATO posture: authorization status, drift, POA&Ms."""
+    from warlock.db.engine import get_session, init_db
+
+    init_db()
+    system_id = None
+    with get_session() as session:
+        if system:
+            from warlock.cli import _resolve_system_id
+
+            system_id = _resolve_system_id(session, system)
+
+        from warlock.workflows.continuous_auth import evaluate_authorization
+
+        status = evaluate_authorization(session, framework=framework, system_id=system_id)
+
+    if fmt == "json":
+        import json as _json
+        from dataclasses import asdict
+
+        console.print_json(_json.dumps(asdict(status), default=str))
+        return
+
+    from rich.panel import Panel
+    from rich.markup import escape
+
+    auth_style = "green" if status.authorized else "red bold"
+    auth_label = "AUTHORIZED" if status.authorized else "NOT AUTHORIZED"
+
+    lines = [
+        f"[bold]Framework:[/bold]  {escape(status.framework)}",
+        f"[bold]System:[/bold]     {escape(status.system_name or 'All')}",
+        f"[bold]Status:[/bold]     [{auth_style}]{auth_label}[/{auth_style}]",
+        f"[bold]Score:[/bold]      {status.current_score:.1f}% "
+        f"(threshold: {status.threshold:.0f}%)",
+        "",
+        f"[bold]Open POA&Ms:[/bold]     {status.open_poams}",
+        f"[bold]Critical POA&Ms:[/bold] {status.critical_poams}",
+        f"[bold]Overdue POA&Ms:[/bold]  {status.overdue_poams}",
+    ]
+
+    if status.significant_changes:
+        lines.append("")
+        lines.append("[bold red]Significant Changes Detected:[/bold red]")
+        for sc in status.significant_changes:
+            lines.append(
+                f"  [{sc.get('severity', 'medium')}]{escape(sc.get('description', ''))}[/]"
+            )
+
+    if status.drift_events:
+        lines.append("")
+        lines.append(f"[bold]Recent Drift Events:[/bold] {len(status.drift_events)}")
+        for d in status.drift_events[:5]:
+            lines.append(f"  {d['control_id']}: {d['from_status']} -> {d['to_status']}")
+
+    lines.append("")
+    lines.append("[bold]ConMon Deliverables:[/bold]")
+    for d in status.conmon_deliverables:
+        ds = {
+            "current": "[green]Current[/green]",
+            "due": "[yellow]Due[/yellow]",
+            "overdue": "[red]Overdue[/red]",
+            "check": "[dim]Check[/dim]",
+            "action_required": "[red bold]Action Required[/red bold]",
+            "none_detected": "[green]None[/green]",
+        }.get(d["status"], d["status"])
+        lines.append(f"  {d['name']}: {ds}")
+
+    console.print(Panel("\n".join(lines), title="cATO Posture", border_style="cyan"))

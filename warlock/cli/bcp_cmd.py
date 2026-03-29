@@ -45,6 +45,26 @@ def _impact_style(impact: str | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# list (alias for systems — CLI UX consistency)
+# ---------------------------------------------------------------------------
+
+
+@bcp.command("list")
+@click.option(
+    "--criticality",
+    "-c",
+    default=None,
+    type=click.Choice(["high", "moderate", "low"]),
+    help="Filter by overall_impact level",
+)
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.pass_context
+def bcp_list(ctx: click.Context, criticality: str | None, output_format: str) -> None:
+    """List BCP systems (alias for 'bcp systems')."""
+    ctx.invoke(bcp_systems, criticality=criticality, output_format=output_format)
+
+
+# ---------------------------------------------------------------------------
 # systems
 # ---------------------------------------------------------------------------
 

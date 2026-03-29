@@ -38,6 +38,12 @@ _FRAMEWORK_DIRS: dict[str, str] = {
     "cmmc": "cmmc-oscal",
     "gdpr": "gdpr-oscal",
     "ucf": "unified-controls-framework",
+    "nist_csf": "nist-csf-oscal",
+    "nist-csf": "nist-csf-oscal",
+    "eu_ai_act": "eu-ai-act-oscal",
+    "eu-ai-act": "eu-ai-act-oscal",
+    "sec_cyber": "sec-cyber-oscal",
+    "sec-cyber": "sec-cyber-oscal",
 }
 
 
@@ -348,15 +354,26 @@ def assessment_results(framework: str, output: str | None, system_name: str) -> 
 
 
 @oscal_group.command("ssp")
-@click.argument("framework")
+@click.argument("framework", required=False, default=None)
+@click.option("--framework", "-f", "framework_opt", default=None, help="Framework slug")
 @click.option("--output", "-o", default=None, help="Output file path")
 @click.option("--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
 @click.option("--description", default="", help="System description")
-def ssp_export(framework: str, output: str | None, system_name: str, description: str) -> None:
+def ssp_export(
+    framework: str | None,
+    framework_opt: str | None,
+    output: str | None,
+    system_name: str,
+    description: str,
+) -> None:
     """Export an OSCAL System Security Plan (SSP) for a framework.
 
-    FRAMEWORK: Framework slug (e.g. nist_800_53, fedramp)
+    FRAMEWORK: Framework slug (e.g. nist_800_53, fedramp).
+    Can also be provided as --framework/-f.
     """
+    framework = framework or framework_opt
+    if not framework:
+        _error("Framework is required. Pass as argument or --framework/-f.")
     from warlock.db.engine import get_session, init_db
     from warlock.export.oscal import OscalExporter
 
@@ -381,6 +398,98 @@ def ssp_export(framework: str, output: str | None, system_name: str, description
         dest = export_path("ssp", framework=framework)
         exporter.to_file(data, str(dest))
         console.print(f"[green]OSCAL SSP written to {dest}[/green]")
+
+
+# ---------------------------------------------------------------------------
+# sap (assessment plan)
+# ---------------------------------------------------------------------------
+
+
+@oscal_group.command("sap")
+@click.argument("framework")
+@click.option("--output", "-o", default=None, help="Output file path")
+@click.option("--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
+@click.option("--days", default=30, help="Assessment window duration in days")
+def sap_export(framework: str, output: str | None, system_name: str, days: int) -> None:
+    """Export an OSCAL Assessment Plan (SAP) for a framework.
+
+    FRAMEWORK: Framework slug (e.g. nist_800_53, soc2)
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.oscal_sap import OscalSapExporter
+
+    init_db()
+    exporter = OscalSapExporter()
+
+    with get_session() as session:
+        data = exporter.export_sap(
+            session,
+            framework=framework,
+            system_name=system_name,
+            assessment_days=days,
+        )
+
+    if output:
+        exporter.to_file(data, output)
+        console.print(f"[green]OSCAL SAP written to {output}[/green]")
+    else:
+        from warlock.export.paths import export_path
+
+        dest = export_path("sap", framework=framework)
+        exporter.to_file(data, str(dest))
+        console.print(f"[green]OSCAL SAP written to {dest}[/green]")
+
+
+# ---------------------------------------------------------------------------
+# ssp-narrative
+# ---------------------------------------------------------------------------
+
+
+@oscal_group.command("ssp-narrative")
+@click.argument("framework")
+@click.option("--output", "-o", default=None, help="Output file path")
+@click.option("--system-name", default="Warlock GRC System", help="System name for OSCAL metadata")
+@click.option("--description", default="", help="System description")
+@click.option("--ai", "ai_mode", is_flag=True, help="Use AI to generate prose (requires AI config)")
+def ssp_narrative(
+    framework: str,
+    output: str | None,
+    system_name: str,
+    description: str,
+    ai_mode: bool,
+) -> None:
+    """Generate a human-readable SSP narrative in Markdown.
+
+    FRAMEWORK: Framework slug (e.g. nist_800_53, soc2, fedramp)
+    """
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.ssp_narrative import SspNarrativeGenerator
+
+    init_db()
+    generator = SspNarrativeGenerator()
+
+    with get_session() as session:
+        md = generator.generate(
+            session,
+            framework=framework,
+            system_name=system_name,
+            description=description or f"{system_name} System Security Plan",
+            ai_mode=ai_mode,
+        )
+
+    if output:
+        from pathlib import Path
+
+        dest = Path(output)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(md, encoding="utf-8")
+        console.print(f"[green]SSP narrative written to {output}[/green]")
+    else:
+        from warlock.export.paths import export_path
+
+        dest = export_path("ssp-narrative", framework=framework, extension="md")
+        dest.write_text(md, encoding="utf-8")
+        console.print(f"[green]SSP narrative written to {dest}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -732,7 +841,18 @@ def audit_package(framework: str, output: str, system_name: str) -> None:
         files_written.append({"file": "component-definition.json", "type": "component-definition"})
         console.print("  [green]\u2713[/green] component-definition.json")
 
-    # 5. Manifest
+    # 5. Assessment Plan (SAP)
+    from warlock.export.oscal_sap import OscalSapExporter
+
+    sap_exporter = OscalSapExporter()
+    with get_session() as session:
+        sap_data = sap_exporter.export_sap(session, framework=framework, system_name=system_name)
+    sap_path = out_dir / "assessment-plan.json"
+    sap_exporter.to_file(sap_data, str(sap_path))
+    files_written.append({"file": "assessment-plan.json", "type": "assessment-plan"})
+    console.print("  [green]\u2713[/green] assessment-plan.json")
+
+    # 6. Manifest
     manifest = {
         "audit-package": {
             "framework": framework,

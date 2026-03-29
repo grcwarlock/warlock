@@ -1,0 +1,17 @@
+{
+  "profile": {
+    "uuid": "83b10823-961d-5e89-ad34-66391cf5d135",
+    "metadata": {
+      "title": "EU AI Act Profile",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-29T00:00:00Z"
+    },
+    "imports": [
+      {
+        "href": "catalog/catalog.json",
+        "include-all": {}
+      }
+    ]
+  }
+}

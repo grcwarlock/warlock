@@ -1268,3 +1268,229 @@ def executive_brief(framework: str | None, output_format: str, output: str | Non
         with open(output, "w") as f:
             f.write(content)
         console.print(f"[green]Report written to {output}[/green]")
+
+
+# ---------------------------------------------------------------------------
+# velocity — compliance velocity metrics (MTTC, gap closure, debt)
+# ---------------------------------------------------------------------------
+
+
+@comply.command("velocity")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--days", "-d", default=90, show_default=True, help="Lookback window in days")
+def comply_velocity(framework: str | None, days: int) -> None:
+    """Show compliance velocity metrics: MTTC, gap closure rate, debt."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.compliance_velocity import compute_velocity
+
+    init_db()
+    with get_session() as session:
+        metrics = compute_velocity(session, framework=framework, lookback_days=days)
+
+    mttc = f"{metrics.mttc_hours:.0f} hours" if metrics.mttc_hours is not None else "\u2014"
+    avg_age = (
+        f"{metrics.avg_evidence_age_hours:.0f} hours"
+        if metrics.avg_evidence_age_hours is not None
+        else "\u2014"
+    )
+    pct = (
+        f"{metrics.compliant_controls / metrics.total_controls * 100:.0f}%"
+        if metrics.total_controls
+        else "\u2014"
+    )
+
+    table = Table(title=f"Compliance Velocity ({framework or 'all frameworks'})")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", justify="right")
+
+    table.add_row("Compliance Rate", pct)
+    table.add_row("Mean Time to Compliance (MTTC)", mttc)
+    table.add_row("Gap Closure Rate", f"{metrics.gap_closure_rate:.1f} / week")
+    table.add_row("Compliance Debt Score", f"{metrics.compliance_debt:.0f}")
+    table.add_row("Open Gaps", str(metrics.open_gaps))
+    table.add_row(f"Gaps Closed (last {days}d)", str(metrics.closed_gaps_last_30d))
+    table.add_row("Avg Evidence Age", avg_age)
+    table.add_row("Stale Evidence (>90d)", str(metrics.stale_evidence_count))
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# trends — compliance score trending over time
+# ---------------------------------------------------------------------------
+
+
+@comply.command("trends")
+@click.option("--framework", "-f", required=True, help="Framework to trend")
+@click.option("--days", "-d", default=90, show_default=True, help="Number of days to show")
+def comply_trends(framework: str, days: int) -> None:
+    """Show historical compliance score trends from posture snapshots."""
+    from sqlalchemy import func
+
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.db.models import PostureSnapshot
+
+    init_db()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+    with get_read_session() as session:
+        rows = (
+            session.query(
+                func.strftime("%Y-%m-%d", PostureSnapshot.snapshot_date).label("day"),
+                func.avg(PostureSnapshot.posture_score).label("avg_score"),
+                func.count(PostureSnapshot.id).label("controls"),
+            )
+            .filter(
+                PostureSnapshot.framework == framework,
+                PostureSnapshot.snapshot_date >= cutoff,
+            )
+            .group_by(func.strftime("%Y-%m-%d", PostureSnapshot.snapshot_date))
+            .order_by(func.strftime("%Y-%m-%d", PostureSnapshot.snapshot_date))
+            .all()
+        )
+
+    if not rows:
+        console.print(
+            f"[dim]No posture snapshots found for {framework} in the last {days} days.[/dim]"
+        )
+        return
+
+    table = Table(title=f"Compliance Trends: {framework} (last {days} days)")
+    table.add_column("Date", style="dim")
+    table.add_column("Avg Score", justify="right")
+    table.add_column("Controls")
+    table.add_column("Trend", style="cyan")
+
+    prev_score = None
+    for row in rows:
+        score = row.avg_score or 0.0
+        style = _pct_style(score)
+        trend = ""
+        if prev_score is not None:
+            delta = score - prev_score
+            if delta > 0.5:
+                trend = f"[green]+{delta:.1f}[/green]"
+            elif delta < -0.5:
+                trend = f"[red]{delta:.1f}[/red]"
+            else:
+                trend = "[dim]\u2192[/dim]"
+        prev_score = score
+        table.add_row(
+            row.day,
+            f"[{style}]{score:.1f}%[/{style}]",
+            str(row.controls),
+            trend,
+        )
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# observation-period — SOC 2 Type II observation period tracking (Item 124)
+# ---------------------------------------------------------------------------
+
+
+@comply.command("observation-period")
+@click.option("--framework", "-f", default="soc2", help="Framework (default: soc2)")
+@click.option("--set-start", default=None, help="Set observation period start (YYYY-MM-DD)")
+@click.option("--set-end", default=None, help="Set observation period end (YYYY-MM-DD)")
+def observation_period(
+    framework: str,
+    set_start: str | None,
+    set_end: str | None,
+) -> None:
+    """View or set SOC 2 Type II observation period start/end dates.
+
+    The observation period is stored as an AuditEntry so it participates
+    in the hash-chained audit trail.
+    """
+    import hashlib
+    import uuid
+
+    from warlock.cli import _get_actor
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
+
+    init_db()
+    entity_type = "observation_period"
+    entity_id = f"obs_{framework}"
+
+    with get_session() as session:
+        existing = (
+            session.query(AuditEntry)
+            .filter(
+                AuditEntry.entity_type == entity_type,
+                AuditEntry.entity_id == entity_id,
+            )
+            .order_by(AuditEntry.created_at.desc())
+            .first()
+        )
+        current = (existing.extra or {}) if existing else {}
+
+        if set_start or set_end:
+            actor = _get_actor()
+            payload = dict(current)
+            payload["framework"] = framework
+            if set_start:
+                payload["observation_period_start"] = set_start
+            if set_end:
+                payload["observation_period_end"] = set_end
+
+            blob = json.dumps(payload, sort_keys=True, default=str).encode()
+            evidence_sha256 = hashlib.sha256(blob).hexdigest()
+
+            last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
+            prev_hash = last.entry_hash if last else "genesis"
+            sequence = (last.sequence + 1) if last else 1
+
+            chain_blob = (f"{prev_hash}{sequence}updated{entity_type}{entity_id}{actor}").encode()
+            entry_hash = hashlib.sha256(chain_blob).hexdigest()
+
+            entry = AuditEntry(
+                id=str(uuid.uuid4()),
+                sequence=sequence,
+                previous_hash=prev_hash,
+                entry_hash=entry_hash,
+                action="updated",
+                entity_type=entity_type,
+                entity_id=entity_id,
+                actor=actor,
+                evidence_sha256=evidence_sha256,
+                extra=payload,
+            )
+            session.add(entry)
+            session.commit()
+            current = payload
+            console.print("[green]Observation period updated.[/green]")
+
+        start = current.get("observation_period_start", "\u2014")
+        end = current.get("observation_period_end", "\u2014")
+
+        from rich.panel import Panel
+
+        days_info = ""
+        if start != "\u2014" and end != "\u2014":
+            try:
+                s = datetime.strptime(start, "%Y-%m-%d")
+                e = datetime.strptime(end, "%Y-%m-%d")
+                total_days = (e - s).days
+                now = datetime.now(timezone.utc)
+                elapsed = (now - s.replace(tzinfo=timezone.utc)).days
+                remaining = total_days - elapsed
+                days_info = (
+                    f"\n[bold]Duration:[/bold]  {total_days} days"
+                    f"\n[bold]Elapsed:[/bold]   {elapsed} days"
+                    f"\n[bold]Remaining:[/bold] {max(remaining, 0)} days"
+                )
+            except ValueError:
+                pass
+
+        lines = [
+            f"[bold]Framework:[/bold] {framework}",
+            f"[bold]Start:[/bold]     {start}",
+            f"[bold]End:[/bold]       {end}",
+        ]
+        if days_info:
+            lines.append(days_info)
+
+        console.print(Panel("\n".join(lines), title="Observation Period", border_style="cyan"))

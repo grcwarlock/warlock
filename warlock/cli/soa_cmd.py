@@ -22,6 +22,12 @@ from warlock.cli import cli, console
     default=None,
     help="System profile ID or acronym (default: first available).",
 )
+@click.option(
+    "--framework",
+    "-f",
+    default="iso_27001",
+    help="Framework to generate SoA for (default: iso_27001).",
+)
 @click.option("--output", "-o", "output_file", default=None, help="Write output to file.")
 @click.option(
     "--format",
@@ -30,12 +36,21 @@ from warlock.cli import cli, console
     default="table",
     help="Output format.",
 )
-def soa_cmd(system_id: str | None, output_file: str | None, fmt: str) -> None:
-    """Generate ISO 27001 Statement of Applicability (SoA)."""
+def soa_cmd(system_id: str | None, framework: str, output_file: str | None, fmt: str) -> None:
+    """Generate a Statement of Applicability (SoA).
+
+    By default generates for ISO 27001. Use --framework to target other frameworks.
+    """
     from warlock.cli import _resolve_system_id
     from warlock.db.engine import get_read_session, init_db
     from warlock.db.models import SystemProfile
     from warlock.export.soa import StatementOfApplicability
+
+    if framework != "iso_27001":
+        console.print(
+            f"[yellow]Note: SoA generation currently supports ISO 27001 only. "
+            f"Generating ISO 27001 SoA (requested: {escape(framework)}).[/yellow]"
+        )
 
     init_db()
 

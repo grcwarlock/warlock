@@ -367,6 +367,9 @@ class Settings(BaseSettings):
     # Must be 32+ chars in production. Empty = error when GDPR features are invoked.
     gdpr_hmac_secret: str = ""
 
+    # Webhook ingestion (Item 60)
+    webhook_secrets: str = "{}"  # JSON dict: {"source_name": "hmac_secret", ...}
+
     # Trust portal
     trust_portal_secret: str = ""  # HMAC secret for download token signing
 

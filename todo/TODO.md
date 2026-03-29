@@ -272,11 +272,11 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 | Priority | Count | Description |
 |----------|-------|-------------|
-| P0 | 0 (was 13, all resolved) | All P0 items complete |
-| P1 | 49 | Broken workflows, dead UI, missing models — blocks usage |
-| P2 | 75 | Incomplete features, weak coverage — limits credibility |
-| P3 | 10 | Future roadmap — no current impact |
-| **Total** | **147** | |
+| P0 | 0 (was 13) | All complete |
+| P1 | 0 (was 49) | All complete |
+| P2 | 0 (was 75) | All complete |
+| P3 | 0 (was 10) | All complete |
+| **Total** | **0 remaining (147 resolved)** | |
 
 ### By Effort
 
@@ -290,22 +290,4 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 
 ### Quick Wins (P0/P1 + S effort)
 
-These 17 items are high-priority and can each be fixed in under a day:
-
-1. GAP-001 — POA&M CHECK constraint
-2. GAP-002 — Unify hash algorithms
-3. GAP-003 — ConMon crash guard
-4. GAP-006 — `link change-compliance` null guard
-5. GAP-007 — `vendors list` read-only session
-6. GAP-017 — HTTP 429 JSON response
-7. GAP-021 — `/auth/me` endpoint
-8. GAP-023 — Pipeline status real counts
-9. GAP-025 — Login page cleanup
-10. GAP-029 — GDPR log HMAC pseudonym
-11. GAP-030 — Demo seed phase fixes
-12. GAP-035 — `audit hash-verify` crash fix
-13. GAP-036 — `system-controls` framework filter
-14. GAP-037 — Frontend incident status alignment
-15. GAP-038 — `reports executive-export` crash fix
-16. GAP-039 — Pipeline hash-verify algorithm fix
-17. GAP-040 — Risk appetite unit fix
+All 17 quick wins resolved.

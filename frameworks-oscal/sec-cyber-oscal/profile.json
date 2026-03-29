@@ -1,0 +1,17 @@
+{
+  "profile": {
+    "uuid": "6f67b3d2-c419-5999-a53b-cb4f3cb15660",
+    "metadata": {
+      "title": "SEC Cybersecurity Disclosure Rules Profile",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-29T00:00:00Z"
+    },
+    "imports": [
+      {
+        "href": "catalog/catalog.json",
+        "include-all": {}
+      }
+    ]
+  }
+}

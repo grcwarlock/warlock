@@ -33,6 +33,75 @@ def control_tests(ctx: click.Context) -> None:
 # ---------------------------------------------------------------------------
 
 
+@control_tests.command("list")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--limit", "-n", default=50, help="Max results")
+@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+def control_tests_list(framework: str | None, limit: int, output_format: str) -> None:
+    """List recent control test results."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult
+
+    init_db()
+    with get_session() as session:
+        q = session.query(ControlResult).order_by(ControlResult.assessed_at.desc())
+        if framework:
+            q = q.filter(ControlResult.framework == framework)
+        rows = q.limit(limit).all()
+
+        data = [
+            {
+                "id": r.id[:8],
+                "framework": r.framework,
+                "control_id": r.control_id,
+                "status": r.status,
+                "assessor": r.assessor or "",
+                "assessed_at": str(r.assessed_at)[:19] if r.assessed_at else "",
+                "examined_by": r.examined_by or "",
+            }
+            for r in rows
+        ]
+
+    if not data:
+        console.print("[dim]No control test results found.[/dim]")
+        return
+
+    if output_format == "json":
+        import json
+
+        console.print(json.dumps(data, indent=2))
+        return
+
+    table = Table(title=f"Control Test Results ({len(data)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Framework", style="cyan")
+    table.add_column("Control", style="cyan")
+    table.add_column("Status")
+    table.add_column("Assessor", max_width=25)
+    table.add_column("Assessed At")
+    table.add_column("Examined By", max_width=20)
+
+    for r in data:
+        status_style = {
+            "compliant": "green",
+            "non_compliant": "red",
+            "partial": "yellow",
+            "not_assessed": "dim",
+        }.get(r["status"], "")
+        st_text = f"[{status_style}]{r['status']}[/{status_style}]" if status_style else r["status"]
+        table.add_row(
+            r["id"],
+            r["framework"],
+            r["control_id"],
+            st_text,
+            r["assessor"][:25] if r["assessor"] else "\u2014",
+            r["assessed_at"],
+            r["examined_by"][:20] or "\u2014",
+        )
+
+    console.print(table)
+
+
 @control_tests.command("import")
 @click.option(
     "--file", "filepath", required=True, type=click.Path(exists=True), help="Input file path"

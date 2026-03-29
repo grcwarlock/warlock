@@ -1,0 +1,17 @@
+{
+  "profile": {
+    "uuid": "92873f70-eda5-5582-9d81-e9a98db43430",
+    "metadata": {
+      "title": "NIST CSF 2.0 Profile",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-29T00:00:00Z"
+    },
+    "imports": [
+      {
+        "href": "catalog/catalog.json",
+        "include-all": {}
+      }
+    ]
+  }
+}

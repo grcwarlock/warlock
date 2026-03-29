@@ -325,6 +325,26 @@ def lake_assess(path: str | None, framework: str | None) -> None:
 
 
 # ---------------------------------------------------------------------------
+# OLTP fallback helper
+# ---------------------------------------------------------------------------
+
+
+def _has_lake_data(lake_path: str, zone: str) -> bool:
+    """Check if a lake zone has Parquet data."""
+    base = Path(lake_path)
+    return bool(list(base.glob(f"{zone}/**/*.parquet")))
+
+
+def _lake_or_oltp(lake_path: str, zone: str, lake_fn, oltp_fn) -> None:
+    """Try lake query first; fall back to OLTP if no lake data exists."""
+    if _has_lake_data(lake_path, zone):
+        lake_fn(lake_path)
+    else:
+        console.print("[dim](Lake data unavailable -- showing OLTP data)[/dim]")
+        oltp_fn()
+
+
+# ---------------------------------------------------------------------------
 # Evidence Commands
 # ---------------------------------------------------------------------------
 
@@ -341,79 +361,161 @@ def evidence(ctx: click.Context) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 @click.option("--limit", default=20, type=int, help="Maximum rows to display")
 def evidence_list(path: str | None, limit: int) -> None:
-    """List evidence artifacts from the lake."""
+    """List evidence artifacts (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "evidence_artifacts" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/evidence_artifacts/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT id, source_connector, artifact_type, collected_at FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
-            [limit],
-        )
-        table = Table(title="Evidence Artifacts")
-        for col in ["id", "source_connector", "artifact_type", "collected_at"]:
-            table.add_column(col, style="cyan" if col == "source_connector" else None)
-        for row in result:
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "evidence_artifacts" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT id, source_connector, artifact_type, collected_at "
+                f"FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+                [limit],
+            )
+            table = Table(title="Evidence Artifacts (Lake)")
+            for col in ["id", "source_connector", "artifact_type", "collected_at"]:
+                table.add_column(col, style="cyan" if col == "source_connector" else None)
+            for row in result:
+                table.add_row(
+                    *[
+                        str(row.get(c, ""))
+                        for c in ["id", "source_connector", "artifact_type", "collected_at"]
+                    ]
+                )
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import ControlResult
+        from warlock.utils import ensure_aware
+
+        init_db()
+        with get_read_session() as session:
+            rows = (
+                session.query(ControlResult)
+                .order_by(ControlResult.assessed_at.desc())
+                .limit(limit)
+                .all()
+            )
+        if not rows:
+            console.print("[dim]No evidence records found.[/dim]")
+            return
+        table = Table(title="Evidence Artifacts (OLTP)")
+        table.add_column("ID", style="dim")
+        table.add_column("Framework", style="cyan")
+        table.add_column("Control", style="cyan")
+        table.add_column("Status")
+        table.add_column("Assessed At")
+        for r in rows:
+            ts = ensure_aware(r.assessed_at).strftime("%Y-%m-%d %H:%M") if r.assessed_at else ""
+            color = (
+                "green"
+                if r.status == "compliant"
+                else "red"
+                if r.status == "non_compliant"
+                else "yellow"
+            )
             table.add_row(
-                str(row.get("id", "")),
-                str(row.get("source_connector", "")),
-                str(row.get("artifact_type", "")),
-                str(row.get("collected_at", "")),
+                r.id[:8],
+                escape(r.framework),
+                escape(r.control_id),
+                f"[{color}]{escape(r.status)}[/{color}]",
+                ts,
             )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/evidence_artifacts", _from_lake, _from_oltp)
 
 
 @evidence.command("freshness")
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def evidence_freshness(path: str | None) -> None:
-    """Show evidence freshness status."""
+    """Show evidence freshness status (lake with OLTP fallback)."""
     from rich.table import Table
+    from datetime import datetime, timedelta, timezone
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "evidence_freshness" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/evidence_freshness/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
-            [],
-        )
-        table = Table(title="Evidence Freshness")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "evidence_freshness" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+            table = Table(title="Evidence Freshness (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import ControlResult
+        from warlock.utils import ensure_aware
+
+        init_db()
+        now = datetime.now(timezone.utc)
+        threshold_30 = now - timedelta(days=30)
+        threshold_90 = now - timedelta(days=90)
+
+        with get_read_session() as session:
+            # Compute freshness per framework in Python (SQLite-safe)
+            fw_stats: dict[str, dict] = {}
+            all_rows = session.query(ControlResult.framework, ControlResult.assessed_at).all()
+            for r in all_rows:
+                fw = r.framework
+                if fw not in fw_stats:
+                    fw_stats[fw] = {"total": 0, "fresh": 0, "stale": 0, "expired": 0}
+                fw_stats[fw]["total"] += 1
+                if r.assessed_at:
+                    assessed = ensure_aware(r.assessed_at)
+                    if assessed >= threshold_30:
+                        fw_stats[fw]["fresh"] += 1
+                    elif assessed >= threshold_90:
+                        fw_stats[fw]["stale"] += 1
+                    else:
+                        fw_stats[fw]["expired"] += 1
+
+        if not fw_stats:
+            console.print("[dim]No evidence records found.[/dim]")
+            return
+
+        table = Table(title="Evidence Freshness (OLTP)")
+        table.add_column("Framework", style="cyan")
+        table.add_column("Total", justify="right")
+        table.add_column("Fresh (<30d)", justify="right", style="green")
+        table.add_column("Stale (30-90d)", justify="right", style="yellow")
+        table.add_column("Expired (>90d)", justify="right", style="red")
+        for fw in sorted(fw_stats):
+            s = fw_stats[fw]
+            table.add_row(fw, str(s["total"]), str(s["fresh"]), str(s["stale"]), str(s["expired"]))
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/evidence_freshness", _from_lake, _from_oltp)
 
 
 # ---------------------------------------------------------------------------
@@ -434,44 +536,83 @@ def incidents(ctx: click.Context) -> None:
 @click.option("--status", default=None, help="Filter by status")
 @click.option("--limit", default=20, type=int, help="Maximum rows to display")
 def incidents_list(path: str | None, status: str | None, limit: int) -> None:
-    """List incidents from the lake."""
+    """List incidents (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "incidents" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/incidents/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        if status:
-            result = engine.query(
-                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE status = ? LIMIT ?",
-                [status, limit],
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "incidents" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            if status:
+                result = engine.query(
+                    f"SELECT * FROM read_parquet('{glob}', union_by_name=true) "
+                    f"WHERE status = ? LIMIT ?",
+                    [status, limit],
+                )
+            else:
+                result = engine.query(
+                    f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+                    [limit],
+                )
+            table = Table(title="Incidents (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import Finding
+        from warlock.utils import ensure_aware
+
+        init_db()
+        with get_read_session() as session:
+            q = session.query(Finding).filter(
+                Finding.observation_type.in_(["alert", "policy_violation", "access_anomaly"])
             )
-        else:
-            result = engine.query(
-                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
-                [limit],
+            if status:
+                q = q.filter(Finding.severity == status)
+            rows = q.order_by(Finding.ingested_at.desc()).limit(limit).all()
+
+        if not rows:
+            console.print("[dim]No incident-type findings found.[/dim]")
+            return
+        table = Table(title="Incidents (OLTP -- from findings)")
+        table.add_column("ID", style="dim")
+        table.add_column("Title")
+        table.add_column("Type", style="cyan")
+        table.add_column("Severity")
+        table.add_column("Provider")
+        table.add_column("Ingested")
+        for r in rows:
+            ts = ensure_aware(r.ingested_at).strftime("%Y-%m-%d %H:%M") if r.ingested_at else ""
+            sev_color = {"critical": "red bold", "high": "red", "medium": "yellow"}.get(
+                r.severity, "dim"
             )
-        table = Table(title="Incidents")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+            table.add_row(
+                r.id[:8],
+                escape(r.title[:60] if r.title else ""),
+                escape(r.observation_type),
+                f"[{sev_color}]{escape(r.severity)}[/{sev_color}]",
+                escape(r.provider),
+                ts,
+            )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/incidents", _from_lake, _from_oltp)
 
 
 @incidents.command("events")
@@ -479,44 +620,74 @@ def incidents_list(path: str | None, status: str | None, limit: int) -> None:
 @click.option("--severity", default=None, help="Filter by severity")
 @click.option("--limit", default=20, type=int, help="Maximum rows to display")
 def incidents_events(path: str | None, severity: str | None, limit: int) -> None:
-    """List security events."""
+    """List security events (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "security_events" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/security_events/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        if severity:
-            result = engine.query(
-                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE severity = ? LIMIT ?",
-                [severity, limit],
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "security_events" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            if severity:
+                result = engine.query(
+                    f"SELECT * FROM read_parquet('{glob}', union_by_name=true) "
+                    f"WHERE severity = ? LIMIT ?",
+                    [severity, limit],
+                )
+            else:
+                result = engine.query(
+                    f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+                    [limit],
+                )
+            table = Table(title="Security Events (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import RawEvent
+        from warlock.utils import ensure_aware
+
+        init_db()
+        with get_read_session() as session:
+            q = session.query(RawEvent).filter(RawEvent.source_type.in_(["edr", "siem", "cloud"]))
+            rows = q.order_by(RawEvent.ingested_at.desc()).limit(limit).all()
+
+        if not rows:
+            console.print("[dim]No security events found.[/dim]")
+            return
+        table = Table(title="Security Events (OLTP -- from raw events)")
+        table.add_column("ID", style="dim")
+        table.add_column("Source", style="cyan")
+        table.add_column("Type")
+        table.add_column("Provider")
+        table.add_column("Ingested")
+        for r in rows:
+            ts = ensure_aware(r.ingested_at).strftime("%Y-%m-%d %H:%M") if r.ingested_at else ""
+            table.add_row(
+                r.id[:8],
+                escape(r.source),
+                escape(r.event_type),
+                escape(r.provider),
+                ts,
             )
-        else:
-            result = engine.query(
-                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
-                [limit],
-            )
-        table = Table(title="Security Events")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/security_events", _from_lake, _from_oltp)
 
 
 # ---------------------------------------------------------------------------
@@ -536,118 +707,227 @@ def privacy(ctx: click.Context) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 @click.option("--status", default=None, help="Filter by status")
 def privacy_dsars(path: str | None, status: str | None) -> None:
-    """List DSAR requests."""
+    """List DSAR requests (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "dsars" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/dsars/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        if status:
-            result = engine.query(
-                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE status = ?",
-                [status],
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "dsars" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            if status:
+                result = engine.query(
+                    f"SELECT * FROM read_parquet('{glob}', union_by_name=true) WHERE status = ?",
+                    [status],
+                )
+            else:
+                result = engine.query(
+                    f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                    [],
+                )
+            table = Table(title="DSAR Requests (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import Finding
+
+        init_db()
+        with get_read_session() as session:
+            # DSARs are tracked as findings from privacy connectors
+            rows = (
+                session.query(Finding)
+                .filter(Finding.source_type == "privacy")
+                .order_by(Finding.ingested_at.desc())
+                .limit(20)
+                .all()
             )
-        else:
-            result = engine.query(
-                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
-                [],
+            # Also check data_silos for privacy-related data
+            if not rows:
+                from warlock.db.models import DataSilo
+
+                silos = session.query(DataSilo).limit(20).all()
+                if silos:
+                    table = Table(title="Data Subject Access -- Data Silos (OLTP)")
+                    table.add_column("ID", style="dim")
+                    table.add_column("Name", style="cyan")
+                    table.add_column("Type")
+                    table.add_column("Classification")
+                    for s in silos:
+                        table.add_row(
+                            s.id[:8],
+                            escape(s.name or ""),
+                            escape(s.silo_type or ""),
+                            escape(s.data_classification or ""),
+                        )
+                    console.print(table)
+                    return
+
+        if not rows:
+            console.print("[dim]No DSAR data found. Privacy connectors not yet run.[/dim]")
+            return
+        table = Table(title="Privacy / DSAR Findings (OLTP)")
+        table.add_column("ID", style="dim")
+        table.add_column("Title")
+        table.add_column("Severity")
+        table.add_column("Provider")
+        for r in rows:
+            table.add_row(
+                r.id[:8],
+                escape(r.title[:60] if r.title else ""),
+                escape(r.severity),
+                escape(r.provider),
             )
-        table = Table(title="DSAR Requests")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/dsars", _from_lake, _from_oltp)
 
 
 @privacy.command("processing")
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def privacy_processing(path: str | None) -> None:
-    """List processing activities (GDPR Art. 30)."""
+    """List processing activities (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "processing_activities" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/processing_activities/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
-            [],
-        )
-        table = Table(title="Processing Activities (GDPR Art. 30)")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "processing_activities" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+            table = Table(title="Processing Activities (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import DataSilo
+
+        init_db()
+        with get_read_session() as session:
+            rows = session.query(DataSilo).order_by(DataSilo.name).limit(30).all()
+
+        if not rows:
+            console.print("[dim]No processing activities found.[/dim]")
+            return
+        table = Table(title="Processing Activities (OLTP -- from data silos)")
+        table.add_column("ID", style="dim")
+        table.add_column("Name", style="cyan")
+        table.add_column("Type")
+        table.add_column("Classification")
+        table.add_column("Owner")
+        for r in rows:
+            table.add_row(
+                r.id[:8],
+                escape(r.name or ""),
+                escape(r.silo_type or ""),
+                escape(r.data_classification or ""),
+                escape(r.owner or ""),
+            )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/processing_activities", _from_lake, _from_oltp)
 
 
 @privacy.command("transfers")
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def privacy_transfers(path: str | None) -> None:
-    """List cross-border data transfers."""
+    """List cross-border data transfers (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "data_transfers" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/data_transfers/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
-            [],
-        )
-        table = Table(title="Cross-Border Data Transfers")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "data_transfers" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+            table = Table(title="Cross-Border Data Transfers (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import DataSilo
+
+        init_db()
+        with get_read_session() as session:
+            rows = (
+                session.query(DataSilo)
+                .filter(DataSilo.provider.isnot(None))
+                .order_by(DataSilo.name)
+                .limit(30)
+                .all()
+            )
+
+        if not rows:
+            console.print("[dim]No data transfer records found.[/dim]")
+            return
+        table = Table(title="Cross-Border Data Transfers (OLTP -- from data silos)")
+        table.add_column("ID", style="dim")
+        table.add_column("Name", style="cyan")
+        table.add_column("Provider")
+        table.add_column("Classification")
+        table.add_column("Type")
+        for r in rows:
+            table.add_row(
+                r.id[:8],
+                escape(r.name or ""),
+                escape(r.provider or ""),
+                escape(r.data_classification or ""),
+                escape(r.silo_type or ""),
+            )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/data_transfers", _from_lake, _from_oltp)
 
 
 # ---------------------------------------------------------------------------
@@ -667,112 +947,237 @@ def supply_chain(ctx: click.Context) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 @click.option("--limit", default=50, type=int, help="Maximum rows to display")
 def supply_chain_sbom(path: str | None, limit: int) -> None:
-    """List SBOM components."""
+    """List SBOM components (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "sbom_components" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/sbom_components/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
-            [limit],
-        )
-        table = Table(title="SBOM Components")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "sbom_components" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true) LIMIT ?",
+                [limit],
+            )
+            table = Table(title="SBOM Components (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import Finding
+
+        init_db()
+        with get_read_session() as session:
+            rows = (
+                session.query(Finding)
+                .filter(Finding.observation_type == "inventory")
+                .filter(Finding.source_type.in_(["sbom", "scanner", "sca"]))
+                .order_by(Finding.ingested_at.desc())
+                .limit(limit)
+                .all()
+            )
+            # Broader fallback: any inventory-type finding from dependency scanners
+            if not rows:
+                rows = (
+                    session.query(Finding)
+                    .filter(
+                        Finding.provider.in_(
+                            [
+                                "snyk",
+                                "dependabot",
+                                "trivy",
+                                "grype",
+                                "github_dependabot",
+                                "npm_audit",
+                            ]
+                        )
+                    )
+                    .order_by(Finding.ingested_at.desc())
+                    .limit(limit)
+                    .all()
+                )
+
+        if not rows:
+            console.print(
+                "[dim]No SBOM data found. "
+                "Run dependency scanners or import SBOM (CycloneDX/SPDX).[/dim]"
+            )
+            return
+        table = Table(title="SBOM / Dependency Findings (OLTP)")
+        table.add_column("ID", style="dim")
+        table.add_column("Title")
+        table.add_column("Severity")
+        table.add_column("Provider", style="cyan")
+        table.add_column("Resource")
+        for r in rows:
+            table.add_row(
+                r.id[:8],
+                escape(r.title[:50] if r.title else ""),
+                escape(r.severity),
+                escape(r.provider),
+                escape(r.resource_id[:40] if r.resource_id else ""),
+            )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/sbom_components", _from_lake, _from_oltp)
 
 
 @supply_chain.command("suppliers")
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def supply_chain_suppliers(path: str | None) -> None:
-    """List supplier assessments."""
+    """List supplier assessments (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "supplier_assessments" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/supplier_assessments/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
-            [],
-        )
-        table = Table(title="Supplier Assessments")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "supplier_assessments" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+            table = Table(title="Supplier Assessments (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import Vendor
+
+        init_db()
+        with get_read_session() as session:
+            rows = session.query(Vendor).order_by(Vendor.name).limit(30).all()
+
+        if not rows:
+            console.print("[dim]No supplier/vendor data found.[/dim]")
+            return
+        table = Table(title="Supplier / Vendor Assessments (OLTP)")
+        table.add_column("ID", style="dim")
+        table.add_column("Name", style="cyan")
+        table.add_column("Tier")
+        table.add_column("Risk Score", justify="right")
+        for r in rows:
+            tier_color = {"critical": "red", "high": "red", "medium": "yellow"}.get(
+                (r.tier or "").lower(), "dim"
+            )
+            score_str = f"{r.risk_score:.1f}" if r.risk_score is not None else "N/A"
+            table.add_row(
+                r.id[:8],
+                escape(r.name or ""),
+                f"[{tier_color}]{escape(r.tier or 'unrated')}[/{tier_color}]",
+                score_str,
+            )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/supplier_assessments", _from_lake, _from_oltp)
 
 
 @supply_chain.command("concentration")
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def supply_chain_concentration(path: str | None) -> None:
-    """Show concentration risk analysis."""
+    """Show concentration risk analysis (lake with OLTP fallback)."""
     from rich.table import Table
+    from rich.markup import escape
+    from collections import Counter
 
     from warlock.config import get_settings
-    from warlock.lake.query import LakeQueryEngine
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    base = Path(lake_path)
-    glob = _safe_lake_path(str(base / "curated" / "concentration_risk" / "**" / "*.parquet"))
 
-    if not list(base.glob("curated/concentration_risk/**/*.parquet")):
-        console.print(
-            "[yellow]No data found. Run pipeline with WLK_LAKE_ENABLED=true first.[/yellow]"
-        )
-        return
+    def _from_lake(lp: str) -> None:
+        from warlock.lake.query import LakeQueryEngine
 
-    engine = LakeQueryEngine(lake_path)
-    try:
-        result = engine.query(
-            f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
-            [],
-        )
-        table = Table(title="Concentration Risk")
-        if result:
-            for col in result[0].keys():
-                table.add_column(col)
-            for row in result:
-                table.add_row(*[str(v) for v in row.values()])
+        base = Path(lp)
+        glob = _safe_lake_path(str(base / "curated" / "concentration_risk" / "**" / "*.parquet"))
+        engine = LakeQueryEngine(lp)
+        try:
+            result = engine.query(
+                f"SELECT * FROM read_parquet('{glob}', union_by_name=true)",
+                [],
+            )
+            table = Table(title="Concentration Risk (Lake)")
+            if result:
+                for col in result[0].keys():
+                    table.add_column(col)
+                for row in result:
+                    table.add_row(*[str(v) for v in row.values()])
+            console.print(table)
+        finally:
+            engine.close()
+
+    def _from_oltp() -> None:
+        from warlock.db.engine import get_read_session, init_db
+        from warlock.db.models import ConnectorRun
+
+        init_db()
+        with get_read_session() as session:
+            rows = session.query(ConnectorRun).all()
+
+        if not rows:
+            console.print("[dim]No concentration data found.[/dim]")
+            return
+
+        # Analyze concentration by provider
+        provider_counts: Counter[str] = Counter()
+        provider_events: Counter[str] = Counter()
+        for r in rows:
+            provider_counts[r.provider] += 1
+            provider_events[r.provider] += r.event_count or 0
+
+        total_events = sum(provider_events.values())
+        table = Table(title="Provider Concentration Risk (OLTP)")
+        table.add_column("Provider", style="cyan")
+        table.add_column("Runs", justify="right")
+        table.add_column("Events", justify="right")
+        table.add_column("Share", justify="right")
+        table.add_column("Risk")
+
+        for prov, count in provider_counts.most_common(20):
+            events = provider_events[prov]
+            share = (events / total_events * 100) if total_events else 0
+            risk_color = "red" if share > 40 else "yellow" if share > 20 else "green"
+            risk_label = "HIGH" if share > 40 else "MEDIUM" if share > 20 else "LOW"
+            table.add_row(
+                escape(prov),
+                str(count),
+                str(events),
+                f"{share:.1f}%",
+                f"[{risk_color}]{risk_label}[/{risk_color}]",
+            )
         console.print(table)
-    finally:
-        engine.close()
+
+    _lake_or_oltp(lake_path, "curated/concentration_risk", _from_lake, _from_oltp)
 
 
 # ---------------------------------------------------------------------------
@@ -1061,7 +1466,7 @@ def lake_compact(path: str | None, target_size: int) -> None:
 @lake.command("maintenance")
 @click.option("--path", default=None)
 def lake_maintenance(path: str | None) -> None:
-    """Run all lake maintenance jobs (compact, expire, cleanup)."""
+    """Run all lake maintenance jobs (compact, expire, cleanup) with detailed reporting."""
     try:
         import pyarrow  # noqa: F401
     except ImportError:
@@ -1070,19 +1475,165 @@ def lake_maintenance(path: str | None) -> None:
             'Install it with: pip install -e ".[lake]"'
         )
 
+    from rich.table import Table as RichTable
+
     from warlock.config import get_settings
     from warlock.lake.maintenance import run_all_maintenance
 
     settings = get_settings()
     lake_path = path or settings.lake_path
-    console.print(f"[cyan]Running maintenance on {lake_path}...[/cyan]")
+    console.print(f"[cyan]Running maintenance on {lake_path}...[/cyan]\n")
     results = run_all_maintenance(lake_path)
+
+    # Detailed reporting per job
+    table = RichTable(title="Maintenance Report")
+    table.add_column("Job", style="cyan")
+    table.add_column("Zone/Target")
+    table.add_column("Action")
+    table.add_column("Count", justify="right")
+
+    total_actions = 0
     for job, stats in results.items():
         if stats:
-            console.print(f"  [green]{job}:[/green] {stats}")
+            for target, count in stats.items():
+                action_label = {
+                    "compaction": "files compacted",
+                    "expiry": "files expired",
+                    "orphan_cleanup": "dirs removed",
+                }.get(job, "items processed")
+                table.add_row(job, str(target), action_label, str(count))
+                total_actions += count
         else:
-            console.print(f"  [dim]{job}: nothing to do[/dim]")
-    console.print("[green]Maintenance complete.[/green]")
+            table.add_row(job, "--", "nothing to do", "0")
+
+    console.print(table)
+    if total_actions:
+        console.print(f"\n[green]Maintenance complete: {total_actions} actions taken.[/green]")
+    else:
+        console.print("\n[dim]Maintenance complete: lake is already clean.[/dim]")
+
+
+@lake.command("search")
+@click.argument("query")
+@click.option("--path", default=None, help="Lake root path (default: from config)")
+@click.option("--zone", default=None, help="Limit to zone (raw, enrichment, curated)")
+def lake_search(query: str, path: str | None, zone: str | None) -> None:
+    """Search lake table metadata and Parquet file contents by keyword."""
+    from rich.markup import escape as rich_escape
+    from rich.table import Table as RichTable
+
+    from warlock.config import get_settings
+
+    settings = get_settings()
+    lake_path = Path(path or settings.lake_path)
+
+    if not lake_path.exists():
+        console.print(f"[yellow]Lake directory does not exist: {lake_path}[/yellow]")
+        return
+
+    zones = [zone] if zone else ["raw", "enrichment", "curated"]
+    results: list[tuple[str, str, int, int]] = []  # (zone, table_path, files, size)
+
+    query_lower = query.lower()
+
+    for z in zones:
+        zone_dir = lake_path / z
+        if not zone_dir.exists():
+            continue
+
+        # Walk directory structure looking for matching paths
+        for dirpath, _dirnames, filenames in __import__("os").walk(str(zone_dir)):
+            p = Path(dirpath)
+            rel = str(p.relative_to(lake_path))
+            parquet_files = [f for f in filenames if f.endswith(".parquet")]
+
+            if not parquet_files:
+                continue
+
+            # Match against path components
+            if query_lower in rel.lower():
+                size = sum((p / f).stat().st_size for f in parquet_files)
+                results.append((z, rel, len(parquet_files), size))
+
+    if not results:
+        # Try content search via DuckDB if available
+        try:
+            from warlock.lake.query import LakeQueryEngine
+
+            engine = LakeQueryEngine(str(lake_path))
+            try:
+                # Search across all zones for the keyword
+                for z in zones:
+                    zone_dir = lake_path / z
+                    if not zone_dir.exists():
+                        continue
+                    glob_pattern = str(zone_dir / "**" / "*.parquet")
+                    if not list(zone_dir.rglob("*.parquet")):
+                        continue
+                    try:
+                        # Get column names from first file
+                        cols = engine.query(
+                            f"SELECT column_name FROM (DESCRIBE SELECT * FROM "
+                            f"read_parquet('{glob_pattern}', union_by_name=true)) LIMIT 50"
+                        )
+                        col_names = [c["column_name"] for c in cols]
+                        # Search text columns for the keyword
+                        text_cols = [
+                            c
+                            for c in col_names
+                            if c
+                            in (
+                                "title",
+                                "source",
+                                "provider",
+                                "framework",
+                                "control_id",
+                                "connector_name",
+                                "event_type",
+                                "severity",
+                                "status",
+                                "observation_type",
+                            )
+                        ]
+                        if text_cols:
+                            like_clauses = " OR ".join(
+                                f"LOWER(CAST({c} AS VARCHAR)) LIKE ?" for c in text_cols
+                            )
+                            params = [f"%{query_lower}%"] * len(text_cols)
+                            count_result = engine.query(
+                                f"SELECT COUNT(*) as cnt FROM "
+                                f"read_parquet('{glob_pattern}', union_by_name=true) "
+                                f"WHERE {like_clauses}",
+                                params,
+                            )
+                            cnt = count_result[0]["cnt"] if count_result else 0
+                            if cnt > 0:
+                                console.print(
+                                    f"  [cyan]{z}:[/cyan] {cnt} rows match "
+                                    f"'{rich_escape(query)}' "
+                                    f"(columns: {', '.join(text_cols)})"
+                                )
+                    except Exception:
+                        pass
+            finally:
+                engine.close()
+        except ImportError:
+            pass
+
+        if not results:
+            console.print(f"[dim]No lake tables or content matching '{rich_escape(query)}'.[/dim]")
+        return
+
+    table = RichTable(title=f"Lake Search Results for '{rich_escape(query)}'")
+    table.add_column("Zone", style="cyan")
+    table.add_column("Path")
+    table.add_column("Files", justify="right")
+    table.add_column("Size", justify="right")
+
+    for z, rel_path, file_count, size in sorted(results):
+        table.add_row(z, rel_path, str(file_count), _format_size(size))
+
+    console.print(table)
 
 
 @lake.command("thin-oltp")

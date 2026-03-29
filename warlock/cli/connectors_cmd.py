@@ -85,12 +85,16 @@ def _db_connector_names() -> list[str]:
 @click.option("--source-type", "-t", default=None, help="Filter by source type")
 @click.option("--provider", "-p", default=None, help="Filter by provider")
 @click.option("--enabled/--disabled", default=None, help="Filter by enabled state")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default=None)
+@click.option("--export", "export_path", default=None, help="Export to file (json/csv)")
+@click.pass_context
 def connectors_list(
+    ctx: click.Context,
     source_type: str | None,
     provider: str | None,
     enabled: bool | None,
-    fmt: str,
+    fmt: str | None,
+    export_path: str | None,
 ) -> None:
     """List all registered connectors."""
     from warlock.db.engine import get_session, init_db
@@ -119,40 +123,40 @@ def connectors_list(
         console.print("[dim]No connectors found. Run the pipeline first.[/dim]")
         return
 
-    if fmt == "json":
-        data = [
-            {
-                "name": r.connector_name,
-                "source_type": r.source_type,
-                "provider": r.provider,
-                "last_status": r.status,
-            }
-            for r in rows
-        ]
-        console.print(json.dumps(data, indent=2))
-        return
+    from warlock.cli.output import format_output, get_output_format
 
-    table = Table(title=f"Connectors ({len(rows)})")
-    table.add_column("Name", style="cyan")
-    table.add_column("Source Type")
-    table.add_column("Provider")
-    table.add_column("Last Status")
+    data = [
+        {
+            "name": r.connector_name,
+            "source_type": r.source_type,
+            "provider": r.provider,
+            "last_status": r.status,
+        }
+        for r in rows
+    ]
 
-    for r in rows:
-        status_style = {
-            "success": "green",
-            "error": "red",
-            "partial": "yellow",
-            "running": "cyan",
-        }.get(r.status, "dim")
-        table.add_row(
-            r.connector_name,
-            r.source_type,
-            r.provider,
-            f"[{status_style}]{r.status}[/{status_style}]",
-        )
+    _COLUMNS = [
+        {"key": "name", "header": "Name", "style": "cyan"},
+        {"key": "source_type", "header": "Source Type"},
+        {"key": "provider", "header": "Provider"},
+        {"key": "last_status", "header": "Last Status"},
+    ]
 
-    console.print(table)
+    format_output(
+        data,
+        _COLUMNS,
+        fmt=get_output_format(ctx, fmt),
+        title=f"Connectors ({len(rows)})",
+        style_map={
+            "last_status": {
+                "success": "green",
+                "error": "red",
+                "partial": "yellow",
+                "running": "cyan",
+            },
+        },
+        export_path=export_path,
+    )
 
 
 # ---------------------------------------------------------------------------

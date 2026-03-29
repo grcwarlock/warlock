@@ -42,19 +42,72 @@ def _fuzzy_match(query: str, text: str) -> bool:
     return query.lower() in text.lower()
 
 
+_NAV_REGISTRY: list[dict] = [
+    {"type": "navigate", "id": "dashboard", "label": "Go to Dashboard", "detail": "Home screen"},
+    {"type": "navigate", "id": "remed", "label": "Go to Remediations", "detail": ""},
+    {"type": "navigate", "id": "findings", "label": "Go to Findings", "detail": ""},
+    {"type": "navigate", "id": "controls", "label": "Go to Controls", "detail": ""},
+    {"type": "navigate", "id": "poam", "label": "Go to POA&M", "detail": ""},
+    {"type": "navigate", "id": "incidents", "label": "Go to Incidents", "detail": ""},
+    {"type": "navigate", "id": "alerts", "label": "Go to Alerts", "detail": ""},
+    {"type": "navigate", "id": "evidence", "label": "Go to Evidence", "detail": ""},
+    {"type": "navigate", "id": "privacy", "label": "Go to Privacy", "detail": ""},
+    {"type": "navigate", "id": "pipeline", "label": "Go to Pipeline", "detail": ""},
+    {"type": "navigate", "id": "frameworks", "label": "Go to Frameworks", "detail": ""},
+    {"type": "navigate", "id": "vendors", "label": "Go to Vendors", "detail": ""},
+    {"type": "navigate", "id": "personnel", "label": "Go to Personnel", "detail": ""},
+    {"type": "navigate", "id": "training", "label": "Go to Training", "detail": ""},
+    {"type": "navigate", "id": "audits", "label": "Go to Audit Engagements", "detail": ""},
+    {"type": "navigate", "id": "changes", "label": "Go to Change Requests", "detail": ""},
+    {"type": "navigate", "id": "calendar", "label": "Go to Compliance Calendar", "detail": ""},
+    {"type": "navigate", "id": "search", "label": "Go to Search", "detail": ""},
+    {"type": "navigate", "id": "reports", "label": "Go to Reports", "detail": ""},
+    {"type": "navigate", "id": "risk", "label": "Go to Risk Analysis", "detail": ""},
+]
+
+
 def _search(query: str) -> list[dict]:
-    """Search commands and entities."""
+    """Search commands, navigation, and entities."""
     if not query or len(query) < 1:
-        # Show recent/popular commands
-        return _COMMAND_REGISTRY[:10]
+        # Show navigation + recent commands
+        return _NAV_REGISTRY[:10] + _COMMAND_REGISTRY[:5]
 
     results: list[dict] = []
     q = query.lower()
+
+    # Search navigation
+    for nav in _NAV_REGISTRY:
+        if q in nav["label"].lower() or q in nav["id"].lower():
+            results.append(nav)
 
     # Search commands
     for cmd in _COMMAND_REGISTRY:
         if q in cmd["label"].lower() or q in cmd["detail"].lower():
             results.append(cmd)
+
+    # Search saved views
+    try:
+        app = None
+        try:
+            from textual.app import App
+
+            app = App.current
+        except Exception:
+            pass
+        if app and hasattr(app, "get_saved_views"):
+            for name, view_id in app.get_saved_views().items():
+                if q in name.lower() or q in view_id.lower():
+                    results.append(
+                        {
+                            "type": "saved_view",
+                            "id": name,
+                            "view_id": view_id,
+                            "label": f"Saved: {name}",
+                            "detail": f"view: {view_id}",
+                        }
+                    )
+    except Exception:
+        pass
 
     # Search entities
     try:
@@ -70,6 +123,8 @@ def _search(query: str) -> list[dict]:
 
 TYPE_LABELS = {
     "command": ("CMD", "green"),
+    "navigate": ("NAV", "#a78bfa"),
+    "saved_view": ("SAV", "cyan"),
     "remediation": ("REM", "red"),
     "finding": ("FND", "yellow"),
     "control": ("CTL", "magenta"),

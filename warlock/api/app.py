@@ -32,6 +32,18 @@ from warlock.api.routers import (
     resources,
     trust_portal as trust_portal_router,
     webhooks,
+    analytics,
+    search,
+    reports,
+    incidents,
+    changes,
+    calendar,
+    exceptions,
+    privacy,
+    access_reviews,
+    training,
+    bcp,
+    control_tests,
 )
 
 log = logging.getLogger(__name__)
@@ -174,6 +186,29 @@ def create_app() -> FastAPI:
         log.info("Prometheus /metrics disabled in production (env=production)")
 
     # ------------------------------------------------------------------
+    # API versioning — deprecation headers and v2 redirect stub (Item 113)
+    # ------------------------------------------------------------------
+    @application.middleware("http")
+    async def api_versioning_middleware(request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/api/v1"):
+            response.headers["Deprecation"] = "false"
+            response.headers["Sunset"] = ""
+            response.headers["X-API-Version"] = "v1"
+        elif path.startswith("/api/v2"):
+            # v2 stub — redirect to v1 for now
+            from starlette.responses import Response
+
+            return Response(
+                content='{"detail":"API v2 not yet available. Use /api/v1."}',
+                status_code=501,
+                media_type="application/json",
+                headers={"X-API-Version": "v2"},
+            )
+        return response
+
+    # ------------------------------------------------------------------
     # Mount domain routers
     # ------------------------------------------------------------------
     prefix = "/api/v1"
@@ -194,6 +229,38 @@ def create_app() -> FastAPI:
     application.include_router(resources.router, prefix=prefix, tags=["resources"])
     application.include_router(webhooks.router, prefix=prefix, tags=["webhooks"])
     application.include_router(trust_portal_router.router, prefix=prefix, tags=["trust-portal"])
+    application.include_router(analytics.router, prefix=prefix, tags=["analytics"])
+    application.include_router(search.router, prefix=prefix, tags=["search"])
+    application.include_router(reports.router, prefix=prefix, tags=["reports"])
+    application.include_router(incidents.router, prefix=prefix, tags=["incidents"])
+    application.include_router(changes.router, prefix=prefix, tags=["changes"])
+    application.include_router(calendar.router, prefix=prefix, tags=["calendar"])
+    application.include_router(exceptions.router, prefix=prefix, tags=["exceptions"])
+    application.include_router(privacy.router, prefix=prefix, tags=["privacy"])
+    application.include_router(access_reviews.router, prefix=prefix, tags=["access-reviews"])
+    application.include_router(training.router, prefix=prefix, tags=["training"])
+    application.include_router(bcp.router, prefix=prefix, tags=["bcp"])
+    application.include_router(control_tests.router, prefix=prefix, tags=["control-tests"])
+
+    # Real-time webhook ingestion (Item 60)
+    from warlock.pipeline.webhook_receiver import router as ingest_router
+
+    application.include_router(ingest_router, prefix=prefix, tags=["ingest"])
+
+    # WebSocket endpoint for real-time events
+    from warlock.api.websocket import router as ws_router
+
+    application.include_router(ws_router, prefix=prefix, tags=["websocket"])
+
+    # SSE endpoint for real-time compliance events (Item 114)
+    from warlock.api.sse import router as sse_router
+
+    application.include_router(sse_router, prefix=prefix, tags=["events"])
+
+    # Mobile-compact endpoints (Item 131)
+    from warlock.api.mobile import router as mobile_router
+
+    application.include_router(mobile_router, prefix=prefix, tags=["mobile"])
 
     # ------------------------------------------------------------------
     # Root-level health endpoints for k8s probes, load balancers, Docker

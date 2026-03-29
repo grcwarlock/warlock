@@ -112,11 +112,20 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 media_type="application/json",
                 headers={
                     "Retry-After": str(self.window_seconds),
+                    "X-RateLimit-Limit": str(max_allowed),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(self.window_seconds),
                     "X-RateLimit-Scope": scope,
                 },
             )
 
         response = await call_next(request)
+        response.headers["X-RateLimit-Limit"] = str(max_allowed)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, max_allowed - count))
+        # Reset is the number of seconds until the current window expires.
+        # The exact window start is unknown (counter-based), so we report
+        # the full window duration as a conservative upper bound.
+        response.headers["X-RateLimit-Reset"] = str(self.window_seconds)
         response.headers["X-RateLimit-Scope"] = scope
         if using_memory:
             response.headers["X-RateLimit-Warning"] = "per-worker"

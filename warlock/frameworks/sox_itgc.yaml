@@ -1,0 +1,254 @@
+framework_id: sox_itgc
+control_families:
+  APD:
+    name: Access to Programs and Data
+    controls:
+      APD.1:
+        checks:
+        - id: sox_apd_access_mgmt
+          event_types:
+          - iam_policies
+          - okta_logs
+          - entra_id_logs
+          resource_types:
+          - iam_policy
+          - identity_provider
+        monitoring_frequency: quarterly
+      APD.2:
+        checks:
+        - id: sox_apd_privileged_access
+          event_types:
+          - iam_policies
+          - aws_config
+          resource_types:
+          - iam_role
+          - service_account
+        monitoring_frequency: quarterly
+      APD.3:
+        checks:
+        - id: sox_apd_provisioning
+          event_types:
+          - okta_logs
+          - entra_id_logs
+          resource_types:
+          - user_account
+        monitoring_frequency: quarterly
+      APD.4:
+        checks:
+        - id: sox_apd_termination
+          event_types:
+          - okta_logs
+          - entra_id_logs
+          resource_types:
+          - user_account
+        monitoring_frequency: quarterly
+      APD.5:
+        checks:
+        - id: sox_apd_password_policy
+          event_types:
+          - iam_policies
+          - okta_logs
+          resource_types:
+          - password_policy
+        monitoring_frequency: quarterly
+      APD.6:
+        checks:
+        - id: sox_apd_access_review
+          event_types:
+          - okta_logs
+          - entra_id_logs
+          - confluence_pages
+          resource_types:
+          - access_review
+          - grc_document
+        monitoring_frequency: quarterly
+      APD.7:
+        checks:
+        - id: sox_apd_segregation_of_duties
+          event_types:
+          - iam_policies
+          - okta_logs
+          resource_types:
+          - iam_role
+          - identity_provider
+        monitoring_frequency: quarterly
+      APD.8:
+        checks:
+        - id: sox_apd_physical_access
+          event_types:
+          - physical_access_logs
+          - confluence_pages
+          resource_types:
+          - physical_access
+          - grc_document
+        monitoring_frequency: quarterly
+  PC:
+    name: Program Changes
+    controls:
+      PC.1:
+        checks:
+        - id: sox_pc_change_approval
+          event_types:
+          - github_events
+          - jira_issues
+          resource_types:
+          - pull_request
+          - change_request
+        monitoring_frequency: quarterly
+      PC.2:
+        checks:
+        - id: sox_pc_testing_approval
+          event_types:
+          - github_events
+          - jira_issues
+          resource_types:
+          - test_result
+          - release
+        monitoring_frequency: quarterly
+      PC.3:
+        checks:
+        - id: sox_pc_segregation
+          event_types:
+          - github_events
+          resource_types:
+          - pull_request
+        monitoring_frequency: quarterly
+      PC.4:
+        checks:
+        - id: sox_pc_emergency_changes
+          event_types:
+          - github_events
+          - jira_issues
+          resource_types:
+          - change_request
+        monitoring_frequency: quarterly
+      PC.5:
+        checks:
+        - id: sox_pc_version_control
+          event_types:
+          - github_events
+          resource_types:
+          - repository
+        monitoring_frequency: quarterly
+      PC.6:
+        checks:
+        - id: sox_pc_migration_controls
+          event_types:
+          - github_events
+          - jira_issues
+          resource_types:
+          - deployment
+          - release
+        monitoring_frequency: quarterly
+  PD:
+    name: Program Development
+    controls:
+      PD.1:
+        checks:
+        - id: sox_pd_sdlc_methodology
+          event_types:
+          - confluence_pages
+          - jira_issues
+          resource_types:
+          - grc_document
+          - project
+        monitoring_frequency: quarterly
+      PD.2:
+        checks:
+        - id: sox_pd_requirements_approval
+          event_types:
+          - jira_issues
+          - confluence_pages
+          resource_types:
+          - requirements_doc
+          - grc_document
+        monitoring_frequency: quarterly
+      PD.3:
+        checks:
+        - id: sox_pd_testing_validation
+          event_types:
+          - github_events
+          - jira_issues
+          resource_types:
+          - test_result
+        monitoring_frequency: quarterly
+      PD.4:
+        checks:
+        - id: sox_pd_data_conversion
+          event_types:
+          - application_logs
+          - jira_issues
+          resource_types:
+          - data_pipeline
+          - change_request
+        monitoring_frequency: quarterly
+      PD.5:
+        checks:
+        - id: sox_pd_post_impl_review
+          event_types:
+          - confluence_pages
+          - jira_issues
+          resource_types:
+          - grc_document
+          - retrospective
+        monitoring_frequency: quarterly
+  CO:
+    name: Computer Operations
+    controls:
+      CO.1:
+        checks:
+        - id: sox_co_job_scheduling
+          event_types:
+          - cloudwatch_events
+          - datadog_events
+          resource_types:
+          - scheduled_job
+        monitoring_frequency: quarterly
+      CO.2:
+        checks:
+        - id: sox_co_incident_management
+          event_types:
+          - pagerduty_incidents
+          - jira_issues
+          resource_types:
+          - incident
+        monitoring_frequency: quarterly
+      CO.3:
+        checks:
+        - id: sox_co_backup_recovery
+          event_types:
+          - aws_config
+          - azure_policy
+          resource_types:
+          - backup_vault
+          - recovery_point
+        monitoring_frequency: quarterly
+      CO.4:
+        checks:
+        - id: sox_co_monitoring_alerting
+          event_types:
+          - cloudwatch_events
+          - datadog_events
+          resource_types:
+          - alarm
+          - monitor
+        monitoring_frequency: quarterly
+      CO.5:
+        checks:
+        - id: sox_co_capacity_management
+          event_types:
+          - aws_config
+          - azure_policy
+          resource_types:
+          - compute_instance
+        monitoring_frequency: quarterly
+      CO.6:
+        checks:
+        - id: sox_co_data_integrity
+          event_types:
+          - application_logs
+          - cloudtrail_events
+          resource_types:
+          - audit_log
+          - data_pipeline
+        monitoring_frequency: quarterly

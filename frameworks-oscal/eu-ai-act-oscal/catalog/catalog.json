@@ -1,0 +1,1225 @@
+{
+  "catalog": {
+    "uuid": "1caf93b0-0c4d-5e3c-aa5d-53b68fba46a7",
+    "metadata": {
+      "title": "EU Artificial Intelligence Act (Regulation 2024/1689)",
+      "version": "2024/1689",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-03-29T00:00:00Z",
+      "links": [
+        {
+          "rel": "source",
+          "href": "https://artificialintelligenceact.eu/"
+        }
+      ],
+      "props": [
+        {
+          "name": "framework-key",
+          "value": "eu_ai_act"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "art5",
+        "title": "Prohibited AI Practices",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART5"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art5-1",
+            "title": "ART5 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART5.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art5-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art5-1_smt",
+                "name": "statement",
+                "prose": "ART5.1: Prohibited AI Practices control requirement."
+              },
+              {
+                "id": "art5-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_5_1_prohibited_practices evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "prisma_policies,confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art6",
+        "title": "High-Risk AI System Classification",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART6"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art6-1",
+            "title": "ART6 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART6.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art6-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art6-1_smt",
+                "name": "statement",
+                "prose": "ART6.1: High-Risk AI System Classification control requirement."
+              },
+              {
+                "id": "art6-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_6_1_classification evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art6-2",
+            "title": "ART6 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART6.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art6-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art6-2_smt",
+                "name": "statement",
+                "prose": "ART6.2: High-Risk AI System Classification control requirement."
+              },
+              {
+                "id": "art6-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_6_2_annex_iii_systems evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art9",
+        "title": "Risk Management System",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART9"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art9-1",
+            "title": "ART9 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART9.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art9-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art9-1_smt",
+                "name": "statement",
+                "prose": "ART9.1: Risk Management System control requirement."
+              },
+              {
+                "id": "art9-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_9_1_risk_mgmt_system evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art9-2",
+            "title": "ART9 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART9.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art9-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art9-2_smt",
+                "name": "statement",
+                "prose": "ART9.2: Risk Management System control requirement."
+              },
+              {
+                "id": "art9-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_9_2_risk_identification evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks,wiz_issues,prisma_alerts"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art9-3",
+            "title": "ART9 - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART9.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "art9-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art9-3_smt",
+                "name": "statement",
+                "prose": "ART9.3: Risk Management System control requirement."
+              },
+              {
+                "id": "art9-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_9_3_testing_procedures evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "compliance_audits,prisma_compliance"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art9-4",
+            "title": "ART9 - 4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART9.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "art9-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art9-4_smt",
+                "name": "statement",
+                "prose": "ART9.4: Risk Management System control requirement."
+              },
+              {
+                "id": "art9-4-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_9_4_risk_measures evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "snow_risks"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art10",
+        "title": "Data and Data Governance",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART10"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art10-1",
+            "title": "ART10 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART10.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art10-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art10-1_smt",
+                "name": "statement",
+                "prose": "ART10.1: Data and Data Governance control requirement."
+              },
+              {
+                "id": "art10-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_10_1_training_data evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "s3_buckets,storage_accounts,storage_buckets"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art10-2",
+            "title": "ART10 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART10.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art10-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art10-2_smt",
+                "name": "statement",
+                "prose": "ART10.2: Data and Data Governance control requirement."
+              },
+              {
+                "id": "art10-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_10_2_data_governance evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "onetrust_data_maps,s3_buckets"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art10-3",
+            "title": "ART10 - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART10.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "art10-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art10-3_smt",
+                "name": "statement",
+                "prose": "ART10.3: Data and Data Governance control requirement."
+              },
+              {
+                "id": "art10-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_10_3_data_relevant evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art10-4",
+            "title": "ART10 - 4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART10.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "art10-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art10-4_smt",
+                "name": "statement",
+                "prose": "ART10.4: Data and Data Governance control requirement."
+              },
+              {
+                "id": "art10-4-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_10_4_data_bias_examined evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art10-5",
+            "title": "ART10 - 5",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART10.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "art10-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art10-5_smt",
+                "name": "statement",
+                "prose": "ART10.5: Data and Data Governance control requirement."
+              },
+              {
+                "id": "art10-5-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_10_5_personal_data evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "onetrust_consent_records,onetrust_data_maps"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art11",
+        "title": "Technical Documentation",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART11"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art11-1",
+            "title": "ART11 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART11.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art11-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art11-1_smt",
+                "name": "statement",
+                "prose": "ART11.1: Technical Documentation control requirement."
+              },
+              {
+                "id": "art11-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_11_1_technical_doc evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art12",
+        "title": "Record-Keeping",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART12"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art12-1",
+            "title": "ART12 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART12.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art12-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art12-1_smt",
+                "name": "statement",
+                "prose": "ART12.1: Record-Keeping control requirement."
+              },
+              {
+                "id": "art12-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_12_1_automatic_logging evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "cloudtrail_trails,audit_logs,activity_log"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art12-2",
+            "title": "ART12 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART12.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art12-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art12-2_smt",
+                "name": "statement",
+                "prose": "ART12.2: Record-Keeping control requirement."
+              },
+              {
+                "id": "art12-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_12_2_traceability evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "cloudtrail_trails,audit_logs"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art13",
+        "title": "Transparency and Provision of Information",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART13"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art13-1",
+            "title": "ART13 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART13.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art13-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art13-1_smt",
+                "name": "statement",
+                "prose": "ART13.1: Transparency and Provision of Information control requirement."
+              },
+              {
+                "id": "art13-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_13_1_transparency evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art13-2",
+            "title": "ART13 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART13.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art13-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art13-2_smt",
+                "name": "statement",
+                "prose": "ART13.2: Transparency and Provision of Information control requirement."
+              },
+              {
+                "id": "art13-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_13_2_output_interpretation evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art13-3",
+            "title": "ART13 - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART13.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "art13-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art13-3_smt",
+                "name": "statement",
+                "prose": "ART13.3: Transparency and Provision of Information control requirement."
+              },
+              {
+                "id": "art13-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_13_3_deployer_info evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art14",
+        "title": "Human Oversight",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART14"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art14-1",
+            "title": "ART14 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART14.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art14-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art14-1_smt",
+                "name": "statement",
+                "prose": "ART14.1: Human Oversight control requirement."
+              },
+              {
+                "id": "art14-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_14_1_human_oversight_design evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "okta_system_log,entra_directory_audits,cyberark_recordings"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art14-2",
+            "title": "ART14 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART14.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art14-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art14-2_smt",
+                "name": "statement",
+                "prose": "ART14.2: Human Oversight control requirement."
+              },
+              {
+                "id": "art14-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_14_2_oversight_measures evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "okta_system_log,entra_directory_audits"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art14-3",
+            "title": "ART14 - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART14.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "art14-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art14-3_smt",
+                "name": "statement",
+                "prose": "ART14.3: Human Oversight control requirement."
+              },
+              {
+                "id": "art14-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_14_3_human_understand evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages,kb4_training_enrollments"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art14-4",
+            "title": "ART14 - 4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART14.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "art14-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art14-4_smt",
+                "name": "statement",
+                "prose": "ART14.4: Human Oversight control requirement."
+              },
+              {
+                "id": "art14-4-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_14_4_override_capability evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "okta_system_log,entra_directory_audits"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art15",
+        "title": "Accuracy, Robustness and Cybersecurity",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART15"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art15-1",
+            "title": "ART15 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART15.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art15-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art15-1_smt",
+                "name": "statement",
+                "prose": "ART15.1: Accuracy, Robustness and Cybersecurity control requirement."
+              },
+              {
+                "id": "art15-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_15_1_accuracy_levels evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "compliance_audits"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art15-2",
+            "title": "ART15 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART15.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art15-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art15-2_smt",
+                "name": "statement",
+                "prose": "ART15.2: Accuracy, Robustness and Cybersecurity control requirement."
+              },
+              {
+                "id": "art15-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_15_2_robustness evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "compliance_audits"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art15-3",
+            "title": "ART15 - 3",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART15.3"
+              },
+              {
+                "name": "sort-id",
+                "value": "art15-3"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art15-3_smt",
+                "name": "statement",
+                "prose": "ART15.3: Accuracy, Robustness and Cybersecurity control requirement."
+              },
+              {
+                "id": "art15-3-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_15_3_resilience evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "falcon_detection_details,defender_alerts,scc_findings"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art15-4",
+            "title": "ART15 - 4",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART15.4"
+              },
+              {
+                "name": "sort-id",
+                "value": "art15-4"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art15-4_smt",
+                "name": "statement",
+                "prose": "ART15.4: Accuracy, Robustness and Cybersecurity control requirement."
+              },
+              {
+                "id": "art15-4-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_15_4_cybersecurity evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "guardduty_detectors,securityhub_hub,ec2_security_groups,network_security_groups"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art26",
+        "title": "Obligations for Deployers of High-Risk AI",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART26"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art26-1",
+            "title": "ART26 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART26.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art26-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art26-1_smt",
+                "name": "statement",
+                "prose": "ART26.1: Obligations for Deployers of High-Risk AI control requirement."
+              },
+              {
+                "id": "art26-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_26_1_deployer_use evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art26-2",
+            "title": "ART26 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART26.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art26-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art26-2_smt",
+                "name": "statement",
+                "prose": "ART26.2: Obligations for Deployers of High-Risk AI control requirement."
+              },
+              {
+                "id": "art26-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_26_2_deployer_monitoring evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitor_alerts,splunk_notable_events,sentinel_incidents"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art26-5",
+            "title": "ART26 - 5",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART26.5"
+              },
+              {
+                "name": "sort-id",
+                "value": "art26-5"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art26-5_smt",
+                "name": "statement",
+                "prose": "ART26.5: Obligations for Deployers of High-Risk AI control requirement."
+              },
+              {
+                "id": "art26-5-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_26_5_dpia evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "onetrust_data_maps"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art50",
+        "title": "Transparency Obligations for AI Systems",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART50"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art50-1",
+            "title": "ART50 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART50.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art50-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art50-1_smt",
+                "name": "statement",
+                "prose": "ART50.1: Transparency Obligations for AI Systems control requirement."
+              },
+              {
+                "id": "art50-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_50_1_human_interaction evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art50-2",
+            "title": "ART50 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART50.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art50-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art50-2_smt",
+                "name": "statement",
+                "prose": "ART50.2: Transparency Obligations for AI Systems control requirement."
+              },
+              {
+                "id": "art50-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_50_2_synthetic_content evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "art72",
+        "title": "Post-Market Monitoring",
+        "props": [
+          {
+            "name": "label",
+            "value": "ART72"
+          }
+        ],
+        "controls": [
+          {
+            "id": "art72-1",
+            "title": "ART72 - 1",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART72.1"
+              },
+              {
+                "name": "sort-id",
+                "value": "art72-1"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art72-1_smt",
+                "name": "statement",
+                "prose": "ART72.1: Post-Market Monitoring control requirement."
+              },
+              {
+                "id": "art72-1-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_72_1_monitoring_system evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "monitor_alerts,scc_findings,wiz_issues"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "art72-2",
+            "title": "ART72 - 2",
+            "props": [
+              {
+                "name": "label",
+                "value": "ART72.2"
+              },
+              {
+                "name": "sort-id",
+                "value": "art72-2"
+              }
+            ],
+            "parts": [
+              {
+                "id": "art72-2_smt",
+                "name": "statement",
+                "prose": "ART72.2: Post-Market Monitoring control requirement."
+              },
+              {
+                "id": "art72-2-1",
+                "name": "assessment-objective",
+                "prose": "Verify eu_ai_72_2_monitoring_plan evidence.",
+                "props": [
+                  {
+                    "name": "evidence-type",
+                    "value": "confluence_pages"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

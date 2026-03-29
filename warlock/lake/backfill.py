@@ -48,8 +48,29 @@ class BackfillStats:
         )
 
 
+def _purge_lake_zone(lake_path: str, zone: str) -> int:
+    """Remove all Parquet files from a lake zone directory.
+
+    Returns the number of files removed. Used to make backfill idempotent
+    by clearing stale data before writing fresh rows.
+    """
+    from pathlib import Path
+
+    zone_dir = Path(lake_path) / zone
+    if not zone_dir.exists():
+        return 0
+    removed = 0
+    for pf in zone_dir.rglob("*.parquet"):
+        pf.unlink()
+        removed += 1
+    return removed
+
+
 def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillStats:
     """Backfill all OLTP pipeline data to lake.
+
+    Idempotent: purges existing Parquet files in each zone before writing,
+    so running backfill twice produces the same result (no duplicates).
 
     Reads tables in batches and writes to the appropriate lake zones.
     Returns BackfillStats with counts per table.
@@ -83,6 +104,12 @@ def backfill(session: Any, lake_path: str, batch_size: int = 10000) -> BackfillS
     start = time.monotonic()
     stats = BackfillStats()
     run_id = "backfill"
+
+    # Purge existing lake data to ensure idempotency (no duplicate rows).
+    for zone in ("raw", "enrichment", "curated"):
+        removed = _purge_lake_zone(lake_path, zone)
+        if removed:
+            log.info("Purged %d existing Parquet files from %s zone", removed, zone)
 
     # --- Raw events ---
     try:

@@ -186,9 +186,11 @@ def _interactive_findings_loop(rows: list) -> None:
 @click.option("--source-type", "-t", default=None, help="Filter by source type")
 @click.option("--observation-type", "-o", default=None, help="Filter by observation type")
 @click.option("--framework", "-f", default=None, help="Filter by mapped framework")
+@click.option("--system", default=None, help="Filter by system profile ID or acronym")
 @click.option("--suppressed/--no-suppressed", default=False, help="Include suppressed findings")
 @click.option("--limit", "-n", default=50, help="Max results")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default=None)
+@click.option("--export", "export_path", default=None, help="Export to file (json/csv)")
 @click.option(
     "--interactive",
     "-i",
@@ -196,15 +198,19 @@ def _interactive_findings_loop(rows: list) -> None:
     default=False,
     help="Interactive mode: browse and act on findings",
 )
+@click.pass_context
 def findings_list(
+    ctx: click.Context,
     severity: str | None,
     source: str | None,
     source_type: str | None,
     observation_type: str | None,
     framework: str | None,
+    system: str | None,
     suppressed: bool,
     limit: int,
-    fmt: str,
+    fmt: str | None,
+    export_path: str | None,
     interactive: bool,
 ) -> None:
     """List normalized findings."""
@@ -249,6 +255,11 @@ def findings_list(
                 q = q.filter(Finding.source_type == source_type)
             if observation_type:
                 q = q.filter(Finding.observation_type == observation_type)
+            if system:
+                from warlock.cli import _resolve_system_id
+
+                sid = _resolve_system_id(session, system)
+                q = q.filter(Finding.system_profile_id == sid)
             q = q.order_by(Finding.observed_at.desc()).limit(limit)
             rows = q.all()
 
@@ -262,54 +273,53 @@ def findings_list(
             return row.get(key, default)
         return getattr(row, key, default)
 
-    if fmt == "json":
-        data = [
-            {
-                "id": _g(r, "id", ""),
-                "title": _g(r, "title", ""),
-                "severity": _g(r, "severity", ""),
-                "observation_type": _g(r, "observation_type", ""),
-                "source": _g(r, "source", ""),
-                "source_type": _g(r, "source_type", ""),
-                "provider": _g(r, "provider", ""),
-                "resource_id": _g(r, "resource_id", ""),
-                "observed_at": str(_g(r, "observed_at", "")),
-            }
-            for r in rows
-        ]
-        console.print(json.dumps(data, indent=2))
-        return
+    # Resolve effective format (local --format > global --output-format > table)
+    from warlock.cli.output import format_output, get_output_format
+
+    effective_fmt = get_output_format(ctx, fmt)
+
+    # Build uniform data dicts for all format paths
+    data = [
+        {
+            "id": str(_g(r, "id", ""))[:8],
+            "title": (_g(r, "title", "") or "")[:50],
+            "severity": _g(r, "severity", ""),
+            "observation_type": _g(r, "observation_type", ""),
+            "source": _g(r, "source", ""),
+            "provider": _g(r, "provider", ""),
+            "resource_id": _g(r, "resource_id", ""),
+            "observed_at": str(_g(r, "observed_at", ""))[:19] if _g(r, "observed_at") else "",
+        }
+        for r in rows
+    ]
+
+    _COLUMNS = [
+        {"key": "id", "header": "ID", "style": "dim", "max_width": "8"},
+        {"key": "severity", "header": "Severity"},
+        {"key": "observation_type", "header": "Type"},
+        {"key": "title", "header": "Title", "max_width": "50"},
+        {"key": "source", "header": "Source"},
+        {"key": "provider", "header": "Provider"},
+        {"key": "observed_at", "header": "Observed At"},
+    ]
 
     tag = " [lake]" if _lake_mode else ""
-    table = Table(title=f"Findings ({len(rows)}){tag}")
-    table.add_column("#", style="dim", justify="right")
-    table.add_column("ID", style="dim", max_width=8)
-    table.add_column("Severity")
-    table.add_column("Type")
-    table.add_column("Title", max_width=50)
-    table.add_column("Source")
-    table.add_column("Observed At")
-
-    for idx, r in enumerate(rows, 1):
-        sev = _g(r, "severity", "")
-        sty = _severity_style(sev)
-        rid = str(_g(r, "id", ""))[:8]
-        title = _g(r, "title", "") or ""
-        obs_type = _g(r, "observation_type", "")
-        src = _g(r, "source", "")
-        prov = _g(r, "provider", "")
-        obs_at = _g(r, "observed_at", "")
-        table.add_row(
-            str(idx) if interactive else "",
-            rid,
-            f"[{sty}]{sev}[/{sty}]" if sty else sev,
-            obs_type,
-            escape(title[:50]),
-            f"{src}/{prov}",
-            str(obs_at)[:19] if obs_at else "\u2014",
-        )
-
-    console.print(table)
+    format_output(
+        data,
+        _COLUMNS,
+        fmt=effective_fmt,
+        title=f"Findings ({len(rows)}){tag}",
+        style_map={
+            "severity": {
+                "critical": "red bold",
+                "high": "red",
+                "medium": "yellow",
+                "low": "dim",
+                "info": "dim",
+            },
+        },
+        export_path=export_path,
+    )
 
     if interactive:
         _interactive_findings_loop(rows)

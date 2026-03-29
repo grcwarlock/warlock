@@ -290,3 +290,64 @@ async def jira_webhook(
         updated=result.get("updated", False),
         details=result.get("details", ""),
     )
+
+
+# ------------------------------------------------------------------
+# Webhook event catalog — Item 117
+# ------------------------------------------------------------------
+
+_WEBHOOK_EVENT_CATALOG = [
+    {
+        "event_type": "control_status_change",
+        "description": "Fired when a control result status changes (e.g., compliant -> non_compliant)",
+        "payload_fields": ["control_id", "framework", "old_status", "new_status", "timestamp"],
+    },
+    {
+        "event_type": "alert_triggered",
+        "description": "Fired when a new alert is triggered by the rule engine",
+        "payload_fields": ["alert_id", "severity", "rule_name", "message", "timestamp"],
+    },
+    {
+        "event_type": "poam_overdue",
+        "description": "Fired when a POA&M passes its scheduled completion date",
+        "payload_fields": ["poam_id", "framework", "control_id", "due_date", "timestamp"],
+    },
+    {
+        "event_type": "poam_transition",
+        "description": "Fired when a POA&M status changes",
+        "payload_fields": ["poam_id", "old_status", "new_status", "actor", "timestamp"],
+    },
+    {
+        "event_type": "pipeline_completed",
+        "description": "Fired when a full pipeline run completes",
+        "payload_fields": [
+            "run_id",
+            "connectors_ok",
+            "connectors_failed",
+            "findings_normalized",
+            "controls_mapped",
+            "duration_seconds",
+        ],
+    },
+    {
+        "event_type": "finding_created",
+        "description": "Fired when new findings are normalized from raw events",
+        "payload_fields": ["finding_id", "severity", "source", "title", "timestamp"],
+    },
+    {
+        "event_type": "compliance_drift",
+        "description": "Fired when compliance posture drifts beyond threshold",
+        "payload_fields": ["framework", "control_id", "previous_score", "current_score", "delta"],
+    },
+    {
+        "event_type": "evidence_expired",
+        "description": "Fired when evidence freshness exceeds its validity window",
+        "payload_fields": ["evidence_id", "framework", "control_id", "age_days"],
+    },
+]
+
+
+@router.get("/webhooks/events")
+def webhook_event_catalog() -> list[dict]:
+    """List all available webhook event types and their payload schemas."""
+    return _WEBHOOK_EVENT_CATALOG

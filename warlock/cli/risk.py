@@ -15,6 +15,7 @@ def risk(ctx: click.Context) -> None:
     """Monte Carlo risk quantification and cache management."""
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
+        console.print("\n[dim]Quick start: warlock risk analyze -f <framework>[/dim]")
 
 
 @risk.command("analyze")
@@ -29,10 +30,30 @@ def risk_analyze(framework: str, iterations: int, use_ai: bool | None) -> None:
     init_db()
     engine = RiskEngine(default_iterations=iterations)
 
-    console.print("[dim]Running Monte Carlo simulation...[/dim]")
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
-    with get_session() as session:
-        result = engine.analyze_framework_risk(session, framework, iterations=iterations)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[bold cyan]{task.description}"),
+        BarColumn(bar_width=30),
+        TaskProgressColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"Monte Carlo ({iterations:,} iterations)", total=4)
+
+        progress.update(task, advance=1, description="Loading posture data...")
+
+        with get_session() as session:
+            progress.update(task, advance=1, description="Running Monte Carlo simulation...")
+            result = engine.analyze_framework_risk(
+                session,
+                framework,
+                iterations=iterations,
+            )
+            progress.update(task, advance=1, description="Aggregating risk scenarios...")
+
+        progress.update(task, advance=1, description="Risk analysis complete")
 
     scenarios = result.get("scenarios", [])
     portfolio = result.get("portfolio", {})
@@ -212,19 +233,24 @@ def risk_invalidate(framework: str | None) -> None:
     console.print(f"[green]Invalidated {result['deleted']} cached entries for {scope}.[/green]")
 
 
-@cli.command()
+@cli.group("vendors", invoke_without_command=True)
 @click.option("-p", "--provider", default="securityscorecard", help="Vendor data provider")
 @click.option("-t", "--threshold", default=60.0, help="High-risk threshold (0-100)")
-def vendors(provider: str, threshold: float) -> None:
+@click.pass_context
+def vendors(ctx: click.Context, provider: str, threshold: float) -> None:
     """Score and monitor vendor risk."""
+    if ctx.invoked_subcommand is not None:
+        return
     from warlock.assessors.vendor_risk import VendorRiskEngine
-    from warlock.db.engine import get_session, init_db
+    from warlock.db.engine import get_read_session, init_db
 
     init_db()
     engine = VendorRiskEngine()
 
-    with get_session() as session:
-        scores = engine.monitor_all(session, provider=provider, high_risk_threshold=threshold)
+    # Read-only: score vendors without creating findings (no DB writes)
+    with get_read_session() as session:
+        vendor_list = engine.from_findings(session, provider=provider)
+        scores = [engine.score_vendor(v) for v in vendor_list]
 
     if not scores:
         console.print(f"[dim]No vendor data from provider '{provider}'.[/dim]")
@@ -245,10 +271,13 @@ def vendors(provider: str, threshold: float) -> None:
             "medium": "yellow",
             "low": "green",
         }.get(s.risk_level, "")
+        level_text = (
+            f"[{level_style}]{s.risk_level}[/{level_style}]" if level_style else s.risk_level
+        )
         table.add_row(
             s.vendor_name,
             f"{s.overall_score:.0f}",
-            f"[{level_style}]{s.risk_level}[/]",
+            level_text,
             str(s.issues_count),
             f"{s.security_posture_score:.0f}/25",
             f"{s.assessment_currency_score:.0f}/20",
@@ -262,6 +291,15 @@ def vendors(provider: str, threshold: float) -> None:
         for s in high_risk:
             for rec in s.recommendations:
                 console.print(f"  [dim]\u2022 {rec}[/dim]")
+
+
+@vendors.command("list")
+@click.option("-p", "--provider", default="securityscorecard", help="Vendor data provider")
+@click.option("-t", "--threshold", default=60.0, help="High-risk threshold (0-100)")
+@click.pass_context
+def vendors_list(ctx: click.Context, provider: str, threshold: float) -> None:
+    """List and score all vendors (alias for 'warlock vendors')."""
+    ctx.invoke(vendors, provider=provider, threshold=threshold)
 
 
 @cli.command("policy-coverage")

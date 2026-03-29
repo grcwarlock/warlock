@@ -14,6 +14,8 @@ from warlock.normalizers.base import FindingData, NormalizerRegistry
 from warlock.mappers.control_mapper import ControlMapper
 from warlock.assessors.engine import Assessor, ControlResultData
 from warlock.pipeline.bus import EventBus, PipelineEvent
+from warlock.pipeline.data_quality import DataQualityChecker
+from warlock.pipeline.lineage import LineageRecorder
 from warlock.pipeline.schema_registry import SchemaRegistry
 from warlock.db import models
 
@@ -107,6 +109,8 @@ class Pipeline:
         self.bus = bus
         self.opa_evaluator = opa_evaluator
         self.schema_registry = schema_registry
+        self.lineage: LineageRecorder | None = None
+        self.dq_checker: DataQualityChecker | None = None
 
     def run(self, session: Session) -> PipelineRunStats:
         """Execute the full pipeline. One pass, all connectors.
@@ -146,6 +150,10 @@ class Pipeline:
 
         log.info("Pipeline run starting (run_id=%s)", stats.run_id)
 
+        # Initialize lineage recorder and data quality checker for this run
+        self.lineage = LineageRecorder(run_id=stats.run_id)
+        self.dq_checker = DataQualityChecker()
+
         # Accumulate already-normalized findings so Stage 5 (OPA) can reuse them
         # directly instead of re-normalizing the same raw events a second time.
         all_normalized_findings: list[FindingData] = []
@@ -177,6 +185,15 @@ class Pipeline:
                     raw_event_id = db_raw.id  # capture before potential expunge
                     commit_status.raw_events += 1
                     stats.raw_events_collected += 1
+                    # Lineage: connector_run -> raw_event
+                    if self.lineage:
+                        self.lineage.record(
+                            "connector_run",
+                            connector_run_id,
+                            "raw_event",
+                            raw_event_id,
+                            stage="collect",
+                        )
                     self.bus.publish(
                         PipelineEvent(
                             event_type="raw_event.created",
@@ -198,6 +215,10 @@ class Pipeline:
                                 "; ".join(schema_errors),
                             )
 
+                    # Data quality check on raw event
+                    if self.dq_checker:
+                        self.dq_checker.check_raw_event(raw_event)
+
                     # Stage 2: Normalize
                     try:
                         findings = self.normalizers.normalize(raw_event)
@@ -211,11 +232,23 @@ class Pipeline:
                     # Accumulate for OPA stage (avoids re-normalization later)
                     all_normalized_findings.extend(findings)
                     for finding in findings:
+                        # Data quality check on finding
+                        if self.dq_checker:
+                            self.dq_checker.check_finding(finding)
                         finding.raw_event_id = raw_event_id
                         db_finding = self._persist_finding(session, finding)
                         finding_id = db_finding.id  # capture before potential expunge
                         commit_status.findings += 1
                         stats.findings_normalized += 1
+                        # Lineage: raw_event -> finding
+                        if self.lineage:
+                            self.lineage.record(
+                                "raw_event",
+                                raw_event_id,
+                                "finding",
+                                finding_id,
+                                stage="normalize",
+                            )
                         self.bus.publish(
                             PipelineEvent(
                                 event_type="finding.normalized",
@@ -249,10 +282,22 @@ class Pipeline:
                         # Stage 4: Assess
                         results = self.assessor.assess(mapped, raw_data=raw_event.raw_data)
                         for result in results:
+                            # Data quality check on control result
+                            if self.dq_checker:
+                                self.dq_checker.check_control_result(result)
                             db_result = self._persist_result(session, result)
                             result_id = db_result.id  # capture before potential expunge
                             commit_status.results += 1
                             stats.results_assessed += 1
+                            # Lineage: finding -> control_result
+                            if self.lineage:
+                                self.lineage.record(
+                                    "finding",
+                                    finding_id,
+                                    "control_result",
+                                    result_id,
+                                    stage="assess",
+                                )
                             self.bus.publish(
                                 PipelineEvent(
                                     event_type="control.assessed",
@@ -438,6 +483,20 @@ class Pipeline:
             get_query_cache().invalidate_tag("dashboard")
         except Exception:
             log.debug("Query cache invalidation skipped", exc_info=True)
+
+        # Log data quality summary
+        if self.dq_checker and self.dq_checker.issues:
+            dq_report = self.dq_checker.report()
+            log.info(
+                "Data quality: %d issues (%d errors, %d warnings)",
+                dq_report["total_issues"],
+                dq_report["errors"],
+                dq_report["warnings"],
+            )
+
+        # Log lineage summary
+        if self.lineage and self.lineage.edge_count:
+            log.info("Lineage: %d edges recorded", self.lineage.edge_count)
 
         stats.completed_at = datetime.now(timezone.utc)
         log.info(

@@ -36,10 +36,19 @@ WARLOCK_NS = UUID("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
 
 _FRAMEWORK_PROFILE_URIS: dict[str, str] = {
     "nist_800_53": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
-    "soc2": "#soc2-profile",
-    "iso_27001": "#iso-27001-profile",
-    "cis": "#cis-profile",
-    "pci_dss": "#pci-dss-profile",
+    "soc2": "./frameworks-oscal/soc2-oscal/profile.json",
+    "iso_27001": "./frameworks-oscal/iso-27001-oscal/profile.json",
+    "iso_27701": "./frameworks-oscal/iso-27701-oscal/profile.json",
+    "iso_42001": "./frameworks-oscal/iso-42001-oscal/profile.json",
+    "pci_dss": "./frameworks-oscal/pci-dss-oscal/profile.json",
+    "hipaa": "./frameworks-oscal/hipaa-oscal/profile.json",
+    "cmmc": "./frameworks-oscal/cmmc-oscal/profile.json",
+    "gdpr": "./frameworks-oscal/gdpr-oscal/profile.json",
+    "fedramp": "./frameworks-oscal/fedramp-oscal/profile.json",
+    "ucf": "./frameworks-oscal/unified-controls-framework/profile.json",
+    "nist_csf": "./frameworks-oscal/nist-csf-oscal/profile.json",
+    "eu_ai_act": "./frameworks-oscal/eu-ai-act-oscal/profile.json",
+    "sec_cyber": "./frameworks-oscal/sec-cyber-oscal/profile.json",
 }
 
 # Local OSCAL catalog paths (relative to project root).
@@ -51,6 +60,14 @@ _LOCAL_CATALOG_PATHS: dict[str, str] = {
     "iso_42001": "frameworks-oscal/iso-42001-oscal/catalog/catalog.json",
     "iso_27701": "frameworks-oscal/iso-27701-oscal/catalog/catalog.json",
     "ucf": "frameworks-oscal/unified-controls-framework/catalog/ucf-catalog.json",
+    "hipaa": "frameworks-oscal/hipaa-oscal/catalog/catalog.json",
+    "pci_dss": "frameworks-oscal/pci-dss-oscal/catalog/catalog.json",
+    "cmmc": "frameworks-oscal/cmmc-oscal/catalog/catalog.json",
+    "gdpr": "frameworks-oscal/gdpr-oscal/catalog/catalog.json",
+    "fedramp": "frameworks-oscal/fedramp-oscal/catalog/catalog.json",
+    "nist_csf": "frameworks-oscal/nist-csf-oscal/catalog/catalog.json",
+    "eu_ai_act": "frameworks-oscal/eu-ai-act-oscal/catalog/catalog.json",
+    "sec_cyber": "frameworks-oscal/sec-cyber-oscal/catalog/catalog.json",
 }
 
 
@@ -619,9 +636,19 @@ class OscalExporter:
                 req["statements"] = statements
             implemented_requirements.append(req)
 
-        profile_href = _load_local_catalog(framework) or _FRAMEWORK_PROFILE_URIS.get(
-            framework, f"#{framework}-profile"
+        profile_href = _FRAMEWORK_PROFILE_URIS.get(framework, f"#{framework}-profile")
+        # Prefer a local catalog UUID if available (resolvable internal ref)
+        local_ref = _load_local_catalog(framework)
+        if local_ref:
+            profile_href = local_ref
+
+        # Derive earliest assessment date for date-authorized
+        assessed_dates = [cr.assessed_at for cr in cr_rows if cr.assessed_at]
+        date_authorized = (
+            _iso(min(assessed_dates)) if assessed_dates else datetime.now(timezone.utc).isoformat()
         )
+
+        warlock_party_uuid = str(uuid5(WARLOCK_NS, "warlock-grc"))
 
         return {
             "system-security-plan": {
@@ -638,6 +665,13 @@ class OscalExporter:
                     ],
                     "description": description,
                     "security-sensitivity-level": "moderate",
+                    "security-impact-level": {
+                        "security-objective-confidentiality": "moderate",
+                        "security-objective-integrity": "moderate",
+                        "security-objective-availability": "moderate",
+                    },
+                    "status": {"state": "operational"},
+                    "date-authorized": date_authorized,
                     "system-information": {
                         "information-types": [
                             {
@@ -657,7 +691,9 @@ class OscalExporter:
                         ]
                     },
                     "authorization-boundary": {
-                        "description": f"Authorization boundary for {system_name} as assessed by Warlock GRC."
+                        "description": (
+                            f"Authorization boundary for {system_name} as assessed by Warlock GRC."
+                        )
                     },
                 },
                 "system-implementation": {
@@ -682,9 +718,22 @@ class OscalExporter:
                     "inventory-items": inventory_items,
                 },
                 "control-implementation": {
-                    "description": f"Control implementation for {framework} as assessed by Warlock GRC pipeline.",
+                    "description": (
+                        f"Control implementation for {framework} "
+                        "as assessed by Warlock GRC pipeline."
+                    ),
                     "implemented-requirements": implemented_requirements,
                 },
+                "responsible-parties": [
+                    {
+                        "role-id": "assessor",
+                        "party-uuids": [warlock_party_uuid],
+                    },
+                    {
+                        "role-id": "tool",
+                        "party-uuids": [warlock_party_uuid],
+                    },
+                ],
             }
         }
 

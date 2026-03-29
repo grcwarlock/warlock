@@ -20,7 +20,7 @@ from warlock.cli import (
 )
 
 
-@cli.command("issues")
+@cli.group("issues", invoke_without_command=True)
 @click.option(
     "--status", "-s", default=None, help="Filter by status (open, assigned, in_progress, etc.)"
 )
@@ -28,22 +28,32 @@ from warlock.cli import (
     "--priority", "-p", default=None, help="Filter by priority (critical, high, medium, low)"
 )
 @click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--system", default=None, help="Filter by system profile ID or acronym")
 @click.option("--assigned-to", default=None, help="Filter by assignee")
 @click.option("--limit", "-n", default=50, help="Max results")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default=None)
+@click.option("--export", "export_path", default=None, help="Export to file (json/csv)")
 @click.option(
     "--ask",
     default=None,
     help="Ask AI a question about the listed issues (e.g. 'What should I fix first?')",
 )
+@click.pass_context
 def issues(
+    ctx: click.Context,
     status: str | None,
     priority: str | None,
     framework: str | None,
+    system: str | None,
     assigned_to: str | None,
     limit: int,
+    fmt: str | None,
+    export_path: str | None,
     ask: str | None,
 ) -> None:
     """List and manage compliance issues."""
+    if ctx.invoked_subcommand is not None:
+        return
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Issue
 
@@ -60,6 +70,23 @@ def issues(
             q = q.filter(Issue.priority == priority)
         if framework:
             q = q.filter(Issue.framework == framework)
+        if system:
+            from warlock.db.models import SystemProfile
+
+            sp = (
+                session.query(SystemProfile)
+                .filter(
+                    (SystemProfile.name.ilike(f"%{system}%"))
+                    | (SystemProfile.id.like(f"{system}%"))
+                    | (SystemProfile.acronym.ilike(system))
+                )
+                .first()
+            )
+            if sp and sp.frameworks:
+                q = q.filter(Issue.framework.in_(sp.frameworks))
+            else:
+                console.print(f"[red]System '{system}' not found or has no frameworks.[/red]")
+                return
         if assigned_to:
             q = q.filter(Issue.assigned_to == assigned_to)
         q = q.order_by(Issue.created_at.desc()).limit(limit)
@@ -69,42 +96,55 @@ def issues(
         console.print("[dim]No issues found.[/dim]")
         return
 
-    table = Table(title=f"Issues ({len(rows)})")
-    table.add_column("ID", style="dim", max_width=8)
-    table.add_column("Framework", style="cyan")
-    table.add_column("Control", style="cyan")
-    table.add_column("Title", max_width=50)
-    table.add_column("Status")
-    table.add_column("Priority")
-    table.add_column("Assigned To", style="dim")
+    from warlock.cli.output import format_output, get_output_format
 
-    for i in rows:
-        status_style = {
-            "open": "yellow",
-            "assigned": "blue",
-            "in_progress": "cyan",
-            "remediated": "green",
-            "verified": "green bold",
-            "closed": "dim",
-            "risk_accepted": "magenta",
-        }.get(i.status, "")
-        priority_style = {
-            "critical": "red bold",
-            "high": "red",
-            "medium": "yellow",
-            "low": "dim",
-        }.get(i.priority, "")
-        table.add_row(
-            i.id[:8],
-            i.framework or "",
-            i.control_id or "",
-            escape(i.title[:50]),
-            f"[{status_style}]{i.status}[/]",
-            f"[{priority_style}]{i.priority}[/]",
-            i.assigned_to or "",
-        )
+    data = [
+        {
+            "id": i.id[:8],
+            "framework": i.framework or "",
+            "control_id": i.control_id or "",
+            "title": (i.title or "")[:50],
+            "status": i.status or "",
+            "priority": i.priority or "",
+            "assigned_to": i.assigned_to or "",
+        }
+        for i in rows
+    ]
 
-    console.print(table)
+    _COLUMNS = [
+        {"key": "id", "header": "ID", "style": "dim", "max_width": "8"},
+        {"key": "framework", "header": "Framework", "style": "cyan"},
+        {"key": "control_id", "header": "Control", "style": "cyan"},
+        {"key": "title", "header": "Title", "max_width": "50"},
+        {"key": "status", "header": "Status"},
+        {"key": "priority", "header": "Priority"},
+        {"key": "assigned_to", "header": "Assigned To", "style": "dim"},
+    ]
+
+    format_output(
+        data,
+        _COLUMNS,
+        fmt=get_output_format(ctx, fmt),
+        title=f"Issues ({len(rows)})",
+        style_map={
+            "status": {
+                "open": "yellow",
+                "assigned": "blue",
+                "in_progress": "cyan",
+                "remediated": "green",
+                "verified": "green bold",
+                "closed": "dim",
+                "risk_accepted": "magenta",
+            },
+            "priority": {
+                "critical": "red bold",
+                "high": "red",
+                "medium": "yellow",
+                "low": "dim",
+            },
+        },
+        export_path=export_path,
+    )
 
     # --ask: AI question about the listed issues (or REPL if empty)
     if ask is not None:
@@ -150,6 +190,39 @@ def issues(
             _ai_repl(svc, session_id, ctx, f"issues ({len(rows)} items)")
 
 
+@issues.command("list")
+@click.option(
+    "--status", "-s", default=None, help="Filter by status (open, assigned, in_progress, etc.)"
+)
+@click.option(
+    "--priority", "-p", default=None, help="Filter by priority (critical, high, medium, low)"
+)
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--assigned-to", default=None, help="Filter by assignee")
+@click.option("--limit", "-n", default=50, help="Max results")
+def issues_list_cmd(
+    status: str | None,
+    priority: str | None,
+    framework: str | None,
+    assigned_to: str | None,
+    limit: int,
+) -> None:
+    """List compliance issues (alias for 'warlock issues')."""
+    # Delegate to the group's default behaviour
+    ctx = click.get_current_context()
+    ctx.invoke(
+        issues,
+        status=status,
+        priority=priority,
+        framework=framework,
+        assigned_to=assigned_to,
+        limit=limit,
+        fmt=None,
+        export_path=None,
+        ask=None,
+    )
+
+
 @cli.command("issues-auto-create")
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
 @click.option(
@@ -187,10 +260,23 @@ def issues_auto_create(framework: str | None, actor: str | None) -> None:
 
 @cli.command("poams")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
+@click.option("--system", default=None, help="Filter by system profile ID or acronym")
 @click.option("--status", "-s", default=None, help="Filter by status")
 @click.option("--overdue", is_flag=True, help="Show only overdue POA&Ms")
 @click.option("--limit", "-n", default=50, help="Max results")
-def poams_list(framework: str | None, status: str | None, overdue: bool, limit: int) -> None:
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default=None)
+@click.option("--export", "export_path", default=None, help="Export to file (json/csv)")
+@click.pass_context
+def poams_list(
+    ctx: click.Context,
+    framework: str | None,
+    system: str | None,
+    status: str | None,
+    overdue: bool,
+    limit: int,
+    fmt: str | None,
+    export_path: str | None,
+) -> None:
     """List Plans of Action & Milestones."""
     from warlock.db.engine import get_session, init_db
     from warlock.workflows.poam import POAMManager
@@ -204,40 +290,62 @@ def poams_list(framework: str | None, status: str | None, overdue: bool, limit: 
         else:
             rows = mgr.list_poams(session, framework=framework, status=status)
 
+        # Filter by system profile if provided
+        if system:
+            sid = _resolve_system_id(session, system)
+            rows = [r for r in rows if r.system_profile_id == sid]
+
     rows = rows[:limit]
     if not rows:
         console.print("[dim]No POA&Ms found.[/dim]")
         return
 
-    table = Table(title="Plans of Action & Milestones")
-    table.add_column("ID", max_width=8)
-    table.add_column("Framework")
-    table.add_column("Control")
-    table.add_column("Severity")
-    table.add_column("Status")
-    table.add_column("Due Date")
-    table.add_column("Delays", justify="right")
-    table.add_column("Weakness", max_width=40)
+    from warlock.cli.output import format_output, get_output_format
 
-    for p in rows:
-        due = p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else "\u2014"
-        status_style = (
-            "red"
-            if p.status in ("draft", "open")
-            else ("yellow" if p.status == "in_progress" else "green")
-        )
-        table.add_row(
-            p.id[:8],
-            p.framework,
-            p.control_id,
-            p.severity,
-            f"[{status_style}]{p.status}[/{status_style}]",
-            due,
-            str(p.delay_count or 0),
-            escape((p.weakness_description or "")[:40]),
-        )
+    data = [
+        {
+            "id": p.id[:8],
+            "framework": p.framework or "",
+            "control_id": p.control_id or "",
+            "severity": p.severity or "",
+            "status": p.status or "",
+            "due_date": (
+                p.scheduled_completion.strftime("%Y-%m-%d") if p.scheduled_completion else ""
+            ),
+            "delays": str(p.delay_count or 0),
+            "weakness": (p.weakness_description or "")[:40],
+        }
+        for p in rows
+    ]
 
-    console.print(table)
+    _COLUMNS = [
+        {"key": "id", "header": "ID", "max_width": "8"},
+        {"key": "framework", "header": "Framework"},
+        {"key": "control_id", "header": "Control"},
+        {"key": "severity", "header": "Severity"},
+        {"key": "status", "header": "Status"},
+        {"key": "due_date", "header": "Due Date"},
+        {"key": "delays", "header": "Delays", "justify": "right"},
+        {"key": "weakness", "header": "Weakness", "max_width": "40"},
+    ]
+
+    format_output(
+        data,
+        _COLUMNS,
+        fmt=get_output_format(ctx, fmt),
+        title="Plans of Action & Milestones",
+        style_map={
+            "status": {
+                "draft": "red",
+                "open": "red",
+                "in_progress": "yellow",
+                "remediated": "green",
+                "verified": "green",
+                "completed": "green",
+            },
+        },
+        export_path=export_path,
+    )
 
 
 @cli.command("compensating-controls")
@@ -826,14 +934,39 @@ def _show_remediation_for_poam(session, poam) -> None:
 
 
 @cli.command("inheritance")
-@click.option("--system", required=True, help="System profile ID or acronym")
+@click.option("--system", required=False, default=None, help="System profile ID or acronym")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-def inheritance_list(system: str, framework: str | None) -> None:
-    """Show control inheritance map for a system."""
+def inheritance_list(system: str | None, framework: str | None) -> None:
+    """Show control inheritance map for a system.
+
+    When --system is omitted, lists available system profiles so you can
+    pick one.
+    """
     from warlock.db.engine import get_session, init_db
+    from warlock.db.models import SystemProfile
     from warlock.workflows.inheritance import InheritanceManager
 
     init_db()
+
+    if not system:
+        # List available systems so the user knows what IDs to use
+        with get_session() as session:
+            profiles = (
+                session.query(SystemProfile)
+                .filter(SystemProfile.is_active == True)  # noqa: E712
+                .order_by(SystemProfile.name)
+                .all()
+            )
+        if not profiles:
+            console.print("[dim]No system profiles found. Run the pipeline first.[/dim]")
+            return
+        console.print("[bold]Available systems:[/bold]")
+        for sp in profiles:
+            acr = f" ({escape(sp.acronym)})" if sp.acronym else ""
+            console.print(f"  [cyan]{sp.id[:8]}[/cyan] {escape(sp.name or '')}{acr}")
+        console.print("\n[dim]Use: warlock inheritance --system <id-or-acronym>[/dim]")
+        return
+
     mgr = InheritanceManager()
 
     with get_session() as session:

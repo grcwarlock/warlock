@@ -233,3 +233,133 @@ def policy_history(policy_type, limit):
             row["timestamp"], row["action"], row["policy_type"], row["actor"], row["new_rules"]
         )
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# Policy Templates (P1 Item 43)
+# ---------------------------------------------------------------------------
+
+
+@policy.group("templates", invoke_without_command=True)
+@click.pass_context
+def templates(ctx: click.Context) -> None:
+    """Built-in policy template library."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@templates.command("list")
+@click.option("--category", "-c", default=None, help="Filter by category")
+@click.option("--framework", "-f", default=None, help="Filter by framework")
+def templates_list(category: str | None, framework: str | None) -> None:
+    """List available policy templates."""
+    from warlock.workflows.policy_templates import PolicyTemplateLibrary
+
+    lib = PolicyTemplateLibrary()
+    results = lib.list_templates(category=category, framework=framework)
+
+    if not results:
+        console.print("[dim]No templates matching filters.[/dim]")
+        return
+
+    table = Table(title="Policy Templates")
+    table.add_column("Slug", style="cyan")
+    table.add_column("Title")
+    table.add_column("Category")
+    table.add_column("Frameworks")
+
+    for t in results:
+        table.add_row(
+            t.slug,
+            escape(t.title),
+            escape(t.category),
+            ", ".join(t.frameworks[:4]) + ("..." if len(t.frameworks) > 4 else ""),
+        )
+    console.print(table)
+    console.print(
+        f"\n[dim]{len(results)} template(s). Use 'policy templates show <slug>' for details.[/dim]"
+    )
+
+
+@templates.command("show")
+@click.argument("slug")
+def templates_show(slug: str) -> None:
+    """Show a policy template with content outline."""
+    from rich.panel import Panel
+
+    from warlock.workflows.policy_templates import PolicyTemplateLibrary
+
+    lib = PolicyTemplateLibrary()
+    t = lib.get_template(slug)
+
+    if not t:
+        from warlock.cli import _error
+
+        _error(f"Template '{slug}' not found. Use 'policy templates list' to see available.")
+
+    content_lines = [
+        f"[bold]{t.title}[/bold]",
+        f"Category: {t.category}",
+        f"Frameworks: {', '.join(t.frameworks)}",
+        "",
+        f"[dim]{t.description}[/dim]",
+        "",
+        "[bold]Content Outline:[/bold]",
+    ]
+    for item in t.outline:
+        content_lines.append(f"  {item}")
+
+    console.print(Panel("\n".join(content_lines), title=escape(t.title), border_style="cyan"))
+
+
+@policy.command("acknowledge")
+@click.argument("policy_name")
+@click.option("--user", "-u", required=True, help="User email acknowledging the policy")
+@click.option("--notes", "-n", default="", help="Acknowledgment notes")
+def policy_acknowledge(policy_name: str, user: str, notes: str) -> None:
+    """Record a user's acknowledgment of a policy."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.policy_templates import PolicyTemplateLibrary
+
+    init_db()
+    with get_session() as session:
+        lib = PolicyTemplateLibrary(session)
+        ack = lib.acknowledge(policy_name=policy_name, user_email=user, notes=notes)
+
+    console.print("[green]Acknowledgment recorded:[/green]")
+    console.print(f"  Policy: {escape(ack.policy_name)}")
+    console.print(f"  User:   {escape(ack.user_email)}")
+    console.print(f"  At:     {ack.acknowledged_at.strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+@policy.command("acknowledgments")
+@click.option("--policy-name", "-p", default=None, help="Filter by policy name")
+@click.option("--user", "-u", default=None, help="Filter by user email")
+def policy_acknowledgments(policy_name: str | None, user: str | None) -> None:
+    """List policy acknowledgments."""
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.workflows.policy_templates import PolicyTemplateLibrary
+
+    init_db()
+    with get_read_session() as session:
+        lib = PolicyTemplateLibrary(session)
+        acks = lib.list_acknowledgments(policy_name=policy_name, user_email=user)
+
+    if not acks:
+        console.print("[dim]No acknowledgments found.[/dim]")
+        return
+
+    table = Table(title="Policy Acknowledgments")
+    table.add_column("Policy", style="cyan")
+    table.add_column("User")
+    table.add_column("Acknowledged At")
+    table.add_column("Notes")
+
+    for a in acks:
+        table.add_row(
+            escape(a.policy_name),
+            escape(a.user_email),
+            a.acknowledged_at.strftime("%Y-%m-%d %H:%M"),
+            escape(a.notes[:40] if a.notes else ""),
+        )
+    console.print(table)

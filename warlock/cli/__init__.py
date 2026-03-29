@@ -29,15 +29,23 @@ def _check_ai_available(use_ai: bool | None) -> bool:
     """Check if AI is available when --ai was requested. Returns True if AI should be attempted."""
     if use_ai is False:
         return False
-    if use_ai is True:
-        from warlock.ai.service import get_ai_service
+    if use_ai is None:
+        # When not explicitly requested, check the master toggle first
+        from warlock.config import get_settings
 
-        svc = get_ai_service()
-        if not svc.is_available():
-            console.print(
-                "[dim](AI requested but not configured -- run 'warlock ai configure' to enable)[/dim]"
-            )
+        if not get_settings().ai_enabled:
             return False
+    # use_ai is True or None (with ai_enabled=True) -- verify AI service is ready
+    from warlock.ai.service import get_ai_service
+
+    svc = get_ai_service()
+    if not svc.is_available():
+        if use_ai is True:
+            console.print(
+                "[dim](AI requested but not configured"
+                " -- run 'warlock ai configure' to enable)[/dim]"
+            )
+        return False
     return True
 
 
@@ -158,7 +166,7 @@ def _print_stats(stats) -> None:
 @click.option(
     "--output-format",
     "global_format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default=None,
     help="Override output format for all commands",
 )
@@ -297,6 +305,35 @@ from warlock.cli import soa_cmd as _soa_cmd  # noqa: F401, E402
 from warlock.cli import model_cmds as _model_cmds  # noqa: F401, E402
 from warlock.cli import db_cmd as _db_cmd  # noqa: F401, E402
 
+# Diagnostics
+from warlock.cli import doctor_cmd as _doctor_cmd  # noqa: F401, E402
+
+# P2 — Model CRUD CLI modules
+from warlock.cli import asset_cmd as _asset_cmd  # noqa: F401, E402
+from warlock.cli import dlq_cmd as _dlq_cmd  # noqa: F401, E402
+from warlock.cli import sandbox_cmd as _sandbox_cmd  # noqa: F401, E402
+from warlock.cli import delegation_cmd as _delegation_cmd  # noqa: F401, E402
+from warlock.cli import obligation_cmd as _obligation_cmd  # noqa: F401, E402
+from warlock.cli import allowlist_cmd as _allowlist_cmd  # noqa: F401, E402
+from warlock.cli import risk_dep_cmd as _risk_dep_cmd  # noqa: F401, E402
+from warlock.cli import branding_cmd as _branding_cmd  # noqa: F401, E402
+from warlock.cli import tenant_cmd as _tenant_cmd  # noqa: F401, E402
+from warlock.cli import p2_features_cmd as _p2_features_cmd  # noqa: F401, E402
+
+# Market table stakes — evidence requests, readiness, notifications
+from warlock.cli import evidence_request_cmd as _evidence_request_cmd  # noqa: F401, E402
+from warlock.cli import readiness_cmd as _readiness_cmd  # noqa: F401, E402
+from warlock.cli import notification_cmd as _notification_cmd  # noqa: F401, E402
+
+# P0/P1 features — import, dashboard builder
+from warlock.cli import import_cmd as _import_cmd  # noqa: F401, E402
+from warlock.cli import dashboard_builder_cmd as _dashboard_builder_cmd  # noqa: F401, E402
+
+# P3 — endpoint agent, AI governance, packaging
+from warlock.cli import endpoint_cmd as _endpoint_cmd  # noqa: F401, E402
+from warlock.cli import ai_governance_cmd as _ai_governance_cmd  # noqa: F401, E402
+from warlock.cli import package_cmd as _package_cmd  # noqa: F401, E402
+
 
 # ---------------------------------------------------------------------------
 # UX-005: Conceptual help topics
@@ -361,6 +398,14 @@ def help_topic(topic: str | None) -> None:
     from rich.panel import Panel
 
     console.print(Panel(content, title=f"[bold]{topic}[/bold]", border_style="cyan"))
+
+
+@cli.command("version")
+def version_cmd() -> None:
+    """Print the Warlock version and exit."""
+    from warlock import __version__
+
+    click.echo(f"warlock {__version__}")
 
 
 if __name__ == "__main__":

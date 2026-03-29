@@ -175,6 +175,86 @@ class EvidenceScheduler:
     # Internal helpers
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Item 76: Evidence sufficiency scoring
+    # ------------------------------------------------------------------
+
+    def score_sufficiency(
+        self,
+        framework: str | None = None,
+    ) -> list[dict]:
+        """Score evidence sufficiency per control.
+
+        Scores on three dimensions (each 0-100):
+        - relevance: Does evidence map to the right control? (has finding_id)
+        - completeness: Are all sub-requirements assessed? (not not_assessed)
+        - recency: Is the evidence fresh? (assessed within threshold)
+
+        Overall score = weighted average (relevance 40%, completeness 30%, recency 30%).
+        """
+        from warlock.db.models import ControlResult
+
+        q = self.session.query(ControlResult)
+        if framework:
+            q = q.filter(ControlResult.framework == framework)
+
+        results = q.all()
+        now = datetime.now(timezone.utc)
+
+        # Group by control
+        by_control: dict[str, list] = {}
+        for r in results:
+            key = f"{r.framework}:{r.control_id}"
+            by_control.setdefault(key, []).append(r)
+
+        scores = []
+        for key, control_results in sorted(by_control.items()):
+            fw, cid = key.split(":", 1)
+
+            # Relevance: proportion with a finding_id (evidence link)
+            linked = sum(1 for r in control_results if r.finding_id)
+            relevance = (linked / len(control_results) * 100) if control_results else 0
+
+            # Completeness: proportion assessed (not not_assessed)
+            assessed = sum(1 for r in control_results if r.status != "not_assessed")
+            completeness = (assessed / len(control_results) * 100) if control_results else 0
+
+            # Recency: score based on freshest assessment
+            freshest = None
+            for r in control_results:
+                if r.assessed_at:
+                    dt = ensure_aware(r.assessed_at)
+                    if freshest is None or dt > freshest:
+                        freshest = dt
+
+            threshold_days = 30
+            if freshest:
+                age_days = (now - freshest).days
+                if age_days <= threshold_days:
+                    recency = 100.0
+                elif age_days <= threshold_days * 2:
+                    recency = 50.0
+                else:
+                    recency = max(0.0, 100.0 - (age_days / threshold_days) * 25)
+            else:
+                recency = 0.0
+
+            overall = relevance * 0.4 + completeness * 0.3 + recency * 0.3
+
+            scores.append(
+                {
+                    "framework": fw,
+                    "control_id": cid,
+                    "relevance": round(relevance, 1),
+                    "completeness": round(completeness, 1),
+                    "recency": round(recency, 1),
+                    "overall": round(overall, 1),
+                    "result_count": len(control_results),
+                }
+            )
+
+        return sorted(scores, key=lambda s: s["overall"])
+
     @staticmethod
     def _parse_due_date(request: EvidenceRequest) -> datetime | None:
         """Extract due_date from fulfillment_notes metadata string."""

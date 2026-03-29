@@ -614,10 +614,15 @@ def evidence_gaps(framework: str | None) -> None:
             "compliant": "green",
         }.get(r.status, "")
         ev_type = "none" if not r.evidence_ids else "pipeline hash only"
+        status_text = (
+            f"[{status_style}]{r.status}[/{status_style}]"
+            if status_style
+            else escape(r.status or "")
+        )
         table.add_row(
             r.framework,
             r.control_id,
-            f"[{status_style}]{r.status}[/]",
+            status_text,
             r.severity,
             ev_type,
         )
@@ -1217,3 +1222,353 @@ def requests_overdue() -> None:
         )
 
     console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# schedule sub-group (Item 75)
+# ---------------------------------------------------------------------------
+
+
+@evidence.group("schedule", invoke_without_command=True)
+@click.pass_context
+def evidence_schedule(ctx: click.Context) -> None:
+    """Manage evidence collection schedules."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(evidence_schedule_list)
+
+
+@evidence_schedule.command("list")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def evidence_schedule_list(fmt: str = "table") -> None:
+    """List evidence collection schedules."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.evidence_scheduler import EvidenceScheduler
+
+    init_db()
+    with get_session() as session:
+        EvidenceScheduler(session)  # validate session compatibility
+        from warlock.db.models import EvidenceRequest
+
+        requests = (
+            session.query(EvidenceRequest)
+            .filter(EvidenceRequest.status.in_(["requested", "in_progress"]))
+            .order_by(EvidenceRequest.created_at.desc())
+            .limit(50)
+            .all()
+        )
+
+    if not requests:
+        console.print("[dim]No evidence schedules found.[/dim]")
+        console.print("[dim]Use 'warlock evidence schedule add' to create one.[/dim]")
+        return
+
+    if fmt == "json":
+        import json as _j2
+
+        out = [
+            {
+                "id": r.id,
+                "framework": r.framework or "",
+                "control_id": r.control_id or "",
+                "description": r.description or "",
+                "status": r.status,
+                "notes": r.fulfillment_notes or "",
+            }
+            for r in requests
+        ]
+        console.print(_j2.dumps(out, indent=2, default=str))
+        return
+
+    table = Table(title=f"Evidence Collection Schedules ({len(requests)})")
+    table.add_column("ID", style="dim", max_width=8)
+    table.add_column("Framework", style="cyan")
+    table.add_column("Control", style="cyan")
+    table.add_column("Description", max_width=40)
+    table.add_column("Status")
+    table.add_column("Interval")
+
+    for r in requests:
+        notes = r.fulfillment_notes or ""
+        interval = ""
+        for part in notes.split(";"):
+            if part.startswith("frequency_days="):
+                interval = part.split("=", 1)[1] + "d"
+
+        table.add_row(
+            r.id[:8],
+            r.framework or "\u2014",
+            r.control_id or "\u2014",
+            escape((r.description or "")[:40]),
+            r.status,
+            interval or "\u2014",
+        )
+
+    console.print(table)
+
+
+@evidence_schedule.command("add")
+@click.option("--control", "-c", required=True, help="Control ID")
+@click.option("--framework", "-f", default="", help="Framework")
+@click.option("--interval", "-i", default="30d", help="Collection interval (e.g. 30d, 90d)")
+@click.option("--description", "-d", default="Scheduled evidence collection", help="Description")
+@click.option("--collector-type", default="automated", help="Collection type")
+@click.option("--engagement", default=None, help="Engagement ID (auto-detects if omitted)")
+def evidence_schedule_add(
+    control: str,
+    framework: str,
+    interval: str,
+    description: str,
+    collector_type: str,
+    engagement: str | None,
+) -> None:
+    """Schedule periodic evidence collection for a control."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEngagement, ExternalAuditor
+    from warlock.workflows.evidence_scheduler import EvidenceScheduler
+
+    days = 30
+    if interval.endswith("d"):
+        try:
+            days = int(interval[:-1])
+        except ValueError:
+            _error(f"Invalid interval format: {interval}. Use e.g. 30d, 90d.")
+
+    init_db()
+    with get_session() as session:
+        # Resolve engagement ID (required FK)
+        eng_id = engagement
+        if not eng_id:
+            eng = session.query(AuditEngagement).first()
+            if not eng:
+                _error(
+                    "No audit engagement found. Create one first with "
+                    "'warlock audit engagement create'."
+                )
+                return
+            eng_id = eng.id
+
+        # Resolve auditor ID (required FK to external_auditors)
+        auditor = session.query(ExternalAuditor).first()
+        auditor_id = auditor.id if auditor else ""
+
+        scheduler = EvidenceScheduler(session)
+        req = scheduler.create_schedule(
+            control_id=control,
+            framework=framework,
+            frequency_days=days,
+            collector_type=collector_type,
+            description=description,
+            engagement_id=eng_id,
+            auditor_id=auditor_id,
+        )
+        console.print(
+            f"[green]Evidence schedule created:[/green] {req.id[:8]} "
+            f"({escape(framework)}/{escape(control)}, every {days}d)"
+        )
+
+
+# ---------------------------------------------------------------------------
+# sufficiency (Item 76)
+# ---------------------------------------------------------------------------
+
+
+@evidence.command("sufficiency")
+@click.option("--framework", "-f", default=None, help="Limit to a specific framework")
+@click.option("--limit", "-n", default=20, help="Max results to show")
+@click.option(
+    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+)
+def evidence_sufficiency(framework: str | None, limit: int, fmt: str) -> None:
+    """Score evidence sufficiency per control (relevance, completeness, recency)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.evidence_scheduler import EvidenceScheduler
+
+    init_db()
+    with get_session() as session:
+        scheduler = EvidenceScheduler(session)
+        scores = scheduler.score_sufficiency(framework=framework)
+
+    if not scores:
+        console.print("[dim]No control results found to score.[/dim]")
+        return
+
+    display = scores[:limit]
+
+    if fmt == "json":
+        console.print(_json.dumps(display, indent=2, default=str))
+        return
+
+    table = Table(title=f"Evidence Sufficiency Scores (weakest {len(display)} of {len(scores)})")
+    table.add_column("Framework", style="cyan")
+    table.add_column("Control", style="cyan")
+    table.add_column("Relevance", justify="right")
+    table.add_column("Completeness", justify="right")
+    table.add_column("Recency", justify="right")
+    table.add_column("Overall", justify="right")
+    table.add_column("Results", justify="right", style="dim")
+
+    for s in display:
+        overall = s["overall"]
+        if overall >= 80:
+            style = "green"
+        elif overall >= 50:
+            style = "yellow"
+        else:
+            style = "red"
+
+        table.add_row(
+            s["framework"],
+            s["control_id"],
+            f"{s['relevance']:.0f}%",
+            f"{s['completeness']:.0f}%",
+            f"{s['recency']:.0f}%",
+            f"[{style}]{overall:.0f}%[/]",
+            str(s["result_count"]),
+        )
+
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# Evidence Vault: upload, versions, expire (P1 Item 39)
+# ---------------------------------------------------------------------------
+
+
+@evidence.command("upload")
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--control", "-c", default=None, help="Associated control ID")
+@click.option("--framework", "-f", default=None, help="Associated framework")
+@click.option("--tags", "-t", default=None, help="Comma-separated tags")
+@click.option("--expires-days", type=int, default=None, help="Days until expiry")
+@click.option("--description", "-d", default="", help="Description")
+def evidence_upload(
+    file: str,
+    control: str | None,
+    framework: str | None,
+    tags: str | None,
+    expires_days: int | None,
+    description: str,
+) -> None:
+    """Upload an evidence document to the vault.
+
+    Automatically versions: uploading a file with the same name creates v2, v3, etc.
+    """
+    from pathlib import Path
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.workflows.evidence_vault_manager import EvidenceVaultManager
+
+    init_db()
+    tag_list = [t.strip() for t in tags.split(",")] if tags else []
+    path = Path(file)
+
+    with get_session() as session:
+        vault = EvidenceVaultManager(session)
+        doc = vault.upload(
+            filename=path.name,
+            file_path=str(path),
+            control_id=control,
+            framework=framework,
+            tags=tag_list,
+            uploaded_by=_get_actor(),
+            expires_days=expires_days,
+            description=description,
+        )
+
+    console.print(f"[green]Uploaded:[/green] {escape(doc.filename)} v{doc.version}")
+    console.print(f"  ID:   {doc.id[:12]}...")
+    console.print(f"  Hash: {doc.content_hash[:16]}...")
+    console.print(f"  Size: {doc.size_bytes:,} bytes")
+    if doc.expires_at:
+        console.print(f"  Expires: {doc.expires_at.strftime('%Y-%m-%d')}")
+
+
+@evidence.command("versions")
+@click.argument("filename")
+def evidence_versions(filename: str) -> None:
+    """Show version history for an evidence document."""
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.workflows.evidence_vault_manager import EvidenceVaultManager
+
+    init_db()
+    with get_read_session() as session:
+        vault = EvidenceVaultManager(session)
+        versions = vault.get_versions(filename)
+
+    if not versions:
+        console.print(f"[dim]No versions found for '{escape(filename)}'.[/dim]")
+        return
+
+    table = Table(title=f"Evidence Versions: {escape(filename)}")
+    table.add_column("Version", justify="right")
+    table.add_column("Hash", style="dim")
+    table.add_column("Size", justify="right")
+    table.add_column("Uploaded By")
+    table.add_column("Uploaded At")
+    table.add_column("Description")
+
+    for v in versions:
+        table.add_row(
+            f"v{v.version}",
+            v.content_hash[:16],
+            f"{v.size_bytes:,}",
+            escape(v.uploaded_by),
+            v.uploaded_at.strftime("%Y-%m-%d %H:%M"),
+            escape(v.description[:40] if v.description else ""),
+        )
+    console.print(table)
+
+
+@evidence.command("expire")
+@click.option("--days", type=int, default=30, help="Show documents expiring within N days")
+@click.option("--stale-days", type=int, default=90, help="Show documents not updated in N days")
+def evidence_expire(days: int, stale_days: int) -> None:
+    """Show expiring and stale evidence documents."""
+    from warlock.db.engine import get_read_session, init_db
+    from warlock.workflows.evidence_vault_manager import EvidenceVaultManager
+
+    init_db()
+    with get_read_session() as session:
+        vault = EvidenceVaultManager(session)
+        expiring = vault.get_expiring(within_days=days)
+        stale = vault.get_stale(stale_days=stale_days)
+
+    if expiring:
+        table = Table(title=f"Expiring Within {days} Days")
+        table.add_column("Filename", style="cyan")
+        table.add_column("Version", justify="right")
+        table.add_column("Expires At", style="yellow")
+        table.add_column("Control")
+        table.add_column("Framework")
+
+        for d in expiring:
+            table.add_row(
+                escape(d.filename),
+                f"v{d.version}",
+                d.expires_at.strftime("%Y-%m-%d") if d.expires_at else "",
+                escape(d.control_id or ""),
+                escape(d.framework or ""),
+            )
+        console.print(table)
+    else:
+        console.print(f"[green]No documents expiring within {days} days.[/green]")
+
+    if stale:
+        table = Table(title=f"Stale Documents (>{stale_days} days old)")
+        table.add_column("Filename", style="cyan")
+        table.add_column("Version", justify="right")
+        table.add_column("Last Updated", style="red")
+        table.add_column("Control")
+
+        for d in stale:
+            table.add_row(
+                escape(d.filename),
+                f"v{d.version}",
+                d.uploaded_at.strftime("%Y-%m-%d"),
+                escape(d.control_id or ""),
+            )
+        console.print(table)
+    else:
+        console.print(f"[green]No stale documents (all updated within {stale_days} days).[/green]")

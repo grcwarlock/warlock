@@ -96,22 +96,41 @@ def oscal(framework, system_name, output, fmt, description, use_ai):
     "--old",
     "old_path",
     required=True,
-    type=click.Path(exists=True),
-    help="Path to old framework YAML",
+    help="Old framework YAML: framework ID (e.g. nist_800_53) or file path",
 )
 @click.option(
     "--new",
     "new_path",
     required=True,
-    type=click.Path(exists=True),
-    help="Path to new framework YAML",
+    help="New framework YAML: framework ID (e.g. nist_800_53) or file path",
 )
 def framework_diff_cmd(old_path: str, new_path: str) -> None:
-    """Compare two framework versions and show control changes."""
+    """Compare two framework versions and show control changes.
+
+    Accepts framework IDs (e.g. nist_800_53, soc2) which resolve to
+    warlock/frameworks/<id>.yaml, or explicit file paths.
+    """
+    import pathlib
+
     from warlock.frameworks.diff import FrameworkDiff
 
+    frameworks_dir = pathlib.Path(__file__).resolve().parent.parent / "frameworks"
+
+    def _resolve(val: str) -> str:
+        """Resolve a framework ID or file path to an actual path."""
+        p = pathlib.Path(val)
+        if p.exists():
+            return str(p)
+        # Try as framework ID
+        candidate = frameworks_dir / f"{val}.yaml"
+        if candidate.exists():
+            return str(candidate)
+        _error(
+            f"Cannot resolve '{val}': not a file path and no framework YAML found at {candidate}"
+        )
+
     differ = FrameworkDiff()
-    result = differ.diff(old_path, new_path)
+    result = differ.diff(_resolve(old_path), _resolve(new_path))
 
     console.print("\n[bold]Framework Diff[/bold]")
     console.print(f"  Added:     [green]{len(result.added_controls)}[/green]")

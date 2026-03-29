@@ -1035,3 +1035,27 @@ def templates_list() -> None:
 
     console.print(table)
     console.print("[dim]Use 'warlock reports generate --type <type>' to produce a report.[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# reports board-pdf
+# ---------------------------------------------------------------------------
+
+
+@reports.command("board-pdf")
+@click.option("--output", "-o", default=None, help="Output file path (default: exports/board-pdf/)")
+def board_pdf(output: str | None) -> None:
+    """Generate a board-level compliance report as PDF (or Markdown fallback)."""
+    from warlock.db.engine import get_session, init_db
+    from warlock.export.board_report import generate_board_pdf
+
+    init_db()
+    if not output:
+        from warlock.export.paths import export_path
+
+        output = str(export_path("board-pdf", extension="pdf"))
+
+    with get_session() as session:
+        result_path = generate_board_pdf(session, output)
+
+    console.print(f"[green]Board report written to {result_path}[/green]")

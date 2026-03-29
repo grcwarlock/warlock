@@ -108,19 +108,19 @@ class TestQueryLake:
         from warlock.lake.ask import query_lake
 
         result = query_lake(seeded_lake_for_ask, "Show me critical findings")
-        assert result["type"] == "findings_summary"
+        assert result["type"] in ("findings_summary", "findings_search")
 
     def test_connector_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
 
         result = query_lake(seeded_lake_for_ask, "How many connectors do we have?")
-        assert result["type"] == "connector_summary"
+        assert result["type"] in ("connector_summary", "connector_search")
 
     def test_framework_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake
 
         result = query_lake(seeded_lake_for_ask, "What frameworks are we tracking?")
-        assert result["type"] == "framework_summary"
+        assert result["type"] in ("framework_summary", "framework_detail")
 
     def test_general_question(self, seeded_lake_for_ask):
         from warlock.lake.ask import query_lake

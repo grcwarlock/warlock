@@ -10922,7 +10922,9 @@ class DemoVerkadaConnector(BaseConnector):
 
 def seed_systems(session):
     """Create 5 SystemProfile records representing Acme Corp's systems."""
-    systems = [
+    # Dedup: skip if systems already exist (prevents duplicates on re-run)
+    existing_names = {row[0] for row in session.query(SystemProfile.name).all()}
+    systems_defs = [
         SystemProfile(
             name="Acme Production Platform",
             acronym="APP",
@@ -11025,6 +11027,7 @@ def seed_systems(session):
             service_model="IaaS",
         ),
     ]
+    systems = [s for s in systems_defs if s.name not in existing_names]
     for system in systems:
         session.add(system)
     session.commit()
@@ -13074,21 +13077,33 @@ def seed_phase4_drift(session) -> int:
 
 def seed_phase5_auditor_engagement(session) -> int:
     """Create external auditors, an engagement, assignments, and evidence requests."""
-    # Create 2 auditors
-    auditor1 = ExternalAuditor(
-        email="sarah.chen@deloitte.com",
-        name="Sarah Chen",
-        firm="Deloitte",
-        is_active=True,
+    # Upsert auditors — check-before-insert to avoid UNIQUE constraint on email
+    auditor1 = (
+        session.query(ExternalAuditor)
+        .filter(ExternalAuditor.email == "sarah.chen@deloitte.com")
+        .first()
     )
-    auditor2 = ExternalAuditor(
-        email="marcus.johnson@ey.com",
-        name="Marcus Johnson",
-        firm="Ernst & Young",
-        is_active=True,
+    if not auditor1:
+        auditor1 = ExternalAuditor(
+            email="sarah.chen@deloitte.com",
+            name="Sarah Chen",
+            firm="Deloitte",
+            is_active=True,
+        )
+        session.add(auditor1)
+    auditor2 = (
+        session.query(ExternalAuditor)
+        .filter(ExternalAuditor.email == "marcus.johnson@ey.com")
+        .first()
     )
-    session.add(auditor1)
-    session.add(auditor2)
+    if not auditor2:
+        auditor2 = ExternalAuditor(
+            email="marcus.johnson@ey.com",
+            name="Marcus Johnson",
+            firm="Ernst & Young",
+            is_active=True,
+        )
+        session.add(auditor2)
     session.flush()
 
     # Create or find an engagement
@@ -20513,6 +20528,1277 @@ def _seed_frontend_enrichment(session) -> dict:
     return counts
 
 
+# ---------------------------------------------------------------------------
+# GAP-055+: Seed all 18 previously-empty tables + access review items +
+#           control test records + embeddings + watch subscriptions +
+#           escalation policies + integrations + expanded audit trail +
+#           expanded posture snapshots for cato-dashboard
+# ---------------------------------------------------------------------------
+
+
+def _seed_empty_tables(session) -> dict:  # noqa: C901
+    """Seed data for 18+ previously-empty tables plus missing demo data.
+
+    Covers Items 15-22, 25, 53, 80 from the fix list.
+    """
+    import hashlib
+    import uuid
+
+    from warlock.db.audit import AuditTrail
+    from warlock.db.models import (
+        APIKey,
+        Asset,
+        AuditEngagement,
+        AuditEntry,
+        BrandingConfig,
+        ChangeRequest,
+        ComplianceObligation,
+        ControlResult,
+        DeadLetterEntry,
+        DelegationGrant,
+        Embedding,
+        EscalationPolicy,
+        Finding,
+        IPAllowlistEntry,
+        Issue,
+        POAM,
+        Policy,
+        PolicyHistory,
+        PostureSnapshot,
+        RiskAnalysis,
+        RiskDependency,
+        SandboxEnvironment,
+        SavedQuery,
+        SystemProfile,
+        TrustAccessRequest,
+        TrustDocument,
+        User,
+        WatchSubscription,
+        Workpaper,
+    )
+
+    now = NOW
+    counts: dict[str, int] = {}
+    trail = AuditTrail(session)
+
+    # -----------------------------------------------------------------------
+    # Item 22: Explicit demo users (if not already created by _create_demo_users)
+    # -----------------------------------------------------------------------
+    users = session.query(User).all()
+    user_map = {u.email: u for u in users}
+    admin_user = user_map.get("admin@acme.com")
+    auditor_user = user_map.get("eve.nakamura@acme.com")
+    owner_user = user_map.get("frank.torres@acme.com")
+    viewer_user = user_map.get("carol.park@acme.com")
+
+    # -----------------------------------------------------------------------
+    # Item 15: Embeddings — at least 5
+    # -----------------------------------------------------------------------
+    existing_embeddings = session.query(Embedding).count()
+    if existing_embeddings == 0:
+        embedding_data = [
+            ("control", "AC-2", "Account Management - manage system accounts", 384),
+            ("control", "IA-2", "Identification and Authentication", 384),
+            ("control", "SC-7", "Boundary Protection - network segmentation", 384),
+            ("control", "CC6.1", "Logical and Physical Access Controls", 384),
+            ("control", "AU-6", "Audit Record Review, Analysis, and Reporting", 384),
+            ("finding", "VULN-001", "Critical RCE in OpenSSL library", 384),
+            ("remediation", "REM-001", "Apply vendor patch and restart services", 384),
+        ]
+        for etype, eid, text, dims in embedding_data:
+            # Deterministic fake vector (seeded by entity_id hash)
+            seed_val = int(hashlib.sha256(eid.encode()).hexdigest()[:8], 16)
+            rng = random.Random(seed_val)
+            vector = [round(rng.gauss(0, 0.1), 6) for _ in range(dims)]
+            session.add(
+                Embedding(
+                    entity_type=etype,
+                    entity_id=eid,
+                    entity_text=text,
+                    vector=vector,
+                    model_name="text-embedding-3-small",
+                    dimensions=dims,
+                )
+            )
+        counts["embeddings"] = len(embedding_data)
+    else:
+        counts["embeddings"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 16: Watch subscriptions — at least 3
+    # -----------------------------------------------------------------------
+    existing_watches = session.query(WatchSubscription).count()
+    if existing_watches == 0 and admin_user:
+        issues = session.query(Issue).limit(3).all()
+        watch_count = 0
+        for i, issue in enumerate(issues):
+            watcher = [admin_user, auditor_user, owner_user][i % 3]
+            if watcher:
+                session.add(
+                    WatchSubscription(
+                        user_id=watcher.id,
+                        entity_type="issue",
+                        entity_id=issue.id,
+                        issue_id=issue.id,
+                    )
+                )
+                watch_count += 1
+        # Add a POAM watcher
+        poam = session.query(POAM).first()
+        if poam and auditor_user:
+            session.add(
+                WatchSubscription(
+                    user_id=auditor_user.id,
+                    entity_type="poam",
+                    entity_id=poam.id,
+                )
+            )
+            watch_count += 1
+        counts["watch_subscriptions"] = watch_count
+    else:
+        counts["watch_subscriptions"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 17: Escalation policies — at least 2
+    # -----------------------------------------------------------------------
+    existing_ep = session.query(EscalationPolicy).count()
+    if existing_ep == 0:
+        session.add(
+            EscalationPolicy(
+                name="Critical Finding Escalation",
+                description=(
+                    "Three-tier escalation for critical and high severity findings "
+                    "not remediated within SLA."
+                ),
+                levels=[
+                    {"level": 1, "role": "control_owner", "delay_hours": 24},
+                    {"level": 2, "role": "team_lead", "delay_hours": 48},
+                    {"level": 3, "role": "ciso", "delay_hours": 72},
+                ],
+                cooldown_minutes=60,
+                active=True,
+                entity_types=["issue", "finding"],
+                min_severity="high",
+                created_by="ciso@acme.com",
+            )
+        )
+        session.add(
+            EscalationPolicy(
+                name="Overdue POA&M Escalation",
+                description="Escalation chain for POA&Ms past their scheduled completion date.",
+                levels=[
+                    {"level": 1, "role": "poam_owner", "delay_hours": 48},
+                    {"level": 2, "role": "isso", "delay_hours": 96},
+                    {"level": 3, "role": "authorizing_official", "delay_hours": 168},
+                ],
+                cooldown_minutes=120,
+                active=True,
+                entity_types=["poam"],
+                min_severity="medium",
+                created_by="isso@acme.com",
+            )
+        )
+        session.add(
+            EscalationPolicy(
+                name="Vendor Assessment Overdue",
+                description="Notify procurement and security when vendor assessments are past due.",
+                levels=[
+                    {"level": 1, "role": "vendor_manager", "delay_hours": 72},
+                    {"level": 2, "role": "ciso", "delay_hours": 168},
+                ],
+                cooldown_minutes=240,
+                active=True,
+                entity_types=["vendor"],
+                min_severity="medium",
+                created_by="compliance@acme.com",
+            )
+        )
+        counts["escalation_policies"] = 3
+    else:
+        counts["escalation_policies"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 18: Integrations — at least 2 (via AuditEntry)
+    # -----------------------------------------------------------------------
+    existing_integrations = (
+        session.query(AuditEntry).filter(AuditEntry.action == "integration_configured").count()
+    )
+    if existing_integrations == 0:
+        integration_configs = [
+            {
+                "integration_type": "jira",
+                "status": "active",
+                "config": {
+                    "base_url": "https://acme.atlassian.net",
+                    "project_key": "GRC",
+                    "issue_type": "Task",
+                    "sync_direction": "bidirectional",
+                },
+            },
+            {
+                "integration_type": "slack",
+                "status": "active",
+                "config": {
+                    "workspace": "acme-corp",
+                    "channel": "#grc-alerts",
+                    "events": ["alert.critical", "finding.new", "poam.overdue"],
+                },
+            },
+            {
+                "integration_type": "servicenow",
+                "status": "inactive",
+                "config": {
+                    "instance": "acme.service-now.com",
+                    "table": "sn_grc_issue",
+                    "sync_direction": "outbound",
+                },
+            },
+        ]
+        for ic in integration_configs:
+            trail.record(
+                action="integration_configured",
+                entity_type="integration",
+                entity_id=ic["integration_type"],
+                actor="admin@acme.com",
+                metadata=ic,
+            )
+        counts["integrations"] = len(integration_configs)
+    else:
+        counts["integrations"] = 0
+
+    session.flush()
+
+    # -----------------------------------------------------------------------
+    # Item 21: API keys — 2 for admin/viewer
+    # -----------------------------------------------------------------------
+    existing_keys = session.query(APIKey).count()
+    if existing_keys == 0:
+        api_key_data = []
+        if admin_user:
+            api_key_data.append(
+                APIKey(
+                    user_id=admin_user.id,
+                    key_hash=hashlib.sha256(b"wlk_demo_admin_key_2026").hexdigest(),
+                    name="Admin CI/CD Pipeline Key",
+                    scopes=["read", "write", "admin"],
+                    is_active=True,
+                    expires_at=now + timedelta(days=365),
+                )
+            )
+        if viewer_user:
+            api_key_data.append(
+                APIKey(
+                    user_id=viewer_user.id,
+                    key_hash=hashlib.sha256(b"wlk_demo_viewer_key_2026").hexdigest(),
+                    name="Dashboard Read-Only Key",
+                    scopes=["read"],
+                    is_active=True,
+                    expires_at=now + timedelta(days=180),
+                )
+            )
+        for ak in api_key_data:
+            session.add(ak)
+        counts["api_keys"] = len(api_key_data)
+    else:
+        counts["api_keys"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Assets — 10 linked to findings
+    # -----------------------------------------------------------------------
+    existing_assets = session.query(Asset).count()
+    if existing_assets == 0:
+        systems = {sp.acronym: sp for sp in session.query(SystemProfile).all()}
+        prod_id = systems.get("APP", None)
+        cdw_id = systems.get("CDW", None)
+        cit_id = systems.get("CIT", None)
+
+        asset_defs = [
+            (
+                "arn:aws:ec2:us-east-1:912345678012:instance/i-0abc1234",
+                "ec2_instance",
+                "prod-api-server-01",
+                prod_id,
+                "frank.torres@acme.com",
+                "restricted",
+                5,
+            ),
+            (
+                "arn:aws:ec2:us-east-1:912345678012:instance/i-0abc5678",
+                "ec2_instance",
+                "prod-api-server-02",
+                prod_id,
+                "frank.torres@acme.com",
+                "restricted",
+                5,
+            ),
+            (
+                "arn:aws:rds:us-east-1:912345678012:db:prod-primary",
+                "rds_instance",
+                "prod-postgres-primary",
+                prod_id,
+                "dba@acme.com",
+                "restricted",
+                5,
+            ),
+            (
+                "arn:aws:s3:::acme-customer-data",
+                "s3_bucket",
+                "acme-customer-data",
+                cdw_id,
+                "carol.park@acme.com",
+                "confidential",
+                4,
+            ),
+            (
+                "arn:aws:redshift:us-east-1:912345678012:cluster:analytics",
+                "redshift_cluster",
+                "analytics-warehouse",
+                cdw_id,
+                "carol.park@acme.com",
+                "confidential",
+                4,
+            ),
+            (
+                "arn:aws:lambda:us-east-1:912345678012:function:pipeline",
+                "lambda_function",
+                "data-pipeline-processor",
+                prod_id,
+                "frank.torres@acme.com",
+                "internal",
+                3,
+            ),
+            (
+                "okta:app:0oa1234567890",
+                "saas_application",
+                "Okta SSO",
+                cit_id,
+                "bob.martinez@acme.com",
+                "internal",
+                4,
+            ),
+            (
+                "crowdstrike:host:abc-def-123",
+                "endpoint",
+                "eng-laptop-pool",
+                cit_id,
+                "bob.martinez@acme.com",
+                "internal",
+                3,
+            ),
+            (
+                "arn:aws:elasticloadbalancing:us-east-1:912345678012:loadbalancer/app/prod-alb",
+                "load_balancer",
+                "prod-alb",
+                prod_id,
+                "network-team@acme.com",
+                "internal",
+                4,
+            ),
+            (
+                "github:repo:acme-corp/platform",
+                "code_repository",
+                "platform-monorepo",
+                prod_id,
+                "frank.torres@acme.com",
+                "confidential",
+                5,
+            ),
+        ]
+        # Grab some finding IDs to link
+        sample_findings = session.query(Finding.id).limit(20).all()
+        finding_ids = [f[0] for f in sample_findings]
+
+        for i, (rid, rtype, rname, sys_obj, owner, classif, crit) in enumerate(asset_defs):
+            fids = finding_ids[i * 2 : i * 2 + 2] if i * 2 + 2 <= len(finding_ids) else []
+            session.add(
+                Asset(
+                    resource_id=rid,
+                    resource_type=rtype,
+                    resource_name=rname,
+                    system_id=sys_obj.id if sys_obj else None,
+                    owner=owner,
+                    classification=classif,
+                    criticality=crit,
+                    status="active",
+                    finding_ids=fids,
+                )
+            )
+        counts["assets"] = len(asset_defs)
+    else:
+        counts["assets"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Branding config — 1 default
+    # -----------------------------------------------------------------------
+    existing_branding = session.query(BrandingConfig).count()
+    if existing_branding == 0:
+        session.add(
+            BrandingConfig(
+                tenant_id_unique="default",
+                logo_url="https://acme.com/logo.svg",
+                primary_color="#6366f1",
+                accent_color="#8b5cf6",
+                app_name="Warlock GRC",
+                favicon_url="https://acme.com/favicon.ico",
+                custom_css="/* Acme Corp brand overrides */",
+            )
+        )
+        counts["branding_configs"] = 1
+    else:
+        counts["branding_configs"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Change requests — 3 in various states
+    # -----------------------------------------------------------------------
+    existing_cr = session.query(ChangeRequest).count()
+    if existing_cr == 0:
+        prod_sp = session.query(SystemProfile).filter(SystemProfile.acronym == "APP").first()
+        cr_defs = [
+            ChangeRequest(
+                title="Upgrade PostgreSQL from 14 to 16",
+                description="Major version upgrade for prod-postgres-primary. Requires 30-min maintenance window.",
+                change_type="normal",
+                risk_level="high",
+                system_profile_id=prod_sp.id if prod_sp else None,
+                requester="dba@acme.com",
+                status="approved",
+                cab_decision="approved",
+                cab_notes="Approved with rollback plan. Schedule for Sunday 02:00 UTC.",
+                cab_date=now - timedelta(days=3),
+                implementation_date=now + timedelta(days=4),
+                rollback_plan="pg_basebackup snapshot taken pre-upgrade; revert via point-in-time recovery.",
+            ),
+            ChangeRequest(
+                title="Enable WAF managed rules on prod-alb",
+                description="Add AWS WAF with OWASP Top 10 managed rule set to production ALB.",
+                change_type="standard",
+                risk_level="low",
+                system_profile_id=prod_sp.id if prod_sp else None,
+                requester="network-team@acme.com",
+                status="implemented",
+                cab_decision="approved",
+                cab_notes="Standard change — pre-approved.",
+                cab_date=now - timedelta(days=7),
+                implementation_date=now - timedelta(days=5),
+                rollback_plan="Remove WAF association from ALB via Terraform revert.",
+            ),
+            ChangeRequest(
+                title="Emergency patch: Log4Shell in analytics service",
+                description="CVE-2021-44228 detected in analytics-warehouse log4j dependency. Emergency patching required.",
+                change_type="emergency",
+                risk_level="critical",
+                system_profile_id=prod_sp.id if prod_sp else None,
+                requester="security-lead@acme.com",
+                status="draft",
+                rollback_plan="Revert JAR to previous version and restart service.",
+            ),
+        ]
+        for cr in cr_defs:
+            session.add(cr)
+        counts["change_requests"] = len(cr_defs)
+    else:
+        counts["change_requests"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Compliance obligations — 5
+    # -----------------------------------------------------------------------
+    existing_co = session.query(ComplianceObligation).count()
+    if existing_co == 0:
+        co_defs = [
+            ComplianceObligation(
+                title="SOC 2 Type II Annual Audit",
+                framework="soc2",
+                obligation_type="audit",
+                frequency="annual",
+                next_due=now + timedelta(days=90),
+                owner="eve.nakamura@acme.com",
+                status="pending",
+                notes="Deloitte engagement letter signed. Fieldwork starts Q2.",
+            ),
+            ComplianceObligation(
+                title="PCI DSS Self-Assessment Questionnaire",
+                framework="pci_dss",
+                obligation_type="assessment",
+                frequency="annual",
+                next_due=now + timedelta(days=60),
+                owner="frank.torres@acme.com",
+                status="in_progress",
+                notes="SAQ-D in progress. Penetration test scheduled for next month.",
+            ),
+            ComplianceObligation(
+                title="GDPR Annual DPA Review",
+                framework="gdpr",
+                obligation_type="review",
+                frequency="annual",
+                next_due=now + timedelta(days=30),
+                owner="dpo@acme.com",
+                status="pending",
+                notes="Review all data processing agreements with sub-processors.",
+            ),
+            ComplianceObligation(
+                title="Quarterly Vulnerability Scan Report",
+                framework="nist_800_53",
+                control_id="RA-5",
+                obligation_type="report",
+                frequency="quarterly",
+                next_due=now + timedelta(days=15),
+                owner="security-lead@acme.com",
+                status="pending",
+            ),
+            ComplianceObligation(
+                title="ISO 27001 Surveillance Audit",
+                framework="iso_27001",
+                obligation_type="audit",
+                frequency="annual",
+                next_due=now + timedelta(days=120),
+                owner="compliance@acme.com",
+                status="pending",
+                notes="BSI scheduled for June. Internal audit to complete first.",
+            ),
+        ]
+        for co in co_defs:
+            session.add(co)
+        counts["compliance_obligations"] = len(co_defs)
+    else:
+        counts["compliance_obligations"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Dead letter queue — 2 failed events
+    # -----------------------------------------------------------------------
+    existing_dlq = session.query(DeadLetterEntry).count()
+    if existing_dlq == 0:
+        session.add(
+            DeadLetterEntry(
+                event_type="finding.normalize",
+                payload={
+                    "source": "crowdstrike",
+                    "event_id": "CS-ERR-001",
+                    "raw": {"malformed": True, "missing_field": "severity"},
+                },
+                error_message="KeyError: 'severity' - required field missing from CrowdStrike event payload",
+                retry_count=3,
+                status="failed",
+                original_event_id="evt-cs-001",
+                created_at=now - timedelta(days=2),
+                last_retry_at=now - timedelta(hours=6),
+            )
+        )
+        session.add(
+            DeadLetterEntry(
+                event_type="control.map",
+                payload={
+                    "finding_id": "FND-TIMEOUT-001",
+                    "framework": "nist_800_53",
+                    "error": "timeout",
+                },
+                error_message="TimeoutError: OPA evaluation exceeded 30s limit for batch of 500 controls",
+                retry_count=1,
+                status="failed",
+                original_event_id="evt-map-042",
+                created_at=now - timedelta(days=5),
+                last_retry_at=now - timedelta(days=4),
+            )
+        )
+        counts["dead_letter_queue"] = 2
+    else:
+        counts["dead_letter_queue"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Delegation grants — 2
+    # -----------------------------------------------------------------------
+    existing_dg = session.query(DelegationGrant).count()
+    if existing_dg == 0 and owner_user and viewer_user and admin_user:
+        session.add(
+            DelegationGrant(
+                delegator_id=owner_user.id,
+                delegate_id=viewer_user.id,
+                permissions=["read:findings", "read:results", "export:reports"],
+                expires_at=now + timedelta(days=90),
+                is_active=True,
+            )
+        )
+        session.add(
+            DelegationGrant(
+                delegator_id=admin_user.id,
+                delegate_id=auditor_user.id if auditor_user else owner_user.id,
+                permissions=["read:all", "write:attestations", "write:evidence"],
+                expires_at=now + timedelta(days=30),
+                is_active=True,
+            )
+        )
+        counts["delegation_grants"] = 2
+    else:
+        counts["delegation_grants"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: IP allowlist — 3
+    # -----------------------------------------------------------------------
+    existing_ip = session.query(IPAllowlistEntry).count()
+    if existing_ip == 0:
+        session.add(
+            IPAllowlistEntry(
+                cidr="10.0.0.0/8",
+                description="Internal corporate network",
+                active=True,
+                created_by="admin@acme.com",
+            )
+        )
+        session.add(
+            IPAllowlistEntry(
+                cidr="203.0.113.0/24",
+                description="VPN egress range",
+                active=True,
+                created_by="admin@acme.com",
+            )
+        )
+        session.add(
+            IPAllowlistEntry(
+                cidr="198.51.100.42/32",
+                description="Deloitte auditor static IP (SOC 2 engagement)",
+                active=True,
+                created_by="admin@acme.com",
+                expires_at=now + timedelta(days=60),
+            )
+        )
+        counts["ip_allowlist"] = 3
+    else:
+        counts["ip_allowlist"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Policy history — 5 records
+    # -----------------------------------------------------------------------
+    existing_ph = session.query(PolicyHistory).count()
+    if existing_ph == 0:
+        policies = session.query(Policy).limit(5).all()
+        ph_count = 0
+        for i, pol in enumerate(policies):
+            session.add(
+                PolicyHistory(
+                    policy_id=pol.id,
+                    action="updated" if i > 0 else "created",
+                    old_rules={"version": "1.0"} if i > 0 else None,
+                    new_rules=dict(pol.rules) if pol.rules else {"version": "2.0"},
+                    actor=pol.created_by or "admin@acme.com",
+                    timestamp=now - timedelta(days=30 - i * 5),
+                )
+            )
+            ph_count += 1
+        counts["policy_history"] = ph_count
+    else:
+        counts["policy_history"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Risk dependencies — need RiskAnalysis records first
+    # -----------------------------------------------------------------------
+    existing_ra = session.query(RiskAnalysis).count()
+    ra_ids: list[str] = []
+    if existing_ra == 0:
+        ra_defs = [
+            RiskAnalysis(
+                id=str(uuid.uuid4()),
+                framework="nist_800_53",
+                scenario_name="Data breach via compromised IAM credentials",
+                mean_ale=1_250_000.0,
+                var_95=3_500_000.0,
+                var_99=8_200_000.0,
+                control_effectiveness=0.72,
+                iterations=10000,
+                details={
+                    "threat_event_frequency": {"min": 0.5, "max": 3.0, "mode": 1.2},
+                    "loss_magnitude": {"min": 500_000, "max": 10_000_000, "mode": 2_000_000},
+                },
+                risk_culture_score=68.0,
+                mttr_days=14.0,
+            ),
+            RiskAnalysis(
+                id=str(uuid.uuid4()),
+                framework="soc2",
+                scenario_name="Service outage exceeding SLA commitment",
+                mean_ale=420_000.0,
+                var_95=1_100_000.0,
+                var_99=2_800_000.0,
+                control_effectiveness=0.85,
+                iterations=10000,
+                details={
+                    "threat_event_frequency": {"min": 1.0, "max": 6.0, "mode": 2.5},
+                    "loss_magnitude": {"min": 50_000, "max": 3_000_000, "mode": 300_000},
+                },
+                risk_culture_score=75.0,
+                mttr_days=4.0,
+            ),
+            RiskAnalysis(
+                id=str(uuid.uuid4()),
+                framework="pci_dss",
+                scenario_name="Payment card data exfiltration",
+                mean_ale=2_800_000.0,
+                var_95=7_500_000.0,
+                var_99=15_000_000.0,
+                control_effectiveness=0.88,
+                iterations=10000,
+                details={
+                    "threat_event_frequency": {"min": 0.1, "max": 1.0, "mode": 0.3},
+                    "loss_magnitude": {"min": 2_000_000, "max": 20_000_000, "mode": 5_000_000},
+                },
+                risk_culture_score=80.0,
+                mttr_days=7.0,
+            ),
+            RiskAnalysis(
+                id=str(uuid.uuid4()),
+                framework="gdpr",
+                scenario_name="Cross-border data transfer violation",
+                mean_ale=950_000.0,
+                var_95=4_200_000.0,
+                var_99=12_000_000.0,
+                control_effectiveness=0.65,
+                iterations=10000,
+                details={
+                    "threat_event_frequency": {"min": 0.2, "max": 2.0, "mode": 0.8},
+                    "loss_magnitude": {"min": 200_000, "max": 20_000_000, "mode": 1_500_000},
+                },
+                risk_culture_score=60.0,
+                mttr_days=21.0,
+            ),
+        ]
+        for ra in ra_defs:
+            session.add(ra)
+            ra_ids.append(ra.id)
+        session.flush()
+        counts["risk_analyses"] = len(ra_defs)
+    else:
+        ra_ids = [r[0] for r in session.query(RiskAnalysis.id).limit(4).all()]
+        counts["risk_analyses"] = 0
+
+    existing_rd = session.query(RiskDependency).count()
+    if existing_rd == 0 and len(ra_ids) >= 4:
+        session.add(
+            RiskDependency(
+                risk_id=ra_ids[0],
+                depends_on_risk_id=ra_ids[1],
+                relationship_type="amplifies",
+                weight=0.7,
+                description="IAM credential breach amplifies service outage risk",
+            )
+        )
+        session.add(
+            RiskDependency(
+                risk_id=ra_ids[2],
+                depends_on_risk_id=ra_ids[0],
+                relationship_type="causes",
+                weight=0.9,
+                description="Credential compromise can lead to PCI data exfiltration",
+            )
+        )
+        session.add(
+            RiskDependency(
+                risk_id=ra_ids[3],
+                depends_on_risk_id=ra_ids[2],
+                relationship_type="correlates",
+                weight=0.5,
+                description="PCI breach often co-occurs with GDPR data transfer issues",
+            )
+        )
+        session.add(
+            RiskDependency(
+                risk_id=ra_ids[1],
+                depends_on_risk_id=ra_ids[3],
+                relationship_type="mitigates",
+                weight=0.3,
+                description="Outage mitigation controls reduce GDPR exposure window",
+            )
+        )
+        counts["risk_dependencies"] = 4
+    else:
+        counts["risk_dependencies"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Sandbox environments — 2
+    # -----------------------------------------------------------------------
+    existing_sb = session.query(SandboxEnvironment).count()
+    if existing_sb == 0 and admin_user:
+        session.add(
+            SandboxEnvironment(
+                name="Policy Testing Sandbox",
+                owner_id=admin_user.id,
+                config={
+                    "frameworks": ["nist_800_53", "soc2"],
+                    "mock_data": True,
+                    "opa_fail_mode": "open",
+                },
+                status="active",
+                expires_at=now + timedelta(days=30),
+            )
+        )
+        test_owner = auditor_user or admin_user
+        session.add(
+            SandboxEnvironment(
+                name="Auditor Review Environment",
+                owner_id=test_owner.id,
+                config={
+                    "frameworks": ["soc2", "iso_27001"],
+                    "read_only": True,
+                    "snapshot_date": (now - timedelta(days=7)).isoformat(),
+                },
+                status="active",
+                expires_at=now + timedelta(days=14),
+            )
+        )
+        counts["sandbox_environments"] = 2
+    else:
+        counts["sandbox_environments"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Saved queries — 3
+    # -----------------------------------------------------------------------
+    existing_sq = session.query(SavedQuery).count()
+    if existing_sq == 0:
+        session.add(
+            SavedQuery(
+                name="Non-compliant critical controls",
+                description="All critical controls currently non-compliant across production systems",
+                sql_text=(
+                    "SELECT framework, control_id, status, assessed_at "
+                    "FROM control_results "
+                    "WHERE status = 'non_compliant' "
+                    "ORDER BY assessed_at DESC"
+                ),
+                query_type="sla_breach",
+                shared=True,
+                created_by="eve.nakamura@acme.com",
+                run_count=12,
+                last_run_at=now - timedelta(hours=2),
+            )
+        )
+        session.add(
+            SavedQuery(
+                name="Findings by severity trend (30d)",
+                description="Daily finding counts by severity for the last 30 days",
+                sql_text=(
+                    "SELECT date(ingested_at) as day, severity, count(*) as cnt "
+                    "FROM findings "
+                    "WHERE ingested_at > date('now', '-30 days') "
+                    "GROUP BY day, severity ORDER BY day"
+                ),
+                query_type="drift",
+                shared=True,
+                created_by="admin@acme.com",
+                run_count=8,
+                last_run_at=now - timedelta(days=1),
+            )
+        )
+        session.add(
+            SavedQuery(
+                name="Vendor risk exposure summary",
+                description="Vendor risk scores with contract expiry and blast radius",
+                sql_text=(
+                    "SELECT name, tier, risk_score, blast_radius_score, contract_expires "
+                    "FROM vendors WHERE risk_score > 50 ORDER BY risk_score DESC"
+                ),
+                query_type="custom",
+                shared=False,
+                created_by="carol.park@acme.com",
+                run_count=3,
+            )
+        )
+        counts["saved_queries"] = 3
+    else:
+        counts["saved_queries"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Trust access requests — 2
+    # -----------------------------------------------------------------------
+    existing_tar = session.query(TrustAccessRequest).count()
+    if existing_tar == 0:
+        session.add(
+            TrustAccessRequest(
+                contact_email="auditor@clientcorp.com",
+                contact_name="Jane Smith",
+                company_name="ClientCorp Inc.",
+                document_types=["soc2_report", "pentest_summary"],
+                status="approved",
+                reviewed_by="eve.nakamura@acme.com",
+                reviewed_at=now - timedelta(days=5),
+                reason="Due diligence for vendor onboarding. NDA on file.",
+                nda_accepted=True,
+            )
+        )
+        session.add(
+            TrustAccessRequest(
+                contact_email="security@bigbank.com",
+                contact_name="Michael Chen",
+                company_name="BigBank Financial",
+                document_types=[
+                    "soc2_report",
+                    "iso_cert",
+                    "pentest_summary",
+                    "security_whitepaper",
+                ],
+                status="pending",
+                reason="Enterprise deal in pipeline. Priority review requested by sales.",
+                nda_accepted=False,
+            )
+        )
+        counts["trust_access_requests"] = 2
+    else:
+        counts["trust_access_requests"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Trust documents — 3
+    # -----------------------------------------------------------------------
+    existing_td = session.query(TrustDocument).count()
+    if existing_td == 0:
+        session.add(
+            TrustDocument(
+                title="SOC 2 Type II Report — FY2025",
+                description="Independent auditor report covering the period Jan 1 - Dec 31, 2025.",
+                classification_tier="nda",
+                file_path="/trust/soc2-type2-fy2025.pdf",
+                content_type="application/pdf",
+                file_size_bytes=2_450_000,
+                uploaded_by="eve.nakamura@acme.com",
+                is_active=True,
+            )
+        )
+        session.add(
+            TrustDocument(
+                title="Annual Penetration Test Executive Summary — 2026 Q1",
+                description="NCC Group penetration test results. No critical findings.",
+                classification_tier="contract",
+                file_path="/trust/pentest-summary-2026q1.pdf",
+                content_type="application/pdf",
+                file_size_bytes=1_280_000,
+                uploaded_by="security-lead@acme.com",
+                is_active=True,
+            )
+        )
+        session.add(
+            TrustDocument(
+                title="ISO 27001:2022 Certificate",
+                description="BSI-issued ISO 27001 certificate. Scope: SaaS platform and supporting infrastructure.",
+                classification_tier="public",
+                file_path="/trust/iso27001-cert-2025.pdf",
+                content_type="application/pdf",
+                file_size_bytes=520_000,
+                uploaded_by="compliance@acme.com",
+                is_active=True,
+            )
+        )
+        counts["trust_documents"] = 3
+    else:
+        counts["trust_documents"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 21: Workpapers — 3 linked to engagements
+    # -----------------------------------------------------------------------
+    existing_wp = session.query(Workpaper).count()
+    if existing_wp == 0:
+        eng = session.query(AuditEngagement).first()
+        if eng:
+            session.add(
+                Workpaper(
+                    engagement_id=eng.id,
+                    control_id="CC6.1",
+                    framework="soc2",
+                    template_type="test_of_design",
+                    status="signed_off",
+                    reviewer="sarah.chen@deloitte.com",
+                    notes="Design of IAM controls verified. MFA enforced for all admin accounts.",
+                    review_history=[
+                        {
+                            "action": "created",
+                            "by": "eve.nakamura@acme.com",
+                            "at": (now - timedelta(days=14)).isoformat(),
+                        },
+                        {
+                            "action": "reviewed",
+                            "by": "sarah.chen@deloitte.com",
+                            "at": (now - timedelta(days=7)).isoformat(),
+                        },
+                        {
+                            "action": "signed_off",
+                            "by": "sarah.chen@deloitte.com",
+                            "at": (now - timedelta(days=5)).isoformat(),
+                        },
+                    ],
+                )
+            )
+            session.add(
+                Workpaper(
+                    engagement_id=eng.id,
+                    control_id="CC6.6",
+                    framework="soc2",
+                    template_type="test_of_effectiveness",
+                    status="reviewed",
+                    reviewer="sarah.chen@deloitte.com",
+                    notes="Encryption at rest verified for all S3 buckets and RDS instances.",
+                    review_history=[
+                        {
+                            "action": "created",
+                            "by": "bob.martinez@acme.com",
+                            "at": (now - timedelta(days=10)).isoformat(),
+                        },
+                        {
+                            "action": "reviewed",
+                            "by": "sarah.chen@deloitte.com",
+                            "at": (now - timedelta(days=3)).isoformat(),
+                        },
+                    ],
+                )
+            )
+            session.add(
+                Workpaper(
+                    engagement_id=eng.id,
+                    control_id="CC7.2",
+                    framework="soc2",
+                    template_type="walkthrough",
+                    status="draft",
+                    notes="Walkthrough of incident detection and response procedures. Pending auditor review.",
+                    review_history=[
+                        {
+                            "action": "created",
+                            "by": "frank.torres@acme.com",
+                            "at": (now - timedelta(days=2)).isoformat(),
+                        },
+                    ],
+                )
+            )
+            counts["workpapers"] = 3
+        else:
+            counts["workpapers"] = 0
+    else:
+        counts["workpapers"] = 0
+
+    session.flush()
+
+    # Item 53: Access review items — handled in step 31a (after campaigns created)
+
+    # -----------------------------------------------------------------------
+    # Item 80: Control test records — mark 10 controls as examined
+    # -----------------------------------------------------------------------
+    ct_count = 0
+    unexamined = (
+        session.query(ControlResult).filter(ControlResult.examined_at.is_(None)).limit(10).all()
+    )
+    testers = [
+        "eve.nakamura@acme.com",
+        "frank.torres@acme.com",
+        "hassan.ali@acme.com",
+    ]
+    for i, cr in enumerate(unexamined):
+        cr.examined_at = now - timedelta(days=random.randint(1, 30))
+        cr.examined_by = testers[i % len(testers)]
+        ct_count += 1
+    counts["control_tests"] = ct_count
+
+    # -----------------------------------------------------------------------
+    # Item 25: Expanded audit trail — target 200+ total entries
+    # -----------------------------------------------------------------------
+    current_audit_count = session.query(AuditEntry).count()
+    extra_needed = max(0, 200 - current_audit_count)
+    if extra_needed > 0:
+        audit_actions = [
+            # Bulk finding creation batches
+            (
+                "finding_batch_created",
+                "Pipeline",
+                "BATCH",
+                "pipeline",
+                lambda i: {"batch_size": 50 + i * 10, "source": "crowdstrike", "duration_s": 2.1},
+            ),
+            (
+                "finding_batch_created",
+                "Pipeline",
+                "BATCH",
+                "pipeline",
+                lambda i: {"batch_size": 75, "source": "aws", "duration_s": 3.4},
+            ),
+            (
+                "finding_batch_created",
+                "Pipeline",
+                "BATCH",
+                "pipeline",
+                lambda i: {"batch_size": 120, "source": "okta", "duration_s": 1.8},
+            ),
+            # Control assessment batches
+            (
+                "control_assessment_batch",
+                "Pipeline",
+                "ASSESS",
+                "pipeline",
+                lambda i: {"framework": "nist_800_53", "controls_assessed": 200, "duration_s": 5.2},
+            ),
+            (
+                "control_assessment_batch",
+                "Pipeline",
+                "ASSESS",
+                "pipeline",
+                lambda i: {"framework": "soc2", "controls_assessed": 46, "duration_s": 1.1},
+            ),
+            (
+                "control_assessment_batch",
+                "Pipeline",
+                "ASSESS",
+                "pipeline",
+                lambda i: {"framework": "iso_27001", "controls_assessed": 93, "duration_s": 2.3},
+            ),
+            # Pipeline run events
+            (
+                "pipeline_run_started",
+                "PipelineRun",
+                "RUN",
+                "scheduler",
+                lambda i: {"connectors": 351, "trigger": "scheduled"},
+            ),
+            (
+                "pipeline_run_completed",
+                "PipelineRun",
+                "RUN",
+                "scheduler",
+                lambda i: {"duration_s": 7.2, "findings": 7325, "controls": 373852},
+            ),
+            # Evidence collection
+            (
+                "evidence_collected",
+                "Evidence",
+                "EVC",
+                "pipeline",
+                lambda i: {"source": ["aws", "okta", "crowdstrike"][i % 3], "events": 15 + i},
+            ),
+            # User events
+            (
+                "login",
+                "User",
+                "USR",
+                "admin@acme.com",
+                lambda i: {"ip": "10.0.1.50", "user_agent": "Mozilla/5.0"},
+            ),
+            ("logout", "User", "USR", "admin@acme.com", lambda i: {"duration_minutes": 30 + i * 5}),
+            (
+                "login",
+                "User",
+                "USR",
+                "eve.nakamura@acme.com",
+                lambda i: {"ip": "10.0.1.51", "user_agent": "Mozilla/5.0"},
+            ),
+            # POA&M transitions
+            (
+                "poam_status_changed",
+                "POAM",
+                "POAM",
+                "security-lead@acme.com",
+                lambda i: {"from": "open", "to": "in_progress", "control_id": "AC-2"},
+            ),
+            (
+                "poam_status_changed",
+                "POAM",
+                "POAM",
+                "ciso@acme.com",
+                lambda i: {"from": "in_progress", "to": "remediated", "control_id": "SC-7"},
+            ),
+            # System profile changes
+            (
+                "system_profile_updated",
+                "SystemProfile",
+                "SYS",
+                "hassan.ali@acme.com",
+                lambda i: {
+                    "field": "authorization_status",
+                    "old": "in_process",
+                    "new": "authorized",
+                },
+            ),
+        ]
+
+        batch_idx = 0
+        for action, etype, eid_prefix, actor, meta_fn in audit_actions:
+            if batch_idx >= extra_needed:
+                break
+            trail.record(
+                action=action,
+                entity_type=etype,
+                entity_id=f"{eid_prefix}-{batch_idx + 1:03d}",
+                actor=actor,
+                metadata=meta_fn(batch_idx),
+            )
+            batch_idx += 1
+
+        # Fill remaining with diverse pipeline events
+        while batch_idx < extra_needed:
+            src_idx = batch_idx % 10
+            sources = [
+                "aws",
+                "okta",
+                "crowdstrike",
+                "azure",
+                "gcp",
+                "tenable",
+                "snyk",
+                "splunk",
+                "github",
+                "workday",
+            ]
+            trail.record(
+                action="evidence_collected",
+                entity_type="RawEvent",
+                entity_id=f"RE-EXTRA-{batch_idx:04d}",
+                actor="pipeline",
+                metadata={
+                    "source": sources[src_idx],
+                    "event_count": 3 + (batch_idx % 20),
+                    "pipeline_stage": "collection",
+                },
+            )
+            batch_idx += 1
+
+        counts["extra_audit_entries"] = batch_idx
+    else:
+        counts["extra_audit_entries"] = 0
+
+    # -----------------------------------------------------------------------
+    # Item 20: Expanded posture snapshots for ALL system profiles
+    # -----------------------------------------------------------------------
+    all_profiles = session.query(SystemProfile).all()
+    profiles_with_snapshots = set(
+        row[0]
+        for row in session.query(PostureSnapshot.system_profile_id)
+        .filter(PostureSnapshot.system_profile_id.isnot(None))
+        .distinct()
+        .all()
+    )
+    profiles_needing_snapshots = [sp for sp in all_profiles if sp.id not in profiles_with_snapshots]
+    snapshot_count = 0
+    for sp in profiles_needing_snapshots:
+        # Create 30 days of snapshots per framework the system covers
+        sp_frameworks = sp.frameworks or ["soc2"]
+        for fw in sp_frameworks[:2]:  # Limit to 2 frameworks per system
+            base_score = random.uniform(50, 90)
+            for day_offset in range(30, 0, -5):  # Every 5 days
+                score = max(0, min(100, base_score + random.uniform(-8, 8)))
+                status = (
+                    "compliant" if score >= 80 else "partial" if score >= 50 else "non_compliant"
+                )
+                total = random.randint(3, 10)
+                compliant_n = max(0, int(total * score / 100))
+                session.add(
+                    PostureSnapshot(
+                        snapshot_date=now - timedelta(days=day_offset),
+                        framework=fw,
+                        control_id=f"{fw.upper()[:4]}-AGGR",
+                        status=status,
+                        posture_score=round(score, 1),
+                        total_findings=total,
+                        compliant_findings=compliant_n,
+                        non_compliant_findings=total - compliant_n,
+                        evidence_sources=sp.connector_scope or ["generic"],
+                        system_profile_id=sp.id,
+                    )
+                )
+                snapshot_count += 1
+    counts["posture_snapshots_backfill"] = snapshot_count
+
+    session.commit()
+    return counts
+
+
 def main():
     # Registry divergence note: this demo builds its own ConnectorRegistry,
     # NormalizerRegistry, and EventBus (in-process, in-memory) populated with
@@ -21967,6 +23253,15 @@ def main():
         users_created = _create_demo_users(session)
         print(f"       Users created: {users_created}")
 
+    print("[23a/34] Seeding 18 previously-empty tables + missing demo data...")
+    with get_session() as session:
+        et = _seed_empty_tables(session)
+        total_et = sum(et.values())
+        print(f"       Empty-table records: {total_et}")
+        for k, v in sorted(et.items()):
+            if v > 0:
+                print(f"         {k}: {v}")
+
     # --- GAP-9/GAP-10: Aged findings for SLA breach / aging demos ---
 
     print("[24/34] Aging ~50 findings (7-90 days) for SLA demos...")
@@ -22122,6 +23417,52 @@ def main():
         print(f"       Feature coverage records: {total_fc}")
         for k, v in sorted(fc.items()):
             print(f"         {k}: {v}")
+
+    # --- Fix access review progress (Item 53) — campaigns created in step 31 ---
+    print("[31a/34] Enriching access review campaigns with review items...")
+    with get_session() as session:
+        from warlock.db.models import AuditEntry as _AE
+
+        ar_entries = (
+            session.query(_AE)
+            .filter(
+                _AE.action == "access_review_campaign",
+                _AE.entity_type == "access_review",
+            )
+            .all()
+        )
+        _personnel_emails = [
+            "alice.wong@acme.com",
+            "bob.singh@acme.com",
+            "carol.park@acme.com",
+            "dave.chen@acme.com",
+            "eve.nakamura@acme.com",
+            "frank.torres@acme.com",
+        ]
+        ar_fixed = 0
+        for entry in ar_entries:
+            extra = dict(entry.extra or {})
+            if extra.get("total_users", 0) == 0 or not extra.get("certifications"):
+                certs = []
+                total_users = 8
+                is_completed = extra.get("status") == "completed"
+                cert_count = total_users - 1 if is_completed else 3
+                for j in range(cert_count):
+                    certs.append(
+                        {
+                            "user_email": _personnel_emails[j % len(_personnel_emails)],
+                            "decision": "certified",
+                            "certified_by": "identity-governance@acme.com",
+                            "certified_at": (NOW - timedelta(days=10 + j)).isoformat(),
+                            "notes": "Access verified and appropriate for role",
+                        }
+                    )
+                extra["certifications"] = certs
+                extra["total_users"] = total_users
+                entry.extra = extra
+                ar_fixed += 1
+        session.commit()
+        print(f"       Access review campaigns enriched: {ar_fixed}")
 
     # --- Seed expansions: richer demo data ---
     print("[32/38] Seeding Phase 2 expansions (zero-data gaps)...")
