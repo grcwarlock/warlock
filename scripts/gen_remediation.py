@@ -2,13 +2,15 @@
 """Generate warlock/frameworks/remediation/nist_800_53.yaml with all 1,176 controls."""
 
 import sys
+from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, "/Users/jsn/warlock")
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 # Load control IDs from the framework YAML
-with open("/Users/jsn/warlock/warlock/frameworks/nist_800_53.yaml") as f:
+with open(ROOT / "warlock" / "frameworks" / "nist_800_53.yaml") as f:
     fw = yaml.safe_load(f)
 
 all_controls = []
@@ -6548,7 +6550,7 @@ def represent_none(dumper, _):
 
 NullDumper.add_representer(type(None), represent_none)
 
-output_path = "/Users/jsn/warlock/warlock/frameworks/remediation/nist_800_53.yaml"
+output_path = ROOT / "warlock" / "frameworks" / "remediation" / "nist_800_53.yaml"
 with open(output_path, "w") as f:
     yaml.dump(
         output,

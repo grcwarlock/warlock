@@ -1,5 +1,8 @@
 # Warlock CLI Reference
 
+> **Note:** The canonical CLI reference is [`proddocs/api/cli-reference.md`](proddocs/api/cli-reference.md).
+> This file is a quick-reference snapshot and may be stale. Regenerate with `warlock --help`.
+
 **539 commands** across **101 top-level groups** covering the full GRC lifecycle.
 
 Includes interactive workflows: investigate, triage, daily, morning, weekly,

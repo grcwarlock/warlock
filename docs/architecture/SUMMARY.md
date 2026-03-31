@@ -1,8 +1,11 @@
 # Warlock Architecture Review: Master Summary
 
-> **Merged analysis** from three independent codebase reviews.
-> All unique data points, market figures, and competitive intelligence preserved.
-> See companion files for full detail: `GAPS.md`, `STUBS.md`, `ARCHITECTURE.md`.
+> **Historical snapshot (March 2026).** The counts in this document reflect the
+> state of the codebase at the time of the original architecture audit and are
+> **not automatically verified by CI**. For current counts, run `make verify-docs`.
+> See also: `GAPS.md`, `STUBS.md`, `ARCHITECTURE.md`.
+>
+> Merged analysis from three independent codebase reviews.
 
 ---
 

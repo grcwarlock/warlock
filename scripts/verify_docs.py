@@ -317,7 +317,7 @@ def main() -> int:
 
     print(f"{BOLD}Checking documentation claims...{RESET}\n")
 
-    doc_files = ["README.md", "CLAUDE.md", "DEMO.md", "CONTRIBUTING.md"]
+    doc_files = ["README.md", "CLAUDE.md", "DEMO.md", "CONTRIBUTING.md", "CLI-REFERENCE.md"]
     for doc_name in doc_files:
         path = ROOT / doc_name
         if path.exists():
