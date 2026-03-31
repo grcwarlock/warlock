@@ -638,7 +638,9 @@ class OscalExporter:
 
         # Use an actual profile document reference (URL or local JSON path).
         # Do not point import-profile at an in-document UUID fragment.
-        profile_href = _FRAMEWORK_PROFILE_URIS.get(framework, f"./frameworks-oscal/{framework}/profile.json")
+        profile_href = _FRAMEWORK_PROFILE_URIS.get(
+            framework, f"./frameworks-oscal/{framework}/profile.json"
+        )
 
         # Derive earliest assessment date for date-authorized
         assessed_dates = [cr.assessed_at for cr in cr_rows if cr.assessed_at]
