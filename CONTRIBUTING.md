@@ -2,6 +2,13 @@
 
 Thank you for considering a contribution to Warlock, the pipeline-first GRC platform. This document outlines our development workflow, coding standards, and contribution process.
 
+## Enterprise / procurement documentation
+
+Buyer-facing material for SSO, data residency, SLAs, and integrations lives under **`proddocs/`**:
+
+- [Product docs index](proddocs/README.md) — includes **SSO runbooks**, **data map / subprocessors**, **residency**, **SLA template**, **integration matrix**.
+- Production SSO requires **`WLK_CACHE_URL`** (Redis) when **`WLK_SSO_ENABLED=true`** and **`WLK_ENV=production`** — see `proddocs/operations/sso-idp-runbooks.md` and `.env.example`.
+
 ## Development Setup
 
 ### Prerequisites

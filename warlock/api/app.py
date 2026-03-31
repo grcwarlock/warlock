@@ -73,6 +73,15 @@ def create_app() -> FastAPI:
     configure_logging()
 
     # ------------------------------------------------------------------
+    # Production config validation (GAP-077 SSO, secrets, CORS)
+    # ------------------------------------------------------------------
+    # Note: _get_app_settings() is already loaded above.
+    if _app_settings.env == "production":
+        from warlock.config import validate_production_config
+
+        validate_production_config(_app_settings)
+
+    # ------------------------------------------------------------------
     # CORS — configured via WLK_CORS_ORIGINS
     # ------------------------------------------------------------------
     from warlock.config import get_settings as _get_cors_settings

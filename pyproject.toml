@@ -23,6 +23,7 @@ dependencies = [
     "openpyxl>=3.1",        # RPT-3: Excel export
     "python-jose[cryptography]>=3.3",  # INT-1: OIDC JWT validation (external IdP tokens)
     "textual>=3.0",                    # TUI: interactive terminal dashboard
+    "redis>=5.0",                      # WLK_CACHE_URL — SSO OAuth state, rate limits, queues
 ]
 
 [project.optional-dependencies]

@@ -61,7 +61,18 @@ All Warlock configuration is driven by environment variables prefixed with `WLK_
 | `WLK_QUEUE_PREFIX` | `warlock` | Stream/topic prefix. |
 | `WLK_QUEUE_CONSUMER_GROUP` | `warlock-pipeline` | Consumer group name. |
 | `WLK_QUEUE_MAX_RETRIES` | `3` | Maximum retry count for failed queue messages. |
-| `WLK_CACHE_URL` | (empty) | Shared cache URL. Empty = in-memory (single worker only). Set to Redis URL for multi-worker. |
+| `WLK_CACHE_URL` | (empty) | Shared cache URL. Empty = in-memory (single worker only). Set to Redis for multi-worker **rate limits** and **OIDC OAuth state** (GAP-077). **Required** when `WLK_SSO_ENABLED=true` and `WLK_ENV=production`. See [SSO IdP runbooks](sso-idp-runbooks.md). |
+
+### SSO / OIDC (optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WLK_SSO_ENABLED` | `false` | Enable browser-based OIDC login. |
+| `WLK_SSO_PROVIDER` | (empty) | `okta`, `azure_ad`, `google`, `generic_oidc`. |
+| `WLK_SSO_ISSUER_URL` | (empty) | IdP issuer URL. |
+| `WLK_SSO_CLIENT_ID` / `WLK_SSO_CLIENT_SECRET` | (empty) | OIDC client credentials. |
+| `WLK_SSO_GROUPS_CLAIM` | (empty) | IdP claim for groups (e.g. `groups`). |
+| `WLK_SSO_ROLE_MAPPING` | `{}` | JSON map from IdP group name to Warlock role (`admin`, `auditor`, `owner`, `viewer`). |
 
 ### Pipeline
 

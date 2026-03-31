@@ -10,6 +10,9 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 | [Data Model](technical/data-model.md) | 47-table schema, relationships, JSON columns, pipeline data flow |
 | [Data Lake](technical/data-lake.md) | GRC Data Lake — 3 zones, 10 domains, DuckDB, Iceberg, RAG |
 | [Security](technical/security.md) | Auth (JWT/API keys/MFA), ABAC, OPA, audit trail, GDPR |
+| [Data map & subprocessors](technical/data-map-subprocessors.md) | DDQ/DPA-oriented data categories and typical subprocessors |
+| [Data residency](technical/data-residency.md) | Regions, replicas, multi-tenancy vs geo, lake paths |
+| [SAML roadmap](technical/saml-roadmap.md) | SAML SP — planning only (OIDC is implemented today) |
 
 ## Product
 
@@ -39,3 +42,12 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 | [Deployment](operations/deployment.md) | Local dev, environment variables, production config |
 | [Developer Setup](operations/developer-setup.md) | Local Python setup, testing, linting, QA gate, project structure |
 | [Runbook](operations/runbook.md) | QA gate, pipeline ops, troubleshooting, monitoring |
+| [SSO / IdP runbooks](operations/sso-idp-runbooks.md) | Azure AD, Okta, Google OIDC — redirect URIs, Redis, troubleshooting |
+| [Enterprise SLA template](operations/enterprise-sla-template.md) | Non-binding SLA/support structure for procurement |
+
+## Integrations (enterprise)
+
+| Document | Description |
+|----------|-------------|
+| [Integration matrix](integrations/integration-matrix.md) | Jira, ServiceNow, Slack, Teams, PagerDuty — auth, direction, status |
+| [Integrations roadmap](integrations/integrations-roadmap.md) | POC recommendations, SAML/SCIM notes, webhook pointers |

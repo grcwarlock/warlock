@@ -416,6 +416,10 @@ class Settings(BaseSettings):
     sso_callback_url: str = "/api/v1/auth/sso/callback"
     sso_auto_create_users: bool = True  # auto-create user on first SSO login
     sso_default_role: str = "viewer"  # role for auto-created SSO users
+    # IdP claim holding groups/roles (e.g. "groups", "roles"). Empty = use sso_default_role only.
+    sso_groups_claim: str = ""
+    # JSON map: IdP group or role string -> Warlock role (admin|auditor|owner|viewer).
+    sso_role_mapping: str = "{}"
 
     # --- IP Allowlist (SAC-1) ---
     ip_allowlist_enabled: bool = False  # enforce IP allowlist from DB
@@ -515,6 +519,14 @@ def validate_production_config(settings: Settings) -> None:
     # crash at runtime — catch it at startup instead.
     if not settings.encryption_key:
         errors.append("WLK_ENCRYPTION_KEY must be set in production for field-level encryption")
+
+    # GAP-077 / INT-1: SSO OAuth state must be shared across API workers (Redis).
+    if settings.sso_enabled and not settings.cache_url.strip():
+        errors.append(
+            "WLK_CACHE_URL must be set when WLK_SSO_ENABLED=true in production "
+            "(Redis-backed OAuth state for multi-worker deployments). "
+            "Example: redis://redis:6379/0"
+        )
 
     if errors:
         raise RuntimeError(

@@ -4,7 +4,7 @@ Supports multiple OIDC providers: Okta, Azure AD, Google, and generic
 OIDC-compliant identity providers. On successful authentication, issues
 a local JWT and optionally auto-creates users on first login.
 
-INT-1: SSO/OIDC integration.
+INT-1: SSO/OIDC integration. GAP-077: shared cache for OAuth state.
 """
 
 from __future__ import annotations
@@ -29,12 +29,29 @@ router = APIRouter(prefix="/api/v1/auth/sso", tags=["sso"])
 # OIDC discovery well-known path
 _WELL_KNOWN = "/.well-known/openid-configuration"
 
-# In-memory nonce/state store (short-lived, keyed by state param).
-# GAP-077: This MUST be backed by Redis in production. In-memory storage
-# breaks with multiple workers (each worker has its own dict, so a callback
-# hitting a different worker than the login redirect will fail).
-_pending_states: dict[str, dict[str, Any]] = {}
+# OAuth state is stored via ``warlock.utils.cache`` (Redis when WLK_CACHE_URL is set).
+# GAP-077: Production + SSO requires Redis so callbacks hit shared state across workers.
 _STATE_TTL_SECONDS = 600  # 10 minutes
+_SSO_STATE_KEY_PREFIX = "sso_state:"
+
+
+def _get_cache():
+    from warlock.utils.cache import get_cache
+
+    return get_cache()
+
+
+def _store_sso_state(state: str, data: dict[str, Any]) -> None:
+    cache = _get_cache()
+    cache.set(f"{_SSO_STATE_KEY_PREFIX}{state}", data, ttl=_STATE_TTL_SECONDS)
+
+
+def _pop_sso_state(state: str) -> dict[str, Any] | None:
+    cache = _get_cache()
+    key = f"{_SSO_STATE_KEY_PREFIX}{state}"
+    pending = cache.get(key)
+    cache.delete(key)
+    return pending
 
 
 def _warn_sso_state_storage() -> None:
@@ -43,9 +60,47 @@ def _warn_sso_state_storage() -> None:
     if settings.sso_enabled and not settings.cache_url:
         log.warning(
             "GAP-077: SSO is enabled but WLK_CACHE_URL is empty. "
-            "SSO state is stored in-memory, which breaks with multiple workers. "
-            "Configure WLK_CACHE_URL (Redis) for production SSO deployments."
+            "SSO state uses in-memory cache only — breaks with multiple workers. "
+            "Configure WLK_CACHE_URL (Redis) for production. "
+            "Production env refuses to start without Redis when SSO is on."
         )
+
+
+def _resolve_sso_role(claims: dict[str, Any], settings: Any) -> str:
+    """Map IdP groups/roles claim to a Warlock role using WLK_SSO_ROLE_MAPPING."""
+    from warlock.api.auth import PERMISSIONS
+
+    default = settings.sso_default_role
+    mapping: dict[str, str] = {}
+    raw_map = getattr(settings, "sso_role_mapping", None) or "{}"
+    if isinstance(raw_map, str) and raw_map.strip():
+        try:
+            mapping = json.loads(raw_map)
+        except json.JSONDecodeError:
+            log.warning("Invalid WLK_SSO_ROLE_MAPPING JSON — using default role %s", default)
+            return default if default in PERMISSIONS else "viewer"
+    if not mapping:
+        return default if default in PERMISSIONS else "viewer"
+
+    claim_name = (getattr(settings, "sso_groups_claim", None) or "").strip()
+    if not claim_name:
+        return default if default in PERMISSIONS else "viewer"
+
+    raw = claims.get(claim_name)
+    groups: list[str] = []
+    if isinstance(raw, str):
+        groups = [raw]
+    elif isinstance(raw, list):
+        groups = [str(x) for x in raw]
+
+    for g in groups:
+        if g in mapping:
+            role = mapping[g]
+            if role in PERMISSIONS:
+                return role
+            log.warning("SSO role mapping references unknown role %r for group %s", role, g)
+
+    return default if default in PERMISSIONS else "viewer"
 
 
 # ---------------------------------------------------------------------------
@@ -129,14 +184,6 @@ def _generate_state() -> str:
 def _generate_nonce() -> str:
     """Generate a cryptographically random nonce for ID token binding."""
     return secrets.token_urlsafe(32)
-
-
-def _cleanup_expired_states() -> None:
-    """Remove expired pending states to prevent memory leak."""
-    now = time.time()
-    expired = [k for k, v in _pending_states.items() if v.get("expires_at", 0) < now]
-    for k in expired:
-        del _pending_states[k]
 
 
 def _decode_jwt_unverified(token: str) -> dict:
@@ -286,14 +333,15 @@ async def sso_login(
         host = request.headers.get("x-forwarded-host", request.url.netloc)
         callback_url = f"{scheme}://{host}{callback_url}"
 
-    # Store state for validation on callback
-    _cleanup_expired_states()
-    _pending_states[state] = {
-        "nonce": nonce,
-        "provider": provider,
-        "callback_url": callback_url,
-        "expires_at": time.time() + _STATE_TTL_SECONDS,
-    }
+    # Store state for validation on callback (Redis or in-memory)
+    _store_sso_state(
+        state,
+        {
+            "nonce": nonce,
+            "provider": provider,
+            "callback_url": callback_url,
+        },
+    )
 
     # Build authorization URL
     params = {
@@ -339,17 +387,11 @@ async def sso_callback(
     settings = _get_settings()
 
     # Validate state parameter (CSRF protection)
-    pending = _pending_states.pop(state, None)
+    pending = _pop_sso_state(state)
     if not pending:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired state parameter. Please restart the login flow.",
-        )
-
-    if pending.get("expires_at", 0) < time.time():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Login session expired. Please restart the login flow.",
         )
 
     provider = pending["provider"]
@@ -421,6 +463,8 @@ async def sso_callback(
             detail=str(exc),
         )
 
+    resolved_role = _resolve_sso_role(claims, settings)
+
     # Find or create local user
     from warlock.api.auth import create_access_token, generate_refresh_token
     from warlock.db.engine import get_session
@@ -452,6 +496,10 @@ async def sso_callback(
             user.sso_subject_id = user_info["subject"]
             user.last_login = datetime.now(timezone.utc)
             user.name = user_info["name"]  # Keep name in sync with IdP
+            if getattr(settings, "sso_groups_claim", None) or (
+                getattr(settings, "sso_role_mapping", "{}") or "{}"
+            ).strip() not in ("", "{}"):
+                user.role = resolved_role
             log.info("SSO login for existing user: %s (provider=%s)", user.email, provider)
         elif settings.sso_auto_create_users:
             # Auto-create user on first SSO login
@@ -459,7 +507,7 @@ async def sso_callback(
                 email=user_info["email"],
                 name=user_info["name"],
                 hashed_password="sso:no-password",  # SSO users do not have local passwords
-                role=settings.sso_default_role,
+                role=resolved_role,
                 is_active=True,
                 sso_provider=provider,
                 sso_subject_id=user_info["subject"],
@@ -471,7 +519,7 @@ async def sso_callback(
                 "Auto-created SSO user: %s (provider=%s, role=%s)",
                 user.email,
                 provider,
-                settings.sso_default_role,
+                resolved_role,
             )
         else:
             raise HTTPException(

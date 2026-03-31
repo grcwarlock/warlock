@@ -4,9 +4,24 @@
 
 Warlock is a pipeline-first GRC (Governance, Risk, Compliance) platform. Python 3.12+, FastAPI, SQLAlchemy, Click CLI, OPA/Rego policies, OSCAL packages, Terraform modules.
 
+## Table of contents
+
+- [Project Overview](#project-overview)
+- [HARD RULES](#hard-rules)
+- [Pre-Push QA Gate](#pre-push-qa-gate)
+- [Dependency Chain](#dependency-chain)
+- [Architecture](#architecture)
+- [Key Patterns](#key-patterns)
+- [Sub-Agent Anti-Patterns](#sub-agent-anti-patterns)
+- [CI/CD Pipelines](#cicd-pipelines)
+- [Framework coverage](#framework-coverage)
+- [Security-Critical Config Defaults](#security-critical-config-defaults)
+
 ## HARD RULES
 
 These exist because every one was violated. They are not guidelines.
+
+**When rules conflict:** demo correctness and security beat speed. **Numeric claims** (counts of files, tests, connectors, routes) must match `scripts/verify_docs.py` — run `make verify-docs` after changes; do not hand-edit numbers without verifying.
 
 ### Rule 1: NEVER push without explicit approval
 
@@ -90,7 +105,7 @@ A CLI command that runs without a traceback but shows "no data found", "0 result
 
 ### Rule 9: NEVER let doc counts go stale
 
-After ANY change that adds/removes connectors, models, CLI commands, API routes, tests, assertions, framework YAMLs, or OSCAL files — run `make verify-docs` and fix EVERY doc that mentions the changed count. Check: README.md, CLAUDE.md, DEMO.md, CONTRIBUTING.md, docs/warlock-one-pager.md, and all proddocs/.
+After ANY change that adds/removes connectors, models, CLI commands, API routes, tests, assertions, framework YAMLs, or OSCAL files — run `make verify-docs` and fix EVERY doc that mentions the changed count. Check: README.md, CLAUDE.md, DEMO.md, CONTRIBUTING.md, [`docs/warlock-one-pager.md`](docs/warlock-one-pager.md), and all `proddocs/`. **`scripts/verify_docs.py` is the source of truth** for automated count checks; narrative docs must agree.
 
 **Note:** Demo seed outputs 351 connectors, connector files number 352. Normalizer files also number 352.
 
@@ -118,9 +133,9 @@ ALL checks must pass. If any fail, fix before committing.
 
 ### Pre-push hook
 
-A git pre-push hook runs `ruff check` + `ruff format --check` on committed state. Location: `.git/hooks/pre-push`.
+If installed, a git `pre-push` hook may run `ruff check` + `ruff format --check` on the committed tree (common location: `.git/hooks/pre-push`). Not every clone has this hook; CI is authoritative.
 
-If it fails: `.venv/bin/ruff check --fix warlock/ scripts/ && .venv/bin/ruff format warlock/ scripts/`
+If ruff fails locally: `.venv/bin/ruff check --fix warlock/ scripts/ && .venv/bin/ruff format warlock/ scripts/`
 
 ### After rebase/merge — ALWAYS run lint
 
@@ -144,6 +159,7 @@ When you change the left column, you MUST update every file in the right column.
 | Normalizer (`warlock/normalizers/`) | `__init__.py`, verify matching connector, re-run demo seed |
 | DB model (`warlock/db/`) | Alembic migration, API routes, CLI commands, demo seed, `proddocs/technical/data-model.md` |
 | Config setting (`warlock/config.py`) | `.env.example`, README.md if user-facing |
+| SSO / OIDC (`warlock/api/sso.py`, SSO-related `config.py`) | `.env.example`, `proddocs/operations/sso-idp-runbooks.md`, `proddocs/operations/deployment.md`, `CONTRIBUTING.md` enterprise section if behavior changes |
 | API route (`warlock/api/`) | ABAC enforcement, input validation, auth decorator, middleware skip paths, `proddocs/api/reference.md` |
 | Assertion (`warlock/assessors/`) | All control bindings (list-based), demo seed |
 | Pipeline (`warlock/pipeline/`) | Demo seed, connector count, hash chain |
@@ -164,6 +180,8 @@ When you change the left column, you MUST update every file in the right column.
 
 Run `make verify-docs` for current counts. The tree below shows structure, not exact numbers (those drift — the QA gate catches mismatches).
 
+**Framework YAMLs vs “frameworks”:** The compliance table lists **14** primary programs; `warlock/frameworks/` may contain **more YAML files** (e.g. SOC 2 Points of Focus as a separate file). Demo seed and docs refer to both — use `make verify-docs` so numbers stay aligned.
+
 ```
 warlock/
   connectors/    — source connectors (Stage 1)
@@ -182,7 +200,7 @@ warlock/
   integrations/  — Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
   platform/      — tenancy, white-label, delegation, sandbox, legacy/bulk import
   frameworks/    — framework YAMLs + crosswalks + baselines + inherited controls
-tests/           — pytest tests (33 files)
+tests/           — pytest tests (34 files)
 policies/        — OPA/Rego files across 9 framework dirs
 frameworks-oscal/ — OSCAL catalog/profile JSON
 terraform/       — 142 IaC modules (AWS, Azure, GCP, + 12 more providers)
@@ -196,32 +214,12 @@ scripts/
 
 ## Key Patterns
 
+### Security, compliance, and API surface
+
 - **Hash-chained audit trail**: SHA-256 at every pipeline stage. Never break the chain.
 - **Fail-closed security**: OPA gate, assertions, ABAC all default to deny.
 - **Multiple assertions per control**: List-based bindings. Append, never overwrite.
-- **Timezone-aware datetimes**: Use `ensure_aware()` from `warlock/utils/`. No naive datetimes. SQLite returns naive even with `timezone=True` — always wrap DB values.
-- **Rich markup escaping**: Use `rich.markup.escape()` on ALL user-supplied text before `console.print()`. Unescaped `[brackets]` crash Rich.
 - **Root health endpoints**: `/health`, `/healthz`, `/readyz` at app root (not just `/api/v1/health`).
-- **CLI groups show defaults**: All CLI groups use `invoke_without_command=True` and show a useful summary when called without a subcommand.
-- **Prompt sanitization**: `<evidence>` tags + control character stripping in all LLM prompts.
-- **Gemini API key in header**: `x-goog-api-key`, never in URL query params.
-- **demo_seed.py is the #1 conflict-prone file**: 18K+ lines. Never let two agents touch it simultaneously. Re-run the full seed after any change.
-- **Session management**: Always use `with get_session() as session:` for writes, `with get_read_session() as session:` for reads. Never call `session.commit()` manually (context manager handles it). Never create sessions with `sessionmaker()` directly — miss SQLite PRAGMAs and pool config.
-- **UUID primary keys**: All models use `String(36)` UUID PKs via `_uuid()`. Never use Integer auto-increment PKs.
-- **JSONType for JSON columns**: Use `JSONType` (not raw `JSON`), which maps to JSONB on PostgreSQL (GIN-indexable) and JSON on SQLite.
-- **FK indexes required**: SQLite does not auto-index foreign keys. Every FK column needs an explicit `Index()`. Tag with `# #20: FK index`.
-- **SQLite PRAGMAs**: Engine sets `foreign_keys=ON`, `journal_mode=WAL`, `busy_timeout=5000` on every connection. Never remove these.
-- **Alembic batch mode**: Migrations use `render_as_batch=True` for SQLite ALTER TABLE support. Migration scripts live at `warlock/db/migrations/`, NOT `alembic/versions/`.
-- **Config is a singleton**: Use `get_settings()`, never `Settings()` directly. All env vars use `WLK_` prefix.
-- **Ruff line-length**: 100 characters (not default 88). Target: Python 3.12.
-- **Optional dependencies**: Use `try/except ImportError` with `_HAS_X` boolean guard. Never assume optional packages are installed. Production raises RuntimeError if critical deps (cryptography) are missing.
-- **PII scrubbing**: All normalizer output passes through `scrub_finding()` from `warlock.utils.pii`. New normalizers that skip this persist raw PII.
-- **Connector secrets**: Use `self.get_secret("ENV_VAR")` from BaseConnector, never `os.environ.get()` directly.
-- **Pipeline data classes**: `RawEventData`, `FindingData`, `ControlResultData`, `PipelineRunStats` are `@dataclass` (not Pydantic). Pydantic is only for config and API schemas.
-- **SHA-256 deterministic serialization**: `json.dumps(data, sort_keys=True, default=str)`. Both `sort_keys=True` and `default=str` are required for hash stability.
-- **Correlation ID tracing**: Pipeline runs set `correlation_id` ContextVar from `warlock.logging_config`. Use `logging.getLogger(__name__)` — never `print()`.
-- **WLK_AI_ENABLED=false for seed/QA**: Both `scripts/qa.sh` and `scripts/demo.sh` set this. Without it, the seed attempts real AI calls and fails.
-- **Pipeline lock file**: `$TMPDIR/warlock_pipeline.lock` persists after crashes. `scripts/qa.sh` cleans it before seed runs. `make reset` does not — be aware.
 - **API pagination**: All list endpoints use `Depends(get_pagination)` with a hard cap of 1000 rows (default 50). Never return unbounded results.
 - **Per-endpoint rate limits**: Login=10/min, register=5/min, AI=30/min, pipeline=5/min. Add new sensitive endpoints to `_ENDPOINT_LIMITS` in middleware.py.
 - **Two separate skip-path sets**: `_SKIP_PATHS` in middleware.py (audit logging) and `_HEALTH_PATHS` in policy_gate.py (OPA bypass) must stay in sync for health endpoints.
@@ -230,6 +228,44 @@ scripts/
 - **Control status enum**: Only 5 values: `compliant`, `non_compliant`, `partial`, `not_assessed`, `not_applicable`. Never invent new statuses.
 - **Assessment tier fallback**: Tier 1 (assertions) → Tier 2 (AI, only if not_assessed) → inheritance (only if still not_assessed). Never skip or reorder tiers.
 - **POA&M state machine**: draft→open→in_progress→remediated→verified→completed. Two statuses reachable from any state: risk_accepted, cancelled. Always use `POAMManager.transition()` — never set status directly.
+
+### Database and ORM
+
+- **Timezone-aware datetimes**: Use `ensure_aware()` from `warlock/utils/`. No naive datetimes. SQLite returns naive even with `timezone=True` — always wrap DB values.
+- **Session management**: Always use `with get_session() as session:` for writes, `with get_read_session() as session:` for reads. Never call `session.commit()` manually (context manager handles it). Never create sessions with `sessionmaker()` directly — miss SQLite PRAGMAs and pool config.
+- **UUID primary keys**: All models use `String(36)` UUID PKs via `_uuid()`. Never use Integer auto-increment PKs.
+- **JSONType for JSON columns**: Use `JSONType` (not raw `JSON`), which maps to JSONB on PostgreSQL (GIN-indexable) and JSON on SQLite.
+- **FK indexes required**: SQLite does not auto-index foreign keys. Every FK column needs an explicit `Index()`. Tag with `# #20: FK index`.
+- **SQLite PRAGMAs**: Engine sets `foreign_keys=ON`, `journal_mode=WAL`, `busy_timeout=5000` on every connection. Never remove these.
+- **Alembic batch mode**: Migrations use `render_as_batch=True` for SQLite ALTER TABLE support. Migration scripts live at `warlock/db/migrations/`, NOT `alembic/versions/`.
+
+### Config, tooling, and static checks
+
+- **Config is a singleton**: Use `get_settings()`, never `Settings()` directly. All env vars use `WLK_` prefix.
+- **Ruff line-length**: 100 characters (not default 88). Target: Python 3.12.
+- **Optional dependencies**: Use `try/except ImportError` with `_HAS_X` boolean guard. Never assume optional packages are installed. Production raises RuntimeError if critical deps (cryptography) are missing.
+- **Mypy**: CI runs mypy on `warlock/api/`, `warlock/db/`, and `warlock/pipeline/` (see `pyproject.toml`). Keep new and touched code type-clean where practical; do not widen types to silence errors without review.
+
+### Normalizers, pipeline, and hashing
+
+- **PII scrubbing**: All normalizer output passes through `scrub_finding()` from `warlock.utils.pii`. New normalizers that skip this persist raw PII.
+- **Connector secrets**: Use `self.get_secret("ENV_VAR")` from BaseConnector, never `os.environ.get()` directly.
+- **Pipeline data classes**: `RawEventData`, `FindingData`, `ControlResultData`, `PipelineRunStats` are `@dataclass` (not Pydantic). Pydantic is only for config and API schemas.
+- **SHA-256 deterministic serialization**: `json.dumps(data, sort_keys=True, default=str)`. Both `sort_keys=True` and `default=str` are required for hash stability.
+- **Correlation ID tracing**: Pipeline runs set `correlation_id` ContextVar from `warlock.logging_config`. Use `logging.getLogger(__name__)` — never `print()`.
+- **WLK_AI_ENABLED=false for seed/QA**: Both `scripts/qa.sh` and `scripts/demo.sh` set this. Without it, the seed attempts real AI calls and fails.
+- **Pipeline lock file**: `$TMPDIR/warlock_pipeline.lock` persists after crashes. `scripts/qa.sh` cleans it before seed runs. `make reset` does not — be aware.
+
+### CLI, Rich, and LLM prompts
+
+- **Rich markup escaping**: Use `rich.markup.escape()` on ALL user-supplied text before `console.print()`. Unescaped `[brackets]` crash Rich.
+- **CLI groups show defaults**: All CLI groups use `invoke_without_command=True` and show a useful summary when called without a subcommand.
+- **Prompt sanitization**: `<evidence>` tags + control character stripping in all LLM prompts.
+- **Gemini API key in header**: `x-goog-api-key`, never in URL query params.
+- **demo_seed.py is the #1 conflict-prone file**: 18K+ lines. Never let two agents touch it simultaneously. Re-run the full seed after any change.
+
+### OSCAL and framework YAML
+
 - **OSCAL deterministic UUIDs**: Uses UUID5 with fixed namespace. Same data = same OSCAL output. Control IDs normalized to lowercase with hyphens (AC-2 → ac-2, CC6.1 → cc6-1). Never use uuid4 for OSCAL.
 - **Framework YAML v2 structure**: `framework_id` at root, `control_families` as dict-of-dicts, each control has `checks` with `event_types`/`resource_types` arrays. Never use list-based structures.
 
@@ -273,7 +309,9 @@ MANDATORY — DO NOT USE THESE PATTERNS:
 
 Fix failures locally before pushing.
 
-## Frameworks (14)
+## Framework coverage
+
+The table lists **14** primary compliance programs. **`warlock/frameworks/`** may ship **more YAML files** than 14 (e.g. SOC 2 Points of Focus as its own YAML); the demo seed activates **17** YAMLs total. Run `make verify-docs` after changing framework files or doc counts.
 
 | Framework | Controls | Rego | OSCAL |
 |---|---|---|---|
@@ -306,3 +344,7 @@ All 17 framework YAMLs (including SOC 2 Points of Focus) are active in the demo 
 | `opa_compliance_fail_mode` | `"open"` | Intentionally open — OPA compliance eval is optional |
 | `encryption_key` | `""` | Required in production for field-level encryption. Empty crashes at runtime |
 | `gdpr_hmac_secret` | `""` | Required for GDPR erasure/export. Must be 32+ chars. Empty = RuntimeError |
+
+---
+
+*CLAUDE.md is maintained with the codebase. When project conventions change, update this file and run `make verify-docs`.*
