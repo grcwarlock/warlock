@@ -1,7 +1,25 @@
+# Compliance Gate — OPA, Terraform, OSCAL, Framework YAML validation
+#
+# Scope: compliance-specific checks triggered by policy/infra/framework changes.
+# Counterpart: ci.yml handles Python lint, tests, demo seed, CLI smoke, secrets, pip-audit.
+# ci.yml's qa-gate job also runs OPA/Terraform/OSCAL checks as part of the full qa.sh mirror,
+# but this workflow is authoritative for compliance gate — it runs stricter validation
+# (conftest plan policy, OSCAL structure, framework YAML schema) that ci.yml does not cover.
+#
+# Magic-number thresholds (MIN_REGO_POLICIES, etc.) must stay in sync with
+# scripts/verify_docs.py counts and docs. Run `make verify-docs` after changing.
+
 name: Compliance Gate
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TERRAFORM_VERSION: "1.9"
+  OPA_VERSION: "0.70.0"
+  CONFTEST_VERSION: "0.56.0"
+  # Regression thresholds — keep in sync with scripts/verify_docs.py and docs
+  MIN_REGO_POLICIES: 300
+  MIN_REGO_UNTESTED_LIMIT: 20
+  MIN_TF_PLAN_POLICIES: 9
 
 on:
   push:
@@ -19,8 +37,12 @@ on:
       - 'frameworks-oscal/**'
       - 'warlock/frameworks/**'
       - 'warlock/assessors/**'
+  workflow_dispatch:
 
-# #27: Restrict default permissions to read-only
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -28,11 +50,12 @@ jobs:
   opa-policies:
     name: OPA Policy Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: open-policy-agent/setup-opa@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: open-policy-agent/setup-opa@950f159a49aa91f9323f36f1de81c7f6b5de9576 # v2.3.0
         with:
-          version: latest
+          version: v${{ env.OPA_VERSION }}
 
       - name: Validate policy syntax
         run: opa check policies/
@@ -42,10 +65,10 @@ jobs:
 
       - name: Check policy count regression
         run: |
-          POLICY_COUNT=$(find policies/ -name "*.rego" ! -name "*_test.rego" | wc -l)
-          echo "Total policies: $POLICY_COUNT"
-          if [ "$POLICY_COUNT" -lt 300 ]; then
-            echo "::error::Policy count dropped below 300"
+          POLICY_COUNT=$(find policies/ -name "*.rego" ! -name "*_test.rego" | wc -l | tr -d ' ')
+          echo "Total policies: $POLICY_COUNT (minimum: $MIN_REGO_POLICIES)"
+          if [ "$POLICY_COUNT" -lt "$MIN_REGO_POLICIES" ]; then
+            echo "::error::Policy count $POLICY_COUNT dropped below $MIN_REGO_POLICIES"
             exit 1
           fi
 
@@ -61,39 +84,55 @@ jobs:
               MISSING=$((MISSING + 1))
             fi
           done
-          echo "Policies without tests: $MISSING"
-          if [ "$MISSING" -gt 20 ]; then
-            echo "::error::Too many untested policies"
+          echo "Policies without tests: $MISSING (limit: $MIN_REGO_UNTESTED_LIMIT)"
+          if [ "$MISSING" -gt "$MIN_REGO_UNTESTED_LIMIT" ]; then
+            echo "::error::Too many untested policies ($MISSING > $MIN_REGO_UNTESTED_LIMIT)"
             exit 1
           fi
 
   terraform:
     name: Terraform Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
-          terraform_version: "1.9"
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Validate all modules
         shell: bash
-        timeout-minutes: 20
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
         run: |
           mkdir -p "$TF_PLUGIN_CACHE_DIR"
           FAILED=0
           PASSED=0
+          INIT_FAILED=0
+          MAX_INIT_RETRIES=2
           for dir in terraform/modules/*/*; do
             if [ ! -d "$dir" ] || [ ! -f "$dir/main.tf" ]; then continue; fi
             echo "--- $dir ---"
             pushd "$dir" > /dev/null
-            if ! terraform init -backend=false -input=false > /dev/null 2>&1; then
-              echo "::warning::Init failed for $dir (provider download issue)"
+
+            # Retry init up to MAX_INIT_RETRIES times before failing
+            INIT_OK=false
+            for attempt in $(seq 1 $MAX_INIT_RETRIES); do
+              if terraform init -backend=false -input=false > /dev/null 2>&1; then
+                INIT_OK=true
+                break
+              fi
+              echo "::warning::Init attempt $attempt/$MAX_INIT_RETRIES failed for $dir"
+              sleep 2
+            done
+
+            if [ "$INIT_OK" = false ]; then
+              echo "::error::Init failed for $dir after $MAX_INIT_RETRIES attempts"
+              INIT_FAILED=$((INIT_FAILED + 1))
               popd > /dev/null
               continue
             fi
+
             if ! terraform validate; then
               echo "::error::Validate failed for $dir"
               FAILED=$((FAILED + 1))
@@ -102,8 +141,9 @@ jobs:
             fi
             popd > /dev/null
           done
-          echo "Terraform modules: $PASSED passed, $FAILED failed"
-          if [ "$FAILED" -gt 0 ]; then
+          echo "Terraform modules: $PASSED passed, $FAILED validate failures, $INIT_FAILED init failures"
+          TOTAL_FAILURES=$((FAILED + INIT_FAILED))
+          if [ "$TOTAL_FAILURES" -gt 0 ]; then
             exit 1
           fi
 
@@ -113,53 +153,85 @@ jobs:
   oscal:
     name: OSCAL Package Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
-      - name: Validate all OSCAL JSON
+      - name: Validate OSCAL JSON (syntax + structure)
         shell: bash
         run: |
           python3 << 'EOF'
           import json, pathlib, sys
+
+          # OSCAL model root keys per NIST OSCAL spec
+          OSCAL_MODEL_KEYS = {
+              "catalog", "profile", "component-definition",
+              "system-security-plan", "assessment-plan",
+              "assessment-results", "plan-of-action-and-milestones",
+          }
+          # Additional valid root keys for mapping/crosswalk files
+          MAPPING_KEYS = {"mapping", "ucf-mappings", "generated"}
+
           errors = []
           count = 0
-          for f in pathlib.Path("frameworks-oscal").rglob("*.json"):
+          for f in sorted(pathlib.Path("frameworks-oscal").rglob("*.json")):
               count += 1
               try:
-                  json.loads(f.read_text())
+                  data = json.loads(f.read_text())
               except Exception as e:
-                  errors.append(f"{f}: {e}")
+                  errors.append(f"{f}: JSON parse error: {e}")
+                  continue
+
+              if not isinstance(data, dict):
+                  errors.append(f"{f}: root is not a JSON object")
+                  continue
+
+              recognized_keys = (OSCAL_MODEL_KEYS | MAPPING_KEYS) & data.keys()
+              if not recognized_keys:
+                  errors.append(
+                      f"{f}: missing OSCAL root key (expected one of: {', '.join(sorted(OSCAL_MODEL_KEYS))})"
+                  )
+
           print(f"Checked {count} OSCAL JSON files")
           if errors:
               for e in errors:
-                  print(f"BROKEN: {e}", file=sys.stderr)
+                  print(f"::error::{e}", file=sys.stderr)
               sys.exit(1)
-          print("All OSCAL JSON valid")
+          print("All OSCAL JSON valid (syntax + structure)")
           EOF
 
   terraform-plan-policy:
     name: Terraform Plan Policy Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
-          terraform_version: "1.9"
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Install conftest
         run: |
-          CONFTEST_VERSION="0.56.0"
+          CONFTEST_VERSION="${{ env.CONFTEST_VERSION }}"
+          # Map runner arch to conftest asset name
+          case "${{ runner.arch }}" in
+            X64)  ARCH="x86_64" ;;
+            ARM64) ARCH="arm64" ;;
+            *) echo "::error::Unsupported architecture: ${{ runner.arch }}"; exit 1 ;;
+          esac
+          OS="Linux"
+          ASSET="conftest_${CONFTEST_VERSION}_${OS}_${ARCH}.tar.gz"
           wget -q --tries=3 --waitretry=5 \
-            "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
+            "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/${ASSET}" \
             -O /tmp/conftest.tar.gz
           wget -q --tries=3 --waitretry=5 \
             "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/checksums.txt" \
             -O /tmp/conftest_checksums.txt
-          cd /tmp && grep "conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" conftest_checksums.txt | sha256sum -c -
+          cd /tmp && grep "$ASSET" conftest_checksums.txt | sha256sum -c -
           tar -xzf /tmp/conftest.tar.gz -C /tmp
           sudo mv /tmp/conftest /usr/local/bin/conftest
           conftest --version
@@ -167,8 +239,6 @@ jobs:
       - name: Generate plan JSON for policy check
         shell: bash
         run: |
-          # Use a synthetic minimal plan document that exercises all policy rules
-          # In production this step would run: terraform plan -out=tfplan && terraform show -json tfplan > tfplan.json
           cat > /tmp/tfplan.json << 'PLAN'
           {
             "resource_changes": [
@@ -212,7 +282,6 @@ jobs:
             ]
           }
           PLAN
-          echo "Synthetic plan JSON created at /tmp/tfplan.json"
 
       - name: Run conftest against Terraform plan
         run: |
@@ -222,23 +291,25 @@ jobs:
             --output table
           echo "conftest passed: plan is compliant"
 
-      - name: Validate new Terraform policy count
+      - name: Validate Terraform policy count
         run: |
-          POLICY_COUNT=$(find policies/terraform/ -name "*.rego" ! -name "*_test.rego" | wc -l)
-          echo "Terraform policies: $POLICY_COUNT"
-          if [ "$POLICY_COUNT" -lt 9 ]; then
-            echo "::error::Terraform policy count dropped below 9"
+          POLICY_COUNT=$(find policies/terraform/ -name "*.rego" ! -name "*_test.rego" | wc -l | tr -d ' ')
+          echo "Terraform policies: $POLICY_COUNT (minimum: $MIN_TF_PLAN_POLICIES)"
+          if [ "$POLICY_COUNT" -lt "$MIN_TF_PLAN_POLICIES" ]; then
+            echo "::error::Terraform policy count $POLICY_COUNT dropped below $MIN_TF_PLAN_POLICIES"
             exit 1
           fi
 
   framework-yaml:
     name: Framework YAML Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
+          cache: 'pip'
 
       - name: Validate framework YAML files
         shell: bash
@@ -271,3 +342,28 @@ jobs:
               sys.exit(1)
           print("All framework YAMLs valid")
           EOF
+
+  summary:
+    name: Compliance Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [opa-policies, terraform, oscal, terraform-plan-policy, framework-yaml]
+    timeout-minutes: 5
+    steps:
+      - name: Write job summary
+        run: |
+          echo "## Compliance Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| OPA Policies | \`${{ needs.opa-policies.result }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Validation | \`${{ needs.terraform.result }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| OSCAL Packages | \`${{ needs.oscal.result }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Plan Policy | \`${{ needs.terraform-plan-policy.result }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Framework YAML | \`${{ needs.framework-yaml.result }}\` |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if any job failed
+        if: contains(needs.*.result, 'failure')
+        run: |
+          echo "::error::One or more compliance jobs failed"
+          exit 1
