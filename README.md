@@ -5,7 +5,7 @@
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (361 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
+Stage 1: Connectors (362 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (358 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
@@ -33,7 +33,7 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **196** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (361)
+## Connectors (362)
 
 **Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare, Linode/Akamai, Hetzner, Spot.io
 **EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos, Tanium
@@ -267,7 +267,7 @@ WLK_OKTA_API_TOKEN=...
 
 ```
 warlock/
-├── connectors/           # 361 source connectors (Stage 1)
+├── connectors/           # 362 source connectors (Stage 1)
 ├── normalizers/          # 358 normalizers (Stage 2)
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
@@ -333,7 +333,7 @@ warlock/
 │   ├── oscal.py          # OSCAL 1.1.2 (AR, SSP, POA&M)
 │   ├── binder.py         # Audit evidence binder (ZIP)
 │   └── alerts.py         # Slack/PagerDuty/webhook routing
-├── frameworks/           # 15 framework YAMLs (1,996 controls total)
+├── frameworks/           # 17 framework YAMLs (1,996 controls total)
 │   ├── nist_800_53.yaml  # 1,176 controls with monitoring frequencies
 │   ├── iso_27001.yaml    # 93 controls
 │   ├── soc2.yaml         # 46 controls

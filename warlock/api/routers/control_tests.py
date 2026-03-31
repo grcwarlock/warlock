@@ -15,10 +15,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import (
+    apply_framework_scope,
     get_db,
     get_pagination,
     require_permission,
-    apply_framework_scope,
 )
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
 from warlock.db.models import AuditEntry, ControlResult, User

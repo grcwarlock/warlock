@@ -12,7 +12,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 
 
 @cli.group("audit", invoke_without_command=True)
@@ -63,6 +63,7 @@ def engagement_create(
     """Create a new audit engagement."""
     import os
     from datetime import datetime, timezone
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEngagement
 
@@ -189,8 +190,9 @@ def engagement_list(
 def engagement_show(engagement_id: str) -> None:
     """Show details of an audit engagement."""
     from rich.panel import Panel
+
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, AuditComment
+    from warlock.db.models import AuditComment, AuditEngagement
 
     init_db()
     with get_session() as session:
@@ -277,7 +279,7 @@ def engagement_show(engagement_id: str) -> None:
 def engagement_status(engagement_id: str) -> None:
     """Show progress summary for an engagement (control coverage, open items)."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, ControlResult, AuditComment
+    from warlock.db.models import AuditComment, AuditEngagement, ControlResult
 
     init_db()
     with get_session() as session:
@@ -406,8 +408,9 @@ def findings_import(engagement_id: str, import_file: str, actor: str | None) -> 
     """
     import csv
     import os
+
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, AuditComment
+    from warlock.db.models import AuditComment, AuditEngagement
 
     if actor:
         os.environ["WLK_CLI_ACTOR"] = actor
@@ -486,7 +489,7 @@ def corrective_actions(
     Use 'warlock audit engagement show <id>' to see all comment threads.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, AuditComment
+    from warlock.db.models import AuditComment, AuditEngagement
 
     init_db()
     with get_session() as session:

@@ -6,7 +6,7 @@ import os
 
 import click
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 
 @cli.group(invoke_without_command=True)
@@ -84,9 +84,9 @@ def ai_models() -> None:
 @click.option("--base-url", "-u", default="", help="Base URL (for Ollama cloud/local)")
 def ai_configure(provider: str, api_key: str | None, model: str | None, base_url: str) -> None:
     """Configure the AI provider -- discover models and validate connectivity."""
-    from warlock.ai.discovery import ModelDiscovery
-
     from rich.table import Table
+
+    from warlock.ai.discovery import ModelDiscovery
 
     key = api_key or os.environ.get("WLK_AI_API_KEY", "")
     if not key:

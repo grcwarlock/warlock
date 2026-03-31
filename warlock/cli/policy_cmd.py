@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import click
-from rich.table import Table
-
 from rich.markup import escape
+from rich.table import Table
 
 from warlock.cli import cli, console
 
@@ -70,6 +69,7 @@ def policy_set(
 ):
     """Push a policy to the system."""
     import os
+
     from warlock.db.engine import get_session
     from warlock.domains.policy_engine import PolicyEngine
 
@@ -195,10 +195,10 @@ def policy_show(control, framework):
 @click.option("--limit", "-n", default=20, help="Max entries")
 def policy_history(policy_type, limit):
     """Show policy change history."""
-    from warlock.db.engine import get_session
-    from warlock.db.models import PolicyHistory, Policy
-
     from sqlalchemy.orm import joinedload
+
+    from warlock.db.engine import get_session
+    from warlock.db.models import Policy, PolicyHistory
 
     rows_data = []
     with get_session() as session:

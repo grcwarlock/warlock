@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_current_user, get_db, get_pagination, AuthContext
+from warlock.api.deps import AuthContext, get_current_user, get_db, get_pagination
 from warlock.db.models import EvidenceRequest
 from warlock.utils import ensure_aware
 

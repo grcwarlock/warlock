@@ -16,7 +16,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 from warlock.utils import ensure_aware
 
 
@@ -364,6 +364,7 @@ def execute_test(
     for the given control.  For a full re-assessment, run 'warlock collect'.
     """
     from datetime import datetime, timezone
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
 
@@ -433,6 +434,7 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
     ControlResult to compute the next due date.
     """
     from datetime import datetime, timedelta, timezone
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, ControlResult
 
@@ -734,6 +736,7 @@ def gaps(framework: str | None, output_format: str) -> None:
     Controls with no frequency set are excluded from past-due detection.
     """
     from datetime import datetime, timezone
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, ControlResult
 

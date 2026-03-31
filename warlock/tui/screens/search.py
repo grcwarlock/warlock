@@ -9,8 +9,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Static, Input, ListView, ListItem
-
+from textual.widgets import Input, ListItem, ListView, Static
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #

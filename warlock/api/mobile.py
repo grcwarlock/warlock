@@ -14,11 +14,11 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import func, case
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db
-from warlock.db.models import Alert, ControlResult, POAM
+from warlock.db.models import POAM, Alert, ControlResult
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)

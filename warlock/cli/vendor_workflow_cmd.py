@@ -14,16 +14,14 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from warlock.utils import ensure_aware
-
 import click
 from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
+from warlock.utils import ensure_aware
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -153,7 +151,7 @@ def vendor_assess(vendor_name_or_id: str) -> None:
             console.print("\n[dim]Session ended.[/dim]")
 
 
-def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:  # noqa: N803
+def _run_vendor_assess_loop(session, vendor, Finding, Issue) -> None:
     """Interactive assessment loop (separated for testability)."""
 
     while True:

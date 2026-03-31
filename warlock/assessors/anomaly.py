@@ -550,9 +550,7 @@ class StatisticalAnomalyDetector:
         detail = finding.detail or {}
         resource_count = 0
         for v in detail.values():
-            if isinstance(v, list):
-                resource_count += len(v)
-            elif isinstance(v, dict):
+            if isinstance(v, list) or isinstance(v, dict):
                 resource_count += len(v)
 
         return {
@@ -803,9 +801,7 @@ class AnomalyEngine:
                 detail = f.detail or {}
                 resource_count = 0
                 for v in detail.values():
-                    if isinstance(v, list):
-                        resource_count += len(v)
-                    elif isinstance(v, dict):
+                    if isinstance(v, list) or isinstance(v, dict):
                         resource_count += len(v)
                 observed = ensure_aware(f.observed_at) or datetime.now(timezone.utc)
                 delta = (datetime.now(timezone.utc) - observed).total_seconds()

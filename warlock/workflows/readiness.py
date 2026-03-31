@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from warlock.db.models import ControlResult, POAM, Remediation
+from warlock.db.models import POAM, ControlResult, Remediation
 
 log = logging.getLogger(__name__)
 

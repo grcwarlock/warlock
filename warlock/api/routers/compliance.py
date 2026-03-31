@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission, apply_framework_scope, apply_source_scope
+from warlock.api.deps import apply_framework_scope, apply_source_scope, get_db, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str, _escape_like, _parse_dt
 from warlock.db.models import User
 from warlock.db.repository import get_repos
@@ -525,8 +525,8 @@ def get_control_detail_endpoint(
 ):
     """Full control detail: status counts, passing/failing resources, remediation."""
     from warlock.assessors.remediation_loader import (
-        get_control_detail,
         get_ai_control_remediation,
+        get_control_detail,
     )
 
     detail = get_control_detail(db, control_id, framework)

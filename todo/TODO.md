@@ -291,3 +291,31 @@ Items are grouped by priority tier, then by domain within each tier. Each item r
 ### Quick Wins (P0/P1 + S effort)
 
 All 17 quick wins resolved.
+
+---
+
+## Audit Backlog (2026-03-30)
+
+> Source: Independent Cursor audit (`warlock-full-audit-todo.md`). IDs prefixed **AUDIT-###**.
+
+### P0 — Risk / Correctness
+
+- [x] **AUDIT-001** — Tighten `except Exception` in orchestrator.py and pipeline API: add logging to silent catches, comment deliberate broad catches. `S`
+- [x] **AUDIT-002** — Multi-tenancy spot-check: verify new/changed list endpoints respect tenant scoping. `S`
+
+### P1 — Quality Gates
+
+- [x] **AUDIT-003** — Add mypy to `pyproject.toml` + CI, scoped to `warlock/api/`, `warlock/db/`, `warlock/pipeline/`. `S`
+- [x] **AUDIT-004** — Expand ruff lint rules (E, W, F, I, B, UP, SIM, RUF) with per-file ignores. `S`
+- [x] **AUDIT-005** — Fix CI "Run tests with coverage" step naming (no `--cov` present). `S`
+
+### P2 — Maintainability
+
+- [x] **AUDIT-006** — Document PyJWT vs python-jose usage split in pyproject.toml comments. `S`
+- [ ] **AUDIT-007** — Split `demo_seed.py` into modules (23K lines). Deferred — requires careful validation against expected demo counts. `L`
+- [x] **AUDIT-008** — Add debug logging to silent `except Exception: pass` blocks in TUI. `S`
+
+### P3 — Hygiene
+
+- [x] **AUDIT-009** — Document Terraform disk usage for contributors. `S`
+- [x] **AUDIT-010** — Reconcile audit items with this TODO file. `S`

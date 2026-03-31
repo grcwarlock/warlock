@@ -18,7 +18,6 @@ from dataclasses import dataclass
 
 from warlock.ai.types import AITask
 
-
 # ---------------------------------------------------------------------------
 # Registry data structure
 # ---------------------------------------------------------------------------

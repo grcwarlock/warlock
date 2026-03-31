@@ -177,9 +177,7 @@ class AWSNormalizer(BaseNormalizer):
             issues.append("root_mfa_not_enabled")
 
         severity = "info"
-        if "root_access_keys_present" in issues:
-            severity = "critical"
-        elif "root_mfa_not_enabled" in issues:
+        if "root_access_keys_present" in issues or "root_mfa_not_enabled" in issues:
             severity = "critical"
 
         return [

@@ -450,7 +450,7 @@ class AIService:
 
     def _reason_compliance(self, context: dict[str, Any]) -> AIResult:
         """Delegate to the existing ``create_reasoner()`` for compliance assessment."""
-        from warlock.assessors.ai_reasoning import create_reasoner, ComplianceContext
+        from warlock.assessors.ai_reasoning import ComplianceContext, create_reasoner
 
         reasoner = create_reasoner(
             provider=self._provider,

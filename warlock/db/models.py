@@ -14,25 +14,25 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
     Float,
+    ForeignKey,
     Index,
     Integer,
     String,
     Text,
-    Boolean,
-    ForeignKey,
     UniqueConstraint,
 )
 from sqlalchemy import (
     JSON as SQLiteJSON,
 )  # Generic JSON: maps to JSONB on PostgreSQL, JSON on SQLite
-from sqlalchemy import JSON
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import event as _sa_event
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 # High-volume columns: JSONB on PostgreSQL (GIN-indexable, faster operators), JSON on SQLite (dev)

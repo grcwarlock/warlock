@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Template registry: (provider_pattern, resource_type_pattern) -> commands
 #

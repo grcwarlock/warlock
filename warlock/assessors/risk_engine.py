@@ -1139,6 +1139,7 @@ class RiskEngine:
             and results were written to the DB.
         """
         from sqlalchemy import distinct as sa_distinct
+
         from warlock.db.models import ControlResult
 
         frameworks: list[str] = [
@@ -1341,7 +1342,7 @@ class RiskEngine:
             Returns ``None`` when AI is off or the call fails, signaling
             the caller to present raw quantitative data instead.
         """
-        from warlock.ai import get_ai_service, AITask
+        from warlock.ai import AITask, get_ai_service
 
         ai = get_ai_service()
 

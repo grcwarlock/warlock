@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import click
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 
 @cli.command()
@@ -172,6 +172,7 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         AuditEngagement,
         CompensatingControl,
         ComplianceDrift,
@@ -183,7 +184,6 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
         Issue,
         LegalHold,
         Personnel,
-        POAM,
         PostureSnapshot,
         RawEvent,
         RiskAcceptance,
@@ -457,9 +457,7 @@ def architecture_diagram(fmt: str, output: str | None) -> None:
         if result.returncode == 0:
             console.print(f"[green]Architecture diagram written to {out_path}[/green]")
             # Try to open it
-            if fmt == "svg":
-                subprocess.run(["open", out_path], capture_output=True)
-            elif fmt == "png":
+            if fmt == "svg" or fmt == "png":
                 subprocess.run(["open", out_path], capture_output=True)
         else:
             console.print(f"[red]d2 error: {result.stderr}[/red]")

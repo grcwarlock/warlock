@@ -201,7 +201,7 @@ class LegacyImporter:
 
     def _parse_archer_xml(self, path: Path) -> list[dict[str, Any]]:
         """Parse Archer XML export."""
-        tree = ET.parse(path)  # noqa: S314 — input is from trusted admin upload
+        tree = ET.parse(path)
         root = tree.getroot()
         records: list[dict[str, Any]] = []
 

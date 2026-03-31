@@ -524,7 +524,7 @@ class FedRAMPPackageGenerator:
             t0 = time.monotonic()
 
             # -- preferred path: AIService.reason_batch() ------------------
-            from warlock.ai import get_ai_service, AITask
+            from warlock.ai import AITask, get_ai_service
 
             _ai_svc = get_ai_service()
             if _ai_svc.is_available():
@@ -956,7 +956,7 @@ class FedRAMPPackageGenerator:
             t0 = time.monotonic()
 
             # -- preferred path: AIService.reason_batch() ------------------
-            from warlock.ai import get_ai_service, AITask
+            from warlock.ai import AITask, get_ai_service
 
             _ai_svc = get_ai_service()
             if _ai_svc.is_available():

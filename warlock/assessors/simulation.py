@@ -17,9 +17,9 @@ from sqlalchemy.orm import Session
 from warlock.assessors.cadence import CadenceChecker
 from warlock.assessors.posture import PostureTimeSeriesQuery
 from warlock.db.models import (
+    POAM,
     ControlInheritance,
     ControlResult,
-    POAM,
     PostureSnapshot,
     RiskAcceptance,
 )

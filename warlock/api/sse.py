@@ -122,7 +122,7 @@ async def _event_stream(
         while True:
             try:
                 msg = await asyncio.wait_for(queue.get(), timeout=30.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Send keepalive comment to prevent proxy timeouts
                 yield ": keepalive\n\n"
                 continue

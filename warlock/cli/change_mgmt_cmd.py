@@ -10,8 +10,7 @@ from datetime import datetime, timezone
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # ChangeEvent is a read-only ingestion table (cloud audit logs, CI/CD, ITSM).

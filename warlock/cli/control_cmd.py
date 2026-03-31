@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import click
-from rich.panel import Panel
-
 from rich.markup import escape
+from rich.panel import Panel
 
 from warlock.cli import cli, console
 
@@ -20,16 +19,16 @@ def control_hub(control_id, framework, fmt):
     """Cross-domain view of a control: status, evidence, issues, POA&Ms, attestations, exceptions, OPA coverage."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         Attestation,
         ControlResult,
         EvidenceRequest,
         Issue,
-        POAM,
     )
-    from warlock.domains.registry import DomainRegistry
     from warlock.domains.controls import ControlsDomainService
-    from warlock.domains.issues import IssuesDomainService
     from warlock.domains.evidence import EvidenceDomainService
+    from warlock.domains.issues import IssuesDomainService
+    from warlock.domains.registry import DomainRegistry
 
     init_db()
     hub_data: dict = {"control_id": control_id, "framework": framework}

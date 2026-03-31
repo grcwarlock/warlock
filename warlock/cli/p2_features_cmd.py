@@ -17,10 +17,9 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
-from warlock.cli.lake import lake, _safe_lake_path, _format_size
+from warlock.cli import _error, _get_actor, cli, console
+from warlock.cli.lake import _format_size, _safe_lake_path, lake
 from warlock.utils import ensure_aware
-
 
 # ===================================================================
 # Item 62: Lake partitions management
@@ -441,7 +440,7 @@ def program_status(engagement_id: str) -> None:
     from rich.panel import Panel
 
     from warlock.db.engine import get_session, init_db
-    from warlock.workflows.audit_program import AuditProgramManager, PROGRAM_PHASES
+    from warlock.workflows.audit_program import PROGRAM_PHASES, AuditProgramManager
 
     init_db()
     mgr = AuditProgramManager()

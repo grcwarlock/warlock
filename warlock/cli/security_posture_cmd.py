@@ -17,7 +17,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 
 # SLA thresholds (days) per severity
 _SLA_DAYS: dict[str, int] = {
@@ -125,7 +125,7 @@ def security_posture(ctx: click.Context) -> None:
     """Security posture analysis and vulnerability management."""
     if ctx.invoked_subcommand is None:
         from warlock.db.engine import get_session, init_db
-        from warlock.db.models import Finding, ControlResult
+        from warlock.db.models import ControlResult, Finding
 
         init_db()
         with get_session() as session:
@@ -678,7 +678,7 @@ def cloud_config(source: str | None, limit: int) -> None:
     from sqlalchemy import case, func
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding, ControlMapping
+    from warlock.db.models import ControlMapping, ControlResult, Finding
 
     init_db()
     with get_session() as session:

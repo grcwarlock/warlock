@@ -18,10 +18,10 @@ from sqlalchemy.orm import Session
 
 from warlock.db.audit import AuditTrail
 from warlock.db.models import (
+    POAM,
     CompensatingControl,
     Issue,
     IssueComment,
-    POAM,
     Personnel,
     Questionnaire,
     RiskAcceptance,

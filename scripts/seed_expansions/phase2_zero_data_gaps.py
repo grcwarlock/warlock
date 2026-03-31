@@ -18,11 +18,11 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
+    POAM,
     AuditEntry,
     ConnectorRun,
     DataSilo,
     Personnel,
-    POAM,
 )
 
 

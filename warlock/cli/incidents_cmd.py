@@ -13,9 +13,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Severity / status helpers
@@ -86,11 +84,11 @@ def incidents_create(
     description: str | None,
 ) -> None:
     """Create a new incident."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue
-
     import hashlib
     import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry, Issue
 
     init_db()
     actor = _get_actor()
@@ -311,11 +309,11 @@ def incidents_show(incident_id: str) -> None:
 @click.option("--note", default=None, help="Optional note to add alongside the status change")
 def incidents_update(incident_id: str, status: str, note: str | None) -> None:
     """Update the status of an incident."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue, IssueComment
-
     import hashlib
     import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry, Issue, IssueComment
 
     init_db()
     actor = _get_actor()
@@ -381,11 +379,11 @@ def incidents_update(incident_id: str, status: str, note: str | None) -> None:
 @click.option("--lessons-learned", default=None, help="Lessons learned from this incident")
 def incidents_close(incident_id: str, resolution: str, lessons_learned: str | None) -> None:
     """Close an incident with a resolution and optional lessons learned."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue, IssueComment
-
     import hashlib
     import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry, Issue, IssueComment
 
     init_db()
     actor = _get_actor()
@@ -498,11 +496,11 @@ def incidents_timeline(incident_id: str) -> None:
 @click.option("--description", "-d", required=True, help="Event description")
 def incidents_add_event(incident_id: str, event_type: str, description: str) -> None:
     """Append a manual event to an incident's audit trail."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue
-
     import hashlib
     import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry, Issue
 
     init_db()
     actor = _get_actor()

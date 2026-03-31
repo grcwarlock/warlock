@@ -16,18 +16,21 @@ from typing import Any
 
 import yaml
 
+from warlock.assessors.engine import Assessor
+from warlock.assessors.engine import engine as assertion_engine
+from warlock.config import get_settings
 from warlock.connectors.base import (
     ConnectorConfig,
     ConnectorRegistry,
     SourceType,
+)
+from warlock.connectors.base import (
     registry as type_registry,
 )
-from warlock.normalizers.base import registry as norm_registry
 from warlock.mappers.control_mapper import ControlMapper
-from warlock.assessors.engine import Assessor, engine as assertion_engine
+from warlock.normalizers.base import registry as norm_registry
 from warlock.pipeline.bus import EventBus
 from warlock.pipeline.orchestrator import Pipeline
-from warlock.config import get_settings
 
 log = logging.getLogger(__name__)
 
@@ -792,7 +795,7 @@ def load_assertions() -> None:
     _import_modules(_ASSERTION_MODULES, "assertion")
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _load_yaml_file(path: str) -> dict[str, Any]:
     """Parse a single YAML file and return the resulting dict.
 

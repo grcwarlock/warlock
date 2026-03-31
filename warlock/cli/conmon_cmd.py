@@ -12,8 +12,7 @@ from datetime import datetime, timezone
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -158,7 +157,7 @@ def conmon_monthly_report(framework: str | None, output: str | None, month: str 
     """Generate a ConMon monthly report for submission."""
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ConnectorRun, ControlResult, Finding, Issue, POAM
+    from warlock.db.models import POAM, ConnectorRun, ControlResult, Finding, Issue
 
     init_db()
     now = datetime.now(timezone.utc)
@@ -417,7 +416,7 @@ def conmon_significant_change(
 def conmon_checklist(framework: str | None) -> None:
     """Display the monthly ConMon checklist with current completion status."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ConnectorRun, ControlResult, Issue, POAM
+    from warlock.db.models import POAM, ConnectorRun, ControlResult, Issue
 
     init_db()
     with get_session() as session:
@@ -512,8 +511,8 @@ def cato_status(framework: str, system: str | None, fmt: str) -> None:
         console.print_json(_json.dumps(asdict(status), default=str))
         return
 
-    from rich.panel import Panel
     from rich.markup import escape
+    from rich.panel import Panel
 
     auth_style = "green" if status.authorized else "red bold"
     auth_label = "AUTHORIZED" if status.authorized else "NOT AUTHORIZED"

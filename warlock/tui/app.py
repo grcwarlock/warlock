@@ -6,6 +6,7 @@ content area swaps between different view widgets (remediations, findings, etc.)
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from textual.app import App, ComposeResult
@@ -13,6 +14,8 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 
 from warlock.tui.widgets.sidebar import Sidebar
+
+log = logging.getLogger(__name__)
 
 THEME_CSS = Path(__file__).parent / "theme.tcss"
 
@@ -89,7 +92,7 @@ class WarlockApp(App):
 
             init_db()
         except Exception:
-            pass
+            log.debug("Failed to initialize database on TUI startup", exc_info=True)
 
     def _switch_view(self, view_id: str) -> None:
         """Swap the main content area to a different view."""

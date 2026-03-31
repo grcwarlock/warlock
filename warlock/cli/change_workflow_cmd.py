@@ -18,8 +18,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from warlock.cli import _error, _get_actor, cli, console  # noqa: F401
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Helpers

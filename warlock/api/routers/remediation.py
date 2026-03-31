@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission, apply_framework_scope
+from warlock.api.deps import apply_framework_scope, get_db, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str, _parse_dt
 from warlock.db.models import Finding, Remediation, User
 from warlock.utils import ensure_aware
@@ -524,8 +524,8 @@ def generate_remediation(
     command templates. Optionally includes AI-enhanced remediation when
     ``ai=true`` and an AI provider is configured.
     """
-    from warlock.assessors.remediation_loader import get_remediation
     from warlock.assessors.command_templates import render_commands
+    from warlock.assessors.remediation_loader import get_remediation
 
     # Look up KB playbook for this control
     framework = body.framework or "nist_800_53"

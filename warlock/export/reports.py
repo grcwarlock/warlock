@@ -15,11 +15,11 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from warlock.assessors.posture import PostureAggregator
 from warlock.db.models import (
     AuditEngagement,
     ControlResult,
 )
-from warlock.assessors.posture import PostureAggregator
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)

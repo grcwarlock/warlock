@@ -10,13 +10,13 @@ from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import (
-    cli,
-    console,
+    _ai_repl,
     _error,
     _get_actor,
     _parse_ai_response,
-    _ai_repl,
     _resolve_system_id,
+    cli,
+    console,
 )
 
 
@@ -499,8 +499,8 @@ def remediate(
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
-        Issue,
         POAM,
+        Issue,
     )
 
     # If --actor was passed, override the env-based default
@@ -741,7 +741,7 @@ def _show_remediation_for_issue(session, issue) -> None:
     """Show full remediation guidance for an issue."""
     from rich.panel import Panel
 
-    from warlock.db.models import CompensatingControl, ControlResult, POAM, RiskAcceptance
+    from warlock.db.models import POAM, CompensatingControl, ControlResult, RiskAcceptance
 
     # Header
     console.print()

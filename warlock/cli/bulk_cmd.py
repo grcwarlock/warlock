@@ -15,7 +15,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 
 
 @cli.group("bulk", invoke_without_command=True)
@@ -470,9 +470,10 @@ def deduplicate(source: str | None, dry_run: bool) -> None:
         warlock bulk deduplicate --source aws --dry-run
         warlock bulk deduplicate
     """
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, Finding
-    from sqlalchemy import func
 
     _dry_banner(dry_run)
     init_db()
@@ -906,9 +907,10 @@ def stats(source: str | None) -> None:
     Provides a read-only summary to help plan bulk operations before
     running them with or without --dry-run.
     """
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, Finding, Issue, RawEvent
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:

@@ -18,9 +18,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 from warlock.utils import ensure_aware
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -514,7 +513,7 @@ def collab_calendar(days: int, fmt: str) -> None:
     risk acceptance expiry dates, and calendar items into a sorted timeline.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, POAM, RiskAcceptance
+    from warlock.db.models import POAM, AuditEngagement, RiskAcceptance
 
     init_db()
     now = _utcnow()

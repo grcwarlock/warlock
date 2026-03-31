@@ -21,7 +21,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 
 
 @cli.group("bcp", invoke_without_command=True)
@@ -163,9 +163,9 @@ def bia(system: str | None, output_format: str) -> None:
     Displays FIPS 199 security categorization, authorization status,
     connected frameworks, and continuous monitoring plan summary.
     """
+    from warlock.cli import _resolve_system_id
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import SystemProfile
-    from warlock.cli import _resolve_system_id
 
     init_db()
     with get_session() as session:
@@ -287,9 +287,9 @@ def bcp_backup_status(system: str | None, output_format: str) -> None:
     the continuous_monitoring_plan and extra fields.  Systems are flagged
     if no backup evidence is found.
     """
+    from warlock.cli import _resolve_system_id
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import SystemProfile
-    from warlock.cli import _resolve_system_id
 
     init_db()
     with get_session() as session:
@@ -392,6 +392,7 @@ def bcp_dr_readiness(system: str | None, output_format: str) -> None:
     - Criticality-based assessment thresholds
     """
     import json as _json
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditComment, SystemProfile
 
@@ -607,9 +608,10 @@ def bcp_recovery_test(
     """
     import json as _json
     from datetime import datetime, timezone
+
+    from warlock.cli import _resolve_system_id
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditComment, AuditEngagement, SystemProfile
-    from warlock.cli import _resolve_system_id
 
     init_db()
     actor = _get_actor()
@@ -867,9 +869,10 @@ def dr_execute(
     import json as _json
     import os
     from datetime import datetime, timezone
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, AuditComment, SystemProfile
+
     from warlock.cli import _resolve_system_id
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditComment, AuditEngagement, SystemProfile
 
     if actor:
         os.environ["WLK_CLI_ACTOR"] = actor
@@ -978,9 +981,10 @@ def dr_execute(
 def dr_results(system: str | None, last: int, output_format: str) -> None:
     """List recorded DR test results."""
     import json as _json
+
+    from warlock.cli import _resolve_system_id
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditComment, SystemProfile
-    from warlock.cli import _resolve_system_id
 
     init_db()
     with get_session() as session:
@@ -1079,6 +1083,7 @@ def dr_results(system: str | None, last: int, output_format: str) -> None:
 def dr_report(output_format: str) -> None:
     """Generate a DR test compliance report across all systems."""
     import json as _json
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditComment, SystemProfile
 

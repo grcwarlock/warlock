@@ -21,11 +21,11 @@ import logging
 import secrets
 import struct
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from warlock.db.models import User, APIKey
+from warlock.db.models import APIKey, User
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)

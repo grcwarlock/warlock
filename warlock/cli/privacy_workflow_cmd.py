@@ -21,8 +21,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -544,7 +543,7 @@ def privacy_data_map_review() -> None:
 
                 for silo in group:
 
-                    def _yn(v: bool | None) -> str:  # noqa: E306
+                    def _yn(v: bool | None) -> str:
                         if v is True:
                             return "[yellow]yes[/yellow]"
                         if v is False:

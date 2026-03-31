@@ -648,7 +648,7 @@ class GovernanceAnalyzer:
             contains ``coverage_score`` (the ``CoverageScore`` as a dict)
             and ``ai_used: False``.
         """
-        from warlock.ai import get_ai_service, AITask
+        from warlock.ai import AITask, get_ai_service
 
         # Gather deterministic data
         coverage = self.score_policy_coverage(session, framework)

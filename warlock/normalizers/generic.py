@@ -79,7 +79,7 @@ def _extract_severity(data: dict[str, Any]) -> str:
 
 def _observation_type_hint(data: dict[str, Any]) -> str:
     """Guess the observation type from the payload keys."""
-    text = " ".join(str(k) for k in data.keys()).lower()
+    text = " ".join(str(k) for k in data).lower()
     if "vulnerability" in text or "cve" in text:
         return "vulnerability"
     if "alert" in text or "detection" in text:

@@ -137,11 +137,11 @@ class KandjiNormalizer(BaseNormalizer):
                 try:
                     major = int(os_version.split(".")[0])
                     is_outdated = False
-                    if platform and "mac" in platform.lower() and major < 14:
-                        is_outdated = True
-                    elif platform and "ios" in platform.lower() and major < 17:
-                        is_outdated = True
-                    elif platform and "ipados" in platform.lower() and major < 17:
+                    if (
+                        (platform and "mac" in platform.lower() and major < 14)
+                        or (platform and "ios" in platform.lower() and major < 17)
+                        or (platform and "ipados" in platform.lower() and major < 17)
+                    ):
                         is_outdated = True
 
                     if is_outdated:

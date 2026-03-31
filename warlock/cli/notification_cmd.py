@@ -9,7 +9,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 
 
 @cli.group("notifications", invoke_without_command=True)
@@ -288,8 +288,8 @@ def route_create(event: str, severity: str, channel: str) -> None:
     """Create a notification routing rule."""
     from uuid import uuid4
 
-    from warlock.db.engine import get_session, init_db
     from warlock.db.audit import AuditTrail
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     actor = _get_actor()
@@ -319,8 +319,8 @@ def route_create(event: str, severity: str, channel: str) -> None:
 @click.argument("route_id")
 def route_delete(route_id: str) -> None:
     """Delete a notification routing rule."""
-    from warlock.db.engine import get_session, init_db
     from warlock.db.audit import AuditTrail
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     actor = _get_actor()

@@ -7,7 +7,6 @@ from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.widgets import Static
 
-
 NAV_ITEMS = [
     ("dashboard", "\u25c6 Dash", "Dashboard"),
     ("remed", "\u2699 Remed", "Remediations"),

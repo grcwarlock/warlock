@@ -12,7 +12,7 @@ from pathlib import Path
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 # Terraform root, relative to the repo root (two levels up from this file)
 _TF_ROOT = Path(__file__).resolve().parent.parent.parent / "terraform"

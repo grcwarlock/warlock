@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
+
 from textual.app import ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Input, Static
 
+log = logging.getLogger(__name__)
 
 # Static command registry — introspected from Click at startup
 _COMMAND_REGISTRY: list[dict] = []
@@ -34,7 +37,7 @@ def build_command_registry() -> None:
                 }
             )
     except Exception:
-        pass
+        log.debug("Failed to introspect Click CLI for command registry", exc_info=True)
 
 
 def _fuzzy_match(query: str, text: str) -> bool:
@@ -93,7 +96,7 @@ def _search(query: str) -> list[dict]:
 
             app = App.current
         except Exception:
-            pass
+            log.debug("Failed to get current Textual App reference", exc_info=True)
         if app and hasattr(app, "get_saved_views"):
             for name, view_id in app.get_saved_views().items():
                 if q in name.lower() or q in view_id.lower():
@@ -107,7 +110,7 @@ def _search(query: str) -> list[dict]:
                         }
                     )
     except Exception:
-        pass
+        log.debug("Failed to search saved views", exc_info=True)
 
     # Search entities
     try:
@@ -116,7 +119,7 @@ def _search(query: str) -> list[dict]:
         entities = search_entities(query, limit=10)
         results.extend(entities)
     except Exception:
-        pass
+        log.debug("Failed to search entities via database query", exc_info=True)
 
     return results[:20]
 
@@ -165,12 +168,9 @@ class CommandPalette(ModalScreen[dict | None]):
         self._results: list[dict] = []
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="command-palette"):
-            with Vertical(id="palette-container"):
-                yield Input(
-                    placeholder="\u25c6 Search commands and entities...", id="palette-input"
-                )
-                yield VerticalScroll(id="palette-results")
+        with Vertical(id="command-palette"), Vertical(id="palette-container"):
+            yield Input(placeholder="\u25c6 Search commands and entities...", id="palette-input")
+            yield VerticalScroll(id="palette-results")
 
     def on_mount(self) -> None:
         build_command_registry()

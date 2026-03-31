@@ -885,7 +885,7 @@ def list_legal_holds(
 ):
     filters = []
     if is_active is not None:
-        filters.append(LegalHold.is_active == is_active)  # noqa: E712
+        filters.append(LegalHold.is_active == is_active)
     return _paginate(db, LegalHold, _legal_hold, limit, offset, filters=filters)
 
 

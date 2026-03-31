@@ -34,11 +34,12 @@ except ImportError:  # pragma: no cover
     GraphQLRouter = None  # type: ignore[assignment,misc]
 
 
-def _build_schema():  # noqa: C901 — single schema definition, complexity is structural
+def _build_schema():
     """Build and return the Strawberry schema.  Only called when strawberry is installed."""
 
-    import strawberry as sb
     from datetime import datetime
+
+    import strawberry as sb
 
     # ------------------------------------------------------------------
     # Types
@@ -246,7 +247,7 @@ def _build_schema():  # noqa: C901 — single schema definition, complexity is s
         ) -> list[FindingType]:
             """Return findings, optionally filtered by framework or severity."""
             from warlock.db.engine import get_session
-            from warlock.db.models import Finding, ControlMapping
+            from warlock.db.models import ControlMapping, Finding
 
             limit = min(max(limit, 1), 1000)
             with get_session() as session:

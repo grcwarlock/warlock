@@ -14,14 +14,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission, apply_framework_scope
+from warlock.api.deps import apply_framework_scope, get_db, require_permission
 from warlock.db.models import (
+    POAM,
     ConnectorRun,
     ControlMapping,
     ControlResult,
     Finding,
     Issue,
-    POAM,
     SystemProfile,
     User,
 )

@@ -6,7 +6,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _check_ai_available
+from warlock.cli import _check_ai_available, cli, console
 
 
 @cli.command("cadence")
@@ -14,8 +14,8 @@ from warlock.cli import cli, console, _check_ai_available
 @click.option("--stale-only", is_flag=True, help="Show only stale controls")
 def cadence_check(framework: str | None, stale_only: bool) -> None:
     """Check monitoring cadence -- are controls being assessed on schedule?"""
-    from warlock.db.engine import get_session, init_db
     from warlock.assessors.cadence import CadenceChecker
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     checker = CadenceChecker()
@@ -74,8 +74,8 @@ def cadence_check(framework: str | None, stale_only: bool) -> None:
 @click.option("--days", "-d", default=90, help="Lookback window in days")
 def posture_history(framework: str, control: str | None, days: int) -> None:
     """Show posture trends over time per control."""
-    from warlock.db.engine import get_session, init_db
     from warlock.assessors.posture import PostureTimeSeriesQuery
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     tsq = PostureTimeSeriesQuery()
@@ -131,8 +131,8 @@ def posture_history(framework: str, control: str | None, days: int) -> None:
 @click.option("--below", type=float, default=None, help="Show only controls below this score")
 def sufficiency_check(framework: str | None, below: float | None) -> None:
     """Show evidence sufficiency scores per control."""
-    from warlock.db.engine import get_session, init_db
     from warlock.assessors.posture import EvidenceSufficiencyScorer
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     scorer = EvidenceSufficiencyScorer()
@@ -143,6 +143,7 @@ def sufficiency_check(framework: str | None, below: float | None) -> None:
             scores = fw_result.control_scores
         else:
             from sqlalchemy import distinct
+
             from warlock.db.models import ControlResult
 
             fw_rows = session.query(distinct(ControlResult.framework)).all()
@@ -196,8 +197,8 @@ def sufficiency_check(framework: str | None, below: float | None) -> None:
 @click.option("--direction", default=None, help="Filter: improved or degraded")
 def drift_list(framework: str | None, days: int, direction: str | None) -> None:
     """Show compliance drift events with correlated changes."""
-    from warlock.db.engine import get_session, init_db
     from warlock.assessors.drift import DriftDetector
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     detector = DriftDetector()
@@ -245,8 +246,7 @@ def effectiveness_report(framework: str | None, days: int) -> None:
     init_db()
 
     with get_session() as session:
-        from datetime import timedelta
-        from datetime import datetime, timezone
+        from datetime import datetime, timedelta, timezone
 
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
@@ -303,9 +303,11 @@ def effectiveness_report(framework: str | None, days: int) -> None:
 )
 def simulate_audit(framework: str, date: str, system: str | None, use_ai: bool | None) -> None:
     """Simulate what an auditor would see at a future date."""
-    from datetime import datetime as dt, timedelta
-    from warlock.db.engine import get_session, init_db
+    from datetime import datetime as dt
+    from datetime import timedelta
+
     from warlock.assessors.simulation import AuditSimulator
+    from warlock.db.engine import get_session, init_db
 
     if date is None:
         date = (dt.now().date() + timedelta(days=90)).isoformat()

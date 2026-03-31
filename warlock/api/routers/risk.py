@@ -256,8 +256,9 @@ def run_audit_simulation(
     if current_user.allowed_frameworks and req.framework not in current_user.allowed_frameworks:
         raise HTTPException(status_code=403, detail="Access denied for this framework")
 
-    from warlock.assessors.simulation import AuditSimulator
     from datetime import datetime as dt
+
+    from warlock.assessors.simulation import AuditSimulator
     from warlock.utils import ensure_aware
 
     sim = AuditSimulator()

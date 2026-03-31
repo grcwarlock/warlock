@@ -131,7 +131,7 @@ def get_secrets_backend() -> SecretsBackend:
       - ``"vault"`` -> VaultSecretsBackend
       - anything else -> EnvSecretsBackend (default)
     """
-    global _backend  # noqa: PLW0603
+    global _backend
     if _backend is not None:
         return _backend
 
@@ -147,5 +147,5 @@ def get_secrets_backend() -> SecretsBackend:
 
 def set_secrets_backend(backend: SecretsBackend) -> None:
     """Override the global secrets backend (useful for testing)."""
-    global _backend  # noqa: PLW0603
+    global _backend
     _backend = backend

@@ -33,19 +33,19 @@ class _NoopMetric:
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
         pass
 
-    def inc(self, *_args: Any, **_kwargs: Any) -> None:  # noqa: D102
+    def inc(self, *_args: Any, **_kwargs: Any) -> None:
         pass
 
-    def dec(self, *_args: Any, **_kwargs: Any) -> None:  # noqa: D102
+    def dec(self, *_args: Any, **_kwargs: Any) -> None:
         pass
 
-    def set(self, *_args: Any, **_kwargs: Any) -> None:  # noqa: D102
+    def set(self, *_args: Any, **_kwargs: Any) -> None:
         pass
 
-    def observe(self, *_args: Any, **_kwargs: Any) -> None:  # noqa: D102
+    def observe(self, *_args: Any, **_kwargs: Any) -> None:
         pass
 
-    def labels(self, *_args: Any, **_kwargs: Any) -> "_NoopMetric":  # noqa: D102
+    def labels(self, *_args: Any, **_kwargs: Any) -> "_NoopMetric":
         return self
 
 

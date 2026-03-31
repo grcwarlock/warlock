@@ -1194,7 +1194,7 @@ class QuestionnaireManager:
         Raises:
             ValueError: If questionnaire or template not found.
         """
-        from warlock.ai import get_ai_service, AITask
+        from warlock.ai import AITask, get_ai_service
 
         q = session.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
         if not q:

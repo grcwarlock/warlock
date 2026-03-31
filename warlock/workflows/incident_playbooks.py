@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 
 from warlock.utils import ensure_aware
 
-
 # ---------------------------------------------------------------------------
 # Playbook definitions
 # ---------------------------------------------------------------------------

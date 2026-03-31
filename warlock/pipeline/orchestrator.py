@@ -7,20 +7,20 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+# Optional OPA compliance evaluation imports (may not be initialized)
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import Session
 
-from warlock.connectors.base import ConnectorRegistry, ConnectorResult, RawEventData
-from warlock.normalizers.base import FindingData, NormalizerRegistry
-from warlock.mappers.control_mapper import ControlMapper
 from warlock.assessors.engine import Assessor, ControlResultData
+from warlock.connectors.base import ConnectorRegistry, ConnectorResult, RawEventData
+from warlock.db import models
+from warlock.mappers.control_mapper import ControlMapper
+from warlock.normalizers.base import FindingData, NormalizerRegistry
 from warlock.pipeline.bus import EventBus, PipelineEvent
 from warlock.pipeline.data_quality import DataQualityChecker
 from warlock.pipeline.lineage import LineageRecorder
 from warlock.pipeline.schema_registry import SchemaRegistry
-from warlock.db import models
-
-# Optional OPA compliance evaluation imports (may not be initialized)
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from warlock.assessors.opa_evaluator import OPAComplianceEvaluator
@@ -365,10 +365,13 @@ class Pipeline:
                 # collected during the run by calling flush directly.
                 lake_writer.flush(stats.run_id, session)
                 log.info("Lake write complete for run %s", stats.run_id)
-            except Exception as exc:
+            except (
+                Exception
+            ) as exc:  # deliberate: broad catch for resilience — lake is non-critical
                 log.error(
                     "Lake write failed for run %s — recording in DLQ",
                     stats.run_id,
+                    exc_info=True,
                 )
                 try:
                     from warlock.db.models import DeadLetterEntry
@@ -423,17 +426,17 @@ class Pipeline:
                     snaps = session.query(PostureSnapshot).all()
                     snap_dicts = [_lake_m2d(r) for r in snaps] if snaps else []
                 except Exception:
-                    pass
+                    log.debug("Failed to query PostureSnapshot for lake", exc_info=True)
                 try:
                     drifts = session.query(ComplianceDrift).all()
                     drift_dicts = [_lake_m2d(r) for r in drifts] if drifts else []
                 except Exception:
-                    pass
+                    log.debug("Failed to query ComplianceDrift for lake", exc_info=True)
                 try:
                     audits = session.query(AuditEntry).all()
                     audit_dicts = [_lake_m2d(r) for r in audits] if audits else []
                 except Exception:
-                    pass
+                    log.debug("Failed to query AuditEntry for lake", exc_info=True)
 
                 if snap_dicts or drift_dicts:
                     write_temporal_facts(
@@ -457,7 +460,7 @@ class Pipeline:
                         "Lake domain: %d audit entries",
                         len(audit_dicts),
                     )
-            except Exception:
+            except Exception:  # deliberate: broad catch for resilience — lake domains are optional
                 log.debug(
                     "Lake domain writers skipped for run %s",
                     stats.run_id,
@@ -473,7 +476,7 @@ class Pipeline:
                     "Lake materialized views refreshed for run %s",
                     stats.run_id,
                 )
-            except Exception:
+            except Exception:  # deliberate: broad catch for resilience — view refresh is non-fatal
                 log.exception("Materialized view refresh failed (non-fatal)")
 
         # ARCH-021: Invalidate dashboard query cache after pipeline completion.
@@ -481,7 +484,9 @@ class Pipeline:
             from warlock.db.query_cache import get_query_cache
 
             get_query_cache().invalidate_tag("dashboard")
-        except Exception:
+        except (
+            Exception
+        ):  # deliberate: broad catch for resilience — cache invalidation is best-effort
             log.debug("Query cache invalidation skipped", exc_info=True)
 
         # Log data quality summary
@@ -531,6 +536,7 @@ class Pipeline:
             # are disallowed because the connection may be reassigned between
             # statements. Use the transaction-scoped variant instead.
             from sqlalchemy import text
+
             from warlock.config import get_settings
 
             settings = get_settings()
@@ -564,7 +570,7 @@ class Pipeline:
                     # Check if the holder is still alive by reading its PID.
                     stale = False
                     try:
-                        with open(lock_path, "r") as f:
+                        with open(lock_path) as f:
                             holder_pid = int(f.read().strip())
                         os.kill(holder_pid, 0)  # signal 0 = existence check
                     except (ValueError, OSError):
@@ -613,11 +619,11 @@ class Pipeline:
                 import fcntl
 
                 fcntl.flock(lock_file, fcntl.LOCK_UN)
-            except Exception:
+            except Exception:  # deliberate: broad catch — cleanup must not raise
                 pass
             try:
                 lock_file.close()
-            except Exception:
+            except Exception:  # deliberate: broad catch — cleanup must not raise
                 pass
             self._lock_file = None
 

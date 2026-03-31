@@ -12,9 +12,8 @@ from datetime import datetime, timezone
 import click
 from rich.table import Table
 
+from warlock.cli import _error, _get_actor, cli, console
 from warlock.utils import ensure_aware
-
-from warlock.cli import cli, console, _error, _get_actor
 
 
 @cli.group("attestations", invoke_without_command=True)
@@ -354,9 +353,10 @@ def attestation_overdue() -> None:
 @click.option("--days", "-d", default=30, type=int, help="Show attestations expiring within N days")
 def attestation_expiring(days: int) -> None:
     """Show approved attestations expiring within N days (based on approved_at + 365 days)."""
+    from datetime import timedelta
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Attestation
-    from datetime import timedelta
 
     init_db()
     now = datetime.now(timezone.utc)

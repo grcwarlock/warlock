@@ -20,8 +20,7 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -604,7 +603,7 @@ def incident_drill() -> None:
     the response, and generates an after-action report.
     """
     try:
-        scenario = random.choice(_SCENARIOS)  # noqa: S311 — not security-sensitive
+        scenario = random.choice(_SCENARIOS)
 
         console.print()
         console.print(

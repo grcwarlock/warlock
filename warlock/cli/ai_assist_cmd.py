@@ -26,7 +26,6 @@ from warlock.cli import (
     console,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -580,9 +579,10 @@ def benchmark_ai(framework: str, use_ai: bool, ask: bool) -> None:
         warlock benchmark-ai -f soc2 --ai
         warlock benchmark-ai -f nist_800_53 --ai --ask
     """
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:

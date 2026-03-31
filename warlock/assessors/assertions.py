@@ -8,12 +8,10 @@ and is bound to relevant NIST 800-53 controls.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-
-from warlock.utils import ensure_aware
 from typing import Any
 
 from warlock.assessors.engine import engine
-
+from warlock.utils import ensure_aware
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -1816,7 +1814,7 @@ def network_segmentation_enforced(detail: dict, raw_data: dict) -> tuple[bool, l
     reasons: list[str] = []
 
     # AWS VPC shape
-    vpcs = detail.get("vpcs", detail.get("VpcId", None))
+    vpcs = detail.get("vpcs", detail.get("VpcId"))
     if isinstance(vpcs, list):
         if len(vpcs) < 2:
             reasons.append("Only one VPC — no network segmentation")

@@ -6,7 +6,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _check_ai_available
+from warlock.cli import _check_ai_available, cli, console
 
 
 @cli.group(invoke_without_command=True)
@@ -30,7 +30,7 @@ def risk_analyze(framework: str, iterations: int, use_ai: bool | None) -> None:
     init_db()
     engine = RiskEngine(default_iterations=iterations)
 
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+    from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
     with Progress(
         SpinnerColumn(),

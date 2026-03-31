@@ -14,13 +14,11 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
-from rich.markup import escape
-
-from warlock.cli import _check_ai_available, _parse_ai_response, cli, console, _error
-
+from warlock.cli import _check_ai_available, _error, _parse_ai_response, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -227,7 +225,7 @@ def root_cause(finding_id: str, use_ai: bool) -> None:
     to produce a structured root cause analysis.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, ControlMapping
+    from warlock.db.models import ControlMapping, Finding
 
     init_db()
     with get_session() as session:
@@ -297,9 +295,10 @@ def root_cause(finding_id: str, use_ai: bool) -> None:
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI prediction")
 def predict_risk(framework: str | None, limit: int, use_ai: bool) -> None:
     """Predict which controls are likely to fail based on historical trends."""
+    from sqlalchemy import case, func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import case, func
 
     init_db()
     with get_session() as session:
@@ -382,7 +381,7 @@ def suggest_remediation(finding_id: str, use_ai: bool) -> None:
     FINDING_ID: finding UUID or prefix.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, ControlMapping
+    from warlock.db.models import ControlMapping, Finding
 
     init_db()
     with get_session() as session:
@@ -514,9 +513,10 @@ def prioritize(framework: str | None, limit: int, use_ai: bool) -> None:
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI summary")
 def summarize_posture(framework: str | None, use_ai: bool) -> None:
     """Natural language compliance posture summary."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -578,7 +578,7 @@ def draft_poam(finding_id: str, use_ai: bool) -> None:
     FINDING_ID: finding UUID or prefix.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, ControlMapping
+    from warlock.db.models import ControlMapping, Finding
 
     init_db()
     with get_session() as session:
@@ -879,9 +879,10 @@ def classify_finding(finding_id: str, use_ai: bool) -> None:
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI drift analysis")
 def detect_drift(framework: str | None, days: int, use_ai: bool) -> None:
     """Detect compliance drift patterns over a time window."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -949,9 +950,10 @@ def detect_drift(framework: str | None, days: int, use_ai: bool) -> None:
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI forecast")
 def forecast(framework: str | None, days: int, use_ai: bool) -> None:
     """Forecast compliance trajectory over a time horizon."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -1039,9 +1041,10 @@ def forecast(framework: str | None, days: int, use_ai: bool) -> None:
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI assessment")
 def audit_readiness(framework: str | None, use_ai: bool) -> None:
     """AI assessment of audit readiness for a framework."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -1113,9 +1116,10 @@ def audit_readiness(framework: str | None, use_ai: bool) -> None:
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI briefing")
 def brief(framework: str | None, use_ai: bool) -> None:
     """Generate an AI-powered compliance briefing."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult, Finding
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -1203,10 +1207,10 @@ def ask_grc(question: str, ctx_scope: str, framework: str | None) -> None:
     if not _check_ai_available(True):
         return
 
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding
     from warlock.ai.service import get_ai_service
     from warlock.ai.types import ConversationContext
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import ControlResult, Finding
 
     init_db()
     context_data: dict = {"question": question, "scope": ctx_scope}
@@ -1352,8 +1356,8 @@ def batch_classify(
 @click.option("--ai", "use_ai", is_flag=True, default=False, help="Enable AI advisory generation")
 def horizon_scan(framework: tuple[str, ...], use_ai: bool) -> None:
     """Regulatory horizon scanning -- upcoming deadlines and emerging requirements."""
-    from warlock.db.engine import get_session, init_db
     from warlock.ai.horizon_scanning import HorizonScanner
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     fw_list: list[str] | None = list(framework) if framework else None
@@ -1479,8 +1483,8 @@ def devtools_inspect(control_result_id: str) -> None:
 
     CONTROL_RESULT_ID: UUID or prefix of the control result.
     """
-    from warlock.db.engine import get_session, init_db
     from warlock.ai.devtools import AIDevTools
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     with get_session() as session:
@@ -1569,8 +1573,8 @@ def devtools_compare(id1: str, id2: str) -> None:
     ID1: UUID or prefix of the first control result.
     ID2: UUID or prefix of the second control result.
     """
-    from warlock.db.engine import get_session, init_db
     from warlock.ai.devtools import AIDevTools
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     with get_session() as session:
@@ -1660,8 +1664,8 @@ def devtools_compare(id1: str, id2: str) -> None:
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 def devtools_confidence(framework: str | None) -> None:
     """Show AI confidence score distribution with outlier detection."""
-    from warlock.db.engine import get_session, init_db
     from warlock.ai.devtools import AIDevTools
+    from warlock.db.engine import get_session, init_db
 
     init_db()
     with get_session() as session:

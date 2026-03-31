@@ -12,8 +12,8 @@ from warlock.ai.service import AIService, get_ai_service
 from warlock.ai.types import AIResult, AITask
 
 __all__ = [
-    "AIService",
-    "get_ai_service",
-    "AITask",
     "AIResult",
+    "AIService",
+    "AITask",
+    "get_ai_service",
 ]

@@ -65,9 +65,7 @@ class PrismaNormalizer(BaseNormalizer):
             # Determine observation type from policy type
             policy_type = policy.get("policyType", "").upper()
             obs_type = "alert"
-            if policy_type in ("CONFIG", "CLOUD_CONFIGURATION"):
-                obs_type = "misconfiguration"
-            elif policy_type == "NETWORK":
+            if policy_type in ("CONFIG", "CLOUD_CONFIGURATION") or policy_type == "NETWORK":
                 obs_type = "misconfiguration"
             elif policy_type == "AUDIT_EVENT":
                 obs_type = "access_anomaly"

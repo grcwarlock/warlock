@@ -44,14 +44,14 @@ class DelegationRecord:
     """In-memory representation of a single delegation grant."""
 
     __slots__ = (
-        "id",
         "from_user_id",
-        "to_user_id",
-        "scope",
         "granted_at",
         "granted_by",
+        "id",
         "revoked_at",
         "revoked_by",
+        "scope",
+        "to_user_id",
     )
 
     def __init__(

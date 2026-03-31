@@ -13,8 +13,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _get_actor
-
+from warlock.cli import _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -183,8 +182,8 @@ def ai_gov_register(
     """Register a new AI model in the governance inventory."""
     from warlock.db.engine import get_session, init_db
     from warlock.workflows.ai_governance import (
-        AIModelRecord,
         AIModelInventory,
+        AIModelRecord,
         AIRiskClassifier,
     )
 

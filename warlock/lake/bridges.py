@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 
-from warlock.lake.utils import today_partition, ensure_dir
+from warlock.lake.utils import ensure_dir, today_partition
 
 log = logging.getLogger(__name__)
 
@@ -53,9 +53,10 @@ def _write_bridge(lake_path: str, table_name: str, rows: list[dict], run_id: str
     if not rows:
         return 0
 
+    from pathlib import Path
+
     import pyarrow as pa
     import pyarrow.parquet as pq
-    from pathlib import Path
 
     date_part = today_partition()
 

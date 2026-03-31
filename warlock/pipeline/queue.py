@@ -916,7 +916,7 @@ class NATSBus:
                 event = _event_from_json(msg.data)
                 self._dispatch(event, event_type)
                 await msg.ack()
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except Exception:
                 if self._running:

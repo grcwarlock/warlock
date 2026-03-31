@@ -29,7 +29,7 @@ import click
 import yaml
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 _FRAMEWORKS_DIR = pathlib.Path(__file__).resolve().parent.parent / "frameworks"
 _REFERENCE_DIR = _FRAMEWORKS_DIR / "reference"

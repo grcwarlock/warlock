@@ -9,7 +9,6 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-
 from warlock.db.models import Base
 
 config = context.config

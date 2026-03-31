@@ -14,8 +14,6 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from warlock.utils import ensure_aware
-
 from warlock.db.models import (
     ControlResult,
     Finding,
@@ -23,6 +21,7 @@ from warlock.db.models import (
     SystemProfile,
 )
 from warlock.db.models import Vendor as VendorModel
+from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)
 

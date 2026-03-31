@@ -117,7 +117,7 @@ class FrameworkDiff:
     @staticmethod
     def _load_yaml(path: str) -> dict:
         """Load and return a YAML file as dict."""
-        with open(path, "r") as f:
+        with open(path) as f:
             return yaml.safe_load(f) or {}
 
     @staticmethod

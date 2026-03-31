@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 _HAS_OTEL = False
 try:
-    from opentelemetry import trace  # noqa: F401
+    from opentelemetry import trace
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
         OTLPSpanExporter,
     )

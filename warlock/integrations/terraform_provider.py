@@ -260,9 +260,9 @@ class TerraformProvider:
 
         # Check various encryption fields
         encrypted = (
-            after.get("encrypted", None)
-            or after.get("storage_encrypted", None)
-            or after.get("encryption_at_rest_enabled", None)
+            after.get("encrypted")
+            or after.get("storage_encrypted")
+            or after.get("encryption_at_rest_enabled")
         )
 
         # Azure storage account

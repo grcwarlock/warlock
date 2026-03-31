@@ -19,7 +19,6 @@ from rich.table import Table
 from warlock.cli import cli, console
 from warlock.utils import ensure_aware
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

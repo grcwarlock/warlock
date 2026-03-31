@@ -10,16 +10,16 @@ transparently to the static KB via ``get_remediation()``.
 from __future__ import annotations
 
 import logging
+from functools import cache
+from pathlib import Path
 from typing import Any
 
 import yaml
-from pathlib import Path
-from functools import lru_cache
 
 log = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_remediation_kb(remediation_dir: str = None) -> dict:
     """Load all remediation YAML files into a single lookup.
     Returns: {(framework, control_id): remediation_dict}
@@ -64,7 +64,7 @@ def enrich_control_result(result, framework: str, control_id: str):
 # ---------------------------------------------------------------------------
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_crosswalks() -> dict[tuple[str, str], list[dict[str, Any]]]:
     """Load crosswalk YAML files and build a bidirectional index.
 
@@ -122,7 +122,7 @@ def _get_crosswalk_entries(framework: str, control_id: str) -> list[dict[str, An
 # ---------------------------------------------------------------------------
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_framework_yaml(framework: str) -> dict[str, Any]:
     """Load a single framework YAML and return its raw dict."""
     fw_dir = Path(__file__).resolve().parent.parent / "frameworks"
@@ -323,7 +323,7 @@ def get_ai_control_remediation(
         A dict with per-resource remediation commands, or ``None``
         if AI is not available.
     """
-    from warlock.ai import get_ai_service, AITask
+    from warlock.ai import AITask, get_ai_service
 
     static_guidance = get_remediation(framework, control_id)
 
@@ -388,7 +388,7 @@ def get_ai_remediation(
         ``steps`` keys).  When falling back, returns the static KB
         dict or ``None`` if no KB entry exists.
     """
-    from warlock.ai import get_ai_service, AITask
+    from warlock.ai import AITask, get_ai_service
 
     static_guidance = get_remediation(framework, control_id)
 

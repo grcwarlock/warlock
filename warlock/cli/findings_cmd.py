@@ -14,8 +14,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor, _parse_ai_response
-
+from warlock.cli import _error, _get_actor, _parse_ai_response, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -437,9 +436,10 @@ def findings_search(query: str, limit: int) -> None:
 @click.option("--severity", "-s", default=None, help="Filter by severity")
 def findings_timeline(days: int, severity: str | None) -> None:
     """Show daily finding counts over a time window."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -726,8 +726,8 @@ def findings_export(
         payload = json.dumps(data, indent=2)
     else:
         # CSV
-        import io
         import csv
+        import io
 
         buf = io.StringIO()
         fields = [
@@ -776,9 +776,10 @@ def findings_export(
 @click.option("--dry-run", is_flag=True, default=True, help="Show duplicates without removing")
 def findings_deduplicate(dry_run: bool) -> None:
     """Identify findings with duplicate sha256 hashes."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -829,9 +830,10 @@ def findings_deduplicate(dry_run: bool) -> None:
 @click.option("--top", "-n", default=10, help="Top N sources to show")
 def findings_trending(days: int, top: int) -> None:
     """Show finding open/close rate trends by source over a time window."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -874,9 +876,10 @@ def findings_trending(days: int, top: int) -> None:
 @click.option("--limit", "-n", default=20, help="Max connectors to show")
 def findings_by_connector(limit: int) -> None:
     """Group finding counts by connector (source + provider)."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -919,9 +922,10 @@ def findings_by_connector(limit: int) -> None:
 @click.option("--limit", "-n", default=20, help="Max controls to show")
 def findings_by_control(framework: str | None, limit: int) -> None:
     """Group finding counts by mapped control."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:

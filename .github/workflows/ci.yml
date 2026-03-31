@@ -37,8 +37,10 @@ jobs:
           python-version: "3.12"
           cache: 'pip'
       - run: pip install -e ".[dev,ai]"
-      - name: Run tests with coverage
+      - name: Run tests
         run: pytest tests/ -v --tb=short
+      - name: Type check (mypy)
+        run: mypy warlock/api/ warlock/db/ warlock/pipeline/ --no-error-summary 2>&1 || true  # non-blocking initially
 
   # Comprehensive QA gate — mirrors the full local qa.sh pipeline
   # Even if someone bypasses the pre-commit hook, CI catches everything

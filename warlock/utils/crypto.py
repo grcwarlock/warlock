@@ -11,8 +11,8 @@ import secrets
 
 try:
     from cryptography.fernet import Fernet
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
     _HAS_FERNET = True
 except ImportError:
@@ -171,7 +171,7 @@ class FieldEncryptor:
             pt = self._stdlib.decrypt(raw)
         return pt.decode("utf-8")
 
-    def is_encrypted(self, value: str) -> bool:  # noqa: D401
+    def is_encrypted(self, value: str) -> bool:
         return isinstance(value, str) and value.startswith("enc:")
 
 

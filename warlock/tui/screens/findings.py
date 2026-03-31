@@ -10,10 +10,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
+from textual.widgets import ListItem, ListView, Static
 
 from warlock.utils import ensure_aware
-
 
 SEV_STYLE = {
     "critical": "bold red",
@@ -124,7 +123,7 @@ class FindingsView(Vertical):
 
     def _fetch_data(self) -> None:
         try:
-            from warlock.tui.data.queries import get_findings, get_finding_counts
+            from warlock.tui.data.queries import get_finding_counts, get_findings
 
             items = get_findings()
             counts = get_finding_counts()

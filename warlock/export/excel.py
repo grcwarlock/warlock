@@ -578,8 +578,9 @@ class ExcelExporter:
         Returns:
             Path to the written file.
         """
-        from warlock.db.models import ControlResult, Finding, POAM, RiskAnalysis
         from sqlalchemy import func
+
+        from warlock.db.models import POAM, ControlResult, Finding, RiskAnalysis
 
         wb = Workbook()
 

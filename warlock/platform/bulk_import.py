@@ -56,7 +56,7 @@ class BulkImporter:
     def import_findings(
         self,
         filepath: str,
-        format: str,  # noqa: A002
+        format: str,
         *,
         column_mapping: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
@@ -72,7 +72,7 @@ class BulkImporter:
     def import_vendors(
         self,
         filepath: str,
-        format: str,  # noqa: A002
+        format: str,
         *,
         column_mapping: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
@@ -85,7 +85,7 @@ class BulkImporter:
     def import_personnel(
         self,
         filepath: str,
-        format: str,  # noqa: A002
+        format: str,
         *,
         column_mapping: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
@@ -98,7 +98,7 @@ class BulkImporter:
     def import_controls(
         self,
         filepath: str,
-        format: str,  # noqa: A002
+        format: str,
         *,
         column_mapping: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
@@ -172,7 +172,7 @@ class BulkImporter:
     def preview(
         self,
         filepath: str,
-        format: str,  # noqa: A002
+        format: str,
         limit: int = 5,
         *,
         column_mapping: dict[str, str] | None = None,

@@ -14,8 +14,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
-
+from textual.widgets import ListItem, ListView, Static
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
@@ -287,7 +286,7 @@ class RemediationsView(Vertical):
 
     def _fetch_data(self) -> None:
         try:
-            from warlock.tui.data.queries import get_remediations, get_remediation_counts
+            from warlock.tui.data.queries import get_remediation_counts, get_remediations
 
             items = get_remediations()
             counts = get_remediation_counts()

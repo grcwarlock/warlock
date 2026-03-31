@@ -214,126 +214,125 @@ def cli(
 
 
 # Import sub-modules to register commands
-from warlock.cli import pipeline as _pipeline  # noqa: F401, E402
-from warlock.cli import compliance as _compliance  # noqa: F401, E402
-from warlock.cli import governance as _governance  # noqa: F401, E402
-from warlock.cli import risk as _risk  # noqa: F401, E402
-from warlock.cli import monitoring as _monitoring  # noqa: F401, E402
-from warlock.cli import admin as _admin  # noqa: F401, E402
-from warlock.cli import ai_cmd as _ai_cmd  # noqa: F401, E402
-from warlock.cli import export as _export  # noqa: F401, E402
-from warlock.cli import lake as _lake  # noqa: F401, E402
-from warlock.cli import policy_cmd as _policy_cmd  # noqa: F401, E402
-from warlock.cli import briefing_cmd as _briefing_cmd  # noqa: F401, E402
-from warlock.cli import control_cmd as _control_cmd  # noqa: F401, E402
-
-# Phase 2 — Workflow CLI modules
-from warlock.cli import incidents_cmd as _incidents_cmd  # noqa: F401, E402
-from warlock.cli import evidence_cmd as _evidence_cmd  # noqa: F401, E402
-from warlock.cli import attestations_cmd as _attestations_cmd  # noqa: F401, E402
-from warlock.cli import privacy_cmd as _privacy_cmd  # noqa: F401, E402
 from warlock.cli import access_review_cmd as _access_review_cmd  # noqa: F401, E402
-from warlock.cli import change_mgmt_cmd as _change_mgmt_cmd  # noqa: F401, E402
-from warlock.cli import exceptions_cmd as _exceptions_cmd  # noqa: F401, E402
-from warlock.cli import calendar_cmd as _calendar_cmd  # noqa: F401, E402
-from warlock.cli import audit_engagement_cmd as _audit_engagement_cmd  # noqa: F401, E402
-from warlock.cli import control_tests_cmd as _control_tests_cmd  # noqa: F401, E402
-from warlock.cli import training_cmd as _training_cmd  # noqa: F401, E402
-from warlock.cli import bcp_cmd as _bcp_cmd  # noqa: F401, E402
-
-# Phase 3 — CLI expansion modules
-from warlock.cli import connectors_cmd as _connectors_cmd  # noqa: F401, E402
-from warlock.cli import assertions_cmd as _assertions_cmd  # noqa: F401, E402
-from warlock.cli import findings_cmd as _findings_cmd  # noqa: F401, E402
-from warlock.cli import frameworks_cmd as _frameworks_cmd  # noqa: F401, E402
-from warlock.cli import policies_opa_cmd as _policies_opa_cmd  # noqa: F401, E402
-from warlock.cli import audit_trail_cmd as _audit_trail_cmd  # noqa: F401, E402
-from warlock.cli import users_cmd as _users_cmd  # noqa: F401, E402
-from warlock.cli import reports_cmd as _reports_cmd  # noqa: F401, E402
-from warlock.cli import vendors_cmd as _vendors_cmd  # noqa: F401, E402
-from warlock.cli import integrations_cmd as _integrations_cmd  # noqa: F401, E402
-from warlock.cli import oscal_cmd as _oscal_cmd  # noqa: F401, E402
-from warlock.cli import pipeline_ext_cmd as _pipeline_ext_cmd  # noqa: F401, E402
-from warlock.cli import vulns_cmd as _vulns_cmd  # noqa: F401, E402
-from warlock.cli import conmon_cmd as _conmon_cmd  # noqa: F401, E402
-from warlock.cli import sod_cmd as _sod_cmd  # noqa: F401, E402
-from warlock.cli import poam_cmd as _poam_cmd  # noqa: F401, E402
-from warlock.cli import terraform_cmd as _terraform_cmd  # noqa: F401, E402
-
-# Phase 3+ — Analytics, correlation, AI, automation
-from warlock.cli import correlate_cmd as _correlate_cmd  # noqa: F401, E402
-from warlock.cli import bulk_cmd as _bulk_cmd  # noqa: F401, E402
-from warlock.cli import risk_engine_cmd as _risk_engine_cmd  # noqa: F401, E402
-from warlock.cli import comply_cmd as _comply_cmd  # noqa: F401, E402
-from warlock.cli import lake_analytics_cmd as _lake_analytics_cmd  # noqa: F401, E402
-from warlock.cli import dashboard_cmd as _dashboard_cmd  # noqa: F401, E402
+from warlock.cli import admin as _admin  # noqa: F401, E402
+from warlock.cli import ai_assist_cmd as _ai_assist_cmd  # noqa: F401, E402
+from warlock.cli import ai_cmd as _ai_cmd  # noqa: F401, E402
+from warlock.cli import ai_governance_cmd as _ai_governance_cmd  # noqa: F401, E402
 from warlock.cli import ai_ops_cmd as _ai_ops_cmd  # noqa: F401, E402
-from warlock.cli import automation_cmd as _automation_cmd  # noqa: F401, E402
-from warlock.cli import investigate_cmd as _investigate_cmd  # noqa: F401, E402
-
-# Interactive workflows — guided GRC practitioner UX
-from warlock.cli import vendor_workflow_cmd as _vendor_workflow_cmd  # noqa: F401, E402
-from warlock.cli import incident_workflow_cmd as _incident_workflow_cmd  # noqa: F401, E402
-from warlock.cli import privacy_workflow_cmd as _privacy_workflow_cmd  # noqa: F401, E402
-from warlock.cli import audit_workflow_cmd as _audit_workflow_cmd  # noqa: F401, E402
-from warlock.cli import risk_workflow_cmd as _risk_workflow_cmd  # noqa: F401, E402
-from warlock.cli import ops_workflow_cmd as _ops_workflow_cmd  # noqa: F401, E402
-from warlock.cli import system_workflow_cmd as _system_workflow_cmd  # noqa: F401, E402
-from warlock.cli import change_workflow_cmd as _change_workflow_cmd  # noqa: F401, E402
-from warlock.cli import training_workflow_cmd as _training_workflow_cmd  # noqa: F401, E402
-from warlock.cli import exception_workflow_cmd as _exception_workflow_cmd  # noqa: F401, E402
-from warlock.cli import conmon_workflow_cmd as _conmon_workflow_cmd  # noqa: F401, E402
-from warlock.cli import evidence_workflow_cmd as _evidence_workflow_cmd  # noqa: F401, E402
-from warlock.cli import lifecycle_cmd as _lifecycle_cmd  # noqa: F401, E402
 
 # Phase 4 — Alerts & Remediation
 from warlock.cli import alerts_cmd as _alerts_cmd  # noqa: F401, E402
-from warlock.cli import remediation_cmd as _remediation_cmd  # noqa: F401, E402
+from warlock.cli import allowlist_cmd as _allowlist_cmd  # noqa: F401, E402
+from warlock.cli import assertions_cmd as _assertions_cmd  # noqa: F401, E402
 
-# Phase 5 — Interoperability & AI-assisted
-from warlock.cli import interop_cmd as _interop_cmd  # noqa: F401, E402
-from warlock.cli import ai_assist_cmd as _ai_assist_cmd  # noqa: F401, E402
+# P2 — Model CRUD CLI modules
+from warlock.cli import asset_cmd as _asset_cmd  # noqa: F401, E402
+from warlock.cli import attestations_cmd as _attestations_cmd  # noqa: F401, E402
+from warlock.cli import audit_cmd as _audit_cmd  # noqa: F401, E402
+from warlock.cli import audit_engagement_cmd as _audit_engagement_cmd  # noqa: F401, E402
+from warlock.cli import audit_trail_cmd as _audit_trail_cmd  # noqa: F401, E402
+from warlock.cli import audit_workflow_cmd as _audit_workflow_cmd  # noqa: F401, E402
+from warlock.cli import automation_cmd as _automation_cmd  # noqa: F401, E402
+from warlock.cli import bcp_cmd as _bcp_cmd  # noqa: F401, E402
+from warlock.cli import branding_cmd as _branding_cmd  # noqa: F401, E402
+from warlock.cli import briefing_cmd as _briefing_cmd  # noqa: F401, E402
+from warlock.cli import bulk_cmd as _bulk_cmd  # noqa: F401, E402
+from warlock.cli import calendar_cmd as _calendar_cmd  # noqa: F401, E402
+from warlock.cli import change_mgmt_cmd as _change_mgmt_cmd  # noqa: F401, E402
+from warlock.cli import change_workflow_cmd as _change_workflow_cmd  # noqa: F401, E402
+from warlock.cli import collaboration_cmd as _collaboration_cmd  # noqa: F401, E402
+from warlock.cli import compliance as _compliance  # noqa: F401, E402
 
 # Backlog Blitz — new CLI modules (2026-03-24)
 from warlock.cli import compliance_views_cmd as _compliance_views_cmd  # noqa: F401, E402
-from warlock.cli import forecasting_cmd as _forecasting_cmd  # noqa: F401, E402
-from warlock.cli import security_posture_cmd as _security_posture_cmd  # noqa: F401, E402
-from warlock.cli import collaboration_cmd as _collaboration_cmd  # noqa: F401, E402
-from warlock.cli import search_cmd as _search_cmd  # noqa: F401, E402
-from warlock.cli import audit_cmd as _audit_cmd  # noqa: F401, E402
-from warlock.cli import soa_cmd as _soa_cmd  # noqa: F401, E402
-from warlock.cli import model_cmds as _model_cmds  # noqa: F401, E402
+from warlock.cli import comply_cmd as _comply_cmd  # noqa: F401, E402
+from warlock.cli import conmon_cmd as _conmon_cmd  # noqa: F401, E402
+from warlock.cli import conmon_workflow_cmd as _conmon_workflow_cmd  # noqa: F401, E402
+
+# Phase 3 — CLI expansion modules
+from warlock.cli import connectors_cmd as _connectors_cmd  # noqa: F401, E402
+from warlock.cli import control_cmd as _control_cmd  # noqa: F401, E402
+from warlock.cli import control_tests_cmd as _control_tests_cmd  # noqa: F401, E402
+
+# Phase 3+ — Analytics, correlation, AI, automation
+from warlock.cli import correlate_cmd as _correlate_cmd  # noqa: F401, E402
+from warlock.cli import dashboard_builder_cmd as _dashboard_builder_cmd  # noqa: F401, E402
+from warlock.cli import dashboard_cmd as _dashboard_cmd  # noqa: F401, E402
 from warlock.cli import db_cmd as _db_cmd  # noqa: F401, E402
+from warlock.cli import delegation_cmd as _delegation_cmd  # noqa: F401, E402
+from warlock.cli import dlq_cmd as _dlq_cmd  # noqa: F401, E402
 
 # Diagnostics
 from warlock.cli import doctor_cmd as _doctor_cmd  # noqa: F401, E402
 
-# P2 — Model CRUD CLI modules
-from warlock.cli import asset_cmd as _asset_cmd  # noqa: F401, E402
-from warlock.cli import dlq_cmd as _dlq_cmd  # noqa: F401, E402
-from warlock.cli import sandbox_cmd as _sandbox_cmd  # noqa: F401, E402
-from warlock.cli import delegation_cmd as _delegation_cmd  # noqa: F401, E402
-from warlock.cli import obligation_cmd as _obligation_cmd  # noqa: F401, E402
-from warlock.cli import allowlist_cmd as _allowlist_cmd  # noqa: F401, E402
-from warlock.cli import risk_dep_cmd as _risk_dep_cmd  # noqa: F401, E402
-from warlock.cli import branding_cmd as _branding_cmd  # noqa: F401, E402
-from warlock.cli import tenant_cmd as _tenant_cmd  # noqa: F401, E402
-from warlock.cli import p2_features_cmd as _p2_features_cmd  # noqa: F401, E402
+# P3 — endpoint agent, AI governance, packaging
+from warlock.cli import endpoint_cmd as _endpoint_cmd  # noqa: F401, E402
+from warlock.cli import evidence_cmd as _evidence_cmd  # noqa: F401, E402
 
 # Market table stakes — evidence requests, readiness, notifications
 from warlock.cli import evidence_request_cmd as _evidence_request_cmd  # noqa: F401, E402
-from warlock.cli import readiness_cmd as _readiness_cmd  # noqa: F401, E402
-from warlock.cli import notification_cmd as _notification_cmd  # noqa: F401, E402
+from warlock.cli import evidence_workflow_cmd as _evidence_workflow_cmd  # noqa: F401, E402
+from warlock.cli import exception_workflow_cmd as _exception_workflow_cmd  # noqa: F401, E402
+from warlock.cli import exceptions_cmd as _exceptions_cmd  # noqa: F401, E402
+from warlock.cli import export as _export  # noqa: F401, E402
+from warlock.cli import findings_cmd as _findings_cmd  # noqa: F401, E402
+from warlock.cli import forecasting_cmd as _forecasting_cmd  # noqa: F401, E402
+from warlock.cli import frameworks_cmd as _frameworks_cmd  # noqa: F401, E402
+from warlock.cli import governance as _governance  # noqa: F401, E402
 
 # P0/P1 features — import, dashboard builder
 from warlock.cli import import_cmd as _import_cmd  # noqa: F401, E402
-from warlock.cli import dashboard_builder_cmd as _dashboard_builder_cmd  # noqa: F401, E402
+from warlock.cli import incident_workflow_cmd as _incident_workflow_cmd  # noqa: F401, E402
 
-# P3 — endpoint agent, AI governance, packaging
-from warlock.cli import endpoint_cmd as _endpoint_cmd  # noqa: F401, E402
-from warlock.cli import ai_governance_cmd as _ai_governance_cmd  # noqa: F401, E402
+# Phase 2 — Workflow CLI modules
+from warlock.cli import incidents_cmd as _incidents_cmd  # noqa: F401, E402
+from warlock.cli import integrations_cmd as _integrations_cmd  # noqa: F401, E402
+
+# Phase 5 — Interoperability & AI-assisted
+from warlock.cli import interop_cmd as _interop_cmd  # noqa: F401, E402
+from warlock.cli import investigate_cmd as _investigate_cmd  # noqa: F401, E402
+from warlock.cli import lake as _lake  # noqa: F401, E402
+from warlock.cli import lake_analytics_cmd as _lake_analytics_cmd  # noqa: F401, E402
+from warlock.cli import lifecycle_cmd as _lifecycle_cmd  # noqa: F401, E402
+from warlock.cli import model_cmds as _model_cmds  # noqa: F401, E402
+from warlock.cli import monitoring as _monitoring  # noqa: F401, E402
+from warlock.cli import notification_cmd as _notification_cmd  # noqa: F401, E402
+from warlock.cli import obligation_cmd as _obligation_cmd  # noqa: F401, E402
+from warlock.cli import ops_workflow_cmd as _ops_workflow_cmd  # noqa: F401, E402
+from warlock.cli import oscal_cmd as _oscal_cmd  # noqa: F401, E402
+from warlock.cli import p2_features_cmd as _p2_features_cmd  # noqa: F401, E402
 from warlock.cli import package_cmd as _package_cmd  # noqa: F401, E402
+from warlock.cli import pipeline as _pipeline  # noqa: F401, E402
+from warlock.cli import pipeline_ext_cmd as _pipeline_ext_cmd  # noqa: F401, E402
+from warlock.cli import poam_cmd as _poam_cmd  # noqa: F401, E402
+from warlock.cli import policies_opa_cmd as _policies_opa_cmd  # noqa: F401, E402
+from warlock.cli import policy_cmd as _policy_cmd  # noqa: F401, E402
+from warlock.cli import privacy_cmd as _privacy_cmd  # noqa: F401, E402
+from warlock.cli import privacy_workflow_cmd as _privacy_workflow_cmd  # noqa: F401, E402
+from warlock.cli import readiness_cmd as _readiness_cmd  # noqa: F401, E402
+from warlock.cli import remediation_cmd as _remediation_cmd  # noqa: F401, E402
+from warlock.cli import reports_cmd as _reports_cmd  # noqa: F401, E402
+from warlock.cli import risk as _risk  # noqa: F401, E402
+from warlock.cli import risk_dep_cmd as _risk_dep_cmd  # noqa: F401, E402
+from warlock.cli import risk_engine_cmd as _risk_engine_cmd  # noqa: F401, E402
+from warlock.cli import risk_workflow_cmd as _risk_workflow_cmd  # noqa: F401, E402
+from warlock.cli import sandbox_cmd as _sandbox_cmd  # noqa: F401, E402
+from warlock.cli import search_cmd as _search_cmd  # noqa: F401, E402
+from warlock.cli import security_posture_cmd as _security_posture_cmd  # noqa: F401, E402
+from warlock.cli import soa_cmd as _soa_cmd  # noqa: F401, E402
+from warlock.cli import sod_cmd as _sod_cmd  # noqa: F401, E402
+from warlock.cli import system_workflow_cmd as _system_workflow_cmd  # noqa: F401, E402
+from warlock.cli import tenant_cmd as _tenant_cmd  # noqa: F401, E402
+from warlock.cli import terraform_cmd as _terraform_cmd  # noqa: F401, E402
+from warlock.cli import training_cmd as _training_cmd  # noqa: F401, E402
+from warlock.cli import training_workflow_cmd as _training_workflow_cmd  # noqa: F401, E402
+from warlock.cli import users_cmd as _users_cmd  # noqa: F401, E402
 
+# Interactive workflows — guided GRC practitioner UX
+from warlock.cli import vendor_workflow_cmd as _vendor_workflow_cmd  # noqa: F401, E402
+from warlock.cli import vendors_cmd as _vendors_cmd  # noqa: F401, E402
+from warlock.cli import vulns_cmd as _vulns_cmd  # noqa: F401, E402
 
 # ---------------------------------------------------------------------------
 # UX-005: Conceptual help topics

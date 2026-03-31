@@ -42,7 +42,7 @@ def _get_shipper() -> Any:
     Returns ``None`` when external shipping is not configured (i.e.
     ``WLK_AUDIT_SINK_BACKEND`` is absent or set to ``"stdout"``).
     """
-    global _shipper  # noqa: PLW0603
+    global _shipper
     if _shipper is not None:
         return _shipper
     audit_backend = os.environ.get("WLK_AUDIT_SINK_BACKEND", "").strip().lower()
@@ -141,10 +141,11 @@ class AuditTrail:
         shipper = _get_shipper()
         if shipper is not None:
             try:
+                from datetime import timezone
+
                 from warlock.export.audit_sink import (
                     AuditEntry as SinkAuditEntry,
                 )
-                from datetime import timezone
 
                 created_at = entry.created_at
                 if created_at is None:

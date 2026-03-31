@@ -422,9 +422,9 @@ async def sso_callback(
         )
 
     # Find or create local user
+    from warlock.api.auth import create_access_token, generate_refresh_token
     from warlock.db.engine import get_session
     from warlock.db.models import User
-    from warlock.api.auth import create_access_token, generate_refresh_token
 
     with get_session() as db:
         # Look up by SSO subject first (most reliable), then by email

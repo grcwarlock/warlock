@@ -231,8 +231,8 @@ class PipelineScheduler:
     def _execute_collect(self) -> None:
         """Run the 4-stage pipeline."""
         from warlock.db.engine import get_session, init_db
-        from warlock.pipeline.queue import create_bus_from_settings
         from warlock.pipeline.loader import build_pipeline
+        from warlock.pipeline.queue import create_bus_from_settings
 
         init_db()
         bus = create_bus_from_settings()
@@ -250,8 +250,8 @@ class PipelineScheduler:
 
     def _execute_snapshot(self) -> None:
         """Take posture snapshots for all frameworks."""
-        from warlock.db.engine import get_session, init_db
         from warlock.assessors.posture import PostureAggregator
+        from warlock.db.engine import get_session, init_db
 
         init_db()
         aggregator = PostureAggregator()
@@ -263,8 +263,8 @@ class PipelineScheduler:
 
     def _execute_cadence(self) -> None:
         """Check monitoring cadence and log stale controls."""
-        from warlock.db.engine import get_session, init_db
         from warlock.assessors.cadence import CadenceChecker
+        from warlock.db.engine import get_session, init_db
 
         init_db()
         checker = CadenceChecker()
@@ -365,9 +365,9 @@ class PipelineScheduler:
 
     def _execute_risk_cache_precompute(self) -> None:
         """Pre-warm the Monte Carlo risk cache for all active frameworks."""
+        from warlock.assessors.risk_engine import RiskEngine
         from warlock.config import get_settings
         from warlock.db.engine import get_session, init_db
-        from warlock.assessors.risk_engine import RiskEngine
 
         settings = get_settings()
         if not getattr(settings, "risk_cache_precompute_enabled", False):

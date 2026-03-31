@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from fastapi import Depends, HTTPException, Header, Query, Request, status
+
+from fastapi import Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
-from warlock.db.engine import get_session as _get_session, current_tenant_id
-from warlock.db.models import User, DEFAULT_TENANT_ID
 from warlock.api.auth import (
+    PERMISSIONS,
     authenticate_api_key,
     decode_access_token,
-    PERMISSIONS,
 )
+from warlock.db.engine import current_tenant_id
+from warlock.db.engine import get_session as _get_session
+from warlock.db.models import DEFAULT_TENANT_ID, User
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)

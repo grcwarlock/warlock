@@ -6,7 +6,7 @@ from pathlib import Path
 
 import click
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 
 def _safe_lake_path(path: str) -> str:
@@ -362,8 +362,8 @@ def evidence(ctx: click.Context) -> None:
 @click.option("--limit", default=20, type=int, help="Maximum rows to display")
 def evidence_list(path: str | None, limit: int) -> None:
     """List evidence artifacts (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -443,8 +443,9 @@ def evidence_list(path: str | None, limit: int) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def evidence_freshness(path: str | None) -> None:
     """Show evidence freshness status (lake with OLTP fallback)."""
-    from rich.table import Table
     from datetime import datetime, timedelta, timezone
+
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -537,8 +538,8 @@ def incidents(ctx: click.Context) -> None:
 @click.option("--limit", default=20, type=int, help="Maximum rows to display")
 def incidents_list(path: str | None, status: str | None, limit: int) -> None:
     """List incidents (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -621,8 +622,8 @@ def incidents_list(path: str | None, status: str | None, limit: int) -> None:
 @click.option("--limit", default=20, type=int, help="Maximum rows to display")
 def incidents_events(path: str | None, severity: str | None, limit: int) -> None:
     """List security events (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -708,8 +709,8 @@ def privacy(ctx: click.Context) -> None:
 @click.option("--status", default=None, help="Filter by status")
 def privacy_dsars(path: str | None, status: str | None) -> None:
     """List DSAR requests (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -802,8 +803,8 @@ def privacy_dsars(path: str | None, status: str | None) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def privacy_processing(path: str | None) -> None:
     """List processing activities (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -865,8 +866,8 @@ def privacy_processing(path: str | None) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def privacy_transfers(path: str | None) -> None:
     """List cross-border data transfers (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -948,8 +949,8 @@ def supply_chain(ctx: click.Context) -> None:
 @click.option("--limit", default=50, type=int, help="Maximum rows to display")
 def supply_chain_sbom(path: str | None, limit: int) -> None:
     """List SBOM components (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -1041,8 +1042,8 @@ def supply_chain_sbom(path: str | None, limit: int) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def supply_chain_suppliers(path: str | None) -> None:
     """List supplier assessments (lake with OLTP fallback)."""
-    from rich.table import Table
     from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 
@@ -1106,9 +1107,10 @@ def supply_chain_suppliers(path: str | None) -> None:
 @click.option("--path", default=None, help="Lake root path (default: from config)")
 def supply_chain_concentration(path: str | None) -> None:
     """Show concentration risk analysis (lake with OLTP fallback)."""
-    from rich.table import Table
-    from rich.markup import escape
     from collections import Counter
+
+    from rich.markup import escape
+    from rich.table import Table
 
     from warlock.config import get_settings
 

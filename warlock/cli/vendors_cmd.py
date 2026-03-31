@@ -14,8 +14,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
-
+from warlock.cli import _error, cli, console
 
 # ---------------------------------------------------------------------------
 # vendor-mgmt group

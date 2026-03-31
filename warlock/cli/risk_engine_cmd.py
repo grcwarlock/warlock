@@ -14,12 +14,10 @@ import uuid
 from datetime import datetime, timezone
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
-from rich.markup import escape
-
-from warlock.cli import cli, console, _error, _get_actor
-
+from warlock.cli import _error, _get_actor, cli, console
 
 # ---------------------------------------------------------------------------
 # Helpers

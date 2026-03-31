@@ -34,7 +34,7 @@ class ContinuousControlMonitor:
     # Map construction
     # ------------------------------------------------------------------
 
-    def build_control_evidence_map(self, session: Any) -> None:  # noqa: ARG002
+    def build_control_evidence_map(self, session: Any) -> None:
         """Build a map of which event_types affect which controls.
 
         Uses the ControlMapper's explicit rules (loaded from framework YAML

@@ -8,8 +8,8 @@ Prometheus text format for scraping.
 from __future__ import annotations
 
 import logging
-import time
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -243,10 +243,11 @@ def get_metrics_from_db() -> PipelineMetricsSnapshot:
     When the pipeline is not actively running, we can still derive useful
     metrics from the pipeline_runs and connector_runs tables.
     """
+    from sqlalchemy import func
+
     from warlock.db.engine import get_read_session, init_db
     from warlock.db.models import PipelineRun
     from warlock.utils import ensure_aware
-    from sqlalchemy import func
 
     init_db()
     snap = PipelineMetricsSnapshot()

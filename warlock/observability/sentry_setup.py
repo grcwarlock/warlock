@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 _HAS_SENTRY = False
 try:
-    import sentry_sdk  # noqa: F401
+    import sentry_sdk
 
     _HAS_SENTRY = True
 except ImportError:

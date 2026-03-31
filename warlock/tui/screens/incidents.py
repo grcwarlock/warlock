@@ -10,10 +10,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
+from textual.widgets import ListItem, ListView, Static
 
 from warlock.utils import ensure_aware
-
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
@@ -178,7 +177,7 @@ class IncidentsView(Vertical):
 
     def _fetch_data(self) -> None:
         try:
-            from warlock.tui.data.queries import get_incidents, get_incident_counts
+            from warlock.tui.data.queries import get_incident_counts, get_incidents
 
             items = get_incidents()
             counts = get_incident_counts()

@@ -213,6 +213,7 @@ def training_status(
 def overdue_training(days: int, department: str | None, output_format: str) -> None:
     """List personnel with overdue training."""
     from datetime import datetime, timedelta, timezone
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Personnel
 

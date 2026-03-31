@@ -545,6 +545,7 @@ class PgVectorStore(VectorStore):
     ) -> None:
         _validate_table_name(table_name)
 
+        from pgvector.sqlalchemy import Vector
         from sqlalchemy import (
             Column,
             MetaData,
@@ -553,7 +554,6 @@ class PgVectorStore(VectorStore):
             Text,
             create_engine,
         )
-        from pgvector.sqlalchemy import Vector
 
         self._engine = create_engine(connection_string)
         self._metadata = MetaData()

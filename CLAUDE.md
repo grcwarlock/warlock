@@ -292,7 +292,7 @@ Fix failures locally before pushing.
 | EU AI Act | 33 | — | — |
 | SEC Cyber | 20 | — | — |
 
-All 15 framework YAMLs (including SOC 2 Points of Focus) are active in the demo seed.
+All 17 framework YAMLs (including SOC 2 Points of Focus) are active in the demo seed.
 
 ## Security-Critical Config Defaults
 

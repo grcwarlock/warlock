@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 
 from warlock.config import get_settings
 from warlock.db.audit import AuditTrail
-from warlock.db.models import EscalationPolicy, Issue, POAM
+from warlock.db.models import POAM, EscalationPolicy, Issue
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)

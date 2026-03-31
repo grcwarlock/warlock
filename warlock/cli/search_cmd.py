@@ -105,7 +105,7 @@ def _utcnow() -> datetime:
 def full_text(query: str, entity_type: str | None, limit: int) -> None:
     """Full-text search across findings, controls, issues, POAMs, and vendors."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding, Issue, POAM, Vendor
+    from warlock.db.models import POAM, ControlResult, Finding, Issue, Vendor
 
     init_db()
     like_pattern = f"%{query}%"
@@ -303,7 +303,7 @@ def apply_filter(name: str, limit: int) -> None:
     criteria = preset.get("filters", {})
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding, Issue, POAM, Vendor
+    from warlock.db.models import POAM, ControlResult, Finding, Issue, Vendor
 
     init_db()
 
@@ -507,7 +507,7 @@ def recent(limit: int) -> None:
 def faceted(entity_type: str) -> None:
     """Show faceted counts for an entity type (severity, status, framework, source)."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Finding, Issue, POAM, Vendor
+    from warlock.db.models import POAM, ControlResult, Finding, Issue, Vendor
 
     init_db()
 
@@ -746,7 +746,7 @@ def fuzzy(query: str, scope: str, limit: int) -> None:
     # --- Entities ---
     if scope in ("entities", "all"):
         from warlock.db.engine import get_session, init_db
-        from warlock.db.models import Finding, Issue, POAM, Vendor
+        from warlock.db.models import POAM, Finding, Issue, Vendor
 
         init_db()
         titles: list[tuple[str, str, str]] = []  # (type, id, title)

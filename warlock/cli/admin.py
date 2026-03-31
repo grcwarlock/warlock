@@ -265,7 +265,7 @@ def retention(ctx: click.Context) -> None:
 def retention_report() -> None:
     """Show retention report: record ages, purgeable counts, legal holds."""
     from warlock.db.engine import get_session, init_db
-    from warlock.workflows.retention import RetentionManager, FRAMEWORK_RETENTION
+    from warlock.workflows.retention import FRAMEWORK_RETENTION, RetentionManager
 
     init_db()
     mgr = RetentionManager()

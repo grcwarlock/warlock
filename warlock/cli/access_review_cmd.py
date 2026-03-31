@@ -11,9 +11,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 from warlock.utils import ensure_aware
-
 
 # ---------------------------------------------------------------------------
 # Access review campaigns are stored as AuditEntry records with:
@@ -763,9 +762,7 @@ def access_review_background_checks(overdue_only: bool, department: str | None, 
             (check_date + timedelta(days=365)).strftime("%Y-%m-%d") if check_date else "\u2014"
         )
         is_overdue = False
-        if status == "not_started":
-            is_overdue = True
-        elif check_date and check_date < overdue_cutoff:
+        if status == "not_started" or (check_date and check_date < overdue_cutoff):
             is_overdue = True
 
         if overdue_only and not is_overdue:

@@ -46,6 +46,16 @@ Expected demo output shows:
 - ~7,325 findings normalized
 - 373,852 controls mapped
 
+### Terraform Disk Usage
+
+The `terraform/` directory contains 142+ IaC modules. Running `terraform init` on any module downloads provider plugins to `terraform/**/.terraform/` — these caches are **gitignored** but can consume **tens of GB** on disk. It is safe to delete them at any time:
+
+```bash
+find terraform/ -name ".terraform" -type d -exec rm -rf {} +
+```
+
+Re-run `terraform init` in a module directory when you need to validate or plan.
+
 ---
 
 ## Branch Strategy
@@ -279,7 +289,7 @@ Closes #123 (if applicable)
 Warlock's architecture is **pipeline-first**: evidence flows through four immutable stages with SHA-256 integrity hashing at every step.
 
 ```
-Stage 1: Connectors (361)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
+Stage 1: Connectors (362)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (358)  → FindingData          → transform to universal findings format
 Stage 3: Control Mapper     → ControlMappingData   → map to 1,996 controls across 14 frameworks
 Stage 4: Assessor (Tier 1-4) → ControlResultData  → deterministic assertions + optional AI reasoning
@@ -289,7 +299,7 @@ Every control result traces back to its raw API response — the hash chain is t
 
 ### Key Components
 
-- **Connectors** (`warlock/connectors/`) — 361 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
+- **Connectors** (`warlock/connectors/`) — 362 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
 - **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
@@ -299,8 +309,8 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
 - **Database** (`warlock/db/`) — SQLAlchemy ORM, 56 models, schema via Base.metadata.create_all()
-- **Frameworks** (`warlock/frameworks/`) — 15 framework YAMLs, 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
-- **OPA** (`policies/`) — 676 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
+- **Frameworks** (`warlock/frameworks/`) — 17 framework YAMLs, 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
+- **OPA** (`policies/`) — 731 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports
 - **Workflows** (`warlock/workflows/`) — POA&M, risk acceptance, compensating controls, GDPR
 

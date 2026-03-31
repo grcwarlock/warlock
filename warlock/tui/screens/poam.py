@@ -9,12 +9,10 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
 from textual.reactive import reactive
-
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
+from textual.widgets import ListItem, ListView, Static
 
 from warlock.utils import ensure_aware
-
 
 STATUS_STYLE = {
     "draft": "dim",
@@ -134,7 +132,7 @@ class POAMView(Vertical):
 
     def _fetch_data(self) -> None:
         try:
-            from warlock.tui.data.queries import get_poams, get_poam_counts
+            from warlock.tui.data.queries import get_poam_counts, get_poams
 
             items = get_poams()
             counts = get_poam_counts()

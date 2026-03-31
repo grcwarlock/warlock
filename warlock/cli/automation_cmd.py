@@ -15,7 +15,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor, _print_stats
+from warlock.cli import _error, _get_actor, _print_stats, cli, console
 
 
 def _utcnow() -> datetime:
@@ -58,10 +58,11 @@ def run_all(dry_run: bool) -> None:
         console.print("\n[dim]Pass without --dry-run to execute.[/dim]")
         return
 
+    import logging
+
     from warlock.db.engine import get_session, init_db
     from warlock.pipeline.bus import EventBus
     from warlock.pipeline.loader import build_pipeline, register_lake_writer
-    import logging
 
     init_db()
     bus = EventBus()
@@ -117,10 +118,11 @@ def collect_and_assess(
         console.print("\n[dim]Pass without --dry-run to execute.[/dim]")
         return
 
+    import logging
+
     from warlock.db.engine import get_session, init_db
     from warlock.pipeline.bus import EventBus
     from warlock.pipeline.loader import build_pipeline, register_lake_writer
-    import logging
 
     init_db()
     bus = EventBus()
@@ -345,7 +347,7 @@ def auto_poam(
     entries for those not already tracked.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, POAM
+    from warlock.db.models import POAM, ControlResult
 
     init_db()
     actor = _get_actor()
@@ -436,7 +438,7 @@ def cleanup(older_than_days: int, dry_run: bool) -> None:
     action in the audit trail.  Does not delete records.
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Issue, POAM
+    from warlock.db.models import POAM, Issue
 
     init_db()
     cutoff = _utcnow() - timedelta(days=older_than_days)
@@ -604,10 +606,11 @@ def rules_create(trigger: str, action: str, conditions: str, enabled: bool) -> N
         --action auto-issue \\
         --conditions "framework=nist_800_53"
     """
+    import hashlib
     import uuid as _uuid
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
-    import hashlib
 
     init_db()
     actor = _get_actor()
@@ -661,10 +664,11 @@ def rules_delete(rule_id: str) -> None:
 
     RULE_ID: rule UUID or prefix (from 'warlock automation rules list').
     """
+    import hashlib
     import uuid as _uuid
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
-    import hashlib
 
     init_db()
     actor = _get_actor()
@@ -730,7 +734,7 @@ def rules_test(rule_id: str, dry_run: bool) -> None:
     RULE_ID: rule UUID or prefix (from 'warlock automation rules list').
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Finding, ControlResult
+    from warlock.db.models import AuditEntry, ControlResult, Finding
 
     init_db()
 
@@ -912,8 +916,8 @@ def webhook_create(
         --event finding.critical \\
         --secret my-shared-secret
     """
-    import uuid as _uuid
     import hashlib
+    import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
@@ -1032,8 +1036,8 @@ def webhook_delete(webhook_id: str) -> None:
 
     WEBHOOK_ID: webhook UUID or prefix (from 'warlock automation webhook list').
     """
-    import uuid as _uuid
     import hashlib
+    import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
@@ -1251,10 +1255,11 @@ def schedules_set(name: str, cron: str, enabled: bool) -> None:
         --cron "0 2 * * *" \\
         --enabled
     """
+    import hashlib
     import uuid as _uuid
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
-    import hashlib
 
     init_db()
     actor = _get_actor()

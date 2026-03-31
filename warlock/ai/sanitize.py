@@ -14,10 +14,10 @@ import re
 from typing import Any
 
 __all__ = [
-    "sanitize_field",
-    "wrap_evidence",
     "hash_prompt",
+    "sanitize_field",
     "strip_secrets",
+    "wrap_evidence",
 ]
 
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")

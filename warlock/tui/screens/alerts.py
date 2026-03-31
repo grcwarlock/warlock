@@ -10,10 +10,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
+from textual.widgets import ListItem, ListView, Static
 
 from warlock.utils import ensure_aware
-
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
@@ -172,7 +171,7 @@ class AlertsView(Vertical):
 
     def _fetch_data(self) -> None:
         try:
-            from warlock.tui.data.queries import get_alerts, get_alert_counts
+            from warlock.tui.data.queries import get_alert_counts, get_alerts
 
             items = get_alerts()
             counts = get_alert_counts()

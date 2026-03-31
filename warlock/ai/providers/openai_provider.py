@@ -19,9 +19,9 @@ import time
 import httpx
 
 from warlock.ai.providers.base import (
-    BaseProvider,
     DEFAULT_MAX_RETRIES,
     DEFAULT_TIMEOUT,
+    BaseProvider,
     ProviderResponse,
 )
 from warlock.ai.types import ModelInfo

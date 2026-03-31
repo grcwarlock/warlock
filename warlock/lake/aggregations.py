@@ -21,6 +21,7 @@ def refresh_aggregations(lake_path: str) -> dict[str, int]:
     """Refresh all materialized aggregation tables. Returns row counts."""
     import pyarrow as pa
     import pyarrow.parquet as pq
+
     from warlock.lake.query import LakeQueryEngine
 
     base = Path(lake_path)

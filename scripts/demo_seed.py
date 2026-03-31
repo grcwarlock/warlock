@@ -423,9 +423,9 @@ NOW = datetime.now(timezone.utc)
 # Rich data generation (from demo_data.py)
 # ---------------------------------------------------------------------------
 
-import threading  # noqa: E402
+import threading
 
-try:  # noqa: E402
+try:
     from scripts.demo_data import (
         generate_auth_logs,
         generate_cloud_instances,
@@ -451,7 +451,7 @@ try:  # noqa: E402
         generate_vulnerabilities,
     )
 except ImportError:
-    from demo_data import (  # type: ignore[no-redef]  # noqa: E402
+    from demo_data import (  # type: ignore[no-redef]
         generate_auth_logs,
         generate_cloud_instances,
         generate_code_findings,
@@ -20536,7 +20536,7 @@ def _seed_frontend_enrichment(session) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _seed_empty_tables(session) -> dict:  # noqa: C901
+def _seed_empty_tables(session) -> dict:
     """Seed data for 18+ previously-empty tables plus missing demo data.
 
     Covers Items 15-22, 25, 53, 80 from the fix list.
@@ -20546,6 +20546,7 @@ def _seed_empty_tables(session) -> dict:  # noqa: C901
 
     from warlock.db.audit import AuditTrail
     from warlock.db.models import (
+        POAM,
         APIKey,
         Asset,
         AuditEngagement,
@@ -20561,7 +20562,6 @@ def _seed_empty_tables(session) -> dict:  # noqa: C901
         Finding,
         IPAllowlistEntry,
         Issue,
-        POAM,
         Policy,
         PolicyHistory,
         PostureSnapshot,

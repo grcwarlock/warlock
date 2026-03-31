@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from warlock.api.auth import PERMISSIONS
-from warlock.api.deps import get_db, require_permission, apply_source_scope
+from warlock.api.deps import apply_source_scope, get_db, require_permission
 from warlock.api.routers.schemas import (
     MessageResponse,
     PaginatedResponse,

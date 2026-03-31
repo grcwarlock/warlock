@@ -14,9 +14,9 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from warlock.db.models import (
+    POAM,
     ComplianceDrift,
     ControlResult,
-    POAM,
     PostureSnapshot,
     SystemProfile,
 )

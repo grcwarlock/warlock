@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission, apply_framework_scope
+from warlock.api.deps import apply_framework_scope, get_db, require_permission
 from warlock.api.routers.schemas import (
     MessageResponse,
     PaginatedResponse,
@@ -19,6 +19,7 @@ from warlock.api.routers.schemas import (
     _parse_dt,
 )
 from warlock.db.models import (
+    POAM,
     Attestation,
     AuditComment,
     AuditEngagement,
@@ -26,7 +27,6 @@ from warlock.db.models import (
     ControlResult,
     Finding,
     Issue,
-    POAM,
     User,
 )
 from warlock.db.repository import get_repos
@@ -1220,8 +1220,9 @@ def extend_poam(
     current_user: User = Depends(require_permission("write")),
 ):
     """Extend a POA&M's scheduled completion date."""
-    from warlock.workflows.poam import POAMManager
     from datetime import datetime as dt
+
+    from warlock.workflows.poam import POAMManager
 
     mgr = POAMManager()
     new_date = dt.fromisoformat(req.new_completion_date)

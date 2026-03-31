@@ -12,8 +12,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from warlock.normalizers.base import FindingData
 from warlock.connectors.base import RawEventData
+from warlock.normalizers.base import FindingData
 
 log = logging.getLogger(__name__)
 

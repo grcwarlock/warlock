@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from warlock.db.models import Issue, POAM
+from warlock.db.models import POAM, Issue
 from warlock.domains.base import (
     DomainEvent,
     QueryFilters,

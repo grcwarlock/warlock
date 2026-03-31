@@ -20,7 +20,6 @@ from rich.table import Table
 from warlock.cli import cli, console
 from warlock.utils import ensure_aware
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -239,7 +238,7 @@ def gap_close(framework: str | None) -> None:
 def audit_prep(framework: str) -> None:
     """Pre-flight checklist for an upcoming audit: evidence freshness, coverage, POA&Ms, attestations."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Attestation, ControlResult, POAM
+    from warlock.db.models import POAM, Attestation, ControlResult
 
     init_db()
     with get_session() as session:
@@ -340,7 +339,7 @@ def readiness_score(framework: str | None, framework_opt: str | None) -> None:
         )
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Attestation, ControlResult, POAM
+    from warlock.db.models import POAM, Attestation, ControlResult
 
     init_db()
     with get_session() as session:
@@ -426,7 +425,7 @@ def readiness_score(framework: str | None, framework_opt: str | None) -> None:
 def pre_audit(framework: str, output_format: str) -> None:
     """Generate a pre-audit report for a framework."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Attestation, ControlResult, POAM
+    from warlock.db.models import POAM, Attestation, ControlResult
 
     init_db()
     with get_session() as session:
@@ -697,6 +696,7 @@ def benchmark(framework: str | None, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -717,7 +717,7 @@ def benchmark(framework: str | None, output: str | None) -> None:
 def maturity_model(framework: str | None) -> None:
     """Assess GRC program maturity on a 1-5 scale."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Attestation, AuditEntry, POAM
+    from warlock.db.models import POAM, Attestation, AuditEntry
 
     init_db()
     with get_session() as session:
@@ -991,7 +991,7 @@ def continuous_compliance(framework: str | None) -> None:
 def debt(framework: str | None) -> None:
     """Show compliance debt: overdue POA&Ms, expired attestations, stale evidence."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Attestation, ControlResult, POAM
+    from warlock.db.models import POAM, Attestation, ControlResult
 
     init_db()
     now = datetime.now(timezone.utc)
@@ -1140,7 +1140,7 @@ def schedule_audit(framework: str | None) -> None:
 def executive_brief(framework: str | None, output_format: str, output: str | None) -> None:
     """Generate a one-page executive compliance brief."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Attestation, POAM
+    from warlock.db.models import POAM, Attestation
 
     init_db()
     now = datetime.now(timezone.utc)

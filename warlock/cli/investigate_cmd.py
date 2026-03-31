@@ -1065,10 +1065,10 @@ def audit_prep(framework: str, non_interactive: bool) -> None:
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         Attestation,
         ControlResult,
         EvidenceRequest,
-        POAM,
     )
 
     _ = _get_actor()  # reserved for future auto-remediation actions
@@ -1235,9 +1235,9 @@ def daily(non_interactive: bool) -> None:
     """Daily GRC practitioner morning summary and workflow launcher."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         Finding,
         Issue,
-        POAM,
     )
 
     init_db()

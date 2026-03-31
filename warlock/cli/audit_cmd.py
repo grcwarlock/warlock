@@ -15,9 +15,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import console, _error
+from warlock.cli import _error, console
 from warlock.cli.audit_engagement_cmd import audit_grp
-
 
 # ---------------------------------------------------------------------------
 # audit sample
@@ -133,9 +132,9 @@ def audit_workpapers(
     fmt: str,
 ) -> None:
     """List workpapers for an engagement, or create a new one with --create."""
+    from warlock.cli import _get_actor
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
-    from warlock.cli import _get_actor
     from warlock.workflows.audit_manager import AuditManager
 
     init_db()

@@ -114,7 +114,7 @@ if _HAS_STRAWBERRY:
                 while True:
                     try:
                         message = await asyncio.wait_for(queue.get(), timeout=30.0)
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         # Send keepalive as a no-op; GraphQL-WS handles pings
                         continue
 

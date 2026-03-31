@@ -12,6 +12,7 @@ from sqlalchemy import case, func
 
 from warlock.db.engine import get_read_session, init_db
 from warlock.db.models import (
+    POAM,
     Alert,
     AuditEngagement,
     ChangeRequest,
@@ -21,7 +22,6 @@ from warlock.db.models import (
     Finding,
     Personnel,
     PipelineRun,
-    POAM,
     Remediation,
     RiskAnalysis,
     SystemProfile,

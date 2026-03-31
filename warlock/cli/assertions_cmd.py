@@ -12,8 +12,7 @@ from collections import defaultdict
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
-
+from warlock.cli import _error, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -37,7 +36,6 @@ def _get_engine():
     """Return the singleton AssertionEngine with all assertions loaded."""
     # Import assertions module to ensure all @engine.assertion decorators run
     import warlock.assessors.assertions  # noqa: F401
-
     from warlock.assessors.engine import engine
 
     return engine

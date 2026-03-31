@@ -13,11 +13,10 @@ from pathlib import Path
 
 import click
 from rich.markup import escape
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
-
+from warlock.cli import _error, cli, console
 
 # ---------------------------------------------------------------------------
 # Column mappings for common scanner formats

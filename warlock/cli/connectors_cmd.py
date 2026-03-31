@@ -13,8 +13,7 @@ from collections import Counter, defaultdict
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
-
+from warlock.cli import _error, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -441,7 +440,7 @@ def connectors_history(name: str | None, limit: int) -> None:
 def connectors_schema(name: str) -> None:
     """Show the raw event schema (event_types) produced by a connector."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import RawEvent, ConnectorRun
+    from warlock.db.models import ConnectorRun, RawEvent
 
     init_db()
     with get_session() as session:

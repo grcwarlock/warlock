@@ -15,9 +15,8 @@ from typing import Any
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 from warlock.utils import ensure_aware
-
 
 # ---------------------------------------------------------------------------
 # Root group
@@ -83,8 +82,9 @@ def _severity_style(severity: str) -> str:
 
 def _posture_score(session, framework: str | None = None) -> dict[str, Any]:
     """Compute a simple compliance posture summary from control results."""
-    from warlock.db.models import ControlResult
     from sqlalchemy import func
+
+    from warlock.db.models import ControlResult
 
     q = session.query(
         ControlResult.framework,
@@ -156,10 +156,10 @@ def dashboard_live(refresh_seconds: int) -> None:
     """Real-time compliance dashboard (Rich Live display). Press Ctrl-C to exit."""
     from rich.live import Live
     from rich.panel import Panel
+    from sqlalchemy import func
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ConnectorRun, Finding
-    from sqlalchemy import func
 
     init_db()
 
@@ -300,6 +300,7 @@ def dashboard_posture(framework: tuple[str, ...], output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -329,7 +330,7 @@ def dashboard_posture(framework: tuple[str, ...], output: str | None) -> None:
 def dashboard_executive(output: str | None) -> None:
     """Board-level summary: overall score, top risks, trending items, and open actions."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Finding, POAM, Issue
+    from warlock.db.models import POAM, Finding, Issue
 
     init_db()
     with get_session() as session:
@@ -394,6 +395,7 @@ def dashboard_executive(output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -416,9 +418,10 @@ def dashboard_executive(output: str | None) -> None:
 @dashboard.command("security")
 def dashboard_security() -> None:
     """Security-focused view: vulnerability counts, MTTR, and active incidents."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding, Issue
-    from sqlalchemy import func
 
     init_db()
     since_30d = _utcnow() - timedelta(days=30)
@@ -503,9 +506,10 @@ def dashboard_security() -> None:
 @dashboard.command("operations")
 def dashboard_operations() -> None:
     """Ops-focused view: connector health, pipeline status, data freshness, and errors."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ConnectorRun, RawEvent
-    from sqlalchemy import func
 
     init_db()
     since_24h = _utcnow() - timedelta(hours=24)
@@ -605,7 +609,7 @@ def dashboard_operations() -> None:
 def dashboard_program() -> None:
     """GRC program health: training, attestation coverage, evidence freshness, POA&M aging."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import POAM, Finding, ControlResult
+    from warlock.db.models import POAM, ControlResult, Finding
 
     init_db()
     now = _utcnow()
@@ -717,9 +721,10 @@ _KRI_REGISTRY: dict[str, dict[str, Any]] = {
 
 def _evaluate_kri(name: str, kri_def: dict[str, Any]) -> float:
     """Compute current KRI value by running the corresponding query."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ConnectorRun, Finding, POAM, RawEvent
     from sqlalchemy import func
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import POAM, ConnectorRun, Finding, RawEvent
 
     init_db()
     query_key = kri_def.get("query", "")

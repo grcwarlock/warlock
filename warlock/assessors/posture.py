@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import distinct
 from sqlalchemy.orm import Session
@@ -20,8 +20,6 @@ from warlock.db.models import (
     Finding,
     PostureSnapshot,
 )
-from datetime import timedelta
-
 from warlock.utils import ensure_aware
 
 log = logging.getLogger(__name__)

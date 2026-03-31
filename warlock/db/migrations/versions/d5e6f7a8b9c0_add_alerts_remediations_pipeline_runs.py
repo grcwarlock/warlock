@@ -12,8 +12,8 @@ PG-8: PipelineRun model for pipeline execution history and stats.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "d5e6f7a8b9c0"
 down_revision: Union[str, Sequence[str], None] = "c4d5e6f7a8b9"

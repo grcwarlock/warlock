@@ -15,9 +15,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 from warlock.utils import ensure_aware
-
 
 # ---------------------------------------------------------------------------
 # Root group
@@ -207,9 +206,10 @@ def lake_summary() -> None:
 @lake_analytics.command("sources")
 def lake_sources() -> None:
     """List all data sources in the lake with row counts and last-updated timestamps."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import RawEvent
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -272,9 +272,10 @@ def lake_sources() -> None:
 )
 def lake_freshness(source: str | None, threshold_hours: int) -> None:
     """Show data freshness per source, flagging stale sources."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import RawEvent
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -342,9 +343,10 @@ def lake_freshness(source: str | None, threshold_hours: int) -> None:
 )
 def lake_volume(days: int, group_by: str) -> None:
     """Show data volume trends grouped by a chosen dimension."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import RawEvent
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -390,9 +392,10 @@ def lake_volume(days: int, group_by: str) -> None:
 @click.option("--source", default=None, help="Filter by source name")
 def lake_quality(source: str | None) -> None:
     """Report data quality metrics: nulls, duplicates, and schema violations."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding, RawEvent
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:
@@ -768,8 +771,8 @@ def lake_compact(dry_run: bool) -> None:
 
         if not dry_run:
             try:
-                import pyarrow.parquet as pq
                 import pyarrow as pa
+                import pyarrow.parquet as pq
 
                 tables = [pq.read_table(str(f)) for f in small_files]
                 merged = pa.concat_tables(tables)
@@ -796,9 +799,9 @@ def lake_compact(dry_run: bool) -> None:
 @lake_analytics.command("retention")
 def lake_retention() -> None:
     """Show the data retention policy and what data is eligible for purge."""
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import RawEvent, Finding
     from warlock.config import get_settings
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import Finding, RawEvent
 
     settings = get_settings()
     retention_days = getattr(settings, "lake_retention_days", 365)
@@ -848,7 +851,7 @@ def lake_retention() -> None:
 def lake_purge(older_than_days: int, dry_run: bool) -> None:
     """Purge old data from the lake per the retention policy."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import RawEvent, Finding
+    from warlock.db.models import Finding, RawEvent
 
     init_db()
     cutoff = _utcnow() - timedelta(days=older_than_days)
@@ -894,9 +897,10 @@ def lake_purge(older_than_days: int, dry_run: bool) -> None:
 @click.option("--days", type=int, default=7, show_default=True, help="Analysis window in days")
 def anomaly_detect(source: str | None, days: int) -> None:
     """Detect anomalies in finding volume and severity patterns."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -965,9 +969,10 @@ def anomaly_detect(source: str | None, days: int) -> None:
 @click.option("--since", default=None, help="ISO datetime lower bound")
 def anomaly_list(severity: str | None, since: str | None) -> None:
     """List detected anomalies in the data lake (days with abnormal finding counts)."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     since_dt = _utcnow() - timedelta(days=30)
@@ -1017,9 +1022,10 @@ def anomaly_list(severity: str | None, since: str | None) -> None:
 @click.argument("anomaly_date")
 def anomaly_investigate(anomaly_date: str) -> None:
     """Drill into findings on a specific anomalous date (YYYY-MM-DD)."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     try:
@@ -1102,9 +1108,10 @@ def anomaly_investigate(anomaly_date: str) -> None:
 )
 def trends_findings(days: int, group_by: str) -> None:
     """Show finding volume trends over time."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -1155,9 +1162,10 @@ def trends_findings(days: int, group_by: str) -> None:
 @click.option("--framework", default=None, help="Filter by framework")
 def trends_controls(days: int, framework: str | None) -> None:
     """Show control pass/fail trends over time."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlResult
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -1212,9 +1220,10 @@ def trends_controls(days: int, framework: str | None) -> None:
 @click.option("--days", type=int, default=30, show_default=True, help="Lookback window in days")
 def trends_risk(days: int) -> None:
     """Show risk score trends (severity distribution over time)."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import Finding
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -1264,9 +1273,10 @@ def trends_risk(days: int) -> None:
 @click.option("--days", type=int, default=30, show_default=True, help="Lookback window in days")
 def trends_connectors(days: int) -> None:
     """Show connector data volume trends over time."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ConnectorRun
-    from sqlalchemy import func
 
     init_db()
     since = _utcnow() - timedelta(days=days)
@@ -1571,9 +1581,10 @@ def lake_time_travel(target_date: str, framework: str | None) -> None:
     Shows the compliance state as it was on the specified date, using
     the closest PostureSnapshot records on or before that date.
     """
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import PostureSnapshot
-    from sqlalchemy import func
 
     init_db()
     try:
@@ -1756,9 +1767,10 @@ def lake_storage_tiers() -> None:
 )
 def lake_risk_history(framework: str | None, months: int) -> None:
     """Show risk analysis trends over time (mean ALE and VaR 95% by month)."""
+    from sqlalchemy import extract, func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import RiskAnalysis
-    from sqlalchemy import func, extract
 
     init_db()
     since = _utcnow() - timedelta(days=months * 30)

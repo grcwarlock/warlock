@@ -9,12 +9,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import click
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
-from rich.markup import escape
-
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 
 @cli.group("correlate", invoke_without_command=True)
@@ -552,9 +551,10 @@ def blast_radius(finding_id: str) -> None:
 @click.option("--limit", "-n", default=50, help="Max results")
 def common_findings(framework: str | None, min_frameworks: int, limit: int) -> None:
     """Findings that map to multiple frameworks."""
+    from sqlalchemy import func
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import ControlMapping, Finding
-    from sqlalchemy import func
 
     init_db()
     with get_session() as session:

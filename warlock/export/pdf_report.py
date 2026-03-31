@@ -258,7 +258,7 @@ def generate_executive_pdf(
     """
     _require_reportlab()
 
-    from warlock.db.models import ControlResult, Finding, Issue, POAM
+    from warlock.db.models import POAM, ControlResult, Finding, Issue
 
     if not output_path:
         output_path = f"executive-summary-{datetime.now(timezone.utc):%Y%m%d}.pdf"

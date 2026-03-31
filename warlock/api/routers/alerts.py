@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission, apply_framework_scope
+from warlock.api.deps import apply_framework_scope, get_db, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
 from warlock.db.models import Alert, User
 from warlock.utils import ensure_aware

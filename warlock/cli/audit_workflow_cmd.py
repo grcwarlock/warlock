@@ -20,9 +20,8 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _get_actor
+from warlock.cli import _error, _get_actor, cli, console
 from warlock.utils import ensure_aware
-
 
 # ---------------------------------------------------------------------------
 # Root group
@@ -102,11 +101,11 @@ def audit_prepare(framework: str, stale_days: int, interactive: bool) -> None:
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         Attestation,
         AuditEngagement,
         ControlResult,
         EvidenceRequest,
-        POAM,
     )
 
     init_db()
@@ -609,7 +608,7 @@ def audit_simulate(framework: str, sim_date_str: str, interactive: bool) -> None
         warlock audit-workflow simulate nist_800_53 --date 2026-12-31
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, POAM
+    from warlock.db.models import POAM, ControlResult
 
     try:
         sim_date = datetime.strptime(sim_date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
@@ -789,7 +788,7 @@ def audit_respond(engagement_id: str, interactive: bool) -> None:
         warlock audit-workflow respond <engagement_id>
     """
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEngagement, EvidenceRequest, ControlResult
+    from warlock.db.models import AuditEngagement, ControlResult, EvidenceRequest
 
     init_db()
 

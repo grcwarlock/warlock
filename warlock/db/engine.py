@@ -196,7 +196,7 @@ def init_db():
     Also ensures the default system tenant exists so that FK constraints
     on ``tenant_id`` columns are satisfied for all subsequent inserts.
     """
-    from warlock.db.models import Base, DEFAULT_TENANT_ID, Tenant  # noqa: F811
+    from warlock.db.models import DEFAULT_TENANT_ID, Base, Tenant
 
     Base.metadata.create_all(get_engine())
     _ensure_default_tenant(Tenant, DEFAULT_TENANT_ID)
@@ -227,7 +227,7 @@ def _install_tenant_filter() -> None:
     ``do_orm_execute`` event that appends ``WHERE tenant_id = :tid`` to every
     SELECT whose primary entity has a ``tenant_id`` column.
     """
-    global _tenant_filter_installed  # noqa: PLW0603
+    global _tenant_filter_installed
     if _tenant_filter_installed:
         return
     _tenant_filter_installed = True
@@ -236,7 +236,7 @@ def _install_tenant_filter() -> None:
     if not settings.multi_tenancy_enabled:
         return
 
-    from warlock.db.models import Tenant, TenantMixin  # noqa: F811
+    from warlock.db.models import Tenant, TenantMixin
 
     @event.listens_for(Session, "do_orm_execute")
     def _apply_tenant_filter(orm_execute_state):

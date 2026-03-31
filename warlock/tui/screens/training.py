@@ -11,7 +11,6 @@ from textual.containers import Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Static
 
-
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
 # ------------------------------------------------------------------ #

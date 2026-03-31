@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate warlock/frameworks/remediation/nist_800_53.yaml with all 1,176 controls."""
 
-import yaml
 import sys
+
+import yaml
 
 sys.path.insert(0, "/Users/jsn/warlock")
 

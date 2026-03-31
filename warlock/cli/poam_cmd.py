@@ -14,10 +14,8 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
+from warlock.cli import _error, _get_actor, cli, console
 from warlock.utils import ensure_aware
-
-from warlock.cli import cli, console, _error, _get_actor
-
 
 # ---------------------------------------------------------------------------
 # Style maps
@@ -96,7 +94,7 @@ def poam_create(
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, POAM
+    from warlock.db.models import POAM, AuditEntry
 
     init_db()
     actor = _get_actor()
@@ -360,7 +358,7 @@ def poam_close(poam_id: str, note: str) -> None:
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, POAM
+    from warlock.db.models import POAM, AuditEntry
 
     init_db()
     actor = _get_actor()
@@ -869,7 +867,7 @@ def poam_bulk_update(
     """Batch update status for multiple POA&Ms by framework/severity."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import POAM
-    from warlock.workflows.poam import POAMManager, _CLOSED_STATUSES
+    from warlock.workflows.poam import _CLOSED_STATUSES, POAMManager
 
     init_db()
     actor = _get_actor()
@@ -940,7 +938,7 @@ def poam_bulk_assign(
     """Batch assign POA&Ms to a user by framework/severity."""
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import POAM
-    from warlock.workflows.poam import POAMManager, _CLOSED_STATUSES
+    from warlock.workflows.poam import _CLOSED_STATUSES, POAMManager
 
     init_db()
     actor = _get_actor()

@@ -10,8 +10,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
-
+from textual.widgets import ListItem, ListView, Static
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #

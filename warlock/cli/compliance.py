@@ -5,7 +5,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error, _check_ai_available, _parse_ai_response, _ai_repl
+from warlock.cli import _ai_repl, _check_ai_available, _error, _parse_ai_response, cli, console
 
 
 @cli.command()
@@ -161,6 +161,7 @@ def coverage(framework: str | None, use_ai: bool | None) -> None:
 
     if not rows:
         from sqlalchemy import func
+
         from warlock.db.engine import get_session
         from warlock.db.models import ControlResult
 

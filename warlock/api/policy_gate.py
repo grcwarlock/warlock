@@ -147,8 +147,8 @@ class PolicyGate:
 
     async def _call_opa(self, opa_input: dict) -> Any:
         """Make HTTP call to OPA server."""
-        import urllib.request
         import urllib.error
+        import urllib.request
 
         # Try httpx first (async-friendly), fall back to urllib
         client = self._get_http_session()

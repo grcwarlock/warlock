@@ -24,6 +24,7 @@ def aggregate_control_statuses(lake_path: str) -> list[dict[str, Any]]:
     an aggregate status via majority voting.
     """
     from pathlib import Path
+
     from warlock.lake.query import LakeQueryEngine
 
     engine = LakeQueryEngine(lake_path)
@@ -102,9 +103,10 @@ def write_aggregate_assessments(lake_path: str, aggregates: list[dict]) -> int:
     if not aggregates:
         return 0
 
+    from pathlib import Path
+
     import pyarrow as pa
     import pyarrow.parquet as pq
-    from pathlib import Path
 
     base = Path(lake_path) / "curated" / "aggregate_control_assessments"
     base.mkdir(parents=True, exist_ok=True)

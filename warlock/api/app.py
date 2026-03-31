@@ -12,38 +12,39 @@ import logging
 from fastapi import Depends, FastAPI, Request
 from starlette.responses import JSONResponse
 
-from warlock.api.deps import get_db
-
 from warlock import __version__ as _VERSION
+from warlock.api.deps import get_db
 from warlock.api.routers import (
-    health,
-    auth_routes,
-    pipeline,
-    compliance,
-    governance,
-    risk,
+    access_reviews,
     admin,
     ai_routes,
-    export,
     alerts,
-    remediation,
+    analytics,
+    auth_routes,
+    bcp,
+    calendar,
+    changes,
+    compliance,
+    control_tests,
     evidence,
     evidence_api,
-    resources,
-    trust_portal as trust_portal_router,
-    webhooks,
-    analytics,
-    search,
-    reports,
-    incidents,
-    changes,
-    calendar,
     exceptions,
+    export,
+    governance,
+    health,
+    incidents,
+    pipeline,
     privacy,
-    access_reviews,
+    remediation,
+    reports,
+    resources,
+    risk,
+    search,
     training,
-    bcp,
-    control_tests,
+    webhooks,
+)
+from warlock.api.routers import (
+    trust_portal as trust_portal_router,
 )
 
 log = logging.getLogger(__name__)
@@ -175,7 +176,7 @@ def create_app() -> FastAPI:
     # ------------------------------------------------------------------
     if not _is_production:
         try:
-            from prometheus_client import make_asgi_app  # noqa: F401
+            from prometheus_client import make_asgi_app
 
             _metrics_app = make_asgi_app()
             application.mount("/metrics", _metrics_app)
@@ -304,6 +305,7 @@ app = create_app()
 def run_server():
     """Entry point for `warlock-api` console script."""
     import uvicorn
+
     from warlock.config import get_settings
 
     settings = get_settings()

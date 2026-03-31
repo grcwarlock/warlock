@@ -25,9 +25,8 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from warlock.cli import cli, console, _get_actor
+from warlock.cli import _get_actor, cli, console
 from warlock.utils import ensure_aware
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -139,11 +138,11 @@ def audit_lifecycle(framework: str | None, target_date_str: str | None, interact
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         AuditEngagement,
         ControlResult,
         EvidenceRequest,
         Issue,
-        POAM,
     )
 
     init_db()
@@ -507,10 +506,10 @@ def finding_lifecycle(finding_id: str | None, interactive: bool) -> None:
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         ControlResult,
         Finding,
         Issue,
-        POAM,
     )
 
     init_db()
@@ -1025,10 +1024,10 @@ def conmon_lifecycle(framework: str | None, interactive: bool) -> None:
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         ComplianceDrift,
         ConnectorRun,
         ControlResult,
-        POAM,
         PostureSnapshot,
     )
 

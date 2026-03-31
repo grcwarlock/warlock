@@ -18,7 +18,6 @@ import httpx
 
 from warlock.ai.sanitize import hash_prompt as _hash_prompt
 from warlock.ai.sanitize import sanitize_field as _shared_sanitize_field
-
 from warlock.mappers.control_mapper import ControlMappingData
 from warlock.normalizers.base import FindingData
 
@@ -482,7 +481,7 @@ def evaluate_with_service(
     Returns:
         ``AIReasoningResult`` on success, ``None`` if AI is not used.
     """
-    from warlock.ai import get_ai_service, AITask
+    from warlock.ai import AITask, get_ai_service
 
     ai = get_ai_service()
     if not ai.is_task_enabled(AITask.COMPLIANCE_ASSESSMENT):
@@ -529,17 +528,16 @@ def build_compliance_context(
     This is optional — if called, it enriches the AI prompt with the full
     compliance picture. If not called, the AI falls back to finding-only reasoning.
     """
+    from datetime import datetime, timedelta, timezone
+
     from warlock.db.models import (
         CompensatingControl,
-        RiskAcceptance,
-        ControlInheritance,
         ComplianceDrift,
+        ControlInheritance,
         PostureSnapshot,
+        RiskAcceptance,
         SystemProfile,
     )
-    from datetime import timedelta, timezone
-    from datetime import datetime
-
     from warlock.utils import ensure_aware
 
     ctx = ComplianceContext()
@@ -637,9 +635,9 @@ def build_compliance_context(
         }
 
     # Cadence status
-    from warlock.db.models import ControlMapping
     from sqlalchemy import func
-    from warlock.db.models import ControlResult
+
+    from warlock.db.models import ControlMapping, ControlResult
 
     freq_row = (
         session.query(ControlMapping.monitoring_frequency)

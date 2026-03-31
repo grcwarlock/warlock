@@ -189,8 +189,9 @@ def _handle_connector_status(lake_path: str, args: dict) -> dict:
 
 
 def _handle_control_details(lake_path: str, args: dict) -> dict:
-    from warlock.lake.query import LakeQueryEngine
     from pathlib import Path
+
+    from warlock.lake.query import LakeQueryEngine
 
     framework = args.get("framework", "")
     control_id = args.get("control_id", "")
@@ -223,8 +224,9 @@ def _handle_control_details(lake_path: str, args: dict) -> dict:
 
 
 def _handle_aggregate_assessment(lake_path: str, args: dict) -> dict:
-    from warlock.lake.query import LakeQueryEngine
     from pathlib import Path
+
+    from warlock.lake.query import LakeQueryEngine
 
     engine = LakeQueryEngine(lake_path)
     base = Path(lake_path)

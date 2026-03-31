@@ -92,7 +92,7 @@ def _run_pipeline_background(run_id: str, source: list[str] | None = None):
                     lake_stats.findings_written,
                     lake_stats.control_results_written,
                 )
-    except Exception:
+    except Exception:  # deliberate: broad catch — background task boundary, must not propagate
         log.exception("Background pipeline run failed (run_id=%s)", run_id)
 
 
@@ -160,7 +160,8 @@ def pipeline_status(
                 [d.name for d in curated.iterdir() if d.is_dir()] if curated.exists() else []
             )
             lake_status = f"ok ({len(table_dirs)} tables, {len(parquet_files)} files)"
-        except Exception:
+        except Exception:  # deliberate: broad catch for resilience — lake check is informational
+            log.warning("Lake health check failed", exc_info=True)
             lake_status = "error"
 
     return {

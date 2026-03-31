@@ -19,7 +19,6 @@ from rich.table import Table
 
 from warlock.cli import _get_actor, cli, console
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -95,11 +94,11 @@ def conmon_monthly(framework: str | None, output: str | None) -> None:
     """
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import (
+        POAM,
         ChangeEvent,
         ConnectorRun,
         Issue,
         Personnel,
-        POAM,
         PostureSnapshot,
     )
 

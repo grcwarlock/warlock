@@ -391,7 +391,7 @@ class AlertRulesEngine:
                 created = ensure_aware(existing.created_at) or now
                 self._sent_cache[dedup_key] = created
                 return True
-        except Exception:  # noqa: BLE001
+        except Exception:
             # DB check failure should not block alert creation
             pass
 
@@ -426,7 +426,7 @@ class AlertRulesEngine:
         for rule in self.rules:
             try:
                 payloads = rule.check(session)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # Rule evaluation failure should not crash the engine
                 continue
 

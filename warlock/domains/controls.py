@@ -8,7 +8,7 @@ from collections import defaultdict
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from warlock.db.models import ControlResult, POAM
+from warlock.db.models import POAM, ControlResult
 from warlock.domains.base import (
     DomainEvent,
     QueryFilters,

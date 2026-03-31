@@ -10,8 +10,7 @@ from __future__ import annotations
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
-
+from warlock.cli import _error, cli, console
 
 # ---------------------------------------------------------------------------
 # Integration registry (in-memory catalogue of known integration types)
@@ -142,18 +141,16 @@ def integrations_configure(
     Tokens are NOT persisted in the database. Set them as environment variables:
       WLK_INTEGRATION_<TYPE>_TOKEN (e.g. WLK_INTEGRATION_SLACK_TOKEN)
     """
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
-
     import hashlib
     import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
 
     if token:
         console.print(
             "[yellow]Warning: Do not paste live tokens into CLI commands. "
-            "Set WLK_INTEGRATION_{}_TOKEN as an environment variable instead.[/yellow]".format(
-                integration_type.upper()
-            )
+            f"Set WLK_INTEGRATION_{integration_type.upper()}_TOKEN as an environment variable instead.[/yellow]"
         )
 
     init_db()
@@ -351,7 +348,7 @@ def integrations_sync(name: str, dry_run: bool, direction: str) -> None:
     pushed = 0
     pulled = 0
 
-    if direction in ("push", "both") and hasattr(cls, "push") or hasattr(cls, "sync_push"):
+    if (direction in ("push", "both") and hasattr(cls, "push")) or hasattr(cls, "sync_push"):
         sync_method = getattr(cls, "push", None) or getattr(cls, "sync_push", None)
         if sync_method:
             try:
@@ -363,7 +360,7 @@ def integrations_sync(name: str, dry_run: bool, direction: str) -> None:
         else:
             console.print(f"[dim]No push method available on '{_esc(name)}'.[/dim]")
 
-    if direction in ("pull", "both") and hasattr(cls, "pull") or hasattr(cls, "sync_pull"):
+    if (direction in ("pull", "both") and hasattr(cls, "pull")) or hasattr(cls, "sync_pull"):
         sync_method = getattr(cls, "pull", None) or getattr(cls, "sync_pull", None)
         if sync_method:
             try:
@@ -493,11 +490,11 @@ def notifications_configure(channel: str, webhook_url: str | None, recipient: st
     Secrets should be set via environment variables:
       WLK_NOTIFY_<CHANNEL>_TOKEN
     """
-    from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
-
     import hashlib
     import uuid
+
+    from warlock.db.engine import get_session, init_db
+    from warlock.db.models import AuditEntry
 
     init_db()
     with get_session() as session:

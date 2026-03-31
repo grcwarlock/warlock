@@ -25,10 +25,10 @@ def briefing(framework, owner, mode, limit):
     """Daily briefing — what needs attention across all domains."""
     from warlock.db.engine import get_session
     from warlock.domains.base import QueryFilters
-    from warlock.domains.registry import DomainRegistry
     from warlock.domains.controls import ControlsDomainService
-    from warlock.domains.issues import IssuesDomainService
     from warlock.domains.evidence import EvidenceDomainService
+    from warlock.domains.issues import IssuesDomainService
+    from warlock.domains.registry import DomainRegistry
 
     now = datetime.now(timezone.utc)
     filters = QueryFilters(

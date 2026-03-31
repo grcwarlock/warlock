@@ -18,8 +18,7 @@ import click
 from rich.markup import escape
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
-
+from warlock.cli import _error, cli, console
 
 # ---------------------------------------------------------------------------
 # Group
@@ -441,7 +440,8 @@ def pipeline_replay(run_id: str) -> None:
 
         for raw_event_row in raw_events:
             # Reconstruct a RawEvent-like object for the normalizer
-            from warlock.connectors.base import RawEvent as ConnRawEvent, SourceType
+            from warlock.connectors.base import RawEvent as ConnRawEvent
+            from warlock.connectors.base import SourceType
 
             raw = ConnRawEvent(
                 source=raw_event_row.source,
@@ -1151,9 +1151,9 @@ def pipeline_volume(threshold: float) -> None:
 @pipeline_group.command("preflight")
 def pipeline_preflight() -> None:
     """Verify all connector configurations are valid before running the pipeline."""
-    from warlock.pipeline.loader import build_pipeline
-    from warlock.pipeline.bus import EventBus
     from warlock.db.engine import init_db
+    from warlock.pipeline.bus import EventBus
+    from warlock.pipeline.loader import build_pipeline
 
     init_db()
     bus = EventBus()

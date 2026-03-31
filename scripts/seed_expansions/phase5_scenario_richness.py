@@ -14,11 +14,11 @@ from datetime import datetime, timedelta, timezone
 
 from warlock.db.audit import AuditTrail
 from warlock.db.models import (
+    POAM,
     Alert,
     Attestation,
     AuditEngagement,
     Issue,
-    POAM,
     Remediation,
     SystemProfile,
     Vendor,

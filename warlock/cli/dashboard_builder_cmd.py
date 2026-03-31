@@ -15,9 +15,8 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 from warlock.utils import ensure_aware
-
 
 WIDGET_TYPES = {
     "posture": "Framework compliance posture",
@@ -77,7 +76,7 @@ def _render_kri_widget(session) -> Panel:
     """Render key risk indicators widget."""
     from sqlalchemy import func
 
-    from warlock.db.models import ControlResult, Finding, POAM
+    from warlock.db.models import POAM, ControlResult, Finding
 
     critical = (
         session.query(func.count(Finding.id)).filter(Finding.severity == "critical").scalar() or 0

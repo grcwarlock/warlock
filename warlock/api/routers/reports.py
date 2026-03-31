@@ -11,15 +11,15 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import (
+    apply_framework_scope,
     get_db,
     require_permission,
-    apply_framework_scope,
 )
 from warlock.db.models import (
+    POAM,
     ControlResult,
     Finding,
     Issue,
-    POAM,
     PostureSnapshot,
     User,
     Vendor,

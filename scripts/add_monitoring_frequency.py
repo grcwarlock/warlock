@@ -11,7 +11,6 @@ from pathlib import Path
 
 import yaml
 
-
 # NIST 800-53 control family frequency defaults based on FedRAMP ConMon
 NIST_FAMILY_DEFAULTS = {
     # High volatility — daily/weekly monitoring

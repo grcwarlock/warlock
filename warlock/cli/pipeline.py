@@ -6,7 +6,7 @@ import logging
 
 import click
 
-from warlock.cli import cli, console, _print_stats
+from warlock.cli import _print_stats, cli, console
 
 
 @cli.command()
@@ -105,11 +105,11 @@ def collect(source: tuple[str, ...], demo: bool, mode: str | None) -> None:
 
     # Run with progress indicator
     from rich.progress import (
+        BarColumn,
+        MofNCompleteColumn,
         Progress,
         SpinnerColumn,
         TextColumn,
-        BarColumn,
-        MofNCompleteColumn,
     )
 
     active_connectors = pipeline.connectors.list_active()
@@ -168,8 +168,9 @@ def collect(source: tuple[str, ...], demo: bool, mode: str | None) -> None:
 def ingest(source: str, provider: str, event_type: str, file_path: str) -> None:
     """Ingest a JSON file through the webhook receiver and pipeline."""
     import json
-    from warlock.connectors.webhook import WebhookReceiver
+
     from warlock.connectors.base import ConnectorResult, SourceType
+    from warlock.connectors.webhook import WebhookReceiver
     from warlock.db.engine import get_session, init_db
     from warlock.pipeline.bus import EventBus
     from warlock.pipeline.loader import build_pipeline

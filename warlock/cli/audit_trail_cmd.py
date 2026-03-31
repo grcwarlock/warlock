@@ -27,7 +27,7 @@ from typing import Any
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 
 def _recompute_hash(entry) -> str:
@@ -300,9 +300,10 @@ def audit_trail_verify(from_seq: int, to_seq: int | None, verbose: bool) -> None
 @click.option("--limit", "-n", default=50, help="Max results")
 def audit_trail_search(query: str, field: str, limit: int) -> None:
     """Search audit entries by text."""
+    from sqlalchemy import or_
+
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
-    from sqlalchemy import or_
 
     init_db()
     with get_session() as session:

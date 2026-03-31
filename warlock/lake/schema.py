@@ -73,14 +73,14 @@ def generate_iceberg_schema(model_class: type) -> Schema:
 def generate_all_schemas() -> dict[str, Schema]:
     """Generate Iceberg schemas for all pipeline models."""
     from warlock.db.models import (
+        AuditEntry,
+        ComplianceDrift,
         ConnectorRun,
         ControlMapping,
         ControlResult,
         Finding,
-        RawEvent,
         PostureSnapshot,
-        ComplianceDrift,
-        AuditEntry,
+        RawEvent,
     )
 
     models = {

@@ -15,7 +15,7 @@ from pathlib import Path
 import click
 from rich.table import Table
 
-from warlock.cli import cli, console, _error
+from warlock.cli import _error, cli, console
 
 # Root of the OSCAL package directory (resolved relative to this file's location)
 _OSCAL_ROOT = Path(__file__).resolve().parent.parent.parent / "frameworks-oscal"

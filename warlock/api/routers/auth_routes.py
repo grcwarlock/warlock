@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from warlock.api.auth import (
+    PERMISSIONS,
     create_access_token,
     create_user,
     generate_api_key,
@@ -17,9 +18,8 @@ from warlock.api.auth import (
     login_with_tokens,
     rotate_refresh_token,
     validate_password,
-    verify_password,
     verify_mfa_login,
-    PERMISSIONS,
+    verify_password,
 )
 from warlock.api.deps import get_db, require_permission
 from warlock.api.routers.schemas import MessageResponse, _dt_str
@@ -146,7 +146,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/auth/mfa/verify")
 def mfa_verify(body: MFAVerifyRequest, db: Session = Depends(get_db)):
     """Complete MFA login by verifying TOTP code. Issues tokens on success."""
-    from warlock.api.auth import verify_mfa_challenge, generate_refresh_token
+    from warlock.api.auth import generate_refresh_token, verify_mfa_challenge
 
     # Verify the signed challenge token (replaces raw user_id)
     user_id = verify_mfa_challenge(body.mfa_token)

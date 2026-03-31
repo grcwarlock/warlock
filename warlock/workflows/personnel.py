@@ -312,9 +312,9 @@ class PersonnelManager:
                 flags.append("no_mfa")
 
             # Overdue training
-            if person.training_status == "overdue":
-                flags.append("overdue_training")
-            elif person.training_status is None and person.hr_status == "active":
+            if person.training_status == "overdue" or (
+                person.training_status is None and person.hr_status == "active"
+            ):
                 flags.append("overdue_training")
 
             # No access review in 90 days

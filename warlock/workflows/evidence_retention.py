@@ -398,7 +398,7 @@ def evaluate_evidence_quality(
         A dict with per-artifact scores, overall aggregated scores, and
         an ``ai_used`` boolean indicating provenance.
     """
-    from warlock.ai import get_ai_service, AITask
+    from warlock.ai import AITask, get_ai_service
 
     ai = get_ai_service()
 

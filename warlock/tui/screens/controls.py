@@ -10,8 +10,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
-
+from textual.widgets import ListItem, ListView, Static
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
@@ -127,7 +126,7 @@ class ControlsView(Vertical):
 
     def _fetch_data(self) -> None:
         try:
-            from warlock.tui.data.queries import get_control_results, get_control_counts
+            from warlock.tui.data.queries import get_control_counts, get_control_results
 
             items = get_control_results()
             counts = get_control_counts()

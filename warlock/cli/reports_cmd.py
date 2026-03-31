@@ -12,7 +12,6 @@ from rich.table import Table
 from warlock.cli import cli, console
 from warlock.utils import ensure_aware
 
-
 # ---------------------------------------------------------------------------
 # reports group
 # ---------------------------------------------------------------------------
@@ -103,6 +102,7 @@ def reports_executive(framework: str | None, out_format: str, output: str | None
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -257,6 +257,7 @@ def reports_compliance(framework: str, limit: int, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -330,7 +331,7 @@ def reports_trend(framework: str | None, days: int) -> None:
 def reports_risk(framework: str | None, limit: int) -> None:
     """Show top open risk items (issues + POA&Ms) by severity."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import Issue, POAM
+    from warlock.db.models import POAM, Issue
 
     init_db()
     with get_session() as session:
@@ -640,7 +641,7 @@ def reports_history(limit: int) -> None:
 def reports_board(framework: str | None, output: str | None) -> None:
     """Generate board-level GRC summary (high-level risk and posture metrics)."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import ControlResult, Issue, POAM
+    from warlock.db.models import POAM, ControlResult, Issue
 
     init_db()
     with get_session() as session:
@@ -677,6 +678,7 @@ def reports_board(framework: str | None, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -745,6 +747,7 @@ def reports_kri(framework: str | None, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -797,6 +800,7 @@ def reports_kpi(framework: str | None, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -858,6 +862,7 @@ def reports_conmon(framework: str | None, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -932,6 +937,7 @@ def reports_sla(framework: str | None, output: str | None) -> None:
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()
@@ -981,6 +987,7 @@ def reports_attestation_summary(framework: str | None, output: str | None) -> No
 
     if output:
         from io import StringIO
+
         from rich.console import Console as RichConsole
 
         buf = StringIO()

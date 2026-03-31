@@ -581,7 +581,7 @@ def aggregate_control_evidence(
     This pulls together ControlResults, Findings, and ControlMappings to build
     the complete evidence picture the narrator needs.
     """
-    from warlock.db.models import ControlResult, Finding, ControlMapping
+    from warlock.db.models import ControlMapping, ControlResult, Finding
 
     # All results for this control
     results = (
@@ -673,11 +673,11 @@ def aggregate_control_evidence(
     # inheritance, posture trends, and cadence status
     # ------------------------------------------------------------------
     from warlock.db.models import (
-        CompensatingControl,
-        RiskAcceptance,
         POAM,
+        CompensatingControl,
         ControlInheritance,
         PostureSnapshot,
+        RiskAcceptance,
     )
 
     __import__("datetime").datetime.now(__import__("datetime").timezone.utc)

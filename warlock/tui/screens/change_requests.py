@@ -10,10 +10,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static, ListView, ListItem
+from textual.widgets import ListItem, ListView, Static
 
 from warlock.utils import ensure_aware
-
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
@@ -183,8 +182,8 @@ class ChangeRequestsView(Vertical):
     def _fetch_data(self) -> None:
         try:
             from warlock.tui.data.queries import (
-                get_change_requests,
                 get_change_request_counts,
+                get_change_requests,
             )
 
             items = get_change_requests()
