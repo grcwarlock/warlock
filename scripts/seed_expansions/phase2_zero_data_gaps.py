@@ -11,7 +11,6 @@ Called from demo_seed.py after the main seed completes.
 
 from __future__ import annotations
 
-import hashlib
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -19,7 +18,6 @@ from sqlalchemy.orm import Session
 
 from warlock.db.models import (
     POAM,
-    AuditEntry,
     ConnectorRun,
     DataSilo,
     Personnel,
@@ -502,44 +500,28 @@ def _seed_significant_changes(session: Session) -> int:
     ``entity_type='conmon'``.
     """
     now = _utcnow()
+    from warlock.db.audit import AuditTrail
 
-    # Find the current max sequence to continue the hash chain correctly
-    last_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    seq = (last_entry.sequence + 1) if last_entry else 1
-    prev_hash = last_entry.entry_hash if last_entry else "genesis"
-
-    entries = []
+    trail = AuditTrail(session)
+    count = 0
     for i, change in enumerate(_SIGNIFICANT_CHANGES):
-        payload = f"{seq}:{prev_hash}:significant_change:conmon:{change['actor']}:{change['title']}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=_uuid(),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        trail.record(
             action="significant_change",
             entity_type="conmon",
-            entity_id=f"sigchange-{seq}",
+            entity_id=f"sigchange-{i + 1:03d}",
             actor=change["actor"],
-            extra={
+            metadata={
                 "title": change["title"],
                 "description": change["description"],
                 "system": None,
                 "frameworks": change["frameworks"],
                 "recorded_at": (now - timedelta(days=10 - i * 3)).isoformat(),
             },
-            created_at=now - timedelta(days=10 - i * 3),
         )
-        entries.append(entry)
+        count += 1
 
-        # Advance chain
-        prev_hash = entry_hash
-        seq += 1
-
-    session.add_all(entries)
     session.flush()
-    return len(entries)
+    return count
 
 
 # ---------------------------------------------------------------------------

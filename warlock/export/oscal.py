@@ -636,11 +636,9 @@ class OscalExporter:
                 req["statements"] = statements
             implemented_requirements.append(req)
 
-        profile_href = _FRAMEWORK_PROFILE_URIS.get(framework, f"#{framework}-profile")
-        # Prefer a local catalog UUID if available (resolvable internal ref)
-        local_ref = _load_local_catalog(framework)
-        if local_ref:
-            profile_href = local_ref
+        # Use an actual profile document reference (URL or local JSON path).
+        # Do not point import-profile at an in-document UUID fragment.
+        profile_href = _FRAMEWORK_PROFILE_URIS.get(framework, f"./frameworks-oscal/{framework}/profile.json")
 
         # Derive earliest assessment date for date-authorized
         assessed_dates = [cr.assessed_at for cr in cr_rows if cr.assessed_at]
@@ -650,11 +648,34 @@ class OscalExporter:
 
         warlock_party_uuid = str(uuid5(WARLOCK_NS, "warlock-grc"))
 
+        security_impact_level = {
+            "security-objective-confidentiality": "moderate",
+            "security-objective-integrity": "moderate",
+            "security-objective-availability": "moderate",
+        }
+        ssp_status = {"state": "operational"}
+
         return {
             "system-security-plan": {
                 "uuid": str(uuid4()),
-                "metadata": _build_metadata(f"Warlock GRC SSP — {system_name}"),
+                "metadata": {
+                    **_build_metadata(f"Warlock GRC SSP — {system_name}"),
+                    "responsible-parties": [
+                        {
+                            "role-id": "assessor",
+                            "party-uuids": [warlock_party_uuid],
+                        },
+                        {
+                            "role-id": "tool",
+                            "party-uuids": [warlock_party_uuid],
+                        },
+                    ],
+                },
                 "import-profile": {"href": profile_href},
+                # Keep these at document level for strict SSP validators.
+                "status": ssp_status,
+                "date-authorized": date_authorized,
+                "security-impact-level": security_impact_level,
                 "system-characteristics": {
                     "system-name": system_name,
                     "system-ids": [
@@ -665,12 +686,8 @@ class OscalExporter:
                     ],
                     "description": description,
                     "security-sensitivity-level": "moderate",
-                    "security-impact-level": {
-                        "security-objective-confidentiality": "moderate",
-                        "security-objective-integrity": "moderate",
-                        "security-objective-availability": "moderate",
-                    },
-                    "status": {"state": "operational"},
+                    "security-impact-level": security_impact_level,
+                    "status": ssp_status,
                     "date-authorized": date_authorized,
                     "system-information": {
                         "information-types": [
@@ -724,16 +741,6 @@ class OscalExporter:
                     ),
                     "implemented-requirements": implemented_requirements,
                 },
-                "responsible-parties": [
-                    {
-                        "role-id": "assessor",
-                        "party-uuids": [warlock_party_uuid],
-                    },
-                    {
-                        "role-id": "tool",
-                        "party-uuids": [warlock_party_uuid],
-                    },
-                ],
             }
         }
 

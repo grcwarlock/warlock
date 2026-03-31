@@ -51,14 +51,14 @@ Items are deduplicated across runs. Where multiple runs flagged the same issue, 
 
 | # | Issue | Detail | Effort | Source |
 |---|-------|--------|--------|--------|
-| 1 | `pipeline verify-chain` wrong hash algorithm | Uses string concatenation; actual chain uses JSON `sort_keys=True`. Reports false breakage ("Chain broken at 93 points") when chain is intact. | S | R1 |
-| 2 | Lake reconciliation permanently broken after `make reset` | `make reset` deletes DB but not `lake/` dir. Lake accumulates stale data across resets (577% drift). `make reset` must also `rm -rf lake/`. | S | R1 |
+| 1 | `pipeline verify-chain` wrong hash algorithm | ✅ **DONE (2026-03-31)** — command now verifies with the correct JSON-based hash-chain logic and validates cleanly. | S | R1 |
+| 2 | Lake reconciliation permanently broken after `make reset` | ✅ **DONE (2026-03-31)** — `make reset` includes lake cleanup and resets demo data cleanly. | S | R1 |
 | 3 | Lake backfill not idempotent | Running `lake backfill` twice creates duplicate rows. No upsert/dedup logic. Reconciliation permanently broken after re-run. | M | R1 |
-| 4 | Demo seed IntegrityError on `external_auditors.email` | UNIQUE constraint fails when seed creates duplicate auditors within one run. | S | R1 |
-| 5 | `evidence gaps` crashes — Rich markup error | `evidence_cmd.py:620` — empty style string produces `[]{text}[/]`, crashing Rich. Anti-pattern fix: `f"[{style}]{text}[/{style}]" if style else escape(text)` | S | R3 |
-| 6 | `poam list` returns empty but `poams` shows 26 | Two competing commands for the same entity with different query logic. | S | R2 |
+| 4 | Demo seed IntegrityError on `external_auditors.email` | ✅ **DONE (2026-03-31)** — seed path now upserts auditors and no longer throws duplicate-email integrity errors. | S | R1 |
+| 5 | `evidence gaps` crashes — Rich markup error | ✅ **DONE (2026-03-31)** — command runs cleanly without Rich markup crash. | S | R3 |
+| 6 | `poam list` returns empty but `poams` shows 26 | ✅ **DONE (2026-03-31)** — `poam list` and `poams` now return consistent results. | S | R2 |
 | 7 | Duplicate system profiles | `systems` shows 10 rows but only 5 unique systems. Seed creates duplicates. | M | R2 |
-| 8 | `reports pdf` crashes — `reportlab` not in dev deps | PDF generation is a demo feature but dependency is missing from `[dev]` extras. | S | R2 |
+| 8 | `reports pdf` crashes — `reportlab` not in dev deps | ✅ **DONE (2026-03-31)** — PDF generation works and dependency is present in dev extras. | S | R2 |
 
 ### Missing (Demo-Blocking)
 
@@ -79,16 +79,16 @@ Items are deduplicated across runs. Where multiple runs flagged the same issue, 
 | 12 | 10 lake subcommands return "No data found" | `lake evidence list/freshness`, `lake incidents list/events`, `lake privacy dsars/processing/transfers`, `lake supply-chain sbom/suppliers/concentration` — all empty despite 119 MB lake data. | L | R1 |
 | 13 | `ask` and `lake query` return generic response | Return same summary regardless of question. Without AI, should at least do keyword/SQL queries against the lake. | M | R1 |
 | 14 | `coverage` and `simulate-audit` make AI calls when AI disabled | HTTP POST to ollama even with `WLK_AI_ENABLED=false`. Must check flag before calling. | S | R1 |
-| 15 | `embeddings` returns "No embeddings found" | No seed data. Rule 8 violation. | S | R1, R2 |
-| 16 | `watch-subscriptions` returns "No data found" | Model + API exists, no seed data. | S | R2 |
-| 17 | `escalation-policies` returns "No data found" | Model + API exists, no seed data. | S | R2 |
-| 18 | `integrations list` shows "No integrations configured" | Demo should show at least one configured integration. | S | R2 |
+| 15 | `embeddings` returns "No embeddings found" | ✅ **DONE (2026-03-31)** — demo seed now populates embeddings and command returns records. | S | R1, R2 |
+| 16 | `watch-subscriptions` returns "No data found" | ✅ **DONE (2026-03-31)** — demo seed now includes watch subscription records. | S | R2 |
+| 17 | `escalation-policies` returns "No data found" | ✅ **DONE (2026-03-31)** — demo seed now includes escalation policy records. | S | R2 |
+| 18 | `integrations list` shows "No integrations configured" | ✅ **DONE (2026-03-31)** — demo seed now includes configured integrations. | S | R2 |
 | 19 | `vendors` command mutates DB on read | Creates new vendor risk findings every invocation. Read-only list should not write data. | M | R2 |
 | 20 | `cato-dashboard` shows 0 controls for 8/10 systems | System-to-control mapping incomplete. Only 2 of 10 profiles linked to control results. | M | R2 |
-| 21 | 18 database tables completely empty in demo | `api_keys`, `assets`, `branding_configs`, `change_requests`, `compliance_obligations`, `dead_letter_queue`, `delegation_grants`, `embeddings`, `escalation_policies`, `ip_allowlist`, `policy_history`, `risk_dependencies`, `sandbox_environments`, `saved_queries`, `trust_access_requests`, `trust_documents`, `watch_subscriptions`, `workpapers` | M | R3 |
-| 22 | Demo seed does NOT create users explicitly | Users exist from ad-hoc runs. Fresh `make reset` may not create them, breaking API auth testing. | S | R3 |
-| 23 | OSCAL SSP missing required fields | No `security-impact-level`, `status`, `date-authorized`, `responsible-parties` — fails FedRAMP schema validation. | M | R3 |
-| 24 | OSCAL SSP `import-profile` uses unresolvable UUID href | `"href": "#967a8853-..."` points nowhere. Should reference actual profile JSON. Breaks SSP-to-catalog traceability. | S | R3 |
+| 21 | 18 database tables completely empty in demo | ✅ **DONE (2026-03-31)** — all listed tables are now seeded with demo data and non-empty after `make reset`. | M | R3 |
+| 22 | Demo seed does NOT create users explicitly | ✅ **DONE (2026-03-31)** — demo seed now creates explicit users and `users list` works on fresh reset. | S | R3 |
+| 23 | OSCAL SSP missing required fields | ✅ **DONE (2026-03-31)** — SSP export now includes `security-impact-level`, `status`, `date-authorized`, and `responsible-parties`. | M | R3 |
+| 24 | OSCAL SSP `import-profile` uses unresolvable UUID href | ✅ **DONE (2026-03-31)** — SSP `import-profile.href` now points to a resolvable profile reference. | S | R3 |
 | 25 | Audit trail has only 93 entries for 747K+ control results | <0.01% coverage. Pipeline operations not generating audit entries at scale. Assessor would flag immediately. | L | R3 |
 
 ### Missing CLI/API/TUI Coverage
@@ -98,7 +98,7 @@ Items are deduplicated across runs. Where multiple runs flagged the same issue, 
 | 26 | TUI only has 7 of ~20 needed screens | Missing: incidents, evidence, alerts, training, personnel, privacy, audit engagements, change requests, compliance calendar, search, risk, reports, settings/admin. | XL | R2 |
 | 27 | No TUI dashboard/home screen | "Home" is remediations list. Should be a KRI dashboard with posture summary, alerts, overdue items. | L | R2 |
 | 28 | No interactive TUI for creating/editing entities | TUI is read-only. Cannot create POA&Ms, findings, issues from TUI. | XL | R2 |
-| 29 | CLI analytics have ZERO API endpoints | `compliance-views`, `security-posture`, `comply`, `correlate`, `search`, `reports` — ~60% of platform value is CLI-only. TUI/web frontends are blocked. | L | R2 |
+| 29 | CLI analytics have ZERO API endpoints | ✅ **DONE (2026-03-31)** — analytics/search/reports API routes are present and mounted for frontend consumption. | L | R2 |
 | 30 | No API routers for incidents, changes, calendar, exceptions, privacy, access reviews | Entire CLI domains with no API coverage. | M | R2 |
 | 31 | No pipeline data lineage tracking | Cannot trace control_result -> finding -> raw_event -> connector_run. No end-to-end lineage graph or lineage metadata per record. | L | R1 |
 | 32 | No pipeline data quality validation layer | No checks for duplicates, null required fields, schema violations, out-of-range values. `schema_registry.py` exists but isn't wired into pipeline. | L | R1 |
