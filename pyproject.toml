@@ -121,7 +121,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/demo_seed.py" = ["E", "W", "B", "SIM"]  # 23k-line generated seed — lint incrementally
+"scripts/demo_seed.py" = ["E", "W", "B", "SIM"]  # thin entry + re-exports
+"scripts/seed_impl/**" = ["E", "W", "B", "SIM", "F403", "F405"]  # star-imports from helpers; large generated
+"scripts/seed_impl/normalizer_imports.py" = ["F401"]  # imports are for `import *` side effects in main
 "warlock/db/migrations/*.py" = ["E", "W"]          # Alembic auto-generated migrations
 "tests/*" = ["B011"]                                # assert False is fine in tests
 

@@ -1,13 +1,38 @@
-# Warlock — Master TODO (4-Run Audit)
+# Warlock — Master TODO
 
-> **Generated**: 2026-03-29
-> **Method**: 4 parallel GRC engineering audits against live demo database
-> **Sources**: Run 1 (Pipeline/Demo), Run 2 (CLI/API/TUI), Run 3 (Security/Compliance/Exports), Run 4 (Market Research)
-> **Scope**: Bugs, missing features, and competitive gaps vs. Drata, Vanta, Anecdotes, Hyperproof, ServiceNow GRC, OneTrust, Archer, AuditBoard, LogicGate, Wiz, Scrut, Sprinto, Secureframe
+> **Last updated**: 2026-03-30  
+> **Canonical backlog**: Single source of truth for remaining product and engineering work.  
+> **Superseded** (moved to `todo/archive/`): historical `TODO.md` (GAPS/STUBS/ARCH — all completed), narrative `run1`–`run4` audits, `connectors-todo.md`.
 
 ---
 
-## How to Read This File
+## Engineering hotfix queue (verify first)
+
+Issues confirmed in code; they are **not** renumbered into the audit list below.
+
+*No open items.*
+
+- **ENG-001** (resolved 2026-03-30): Lake paths for connector runs returned `list[dict]` while routes expected ORM-style attributes. Fixed by mapping DuckDB rows to `LakeConnectorRunView` in `warlock/db/repository.py` (`_connector_runs_from_lake_dicts`).
+
+---
+
+## Archive index
+
+| Path | Contents |
+|------|----------|
+| `todo/archive/historical-gaps-stubs-architecture.md` | Original GAPS/STUBS/ARCHITECTURE merge (`TODO.md`) — 147 items, all complete |
+| `todo/archive/audit-runs-2026-03-29/` | Full narrative outputs from 4 parallel audits (pipeline, CLI/API, security, market) |
+| `todo/archive/connectors-expansion-completed.md` | Connector expansion note (351 connectors) — completed 2026-03-26 |
+
+---
+
+## 4-run audit backlog (2026-03-29)
+
+> **Method**: Four parallel GRC engineering audits against the live demo database  
+> **Sources**: Run 1 (Pipeline/Demo), Run 2 (CLI/API/TUI), Run 3 (Security/Compliance/Exports), Run 4 (Market Research)  
+> **Scope**: Bugs, missing features, and competitive gaps vs. Drata, Vanta, Anecdotes, Hyperproof, ServiceNow GRC, OneTrust, Archer, AuditBoard, LogicGate, Wiz, Scrut, Sprinto, Secureframe
+
+### How to Read This File
 
 - **P0** — Crash, data corruption, false confidence, or blocks demo/eval
 - **P1** — Broken workflow, missing data, or competitive table stakes
@@ -223,6 +248,8 @@ Items are deduplicated across runs. Where multiple runs flagged the same issue, 
 | P2 | 11 | 29 | 15 | **55** |
 | P3 | — | 19 | 14 | **33** |
 | **Total** | **33** | **65** | **37** | **135** |
+
+The **engineering hotfix queue** at the top of this file is separate from these 135 audit rows.
 
 ### By Effort
 

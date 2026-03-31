@@ -312,7 +312,7 @@ All 17 quick wins resolved.
 ### P2 — Maintainability
 
 - [x] **AUDIT-006** — Document PyJWT vs python-jose usage split in pyproject.toml comments. `S`
-- [ ] **AUDIT-007** — Split `demo_seed.py` into modules (23K lines). Deferred — requires careful validation against expected demo counts. `L`
+- [x] **~~AUDIT-007~~** — Split `demo_seed.py` into `scripts/seed_impl/` (thin `scripts/demo_seed.py` shim). Validated: 351/351 connectors, 1071 raw events, ~7327 findings, ~374k controls mapped, audit chain verified. `L`
 - [x] **AUDIT-008** — Add debug logging to silent `except Exception: pass` blocks in TUI. `S`
 
 ### P3 — Hygiene

@@ -6,6 +6,8 @@ Each repository encapsulates queries for a specific domain entity.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -33,6 +35,66 @@ from warlock.db.models import (
     SystemProfile,
     User,
 )
+
+
+def _coerce_connector_run_datetime(val: Any) -> datetime | None:
+    """Normalize lake/Parquet timestamps for API code that expects datetime."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, str):
+        s = val.strip()
+        if not s:
+            return None
+        try:
+            return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return None
+
+
+@dataclass(frozen=True, slots=True)
+class LakeConnectorRunView:
+    """Read-only connector run row from lake Parquet (attribute-compatible with ORM usage)."""
+
+    id: str
+    connector_name: str
+    source: str
+    source_type: str
+    provider: str
+    status: str
+    event_count: int
+    error_count: int
+    errors: list[Any]
+    started_at: datetime | None
+    completed_at: datetime | None
+    duration_seconds: float
+
+    @classmethod
+    def from_lake_dict(cls, d: dict[str, Any]) -> LakeConnectorRunView:
+        err = d.get("errors")
+        if not isinstance(err, list):
+            err = []
+        return cls(
+            id=str(d.get("id") or ""),
+            connector_name=str(d.get("connector_name") or ""),
+            source=str(d.get("source") or ""),
+            source_type=str(d.get("source_type") or ""),
+            provider=str(d.get("provider") or ""),
+            status=str(d.get("status") or ""),
+            event_count=int(d.get("event_count") or 0),
+            error_count=int(d.get("error_count") or 0),
+            errors=err,
+            started_at=_coerce_connector_run_datetime(d.get("started_at")),
+            completed_at=_coerce_connector_run_datetime(d.get("completed_at")),
+            duration_seconds=float(d.get("duration_seconds") or 0.0),
+        )
+
+
+def _connector_runs_from_lake_dicts(rows: list[dict[str, Any]]) -> list[LakeConnectorRunView]:
+    return [LakeConnectorRunView.from_lake_dict(d) for d in rows]
+
 
 # ---------------------------------------------------------------------------
 # Base Repository
@@ -851,7 +913,7 @@ class ConnectorRunRepository(BaseRepository):
     def __init__(self, session: Session) -> None:
         super().__init__(session, ConnectorRun)
 
-    def latest_per_connector(self) -> list[ConnectorRun]:
+    def latest_per_connector(self) -> Sequence[ConnectorRun | LakeConnectorRunView]:
         """Most recent run per connector (by provider + source_type)."""
         from warlock.config import get_settings
 
@@ -862,7 +924,7 @@ class ConnectorRunRepository(BaseRepository):
 
                 readers = LakeReaders(settings.lake_path)
                 try:
-                    return readers.latest_per_connector()
+                    return _connector_runs_from_lake_dicts(readers.latest_per_connector())
                 finally:
                     readers.close()
             except Exception:
@@ -904,7 +966,7 @@ class ConnectorRunRepository(BaseRepository):
         """Timestamp of the most recent connector run start."""
         return self.session.query(func.max(ConnectorRun.started_at)).scalar()
 
-    def latest_per_provider(self) -> list[ConnectorRun]:
+    def latest_per_provider(self) -> Sequence[ConnectorRun | LakeConnectorRunView]:
         """Most recent run per provider (ignoring source_type).
 
         Used by dashboard to show connector health per provider.
@@ -918,7 +980,7 @@ class ConnectorRunRepository(BaseRepository):
 
                 readers = LakeReaders(settings.lake_path)
                 try:
-                    return readers.latest_per_provider()
+                    return _connector_runs_from_lake_dicts(readers.latest_per_provider())
                 finally:
                     readers.close()
             except Exception:
