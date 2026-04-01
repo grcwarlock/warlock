@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -69,7 +70,17 @@ consumer_only, both).
 drifted is different from one that has been non-compliant for months.
 - Consider MONITORING CADENCE: stale evidence reduces confidence.
 
-Respond ONLY with a JSON object (no markdown fences, no commentary):
+First, think step-by-step inside <analysis> tags. In your analysis:
+1. Identify what the finding actually tests and which control requirement it maps to.
+2. Evaluate the strength and freshness of the evidence.
+3. Consider any compensating controls, risk acceptances, or inheritance that \
+shift the assessment.
+4. Weigh whether the gap is total (non_compliant) or partial — be specific \
+about what IS vs IS NOT satisfied.
+5. Calibrate confidence: strong direct evidence = high, stale or indirect = low.
+
+Then, AFTER the closing </analysis> tag, respond with ONLY a JSON object \
+(no markdown fences, no commentary):
 {
   "status": "compliant" | "non_compliant" | "partial",
   "confidence": <float 0.0-1.0>,
@@ -167,9 +178,21 @@ def _sanitize_field(value: Any) -> Any:
 _VALID_STATUSES = {"compliant", "non_compliant", "partial", "not_assessed"}
 
 
+def _strip_analysis(text: str) -> tuple[str, str]:
+    """Remove <analysis>...</analysis> scratchpad and return (clean, analysis)."""
+    m = re.search(r"<analysis>(.*?)</analysis>", text, re.DOTALL)
+    analysis = m.group(1).strip() if m else ""
+    clean = re.sub(r"<analysis>.*?</analysis>", "", text, count=1, flags=re.DOTALL).strip()
+    return clean, analysis
+
+
 def _parse_response(text: str, model: str) -> AIReasoningResult:
     """Extract JSON from the LLM response text."""
     text = text.strip()
+    # Strip <analysis> scratchpad block before parsing JSON
+    text, _analysis = _strip_analysis(text)
+    if _analysis:
+        log.debug("AI analysis scratchpad (%d chars): %.300s", len(_analysis), _analysis)
     # Strip markdown code fences if present
     if text.startswith("```"):
         text = text.split("\n", 1)[1] if "\n" in text else text[3:]
@@ -265,7 +288,7 @@ class AnthropicReasoner(AIReasoner):
         }
         payload = {
             "model": self.model,
-            "max_tokens": 1024,
+            "max_tokens": 2048,
             "temperature": 0,
             "system": _SYSTEM_PROMPT,
             "messages": [{"role": "user", "content": user_prompt}],
@@ -305,7 +328,7 @@ class OpenAIReasoner(AIReasoner):
         }
         payload = {
             "model": self.model,
-            "max_tokens": 1024,
+            "max_tokens": 2048,
             "temperature": 0,
             "messages": [
                 {"role": "system", "content": _SYSTEM_PROMPT},
@@ -347,7 +370,7 @@ class GeminiReasoner(AIReasoner):
         payload = {
             "system_instruction": {"parts": [{"text": _SYSTEM_PROMPT}]},
             "contents": [{"parts": [{"text": user_prompt}]}],
-            "generationConfig": {"maxOutputTokens": 1024, "temperature": 0},
+            "generationConfig": {"maxOutputTokens": 2048, "temperature": 0},
         }
         try:
             resp = httpx.post(url, headers=headers, json=payload, timeout=TIMEOUT)
