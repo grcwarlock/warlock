@@ -45,9 +45,14 @@ def _score_style(score: float) -> str:
 
 
 def _format_output(data: list[dict], fmt: str, table: Table) -> None:
-    """Print either a Rich table or JSON depending on format flag."""
+    """Print either a Rich table, JSON, or CSV depending on format flag."""
     if fmt == "json":
         console.print_json(_json.dumps(data, default=str))
+    elif fmt == "csv":
+        from warlock.cli.output import render_csv
+
+        keys = list(data[0].keys()) if data else []
+        render_csv(data, keys=keys)
     else:
         console.print(table)
 
@@ -121,7 +126,7 @@ def forecast(ctx: click.Context) -> None:
 @click.option(
     "--target-score", default=90.0, type=float, help="Target compliance score (default: 90%)."
 )
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def compliance_forecast(
     framework: str | None,
     months: int,

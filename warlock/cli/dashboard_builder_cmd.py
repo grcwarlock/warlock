@@ -365,7 +365,11 @@ def custom_create(name: str, widgets: str, description: str) -> None:
 
 @custom.command("list")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def custom_list(fmt: str) -> None:
     """List saved custom dashboards."""
@@ -387,7 +391,7 @@ def custom_list(fmt: str) -> None:
         )
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         import json as _json
 
         data = []
@@ -401,7 +405,12 @@ def custom_list(fmt: str) -> None:
                     "created_at": r.created_at.isoformat() if r.created_at else "",
                 }
             )
-        console.print(_json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(_json.dumps(data, indent=2))
         return
 
     table = Table(title="Custom Dashboards")

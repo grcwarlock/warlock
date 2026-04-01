@@ -114,7 +114,9 @@ def engagement_create(
 @engagement_grp.command("list")
 @click.option("--status", "-s", default=None, help="Filter by status (active, completed, archived)")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def engagement_list(
     status: str | None,
     framework: str | None,
@@ -150,10 +152,15 @@ def engagement_list(
         console.print("[dim]No engagements found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Audit Engagements ({len(data)})")
@@ -477,7 +484,9 @@ def findings_import(engagement_id: str, import_file: str, actor: str | None) -> 
 @audit_grp.command("corrective-actions")
 @click.argument("engagement_id")
 @click.option("--status", "-s", default=None, help="Filter by status (open, resolved)")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def corrective_actions(
     engagement_id: str,
     status: str | None,
@@ -527,10 +536,15 @@ def corrective_actions(
         console.print("[dim]No corrective actions found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Corrective Actions — {eng.name} ({len(data)})")

@@ -177,7 +177,11 @@ def poam_create(
 @click.option("--overdue", is_flag=True, help="Show only overdue POA&Ms")
 @click.option("--limit", "-n", default=50, help="Max results")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def poam_list(
     framework: str | None,
@@ -204,7 +208,7 @@ def poam_list(
         console.print("[dim]No POA&Ms found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         out = [
             {
                 "id": p.id,
@@ -220,7 +224,12 @@ def poam_list(
             }
             for p in rows
         ]
-        console.print_json(data=out)
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print_json(data=out)
         return
 
     table = Table(title=f"POA&Ms ({len(rows)})")
@@ -415,7 +424,11 @@ def poam_close(poam_id: str, note: str) -> None:
 @poam_group.command("milestones")
 @click.argument("poam_id")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def poam_milestones(poam_id: str, fmt: str) -> None:
     """Show all milestones for a POA&M.
@@ -455,10 +468,15 @@ def poam_milestones(poam_id: str, fmt: str) -> None:
     console.print(f"Scheduled completion: {poam_display['scheduled_completion']}\n")
 
     if not milestones:
-        if fmt == "json":
+        if fmt in ("json", "csv"):
             import json as _json
 
-            console.print(_json.dumps({"poam": poam_display, "milestones": []}, indent=2))
+            if fmt == "csv":
+                from warlock.cli.output import render_csv
+
+                render_csv([], keys=[])
+            else:
+                console.print(_json.dumps({"poam": poam_display, "milestones": []}, indent=2))
             return
         console.print("[dim]No milestones defined for this POA&M.[/dim]")
         console.print(
@@ -467,12 +485,17 @@ def poam_milestones(poam_id: str, fmt: str) -> None:
         )
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         import json as _json
 
-        console.print(
-            _json.dumps({"poam": poam_display, "milestones": milestones}, indent=2, default=str)
-        )
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(milestones, keys=list(milestones[0].keys()) if milestones else [])
+        else:
+            console.print(
+                _json.dumps({"poam": poam_display, "milestones": milestones}, indent=2, default=str)
+            )
         return
 
     table = Table(title=f"Milestones ({len(milestones)})")
@@ -686,7 +709,11 @@ def poam_deviation(
 @poam_group.command("cost")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def poam_cost(framework: str | None, fmt: str) -> None:
     """Show cost summary for POA&Ms aggregated by framework and status."""
@@ -702,8 +729,13 @@ def poam_cost(framework: str | None, fmt: str) -> None:
         console.print("[dim]No POA&Ms with cost data found.[/dim]")
         return
 
-    if fmt == "json":
-        console.print_json(data=rows)
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print_json(data=rows)
         return
 
     table = Table(title="POA&M Cost Summary")
@@ -739,7 +771,11 @@ def poam_cost(framework: str | None, fmt: str) -> None:
 @poam_group.command("overdue")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def poam_overdue(framework: str | None, fmt: str) -> None:
     """Show overdue POA&Ms with days overdue and severity."""
@@ -777,8 +813,13 @@ def poam_overdue(framework: str | None, fmt: str) -> None:
         console.print("[green]No overdue POA&Ms found.[/green]")
         return
 
-    if fmt == "json":
-        console.print_json(data=rows_data)
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows_data, keys=list(rows_data[0].keys()) if rows_data else [])
+        else:
+            console.print_json(data=rows_data)
         return
 
     table = Table(title=f"Overdue POA&Ms ({len(rows_data)})")

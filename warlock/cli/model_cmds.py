@@ -32,7 +32,7 @@ def _list_model(
     columns: list of (attr_name, column_header, style) tuples.
     title: Table title.
     limit: Max rows to display.
-    fmt: "table" or "json".
+    fmt: "table", "json", or "csv".
     """
     from warlock.db.engine import get_read_session, init_db
 
@@ -45,7 +45,7 @@ def _list_model(
         console.print(f"[dim]No {title.lower()} found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = []
         for row in rows:
             entry = {}
@@ -55,7 +55,16 @@ def _list_model(
                     val = val.isoformat()
                 entry[attr] = val
             data.append(entry)
-        console.print_json(_json.dumps(data, default=str))
+        if fmt == "json":
+            console.print_json(_json.dumps(data, default=str))
+        else:
+            from warlock.cli.output import render_csv
+
+            render_csv(
+                data,
+                keys=[attr for attr, _, _ in columns],
+                headers=[header for _, header, _ in columns],
+            )
         return
 
     table = Table(title=f"{title} ({len(rows)} shown)")
@@ -83,7 +92,9 @@ def _list_model(
 # Individual commands
 # ---------------------------------------------------------------------------
 
-_FMT_OPTION = click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+_FMT_OPTION = click.option(
+    "--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table"
+)
 _LIMIT_OPTION = click.option("--limit", default=50, help="Max rows to show.")
 
 

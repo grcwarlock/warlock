@@ -153,6 +153,37 @@ def _render_table(
     console.print(table)
 
 
+def render_csv(
+    data: Sequence[dict[str, Any]],
+    keys: list[str],
+    headers: list[str] | None = None,
+) -> None:
+    """Write CSV to stdout from a list of dicts.
+
+    Lightweight helper for commands that build JSON-style dicts but
+    don't use the full ``format_output`` pipeline.
+
+    Parameters
+    ----------
+    data:
+        List of row dicts (same structure used for JSON output).
+    keys:
+        Dict keys to include, in column order.
+    headers:
+        Column headers for the CSV.  Defaults to *keys* if omitted.
+    """
+    if not data:
+        console.print("[dim]No data.[/dim]")
+        return
+    hdrs = headers or keys
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(hdrs)
+    for row in data:
+        writer.writerow([_plain(row.get(k, "")) for k in keys])
+    sys.stdout.write(buf.getvalue())
+
+
 def _plain(value: Any) -> str:
     """Convert a value to a plain string suitable for CSV."""
     if value is None:

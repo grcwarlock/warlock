@@ -36,7 +36,11 @@ def conmon(ctx: click.Context) -> None:
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--system", "-s", default=None, help="Filter by system profile ID or acronym")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def conmon_status(framework: str | None, system: str | None, fmt: str) -> None:
     """Show current continuous monitoring status across frameworks."""
@@ -82,7 +86,7 @@ def conmon_status(framework: str | None, system: str | None, fmt: str) -> None:
         fw_stats.setdefault(row.framework, {})
         fw_stats[row.framework][row.status] = row.cnt
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         import json as _json
 
         data = []
@@ -105,7 +109,12 @@ def conmon_status(framework: str | None, system: str | None, fmt: str) -> None:
                     "score_pct": round(score, 1),
                 }
             )
-        console.print(_json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(_json.dumps(data, indent=2))
         return
 
     table = Table(title="Continuous Monitoring Status")
@@ -485,7 +494,7 @@ def conmon_checklist(framework: str | None) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def cato_status(framework: str, system: str | None, fmt: str) -> None:
@@ -504,11 +513,17 @@ def cato_status(framework: str, system: str | None, fmt: str) -> None:
 
         status = evaluate_authorization(session, framework=framework, system_id=system_id)
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         import json as _json
         from dataclasses import asdict
 
-        console.print_json(_json.dumps(asdict(status), default=str))
+        out = asdict(status)
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([out], keys=list(out.keys()))
+        else:
+            console.print_json(_json.dumps(out, default=str))
         return
 
     from rich.markup import escape

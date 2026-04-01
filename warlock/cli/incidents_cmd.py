@@ -157,7 +157,11 @@ def incidents_create(
 @click.option("--since", default=None, help="ISO date lower bound (e.g. 2026-01-01)")
 @click.option("--limit", "-n", default=50, help="Max results")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def incidents_list(
     severity: str | None,
@@ -191,7 +195,7 @@ def incidents_list(
         console.print("[dim]No incidents found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         out = [
             {
                 "id": i.id,
@@ -204,7 +208,12 @@ def incidents_list(
             }
             for i in rows
         ]
-        console.print(_json.dumps(out, indent=2, default=str))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print(_json.dumps(out, indent=2, default=str))
         return
 
     table = Table(title=f"Incidents ({len(rows)})")

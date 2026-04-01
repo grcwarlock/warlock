@@ -13,7 +13,11 @@ from warlock.cli import cli, console
 @click.argument("control_id")
 @click.option("--framework", "-f", default=None, help="Framework context")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def control_hub(control_id, framework, fmt):
     """Cross-domain view of a control: status, evidence, issues, POA&Ms, attestations, exceptions, OPA coverage."""
@@ -68,7 +72,7 @@ def control_hub(control_id, framework, fmt):
             ev_q = ev_q.filter(EvidenceRequest.framework == framework)
         evidence_requests = ev_q.all()
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         hub_data["control_results"] = [
             {"status": r.status, "framework": r.framework, "assessed_at": str(r.assessed_at)}
             for r in control_results
@@ -89,7 +93,14 @@ def control_hub(control_id, framework, fmt):
             k: [{"summary": i.summary, "status": i.status} for i in v]
             for k, v in (related or {}).items()
         }
-        console.print_json(data=hub_data)
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            # Flatten control results into CSV rows
+            csv_rows = hub_data["control_results"]
+            render_csv(csv_rows, keys=list(csv_rows[0].keys()) if csv_rows else [])
+        else:
+            console.print_json(data=hub_data)
         return
 
     fw_label = f" ({framework})" if framework else ""

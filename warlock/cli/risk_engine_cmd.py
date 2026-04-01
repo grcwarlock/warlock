@@ -216,7 +216,7 @@ def quantify(finding_id: str, method: str) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     show_default=True,
     help="Output format",
@@ -271,8 +271,13 @@ def quantify_bulk(framework: str | None, severity: str | None, output_format: st
             }
         )
 
-    if output_format == "json":
-        console.print_json(json.dumps(rows_data, default=str))
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows_data, keys=list(rows_data[0].keys()) if rows_data else [])
+        else:
+            console.print_json(json.dumps(rows_data, default=str))
         return
 
     table = Table(title=f"Bulk Risk Quantification ({len(rows_data)} findings)")

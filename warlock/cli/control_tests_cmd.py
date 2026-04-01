@@ -36,7 +36,9 @@ def control_tests(ctx: click.Context) -> None:
 @control_tests.command("list")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--limit", "-n", default=50, help="Max results")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def control_tests_list(framework: str | None, limit: int, output_format: str) -> None:
     """List recent control test results."""
     from warlock.db.engine import get_session, init_db
@@ -66,10 +68,15 @@ def control_tests_list(framework: str | None, limit: int, output_format: str) ->
         console.print("[dim]No control test results found.[/dim]")
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(data, indent=2))
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            import json
+
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Control Test Results ({len(data)})")
@@ -221,7 +228,9 @@ def control_tests_import(filepath: str, fmt: str, dry_run: bool) -> None:
 
 @control_tests.command("schedule")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def schedule_view(framework: str | None, output_format: str) -> None:
     """View control test schedule grouped by control family."""
     from warlock.db.engine import get_session, init_db
@@ -262,10 +271,15 @@ def schedule_view(framework: str | None, output_format: str) -> None:
         console.print("[dim]No control results found.[/dim]")
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(data, indent=2))
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            import json
+
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title="Control Test Schedule")
@@ -426,7 +440,9 @@ def execute_test(
 @control_tests.command("due")
 @click.option("--days", "-d", default=30, help="Controls due within N days (default: 30)")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def due_controls(days: int, framework: str | None, output_format: str) -> None:
     """List controls due for testing within the next N days.
 
@@ -513,10 +529,15 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
         console.print(f"[green]No controls due within {days} days.[/green]")
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(deduped, indent=2))
+            render_csv(deduped, keys=list(deduped[0].keys()) if deduped else [])
+        else:
+            import json
+
+            console.print(json.dumps(deduped, indent=2))
         return
 
     table = Table(title=f"Controls Due Within {days} Days ({len(deduped)})")
@@ -548,7 +569,9 @@ def due_controls(days: int, framework: str | None, output_format: str) -> None:
 @click.argument("control_id", required=False, default=None)
 @click.option("--last", "-n", default=20, help="Show last N results (default: 20)")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def control_history(
     control_id: str | None, last: int, framework: str | None, output_format: str
 ) -> None:
@@ -590,10 +613,15 @@ def control_history(
         console.print(f"[dim]No test history found for {label}.[/dim]")
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(data, indent=2))
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            import json
+
+            console.print(json.dumps(data, indent=2))
         return
 
     title = (
@@ -725,7 +753,9 @@ def tests_report(framework: str | None, output_format: str) -> None:
 
 @control_tests.command("gaps")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def gaps(framework: str | None, output_format: str) -> None:
     """List controls that have never been tested or are past-due.
 
@@ -838,10 +868,15 @@ def gaps(framework: str | None, output_format: str) -> None:
         )
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(gap_rows, indent=2))
+            render_csv(gap_rows, keys=list(gap_rows[0].keys()) if gap_rows else [])
+        else:
+            import json
+
+            console.print(json.dumps(gap_rows, indent=2))
         return
 
     table = Table(title=f"Control Testing Gaps ({len(gap_rows)})")

@@ -53,20 +53,20 @@ Items are deduplicated across runs. Where multiple runs flagged the same issue, 
 |---|-------|--------|--------|--------|
 | 1 | `pipeline verify-chain` wrong hash algorithm | ✅ **DONE (2026-03-31)** — command now verifies with the correct JSON-based hash-chain logic and validates cleanly. | S | R1 |
 | 2 | Lake reconciliation permanently broken after `make reset` | ✅ **DONE (2026-03-31)** — `make reset` includes lake cleanup and resets demo data cleanly. | S | R1 |
-| 3 | Lake backfill not idempotent | Running `lake backfill` twice creates duplicate rows. No upsert/dedup logic. Reconciliation permanently broken after re-run. | M | R1 |
+| 3 | Lake backfill not idempotent | ✅ **DONE (2026-04-01)** — `_purge_lake_zone()` deletes all Parquet files before re-writing. Double backfill verified: 0% drift on reconciliation. | M | R1 |
 | 4 | Demo seed IntegrityError on `external_auditors.email` | ✅ **DONE (2026-03-31)** — seed path now upserts auditors and no longer throws duplicate-email integrity errors. | S | R1 |
 | 5 | `evidence gaps` crashes — Rich markup error | ✅ **DONE (2026-03-31)** — command runs cleanly without Rich markup crash. | S | R3 |
 | 6 | `poam list` returns empty but `poams` shows 26 | ✅ **DONE (2026-03-31)** — `poam list` and `poams` now return consistent results. | S | R2 |
-| 7 | Duplicate system profiles | `systems` shows 10 rows but only 5 unique systems. Seed creates duplicates. | M | R2 |
+| 7 | Duplicate system profiles | ✅ **DONE (2026-04-01)** — `seed_systems()` dedup logic verified: exactly 5 profiles after `make reset`. | M | R2 |
 | 8 | `reports pdf` crashes — `reportlab` not in dev deps | ✅ **DONE (2026-03-31)** — PDF generation works and dependency is present in dev extras. | S | R2 |
 
 ### Missing (Demo-Blocking)
 
 | # | Issue | Detail | Effort | Source |
 |---|-------|--------|--------|--------|
-| 9 | No CSV output format | `--output-format` only supports `table`/`json`. Auditors need CSV for Excel/SIEM handoff. Every list command needs `--format csv`. | M | R2 |
-| 10 | No bulk finding import | `ingest` exists for JSON webhook but no `findings import` for CSV/JSON batch import from external scanners. | L | R2 |
-| 11 | No role/permission management CLI | `users list/create` exists but no CLI for managing roles, permissions, or RBAC policies. | M | R2 |
+| 9 | No CSV output format | ✅ **DONE (2026-04-01)** — `--format csv` added to all CLI list commands (35 files). Shared `render_csv()` helper in `output.py`. Global `--output-format csv` also works. | M | R2 |
+| 10 | No bulk finding import | ✅ **DONE (2026-04-01)** — `warlock bulk import-findings --file FILE --format json|csv --source X --provider Y` exists with dry-run, preview, and dedup. | L | R2 |
+| 11 | No role/permission management CLI | ✅ **DONE (2026-04-01)** — `users roles list/show/create/assign/revoke` + `users scopes list/assign` + `users permissions` + `users sod-check` all implemented. | M | R2 |
 
 ---
 

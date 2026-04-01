@@ -649,7 +649,11 @@ def trust_center_documents() -> None:
     help="Minimum compliance score (0-100, default: 80)",
 )
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def compliance_gate(framework: str | None, threshold: float, fmt: str) -> None:
     """CI/CD compliance gate. Exits non-zero if below threshold.
@@ -668,8 +672,14 @@ def compliance_gate(framework: str | None, threshold: float, fmt: str) -> None:
         results = q.all()
 
     if not results:
-        if fmt == "json":
-            console.print(json.dumps({"passed": False, "reason": "no_data", "score": 0}))
+        if fmt in ("json", "csv"):
+            data = {"passed": False, "reason": "no_data", "score": 0}
+            if fmt == "csv":
+                from warlock.cli.output import render_csv
+
+                render_csv([data], keys=list(data.keys()))
+            else:
+                console.print(json.dumps(data))
         else:
             console.print("[red]GATE FAILED: No control results found.[/red]")
         raise SystemExit(1)
@@ -680,19 +690,21 @@ def compliance_gate(framework: str | None, threshold: float, fmt: str) -> None:
 
     passed = score >= threshold
 
-    if fmt == "json":
-        console.print(
-            json.dumps(
-                {
-                    "passed": passed,
-                    "score": round(score, 1),
-                    "threshold": threshold,
-                    "total_controls": total,
-                    "compliant": compliant,
-                    "framework": framework or "all",
-                }
-            )
-        )
+    if fmt in ("json", "csv"):
+        gate_data = {
+            "passed": passed,
+            "score": round(score, 1),
+            "threshold": threshold,
+            "total_controls": total,
+            "compliant": compliant,
+            "framework": framework or "all",
+        }
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([gate_data], keys=list(gate_data.keys()))
+        else:
+            console.print(json.dumps(gate_data))
     else:
         style = "green" if passed else "red"
         console.print(
@@ -1252,7 +1264,7 @@ def _register_reports_custom() -> None:
         "--format",
         "fmt",
         default="table",
-        type=click.Choice(["table", "json"]),
+        type=click.Choice(["table", "json", "csv"]),
         help="Output format",
     )
     def reports_custom_run(report_id: str, fmt: str) -> None:
@@ -1307,8 +1319,22 @@ def _register_reports_custom() -> None:
             "sections": sections,
         }
 
-        if fmt == "json":
-            console.print(json.dumps(report_data, indent=2))
+        if fmt in ("json", "csv"):
+            if fmt == "csv":
+                from warlock.cli.output import render_csv
+
+                flat = {
+                    "name": report_data.get("name"),
+                    "framework": report_data.get("framework"),
+                    "generated_at": report_data.get("generated_at"),
+                    "score": report_data.get("posture", {}).get("score"),
+                    "total": report_data.get("posture", {}).get("total"),
+                    "compliant": report_data.get("posture", {}).get("compliant"),
+                    "findings": report_data.get("findings"),
+                }
+                render_csv([flat], keys=list(flat.keys()))
+            else:
+                console.print(json.dumps(report_data, indent=2))
             return
 
         console.print(f"\n[bold]Custom Report: {escape(meta.get('name', ''))}[/bold]")

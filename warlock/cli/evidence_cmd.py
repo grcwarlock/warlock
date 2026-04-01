@@ -44,7 +44,11 @@ def evidence(ctx: click.Context) -> None:
     help="Filter by freshness (--fresh: assessed in last 30 days, --stale: older than 30 days)",
 )
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 @click.option("--limit", "-n", default=50, help="Max results")
 def evidence_list(
@@ -77,7 +81,7 @@ def evidence_list(
         console.print("[dim]No evidence records found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         out = [
             {
                 "id": r.id,
@@ -92,7 +96,12 @@ def evidence_list(
             }
             for r in rows
         ]
-        console.print(_json.dumps(out, indent=2, default=str))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print(_json.dumps(out, indent=2, default=str))
         return
 
     table = Table(title=f"Evidence Records ({len(rows)})")
@@ -1238,7 +1247,11 @@ def evidence_schedule(ctx: click.Context) -> None:
 
 @evidence_schedule.command("list")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def evidence_schedule_list(fmt: str = "table") -> None:
     """List evidence collection schedules."""
@@ -1263,7 +1276,7 @@ def evidence_schedule_list(fmt: str = "table") -> None:
         console.print("[dim]Use 'warlock evidence schedule add' to create one.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         import json as _j2
 
         out = [
@@ -1277,7 +1290,12 @@ def evidence_schedule_list(fmt: str = "table") -> None:
             }
             for r in requests
         ]
-        console.print(_j2.dumps(out, indent=2, default=str))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print(_j2.dumps(out, indent=2, default=str))
         return
 
     table = Table(title=f"Evidence Collection Schedules ({len(requests)})")
@@ -1377,7 +1395,11 @@ def evidence_schedule_add(
 @click.option("--framework", "-f", default=None, help="Limit to a specific framework")
 @click.option("--limit", "-n", default=20, help="Max results to show")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def evidence_sufficiency(framework: str | None, limit: int, fmt: str) -> None:
     """Score evidence sufficiency per control (relevance, completeness, recency)."""
@@ -1395,8 +1417,13 @@ def evidence_sufficiency(framework: str | None, limit: int, fmt: str) -> None:
 
     display = scores[:limit]
 
-    if fmt == "json":
-        console.print(_json.dumps(display, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(display, keys=list(display[0].keys()) if display else [])
+        else:
+            console.print(_json.dumps(display, indent=2, default=str))
         return
 
     table = Table(title=f"Evidence Sufficiency Scores (weakest {len(display)} of {len(scores)})")

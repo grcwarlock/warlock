@@ -36,7 +36,11 @@ def users(ctx: click.Context) -> None:
 @click.option("--active/--all", "active_only", default=True, help="Show only active users")
 @click.option("--limit", "-n", default=50, help="Max results")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> None:
     """List platform users."""
@@ -57,7 +61,7 @@ def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> Non
         console.print("[dim]No users found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         import json as _json
 
         data = [
@@ -72,7 +76,12 @@ def users_list(role: str | None, active_only: bool, limit: int, fmt: str) -> Non
             }
             for u in rows
         ]
-        console.print(_json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(_json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Users ({len(rows)})")

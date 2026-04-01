@@ -40,7 +40,7 @@ from warlock.cli.audit_engagement_cmd import audit_grp
     help="Margin of error (default 0.05)",
 )
 @click.option("--seed", default=42, type=int, help="Random seed for reproducibility")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def audit_sample(
     engagement_id: str,
     confidence: float,
@@ -67,8 +67,14 @@ def audit_sample(
         except ValueError as exc:
             _error(str(exc))
 
-    if fmt == "json":
-        console.print_json(json.dumps(result, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            csv_data = [{"control_id": c} for c in result.get("selected_control_ids", [])]
+            render_csv(csv_data, keys=["control_id"])
+        else:
+            console.print_json(json.dumps(result, indent=2))
         return
 
     console.print("\n[bold cyan]Sampling Results[/bold cyan]")
@@ -121,7 +127,7 @@ def audit_sample(
     envvar="WLK_CLI_ACTOR",
     help="Actor identity for audit trail",
 )
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def audit_workpapers(
     engagement_id: str,
     create_mode: bool,
@@ -206,8 +212,13 @@ def audit_workpapers(
 
     wp_list = list(workpapers.values())
 
-    if fmt == "json":
-        console.print_json(json.dumps(wp_list, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(wp_list, keys=list(wp_list[0].keys()) if wp_list else [])
+        else:
+            console.print_json(json.dumps(wp_list, indent=2))
         return
 
     if not wp_list:
@@ -248,7 +259,7 @@ def audit_workpapers(
 @audit_grp.command("evidence-check")
 @click.argument("engagement_id")
 @click.option("--max-age", default=90, type=int, help="Maximum evidence age in days (default 90)")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def audit_evidence_check(engagement_id: str, max_age: int, fmt: str) -> None:
     """Run evidence validity check: flag stale or missing evidence."""
     from warlock.db.engine import get_session, init_db
@@ -267,8 +278,14 @@ def audit_evidence_check(engagement_id: str, max_age: int, fmt: str) -> None:
         except ValueError as exc:
             _error(str(exc))
 
-    if fmt == "json":
-        console.print_json(json.dumps(result, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            csv_data = result.get("stale", []) + result.get("missing", [])
+            render_csv(csv_data, keys=list(csv_data[0].keys()) if csv_data else [])
+        else:
+            console.print_json(json.dumps(result, indent=2))
         return
 
     summary = result["summary"]
@@ -318,7 +335,7 @@ def audit_evidence_check(engagement_id: str, max_age: int, fmt: str) -> None:
 
 @audit_grp.command("package")
 @click.argument("engagement_id")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def audit_package(engagement_id: str, fmt: str) -> None:
     """Assemble and display certification package summary."""
     from warlock.db.engine import get_session, init_db
@@ -333,8 +350,15 @@ def audit_package(engagement_id: str, fmt: str) -> None:
         except ValueError as exc:
             _error(str(exc))
 
-    if fmt == "json":
-        console.print_json(json.dumps(pkg, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            cr = pkg.get("control_results", {})
+            csv_data = [{"status": s, "count": c} for s, c in cr.get("by_status", {}).items()]
+            render_csv(csv_data, keys=["status", "count"])
+        else:
+            console.print_json(json.dumps(pkg, indent=2))
         return
 
     eng = pkg["engagement"]

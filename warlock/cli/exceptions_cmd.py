@@ -97,7 +97,7 @@ def exceptions(ctx: click.Context) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def exceptions_list(status: str | None, fmt: str) -> None:
@@ -140,7 +140,7 @@ def exceptions_list(status: str | None, fmt: str) -> None:
         console.print("[dim]No policy exceptions found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = [
             {
                 "id": ov.id,
@@ -154,7 +154,12 @@ def exceptions_list(status: str | None, fmt: str) -> None:
             }
             for ov, meta, effective_status in results
         ]
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Policy Exceptions ({len(results)})")
@@ -519,14 +524,19 @@ def exceptions_report(fmt: str) -> None:
             }
         )
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         report = {
             "total": len(overrides),
             "by_status": statuses,
             "expiring_within_30_days": expiring_soon,
             "exceptions": rows_data,
         }
-        console.print(json.dumps(report, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows_data, keys=list(rows_data[0].keys()) if rows_data else [])
+        else:
+            console.print(json.dumps(report, indent=2))
         return
 
     console.print("# Policy Exceptions Report\n")

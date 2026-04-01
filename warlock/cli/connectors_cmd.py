@@ -304,7 +304,11 @@ def connectors_disable(name: str) -> None:
 @connectors.command("status")
 @click.option("--limit", "-n", default=20, help="Number of recent runs to show")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def connectors_status(limit: int, fmt: str) -> None:
     """Show recent run status for all connectors."""
@@ -321,7 +325,7 @@ def connectors_status(limit: int, fmt: str) -> None:
         console.print("[dim]No connector runs found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = [
             {
                 "name": run.connector_name,
@@ -333,7 +337,12 @@ def connectors_status(limit: int, fmt: str) -> None:
             }
             for run in rows
         ]
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title="Recent Connector Runs")

@@ -65,7 +65,7 @@ def _fmt_actor(value: str | None) -> str:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     help="Output format",
 )
@@ -94,7 +94,7 @@ def attestations_list(
         console.print("[dim]No attestations found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         data = [
             {
                 "id": a.id,
@@ -107,7 +107,12 @@ def attestations_list(
             }
             for a in rows
         ]
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Attestations ({len(rows)})")
@@ -447,9 +452,15 @@ def attestation_report(framework: str | None, output_format: str) -> None:
 
     all_statuses = ["draft", "submitted", "reviewed", "approved", "rejected"]
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         report_data = {fw: dict(counts) for fw, counts in sorted(by_framework.items())}
-        console.print(json.dumps(report_data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            csv_rows = [{"framework": fw, **counts} for fw, counts in sorted(by_framework.items())]
+            render_csv(csv_rows, keys=list(csv_rows[0].keys()) if csv_rows else [])
+        else:
+            console.print(json.dumps(report_data, indent=2))
         return
 
     # Markdown output

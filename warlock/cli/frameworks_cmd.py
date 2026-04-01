@@ -123,12 +123,12 @@ def frameworks_grp(ctx: click.Context) -> None:
 
 
 @frameworks_grp.command("list")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def frameworks_list(fmt: str) -> None:
     """List all available compliance frameworks."""
     all_fw = _iter_all_frameworks()
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         out = []
         for d in all_fw:
             fw_id = d.get("framework_id", d.get("_file", "unknown"))
@@ -140,7 +140,12 @@ def frameworks_list(fmt: str) -> None:
                     "controls": _count_controls(d),
                 }
             )
-        console.print_json(json.dumps(out))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print_json(json.dumps(out))
         return
 
     table = Table(title=f"Compliance Frameworks ({len(all_fw)})")
@@ -204,7 +209,7 @@ def frameworks_show(framework_id: str) -> None:
 @click.argument("framework_id")
 @click.option("--family", "-f", default=None, help="Filter by family ID")
 @click.option("--limit", "-n", default=100, help="Max results")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def frameworks_controls(framework_id: str, family: str | None, limit: int, fmt: str) -> None:
     """List controls for a framework."""
     data = _load_framework_yaml(framework_id)
@@ -223,11 +228,16 @@ def frameworks_controls(framework_id: str, family: str | None, limit: int, fmt: 
 
     rows = rows[:limit]
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         out = [
             {"family": r[0], "control_id": r[1], "checks": r[2], "event_types": r[3]} for r in rows
         ]
-        console.print_json(json.dumps(out))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print_json(json.dumps(out))
         return
 
     fw_label = _FRAMEWORK_DISPLAY_NAMES.get(framework_id, framework_id)
@@ -1283,7 +1293,7 @@ def frameworks_tailor(
 @frameworks_grp.command("gap-analysis")
 @click.argument("framework_id")
 @click.option("--limit", "-n", default=100, help="Max results")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def frameworks_gap_analysis(framework_id: str, limit: int, fmt: str) -> None:
     """Comprehensive gap analysis: controls with no assertions, no evidence, or no test coverage.
 
@@ -1357,14 +1367,19 @@ def frameworks_gap_analysis(framework_id: str, limit: int, fmt: str) -> None:
     total_controls = len(all_controls)
     gap_count = len(rows)
 
-    if fmt == "json":
-        out = {
-            "framework": framework_id,
-            "total_controls": total_controls,
-            "gap_count": gap_count,
-            "gaps": rows,
-        }
-        console.print_json(json.dumps(out, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            out = {
+                "framework": framework_id,
+                "total_controls": total_controls,
+                "gap_count": gap_count,
+                "gaps": rows,
+            }
+            console.print_json(json.dumps(out, indent=2))
         return
 
     label = _FRAMEWORK_DISPLAY_NAMES.get(framework_id, framework_id)
@@ -1414,7 +1429,7 @@ def frameworks_gap_analysis(framework_id: str, limit: int, fmt: str) -> None:
 @click.option(
     "--format",
     "fmt",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     help="Output format.",
 )
@@ -1465,8 +1480,13 @@ def coverage_gaps(framework: str | None, fmt: str) -> None:
             }
         )
 
-    if fmt == "json":
-        console.print_json(json.dumps(summary_rows, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(summary_rows, keys=list(summary_rows[0].keys()) if summary_rows else [])
+        else:
+            console.print_json(json.dumps(summary_rows, indent=2))
         return
 
     # Summary table

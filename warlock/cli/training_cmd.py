@@ -32,7 +32,9 @@ def training(ctx: click.Context) -> None:
 @training.command("list")
 @click.option("--department", "-d", default=None, help="Filter by department")
 @click.option("--limit", "-n", default=50, help="Max results")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def training_list(department: str | None, limit: int, output_format: str) -> None:
     """List individual personnel training records."""
     from warlock.db.engine import get_session, init_db
@@ -67,10 +69,15 @@ def training_list(department: str | None, limit: int, output_format: str) -> Non
         console.print("[dim]No personnel found.[/dim]")
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(data, indent=2))
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            import json
+
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Training Records ({len(data)})")
@@ -100,7 +107,9 @@ def training_list(department: str | None, limit: int, output_format: str) -> Non
 @training.command("status")
 @click.option("--department", "-d", default=None, help="Filter by department")
 @click.option("--role", "-r", default=None, help="Filter by employee type/role")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def training_status(
     department: str | None,
     role: str | None,
@@ -151,9 +160,7 @@ def training_status(
     not_enrolled = status_totals.get("not_enrolled", 0)
     pct = f"{current / total * 100:.1f}%" if total else "N/A"
 
-    if output_format == "json":
-        import json
-
+    if output_format in ("json", "csv"):
         out = {
             "summary": {
                 "total": total,
@@ -164,7 +171,25 @@ def training_status(
             },
             "by_department": dept_status,
         }
-        console.print(json.dumps(out, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            # Flatten summary into per-department rows for CSV
+            csv_rows = [
+                {
+                    "department": dept,
+                    "current": s_map.get("current", 0),
+                    "overdue": s_map.get("overdue", 0),
+                    "not_enrolled": s_map.get("not_enrolled", 0),
+                    "total": sum(s_map.values()),
+                }
+                for dept, s_map in sorted(dept_status.items())
+            ]
+            render_csv(csv_rows, keys=list(csv_rows[0].keys()) if csv_rows else [])
+        else:
+            import json
+
+            console.print(json.dumps(out, indent=2))
         return
 
     # Summary line
@@ -209,7 +234,9 @@ def training_status(
     help="Include personnel overdue by at least N days (0 = all overdue)",
 )
 @click.option("--department", default=None, help="Filter by department")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def overdue_training(days: int, department: str | None, output_format: str) -> None:
     """List personnel with overdue training."""
     from datetime import datetime, timedelta, timezone
@@ -255,10 +282,15 @@ def overdue_training(days: int, department: str | None, output_format: str) -> N
         console.print("[green]No overdue training found.[/green]")
         return
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(data, indent=2))
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            import json
+
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Overdue Training ({len(data)} personnel)")
@@ -293,7 +325,9 @@ def overdue_training(days: int, department: str | None, output_format: str) -> N
 @click.option(
     "--status", "-s", default=None, help="Filter by campaign status (e.g. completed, active)"
 )
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def campaigns_list(status: str | None, output_format: str) -> None:
     """List training campaigns derived from personnel completion records.
 
@@ -346,10 +380,15 @@ def campaigns_list(status: str | None, output_format: str) -> None:
         for name, count in sorted(campaign_completions.items(), key=lambda x: -x[1])
     ]
 
-    if output_format == "json":
-        import json
+    if output_format in ("json", "csv"):
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
 
-        console.print(json.dumps(data, indent=2))
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            import json
+
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Training Campaigns ({len(data)})")

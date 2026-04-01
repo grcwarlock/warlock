@@ -525,7 +525,7 @@ def automation_rules(ctx: click.Context) -> None:
 
 
 @automation_rules.command("list")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def rules_list(fmt: str) -> None:
     """List all automation rules.
 
@@ -566,8 +566,13 @@ def rules_list(fmt: str) -> None:
             }
         )
 
-    if fmt == "json":
-        console.print(json.dumps(rules, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rules, keys=list(rules[0].keys()) if rules else [])
+        else:
+            console.print(json.dumps(rules, indent=2))
         return
 
     table = Table(title=f"Automation Rules ({len(rules)})")
@@ -971,7 +976,7 @@ def webhook_create(
 
 
 @automation_webhook.command("list")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def webhook_list(fmt: str) -> None:
     """List all registered webhooks."""
     from warlock.db.engine import get_session, init_db
@@ -1005,8 +1010,14 @@ def webhook_list(fmt: str) -> None:
         console.print("[dim]No webhooks registered.[/dim]")
         return
 
-    if fmt == "json":
-        console.print(json.dumps(list(seen.values()), indent=2))
+    if fmt in ("json", "csv"):
+        wh_list = list(seen.values())
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(wh_list, keys=list(wh_list[0].keys()) if wh_list else [])
+        else:
+            console.print(json.dumps(wh_list, indent=2))
         return
 
     table = Table(title=f"Webhooks ({len(seen)})")
@@ -1451,7 +1462,7 @@ def ci_badge(framework: str, fmt: str) -> None:
     elif fmt == "html":
         badge_url = f"https://img.shields.io/badge/{label.replace(' ', '%20')}-{message.replace(' ', '%20')}-{color}"
         console.print(f'<img src="{badge_url}" alt="{label}" />')
-    elif fmt == "json":
+    elif fmt in ("json", "csv"):
         badge_json = {
             "schemaVersion": 1,
             "label": label,
@@ -1462,7 +1473,12 @@ def ci_badge(framework: str, fmt: str) -> None:
             "compliant_controls": compliant,
             "score": round(score, 1),
         }
-        console.print(json.dumps(badge_json, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([badge_json], keys=list(badge_json.keys()))
+        else:
+            console.print(json.dumps(badge_json, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -1525,7 +1541,7 @@ def github_check(framework: str, fmt: str) -> None:
         f"| Score | {score:.1f}% |\n"
     )
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         check_run = {
             "name": f"warlock/{framework}-compliance",
             "status": "completed",
@@ -1551,7 +1567,19 @@ def github_check(framework: str, fmt: str) -> None:
                 }
             )
 
-        console.print(json.dumps(check_run, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            flat = {
+                "name": check_run["name"],
+                "status": check_run["status"],
+                "conclusion": check_run["conclusion"],
+                "title": check_run["output"]["title"],
+                "summary": check_run["output"]["summary"],
+            }
+            render_csv([flat], keys=list(flat.keys()))
+        else:
+            console.print(json.dumps(check_run, indent=2))
     else:
         console.print(f"\n[bold]GitHub Check: {framework.upper()} Compliance[/bold]")
         console.print(f"  Conclusion:    {conclusion}")
@@ -1615,7 +1643,7 @@ def gitlab_status(framework: str, fmt: str) -> None:
         f"({compliant}/{total} controls, {non_compliant} non-compliant)"
     )
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         status_payload = {
             "state": state,
             "name": f"warlock/{framework}-compliance",
@@ -1623,7 +1651,12 @@ def gitlab_status(framework: str, fmt: str) -> None:
             "target_url": "",
             "coverage": round(score, 1),
         }
-        console.print(json.dumps(status_payload, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([status_payload], keys=list(status_payload.keys()))
+        else:
+            console.print(json.dumps(status_payload, indent=2))
     else:
         state_color = "green" if state == "success" else "red"
         console.print(f"\n[bold]GitLab Status: {framework.upper()} Compliance[/bold]")

@@ -47,9 +47,14 @@ def _score_style(score: float) -> str:
 
 
 def _format_output(data: list[dict], fmt: str, table: Table) -> None:
-    """Print either a Rich table or JSON depending on format flag."""
+    """Print either a Rich table, JSON, or CSV depending on format flag."""
     if fmt == "json":
         console.print_json(_json.dumps(data, default=str))
+    elif fmt == "csv":
+        from warlock.cli.output import render_csv
+
+        keys = list(data[0].keys()) if data else []
+        render_csv(data, keys=keys)
     else:
         console.print(table)
 
@@ -133,7 +138,7 @@ def compliance_views(ctx: click.Context) -> None:
 
 @compliance_views.command("by-deployment")
 @click.option("--framework", default=None, help="Filter to a specific framework.")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def by_deployment(framework: str | None, fmt: str) -> None:
     """Compliance posture grouped by deployment model (cloud/on-premise/hybrid)."""
     from warlock.db.engine import get_session, init_db
@@ -205,7 +210,7 @@ def by_deployment(framework: str | None, fmt: str) -> None:
 
 
 @compliance_views.command("by-org-unit")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def by_org_unit(fmt: str) -> None:
     """Compliance posture by organizational unit (system profile)."""
     from warlock.db.engine import get_session, init_db
@@ -286,7 +291,7 @@ _INDUSTRY_BENCHMARKS: dict[str, float] = {
     default="tech",
     help="Industry vertical for comparison.",
 )
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def peer_benchmark(industry: str, fmt: str) -> None:
     """Compare your compliance score against anonymized industry benchmarks."""
     from warlock.db.engine import get_session, init_db
@@ -354,7 +359,7 @@ def peer_benchmark(industry: str, fmt: str) -> None:
 
 
 @compliance_views.command("cato-dashboard")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def cato_dashboard(fmt: str) -> None:
     """Real-time ATO health dashboard per system profile."""
     from warlock.db.engine import get_session, init_db
@@ -435,7 +440,7 @@ def cato_dashboard(fmt: str) -> None:
 @compliance_views.command("pareto")
 @click.option("--top", default=20, help="Number of top families to show.")
 @click.option("--framework", default=None, help="Filter to a specific framework.")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def pareto(top: int, framework: str | None, fmt: str) -> None:
     """Pareto analysis: top control families causing the most failures."""
     from warlock.db.engine import get_session, init_db
@@ -514,7 +519,7 @@ def pareto(top: int, framework: str | None, fmt: str) -> None:
 @click.option("--resource-id", required=True, help="Resource identifier to diff.")
 @click.option("--source", default=None, help="Filter to a specific source.")
 @click.option("--limit", "max_rows", default=100, help="Max findings to compare.")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def finding_diff(resource_id: str, source: str | None, max_rows: int, fmt: str) -> None:
     """Show what changed between consecutive scans for a resource."""
     from warlock.db.engine import get_session, init_db
@@ -611,7 +616,7 @@ def finding_diff(resource_id: str, source: str | None, max_rows: int, fmt: str) 
 
 @compliance_views.command("ai-confidence")
 @click.option("--buckets", default=10, help="Number of histogram buckets.")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def ai_confidence(buckets: int, fmt: str) -> None:
     """AI confidence distribution across control results."""
     from warlock.db.engine import get_session, init_db
@@ -682,7 +687,7 @@ def ai_confidence(buckets: int, fmt: str) -> None:
 
 
 @compliance_views.command("platform-health")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def platform_health(fmt: str) -> None:
     """Platform health: connector sync status, error rates, job stats."""
     from warlock.db.engine import get_session, init_db
@@ -765,7 +770,7 @@ def platform_health(fmt: str) -> None:
 
 
 @compliance_views.command("usage-stats")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def usage_stats(fmt: str) -> None:
     """Platform usage statistics: users, keys, audit entries, findings, controls."""
     from warlock.db.engine import get_session, init_db
@@ -820,7 +825,7 @@ def usage_stats(fmt: str) -> None:
 @click.option(
     "--target-score", default=90.0, type=float, help="Target compliance score (default 90%)."
 )
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def forecast_cmd(framework: str | None, target_score: float, fmt: str) -> None:
     """Project when remediation velocity achieves target compliance score."""
     from warlock.db.engine import get_session, init_db
@@ -929,7 +934,7 @@ def forecast_cmd(framework: str | None, target_score: float, fmt: str) -> None:
 
 @compliance_views.command("multi-cloud")
 @click.option("--framework", default=None, help="Filter to a specific framework.")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def multi_cloud(framework: str | None, fmt: str) -> None:
     """Unified compliance posture across all sources (cloud, SaaS, on-prem)."""
     from warlock.db.engine import get_session, init_db
@@ -989,7 +994,7 @@ def multi_cloud(framework: str | None, fmt: str) -> None:
 
 @compliance_views.command("common-providers")
 @click.option("--top", default=20, help="Number of top providers to show.")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def common_providers(top: int, fmt: str) -> None:
     """Identify evidence sources providing coverage across the most frameworks."""
     from warlock.db.engine import get_session, init_db

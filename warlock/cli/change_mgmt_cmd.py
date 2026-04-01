@@ -129,7 +129,7 @@ def changes_create(change_type: str, title: str, impact: str, description: str) 
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def changes_list(status: str | None, since: str | None, fmt: str) -> None:
@@ -158,7 +158,7 @@ def changes_list(status: str | None, since: str | None, fmt: str) -> None:
         console.print("[dim]No change requests found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = [
             {
                 "id": r.entity_id,
@@ -170,7 +170,12 @@ def changes_list(status: str | None, since: str | None, fmt: str) -> None:
             }
             for r in rows
         ]
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Change Requests ({len(rows)})")
@@ -429,7 +434,7 @@ def changes_report(since: str | None, fmt: str) -> None:
         by_type[ct] = by_type.get(ct, 0) + 1
         by_impact[imp] = by_impact.get(imp, 0) + 1
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         report = {
             "total": total,
             "since": since,
@@ -437,7 +442,12 @@ def changes_report(since: str | None, fmt: str) -> None:
             "by_type": by_type,
             "by_impact": by_impact,
         }
-        console.print(json.dumps(report, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([report], keys=list(report.keys()))
+        else:
+            console.print(json.dumps(report, indent=2))
         return
 
     period = f"since {since}" if since else "all time"

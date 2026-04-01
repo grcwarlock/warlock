@@ -150,7 +150,7 @@ def access_review_create(scope: str, reviewer: str, deadline: str) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def access_review_list(status: str | None, fmt: str) -> None:
@@ -177,7 +177,7 @@ def access_review_list(status: str | None, fmt: str) -> None:
         console.print("[dim]No access review campaigns found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = [
             {
                 "id": r.entity_id,
@@ -189,7 +189,12 @@ def access_review_list(status: str | None, fmt: str) -> None:
             }
             for r in rows
         ]
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Access Review Campaigns ({len(rows)})")
@@ -507,7 +512,7 @@ def access_review_overdue() -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def access_review_entitlements(department: str | None, stale_days: int, fmt: str) -> None:
@@ -585,8 +590,13 @@ def access_review_entitlements(department: str | None, stale_days: int, fmt: str
         console.print("[dim]No personnel records found.[/dim]")
         return
 
-    if fmt == "json":
-        console.print(json.dumps(rows, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print(json.dumps(rows, indent=2, default=str))
         return
 
     excessive_count = sum(1 for r in rows if r["excessive"])
@@ -624,7 +634,7 @@ def access_review_entitlements(department: str | None, stale_days: int, fmt: str
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def access_review_group_changes(user_filter: str | None, max_rows: int, fmt: str) -> None:
@@ -695,8 +705,13 @@ def access_review_group_changes(user_filter: str | None, max_rows: int, fmt: str
         console.print("[dim]No group membership changes found.[/dim]")
         return
 
-    if fmt == "json":
-        console.print(json.dumps(changes, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(changes, keys=list(changes[0].keys()) if changes else [])
+        else:
+            console.print(json.dumps(changes, indent=2, default=str))
         return
 
     table = Table(title=f"IdP Group Membership Changes ({len(changes)})")
@@ -728,7 +743,7 @@ def access_review_group_changes(user_filter: str | None, max_rows: int, fmt: str
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def access_review_background_checks(overdue_only: bool, department: str | None, fmt: str) -> None:
@@ -783,8 +798,13 @@ def access_review_background_checks(overdue_only: bool, department: str | None, 
         console.print("[green]No overdue background checks.[/green]")
         return
 
-    if fmt == "json":
-        console.print(json.dumps(rows, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print(json.dumps(rows, indent=2, default=str))
         return
 
     overdue_count = sum(1 for r in rows if r["overdue"])
@@ -830,7 +850,7 @@ def access_review_background_checks(overdue_only: bool, department: str | None, 
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def access_review_nda_status(unsigned_only: bool, department: str | None, fmt: str) -> None:
@@ -907,8 +927,13 @@ def access_review_nda_status(unsigned_only: bool, department: str | None, fmt: s
         console.print("[green]All NDAs are current.[/green]")
         return
 
-    if fmt == "json":
-        console.print(json.dumps(rows, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print(json.dumps(rows, indent=2, default=str))
         return
 
     action_count = sum(1 for r in rows if r["needs_action"])
@@ -957,7 +982,7 @@ def access_review_nda_status(unsigned_only: bool, department: str | None, fmt: s
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def access_review_phishing_scores(department: str | None, high_risk_only: bool, fmt: str) -> None:
@@ -1015,14 +1040,19 @@ def access_review_phishing_scores(department: str | None, high_risk_only: bool, 
             console.print("[dim]No phishing score data found.[/dim]")
         return
 
-    if fmt == "json":
-        dept_summary = {
-            dept: {"avg_score": round(sum(s) / len(s), 1), "count": len(s)}
-            for dept, s in dept_scores.items()
-            if s
-        }
-        output = {"users": rows, "department_summary": dept_summary}
-        console.print(json.dumps(output, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            dept_summary = {
+                dept: {"avg_score": round(sum(s) / len(s), 1), "count": len(s)}
+                for dept, s in dept_scores.items()
+                if s
+            }
+            output = {"users": rows, "department_summary": dept_summary}
+            console.print(json.dumps(output, indent=2, default=str))
         return
 
     # User-level table

@@ -364,7 +364,7 @@ def calendar(ctx: click.Context) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def calendar_list(item_type: str | None, since: str | None, until: str | None, fmt: str) -> None:
@@ -396,7 +396,7 @@ def calendar_list(item_type: str | None, since: str | None, until: str | None, f
         console.print("[dim]No calendar items found.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = [
             {
                 "id": i["id"],
@@ -407,7 +407,12 @@ def calendar_list(item_type: str | None, since: str | None, until: str | None, f
             }
             for i in items
         ]
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Compliance Calendar ({len(items)})")

@@ -36,7 +36,7 @@ def reports(ctx: click.Context) -> None:
     "--format",
     "out_format",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 @click.option("--output", "-o", default=None, help="Write output to file instead of terminal")

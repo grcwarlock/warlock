@@ -105,7 +105,7 @@ _VALID_DASHBOARD_TYPES = ("posture", "risk", "audit")
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def shared_dashboards(
@@ -201,8 +201,13 @@ def shared_dashboards(
         )
         return
 
-    if fmt == "json":
-        console.print(json.dumps(dashboards, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(dashboards, keys=list(dashboards[0].keys()) if dashboards else [])
+        else:
+            console.print(json.dumps(dashboards, indent=2))
         return
 
     table = Table(title=f"Shared Dashboards ({len(dashboards)})")
@@ -237,7 +242,7 @@ def shared_dashboards(
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def team_workspaces(fmt: str) -> None:
@@ -315,8 +320,13 @@ def team_workspaces(fmt: str) -> None:
                 }
             )
 
-    if fmt == "json":
-        console.print(json.dumps(workspaces, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(workspaces, keys=list(workspaces[0].keys()) if workspaces else [])
+        else:
+            console.print(json.dumps(workspaces, indent=2, default=str))
         return
 
     table = Table(title=f"Team Workspaces ({len(workspaces)})")
@@ -356,7 +366,7 @@ def team_workspaces(fmt: str) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def raci_matrix(framework: str, fmt: str) -> None:
@@ -467,8 +477,13 @@ def raci_matrix(framework: str, fmt: str) -> None:
                 }
             )
 
-    if fmt == "json":
-        console.print(json.dumps(raci_rows, indent=2))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(raci_rows, keys=list(raci_rows[0].keys()) if raci_rows else [])
+        else:
+            console.print(json.dumps(raci_rows, indent=2))
         return
 
     table = Table(title=f"RACI Matrix -- {escape(framework)} ({len(raci_rows)} families)")
@@ -503,7 +518,7 @@ def raci_matrix(framework: str, fmt: str) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def collab_calendar(days: int, fmt: str) -> None:
@@ -595,7 +610,7 @@ def collab_calendar(days: int, fmt: str) -> None:
         console.print(f"[green]No compliance deadlines in the next {days} days.[/green]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = [
             {
                 "source": i["source"],
@@ -606,7 +621,12 @@ def collab_calendar(days: int, fmt: str) -> None:
             }
             for i in items
         ]
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Compliance Deadlines -- Next {days} Days ({len(items)})")
@@ -724,7 +744,7 @@ def regulation_alerts() -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def regulatory_changes(
@@ -835,8 +855,13 @@ def regulatory_changes(
         console.print("[dim]Use --create <title> to track a new regulatory change.[/dim]")
         return
 
-    if fmt == "json":
-        console.print(json.dumps(changes, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(changes, keys=list(changes[0].keys()) if changes else [])
+        else:
+            console.print(json.dumps(changes, indent=2, default=str))
         return
 
     table = Table(title=f"Regulatory Changes ({len(changes)})")
@@ -898,7 +923,7 @@ def _resolve_change_id(session, partial_id: str, mgr) -> str | None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def release_compliance(release_id: str, fmt: str) -> None:
@@ -1018,13 +1043,18 @@ def release_compliance(release_id: str, fmt: str) -> None:
     has_warn = any(c["status"] == "WARN" for c in checks)
     overall = "FAIL" if has_fail else ("WARN" if has_warn else "PASS")
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = {
             "release_id": release_id,
             "overall": overall,
             "checks": checks,
         }
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(checks, keys=list(checks[0].keys()) if checks else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Release Compliance -- {escape(release_id)}")

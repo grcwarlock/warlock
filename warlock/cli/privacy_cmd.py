@@ -521,7 +521,11 @@ def breach(ctx: click.Context) -> None:
 )
 @click.option("--limit", "-n", default=50, help="Max results")
 @click.option(
-    "--format", "fmt", default="table", type=click.Choice(["table", "json"]), help="Output format"
+    "--format",
+    "fmt",
+    default="table",
+    type=click.Choice(["table", "json", "csv"]),
+    help="Output format",
 )
 def breach_list(severity: str | None, limit: int, fmt: str) -> None:
     """List all recorded personal data breaches."""
@@ -540,8 +544,13 @@ def breach_list(severity: str | None, limit: int, fmt: str) -> None:
         console.print("[dim]No breach records found.[/dim]")
         return
 
-    if fmt == "json":
-        console.print_json(data=records)
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(records, keys=list(records[0].keys()) if records else [])
+        else:
+            console.print_json(data=records)
         return
 
     _sev_styles = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "dim"}
@@ -947,7 +956,7 @@ def transfers_validate() -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     help="Output format",
 )
@@ -970,7 +979,7 @@ def data_map(output_format: str) -> None:
         console.print("[dim]No data silos found. Run the pipeline to discover data stores.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         data = [
             {
                 "id": s.id,
@@ -987,7 +996,12 @@ def data_map(output_format: str) -> None:
             }
             for s in rows
         ]
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     _cls_styles = {
@@ -1131,7 +1145,7 @@ def ropa(output_format: str) -> None:
 
     now = datetime.now(timezone.utc)
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         ropa_data = {
             "generated_at": now.isoformat(),
             "article": "GDPR Article 30",
@@ -1154,7 +1168,13 @@ def ropa(output_format: str) -> None:
                 for s in rows
             ],
         }
-        console.print(json.dumps(ropa_data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            activities = ropa_data["activities"]
+            render_csv(activities, keys=list(activities[0].keys()) if activities else [])
+        else:
+            console.print(json.dumps(ropa_data, indent=2))
         return
 
     # Markdown output
@@ -1197,7 +1217,7 @@ def ropa(output_format: str) -> None:
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def cookie_consent(fmt: str) -> None:
@@ -1279,8 +1299,13 @@ def cookie_consent(fmt: str) -> None:
             }
         )
 
-    if fmt == "json":
-        console.print(json.dumps(records, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(records, keys=list(records[0].keys()) if records else [])
+        else:
+            console.print(json.dumps(records, indent=2, default=str))
         return
 
     undocumented = sum(1 for r in records if not r["documented"])
@@ -1351,7 +1376,7 @@ _AI_PRIVACY_KEYWORDS = frozenset(
     "--format",
     "fmt",
     default="table",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     help="Output format",
 )
 def ai_governance(status_filter: str | None, fmt: str) -> None:
@@ -1430,8 +1455,13 @@ def ai_governance(status_filter: str | None, fmt: str) -> None:
 
     rows = list(deduped.values())
 
-    if fmt == "json":
-        console.print(json.dumps(rows, indent=2, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print(json.dumps(rows, indent=2, default=str))
         return
 
     privacy_flagged = sum(1 for r in rows if r["privacy_impact"])
@@ -1525,12 +1555,17 @@ def privacy_data_flow(system: str | None, output_format: str) -> None:
         console.print(diagram.mermaid)
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import dataclasses
         import json as _json
 
         data = dataclasses.asdict(diagram)
-        console.print(_json.dumps(data, indent=2, default=str))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([data], keys=list(data.keys()) if data else [])
+        else:
+            console.print(_json.dumps(data, indent=2, default=str))
         return
 
     # Table output
@@ -1633,12 +1668,17 @@ def privacy_pia_prefill(system: str, categories: str | None, output_format: str)
     with get_read_session() as session:
         pia = prefiller.prefill(session, system_name=system, data_categories=cat_list)
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import dataclasses
         import json as _json
 
         data = dataclasses.asdict(pia)
-        console.print(_json.dumps(data, indent=2, default=str))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv([data], keys=list(data.keys()) if data else [])
+        else:
+            console.print(_json.dumps(data, indent=2, default=str))
         return
 
     # Text output

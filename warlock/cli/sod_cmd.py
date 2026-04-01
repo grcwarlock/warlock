@@ -218,7 +218,7 @@ def sod_matrix() -> None:
 
 
 @cli.command("sod-analysis")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def sod_analysis(fmt: str) -> None:
     """Run full Segregation of Duties analysis across all users.
 
@@ -270,8 +270,15 @@ def sod_analysis(fmt: str) -> None:
         "rules_checked": len(_SOD_RULES),
     }
 
-    if fmt == "json":
-        console.print_json(_json.dumps({"summary": summary, "conflicts": conflicts}, default=str))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(conflicts, keys=list(conflicts[0].keys()) if conflicts else [])
+        else:
+            console.print_json(
+                _json.dumps({"summary": summary, "conflicts": conflicts}, default=str)
+            )
         return
 
     # Summary panel

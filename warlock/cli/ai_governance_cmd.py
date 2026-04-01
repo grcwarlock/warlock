@@ -38,7 +38,7 @@ def ai_governance(ctx: click.Context) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     help="Output format",
 )
@@ -57,12 +57,17 @@ def ai_gov_inventory(output_format: str) -> None:
         console.print("[dim]No AI models registered. Use 'warlock ai-governance register'.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import dataclasses
         import json
 
         data = [dataclasses.asdict(m) for m in models]
-        console.print(json.dumps(data, indent=2, default=str))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2, default=str))
         return
 
     table = Table(title=f"AI Model Inventory ({len(models)})")

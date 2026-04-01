@@ -37,7 +37,7 @@ def endpoint(ctx: click.Context) -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["table", "json"]),
+    type=click.Choice(["table", "json", "csv"]),
     default="table",
     help="Output format",
 )
@@ -67,11 +67,16 @@ def agent_report(output_format: str) -> None:
 
     reports = [EndpointComplianceReport.from_dict(e.raw_data) for e in result.events]
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import dataclasses
 
         data = [dataclasses.asdict(r) for r in reports]
-        console.print(json.dumps(data, indent=2, default=str))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2, default=str))
         return
 
     # Table output

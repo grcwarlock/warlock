@@ -87,7 +87,7 @@ def audit_trail_grp(ctx: click.Context) -> None:
     help="Show entries since ISO date (e.g. 2026-01-01)",
 )
 @click.option("--limit", "-n", default=50, help="Max results")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def audit_trail_list(
     action: str | None,
     actor: str | None,
@@ -118,7 +118,7 @@ def audit_trail_list(
         q = q.order_by(AuditEntry.sequence.desc()).limit(limit)
         rows = q.all()
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         out = [
             {
                 "id": e.id,
@@ -132,7 +132,12 @@ def audit_trail_list(
             }
             for e in rows
         ]
-        console.print_json(json.dumps(out))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(out, keys=list(out[0].keys()) if out else [])
+        else:
+            console.print_json(json.dumps(out))
         return
 
     if not rows:

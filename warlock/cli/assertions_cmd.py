@@ -47,7 +47,7 @@ def _get_engine():
 
 
 @assertions.command("list")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def assertions_list(fmt: str) -> None:
     """List all registered assertion functions."""
     eng = _get_engine()
@@ -57,7 +57,7 @@ def assertions_list(fmt: str) -> None:
         console.print("[dim]No assertions registered.[/dim]")
         return
 
-    if fmt == "json":
+    if fmt in ("json", "csv"):
         data = []
         for name in names:
             fn = eng._assertions[name]
@@ -67,7 +67,12 @@ def assertions_list(fmt: str) -> None:
                     "docstring": (fn.__doc__ or "").strip().split("\n")[0],
                 }
             )
-        console.print(json.dumps(data, indent=2))
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     # Build control bindings index per assertion

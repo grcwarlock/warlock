@@ -57,7 +57,9 @@ def _impact_style(impact: str | None) -> str:
     type=click.Choice(["high", "moderate", "low"]),
     help="Filter by overall_impact level",
 )
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 @click.pass_context
 def bcp_list(ctx: click.Context, criticality: str | None, output_format: str) -> None:
     """List BCP systems (alias for 'bcp systems')."""
@@ -77,7 +79,9 @@ def bcp_list(ctx: click.Context, criticality: str | None, output_format: str) ->
     type=click.Choice(["high", "moderate", "low"]),
     help="Filter by overall_impact level",
 )
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def bcp_systems(criticality: str | None, output_format: str) -> None:
     """List systems with their security impact / criticality tier.
 
@@ -115,10 +119,15 @@ def bcp_systems(criticality: str | None, output_format: str) -> None:
         console.print("[dim]No systems found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Systems ({len(data)})")
@@ -156,7 +165,9 @@ def bcp_systems(criticality: str | None, output_format: str) -> None:
 
 @bcp.command("bia")
 @click.option("--system", "-s", default=None, help="System profile ID, acronym, or name fragment")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def bia(system: str | None, output_format: str) -> None:
     """Business impact analysis for systems.
 
@@ -219,10 +230,15 @@ def bia(system: str | None, output_format: str) -> None:
         console.print("[dim]No systems found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     for r in data:
@@ -279,7 +295,9 @@ def bia(system: str | None, output_format: str) -> None:
 
 @bcp.command("backup-status")
 @click.option("--system", "-s", default=None, help="Filter by system name, acronym, or ID")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def bcp_backup_status(system: str | None, output_format: str) -> None:
     """Show backup status across systems.
 
@@ -334,10 +352,15 @@ def bcp_backup_status(system: str | None, output_format: str) -> None:
         console.print("[dim]No systems found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title=f"Backup Status ({len(data)} systems)")
@@ -381,7 +404,9 @@ def bcp_backup_status(system: str | None, output_format: str) -> None:
 
 @bcp.command("dr-readiness")
 @click.option("--system", "-s", default=None, help="Filter by system name, acronym, or ID")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def bcp_dr_readiness(system: str | None, output_format: str) -> None:
     """DR readiness assessment — check RTO/RPO compliance across systems.
 
@@ -508,10 +533,15 @@ def bcp_dr_readiness(system: str | None, output_format: str) -> None:
         console.print("[dim]No systems found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     _readiness_styles = {
@@ -752,7 +782,9 @@ def dr_test(ctx: click.Context) -> None:
 
 
 @dr_test.command("schedule")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def dr_schedule(output_format: str) -> None:
     """View DR test schedule by system (derived from active audit engagements).
 
@@ -794,10 +826,15 @@ def dr_schedule(output_format: str) -> None:
         console.print("[dim]No systems found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(data, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(data, keys=list(data[0].keys()) if data else [])
+        else:
+            console.print(json.dumps(data, indent=2))
         return
 
     table = Table(title="DR Test Schedule")
@@ -977,7 +1014,9 @@ def dr_execute(
 @dr_test.command("results")
 @click.option("--system", "-s", default=None, help="Filter by system name, acronym, or ID")
 @click.option("--last", "-n", default=20, help="Show last N results (default: 20)")
-@click.option("--format", "output_format", default="table", type=click.Choice(["table", "json"]))
+@click.option(
+    "--format", "output_format", default="table", type=click.Choice(["table", "json", "csv"])
+)
 def dr_results(system: str | None, last: int, output_format: str) -> None:
     """List recorded DR test results."""
     import json as _json
@@ -1034,10 +1073,15 @@ def dr_results(system: str | None, last: int, output_format: str) -> None:
         console.print("[dim]No DR test results found.[/dim]")
         return
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
-        console.print(json.dumps(rows, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print(json.dumps(rows, indent=2))
         return
 
     table = Table(title=f"DR Test Results (last {last})")
@@ -1148,7 +1192,7 @@ def dr_report(output_format: str) -> None:
     total_partial = sum(1 for r in report_rows if r["test_result"] == "partial")
     total_untested = len(untested)
 
-    if output_format == "json":
+    if output_format in ("json", "csv"):
         import json
 
         out = {
@@ -1166,7 +1210,12 @@ def dr_report(output_format: str) -> None:
                 "partial": total_partial,
             },
         }
-        console.print(json.dumps(out, indent=2))
+        if output_format == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(report_rows, keys=list(report_rows[0].keys()) if report_rows else [])
+        else:
+            console.print(json.dumps(out, indent=2))
         return
 
     if output_format == "md":

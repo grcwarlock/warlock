@@ -78,7 +78,7 @@ def policies_grp(ctx: click.Context) -> None:
 @policies_grp.command("list")
 @click.option("--framework", "-f", default=None, help="Filter by framework")
 @click.option("--limit", "-n", default=100, help="Max results")
-@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table")
 def policies_list(framework: str | None, limit: int, fmt: str) -> None:
     """List all OPA policy files."""
     registry = _get_registry()
@@ -110,8 +110,13 @@ def policies_list(framework: str | None, limit: int, fmt: str) -> None:
 
     rows = rows[:limit]
 
-    if fmt == "json":
-        console.print_json(json.dumps(rows))
+    if fmt in ("json", "csv"):
+        if fmt == "csv":
+            from warlock.cli.output import render_csv
+
+            render_csv(rows, keys=list(rows[0].keys()) if rows else [])
+        else:
+            console.print_json(json.dumps(rows))
         return
 
     if not rows:
