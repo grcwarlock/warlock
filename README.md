@@ -1,6 +1,6 @@
 # Warlock
 
-**Pipeline-first GRC platform.** Compliance treated as a telemetry problem — not a spreadsheet problem.
+**Pipeline-first GRC platform.** Compliance telemetry.
 
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
