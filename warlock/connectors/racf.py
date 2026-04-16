@@ -64,7 +64,7 @@ class RACFConnector(BaseConnector):
                 f"{base_url}/zosmf/info",
                 auth=(username, password),
                 timeout=15,
-                verify=False,  # Many z/OSMF instances use self-signed certs
+                verify=self.config.settings.get("verify_tls", True),
             )
             return resp.status_code == 200
         except Exception:
@@ -93,7 +93,7 @@ class RACFConnector(BaseConnector):
                 "X-CSRF-ZOSMF-HEADER": "",
             },
             timeout=self.config.timeout_seconds,
-            verify=False,  # Many z/OSMF instances use self-signed certs
+            verify=self.config.settings.get("verify_tls", True),
         )
 
         try:

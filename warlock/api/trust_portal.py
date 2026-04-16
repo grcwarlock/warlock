@@ -654,10 +654,16 @@ async def serve_trust_document(
             )
         get_current_user(request, authorization, x_api_key, db)
 
-    # H-3: Path traversal protection — ensure file is within trusted directory
+    # H-3 / F21: Path traversal protection — ensure file is within trusted
+    # directory. Uses commonpath instead of startswith to handle OS path
+    # separator differences correctly.
     expected_dir = os.path.realpath(str(_TRUST_DOCS_ROOT))
     real_path = os.path.realpath(doc.file_path)
-    if not real_path.startswith(expected_dir + os.sep) and real_path != expected_dir:
+    try:
+        within = os.path.commonpath([real_path, expected_dir]) == expected_dir
+    except ValueError:
+        within = False  # different drives on Windows
+    if not within:
         log.warning("Path traversal attempt blocked: %s", doc.file_path)
         raise HTTPException(status_code=403, detail="Access denied")
 

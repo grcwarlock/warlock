@@ -81,11 +81,13 @@ def get_event_bus() -> EventBus:
 
 def _verify_ws_token(token: str) -> dict | None:
     """Verify a WebSocket auth token. Returns user claims or None."""
+    if not token:
+        return None
     try:
-        from warlock.api.auth import decode_token
+        from warlock.api.auth import decode_access_token
 
-        return decode_token(token)
-    except Exception:
+        return decode_access_token(token)
+    except ValueError:
         return None
 
 

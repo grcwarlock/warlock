@@ -21,6 +21,7 @@ from warlock.api.deps import get_db, require_permission
 from warlock.config import get_settings
 from warlock.db.audit import AuditTrail
 from warlock.db.models import AuditEntry, User, _uuid
+from warlock.utils.crypto import decrypt_field, encrypt_field
 
 log = logging.getLogger(__name__)
 
@@ -63,11 +64,27 @@ class WebhookTestResult(BaseModel):
 def register_webhook(
     body: WebhookCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission("admin")),
+    current_user: User = Depends(require_permission("manage_users")),
 ) -> dict:
     """Register a new webhook destination."""
     webhook_id = _uuid()
     now = datetime.now(timezone.utc)
+
+    # F16/F27: Persist the secret ENCRYPTED (Fernet) so the delivery worker
+    # can compute a real HMAC. Never store a hash of the secret — short
+    # secrets would be offline-brute-forceable. Encryption requires
+    # WLK_ENCRYPTION_KEY in production; falls back to keystream-XOR with
+    # WLK_JWT_SECRET in dev (still not browse-able from a DB dump).
+    secret_ciphertext = ""
+    if body.secret:
+        try:
+            secret_ciphertext = encrypt_field(body.secret)
+        except Exception as exc:
+            log.error("Failed to encrypt webhook secret: %s", exc)
+            raise HTTPException(
+                status_code=503,
+                detail="Encryption is not configured — set WLK_ENCRYPTION_KEY",
+            )
 
     audit = AuditTrail(db)
     audit.record(
@@ -77,7 +94,7 @@ def register_webhook(
         actor=current_user.email,
         metadata={
             "url": body.url,
-            "secret_hash": hashlib.sha256(body.secret.encode()).hexdigest() if body.secret else "",
+            "secret_encrypted": secret_ciphertext,
             "event_types": body.event_types,
             "active": True,
             "created_at": now.isoformat(),
@@ -97,7 +114,7 @@ def register_webhook(
 @router.get("/webhooks", response_model=list[WebhookOut])
 def list_webhooks(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission("admin")),
+    current_user: User = Depends(require_permission("manage_users")),
 ) -> list[dict]:
     """List all registered webhooks."""
     # Find all webhook_registered entries that haven't been deleted
@@ -139,7 +156,7 @@ def list_webhooks(
 def delete_webhook(
     webhook_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission("admin")),
+    current_user: User = Depends(require_permission("manage_users")),
 ) -> None:
     """Remove a registered webhook."""
     # Verify webhook exists
@@ -173,7 +190,7 @@ def delete_webhook(
 def test_webhook(
     webhook_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission("admin")),
+    current_user: User = Depends(require_permission("manage_users")),
 ) -> dict:
     """Send a test payload to a registered webhook.
 
@@ -202,11 +219,20 @@ def test_webhook(
         "message": "This is a test payload from Warlock GRC.",
     }
 
-    # Compute HMAC signature if secret was provided
-    secret_hash = meta.get("secret_hash", "")
-    if secret_hash:
+    # F16: Compute a REAL HMAC signature using the decrypted secret.
+    # Receivers compute the same HMAC with their stored secret to verify.
+    secret_ct = meta.get("secret_encrypted", "")
+    if secret_ct:
+        try:
+            secret = decrypt_field(secret_ct)
+        except Exception as exc:
+            log.error("Failed to decrypt webhook secret for %s: %s", webhook_id, exc)
+            raise HTTPException(
+                status_code=500,
+                detail="Webhook secret could not be decrypted — re-register the webhook",
+            )
         sig = hmac.new(
-            secret_hash.encode(),
+            secret.encode(),
             json.dumps(test_payload, sort_keys=True).encode(),
             hashlib.sha256,
         ).hexdigest()
@@ -246,10 +272,12 @@ class JiraWebhookResponse(BaseModel):
 def _verify_jira_signature(body: bytes, signature: str | None, secret: str) -> bool:
     """Verify Jira webhook HMAC-SHA256 signature.
 
-    If no webhook secret is configured, verification is skipped (dev mode).
+    Callers MUST handle the "no secret configured" case separately — this
+    function returns False when the secret is missing (fail-closed). Bypass
+    for development happens in the route handler (finding F22).
     """
     if not secret:
-        return True
+        return False
     if not signature:
         return False
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
@@ -263,14 +291,22 @@ async def jira_webhook(
 ) -> JiraWebhookResponse:
     """Receive Jira webhook payload for bidirectional issue sync.
 
-    Validates the HMAC signature (if ``WLK_JIRA_WEBHOOK_SECRET`` is set),
-    then delegates to ``handle_jira_webhook`` for status synchronisation.
+    Validates the HMAC signature. In production/staging, a webhook secret
+    MUST be configured (``WLK_JIRA_WEBHOOK_SECRET``) or the endpoint refuses
+    requests. Development mode allows unsigned payloads for iteration.
     """
     body = await request.body()
     settings = get_settings()
     webhook_secret = getattr(settings, "jira_webhook_secret", "") or ""
 
-    if not _verify_jira_signature(body, x_hub_signature, webhook_secret):
+    if not webhook_secret:
+        if settings.env != "development":
+            raise HTTPException(
+                status_code=503,
+                detail="Jira webhook not configured — WLK_JIRA_WEBHOOK_SECRET required",
+            )
+        # Development only: accept without signature verification
+    elif not _verify_jira_signature(body, x_hub_signature, webhook_secret):
         raise HTTPException(status_code=401, detail="Invalid webhook signature.")
 
     try:

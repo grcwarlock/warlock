@@ -28,6 +28,16 @@ log = logging.getLogger(__name__)
 _ENDPOINT_LIMITS: dict[str, tuple[int, int]] = {
     "/api/v1/auth/login": (10, 5),  # stricter: 10/min + 5 burst
     "/api/v1/auth/register": (5, 2),  # very strict: 5/min + 2 burst
+    # F11: brute-force / credential-stuffing protection
+    "/api/v1/auth/mfa/verify": (5, 2),  # 6-digit TOTP; keep tight
+    "/api/v1/auth/refresh": (10, 5),  # refresh-token replay
+    "/api/v1/auth/change-password": (5, 2),  # existing-password guessing
+    "/api/v1/auth/password-reset": (5, 2),  # token harvesting / enumeration
+    "/api/v1/auth/sso/login": (20, 5),  # SSO state exhaustion
+    "/api/v1/auth/sso/callback": (20, 5),  # SSO callback abuse
+    "/api/v1/scim/Users": (30, 10),  # SCIM Users create/list bulk
+    "/api/v1/ingest/webhook": (100, 20),  # generic webhook ingest
+    "/api/v1/webhooks/jira": (60, 10),  # Jira bidirectional webhook
     "/api/v1/trust/request-access": (10, 3),  # public endpoint, strict
     "/api/v1/ai/reason": (30, 5),  # expensive AI reasoning calls
     "/api/v1/ai/converse": (30, 5),  # expensive AI conversation calls
@@ -60,19 +70,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def _client_key(self, request: Request) -> str:
         """Derive a rate-limit key from the request.
 
-        Prefers the X-Api-Key header (hashed identity) over client IP
-        so that authenticated clients share a key across IPs.
+        F26: Combine IP and API key so the budget is enforced per
+        (ip, key) tuple. A caller cannot double their allowance by
+        alternating between sending and omitting the key — both bursts
+        share the same bucket.
         """
-        api_key = request.headers.get("x-api-key")
-        if api_key:
-            # Hash the key — never use raw key material as identity (H-4 fix)
-            import hashlib
+        import hashlib
 
-            return f"key:{hashlib.sha256(api_key.encode()).hexdigest()[:16]}"
-        # Fall back to IP
         client = request.client
         host = client.host if client else "unknown"
-        return f"ip:{host}"
+        api_key = request.headers.get("x-api-key", "")
+        key_part = hashlib.sha256(api_key.encode()).hexdigest()[:16] if api_key else "anon"
+        return f"ip:{host}|key:{key_part}"
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         from warlock.utils.cache import MemoryCache, get_cache
@@ -351,6 +360,45 @@ def _extract_identity(request: Request) -> str:
     return f"anonymous:{host}"
 
 
+# Query param names whose VALUES must never appear in audit logs (F20).
+# Values are replaced with "[redacted]" while the key is preserved so that
+# the audit record is still meaningful ("caller passed ?token=" vs. nothing).
+_AUDIT_SENSITIVE_QUERY_KEYS = frozenset(
+    {
+        "token",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "code",
+        "state",
+        "nonce",
+        "api_key",
+        "apikey",
+        "secret",
+        "password",
+        "reset_token",
+        "session_id",
+        "assertion",  # SAML / JWT-bearer
+    }
+)
+
+
+def _scrub_query_for_audit(raw: str) -> str:
+    """Redact sensitive query parameter VALUES while preserving keys."""
+    if not raw:
+        return ""
+    from urllib.parse import parse_qsl, urlencode
+
+    try:
+        pairs = parse_qsl(raw, keep_blank_values=True)
+    except Exception:
+        return "[unparseable]"
+    scrubbed = [
+        (k, "[redacted]" if k.lower() in _AUDIT_SENSITIVE_QUERY_KEYS else v) for k, v in pairs
+    ]
+    return urlencode(scrubbed)
+
+
 def _persist_audit_entry(
     request: Request,
     response: Response,
@@ -374,7 +422,7 @@ def _persist_audit_entry(
             metadata={
                 "method": request.method,
                 "path": str(request.url.path),
-                "query": str(request.url.query) if request.url.query else "",
+                "query": _scrub_query_for_audit(str(request.url.query)),
                 "status_code": response.status_code,
                 "duration_ms": duration_ms,
             },

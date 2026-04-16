@@ -80,14 +80,27 @@ def _load_source_secrets() -> dict[str, str]:
 def _validate_hmac(body: bytes, signature: str | None, source: str) -> bool:
     """Validate HMAC-SHA256 signature for the given source.
 
-    Returns True if:
-    - No secret is configured for this source (passthrough)
-    - Signature matches the expected HMAC
+    Returns True only if a secret is configured AND the signature matches.
+    Outside development, requests from sources without a configured secret
+    are REJECTED (finding F7). In development, they pass to keep iteration fast.
     """
+    from warlock.config import get_settings
+
     secrets = _load_source_secrets()
     secret = secrets.get(source)
     if not secret:
-        return True  # No secret configured — allow
+        if get_settings().env == "development":
+            log.warning(
+                "Webhook source %r has no configured HMAC secret — allowing in development",
+                source,
+            )
+            return True
+        log.warning(
+            "Webhook source %r has no configured HMAC secret in env=%s — rejecting",
+            source,
+            get_settings().env,
+        )
+        return False
 
     if not signature:
         return False  # Secret configured but no signature provided

@@ -382,6 +382,11 @@ class Settings(BaseSettings):
     # Environment mode
     env: str = "development"  # "development", "staging", "production"
 
+    # Network trust — only honor X-Forwarded-For when deployed behind a
+    # trusted reverse proxy that overwrites the header. Otherwise callers
+    # can spoof their source IP and bypass ip_allowlist enforcement (F14).
+    trust_forwarded_for: bool = False
+
     # Event-type schema validation (OPS-7)
     schema_validation_enabled: bool = False  # Log warnings for unregistered event_types
 

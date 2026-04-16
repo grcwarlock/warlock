@@ -163,10 +163,26 @@ def _hmac_encode(payload: dict, secret: str) -> str:
 
 
 def _hmac_decode(token: str, secret: str) -> dict:
-    """Decode and verify an HMAC-based token."""
+    """Decode and verify an HMAC-based token.
+
+    F28: Explicitly enforce ``alg=HS256`` on the header — refuses any token
+    that advertises ``alg=none`` (or anything else) so this fallback path
+    cannot be tricked by a header-swap attack.
+    """
     parts = token.encode().split(b".")
     if len(parts) != 3:
         raise ValueError("Invalid token format")
+    # F28: parse and validate the header BEFORE trusting the signature so
+    # an attacker cannot send {"alg":"none"} with an empty signature.
+    header_b64 = parts[0]
+    header_b64 += b"=" * (4 - len(header_b64) % 4) if len(header_b64) % 4 else b""
+    try:
+        header = json.loads(base64.urlsafe_b64decode(header_b64))
+    except Exception as exc:
+        raise ValueError("Invalid token header") from exc
+    if header.get("alg") != "HS256":
+        raise ValueError(f"Unsupported alg in token: {header.get('alg')!r} (expected HS256)")
+
     signing_input = parts[0] + b"." + parts[1]
     expected_sig = hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()
     # Restore padding for base64 decode
@@ -230,14 +246,30 @@ def _get_jwt_secret() -> str:
 _EPHEMERAL_SECRET: str = ""
 
 
+JWT_ISSUER = "warlock"
+JWT_AUDIENCE = "warlock-api"
+
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """Create a JWT access token."""
+    """Create a JWT access token.
+
+    F17: Tokens carry jti/aud/iss so SessionManager can track them
+    individually for granular revocation. Decode does not enforce aud/iss
+    yet (backward compatible with in-flight tokens) — that hardening can
+    happen once the rollout is complete.
+    """
     secret = _get_jwt_secret()
     _, expire_minutes = _get_auth_config()
-    to_encode = {"sub": data.get("sub", "")}  # Only include sub claim (M-3 fix)
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=expire_minutes))
-    to_encode["exp"] = expire.timestamp()
-    to_encode["iat"] = datetime.now(timezone.utc).timestamp()
+    now = datetime.now(timezone.utc)
+    expire = now + (expires_delta or timedelta(minutes=expire_minutes))
+    to_encode = {
+        "sub": data.get("sub", ""),
+        "jti": secrets.token_urlsafe(16),
+        "iss": JWT_ISSUER,
+        "aud": JWT_AUDIENCE,
+        "iat": now.timestamp(),
+        "exp": expire.timestamp(),
+    }
 
     if _HAS_PYJWT:
         return _pyjwt.encode(to_encode, secret, algorithm=ALGORITHM)
@@ -245,11 +277,23 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 
 def decode_access_token(token: str) -> dict:
-    """Decode and validate a JWT access token. Raises ValueError on failure."""
+    """Decode and validate a JWT access token. Raises ValueError on failure.
+
+    F17: Newly-issued tokens include aud/iss claims and PyJWT enforces them
+    when present. Tokens issued before F17 lack aud and are rejected — those
+    users must re-authenticate after the rollout.
+    """
     secret = _get_jwt_secret()
     try:
         if _HAS_PYJWT:
-            payload = _pyjwt.decode(token, secret, algorithms=[ALGORITHM])
+            payload = _pyjwt.decode(
+                token,
+                secret,
+                algorithms=[ALGORITHM],
+                audience=JWT_AUDIENCE,
+                issuer=JWT_ISSUER,
+                options={"verify_aud": True, "verify_iss": True},
+            )
         else:
             payload = _hmac_decode(token, secret)
     except Exception as exc:

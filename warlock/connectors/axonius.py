@@ -56,7 +56,7 @@ class AxoniusConnector(BaseConnector):
                 f"{base_url}/api/v2/system/info",
                 headers=headers,
                 timeout=self.config.timeout_seconds,
-                verify=False,
+                verify=self.config.settings.get("verify_tls", True),
             )
             return resp.status_code in (200, 204)
         except Exception:
@@ -80,7 +80,7 @@ class AxoniusConnector(BaseConnector):
             base_url=base_url,
             headers=headers,
             timeout=self.config.timeout_seconds,
-            verify=False,
+            verify=self.config.settings.get("verify_tls", True),
         )
 
         try:

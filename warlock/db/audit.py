@@ -117,6 +117,7 @@ class AuditTrail:
                 "evidence_sha256": evidence_sha256 or "",
             },
             sort_keys=True,
+            default=str,  # F24: robustness — coerce future non-primitive fields
         )
         entry_hash = hashlib.sha256(content.encode()).hexdigest()
 
@@ -208,6 +209,7 @@ class AuditTrail:
                     "evidence_sha256": entry.evidence_sha256 or "",
                 },
                 sort_keys=True,
+                default=str,  # F24: keep in sync with record()
             )
             expected_hash = hashlib.sha256(content.encode()).hexdigest()
 

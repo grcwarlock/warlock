@@ -73,12 +73,34 @@ def _resolve_sso_role(claims: dict[str, Any], settings: Any) -> str:
     default = settings.sso_default_role
     mapping: dict[str, str] = {}
     raw_map = getattr(settings, "sso_role_mapping", None) or "{}"
+    # F18: bound the input size before json.loads to defuse a JSON-bomb /
+    # memory-exhaustion vector via misconfigured env var.
+    _MAX_ROLE_MAPPING_BYTES = 16 * 1024  # 16 KiB
     if isinstance(raw_map, str) and raw_map.strip():
+        if len(raw_map) > _MAX_ROLE_MAPPING_BYTES:
+            log.error(
+                "WLK_SSO_ROLE_MAPPING exceeds %d bytes (got %d) — refusing to parse",
+                _MAX_ROLE_MAPPING_BYTES,
+                len(raw_map),
+            )
+            return default if default in PERMISSIONS else "viewer"
         try:
             mapping = json.loads(raw_map)
         except json.JSONDecodeError:
             log.warning("Invalid WLK_SSO_ROLE_MAPPING JSON — using default role %s", default)
             return default if default in PERMISSIONS else "viewer"
+        # Defensive: ensure parsed result is a flat dict[str, str] under a sane size
+        if not isinstance(mapping, dict) or len(mapping) > 256:
+            log.error(
+                "WLK_SSO_ROLE_MAPPING must parse to a dict of <=256 entries; got %s",
+                type(mapping).__name__,
+            )
+            return default if default in PERMISSIONS else "viewer"
+        mapping = {
+            str(k)[:200]: str(v)[:50]
+            for k, v in mapping.items()
+            if isinstance(k, str) and isinstance(v, str)
+        }
     if not mapping:
         return default if default in PERMISSIONS else "viewer"
 
@@ -189,10 +211,9 @@ def _generate_nonce() -> str:
 def _decode_jwt_unverified(token: str) -> dict:
     """Decode a JWT payload without signature verification.
 
-    This is used only for extracting claims from the ID token after we have
-    already verified the token via the token endpoint (authorization code flow).
-    The token endpoint response itself is trusted because it comes directly
-    from the IdP over TLS.
+    Retained only for legacy/fallback paths. New callers MUST use
+    ``_decode_and_verify_id_token`` which enforces RS256/ES256 signature
+    verification against the IdP's JWKS (finding F8).
     """
     import base64
 
@@ -206,6 +227,85 @@ def _decode_jwt_unverified(token: str) -> dict:
         payload_b64 += "=" * padding
     payload_bytes = base64.urlsafe_b64decode(payload_b64)
     return json.loads(payload_bytes)
+
+
+# ---------------------------------------------------------------------------
+# JWKS cache — simple TTL cache keyed by jwks_uri (F8)
+# ---------------------------------------------------------------------------
+
+_JWKS_CACHE: dict[str, tuple[float, dict]] = {}
+_JWKS_TTL_SECONDS = 3600  # 1h
+
+
+def _fetch_jwks(jwks_uri: str) -> dict:
+    """Fetch and cache the JWKS document for a given JWKS URI."""
+    now = time.time()
+    cached = _JWKS_CACHE.get(jwks_uri)
+    if cached and (now - cached[0]) < _JWKS_TTL_SECONDS:
+        return cached[1]
+    jwks = _fetch_json(jwks_uri)
+    _JWKS_CACHE[jwks_uri] = (now, jwks)
+    return jwks
+
+
+def _decode_and_verify_id_token(
+    id_token: str,
+    discovery: dict,
+    client_id: str,
+    issuer_url: str,
+) -> dict:
+    """Verify ID token signature using the IdP's JWKS, then return claims.
+
+    Requires PyJWT. Raises ValueError on any failure (missing key, bad
+    signature, unsupported alg, etc.). Callers catch ValueError and map to
+    401.
+    """
+    try:
+        import jwt as _pyjwt  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise ValueError(
+            "PyJWT is required to verify SSO ID tokens. Install with: pip install pyjwt"
+        ) from exc
+
+    jwks_uri = discovery.get("jwks_uri")
+    if not jwks_uri:
+        raise ValueError("OIDC discovery document missing jwks_uri")
+
+    # Use PyJWT's JWKS client if available (handles key rotation and caching too)
+    try:
+        jwk_client = _pyjwt.PyJWKClient(jwks_uri)
+        signing_key = jwk_client.get_signing_key_from_jwt(id_token).key
+    except Exception as exc:
+        # Fallback: fetch JWKS ourselves and match by kid
+        try:
+            header = _pyjwt.get_unverified_header(id_token)
+            kid = header.get("kid")
+            jwks = _fetch_jwks(jwks_uri)
+            matched = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+            if matched is None:
+                raise ValueError(f"JWKS has no key matching kid={kid}") from exc
+            signing_key = _pyjwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(matched))
+        except Exception as inner:
+            raise ValueError(f"Could not resolve signing key: {inner}") from inner
+
+    # Accept signing algorithms advertised by the IdP, defaulting to RS256/ES256
+    id_token_algs = discovery.get("id_token_signing_alg_values_supported") or [
+        "RS256",
+        "ES256",
+    ]
+    try:
+        claims = _pyjwt.decode(
+            id_token,
+            signing_key,
+            algorithms=id_token_algs,
+            audience=client_id,
+            issuer=issuer_url.rstrip("/"),
+            options={"require": ["exp", "iat", "iss", "aud"]},
+        )
+    except Exception as exc:
+        raise ValueError(f"ID token signature/claims verification failed: {exc}") from exc
+
+    return claims
 
 
 def _validate_id_token_claims(
@@ -442,12 +542,19 @@ async def sso_callback(
             detail="Token response missing id_token.",
         )
 
-    # Decode and validate ID token claims
+    # Verify ID token signature (F8) and validate claims
     try:
-        claims = _decode_jwt_unverified(id_token_raw)
-        _validate_id_token_claims(claims, nonce, settings.sso_client_id, settings.sso_issuer_url)
+        claims = _decode_and_verify_id_token(
+            id_token_raw,
+            discovery,
+            settings.sso_client_id,
+            settings.sso_issuer_url,
+        )
+        # PyJWT checks iss/aud/exp; we still need nonce check for replay protection
+        if claims.get("nonce") != nonce:
+            raise ValueError("ID token nonce mismatch — possible replay attack")
     except ValueError as exc:
-        log.error("ID token validation failed: %s", exc)
+        log.error("ID token verification failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"ID token validation failed: {exc}",

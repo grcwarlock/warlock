@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, require_permission
+from warlock.api.deps import apply_framework_scope, get_db, require_permission
 from warlock.db.models import ControlResult, Finding, Remediation, User
 
 router = APIRouter()
@@ -80,14 +80,18 @@ def submit_evidence(
         "attributes": body.attributes,
         "action": body.action,
         "submitted_at": datetime.now(timezone.utc).isoformat(),
-        "submitted_by": current_user.username if current_user else "terraform",
+        "submitted_by": current_user.email if current_user else "terraform",
     }
 
     remediation_updated = False
 
-    # If this is a remediation action, update the linked remediation
+    # If this is a remediation action, update the linked remediation (scoped)
     if body.action == "remediate" and body.remediation_id:
-        remediation = db.query(Remediation).filter(Remediation.id == body.remediation_id).first()
+        remediation = (
+            apply_framework_scope(db.query(Remediation), Remediation, current_user)
+            .filter(Remediation.id == body.remediation_id)
+            .first()
+        )
         if not remediation:
             raise HTTPException(
                 status_code=404,
@@ -119,7 +123,7 @@ def submit_evidence(
         if finding_ids:
             for control_id in body.control_ids:
                 results = (
-                    db.query(ControlResult)
+                    apply_framework_scope(db.query(ControlResult), ControlResult, current_user)
                     .filter(
                         ControlResult.control_id == control_id,
                         ControlResult.finding_id.in_(finding_ids),

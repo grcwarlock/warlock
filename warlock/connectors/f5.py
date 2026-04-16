@@ -58,7 +58,7 @@ class F5Connector(BaseConnector):
             resp = httpx.get(
                 f"{base_url}/mgmt/tm/sys/version",
                 headers=self._headers(),
-                verify=False,  # BIG-IP often uses self-signed certs
+                verify=self.config.settings.get("verify_tls", True),
                 timeout=self.config.timeout_seconds,
             )
             return resp.status_code == 200
@@ -82,7 +82,7 @@ class F5Connector(BaseConnector):
         client = httpx.Client(
             base_url=base_url,
             headers=headers,
-            verify=False,
+            verify=self.config.settings.get("verify_tls", True),
             timeout=self.config.timeout_seconds,
         )
 

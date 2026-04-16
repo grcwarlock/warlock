@@ -90,14 +90,28 @@ def get_sse_broker() -> SSEBroker:
 # ---------------------------------------------------------------------------
 
 
-def _extract_token(request: Request, token: str | None) -> str:
-    """Extract JWT token from Authorization header or query param."""
+def _extract_and_verify_token(request: Request, token: str | None) -> dict:
+    """Extract JWT token from Authorization header or query param and verify it.
+
+    Returns the decoded JWT claims on success. Raises HTTPException(401) otherwise.
+    """
+    from warlock.api.auth import decode_access_token
+
+    raw: str | None = None
     if token:
-        return token
-    auth = request.headers.get("authorization", "")
-    if auth.lower().startswith("bearer "):
-        return auth[7:].strip()
-    raise HTTPException(status_code=401, detail="Authentication required")
+        raw = token
+    else:
+        auth = request.headers.get("authorization", "")
+        if auth.lower().startswith("bearer "):
+            raw = auth[7:].strip()
+
+    if not raw:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    try:
+        return decode_access_token(raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail="Invalid or expired token") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -163,8 +177,9 @@ async def events_stream(
     Supports optional ``event_types`` query param to filter by event type.
     Sends keepalive comments every 30s to prevent proxy timeouts.
     """
-    # Validate token (extracts but does not fully verify for demo compatibility)
-    _extract_token(request, token)
+    # Validate and decode token — raises 401 on invalid/missing/expired
+    claims = _extract_and_verify_token(request, token)
+    log.debug("SSE client connected: sub=%s", claims.get("sub", "unknown"))
 
     # Parse event type filter
     type_filter: list[str] | None = None
@@ -193,8 +208,12 @@ async def events_stream(
 
 
 @router.get("/events/stream/status")
-async def events_stream_status() -> dict:
+async def events_stream_status(
+    request: Request,
+    token: str | None = Query(default=None, description="JWT token (for EventSource)"),
+) -> dict:
     """Return SSE broker status (subscriber count, supported event types)."""
+    _extract_and_verify_token(request, token)
     broker = get_sse_broker()
     return {
         "subscribers": broker.subscriber_count,

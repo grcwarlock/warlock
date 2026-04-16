@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, get_pagination, require_permission
+from warlock.api.deps import apply_framework_scope, get_db, get_pagination, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
 from warlock.db.models import ComplianceObligation, User
 
@@ -65,7 +65,8 @@ def list_obligations(
 ):
     """List compliance obligations / calendar items."""
     limit, offset = pagination
-    q = db.query(ComplianceObligation).order_by(ComplianceObligation.next_due.asc())
+    q = apply_framework_scope(db.query(ComplianceObligation), ComplianceObligation, current_user)
+    q = q.order_by(ComplianceObligation.next_due.asc())
     if status:
         q = q.filter(ComplianceObligation.status == status)
     if framework:
@@ -109,6 +110,15 @@ def create_obligation(
     current_user: User = Depends(require_permission("write")),
 ):
     """Create a compliance obligation / calendar item."""
+    # Enforce framework scope on create — user cannot create an obligation
+    # for a framework outside their allowed_frameworks list.
+    if req.framework and current_user.allowed_frameworks:
+        if req.framework not in current_user.allowed_frameworks:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Not authorized to create obligations for framework {req.framework}",
+            )
+
     now = datetime.now(timezone.utc)
     obl_id = str(uuid.uuid4())
 

@@ -156,27 +156,48 @@ def create_app() -> FastAPI:
             ):
                 return await call_next(request)
 
-            # Skip unauthenticated auth endpoints
-            if path in (
+            # F23: Genuinely-public path allowlist — these routes either
+            # have their own authentication (signed webhooks, OAuth code
+            # exchange, SSO callback) or serve the public trust portal /
+            # documentation. Everything ELSE goes through OPA, even when
+            # there is no authenticated user, so unauthenticated routes
+            # cannot silently bypass policy.
+            _PUBLIC_OPA_BYPASS = (
                 "/api/v1/auth/login",
                 "/api/v1/auth/mfa",
                 "/api/v1/auth/refresh",
+                "/api/v1/auth/register",
+                "/api/v1/auth/password-reset",
+                "/api/v1/auth/sso/login",
+                "/api/v1/auth/sso/callback",
+            )
+            _PUBLIC_OPA_BYPASS_PREFIXES = (
+                "/api/v1/trust/",  # public trust portal
+                "/static/",  # SPA assets
+                "/docs",  # FastAPI auto docs (only when not in prod)
+                "/redoc",
+                "/openapi.json",
+            )
+            if path in _PUBLIC_OPA_BYPASS or any(
+                path.startswith(p) for p in _PUBLIC_OPA_BYPASS_PREFIXES
             ):
                 return await call_next(request)
 
             # Attach gate to request state for per-route use
             request.state.policy_gate = _policy_gate
 
-            # Evaluate OPA policy if a user is present on the request
+            # F23: evaluate OPA for ALL non-public requests (not just those
+            # with an authenticated user). PolicyGate.evaluate handles
+            # user=None by sending email/role="anonymous" to OPA so policy
+            # authors can write rules for unauthenticated paths.
             user = getattr(request.state, "user", None)
-            if user is not None:
-                action = request.method.lower()
-                allowed = await _policy_gate.evaluate(request, user, action)
-                if not allowed:
-                    return JSONResponse(
-                        status_code=403,
-                        content={"detail": "Policy denied by OPA gate"},
-                    )
+            action = request.method.lower()
+            allowed = await _policy_gate.evaluate(request, user, action)
+            if not allowed:
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Policy denied by OPA gate"},
+                )
 
             return await call_next(request)
 

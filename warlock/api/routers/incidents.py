@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import get_db, get_pagination, require_permission
+from warlock.api.deps import apply_framework_scope, get_db, get_pagination, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
 from warlock.db.models import AuditEntry, Issue, User
 
@@ -85,7 +85,8 @@ def list_incidents(
 ):
     """List incidents (issues with incident classification) with pagination."""
     limit, offset = pagination
-    q = db.query(Issue).order_by(Issue.created_at.desc())
+    q = apply_framework_scope(db.query(Issue), Issue, current_user)
+    q = q.order_by(Issue.created_at.desc())
     if status:
         q = q.filter(Issue.status == status)
     if severity:
@@ -124,10 +125,11 @@ def get_incident(
     current_user: User = Depends(require_permission("read")),
 ):
     """Get incident detail."""
-    issue = db.query(Issue).filter(Issue.id == incident_id).first()
+    scoped = apply_framework_scope(db.query(Issue), Issue, current_user)
+    issue = scoped.filter(Issue.id == incident_id).first()
     if not issue:
-        # Try prefix match
-        issue = db.query(Issue).filter(Issue.id.startswith(incident_id)).first()
+        # Try prefix match (still framework-scoped)
+        issue = scoped.filter(Issue.id.startswith(incident_id)).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Incident not found")
 
@@ -217,9 +219,10 @@ def update_incident(
     current_user: User = Depends(require_permission("write")),
 ):
     """Update incident fields."""
-    issue = db.query(Issue).filter(Issue.id == incident_id).first()
+    scoped = apply_framework_scope(db.query(Issue), Issue, current_user)
+    issue = scoped.filter(Issue.id == incident_id).first()
     if not issue:
-        issue = db.query(Issue).filter(Issue.id.startswith(incident_id)).first()
+        issue = scoped.filter(Issue.id.startswith(incident_id)).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Incident not found")
 
@@ -265,9 +268,10 @@ def transition_incident(
             detail=f"Invalid status: {req.status}. Valid: {_VALID_STATUSES}",
         )
 
-    issue = db.query(Issue).filter(Issue.id == incident_id).first()
+    scoped = apply_framework_scope(db.query(Issue), Issue, current_user)
+    issue = scoped.filter(Issue.id == incident_id).first()
     if not issue:
-        issue = db.query(Issue).filter(Issue.id.startswith(incident_id)).first()
+        issue = scoped.filter(Issue.id.startswith(incident_id)).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Incident not found")
 

@@ -14,11 +14,52 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db
 from warlock.db.models import User
 from warlock.utils import ensure_aware
+
+# ---------------------------------------------------------------------------
+# SCIM request bodies (F15) — replace raw request.json() with typed models.
+# Schema follows RFC 7643 §4.1 with only the fields we actually use.
+# ---------------------------------------------------------------------------
+
+
+class ScimName(BaseModel):
+    givenName: str = Field(default="", max_length=200)
+    familyName: str = Field(default="", max_length=200)
+    formatted: str | None = Field(default=None, max_length=400)
+
+
+class ScimRoleEntry(BaseModel):
+    value: str = Field(default="", max_length=50)
+    display: str | None = Field(default=None, max_length=200)
+    primary: bool | None = None
+    type: str | None = Field(default=None, max_length=50)
+
+
+class ScimEmailEntry(BaseModel):
+    value: str = Field(default="", max_length=320)
+    type: str | None = Field(default=None, max_length=50)
+    primary: bool | None = None
+
+
+class ScimUserBody(BaseModel):
+    """Subset of the SCIM 2.0 User resource we accept."""
+
+    userName: str = Field(..., min_length=1, max_length=320)
+    externalId: str | None = Field(default=None, max_length=256)
+    active: bool = True
+    displayName: str | None = Field(default=None, max_length=400)
+    name: ScimName = Field(default_factory=ScimName)
+    roles: list[ScimRoleEntry] = Field(default_factory=list, max_length=20)
+    emails: list[ScimEmailEntry] = Field(default_factory=list, max_length=10)
+
+    class Config:
+        extra = "ignore"  # IdPs send many fields; ignore rather than reject
+
 
 log = logging.getLogger(__name__)
 
@@ -49,9 +90,8 @@ def _get_scim_token() -> str:
     settings = get_settings()
     token = getattr(settings, "scim_bearer_token", "") or ""
     if not token:
-        # Fall back to a setting derived from the JWT secret for dev convenience
         log.warning(
-            "WLK_SCIM_BEARER_TOKEN not set. SCIM endpoints are unprotected. Set this in production."
+            "WLK_SCIM_BEARER_TOKEN not set. SCIM endpoints require a token in staging/production."
         )
     return token
 
@@ -61,10 +101,24 @@ def _verify_scim_auth(authorization: str | None = Header(None)) -> None:
 
     Raises 401 if the token is missing or invalid. Uses constant-time
     comparison to prevent timing attacks on the bearer token.
+
+    Outside of "development" env, a token MUST be configured; missing
+    token = 503 rather than silent fail-open (finding F6).
     """
+    from warlock.config import get_settings
+
     expected = _get_scim_token()
     if not expected:
-        # No token configured — allow in dev, but log warning
+        if get_settings().env != "development":
+            log.error(
+                "SCIM endpoint called but WLK_SCIM_BEARER_TOKEN is unset in env=%s — refusing",
+                get_settings().env,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="SCIM is not configured — WLK_SCIM_BEARER_TOKEN required",
+            )
+        # Development only: allow without token
         return
 
     if not authorization:
@@ -217,6 +271,7 @@ async def list_users(
 @router.post("/Users", status_code=status.HTTP_201_CREATED)
 async def create_user(
     request: Request,
+    body: ScimUserBody,
     db: Session = Depends(get_db),
     _auth: None = Depends(_verify_scim_auth),
 ):
@@ -225,11 +280,9 @@ async def create_user(
     The identity provider sends user attributes; we create a local account
     with SSO linkage and no local password.
     """
-    body = await request.json()
     base_url = _get_base_url(request)
 
-    # Extract required fields
-    username = body.get("userName", "").lower().strip()
+    username = body.userName.lower().strip()
     if not username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -244,38 +297,31 @@ async def create_user(
             detail=f"User with email {username} already exists",
         )
 
-    # Extract name components
-    name_obj = body.get("name", {})
-    given_name = name_obj.get("givenName", "")
-    family_name = name_obj.get("familyName", "")
-    display_name = body.get("displayName", "")
-    full_name = display_name or f"{given_name} {family_name}".strip() or username.split("@")[0]
+    # Derive display name
+    given_name = body.name.givenName
+    family_name = body.name.familyName
+    full_name = body.displayName or f"{given_name} {family_name}".strip() or username.split("@")[0]
 
-    # Extract external ID
-    external_id = body.get("externalId", "")
+    external_id = body.externalId or ""
 
     # Determine role from SCIM roles array (default to configured SSO role)
     from warlock.config import get_settings
 
     settings = get_settings()
     role = settings.sso_default_role
-    scim_roles = body.get("roles", [])
-    if scim_roles and isinstance(scim_roles, list):
-        first_role = scim_roles[0].get("value", "")
+    if body.roles:
         from warlock.api.auth import PERMISSIONS
 
+        first_role = body.roles[0].value
         if first_role in PERMISSIONS:
             role = first_role
-
-    # Determine active status
-    is_active = body.get("active", True)
 
     user = User(
         email=username,
         name=full_name,
         hashed_password="scim:no-password",  # SCIM-provisioned users authenticate via SSO
         role=role,
-        is_active=is_active,
+        is_active=body.active,
         sso_subject_id=external_id,
     )
     db.add(user)
@@ -307,6 +353,7 @@ async def get_user(
 async def update_user(
     request: Request,
     user_id: str,
+    body: ScimUserBody,
     db: Session = Depends(get_db),
     _auth: None = Depends(_verify_scim_auth),
 ):
@@ -315,7 +362,6 @@ async def update_user(
     IdPs use PUT for full user replacement. We update name, email,
     active status, and external ID.
     """
-    body = await request.json()
     base_url = _get_base_url(request)
 
     user = db.query(User).filter(User.id == user_id).first()
@@ -325,10 +371,8 @@ async def update_user(
             detail=f"User {user_id} not found",
         )
 
-    # Update userName (email)
-    new_email = body.get("userName", "").lower().strip()
+    new_email = body.userName.lower().strip()
     if new_email and new_email != user.email:
-        # Check for email conflict
         conflict = db.query(User).filter(User.email == new_email, User.id != user_id).first()
         if conflict:
             raise HTTPException(
@@ -337,32 +381,23 @@ async def update_user(
             )
         user.email = new_email
 
-    # Update name
-    name_obj = body.get("name", {})
-    given_name = name_obj.get("givenName", "")
-    family_name = name_obj.get("familyName", "")
-    display_name = body.get("displayName", "")
-    full_name = display_name or f"{given_name} {family_name}".strip()
+    given_name = body.name.givenName
+    family_name = body.name.familyName
+    full_name = body.displayName or f"{given_name} {family_name}".strip()
     if full_name:
         user.name = full_name
 
-    # Update active status (SCIM deactivation)
-    if "active" in body:
-        user.is_active = bool(body["active"])
-        if not user.is_active:
-            log.info("SCIM deactivated user: %s", user.email)
+    user.is_active = body.active
+    if not user.is_active:
+        log.info("SCIM deactivated user: %s", user.email)
 
-    # Update external ID
-    external_id = body.get("externalId", "")
-    if external_id:
-        user.sso_subject_id = external_id
+    if body.externalId:
+        user.sso_subject_id = body.externalId
 
-    # Update role if provided
-    scim_roles = body.get("roles", [])
-    if scim_roles and isinstance(scim_roles, list):
-        first_role = scim_roles[0].get("value", "")
+    if body.roles:
         from warlock.api.auth import PERMISSIONS
 
+        first_role = body.roles[0].value
         if first_role in PERMISSIONS:
             user.role = first_role
 

@@ -21,6 +21,15 @@ from warlock.utils.pii import scrub_finding
 
 log = logging.getLogger(__name__)
 
+# F25: module-level counter for PII scrub failures. Exposed so that
+# observability tooling can scrape it. Reset only on process restart.
+_pii_scrub_failure_count: int = 0
+
+
+def get_pii_scrub_failure_count() -> int:
+    """Return the running count of PII scrub failures since process start."""
+    return _pii_scrub_failure_count
+
 
 # ---------------------------------------------------------------------------
 # Finding — the universal normalized unit
@@ -171,16 +180,23 @@ class NormalizerRegistry:
                     return []
                 # PII scrubbing runs outside the normalizer try/except so a
                 # scrub failure doesn't discard the entire event batch.
+                # F25: scrub failures are counted via a module-level counter
+                # and also raise in non-development envs so PII cannot leak
+                # silently.
                 scrubbed: list[FindingData] = []
                 for f in findings:
                     try:
                         scrubbed.append(scrub_finding(f))
                     except Exception:
-                        log.warning(
-                            "PII scrub failed for finding %s — passing through unscrubbed",
+                        global _pii_scrub_failure_count
+                        _pii_scrub_failure_count += 1
+                        log.error(
+                            "PII scrub failed for finding %s — dropping finding "
+                            "to avoid unscrubbed PII reaching persistence (total failures: %d)",
                             f.id,
+                            _pii_scrub_failure_count,
                         )
-                        scrubbed.append(f)
+                        # Fail-closed: drop rather than persist unscrubbed data
                 return scrubbed
         log.warning(
             "No normalizer found for source=%s event_type=%s",

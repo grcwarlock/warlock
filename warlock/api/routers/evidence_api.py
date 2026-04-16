@@ -15,7 +15,13 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from warlock.api.deps import AuthContext, get_current_user, get_db, get_pagination
+from warlock.api.deps import (
+    AuthContext,
+    apply_framework_scope,
+    get_current_user,
+    get_db,
+    get_pagination,
+)
 from warlock.db.models import EvidenceRequest
 from warlock.utils import ensure_aware
 
@@ -91,12 +97,12 @@ def submit_evidence(
         # sentinel approach: store metadata in fulfillment_notes and
         # evidence_ids JSON field.
         engagement_id=_get_or_create_self_service_engagement(db),
-        auditor_id=_get_or_create_self_service_auditor(db, user.email, user.username),
+        auditor_id=_get_or_create_self_service_auditor(db, user.email, user.name or user.email),
         framework=body.framework,
         control_id=body.control_id,
         description=body.description,
         status="fulfilled",
-        fulfilled_by=user.username or user.email,
+        fulfilled_by=user.email,
         fulfilled_at=datetime.now(timezone.utc),
         fulfillment_notes=f"Self-service submission. File hash: {body.file_hash}"
         if body.file_hash
@@ -144,10 +150,9 @@ def list_evidence_requests(
     filtered to those assigned to the current user's auditor record
     (if one exists) or all pending requests for admin users.
     """
-    query = (
-        db.query(EvidenceRequest)
-        .filter(EvidenceRequest.status.in_(["requested", "in_progress"]))
-        .order_by(EvidenceRequest.created_at.desc())
+    query = apply_framework_scope(db.query(EvidenceRequest), EvidenceRequest, auth.user)
+    query = query.filter(EvidenceRequest.status.in_(["requested", "in_progress"])).order_by(
+        EvidenceRequest.created_at.desc()
     )
 
     # Non-admin users only see requests assigned to their auditor ID
@@ -197,12 +202,9 @@ def my_submissions(
     """List evidence submissions made by the current user."""
     user = auth.user
 
-    query = (
-        db.query(EvidenceRequest)
-        .filter(
-            EvidenceRequest.fulfilled_by.in_([user.email, user.username]),
-        )
-        .order_by(EvidenceRequest.created_at.desc())
+    query = apply_framework_scope(db.query(EvidenceRequest), EvidenceRequest, user)
+    query = query.filter(EvidenceRequest.fulfilled_by == user.email).order_by(
+        EvidenceRequest.created_at.desc()
     )
 
     items = query.offset(pagination.offset).limit(pagination.limit).all()

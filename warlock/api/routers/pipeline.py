@@ -291,7 +291,7 @@ class PipelineMetricsResponse(BaseModel):
 
 @router.get("/metrics", response_model=PipelineMetricsResponse)
 def pipeline_metrics_json(
-    current_user: User = Depends(require_permission("view_pipeline")),
+    current_user: User = Depends(require_permission("read")),
 ):
     """Pipeline metrics as JSON."""
     from warlock.pipeline.metrics import get_metrics_from_db, get_pipeline_metrics
@@ -324,7 +324,7 @@ def pipeline_metrics_json(
 
 @router.get("/metrics/prometheus")
 def pipeline_metrics_prometheus(
-    current_user: User = Depends(require_permission("view_pipeline")),
+    current_user: User = Depends(require_permission("read")),
 ):
     """Pipeline metrics in Prometheus text exposition format."""
     from fastapi.responses import PlainTextResponse

@@ -79,7 +79,7 @@ class NessusConnector(BaseConnector):
         return httpx.Client(
             headers=headers,
             timeout=self.config.timeout_seconds,
-            verify=False,  # Nessus uses self-signed certs by default
+            verify=self.config.settings.get("verify_tls", True),
         )
 
     # -- Event helpers --

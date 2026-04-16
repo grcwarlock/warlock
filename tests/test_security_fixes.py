@@ -4,21 +4,21 @@ Validates all security controls introduced during the 14-agent review remediatio
 Tests are grouped by the finding they validate.
 """
 
-from datetime import datetime, timedelta, timezone
 import json
+from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import create_engine, event, text, inspect
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker
 
 from warlock.db.models import (
     Base,
-    User,
     ConnectorRun,
-    RawEvent,
-    Finding,
     ControlMapping,
     ControlResult,
+    Finding,
+    RawEvent,
+    User,
 )
 
 
@@ -167,6 +167,7 @@ class TestAccountLockout:
 class TestLegacyPasswordReHash:
     def test_legacy_hash_migrated_on_login(self, session):
         import hashlib
+
         from warlock.api.auth import authenticate_user
 
         # Create user with legacy SHA-256 hash
@@ -530,7 +531,8 @@ class TestCORSConfiguration:
 class TestStructuredLogging:
     def test_json_formatter_produces_valid_json(self):
         import logging
-        from warlock.logging_config import JSONFormatter, CorrelationFilter
+
+        from warlock.logging_config import CorrelationFilter, JSONFormatter
 
         formatter = JSONFormatter()
         filt = CorrelationFilter()
@@ -554,7 +556,7 @@ class TestStructuredLogging:
         assert "correlation_id" in data
 
     def test_correlation_id_generation(self):
-        from warlock.logging_config import new_correlation_id, correlation_id
+        from warlock.logging_config import correlation_id, new_correlation_id
 
         cid = new_correlation_id()
         assert len(cid) == 8
@@ -684,3 +686,41 @@ class TestAIReproducibility:
         # Count "temperature": 0 or "temperature": 0, occurrences
         temp_count = source.count('"temperature": 0')
         assert temp_count >= 4, f"Expected 4 providers with temperature=0, found {temp_count}"
+
+
+class TestRequirePermissionStringsExist:
+    """Regression guard: every require_permission("X") call in the API must
+    reference a permission that exists in the PERMISSIONS map. A typo or a
+    role-name ("admin") mistakenly used as a permission would cause the route
+    to be permanently 403 for everyone — previously this bit webhooks and
+    pipeline-metrics routes (findings F4/F5).
+    """
+
+    def test_all_require_permission_strings_are_valid(self):
+        import re
+        from pathlib import Path
+
+        from warlock.api.auth import PERMISSIONS
+
+        valid = set()
+        for perms in PERMISSIONS.values():
+            valid.update(perms)
+
+        api_root = Path(__file__).parent.parent / "warlock" / "api"
+        pattern = re.compile(r'require_permission\(\s*["\']([^"\']+)["\']\s*\)')
+        offenders: list[tuple[str, int, str]] = []
+
+        for py in api_root.rglob("*.py"):
+            for lineno, line in enumerate(py.read_text().splitlines(), 1):
+                for match in pattern.finditer(line):
+                    perm = match.group(1)
+                    if perm not in valid:
+                        offenders.append(
+                            (str(py.relative_to(api_root.parent.parent)), lineno, perm)
+                        )
+
+        assert not offenders, (
+            "Found require_permission() calls referencing unknown permissions "
+            f"(known: {sorted(valid)}):\n"
+            + "\n".join(f"  {f}:{ln} -> {p!r}" for f, ln, p in offenders)
+        )

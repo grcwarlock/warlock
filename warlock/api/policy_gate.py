@@ -215,13 +215,18 @@ class PolicyGate:
 def _get_client_ip(request: Request) -> str:
     """Extract the real client IP from the request.
 
-    Respects X-Forwarded-For (first entry) when behind a reverse proxy,
-    falling back to the direct client address.
+    Honors X-Forwarded-For only when ``settings.trust_forwarded_for`` is True
+    (i.e. the app is deployed behind a trusted proxy that strips/overwrites
+    incoming XFF). Otherwise falls back to ``request.client.host`` to prevent
+    IP-allowlist bypass via client-forged XFF (finding F14).
     """
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        # X-Forwarded-For: client, proxy1, proxy2 — take the leftmost
-        return forwarded.split(",")[0].strip()
+    from warlock.config import get_settings
+
+    if getattr(get_settings(), "trust_forwarded_for", False):
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            # X-Forwarded-For: client, proxy1, proxy2 — take the leftmost
+            return forwarded.split(",")[0].strip()
     if request.client:
         return request.client.host
     return "0.0.0.0"

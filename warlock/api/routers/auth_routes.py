@@ -292,15 +292,54 @@ class CurrentUserResponse(BaseModel):
     allowed_frameworks: list[str]
     allowed_sources: list[str]
     tenant_id: str | None
+    # F19: be honest about WHERE framework/source scoping is actually applied.
+    # Consumers should treat "allowed_frameworks" as advisory for any
+    # endpoint not in this list.
+    framework_scoping_applied_to: list[str]
+    source_scoping_applied_to: list[str]
 
     model_config = {"from_attributes": True}
+
+
+# Resource types where ``allowed_frameworks`` / ``allowed_sources`` actually
+# filter responses. Update this when adding scoping to new routers (F19).
+_FRAMEWORK_SCOPED_RESOURCES = sorted(
+    [
+        "alerts",
+        "analytics",
+        "calendar",
+        "compliance",
+        "control_tests",
+        "evidence",
+        "evidence_portal",
+        "governance",
+        "incidents",
+        "mobile",
+        "remediation",
+        "reports",
+        "search",
+    ]
+)
+_SOURCE_SCOPED_RESOURCES = sorted(
+    [
+        "alerts",
+        "mobile",
+    ]
+)
 
 
 @router.get("/auth/me", response_model=CurrentUserResponse)
 def get_current_user(
     current_user: User = Depends(require_permission("read")),
 ):
-    """Return the authenticated user's profile information."""
+    """Return the authenticated user's profile information.
+
+    The ``framework_scoping_applied_to`` and ``source_scoping_applied_to``
+    fields enumerate the resource types where this user's
+    ``allowed_frameworks`` / ``allowed_sources`` actually constrain
+    responses (F19). Other endpoints may return cross-scope data — treat
+    these scopes as advisory there.
+    """
     return CurrentUserResponse(
         id=current_user.id,
         email=current_user.email,
@@ -309,6 +348,8 @@ def get_current_user(
         allowed_frameworks=current_user.allowed_frameworks or [],
         allowed_sources=current_user.allowed_sources or [],
         tenant_id=getattr(current_user, "tenant_id", None),
+        framework_scoping_applied_to=_FRAMEWORK_SCOPED_RESOURCES,
+        source_scoping_applied_to=_SOURCE_SCOPED_RESOURCES,
     )
 
 
