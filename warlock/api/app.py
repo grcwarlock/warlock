@@ -143,6 +143,7 @@ def create_app() -> FastAPI:
     from warlock.api.policy_gate import get_policy_gate
 
     _policy_gate = get_policy_gate()
+
     if _policy_gate.enabled:
 
         @application.middleware("http")
@@ -200,6 +201,50 @@ def create_app() -> FastAPI:
                 )
 
             return await call_next(request)
+
+    # ------------------------------------------------------------------
+    # N1 fix: Auth resolver — registered AFTER opa_policy_middleware so
+    # Starlette's LIFO middleware order has it run BEFORE OPA on the inbound
+    # path. Populates `request.state.user` so the OPA gate sees the actual
+    # role instead of always "anonymous". Non-enforcing — invalid credentials
+    # do NOT raise here; the per-route `Depends(require_permission(...))`
+    # still does the rejection. Cost is one DB lookup per authenticated
+    # request; this gets de-duplicated by the Depends machinery downstream.
+    # ------------------------------------------------------------------
+    @application.middleware("http")
+    async def auth_resolver_middleware(request: Request, call_next):
+        try:
+            from warlock.api.auth import authenticate_api_key, decode_access_token
+            from warlock.db.engine import get_session
+        except Exception:
+            return await call_next(request)
+
+        api_key = request.headers.get("x-api-key")
+        authz = request.headers.get("authorization", "")
+
+        if api_key:
+            try:
+                with get_session() as session:
+                    user, _ = authenticate_api_key(session, api_key)
+                    if user is not None:
+                        request.state.user = user
+            except Exception:
+                pass  # never block the request from middleware
+        elif authz.lower().startswith("bearer "):
+            try:
+                payload = decode_access_token(authz[7:].strip())
+                sub = payload.get("sub")
+                if sub:
+                    from warlock.db.models import User
+
+                    with get_session() as session:
+                        user = session.query(User).filter(User.email == sub).first()
+                        if user is not None and user.is_active:
+                            request.state.user = user
+            except Exception:
+                pass  # invalid token — let per-route auth surface raise the 401
+
+        return await call_next(request)
 
     # ------------------------------------------------------------------
     # Prometheus /metrics endpoint (#7) — disabled in production

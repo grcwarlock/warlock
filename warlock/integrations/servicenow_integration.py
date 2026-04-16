@@ -67,9 +67,13 @@ class ServiceNowNotifier:
     __name__ = "ServiceNowNotifier"
 
     def __init__(self) -> None:
+        # N19: route password through SecretsBackend
+        from warlock.connectors.secrets_backend import get_secrets_backend
+
+        backend = get_secrets_backend()
         self._instance = os.environ.get("WLK_SERVICENOW_INSTANCE", "").strip()
         self._username = os.environ.get("WLK_SERVICENOW_USERNAME", "").strip()
-        self._password = os.environ.get("WLK_SERVICENOW_PASSWORD", "").strip()
+        self._password = (backend.get_secret("WLK_SERVICENOW_PASSWORD") or "").strip()
         self._min_severity = os.environ.get("WLK_SERVICENOW_MIN_SEVERITY", "high").strip().lower()
         self._assignment_group = os.environ.get("WLK_SERVICENOW_ASSIGNMENT_GROUP", "").strip()
 

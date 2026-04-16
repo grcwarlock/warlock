@@ -6,7 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "sqlalchemy>=2.0",
     "alembic>=1.13",
-    "psycopg2-binary>=2.9",
+    "psycopg[binary]>=3.2",  # N36: migrated from psycopg2-binary; SQLAlchemy 2.0 supports both
+    "psycopg2-binary>=2.9",  # transitional: kept until existing connection strings are migrated
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
     "pyyaml>=6.0",
@@ -20,8 +21,10 @@ dependencies = [
     "bcrypt>=4.1",          # #14: Password hashing (was optional, now required)
     "PyJWT>=2.8",           # #14: App JWT (login/session tokens) — encode/decode
     "cryptography>=42.0",   # #14: Fernet field encryption (was optional, now required)
+    "defusedxml>=0.7.1",    # N13: hardened XML parser — replaces stdlib ElementTree on remote XML
     "openpyxl>=3.1",        # RPT-3: Excel export
-    "python-jose[cryptography]>=3.3",  # INT-1: OIDC JWT validation (external IdP tokens)
+    # N21: python-jose dropped — SSO now uses PyJWT exclusively (sso.py)
+    # so we don't carry a second JWT implementation with its own CVE history.
     "textual>=3.0",                    # TUI: interactive terminal dashboard
     "redis>=5.0",                      # WLK_CACHE_URL — SSO OAuth state, rate limits, queues
 ]

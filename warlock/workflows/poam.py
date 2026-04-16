@@ -255,7 +255,11 @@ class POAMManager:
         Raises:
             ValueError: If POA&M not found or transition is invalid.
         """
-        poam = session.get(POAM, poam_id)
+        # N10 fix: serialize concurrent transitions on the same POA&M with
+        # SELECT FOR UPDATE — matches the audit-trail pattern (db/audit.py).
+        # Without this, two workers transitioning the same POA&M simultaneously
+        # both read old status, both validate, and both commit (lost update).
+        poam = session.query(POAM).filter(POAM.id == poam_id).with_for_update().first()
         if not poam:
             raise ValueError(f"POA&M not found: {poam_id}")
 

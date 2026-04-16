@@ -209,8 +209,15 @@ def _scim_error(status_code: int, detail: str) -> dict[str, Any]:
 
 def _get_base_url(request: Request) -> str:
     """Extract the base URL from the request for SCIM resource locations."""
-    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("x-forwarded-host", request.url.netloc)
+    # N17 fix: only honor X-Forwarded-* when settings.trust_forwarded_for=True.
+    from warlock.config import get_settings as _gs
+
+    if getattr(_gs(), "trust_forwarded_for", False):
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+        host = request.headers.get("x-forwarded-host", request.url.netloc)
+    else:
+        scheme = request.url.scheme
+        host = request.url.netloc
     return f"{scheme}://{host}"
 
 
@@ -304,7 +311,10 @@ async def create_user(
 
     external_id = body.externalId or ""
 
-    # Determine role from SCIM roles array (default to configured SSO role)
+    # Determine role from SCIM roles array (default to configured SSO role).
+    # N4 fix: only roles in `scim_assignable_roles` are accepted; an IdP can
+    # no longer promote a SCIM-provisioned user to admin without explicit
+    # operator opt-in.
     from warlock.config import get_settings
 
     settings = get_settings()
@@ -313,8 +323,16 @@ async def create_user(
         from warlock.api.auth import PERMISSIONS
 
         first_role = body.roles[0].value
-        if first_role in PERMISSIONS:
+        if first_role in PERMISSIONS and first_role in settings.scim_assignable_roles:
             role = first_role
+        elif first_role in PERMISSIONS:
+            log.warning(
+                "SCIM role assignment '%s' rejected — not in scim_assignable_roles=%s; "
+                "falling back to default role %s",
+                first_role,
+                settings.scim_assignable_roles,
+                role,
+            )
 
     user = User(
         email=username,
@@ -387,19 +405,37 @@ async def update_user(
     if full_name:
         user.name = full_name
 
+    was_active = user.is_active
     user.is_active = body.active
     if not user.is_active:
-        log.info("SCIM deactivated user: %s", user.email)
+        # N23 fix: revoke API keys + force JWT invalidation when deactivating.
+        # Without this, an attacker who held an API key for the deactivated
+        # user could continue authenticating because authenticate_api_key only
+        # checks APIKey.is_active, not User.is_active.
+        from warlock.db.repository import Repositories
+
+        Repositories(db).users.deactivate_api_keys(user.id)
+        user.token_valid_after = datetime.now(timezone.utc)
+        if was_active:
+            log.info("SCIM deactivated user: %s — API keys revoked, tokens invalidated", user.email)
 
     if body.externalId:
         user.sso_subject_id = body.externalId
 
     if body.roles:
         from warlock.api.auth import PERMISSIONS
+        from warlock.config import get_settings as _gs
 
         first_role = body.roles[0].value
-        if first_role in PERMISSIONS:
+        assignable = _gs().scim_assignable_roles
+        if first_role in PERMISSIONS and first_role in assignable:
             user.role = first_role
+        elif first_role in PERMISSIONS:
+            log.warning(
+                "SCIM role assignment '%s' rejected on update — not in scim_assignable_roles=%s",
+                first_role,
+                assignable,
+            )
 
     db.flush()
     log.info("SCIM user updated: %s (id=%s)", user.email, user_id)
@@ -426,9 +462,16 @@ async def delete_user(
         )
 
     user.is_active = False
-    # Invalidate any existing tokens by setting token_valid_after to now
+    # Invalidate tokens AND revoke API keys (N23)
     user.token_valid_after = datetime.now(timezone.utc)
+    from warlock.db.repository import Repositories
+
+    Repositories(db).users.deactivate_api_keys(user.id)
     db.flush()
 
-    log.info("SCIM user deactivated: %s (id=%s)", user.email, user_id)
+    log.info(
+        "SCIM user deactivated: %s (id=%s) — tokens invalidated, API keys revoked",
+        user.email,
+        user_id,
+    )
     return None

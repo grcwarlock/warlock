@@ -387,6 +387,25 @@ class Settings(BaseSettings):
     # can spoof their source IP and bypass ip_allowlist enforcement (F14).
     trust_forwarded_for: bool = False
 
+    # SCIM bearer token — declared so it appears in /env validation (N6).
+    # Required in non-development env (enforced by _verify_scim_auth).
+    scim_bearer_token: str = ""
+
+    # SCIM role allowlist — set of Warlock roles that can be assigned via
+    # SCIM `roles[0].value`. Defaults to viewer-only so an IdP cannot promote
+    # users to admin without explicit operator opt-in (N4).
+    scim_assignable_roles: list[str] = Field(default_factory=lambda: ["viewer"])
+
+    # SSO role overwrite — when True, the user's role is reset on EVERY SSO
+    # login according to the group→role mapping. When False (default, N5),
+    # role is set only on initial user creation; manual role grants are
+    # preserved across logins.
+    sso_role_overwrite: bool = False
+
+    # Lake — opt-in for DuckDB httpfs (S3/HTTP) extension. Default False
+    # because the extension turns the lake_path into an SSRF surface (N25).
+    lake_remote_enabled: bool = False
+
     # Event-type schema validation (OPS-7)
     schema_validation_enabled: bool = False  # Log warnings for unregistered event_types
 
@@ -532,6 +551,31 @@ def validate_production_config(settings: Settings) -> None:
             "(Redis-backed OAuth state for multi-worker deployments). "
             "Example: redis://redis:6379/0"
         )
+
+    # N33: rough entropy check — refuse trivial repeated-character secrets.
+    # A 32-char "aaaaaaaa..." passes the length check but is brute-forceable.
+    def _entropy_ok(name: str, value: str) -> bool:
+        if not value or len(value) < 16:
+            return True  # length check already covers
+        unique = len(set(value))
+        if unique < 8:
+            errors.append(
+                f"{name} has only {unique} unique characters — likely a placeholder; "
+                "use a strong random secret (e.g. `openssl rand -base64 32`)"
+            )
+            return False
+        return True
+
+    if settings.jwt_secret:
+        _entropy_ok("WLK_JWT_SECRET", settings.jwt_secret)
+    if settings.gdpr_hmac_secret:
+        _entropy_ok("WLK_GDPR_HMAC_SECRET", settings.gdpr_hmac_secret)
+    if settings.encryption_key:
+        _entropy_ok("WLK_ENCRYPTION_KEY", settings.encryption_key)
+    if getattr(settings, "trust_portal_secret", ""):
+        _entropy_ok("WLK_TRUST_PORTAL_SECRET", settings.trust_portal_secret)
+    if getattr(settings, "scim_bearer_token", ""):
+        _entropy_ok("WLK_SCIM_BEARER_TOKEN", settings.scim_bearer_token)
 
     if errors:
         raise RuntimeError(

@@ -186,6 +186,21 @@ def apply_source_scope(query, model_class, user: User):
     return query
 
 
+def assert_tenant_scope(rows, expected_tenant_id: str | None) -> None:
+    """N29: tenant-boundary canary — raise if any row's tenant_id leaks
+    across the expected tenant. Use defensively in routes that must never
+    return cross-tenant rows; cheap because rows are already in memory.
+    """
+    if not expected_tenant_id:
+        return  # global tenant view (admin) — no boundary to enforce
+    for row in rows:
+        if hasattr(row, "tenant_id") and row.tenant_id and row.tenant_id != expected_tenant_id:
+            raise RuntimeError(
+                f"Tenant boundary violation: row {getattr(row, 'id', '?')!s} has "
+                f"tenant_id={row.tenant_id!s} but request scope is {expected_tenant_id!s}"
+            )
+
+
 # ---------------------------------------------------------------------------
 # Pagination dependency (#55)
 # ---------------------------------------------------------------------------

@@ -230,25 +230,41 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     require whitelisting.
     """
 
+    # N35 hardening:
+    # - HSTS now includes ``preload`` directive
+    # - Cross-Origin-Opener-Policy / Embedder-Policy / Resource-Policy added
+    #   for Spectre / cross-site isolation
+    # - Permissions-Policy expanded with deny-all on commonly-abused features
+    # - Server header explicitly blanked to avoid uvicorn version disclosure
     _STATIC_HEADERS = {
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "X-XSS-Protection": "1; mode=block",
-        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
         "Referrer-Policy": "strict-origin-when-cross-origin",
-        "Permissions-Policy": "geolocation=(), camera=(), microphone=()",
+        "Permissions-Policy": (
+            "geolocation=(), camera=(), microphone=(), payment=(), usb=(), "
+            "interest-cohort=(), accelerometer=(), gyroscope=(), magnetometer=(), "
+            "midi=(), serial=(), bluetooth=(), screen-wake-lock=()"
+        ),
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Resource-Policy": "same-site",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+        "Server": "",  # blank server header (don't leak uvicorn version)
     }
 
     _CSP_TEMPLATE = (
         "default-src 'self'; "
         "script-src 'self' 'nonce-{nonce}'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'nonce-{nonce}'; "  # N35: nonce styles instead of unsafe-inline
         "img-src 'self' data:; "
         "font-src 'self'; "
         "connect-src 'self'; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
-        "form-action 'self'"
+        "form-action 'self'; "
+        "object-src 'none'; "
+        "upgrade-insecure-requests"
     )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

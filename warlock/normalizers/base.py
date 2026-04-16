@@ -180,23 +180,30 @@ class NormalizerRegistry:
                     return []
                 # PII scrubbing runs outside the normalizer try/except so a
                 # scrub failure doesn't discard the entire event batch.
-                # F25: scrub failures are counted via a module-level counter
-                # and also raise in non-development envs so PII cannot leak
-                # silently.
+                # N2 fix: in non-development env we RAISE so the pipeline run
+                # is marked failed and operators can investigate; in dev we
+                # drop and continue. Either way the failure is counted.
+                from warlock.config import get_settings
+
+                env = get_settings().env
                 scrubbed: list[FindingData] = []
                 for f in findings:
                     try:
                         scrubbed.append(scrub_finding(f))
-                    except Exception:
+                    except Exception as exc:
                         global _pii_scrub_failure_count
                         _pii_scrub_failure_count += 1
                         log.error(
-                            "PII scrub failed for finding %s — dropping finding "
-                            "to avoid unscrubbed PII reaching persistence (total failures: %d)",
+                            "PII scrub failed for finding %s — dropping (total failures: %d)",
                             f.id,
                             _pii_scrub_failure_count,
                         )
-                        # Fail-closed: drop rather than persist unscrubbed data
+                        if env != "development":
+                            raise RuntimeError(
+                                f"PII scrub failed in env={env} — refusing to "
+                                f"persist potentially unscrubbed findings (finding_id={f.id})"
+                            ) from exc
+                        # Development: drop rather than persist unscrubbed data
                 return scrubbed
         log.warning(
             "No normalizer found for source=%s event_type=%s",

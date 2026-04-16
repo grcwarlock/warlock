@@ -275,13 +275,23 @@ def _verify_jira_signature(body: bytes, signature: str | None, secret: str) -> b
     Callers MUST handle the "no secret configured" case separately — this
     function returns False when the secret is missing (fail-closed). Bypass
     for development happens in the route handler (finding F22).
+
+    N9 fix: strip common header prefixes (``sha256=``, ``v1=``) so Atlassian's
+    ``X-Hub-Signature: sha256=<hex>`` and the JIRA Cloud ``Atlassian-Webhook-Identifier``
+    style both verify. Without this strip, every legitimate Jira call failed
+    verification and operators ended up disabling signing.
     """
     if not secret:
         return False
     if not signature:
         return False
+    sig_value = signature.strip()
+    for prefix in ("sha256=", "v1=", "sha1="):
+        if sig_value.startswith(prefix):
+            sig_value = sig_value[len(prefix) :]
+            break
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
+    return hmac.compare_digest(expected, sig_value)
 
 
 @router.post("/jira", response_model=JiraWebhookResponse)

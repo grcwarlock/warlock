@@ -57,7 +57,12 @@ class PagerDutyNotifier:
     __name__ = "PagerDutyNotifier"
 
     def __init__(self) -> None:
-        self._routing_key = os.environ.get("WLK_PAGERDUTY_ROUTING_KEY", "").strip()
+        # N19: routing_key is a credential — route via SecretsBackend
+        from warlock.connectors.secrets_backend import get_secrets_backend
+
+        self._routing_key = (
+            get_secrets_backend().get_secret("WLK_PAGERDUTY_ROUTING_KEY") or ""
+        ).strip()
         self._min_severity = os.environ.get("WLK_PAGERDUTY_MIN_SEVERITY", "high").strip().lower()
 
         raw_events = os.environ.get("WLK_PAGERDUTY_EVENTS", "").strip()

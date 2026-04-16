@@ -27,6 +27,16 @@ from warlock.db.models import AuditEntry
 
 log = logging.getLogger(__name__)
 
+# N24: counter for BatchShipper failures. Operators should scrape this and
+# alert if it grows; non-zero means the external audit sink has gaps.
+_audit_ship_failure_count: int = 0
+
+
+def get_audit_ship_failure_count() -> int:
+    """Return number of BatchShipper failures since process start (N24)."""
+    return _audit_ship_failure_count
+
+
 # ---------------------------------------------------------------------------
 # Module-level BatchShipper — initialised once, shared across AuditTrail
 # instances in the same process.
@@ -171,10 +181,17 @@ class AuditTrail:
                 )
                 shipper.ingest(sink_entry)
             except Exception:
+                # N24: count shipping failures and log loudly. The DB row
+                # exists so the chain is intact, but the external sink may be
+                # missing entries. Operators must reconcile.
+                global _audit_ship_failure_count
+                _audit_ship_failure_count += 1
                 log.exception(
                     "AuditTrail: BatchShipper.ingest() failed for sequence %d — "
-                    "DB write is unaffected",
+                    "DB write OK but external sink missed an entry "
+                    "(total ship failures: %d). Reconcile via verify_chain().",
                     entry.sequence,
+                    _audit_ship_failure_count,
                 )
 
         return entry

@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import secrets
+import threading as _jwks_threading
 import time
 import urllib.error
 import urllib.parse
@@ -235,17 +236,24 @@ def _decode_jwt_unverified(token: str) -> dict:
 
 _JWKS_CACHE: dict[str, tuple[float, dict]] = {}
 _JWKS_TTL_SECONDS = 3600  # 1h
+_JWKS_LOCK = _jwks_threading.Lock()
 
 
-def _fetch_jwks(jwks_uri: str) -> dict:
-    """Fetch and cache the JWKS document for a given JWKS URI."""
+def _fetch_jwks(jwks_uri: str, force_refresh: bool = False) -> dict:
+    """Fetch and cache the JWKS document for a given JWKS URI.
+
+    N22 fix: ``force_refresh=True`` bypasses the cache, used when an unknown
+    `kid` is encountered (likely IdP rotated keys mid-TTL). Lock prevents
+    duplicate concurrent fetches that would all hit the IdP.
+    """
     now = time.time()
-    cached = _JWKS_CACHE.get(jwks_uri)
-    if cached and (now - cached[0]) < _JWKS_TTL_SECONDS:
-        return cached[1]
-    jwks = _fetch_json(jwks_uri)
-    _JWKS_CACHE[jwks_uri] = (now, jwks)
-    return jwks
+    with _JWKS_LOCK:
+        cached = _JWKS_CACHE.get(jwks_uri)
+        if cached and not force_refresh and (now - cached[0]) < _JWKS_TTL_SECONDS:
+            return cached[1]
+        jwks = _fetch_json(jwks_uri)
+        _JWKS_CACHE[jwks_uri] = (now, jwks)
+        return jwks
 
 
 def _decode_and_verify_id_token(
@@ -276,15 +284,25 @@ def _decode_and_verify_id_token(
         jwk_client = _pyjwt.PyJWKClient(jwks_uri)
         signing_key = jwk_client.get_signing_key_from_jwt(id_token).key
     except Exception as exc:
-        # Fallback: fetch JWKS ourselves and match by kid
+        # Fallback: fetch JWKS ourselves and match by kid.
+        # N22: if the kid isn't in the cached JWKS, force-refresh once
+        # (handles IdP key rotation mid-TTL).
         try:
             header = _pyjwt.get_unverified_header(id_token)
             kid = header.get("kid")
             jwks = _fetch_jwks(jwks_uri)
             matched = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
             if matched is None:
+                # N22: force-refresh the cache once before giving up
+                jwks = _fetch_jwks(jwks_uri, force_refresh=True)
+                matched = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+            if matched is None:
                 raise ValueError(f"JWKS has no key matching kid={kid}") from exc
-            signing_key = _pyjwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(matched))
+            kty = matched.get("kty", "RSA")
+            if kty == "EC":
+                signing_key = _pyjwt.algorithms.ECAlgorithm.from_jwk(json.dumps(matched))
+            else:
+                signing_key = _pyjwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(matched))
         except Exception as inner:
             raise ValueError(f"Could not resolve signing key: {inner}") from inner
 
@@ -424,13 +442,33 @@ async def sso_login(
     # Generate state and nonce
     state = _generate_state()
     nonce = _generate_nonce()
+    # N16: PKCE — generate code_verifier and S256 code_challenge per RFC 7636.
+    # Stored alongside state so the callback can include code_verifier in the
+    # token exchange. PKCE protects against authorization-code interception
+    # even when the client_secret is leaked or the redirect URI is spoofed.
+    import base64
+    import hashlib
+
+    code_verifier = secrets.token_urlsafe(64)[:128]  # 43-128 chars per RFC
+    code_challenge = (
+        base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest())
+        .rstrip(b"=")
+        .decode()
+    )
 
     # Determine callback URL
     callback_url = redirect_uri or settings.sso_callback_url
     if callback_url.startswith("/"):
-        # Relative path — build absolute URL from request
-        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-        host = request.headers.get("x-forwarded-host", request.url.netloc)
+        # Relative path — build absolute URL from request.
+        # N17 fix: only honor X-Forwarded-* when behind a trusted proxy
+        # (settings.trust_forwarded_for=True). Otherwise an attacker can
+        # spoof the headers to redirect the auth code to their host.
+        if getattr(settings, "trust_forwarded_for", False):
+            scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+            host = request.headers.get("x-forwarded-host", request.url.netloc)
+        else:
+            scheme = request.url.scheme
+            host = request.url.netloc
         callback_url = f"{scheme}://{host}{callback_url}"
 
     # Store state for validation on callback (Redis or in-memory)
@@ -440,10 +478,11 @@ async def sso_login(
             "nonce": nonce,
             "provider": provider,
             "callback_url": callback_url,
+            "code_verifier": code_verifier,  # N16: needed for PKCE token exchange
         },
     )
 
-    # Build authorization URL
+    # Build authorization URL with PKCE challenge (N16)
     params = {
         "client_id": settings.sso_client_id,
         "response_type": "code",
@@ -451,6 +490,8 @@ async def sso_login(
         "redirect_uri": callback_url,
         "state": state,
         "nonce": nonce,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
 
     # Provider-specific parameters
@@ -497,6 +538,7 @@ async def sso_callback(
     provider = pending["provider"]
     nonce = pending["nonce"]
     callback_url = pending["callback_url"]
+    code_verifier = pending.get("code_verifier", "")  # N16: PKCE
 
     # Fetch OIDC discovery to get token endpoint
     try:
@@ -515,16 +557,17 @@ async def sso_callback(
             detail="OIDC discovery missing token_endpoint.",
         )
 
-    # Exchange authorization code for tokens
-    token_data = urllib.parse.urlencode(
-        {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": callback_url,
-            "client_id": settings.sso_client_id,
-            "client_secret": settings.sso_client_secret,
-        }
-    ).encode("utf-8")
+    # Exchange authorization code for tokens (N16: include PKCE code_verifier)
+    _form: dict[str, str] = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": callback_url,
+        "client_id": settings.sso_client_id,
+        "client_secret": settings.sso_client_secret,
+    }
+    if code_verifier:
+        _form["code_verifier"] = code_verifier
+    token_data = urllib.parse.urlencode(_form).encode("utf-8")
 
     try:
         token_response = _fetch_json(token_endpoint, method="POST", data=token_data)
@@ -589,8 +632,19 @@ async def sso_callback(
         )
 
         if not user:
-            # Try matching by email (link existing account)
-            user = db.query(User).filter(User.email == user_info["email"]).first()
+            # N7 fix: only link by email when the IdP asserts email_verified.
+            # Without this check, a rogue IdP user with the victim's email
+            # logs in as the victim. Lookup by (provider, subject) above is
+            # safe; this fallback is the dangerous one.
+            email_verified = bool(claims.get("email_verified", False))
+            if email_verified:
+                user = db.query(User).filter(User.email == user_info["email"]).first()
+            else:
+                log.warning(
+                    "SSO email %s not marked email_verified by IdP %s — refusing to link",
+                    user_info["email"],
+                    provider,
+                )
 
         if user:
             if not user.is_active:
@@ -603,10 +657,21 @@ async def sso_callback(
             user.sso_subject_id = user_info["subject"]
             user.last_login = datetime.now(timezone.utc)
             user.name = user_info["name"]  # Keep name in sync with IdP
-            if getattr(settings, "sso_groups_claim", None) or (
-                getattr(settings, "sso_role_mapping", "{}") or "{}"
-            ).strip() not in ("", "{}"):
-                user.role = resolved_role
+            # N5 fix: only overwrite role from IdP if explicitly enabled
+            # (sso_role_overwrite). Default False — manual role grants from
+            # admins are no longer silently demoted/promoted on every login.
+            if getattr(settings, "sso_role_overwrite", False) and (
+                getattr(settings, "sso_groups_claim", None)
+                or (getattr(settings, "sso_role_mapping", "{}") or "{}").strip() not in ("", "{}")
+            ):
+                if user.role != resolved_role:
+                    log.info(
+                        "SSO role overwrite for %s: %s -> %s (sso_role_overwrite=True)",
+                        user.email,
+                        user.role,
+                        resolved_role,
+                    )
+                    user.role = resolved_role
             log.info("SSO login for existing user: %s (provider=%s)", user.email, provider)
         elif settings.sso_auto_create_users:
             # Auto-create user on first SSO login

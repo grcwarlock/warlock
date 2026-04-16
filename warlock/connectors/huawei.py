@@ -201,7 +201,7 @@ class HuaweiCloudConnector(BaseConnector):
     @staticmethod
     def _parse_obs_xml(xml_text: str) -> dict:
         """Minimal XML parse for OBS ListBuckets response."""
-        import xml.etree.ElementTree as ET
+        from defusedxml import ElementTree as ET  # N13: XXE/billion-laughs safe
 
         root = ET.fromstring(xml_text)
         ns = ""

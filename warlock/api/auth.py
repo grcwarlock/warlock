@@ -250,6 +250,31 @@ JWT_ISSUER = "warlock"
 JWT_AUDIENCE = "warlock-api"
 
 
+def _jti_revoked(jti: str) -> bool:
+    """Return True if a JWT jti has been explicitly revoked.
+
+    N28 fix: revoked jtis are stored in the shared cache (Redis-backed in
+    prod, in-memory in dev) under key ``revoked_jti:<jti>`` with a TTL ≥
+    the access-token lifetime. Revoke a token via ``revoke_jti(jti, ttl)``.
+    """
+    try:
+        from warlock.utils.cache import get_cache
+
+        return get_cache().get(f"revoked_jti:{jti}") is not None
+    except Exception:
+        return False  # fail-open on cache error — better than locking out users
+
+
+def revoke_jti(jti: str, ttl_seconds: int = 3600) -> None:
+    """Mark a specific JWT jti as revoked. ``ttl_seconds`` should be ≥ exp."""
+    try:
+        from warlock.utils.cache import get_cache
+
+        get_cache().set(f"revoked_jti:{jti}", "1", ttl=ttl_seconds)
+    except Exception as exc:
+        log.warning("Failed to register revoked jti=%s: %s", jti, exc)
+
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token.
 
@@ -279,9 +304,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT access token. Raises ValueError on failure.
 
-    F17: Newly-issued tokens include aud/iss claims and PyJWT enforces them
-    when present. Tokens issued before F17 lack aud and are rejected — those
-    users must re-authenticate after the rollout.
+    F17/N3: Newly-issued tokens include aud/iss/jti claims. Both the PyJWT
+    path AND the HMAC fallback path enforce aud/iss now (N3). Tokens issued
+    before F17 lack aud and are rejected — those users must re-authenticate
+    after the rollout.
     """
     secret = _get_jwt_secret()
     try:
@@ -296,6 +322,13 @@ def decode_access_token(token: str) -> dict:
             )
         else:
             payload = _hmac_decode(token, secret)
+            # N3: enforce aud/iss on the HMAC fallback path too — PyJWT does
+            # this automatically; the stdlib decoder does not.
+            if payload.get("iss") != JWT_ISSUER:
+                raise ValueError(f"Invalid issuer: {payload.get('iss')!r}")
+            aud = payload.get("aud")
+            if aud != JWT_AUDIENCE and (not isinstance(aud, list) or JWT_AUDIENCE not in aud):
+                raise ValueError(f"Invalid audience: {aud!r}")
     except Exception as exc:
         raise ValueError(f"Invalid token: {exc}") from exc
 
@@ -303,8 +336,21 @@ def decode_access_token(token: str) -> dict:
     exp = payload.get("exp")
     if exp is None:
         raise ValueError("Token missing exp claim")
-    if float(exp) < datetime.now(timezone.utc).timestamp():
+    # N28 hardening: reject Infinity / NaN exp values
+    try:
+        exp_float = float(exp)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Token has malformed exp claim") from exc
+    import math
+
+    if not math.isfinite(exp_float):
+        raise ValueError("Token exp must be finite")
+    if exp_float < datetime.now(timezone.utc).timestamp():
         raise ValueError("Token has expired")
+    # N28: enforce per-jti revocation list (operator-revoked individual tokens)
+    jti = payload.get("jti")
+    if jti and _jti_revoked(jti):
+        raise ValueError("Token has been revoked")
     return payload
 
 
@@ -729,10 +775,11 @@ _MFA_CHALLENGE_TTL = 300  # 5 minutes
 def create_mfa_challenge(user_id: str) -> str:
     """Create a signed, time-limited MFA challenge token.
 
-    Replaces exposing raw user_id in the MFA flow. The token is
-    HMAC-signed with the JWT secret and expires after 5 minutes.
+    N18 fix: HMAC key is derived per-purpose so an MFA challenge token
+    cannot be confused with an access token / refresh token / API key
+    fingerprint even though they share an underlying master secret.
     """
-    secret = _get_jwt_secret()
+    key = _derive_purpose_key("mfa_challenge")
     payload = {
         "sub": user_id,
         "purpose": "mfa_challenge",
@@ -741,7 +788,7 @@ def create_mfa_challenge(user_id: str) -> str:
     }
     payload_bytes = json.dumps(payload, default=str).encode()
     payload_b64 = base64.urlsafe_b64encode(payload_bytes).rstrip(b"=").decode()
-    sig = hmac.new(secret.encode(), payload_b64.encode(), hashlib.sha256).hexdigest()[:32]
+    sig = hmac.new(key, payload_b64.encode(), hashlib.sha256).hexdigest()[:32]
     return f"{payload_b64}.{sig}"
 
 
@@ -750,12 +797,12 @@ def verify_mfa_challenge(token: str) -> str | None:
 
     Returns None if the token is invalid, expired, or tampered.
     """
-    secret = _get_jwt_secret()
+    key = _derive_purpose_key("mfa_challenge")
     parts = token.split(".")
     if len(parts) != 2:
         return None
     payload_b64, sig = parts
-    expected_sig = hmac.new(secret.encode(), payload_b64.encode(), hashlib.sha256).hexdigest()[:32]
+    expected_sig = hmac.new(key, payload_b64.encode(), hashlib.sha256).hexdigest()[:32]
     if not hmac.compare_digest(sig, expected_sig):
         return None
     # Restore padding
@@ -819,38 +866,71 @@ def verify_mfa_and_login(session: Session, user_id: str, totp_code: str) -> dict
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
-def _hash_refresh_token(token: str) -> str:
-    """Compute SHA-256 hash of a refresh token for storage.
+def _derive_purpose_key(purpose: str) -> bytes:
+    """N18 fix: derive a per-purpose HMAC key from the master JWT secret.
 
-    Unlike API keys, refresh tokens do not use HMAC because they are
-    single-use (rotated on every refresh) and short-lived relative to
-    API keys.  A plain SHA-256 hash is sufficient.
+    Different security boundaries (refresh tokens, MFA challenges, API key
+    fingerprints) get different keys via HKDF-style domain separation, so
+    compromise of one boundary's tokens does not cross-contaminate.
     """
-    return hashlib.sha256(token.encode()).hexdigest()
+    master = _get_jwt_secret().encode()
+    return hmac.new(
+        master, f"warlock-key-derivation-v1:{purpose}".encode(), hashlib.sha256
+    ).digest()
+
+
+def _hash_refresh_token(token: str) -> str:
+    """Compute HMAC-SHA256 of a refresh token using a purpose-derived key.
+
+    N14 / N18: switched from plain SHA-256 to HMAC; key is derived per-
+    purpose (``refresh_token``) so a future cross-purpose forgery requires
+    breaking domain separation, not just JWT-secret reuse.
+    """
+    return hmac.new(
+        _derive_purpose_key("refresh_token"), token.encode(), hashlib.sha256
+    ).hexdigest()
 
 
 def generate_refresh_token(user_id: str, session: Session) -> str:
-    """Create a long-lived refresh token (30 days) and store its hash on the user.
+    """Create a refresh token bound to an explicit expiry (N14).
 
-    Returns the raw token (shown to the client once; never stored in plaintext).
+    Format: ``<random>.<exp_unix_ts>``. Both the random part and the expiry
+    are covered by the HMAC stored on the User row, so the expiry cannot be
+    extended by the holder. The full token (including expiry) is what's
+    hashed and stored — verify recomputes the same hash.
     """
     user = session.query(User).filter(User.id == user_id).first()
     if not user:
         raise ValueError(f"User {user_id} not found")
 
-    raw_token = secrets.token_urlsafe(48)
+    exp = int((datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)).timestamp())
+    raw_token = f"{secrets.token_urlsafe(48)}.{exp}"
     user.refresh_token_hash = _hash_refresh_token(raw_token)
     session.flush()
 
-    log.info("Refresh token issued for user %s", user.email)
+    log.info("Refresh token issued for user %s (exp=%d)", user.email, exp)
     return raw_token
 
 
 def verify_refresh_token(token: str, session: Session) -> str:
     """Validate a refresh token and return the associated user_id.
 
-    Raises ``ValueError`` if the token is invalid or the user is inactive.
+    N14: rejects tokens past their embedded expiry. Raises ``ValueError`` if
+    the token is invalid, expired, or the user is inactive.
     """
+    # N14: parse and check the embedded expiry BEFORE looking up the hash.
+    parts = token.rsplit(".", 1)
+    if len(parts) == 2:
+        try:
+            exp = int(parts[1])
+        except ValueError as exc:
+            raise ValueError("Malformed refresh token") from exc
+        if exp < int(datetime.now(timezone.utc).timestamp()):
+            raise ValueError("Refresh token has expired")
+    # Tokens issued before N14 lack the expiry suffix — accept them once,
+    # then rotation will produce a properly formatted token. (Reject in
+    # the next release after rollout.)
+
     token_hash = _hash_refresh_token(token)
     user = (
         session.query(User)

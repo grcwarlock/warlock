@@ -203,7 +203,18 @@ async def ingest_webhook(
     # Detect source
     source = _detect_source(data)
 
-    # Handle SNS envelopes
+    # N8 fix: validate HMAC BEFORE handling SNS envelopes. Previously SNS
+    # SubscriptionConfirmation returned 202 with the SubscribeURL logged
+    # before HMAC validation ran, allowing an unauthenticated attacker to
+    # inject SubscribeURL values into logs and bypass auth on the SNS path.
+    signature = x_webhook_signature or x_hub_signature_256
+    if not _validate_hmac(body, signature, source):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid webhook signature",
+        )
+
+    # Handle SNS envelopes (now post-HMAC)
     if source == "sns" or x_amz_sns_message_type:
         data = _parse_sns_envelope(data)
         if data.get("_sns_confirmation"):
@@ -215,14 +226,6 @@ async def ingest_webhook(
             }
         # Re-detect source from unwrapped message
         source = _detect_source(data) if source == "sns" else source
-
-    # Validate HMAC signature
-    signature = x_webhook_signature or x_hub_signature_256
-    if not _validate_hmac(body, signature, source):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid webhook signature",
-        )
 
     # Build event for pipeline queue
     event_id = str(uuid4())

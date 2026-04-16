@@ -101,8 +101,17 @@ class _StdlibEncryptor:
 class FieldEncryptor:
     """Encrypt/decrypt individual field values at rest.
 
-    Uses Fernet (from the ``cryptography`` package) when available,
-    falling back to a stdlib-only XOR+HMAC scheme otherwise.
+    N32: supports two backends:
+    - ``fernet``  — AES-128-CBC + HMAC-SHA256 (legacy default, kept so
+                    existing ciphertext remains decryptable forever).
+    - ``aes-gcm-256`` — AES-256-GCM (modern AEAD; use for new deployments).
+
+    The ciphertext format embeds a version tag so backends can coexist:
+    - ``enc:<b64>``    — legacy Fernet (backwards compatible)
+    - ``enc:v2:<b64>`` — AES-256-GCM nonce(12) || tag(16) || ct
+
+    Selection is via ``WLK_ENCRYPTION_BACKEND`` (``fernet`` or ``aes-gcm-256``;
+    default ``fernet``). Decryption auto-detects the version tag.
     """
 
     def __init__(self, key: str | None = None):
@@ -113,6 +122,7 @@ class FieldEncryptor:
             )
         self._backend: str = "none"
         key_bytes = self.key.encode("utf-8")
+        chosen = os.environ.get("WLK_ENCRYPTION_BACKEND", "fernet").strip().lower()
 
         if _HAS_FERNET:
             # #16: Use a per-deployment salt derived from the encryption key
@@ -127,20 +137,33 @@ class FieldEncryptor:
             )
             derived = base64.urlsafe_b64encode(kdf.derive(key_bytes))
             self._fernet = Fernet(derived)
-            self._backend = "fernet"
+
+            # N32: also derive a 32-byte AES-256-GCM key for the modern backend.
+            gcm_salt = hashlib.sha256(key_bytes + b"warlock-grc-field-enc-aesgcm-v2").digest()[:16]
+            gcm_kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=gcm_salt,
+                iterations=480_000,
+            )
+            self._aesgcm_key = gcm_kdf.derive(key_bytes)
+            self._backend = "aes-gcm-256" if chosen == "aes-gcm-256" else "fernet"
         else:
-            # #15: Refuse to use XOR fallback in production
+            # N31 fix: Refuse to use XOR fallback in ANY non-development env.
+            # The XOR stream cipher is not authenticated against modern attacks
+            # and even in test/staging produces fixtures that may end up in
+            # repos. Only `development` allows the fallback.
             wlk_env = os.environ.get("WLK_ENV", "").strip().lower()
-            if wlk_env == "production":
+            if wlk_env and wlk_env != "development":
                 raise RuntimeError(
                     "CRITICAL: The 'cryptography' package is not installed. "
-                    "XOR-based encryption is NOT safe for production. "
+                    f"XOR-based encryption is NOT safe in env={wlk_env}. "
                     "Install cryptography: pip install cryptography"
                 )
             import warnings
 
             warnings.warn(
-                "Using stdlib XOR encryption fallback — NOT safe for production. "
+                "Using stdlib XOR encryption fallback — NOT safe outside dev. "
                 "Install the 'cryptography' package for Fernet encryption.",
                 stacklevel=2,
             )
@@ -152,20 +175,39 @@ class FieldEncryptor:
         return self._backend
 
     def encrypt(self, plaintext: str) -> str:
-        """Returns ``enc:<base64data>`` string."""
+        """Returns ``enc:<base64data>`` (Fernet) or ``enc:v2:<b64>`` (AES-GCM)."""
         data = plaintext.encode("utf-8")
+        if self._backend == "aes-gcm-256":
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+            aes = AESGCM(self._aesgcm_key)
+            nonce = os.urandom(12)
+            ct = aes.encrypt(nonce, data, None)  # ct includes 16-byte tag
+            return "enc:v2:" + base64.urlsafe_b64encode(nonce + ct).decode("ascii")
         if self._backend == "fernet":
             ct = self._fernet.encrypt(data)
-        else:
-            ct = self._stdlib.encrypt(data)
+            return "enc:" + base64.urlsafe_b64encode(ct).decode("ascii")
+        ct = self._stdlib.encrypt(data)
         return "enc:" + base64.urlsafe_b64encode(ct).decode("ascii")
 
     def decrypt(self, ciphertext: str) -> str:
-        """Decrypts ``enc:...`` strings. Returns plaintext."""
+        """Decrypts ``enc:...`` strings. Auto-detects backend by version tag."""
         if not self.is_encrypted(ciphertext):
             raise ValueError("Value is not an encrypted field (missing enc: prefix)")
+        # N32: detect AES-GCM v2 ciphertext
+        if ciphertext.startswith("enc:v2:"):
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+            blob = base64.urlsafe_b64decode(ciphertext[7:])
+            if len(blob) < 28:  # 12 nonce + 16 tag minimum
+                raise ValueError("AES-GCM ciphertext too short")
+            nonce, ct = blob[:12], blob[12:]
+            aes = AESGCM(self._aesgcm_key)
+            pt = aes.decrypt(nonce, ct, None)
+            return pt.decode("utf-8")
         raw = base64.urlsafe_b64decode(ciphertext[4:])
-        if self._backend == "fernet":
+        if self._backend in ("fernet", "aes-gcm-256") and hasattr(self, "_fernet"):
+            # Try Fernet — handles legacy ciphertext even when default is GCM
             pt = self._fernet.decrypt(raw)
         else:
             pt = self._stdlib.decrypt(raw)

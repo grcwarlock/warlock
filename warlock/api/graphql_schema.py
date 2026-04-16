@@ -406,10 +406,42 @@ def _build_schema():
 
 
 def get_graphql_app() -> "GraphQLRouter | None":
-    """Return a Strawberry FastAPI GraphQL router, or None if strawberry is not installed."""
+    """Return a Strawberry FastAPI GraphQL router, or None.
+
+    N12 fix: this router is not currently mounted on the app (no
+    ``include_router(get_graphql_app())`` in ``warlock/api/app.py``). If a
+    future maintainer wires it up, the ``context_getter`` below enforces
+    JWT authentication so a fresh mount cannot accidentally publish an
+    unauthenticated GraphQL surface that bypasses the REST ABAC model.
+    """
     if not _HAS_STRAWBERRY:
         logger.info("strawberry-graphql not installed -- GraphQL endpoint disabled")
         return None
 
+    from fastapi import HTTPException, Request
+
+    async def _auth_context(request: Request) -> dict:
+        from warlock.api.auth import authenticate_api_key, decode_access_token
+        from warlock.db.engine import get_session
+
+        api_key = request.headers.get("x-api-key")
+        authz = request.headers.get("authorization", "")
+        user = None
+        if api_key:
+            with get_session() as s:
+                user, _ = authenticate_api_key(s, api_key)
+        elif authz.lower().startswith("bearer "):
+            try:
+                payload = decode_access_token(authz[7:].strip())
+                from warlock.db.models import User as _U
+
+                with get_session() as s:
+                    user = s.query(_U).filter(_U.email == payload.get("sub")).first()
+            except Exception as exc:
+                raise HTTPException(status_code=401, detail="Invalid token") from exc
+        if user is None or not getattr(user, "is_active", False):
+            raise HTTPException(status_code=401, detail="GraphQL requires authentication")
+        return {"user": user, "request": request}
+
     schema = _build_schema()
-    return GraphQLRouter(schema, path="/graphql")
+    return GraphQLRouter(schema, path="/graphql", context_getter=_auth_context)

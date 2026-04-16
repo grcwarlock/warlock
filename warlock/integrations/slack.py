@@ -57,7 +57,13 @@ class SlackNotifier:
     __name__ = "SlackNotifier"
 
     def __init__(self) -> None:
-        self._webhook_url = os.environ.get("WLK_SLACK_WEBHOOK_URL", "").strip()
+        # N19: webhook URL is a secret (anyone with it can spam the channel) —
+        # route via SecretsBackend so Vault deployments can rotate.
+        from warlock.connectors.secrets_backend import get_secrets_backend
+
+        self._webhook_url = (
+            get_secrets_backend().get_secret("WLK_SLACK_WEBHOOK_URL") or ""
+        ).strip()
         self._channel = os.environ.get("WLK_SLACK_CHANNEL", "").strip()
         self._min_severity = os.environ.get("WLK_SLACK_MIN_SEVERITY", "medium").strip().lower()
 

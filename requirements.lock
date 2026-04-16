@@ -1,80 +1,107 @@
+# Warlock dependency lockfile (N21)
+# -----------------------------------------------------------------
+# Generated from `pip freeze` against the dev venv. Each CI run
+# should `pip install -r requirements.lock` to get a deterministic
+# tree, defending against supply-chain attacks that ship a malicious
+# minor version of any transitive dependency.
+#
+# Regenerate after changing pyproject.toml:
+#   .venv/bin/pip install -e ".[dev,ai]"
+#   .venv/bin/pip freeze --exclude warlock > requirements.lock
+#
+# This file is committed deliberately. It is NOT a substitute for
+# `pyproject.toml` — pyproject.toml declares declared dependencies;
+# this file pins resolved versions.
+# -----------------------------------------------------------------
 alembic==1.18.4
-    # via warlock (pyproject.toml)
 annotated-doc==0.0.4
-    # via fastapi
 annotated-types==0.7.0
-    # via pydantic
-anyio==4.12.1
-    # via
-    #   httpx
-    #   starlette
+anyio==4.13.0
+bcrypt==5.0.0
+boolean.py==5.0
+CacheControl==0.14.4
+cachetools==6.2.6
 certifi==2026.2.25
-    # via
-    #   httpcore
-    #   httpx
+cffi==2.0.0
+charset-normalizer==3.4.6
 click==8.3.1
-    # via
-    #   uvicorn
-    #   warlock (pyproject.toml)
-fastapi==0.135.1
-    # via warlock (pyproject.toml)
+cryptography==46.0.5
+cyclonedx-python-lib==11.7.0
+defusedxml==0.7.1
+duckdb==1.5.1
+ecdsa==0.19.1
+et_xmlfile==2.0.0
+fastapi==0.135.2
+filelock==3.25.2
+fsspec==2026.3.0
 h11==0.16.0
-    # via
-    #   httpcore
-    #   uvicorn
 httpcore==1.0.9
-    # via httpx
 httpx==0.28.1
-    # via warlock (pyproject.toml)
 idna==3.11
-    # via
-    #   anyio
-    #   httpx
-mako==1.3.10
-    # via alembic
+iniconfig==2.3.0
+librt==0.8.1
+license-expression==30.4.4
+linkify-it-py==2.1.0
+Mako==1.3.10
 markdown-it-py==4.0.0
-    # via rich
-markupsafe==3.0.3
-    # via mako
+MarkupSafe==3.0.3
+mdit-py-plugins==0.5.0
 mdurl==0.1.2
-    # via markdown-it-py
+mmh3==5.2.1
+msgpack==1.1.2
+mypy==1.19.1
+mypy_extensions==1.1.0
+nats-py==2.14.0
+openpyxl==3.1.5
+packageurl-python==0.17.6
+packaging==26.0
+pathspec==1.0.4
+pillow==12.1.1
+pip-api==0.0.34
+pip-requirements-parser==32.0.1
+pip_audit==2.10.0
+platformdirs==4.9.4
+pluggy==1.6.0
 psycopg2-binary==2.9.11
-    # via warlock (pyproject.toml)
+py-serializable==2.1.0
+pyarrow==23.0.1
+pyasn1==0.6.3
+pycparser==3.0
 pydantic==2.12.5
-    # via
-    #   fastapi
-    #   pydantic-settings
-    #   warlock (pyproject.toml)
-pydantic-core==2.41.5
-    # via pydantic
 pydantic-settings==2.13.1
-    # via warlock (pyproject.toml)
-pygments==2.19.2
-    # via rich
+pydantic_core==2.41.5
+Pygments==2.19.2
+pyiceberg==0.11.1
+pyiceberg-core==0.7.0
+PyJWT==2.12.1
+pyparsing==3.3.2
+pyroaring==1.0.4
+pytest==9.0.2
+pytest-asyncio==1.3.0
+python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
-    # via pydantic-settings
-pyyaml==6.0.3
-    # via warlock (pyproject.toml)
+python-jose==3.5.0
+python-multipart==0.0.22
+pytz==2026.1.post1
+PyYAML==6.0.3
+redis==7.4.0
+reportlab==4.4.10
+requests==2.32.5
 rich==14.3.3
-    # via warlock (pyproject.toml)
-sqlalchemy==2.0.48
-    # via
-    #   alembic
-    #   warlock (pyproject.toml)
-starlette==0.52.1
-    # via fastapi
-typing-extensions==4.15.0
-    # via
-    #   alembic
-    #   fastapi
-    #   pydantic
-    #   pydantic-core
-    #   sqlalchemy
-    #   typing-inspection
+rsa==4.9.1
+ruff==0.15.7
+six==1.17.0
+sortedcontainers==2.4.0
+SQLAlchemy==2.0.48
+starlette==1.0.0
+strictyaml==1.7.3
+tenacity==9.1.4
+textual==8.2.0
+tomli==2.4.0
+tomli_w==1.2.0
 typing-inspection==0.4.2
-    # via
-    #   fastapi
-    #   pydantic
-    #   pydantic-settings
+typing_extensions==4.15.0
+uc-micro-py==2.0.0
+urllib3==2.6.3
 uvicorn==0.42.0
-    # via warlock (pyproject.toml)
+zstandard==0.25.0

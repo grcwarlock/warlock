@@ -404,7 +404,7 @@ class AlibabaConnector(BaseConnector):
             data = resp.json()
         except Exception:
             # Parse XML response for bucket names
-            import xml.etree.ElementTree as ET
+            from defusedxml import ElementTree as ET  # N13: XXE/billion-laughs safe
 
             root = ET.fromstring(resp.text)
             ns = root.tag.split("}")[0] + "}" if "}" in root.tag else ""
@@ -448,7 +448,7 @@ class AlibabaConnector(BaseConnector):
                 try:
                     acl_data = acl_resp.json()
                 except Exception:
-                    import xml.etree.ElementTree as ET
+                    from defusedxml import ElementTree as ET  # N13: XXE/billion-laughs safe
 
                     acl_root = ET.fromstring(acl_resp.text)
                     acl_ns = acl_root.tag.split("}")[0] + "}" if "}" in acl_root.tag else ""

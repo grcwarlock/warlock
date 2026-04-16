@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from datetime import datetime, timezone
 from typing import Any
@@ -532,10 +533,17 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     if body.name is not None:
         user.name = body.name
+    # N20: tamper-evident audit of role changes — privilege escalation
+    # is one of the most important events to track in a GRC platform.
+    role_changed_from: str | None = None
     if body.role is not None:
         if body.role not in PERMISSIONS:
             raise HTTPException(status_code=400, detail=f"Invalid role: {body.role}")
+        if user.role != body.role:
+            role_changed_from = user.role
         user.role = body.role
+        # Force re-auth so old tokens with old role can't continue
+        user.token_valid_after = datetime.now(timezone.utc)
     if body.is_active is not None:
         user.is_active = body.is_active
     if body.allowed_frameworks is not None:
@@ -543,6 +551,18 @@ def update_user(
     if body.allowed_sources is not None:
         user.allowed_sources = body.allowed_sources
     db.flush()
+    if role_changed_from is not None:
+        from warlock.db.audit import AuditTrail
+
+        AuditTrail(db).record(
+            action="role_changed",
+            entity_type="user",
+            entity_id=user.id,
+            actor=f"admin:{current_user.email}",
+            evidence_sha256=hashlib.sha256(
+                f"{role_changed_from}->{user.role}".encode()
+            ).hexdigest(),
+        )
     return _user_to_response(user)
 
 

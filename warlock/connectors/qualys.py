@@ -25,7 +25,7 @@ except ImportError:
     httpx = None  # type: ignore[assignment]
 
 try:
-    from xml.etree import ElementTree as ET
+    from defusedxml import ElementTree as ET  # N13: XXE/billion-laughs safe
 except ImportError:
     ET = None  # type: ignore[assignment,misc]
 

@@ -64,9 +64,14 @@ class JiraNotifier:
     __name__ = "JiraNotifier"
 
     def __init__(self) -> None:
+        # N19: secrets (api_token, password) flow through SecretsBackend so
+        # Vault-managed deployments rotate without redeploys.
+        from warlock.connectors.secrets_backend import get_secrets_backend
+
+        backend = get_secrets_backend()
         self._base_url = os.environ.get("WLK_JIRA_BASE_URL", "").strip().rstrip("/")
         self._email = os.environ.get("WLK_JIRA_EMAIL", "").strip()
-        self._api_token = os.environ.get("WLK_JIRA_API_TOKEN", "").strip()
+        self._api_token = (backend.get_secret("WLK_JIRA_API_TOKEN") or "").strip()
         self._project_key = os.environ.get("WLK_JIRA_PROJECT_KEY", "GRC").strip()
         self._issue_type = os.environ.get("WLK_JIRA_ISSUE_TYPE", "Bug").strip()
         self._min_severity = os.environ.get("WLK_JIRA_MIN_SEVERITY", "high").strip().lower()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -26,6 +27,7 @@ from warlock.api.routers.schemas import MessageResponse, _dt_str
 from warlock.db.models import APIKey, User
 from warlock.db.repository import get_repos
 
+log = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -129,17 +131,80 @@ def _user_to_response(user: User) -> UserResponse:
 
 @router.post("/auth/login")
 def login(body: LoginRequest, db: Session = Depends(get_db)):
+    # N26: per-email failure counter (global across IPs) detects credential
+    # stuffing that distributes attempts across many source IPs. Per-IP rate
+    # limiting in middleware doesn't catch this pattern.
+    from warlock.utils.cache import get_cache
+
+    cache = get_cache()
+    fail_key = f"login_fail_email:{body.email.lower()}"
+    fail_count = cache.get(fail_key) or 0
+    if int(fail_count) >= 20:
+        log.warning("Credential-stuffing pattern: %d failures for %s", fail_count, body.email)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts for this account. Try again later.",
+        )
+
     result = login_with_tokens(db, body.email, body.password)
+    # N20: write identity events to the hash-chained audit log so login
+    # success/failure is tamper-evident, not just a console log line.
+    from warlock.db.audit import AuditTrail
+
+    trail = AuditTrail(db)
     if result is None:
+        # N26: bump per-email failure counter (15-min window)
+        cache.set(fail_key, int(fail_count) + 1, ttl=900)
+        trail.record(
+            action="login_failed",
+            entity_type="user",
+            entity_id=body.email,  # may be a non-existent user — that's fine
+            actor=f"login_attempt:{body.email}",
+        )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    # MFA required — return signed challenge token, not raw user_id
+    # N26: reset counter on successful auth
+    cache.set(fail_key, 0, ttl=60)
     if isinstance(result, dict) and result.get("mfa_required"):
+        trail.record(
+            action="login_mfa_required",
+            entity_type="user",
+            entity_id=body.email,
+            actor=f"login:{body.email}",
+        )
         return {
             "mfa_required": True,
             "mfa_token": result["mfa_token"],
             "message": "MFA verification required. POST to /auth/mfa/verify with mfa_token and code.",
         }
-    # Full auth — return access + refresh tokens (#3 refresh tokens wired in)
+    trail.record(
+        action="login_success",
+        entity_type="user",
+        entity_id=body.email,
+        actor=f"login:{body.email}",
+    )
+    # N15: register session in SessionManager so concurrent-session limits and
+    # invalidate_all_sessions actually work. Decode the issued access token to
+    # get the jti.
+    try:
+        from warlock.api.auth import decode_access_token
+        from warlock.api.session_manager import get_session_manager
+        from warlock.db.repository import get_repos
+
+        if isinstance(result, dict) and "access_token" in result:
+            payload = decode_access_token(result["access_token"])
+            jti = payload.get("jti")
+            sub = payload.get("sub")
+            if jti and sub:
+                user = get_repos(db).users.get(sub)
+                if user:
+                    get_session_manager().register_session(
+                        user_id=sub,
+                        token_jti=jti,
+                        ip_address="unknown",  # request not in scope here
+                        user_max_sessions=getattr(user, "max_concurrent_sessions", None),
+                    )
+    except Exception as exc:
+        log.warning("Failed to register session: %s", exc)
     return result
 
 
@@ -405,4 +470,20 @@ def logout(
     """Revoke all tokens for the current user."""
     current_user.token_valid_after = datetime.now(timezone.utc)
     db.flush()
+    # N20: audit logout to the hash-chained trail
+    from warlock.db.audit import AuditTrail
+
+    AuditTrail(db).record(
+        action="logout",
+        entity_type="user",
+        entity_id=current_user.id,
+        actor=f"user:{current_user.email}",
+    )
+    # N15: drop all SessionManager entries for this user
+    try:
+        from warlock.api.session_manager import get_session_manager
+
+        get_session_manager().invalidate_all_sessions(current_user.id)
+    except Exception as exc:
+        log.warning("Failed to invalidate sessions in SessionManager: %s", exc)
     return {"message": "All tokens revoked"}

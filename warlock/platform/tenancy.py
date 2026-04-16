@@ -130,16 +130,22 @@ class TenantManager:
         self._get_tenant(tenant_id)  # validate tenant exists
         entity = _get_query_entity(query)
         if entity is None:
-            log.warning("Cannot isolate query: no primary entity found")
-            return query
+            # N11 fix: fail closed — refuse to return an unfilterable query
+            # rather than silently leaking cross-tenant data.
+            raise RuntimeError(
+                "Cannot isolate query: no primary entity found. "
+                "isolate_query() must receive a Query bound to a single ORM entity."
+            )
         col = getattr(entity, column, None)
         if col is None:
-            log.warning(
-                "Entity %s has no column '%s'; skipping tenant filter",
-                entity.__name__,
-                column,
+            # N11 fix: fail closed — every model that flows through this
+            # boundary MUST declare the tenant column. Logging a warning and
+            # returning the unfiltered query was a silent cross-tenant leak.
+            raise RuntimeError(
+                f"Tenant isolation boundary violated: {entity.__name__} has "
+                f"no column '{column}'. Add the column or refactor the caller "
+                f"to not require tenant isolation on this model."
             )
-            return query
         return query.filter(col == tenant_id)
 
     # ------------------------------------------------------------------

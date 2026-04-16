@@ -13,9 +13,10 @@ from __future__ import annotations
 import csv
 import json
 import logging
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+from defusedxml import ElementTree as ET  # N13: XXE/billion-laughs safe
 
 log = logging.getLogger(__name__)
 
