@@ -8,7 +8,7 @@ Evidence flows through 4 immutable stages with SHA-256 integrity hashing at ever
 Stage 1: Connectors (362 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (358 parsers) → FindingData       → transform to universal findings
 Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
-Stage 4: Assessor (Tier 1-4)      → ControlResultData  → deterministic assertions + AI reasoning
+Stage 4: Assessor (Tier 1 + Tier 2 + inheritance) → ControlResultData → deterministic assertions + optional AI reasoning + parent-to-child fallback
 ```
 
 Every finding traces back to its raw API response. Every control result traces back to its finding. The hash-chained audit trail makes the entire chain tamper-evident.
@@ -85,13 +85,13 @@ warlock                    # launches the Arcane Elegance TUI dashboard
 warlock --no-tui collect   # traditional CLI mode for scripting
 ```
 
-- TUI: type `warlock` after `make demo` — remediation-first dashboard with 7 screens, `Ctrl+K` command palette
+- TUI: type `warlock` after `make demo` — remediation-first dashboard with 20 screens, `Ctrl+K` command palette
 - API: http://localhost:8000/docs
 - Stop: kill the PIDs shown in the demo output
 
 Requires Python 3.12+. See **[DEMO.md](DEMO.md)** for full details.
 
-## CLI (686 leaf commands across 73 modules)
+## CLI (809 leaf commands across 98 modules)
 
 Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
 
@@ -272,7 +272,7 @@ warlock/
 ├── mappers/              # Control mapping + crosswalking (Stage 3)
 ├── assessors/
 │   ├── engine.py         # Tiered assessment (assertion -> AI -> inheritance)
-│   ├── assertions.py     # 102 deterministic assertions across 14 control families
+│   ├── assertions.py     # 147 deterministic assertions across 14 control families
 │   ├── ai_reasoning.py   # Tier 2: LLM evaluation with full compliance context
 │   ├── ai_narrator.py    # SSP/POA&M narrative generation
 │   ├── posture.py        # Posture aggregation, sufficiency scoring, time-series
@@ -288,13 +288,13 @@ warlock/
 │   ├── queue.py          # Redis/Kafka/SQS backends
 │   ├── scheduler.py      # Multi-schedule: collect, snapshot, cadence, retention
 │   └── loader.py         # Bootstrap & registration
-├── tui/                  # Interactive TUI dashboard (Textual, 7 screens)
+├── tui/                  # Interactive TUI dashboard (Textual, 20 screens)
 │   ├── app.py            # WarlockApp entry point, screen routing, keybindings
 │   ├── theme.tcss        # Arcane Elegance theme (purple-accented dark)
-│   ├── screens/          # 7 screens: remediations, findings, controls, poam, pipeline, frameworks, vendors
+│   ├── screens/          # 20 screens: dashboard, remediations, findings, controls, poam, pipeline, frameworks, vendors, incidents, risk, privacy, reports, audit_engagements, evidence, alerts, change_requests, personnel, training, calendar, search
 │   ├── widgets/          # Sidebar, command palette, detail pane components
 │   └── data/             # Direct SQLAlchemy queries, actions, fix templates
-├── lake/                 # GRC Data Lake (23 modules)
+├── lake/                 # GRC Data Lake (24 modules)
 │   ├── writer.py         # Event-sourced Parquet writer
 │   ├── readers.py        # DuckDB analytical queries with ABAC
 │   ├── zones.py          # Raw/enrichment/curated zone writers
@@ -309,7 +309,7 @@ warlock/
 │   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
 │   ├── models.py         # 56 SQLAlchemy models
-│   ├── migrations/       # Schema via Base.metadata.create_all()
+│   ├── migrations/       # Alembic migration scripts (19 revisions)
 │   ├── audit.py          # Hash-chained audit trail
 │   ├── repository.py     # Repository pattern
 │   └── engine.py         # Session management
@@ -346,12 +346,12 @@ warlock/
 ├── domains/          # 7 domain service modules (registry, event bus, policy engine)
 ├── integrations/     # Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
 ├── platform/         # Tenancy, white-label, delegation, sandbox, legacy/bulk import
-└── cli/              # Click CLI package (686 leaf commands, 73 modules)
+└── cli/              # Click CLI package (809 leaf commands, 98 modules)
 ```
 
 ## Database
 
-47 tables (schema managed via `Base.metadata.create_all()`):
+56 tables (schema managed via Alembic migrations in `warlock/db/migrations/`):
 
 **Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
 **Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency

@@ -209,7 +209,7 @@ async def list_findings(
 
 ### Policy Inventory
 
-670 Rego policy files across 8 frameworks in `policies/`. The compliance gate CI job enforces:
+731 Rego policy files across 8 frameworks in `policies/`. The compliance gate CI job enforces:
 - Minimum 300 policies (regression guard)
 - All policies pass `opa check` syntax validation
 - Test coverage via `opa test`

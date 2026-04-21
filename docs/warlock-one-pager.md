@@ -9,7 +9,7 @@ Compliance is still done in spreadsheets. Evidence is collected manually, assess
 Warlock treats compliance as a telemetry problem. It continuously ingests security data from the tools you already use, normalizes it, maps it to compliance controls, and produces auditable results — automatically, with a tamper-evident audit trail.
 
 ```
-352 Connectors → Normalize → Map to 1,996 Controls → Assess → Report
+362 Connectors → Normalize → Map to 1,996 Controls → Assess → Report
                   SHA-256 integrity hashing at every stage
 ```
 
@@ -28,7 +28,7 @@ NIST 800-53 (1,176) | ISO 27001 (93) | ISO 27701 (95) | ISO 42001 (39) | SOC 2 (
 
 Crosswalks mean evidence collected for one framework automatically satisfies overlapping controls in others. One body of evidence, all frameworks.
 
-## 352 Source Connectors
+## 362 Source Connectors
 
 Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare) | Identity (Okta, Entra ID, CyberArk, SailPoint, Vault, JumpCloud, Auth0) | EDR (CrowdStrike, Defender, SentinelOne, Sophos) | Scanners (Tenable, Qualys, Wiz, Nessus) | Code Security (Snyk, GitHub, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode) | SIEM (Sentinel, Splunk, Elastic) | Network (Palo Alto, Fortinet, Zscaler) | HRIS (Workday, BambooHR, Gusto, Rippling) | CI/CD (Jenkins, GitHub Actions, GitLab CI, CircleCI) | and 20+ more across DLP, MDM, backup, email security, observability, GRC, and physical security.
 
@@ -36,9 +36,9 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 
 | Tier | Method | Coverage |
 |------|--------|----------|
-| 1 | **Deterministic assertions** (102 functions) | Fast, reproducible, auditable checks |
+| 1 | **Deterministic assertions** (147 functions) | Fast, reproducible, auditable checks |
 | 2 | **AI reasoning** (Anthropic, OpenAI, Gemini, Ollama) | Fills gaps with configurable confidence floor |
-| 3 | **OPA/Rego policies** (670 policies across 8 frameworks) | Policy-as-code compliance evaluation |
+| 3 | **OPA/Rego policies** (731 policies across 8 frameworks) | Policy-as-code compliance evaluation |
 | 4 | **Control inheritance** (FedRAMP CRM pattern) | Parent-to-child status propagation |
 
 ## Key Capabilities
@@ -58,12 +58,12 @@ Cloud (AWS, Azure, GCP, OCI, IBM, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare
 | Component | Technology |
 |-----------|-----------|
 | Frontend | React 18 + TypeScript + Vite + shadcn/ui — 9 pages, 4-level drill-down |
-| API | FastAPI — 171 REST endpoints, ABAC-scoped, rate-limited |
-| CLI | Click + Rich — 686 leaf commands across 73 modules |
-| Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 47 models |
-| Data Lake | DuckDB + Parquet — 23 modules across 3 zones |
-| Policy Engine | OPA/Rego — 670 policies |
-| Infrastructure | Terraform — 12 IaC modules (AWS, Azure, GCP) |
+| API | FastAPI — 260 REST endpoints, ABAC-scoped, rate-limited |
+| CLI | Click + Rich — 809 leaf commands across 98 modules |
+| Database | SQLAlchemy 2.0, PostgreSQL (prod) / SQLite (dev), 56 models |
+| Data Lake | DuckDB + Parquet — 24 modules across 3 zones |
+| Policy Engine | OPA/Rego — 731 policies |
+| Infrastructure | Terraform — 142 IaC modules (AWS, Azure, GCP, + 12 more providers) |
 | AI | Pluggable — Anthropic, OpenAI, Gemini, Ollama |
 | Security | JWT + RBAC + ABAC + bcrypt + GDPR workflows |
 

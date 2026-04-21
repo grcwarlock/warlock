@@ -25,17 +25,17 @@ Warlock eliminates all three problems by replacing manual processes with an auto
 Evidence flows through four immutable stages, each producing SHA-256 integrity hashes:
 
 ```
-Stage 1: Connectors (352 sources)  --> RawEventData      Collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (352 parsers) --> FindingData        Transform to universal findings
+Stage 1: Connectors (362 sources)  --> RawEventData      Collect from cloud/EDR/IAM/SIEM APIs
+Stage 2: Normalizers (358 parsers) --> FindingData        Transform to universal findings
 Stage 3: Control Mapper            --> ControlMappingData  Map to 1,996 controls across 14 frameworks
-Stage 4: Assessor (Tier 1-4)       --> ControlResultData   Deterministic assertions + AI reasoning
+Stage 4: Assessor (Tier 1 + Tier 2 + inheritance) --> ControlResultData  Deterministic assertions + optional AI + parent-to-child fallback
 ```
 
 Every finding traces back to its raw API response. Every control result traces back to its finding. The hash-chained audit trail makes the entire chain tamper-evident.
 
 ### Stage 1: Collection
 
-352 source connectors pull security telemetry from the tools your organization already uses -- cloud providers (AWS, Azure, GCP), identity providers (Okta, Entra ID), EDR platforms (CrowdStrike, SentinelOne), vulnerability scanners (Tenable, Qualys, Wiz), and dozens more. Each connector validates its configuration, verifies connectivity via health check, and produces raw events with the verbatim API response preserved.
+362 source connectors pull security telemetry from the tools your organization already uses -- cloud providers (AWS, Azure, GCP), identity providers (Okta, Entra ID), EDR platforms (CrowdStrike, SentinelOne), vulnerability scanners (Tenable, Qualys, Wiz), and dozens more. Each connector validates its configuration, verifies connectivity via health check, and produces raw events with the verbatim API response preserved.
 
 ### Stage 2: Normalization
 
@@ -49,9 +49,9 @@ Normalized findings are mapped to specific controls across all 14 compliance fra
 
 A four-tier assessment model evaluates each control:
 
-1. **Deterministic assertions** (102 functions) -- fast, auditable, reproducible checks like "MFA is enabled" or "no open security groups"
+1. **Deterministic assertions** (147 functions) -- fast, auditable, reproducible checks like "MFA is enabled" or "no open security groups"
 2. **AI reasoning** -- LLM-powered evaluation for controls where assertions are unavailable or inconclusive, with a configurable confidence floor
-3. **OPA Rego policies** (670 policies) -- policy-as-code evaluation across 8 frameworks
+3. **OPA Rego policies** (731 policies) -- policy-as-code evaluation across 8 frameworks
 4. **Control inheritance** -- parent-to-child status inheritance following the FedRAMP CRM pattern, where child enhancement controls inherit their parent's status
 
 ## Key Capabilities
@@ -144,14 +144,14 @@ Warlock is a Python 3.12+ application with these core components:
 
 | Component | Technology | Purpose |
 |---|---|---|
-| API | FastAPI + Uvicorn | 171 REST endpoints, ABAC-scoped |
-| CLI | Click + Rich | 686 leaf commands across 73 modules |
-| Database | SQLAlchemy 2.0 | 47 models, schema via Base.metadata.create_all() |
+| API | FastAPI + Uvicorn | 260 REST endpoints, ABAC-scoped |
+| CLI | Click + Rich | 809 leaf commands across 98 modules |
+| Database | SQLAlchemy 2.0 | 56 models, schema via Alembic migrations |
 | Data Lake | DuckDB + PyArrow + Parquet | Analytical queries over compliance data |
 | Queue | Redis / Kafka / SQS (pluggable) | Pipeline job distribution |
 | AI | Anthropic / OpenAI / Gemini / Ollama | Tier 2 reasoning + narrative generation |
-| Policy Engine | OPA / Rego | 670 policies for compliance-as-code |
-| Infrastructure | Terraform | 12 IaC modules (AWS, Azure, GCP) |
+| Policy Engine | OPA / Rego | 731 policies for compliance-as-code |
+| Infrastructure | Terraform | 142 IaC modules (AWS, Azure, GCP, + 12 more providers) |
 
 The platform supports SQLite for development and PostgreSQL for production.
 

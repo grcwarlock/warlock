@@ -230,7 +230,7 @@ make clean       # Remove DB, clean __pycache__
 
 ## Database Migrations
 
-Warlock manages database schema via `Base.metadata.create_all()` in `init_db()`. No Alembic versions directory exists; `alembic/env.py` is present for future migration support.
+Warlock manages database schema via Alembic migrations stored in `warlock/db/migrations/` (19 revisions). Migrations use `render_as_batch=True` for SQLite ALTER TABLE compatibility. `init_db()` is retained for fresh dev databases; production deployments must run `alembic upgrade head`.
 
 ### Run Migrations
 
@@ -302,7 +302,7 @@ pip install -e ".[monitoring]"
 
 ## Connector Configuration
 
-Warlock supports 352 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
+Warlock supports 362 source connectors. Each connector is enabled via an `_enabled` flag and configured with provider-specific credentials. All are opt-in and disabled by default.
 
 Example connector configuration:
 

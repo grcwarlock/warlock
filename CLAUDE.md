@@ -107,7 +107,7 @@ A CLI command that runs without a traceback but shows "no data found", "0 result
 
 After ANY change that adds/removes connectors, models, CLI commands, API routes, tests, assertions, framework YAMLs, or OSCAL files — run `make verify-docs` and fix EVERY doc that mentions the changed count. Check: README.md, CLAUDE.md, DEMO.md, CONTRIBUTING.md, [`docs/warlock-one-pager.md`](docs/warlock-one-pager.md), and all `proddocs/`. **`scripts/verify_docs.py` is the source of truth** for automated count checks; narrative docs must agree.
 
-**Note:** Demo seed outputs 351 connectors, connector files number 352. Normalizer files also number 352.
+**Note:** Demo seed outputs 351 connectors, connector files number 362. Normalizer files number 358.
 
 ---
 
@@ -190,8 +190,8 @@ warlock/
   assessors/     — assertions + AI reasoning + OPA evaluator (Stage 4)
   api/           — FastAPI REST API, ABAC-scoped
   cli/           — Click CLI package
-  tui/           — Interactive Textual TUI (7 screens, command palette, Arcane Elegance)
-  db/            — SQLAlchemy models, schema via Base.metadata.create_all()
+  tui/           — Interactive Textual TUI (20 screens, command palette, Arcane Elegance)
+  db/            — SQLAlchemy models, schema via Alembic migrations (warlock/db/migrations/)
   export/        — OSCAL, binder, alerts, reports
   workflows/     — POA&M, risk acceptance, compensating controls, GDPR, retention
   pipeline/      — orchestrator, event bus, queue backends, scheduler

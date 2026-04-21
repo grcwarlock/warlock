@@ -1,6 +1,6 @@
 # Data Model Reference
 
-This document covers all 47 SQLAlchemy models in `warlock/db/models.py`, organized by domain. It describes the pipeline data flow, key relationships, JSON column contents, and how the OLTP schema relates to the GRC Data Lake.
+This document covers all 56 SQLAlchemy models in `warlock/db/models.py`, organized by domain. It describes the pipeline data flow, key relationships, JSON column contents, and how the OLTP schema relates to the GRC Data Lake.
 
 ## Overview
 
@@ -567,4 +567,4 @@ All foreign keys have dedicated indexes (tagged #20 in code comments). Composite
 
 ## Migration Strategy
 
-Schema is managed via `Base.metadata.create_all()` in `init_db()` (no Alembic versions directory). The demo seed validates the full schema by inserting 351 connectors, 1,071 raw events, ~7,300 findings, and 373,852 control results.
+Schema is managed via Alembic migrations in `warlock/db/migrations/` (19 revisions). Migrations use `render_as_batch=True` for SQLite ALTER TABLE compatibility. `init_db()` is retained for fresh dev databases. The demo seed validates the full schema by inserting 351 connectors, 1,071 raw events, ~7,300 findings, and 373,852 control results.

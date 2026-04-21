@@ -32,7 +32,7 @@ Event Bus -----> LakeWriter (subscriber)
          Readers      Catalog    (TF-IDF)
 ```
 
-**23 modules** in `warlock/lake/`:
+**24 modules** in `warlock/lake/`:
 
 | Module | Purpose |
 |---|---|

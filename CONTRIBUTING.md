@@ -299,7 +299,7 @@ Warlock's architecture is **pipeline-first**: evidence flows through four immuta
 Stage 1: Connectors (362)   → RawEventData         → collect from cloud/EDR/IAM/SIEM APIs
 Stage 2: Normalizers (358)  → FindingData          → transform to universal findings format
 Stage 3: Control Mapper     → ControlMappingData   → map to 1,996 controls across 14 frameworks
-Stage 4: Assessor (Tier 1-4) → ControlResultData  → deterministic assertions + optional AI reasoning
+Stage 4: Assessor (Tier 1 + Tier 2 + inheritance) → ControlResultData → deterministic assertions + optional AI reasoning + parent-to-child fallback
 ```
 
 Every control result traces back to its raw API response — the hash chain is tamper-evident.
@@ -309,13 +309,13 @@ Every control result traces back to its raw API response — the hash chain is t
 - **Connectors** (`warlock/connectors/`) — 362 source integrations (AWS, Azure, EDR, SIEM, IAM, etc.)
 - **Normalizers** (`warlock/normalizers/`) — Parse raw API responses into universal FindingData
 - **Mappers** (`warlock/mappers/`) — Cross-reference findings against 1,996 controls
-- **Assessors** (`warlock/assessors/`) — Tier 1-4 assertions + optional AI reasoning via Claude/Gemini/OpenAI
-- **API** (`warlock/api/`) — FastAPI REST endpoints (171 routes), ABAC-scoped access control
-- **CLI** (`warlock/cli/`) — Click CLI (686 leaf commands across 73 modules)
-- **TUI** (`warlock/tui/`) — Interactive Textual dashboard (7 screens, command palette, Arcane Elegance theme)
+- **Assessors** (`warlock/assessors/`) — Tier 1 deterministic assertions + Tier 2 optional AI reasoning (Claude/Gemini/OpenAI) + inheritance fallback
+- **API** (`warlock/api/`) — FastAPI REST endpoints (260 routes), ABAC-scoped access control
+- **CLI** (`warlock/cli/`) — Click CLI (809 leaf commands across 98 modules)
+- **TUI** (`warlock/tui/`) — Interactive Textual dashboard (20 screens, command palette, Arcane Elegance theme)
 - **Domains** (`warlock/domains/`) — Domain service architecture (registry, event bus, policy engine, cross-domain queries)
 - **Integrations** (`warlock/integrations/`) — Slack, PagerDuty, Jira, ServiceNow outbound subscribers
-- **Database** (`warlock/db/`) — SQLAlchemy ORM, 56 models, schema via Base.metadata.create_all()
+- **Database** (`warlock/db/`) — SQLAlchemy ORM, 56 models, schema via Alembic migrations
 - **Frameworks** (`warlock/frameworks/`) — 17 framework YAMLs, 14 compliance frameworks (NIST, ISO, SOC 2, PCI DSS, etc.)
 - **OPA** (`policies/`) — 731 Rego files across 8 frameworks (NIST, ISO, SOC 2, CMMC, HIPAA, UCF, PCI DSS, Terraform)
 - **Export** (`warlock/export/`) — OSCAL, audit evidence binders, risk reports

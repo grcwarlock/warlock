@@ -213,23 +213,23 @@ For full architecture details, see [Architecture](../technical/architecture.md).
 
 ```
 warlock/
-  connectors/    -- 352 source connectors (Stage 1)
-  normalizers/   -- 352 parsers (Stage 2)
+  connectors/    -- 362 source connectors (Stage 1)
+  normalizers/   -- 358 parsers (Stage 2)
   mappers/       -- Control mapping (Stage 3)
   assessors/     -- Assertion engine + AI reasoning (Stage 4)
-  api/           -- FastAPI REST API (171 routes)
-  cli/           -- Click CLI (686 leaf commands across 73 modules)
-  db/            -- SQLAlchemy models (47), schema via Base.metadata.create_all()
+  api/           -- FastAPI REST API (260 routes)
+  cli/           -- Click CLI (809 leaf commands across 98 modules)
+  db/            -- SQLAlchemy models (56), schema via Alembic migrations
   export/        -- OSCAL, binder, alerts
   workflows/     -- POA&M, risk acceptance, GDPR, retention
   pipeline/      -- Orchestrator, event bus, queue backends, scheduler
   lake/          -- GRC Data Lake (DuckDB, Parquet, RAG)
   domains/       -- Domain service modules
-  frameworks/    -- 14 framework YAMLs (1,996 controls)
-tests/           -- 509 tests across 32 files
-policies/        -- 670 OPA/Rego files
+  frameworks/    -- 17 framework YAMLs (1,996 controls across 14 primary programs)
+tests/           -- pytest suite across 34 files
+policies/        -- 731 OPA/Rego files
 frameworks-oscal/ -- OSCAL catalog/profile JSON
-terraform/       -- 12 IaC modules
+terraform/       -- 142 IaC modules
 scripts/         -- Demo, QA gate, seed scripts
 ```
 

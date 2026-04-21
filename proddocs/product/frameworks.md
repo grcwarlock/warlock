@@ -271,11 +271,11 @@ The mapper reads every framework YAML, matches finding event types to control ch
 
 For each finding-to-control mapping, the four-tier assessment runs:
 
-1. **Tier 1** -- Deterministic assertions: 102 registered assertion functions check specific conditions (e.g., `mfa_enabled`, `no_open_security_groups`, `encryption_at_rest`). A control can have multiple assertions; all must pass for a compliant status.
+1. **Tier 1** -- Deterministic assertions: 147 registered assertion functions check specific conditions (e.g., `mfa_enabled`, `no_open_security_groups`, `encryption_at_rest`). A control can have multiple assertions; all must pass for a compliant status.
 
 2. **Tier 2** -- AI reasoning: If no assertion is available or the result is inconclusive, an LLM evaluates the finding against the control with full compliance context (compensating controls, risk acceptances, posture trends). A confidence floor (default 0.7) rejects unreliable assessments.
 
-3. **Tier 3** -- OPA Rego policies: 670 policy files across 8 frameworks provide automated policy-as-code evaluation.
+3. **Tier 3** -- OPA Rego policies: 731 policy files across 8 frameworks provide automated policy-as-code evaluation.
 
 4. **Tier 4** -- Control inheritance: If the control is still not assessed, and it is a child enhancement (e.g., AC-2(3)), it inherits the parent control's status (AC-2) with reduced confidence.
 

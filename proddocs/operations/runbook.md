@@ -52,7 +52,7 @@ The gate runs these checks in order. All must pass.
 | Check | What It Does |
 |-------|-------------|
 | OPA Policy Check | `opa check policies/` + `opa test policies/` (skipped if OPA not installed) |
-| Terraform Validate | `terraform validate` on all 12 modules (skipped if terraform not installed) |
+| Terraform Validate | `terraform validate` on all 142 modules (skipped if terraform not installed) |
 | Terraform Format | `terraform fmt -check -recursive terraform/` |
 | OSCAL JSON | Validates all JSON files in `frameworks-oscal/` parse correctly |
 | Framework YAML | Validates all YAMLs in `warlock/frameworks/` have valid v2 dict-based structure |

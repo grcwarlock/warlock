@@ -7,7 +7,7 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 | Document | Description |
 |----------|-------------|
 | [Architecture](technical/architecture.md) | System architecture — 4-stage pipeline, storage, security model |
-| [Data Model](technical/data-model.md) | 47-table schema, relationships, JSON columns, pipeline data flow |
+| [Data Model](technical/data-model.md) | 56-table schema, relationships, JSON columns, pipeline data flow |
 | [Data Lake](technical/data-lake.md) | GRC Data Lake — 3 zones, 10 domains, DuckDB, Iceberg, RAG |
 | [Security](technical/security.md) | Auth (JWT/API keys/MFA), ABAC, OPA, audit trail, GDPR |
 | [Data map & subprocessors](technical/data-map-subprocessors.md) | DDQ/DPA-oriented data categories and typical subprocessors |
@@ -25,15 +25,15 @@ Production documentation for the Warlock GRC platform. Updated as part of the QA
 
 | Document | Description |
 |----------|-------------|
-| [Connectors](features/connectors.md) | 352 source connectors across 39 categories |
+| [Connectors](features/connectors.md) | 362 source connectors across 39 categories |
 | [Assessment Engine](features/assessment-engine.md) | 4-tier assessment — assertions, AI, OPA, inheritance |
 
 ## API & CLI
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](api/reference.md) | 171 REST endpoints across 12 router files |
-| [CLI Reference](api/cli-reference.md) | 686 leaf commands across 73 modules |
+| [API Reference](api/reference.md) | 260 REST endpoints across 15 router files |
+| [CLI Reference](api/cli-reference.md) | 809 leaf commands across 98 modules |
 
 ## Operations
 
