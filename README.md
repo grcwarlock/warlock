@@ -1,17 +1,24 @@
 # Warlock
 
-**Pipeline-first GRC platform.** Compliance telemetry.
+> **Pipeline-first GRC platform.** Continuous compliance from your existing security telemetry — automatically.
+
+`Python 3.12+` · `FastAPI` · `SQLAlchemy 2.0` · `362 connectors` · `14 standards` · `1,996 controls` · `Proprietary`
+
+**Contents:** [Frameworks](#frameworks) · [Connectors](#connectors) · [Quick start](#quick-start) · [CLI](#cli) · [REST API](#rest-api) · [Security](#security) · [Configuration](#configuration) · [Architecture](#architecture) · [Database](#database) · [Tech stack](#tech-stack) · [Development](#development)
+
+---
 
 Evidence flows through 4 immutable stages with SHA-256 integrity hashing at every step:
 
 ```
-Stage 1: Connectors (362 sources) → RawEventData     → collect from cloud/EDR/IAM/SIEM APIs
-Stage 2: Normalizers (358 parsers) → FindingData       → transform to universal findings
-Stage 3: Control Mapper           → ControlMappingData → map to 1,996 controls across 14 frameworks
-Stage 4: Assessor (Tier 1 + Tier 2 + inheritance) → ControlResultData → deterministic assertions + optional AI reasoning + parent-to-child fallback
+Stage 1: Connectors (362)    → RawEventData    → collect from cloud / EDR / IAM / SIEM APIs
+Stage 2: Normalizers (358)   → FindingData     → transform vendor data to universal findings
+Stage 3: Control mapper      → ControlMapping  → map to 1,996 controls across 14 frameworks
+Stage 4: Tiered assessor     → ControlResult   → assertions → AI (optional) → inheritance
+                                SHA-256 hash chain at every transition — tamper-evident
 ```
 
-Every finding traces back to its raw API response. Every control result traces back to its finding. The hash-chained audit trail makes the entire chain tamper-evident.
+Every finding traces back to its raw API response. Every control result traces back to its finding. The hash-chained audit trail makes the entire chain independently verifiable.
 
 ## Frameworks
 
@@ -33,45 +40,45 @@ Every finding traces back to its raw API response. Every control result traces b
 | SEC Cyber | 20 | | SEC cybersecurity disclosure rules |
 | **Total** | **1,996** | **196** | Per-control monitoring frequencies (NIST 800-53A) |
 
-## Connectors (362)
+## Connectors
 
-**Cloud:** AWS, Azure, GCP, OCI, IBM Cloud, Alibaba, DigitalOcean, Huawei, OVH, Cloudflare, Linode/Akamai, Hetzner, Spot.io
-**EDR:** CrowdStrike, Microsoft Defender, SentinelOne, Sophos, Tanium
-**IAM:** Okta, Entra ID, CyberArk, SailPoint, HashiCorp Vault, JumpCloud, Auth0, Ping Identity, OneLogin
-**Scanners:** Tenable, Qualys, Wiz, Rapid7 InsightVM, CrowdStrike Spotlight, Vulcan Cyber, Nessus
-**CSPM:** Prisma Cloud, Orca Security, Lacework, Ermetic
-**SIEM:** Sentinel, Splunk, Elastic, Sumo Logic, LogRhythm
-**Network Security:** Palo Alto Networks, Fortinet FortiGate, Zscaler, Cisco Umbrella, Tailscale, Twingate, Banyan Security, Barracuda, F5 BIG-IP, Wallarm
-**HRIS:** Workday, BambooHR, Gusto, Rippling, ADP, UKG, SAP SuccessFactors, Paylocity
-**ITSM:** ServiceNow, ServiceNow GRC, ServiceNow CMDB, PagerDuty, Opsgenie, ManageEngine
-**Training:** KnowBe4
-**Code Security:** Snyk, Snyk Container, GitHub Advanced Security, Checkmarx, SonarQube, Semgrep, Trivy, GitGuardian, Veracode, FOSSA, Socket.dev, Chainguard, Syft/Grype
-**DLP:** Microsoft Purview, Netskope, Nightfall AI, Code42 Incydr, Varonis, Rubrik Security Cloud
-**Backup:** Veeam, AWS Backup, Commvault, Rubrik, Cohesity, Druva
-**MDM:** Microsoft Intune, Jamf, Kandji, VMware Workspace ONE, Microsoft WSUS/SCCM, Ivanti Patch, Automox, Fleet
-**MFA / Password:** Duo Security, 1Password, Bitwarden
-**Collaboration:** Slack, Google Workspace, Salesforce, Microsoft Teams Compliance, Zoom, Smarsh
-**DevOps:** GitLab, Jira, Ansible/AWX
-**Observability:** Datadog, New Relic, Grafana, Kubecost, Infracost
-**Cloud Threat:** AWS GuardDuty
-**Email Security:** Proofpoint, Abnormal Security, Exchange Online, Mimecast
-**GRC:** Confluence, OneTrust, Drata, Vanta, Archer, Secureframe
-**Privacy:** TrustArc, Cookiebot, Osano
-**Physical:** Verkada
-**Third-Party Risk:** SecurityScorecard, BitSight
-**Container:** Kubernetes, Aqua Security
-**Infrastructure:** Terraform Cloud
-**AI/ML:** MLflow, SageMaker, Databricks, Weights & Biases, Vertex AI
-**CI/CD:** Jenkins, GitHub Actions, GitLab CI, CircleCI
-**Secrets Management:** AWS Secrets Manager, Azure Key Vault, GCP Secret Manager
-**Certificate Management:** Venafi, AWS ACM, DigiCert CertCentral
-**Asset Discovery:** Axonius, runZero
-**API Security:** Salt Security, Noname Security, 42Crunch
-**Data Governance:** BigID
-**Pentest Platforms:** Cobalt, HackerOne, PlexTrac
-**Ingest:** Webhook (generic)
+362 source connectors. Vendors shown are representative — see [`proddocs/features/connectors.md`](proddocs/features/connectors.md) for the full inventory.
 
-## Quick Start
+| Category | Vendors |
+|---|---|
+| **Cloud** | AWS · Azure · GCP · OCI · IBM Cloud · Alibaba · DigitalOcean · Huawei · OVH · Cloudflare · Linode/Akamai · Hetzner · Spot.io |
+| **CSPM** | Prisma Cloud · Orca Security · Lacework · Ermetic |
+| **Containers** | Kubernetes · Aqua Security |
+| **Cloud threat** | AWS GuardDuty |
+| **Identity (IAM / MFA)** | Okta · Entra ID · CyberArk · SailPoint · HashiCorp Vault · JumpCloud · Auth0 · Ping Identity · OneLogin · Duo · 1Password · Bitwarden |
+| **EDR / endpoint** | CrowdStrike · Microsoft Defender · SentinelOne · Sophos · Tanium |
+| **MDM / patching** | Intune · Jamf · Kandji · Workspace ONE · WSUS/SCCM · Ivanti Patch · Automox · Fleet |
+| **Vulnerability scanners** | Tenable · Qualys · Wiz · Rapid7 InsightVM · CrowdStrike Spotlight · Vulcan Cyber · Nessus |
+| **Network security** | Palo Alto Networks · Fortinet · Zscaler · Cisco Umbrella · Tailscale · Twingate · Banyan · Barracuda · F5 BIG-IP · Wallarm |
+| **API security** | Salt Security · Noname Security · 42Crunch |
+| **SIEM** | Microsoft Sentinel · Splunk · Elastic · Sumo Logic · LogRhythm |
+| **Email security** | Proofpoint · Abnormal Security · Exchange Online · Mimecast |
+| **DLP** | Microsoft Purview · Netskope · Nightfall AI · Code42 Incydr · Varonis · Rubrik Security Cloud |
+| **Backup & DR** | Veeam · AWS Backup · Commvault · Rubrik · Cohesity · Druva |
+| **Code security** | Snyk · GitHub Advanced Security · Checkmarx · SonarQube · Semgrep · Trivy · GitGuardian · Veracode · FOSSA · Socket.dev · Chainguard · Syft/Grype |
+| **CI/CD & DevOps** | GitHub Actions · GitLab CI · Jenkins · CircleCI · GitLab · Jira · Ansible/AWX |
+| **Secrets / certificates** | AWS Secrets Manager · Azure Key Vault · GCP Secret Manager · Venafi · AWS ACM · DigiCert CertCentral |
+| **HRIS** | Workday · BambooHR · Gusto · Rippling · ADP · UKG · SAP SuccessFactors · Paylocity |
+| **Collaboration** | Slack · Google Workspace · Salesforce · MS Teams Compliance · Zoom · Smarsh |
+| **ITSM / alerting** | ServiceNow (Core, GRC, CMDB) · PagerDuty · Opsgenie · ManageEngine |
+| **Observability** | Datadog · New Relic · Grafana · Kubecost · Infracost |
+| **Asset discovery** | Axonius · runZero |
+| **Privacy / consent** | TrustArc · Cookiebot · Osano · BigID |
+| **GRC platforms** | OneTrust · Drata · Vanta · Archer · Secureframe · Confluence |
+| **Third-party risk** | SecurityScorecard · BitSight |
+| **Pentest platforms** | Cobalt · HackerOne · PlexTrac |
+| **AI / ML** | MLflow · SageMaker · Databricks · Weights & Biases · Vertex AI |
+| **Infrastructure** | Terraform Cloud |
+| **Physical** | Verkada |
+| **Training** | KnowBe4 |
+| **Generic ingest** | Webhook |
+
+## Quick start
 
 ```bash
 git clone https://github.com/grcwarlock/warlock.git && cd warlock
@@ -85,22 +92,22 @@ warlock                    # launches the Arcane Elegance TUI dashboard
 warlock --no-tui collect   # traditional CLI mode for scripting
 ```
 
-- TUI: type `warlock` after `make demo` — remediation-first dashboard with 20 screens, `Ctrl+K` command palette
-- API: http://localhost:8000/docs
-- Stop: kill the PIDs shown in the demo output
+- **TUI** — type `warlock` after `make demo` for the remediation-first dashboard with 20 screens and `Ctrl+K` command palette.
+- **API** — http://localhost:8000/docs
+- **Stop** — kill the PIDs shown in the demo output.
 
 Requires Python 3.12+. See **[DEMO.md](DEMO.md)** for full details.
 
-## CLI (809 leaf commands across 98 modules)
+## CLI
 
-Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete command dictionary.
+**809 leaf commands across 98 modules.** Warlock's CLI covers the full GRC lifecycle — see **[CLI-REFERENCE.md](CLI-REFERENCE.md)** for the complete dictionary.
 
 ### Highlights
 
 | Domain | Group | Commands | Description |
 |---|---|---|---|
 | **Pipeline** | `warlock collect`, `pipeline`, `automation` | 25 | Collect, normalize, map, assess, schedule, replay |
-| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health check all 361 connectors |
+| **Connectors** | `warlock connectors` | 23 | List, test, validate, collect, health-check all 361 connectors |
 | **Findings** | `warlock findings`, `vulns` | 23 | List, search, suppress, export, aging, SLA, trends |
 | **Compliance** | `warlock comply`, `frameworks`, `assertions` | 47 | Auto-map, gap analysis, readiness scores, maturity model |
 | **Incidents** | `warlock incidents` | 11 | Create, triage, timeline, post-mortem, MTTR metrics |
@@ -115,14 +122,14 @@ Warlock's CLI covers the full GRC lifecycle. See **[CLI-REFERENCE.md](CLI-REFERE
 | **Reports** | `warlock reports` | 16 | Executive, board, KRI, KPI, ConMon, SLA, audit-readiness |
 | **Dashboard** | `warlock dashboard` | 15 | Live terminal dashboard, KRI engine, posture, alerts |
 | **Correlation** | `warlock correlate` | 15 | Trace findings to controls, blast radius, gap analysis |
-| **Bulk Ops** | `warlock bulk` | 12 | Suppress, assign, close, deduplicate, reprocess at scale |
-| **AI-Powered** | `warlock ai-ops` | 18 | Explain, root-cause, predict, draft POA&Ms, classify |
-| **Lake Analytics** | `warlock lake-analytics` | 20 | SQL query, anomaly detection, trends, lineage, data quality |
+| **Bulk ops** | `warlock bulk` | 12 | Suppress, assign, close, deduplicate, reprocess at scale |
+| **AI-powered** | `warlock ai-ops` | 18 | Explain, root-cause, predict, draft POA&Ms, classify |
+| **Lake analytics** | `warlock lake-analytics` | 20 | SQL query, anomaly detection, trends, lineage, data quality |
 | **OSCAL** | `warlock oscal` | 8 | Catalogs, profiles, SSP, assessment results, POA&M export |
 | **Policies** | `warlock policies`, `policy` | 19 | OPA Rego management, lifecycle, review-due, coverage |
 | **Other** | `calendar`, `training`, `bcp`, `conmon`, `terraform`, `integrations` | 32 | Cross-domain calendar, BCP/DR, continuous monitoring |
 
-### Quick Examples
+### Quick examples
 
 ```bash
 # Pipeline
@@ -223,16 +230,18 @@ GET  /api/v1/audit-trail/verify # hash chain integrity check
 
 ## Security
 
-- **Authentication:** JWT (HS256) + API keys (SHA-256 hashed, scoped)
-- **Password hashing:** bcrypt (12 rounds) with PBKDF2 fallback (600K iterations)
-- **Account lockout:** 5 failed attempts = 30-minute lock, timing-oracle prevention
-- **Token revocation:** Per-user `token_valid_after` timestamp, logout endpoint
-- **RBAC:** 4 roles (admin, auditor, owner, viewer) with attribute-based scoping
-- **ABAC:** `allowed_frameworks`, `allowed_sources`, `allowed_control_families` per user
-- **Rate limiting:** Sliding window with per-endpoint differentiation (login: 10/min)
-- **Security headers:** HSTS, CSP, X-Frame-Options, nosniff, referrer policy
-- **Audit trail:** Hash-chained, append-only, tamper-evident with verification endpoint
-- **OPA integration:** Optional policy-as-code enforcement (fail-closed in production)
+| Layer | Implementation |
+|---|---|
+| **Authentication** | JWT (HS256) + API keys (SHA-256 hashed, scoped) |
+| **Password hashing** | bcrypt (12 rounds) with PBKDF2 fallback (600K iterations) |
+| **Account lockout** | 5 failed attempts → 30-minute lock, timing-oracle prevention |
+| **Token revocation** | Per-user `token_valid_after` timestamp, logout endpoint |
+| **RBAC** | 4 roles (admin, auditor, owner, viewer) with attribute-based scoping |
+| **ABAC** | `allowed_frameworks`, `allowed_sources`, `allowed_control_families` per user |
+| **Rate limiting** | Sliding window with per-endpoint differentiation (login: 10/min) |
+| **Security headers** | HSTS, CSP, X-Frame-Options, nosniff, referrer policy |
+| **Audit trail** | Hash-chained, append-only, tamper-evident with verification endpoint |
+| **OPA integration** | Optional policy-as-code enforcement (fail-closed in production) |
 
 ## Configuration
 
@@ -247,13 +256,13 @@ WLK_ENV=production                               # enforces security defaults
 # AI (optional — enables Tier 2 reasoning + narrative generation)
 WLK_AI_PROVIDER=ollama             # or anthropic, openai, gemini
 WLK_AI_API_KEY=your-api-key        # set via env var, never hardcode
-WLK_AI_MODEL=qwen3-coder:30b      # or claude-sonnet-4-20250514, gpt-4o
+WLK_AI_MODEL=qwen3-coder:30b       # or claude-sonnet-4-20250514, gpt-4o
 WLK_AI_BASE_URL=https://api.ollama.com  # or http://localhost:11434 for local
 WLK_AI_CONFIDENCE_FLOOR=0.7        # reject low-confidence AI assessments
 WLK_AI_TEMPERATURE=0.0             # deterministic for reproducibility
 
 # Queue backend (production)
-WLK_QUEUE_BACKEND=redis             # or kafka, sqs
+WLK_QUEUE_BACKEND=redis            # or kafka, sqs
 WLK_QUEUE_URL=redis://localhost:6379
 
 # Connectors (enable individually)
@@ -264,6 +273,28 @@ WLK_OKTA_API_TOKEN=...
 ```
 
 ## Architecture
+
+| Module | Purpose |
+|---|---|
+| **`warlock/connectors/`** | 362 source connectors (Stage 1) |
+| **`warlock/normalizers/`** | 358 normalizers — vendor data → universal `FindingData` (Stage 2) |
+| **`warlock/mappers/`** | Control mapping + crosswalking (Stage 3) |
+| **`warlock/assessors/`** | Tiered assessment — 147 deterministic assertions across 14 control families, optional AI reasoning, parent-to-child inheritance, posture, cadence, drift, FAIR risk |
+| **`warlock/pipeline/`** | 4-stage orchestrator, event bus, queue backends (Redis/Kafka/SQS), scheduler |
+| **`warlock/api/`** | FastAPI REST API, JWT + API keys + RBAC + ABAC, OPA policy gate, rate limiting |
+| **`warlock/cli/`** | Click CLI — 809 leaf commands across 98 modules |
+| **`warlock/tui/`** | Interactive Textual TUI (Arcane Elegance theme, 20 screens, command palette) |
+| **`warlock/db/`** | 56 SQLAlchemy models, hash-chained audit trail, Alembic migrations (19 revisions) |
+| **`warlock/lake/`** | GRC Data Lake (24 modules) — DuckDB + Parquet analytical layer with raw / enrichment / curated zones, RAG search, Iceberg catalog |
+| **`warlock/workflows/`** | POA&M, compensating controls, risk acceptance, GDPR (Articles 15-17), retention with legal holds |
+| **`warlock/export/`** | OSCAL 1.1.2 (AR / SSP / POA&M), audit evidence binder (ZIP), Slack/PagerDuty/webhook alerts |
+| **`warlock/frameworks/`** | 17 framework YAMLs (1,996 controls), 196 crosswalk edges |
+| **`warlock/integrations/`** | Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider |
+| **`warlock/platform/`** | Tenancy, white-label, delegation, sandbox, legacy/bulk import |
+| **`warlock/domains/`** | Domain service modules (registry, event bus, policy engine) |
+
+<details>
+<summary><b>Full source tree</b> (click to expand)</summary>
 
 ```
 warlock/
@@ -299,14 +330,14 @@ warlock/
 │   ├── readers.py        # DuckDB analytical queries with ABAC
 │   ├── zones.py          # Raw/enrichment/curated zone writers
 │   ├── domains.py        # 10 curated domain writers
-│   ├── query.py           # Embedded DuckDB query engine
+│   ├── query.py          # Embedded DuckDB query engine
 │   ├── rag.py            # TF-IDF semantic search over curated zone
 │   ├── catalog.py        # Iceberg table catalog
 │   ├── bridges.py        # 6 bridge table writers
 │   ├── scd.py            # SCD Type 2 dimension management
 │   ├── reconciliation.py # OLTP/lake row count + hash comparison
 │   ├── maintenance.py    # Compaction, snapshot expiry, orphan cleanup
-│   └── ...               # + 12 more (ask, backfill, batch_assessor, consumption, etc.)
+│   └── ...               # + 13 more (ask, backfill, batch_assessor, consumption, etc.)
 ├── db/
 │   ├── models.py         # 56 SQLAlchemy models
 │   ├── migrations/       # Alembic migration scripts (19 revisions)
@@ -317,7 +348,7 @@ warlock/
 │   ├── app.py            # FastAPI REST API
 │   ├── auth.py           # JWT + API keys + RBAC + account lockout
 │   ├── deps.py           # Auth dependencies + ABAC scoping
-│   ├── middleware.py      # Rate limiting, security headers, audit logging
+│   ├── middleware.py     # Rate limiting, security headers, audit logging
 │   ├── policy_gate.py    # OPA policy enforcement
 │   └── trust_portal.py   # Public trust portal
 ├── workflows/
@@ -343,42 +374,48 @@ warlock/
 │   ├── crosswalks.yaml   # 196 crosswalk edges
 │   └── diff.py           # Framework version comparison
 ├── config.py             # Pydantic settings (WLK_* env vars)
-├── domains/          # 7 domain service modules (registry, event bus, policy engine)
-├── integrations/     # Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
-├── platform/         # Tenancy, white-label, delegation, sandbox, legacy/bulk import
-└── cli/              # Click CLI package (809 leaf commands, 98 modules)
+├── domains/              # 7 domain service modules (registry, event bus, policy engine)
+├── integrations/         # Jira, ServiceNow, Teams, STIX/TAXII, Terraform provider
+├── platform/             # Tenancy, white-label, delegation, sandbox, legacy/bulk import
+└── cli/                  # Click CLI package (809 leaf commands, 98 modules)
 ```
+
+</details>
 
 ## Database
 
-56 tables (schema managed via Alembic migrations in `warlock/db/migrations/`):
+56 tables managed via Alembic migrations in `warlock/db/migrations/`.
 
-**Core pipeline:** ConnectorRun, RawEvent, Finding, ControlMapping, ControlResult
-**Governance:** POAM, CompensatingControl, RiskAcceptance, ControlInheritance, SystemDependency
-**Intelligence:** ChangeEvent, ComplianceDrift, PostureSnapshot
-**Operations:** Issue, IssueComment, AuditEntry, AuditEngagement, Attestation, AuditComment
-**Identity:** User, APIKey, ExternalAuditor, AuditorEngagementAssignment, EvidenceRequest
-**Assets:** SystemProfile, Personnel, DataSilo, LegalHold, TrustAccessRequest, TrustDocument
-**Configuration:** QuestionnaireTemplate, Questionnaire, RiskAnalysis, PolicyOverride
-**Domain Architecture:** Policy, PolicyHistory, Asset, Vendor
-**Operational:** Alert, Remediation, PipelineRun
-**Search:** Embedding
-**Platform:** WatchSubscription, EscalationPolicy, SavedQuery, IPAllowlistEntry, RiskDependency
+| Domain | Tables |
+|---|---|
+| **Core pipeline** | ConnectorRun · RawEvent · Finding · ControlMapping · ControlResult |
+| **Governance** | POAM · CompensatingControl · RiskAcceptance · ControlInheritance · SystemDependency |
+| **Intelligence** | ChangeEvent · ComplianceDrift · PostureSnapshot |
+| **Operations** | Issue · IssueComment · AuditEntry · AuditEngagement · Attestation · AuditComment |
+| **Identity** | User · APIKey · ExternalAuditor · AuditorEngagementAssignment · EvidenceRequest |
+| **Assets** | SystemProfile · Personnel · DataSilo · LegalHold · TrustAccessRequest · TrustDocument |
+| **Configuration** | QuestionnaireTemplate · Questionnaire · RiskAnalysis · PolicyOverride |
+| **Domain architecture** | Policy · PolicyHistory · Asset · Vendor |
+| **Operational** | Alert · Remediation · PipelineRun |
+| **Search** | Embedding |
+| **Platform** | WatchSubscription · EscalationPolicy · SavedQuery · IPAllowlistEntry · RiskDependency |
 
-## Tech Stack
+## Tech stack
 
-- **Language:** Python 3.12+
-- **Framework:** FastAPI + Uvicorn
-- **ORM:** SQLAlchemy 2.0 + Alembic
-- **Database:** SQLite (dev), PostgreSQL (prod) — generic JSON maps to JSONB
-- **Queue:** Redis Streams / Kafka / SQS (pluggable)
-- **Data Lake:** DuckDB + PyArrow + Parquet (analytical layer)
-- **AI:** Anthropic, OpenAI, Gemini, Ollama (optional Tier 2 + narrative generation)
-- **CLI:** Click + Rich, **TUI:** Textual (Arcane Elegance theme)
-- **Validation:** Pydantic 2.0
-- **HTTP:** httpx (async-capable)
-- **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + Recharts
-- **CI/CD:** GitHub Actions (lint + test)
+| Layer | Technology |
+|---|---|
+| Language | Python 3.12+ |
+| Web framework | FastAPI + Uvicorn |
+| ORM / migrations | SQLAlchemy 2.0 + Alembic |
+| Databases | SQLite (dev) · PostgreSQL (prod, JSON → JSONB) |
+| Queue | Redis Streams · Kafka · SQS (pluggable) |
+| Data lake | DuckDB + PyArrow + Parquet |
+| AI providers | Anthropic · OpenAI · Gemini · Ollama (optional) |
+| CLI / TUI | Click + Rich · Textual (Arcane Elegance theme) |
+| Validation | Pydantic 2.0 |
+| HTTP client | httpx (async-capable) |
+| Frontend | React 18 + TypeScript + Vite + shadcn/ui + Tailwind + Recharts |
+| CI / CD | GitHub Actions (lint + test + compliance gate) |
 
 ## Development
 
