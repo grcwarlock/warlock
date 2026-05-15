@@ -6,7 +6,6 @@ Mirrors the warlock/cli/incidents_cmd.py patterns.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -17,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from warlock.api.deps import apply_framework_scope, get_db, get_pagination, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
-from warlock.db.models import AuditEntry, Issue, User
+from warlock.db.models import Issue, User
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -174,26 +173,16 @@ def create_incident(
     )
     db.add(issue)
 
-    # Audit entry
-    last = db.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-    actor = f"api:{current_user.email}"
-    payload = f"{seq}:{prev_hash}:incident_created:{issue_id}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
-    audit = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    actor = f"api:{current_user.email}"
+    AuditTrail(db).record(
         action="incident_created",
         entity_type="issue",
         entity_id=issue_id,
         actor=actor,
-        created_at=now,
     )
-    db.add(audit)
 
     return IncidentResponse(
         id=issue.id,
@@ -287,27 +276,17 @@ def transition_incident(
     if req.status in ("closed",):
         issue.closed_at = now
 
-    # Audit entry for transition
-    last = db.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-    actor = f"api:{current_user.email}"
-    payload = f"{seq}:{prev_hash}:incident_transition:{issue.id}:{old_status}->{req.status}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
-    audit = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    actor = f"api:{current_user.email}"
+    AuditTrail(db).record(
         action="incident_transition",
         entity_type="issue",
         entity_id=issue.id,
         actor=actor,
-        extra={"from": old_status, "to": req.status, "notes": req.notes},
-        created_at=now,
+        metadata={"from": old_status, "to": req.status, "notes": req.notes},
     )
-    db.add(audit)
 
     return IncidentResponse(
         id=issue.id,

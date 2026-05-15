@@ -12,7 +12,6 @@ Statuses: pending -> assessed -> addressed | dismissed
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -30,12 +29,9 @@ _VALID_STATUSES = frozenset({"pending", "assessed", "addressed", "dismissed"})
 _VALID_IMPACT_LEVELS = frozenset({"critical", "high", "medium", "low", "informational"})
 
 
-def _make_hash(payload: str) -> str:
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def _next_sequence(session: Session) -> int:
-    return (session.query(func.max(AuditEntry.sequence)).scalar() or 0) + 1
+# SEC-C4: ``_make_hash`` / ``_next_sequence`` produced a hash format that
+# did not match :meth:`AuditTrail.verify_chain`. Routing writes through
+# ``AuditTrail.record()`` instead.
 
 
 def _parse_change_from_entry(entry: AuditEntry) -> dict[str, Any]:
@@ -121,19 +117,15 @@ class RegulatoryChangeManager:
             "created_at": now_iso,
         }
 
-        entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=_next_sequence(session),
-            previous_hash="genesis",
-            entry_hash=_make_hash(f"{change_id}:{title}:{framework}:{effective_date}"),
+        from warlock.db.audit import AuditTrail
+
+        entry = AuditTrail(session).record(
             action="regulatory_change",
             entity_type="regulatory_change",
             entity_id=change_id,
             actor=actor,
-            extra=extra,
+            metadata=extra,
         )
-        session.add(entry)
-        session.flush()
 
         log.info(
             "Created regulatory change %s: %s (framework=%s, impact=%s)",
@@ -248,24 +240,20 @@ class RegulatoryChangeManager:
             "assessed_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        # Record the assessment as a new audit entry
-        assessment_entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=_next_sequence(session),
-            previous_hash="genesis",
-            entry_hash=_make_hash(f"{change_id}:assess:{actor}"),
+        # Record the assessment as a new canonical audit entry.
+        from warlock.db.audit import AuditTrail
+
+        AuditTrail(session).record(
             action="regulatory_change",
             entity_type="regulatory_change",
             entity_id=change_id,
             actor=actor,
-            extra={
+            metadata={
                 **extra,
                 "status": "assessed",
                 "impact_assessment": assessment,
             },
         )
-        session.add(assessment_entry)
-        session.flush()
 
         log.info(
             "Assessed regulatory change %s: %d controls, %d systems affected",
@@ -361,17 +349,15 @@ class RegulatoryChangeManager:
         extra = entry.extra or {}
         now_iso = datetime.now(timezone.utc).isoformat()
 
-        # Create a new entry reflecting the addressed status
-        addressed_entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=_next_sequence(session),
-            previous_hash="genesis",
-            entry_hash=_make_hash(f"{change_id}:addressed:{actor}:{now_iso}"),
+        # Create a new canonical entry reflecting the addressed status.
+        from warlock.db.audit import AuditTrail
+
+        addressed_entry = AuditTrail(session).record(
             action="regulatory_change",
             entity_type="regulatory_change",
             entity_id=change_id,
             actor=actor,
-            extra={
+            metadata={
                 **extra,
                 "status": "addressed",
                 "addressed_by": actor,
@@ -379,8 +365,6 @@ class RegulatoryChangeManager:
                 "addressed_notes": notes,
             },
         )
-        session.add(addressed_entry)
-        session.flush()
 
         log.info(
             "Marked regulatory change %s as addressed by %s",

@@ -8,8 +8,6 @@ notification deadlines (GDPR 72h, SEC 4 business days).
 
 from __future__ import annotations
 
-import hashlib
-import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -546,7 +544,6 @@ class PlaybookLibrary:
 
         Returns a dict with execution details.
         """
-        from warlock.db.models import AuditEntry
 
         playbook = self._playbooks.get(playbook_type)
         if not playbook:
@@ -564,23 +561,15 @@ class PlaybookLibrary:
         step = phase["steps"][step_index]
         now = datetime.now(timezone.utc)
 
-        # Record in audit trail
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:playbook_step_completed:{incident_id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: Record in canonical hash-chained audit trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        entry = AuditTrail(session).record(
             action="playbook_step_completed",
             entity_type="issue",
             entity_id=incident_id,
             actor=actor,
-            extra={
+            metadata={
                 "playbook_type": playbook_type,
                 "phase_index": phase_index,
                 "phase_name": phase["name"],
@@ -588,10 +577,7 @@ class PlaybookLibrary:
                 "step_role": step["role"],
                 "step_action": step["action"],
             },
-            created_at=now,
         )
-        session.add(audit)
-        session.flush()
 
         return {
             "playbook_type": playbook_type,
@@ -600,7 +586,7 @@ class PlaybookLibrary:
             "role": step["role"],
             "completed_by": actor,
             "completed_at": now.isoformat(),
-            "audit_sequence": seq,
+            "audit_sequence": entry.sequence,
         }
 
     def get_progress(

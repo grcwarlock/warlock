@@ -367,7 +367,6 @@ def conmon_significant_change(
     import os
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     if actor:
         os.environ["WLK_CLI_ACTOR"] = actor
@@ -378,25 +377,16 @@ def conmon_significant_change(
 
     init_db()
     with get_session() as session:
-        # Store as an audit entry
-        last_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        seq = (last_entry.sequence + 1) if last_entry else 1
-        prev_hash = last_entry.entry_hash if last_entry else "genesis"
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        import hashlib
-
-        payload = f"{seq}:{prev_hash}:significant_change:conmon:{actor_name}:{title}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
-
-        audit = AuditEntry(
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        entry = AuditTrail(session).record(
             action="significant_change",
             entity_type="conmon",
-            entity_id=f"sigchange-{seq}",
+            # Use a placeholder entity_id; AuditTrail allocates the sequence.
+            entity_id="sigchange",
             actor=actor_name,
-            extra={
+            metadata={
                 "title": title,
                 "description": description,
                 "system": system,
@@ -404,7 +394,7 @@ def conmon_significant_change(
                 "recorded_at": now.isoformat(),
             },
         )
-        session.add(audit)
+        seq = entry.sequence
         session.commit()
 
     console.print("[green]Significant change recorded:[/green]")

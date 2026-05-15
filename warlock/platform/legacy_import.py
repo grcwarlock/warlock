@@ -23,6 +23,16 @@ log = logging.getLogger(__name__)
 _MAX_FILE_SIZE_MB = 100
 _MAX_FILE_SIZE_BYTES = _MAX_FILE_SIZE_MB * 1024 * 1024
 
+
+def _is_relative_to(p: Path, root: Path) -> bool:
+    """Backport of ``Path.is_relative_to`` for portability across Python versions."""
+    try:
+        p.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
 # Archer XML tag mapping -> Warlock finding fields.
 _ARCHER_FIELD_MAP: dict[str, str] = {
     "FindingID": "external_id",
@@ -331,10 +341,38 @@ class LegacyImporter:
 
     @staticmethod
     def _validate_path(filepath: str) -> Path:
-        """Validate that the file exists and is within size limits."""
-        path = Path(filepath).resolve()
+        """Validate file existence + size + bounded location.
+
+        SEC-C10: previously the importer ``open``'d any resolved path on the
+        filesystem, so an attacker who could control ``filepath`` (a future
+        API endpoint accepting JSON, a CLI flag, etc.) could read
+        ``/etc/passwd``, ``~/.aws/credentials``, or the SQLite DB. Now the
+        resolved path must live under an allowed root (CWD, ``$TMPDIR``, or
+        any directory listed in ``WLK_IMPORT_ALLOWED_ROOTS``) and must not
+        be a symlink.
+        """
+        raw = Path(filepath)
+        if raw.is_symlink():
+            raise ValueError(f"Symlinked import paths are not permitted: {filepath}")
+        path = raw.resolve(strict=False)
         if not path.is_file():
             raise FileNotFoundError(f"File not found: {filepath}")
+
+        # Compute the set of allowed roots. Operators can extend via env.
+        import os as _os
+        import tempfile
+
+        allowed_roots: list[Path] = [Path.cwd().resolve(), Path(tempfile.gettempdir()).resolve()]
+        extra = _os.environ.get("WLK_IMPORT_ALLOWED_ROOTS", "").strip()
+        if extra:
+            allowed_roots.extend(Path(p.strip()).resolve() for p in extra.split(":") if p.strip())
+
+        if not any(_is_relative_to(path, root) for root in allowed_roots):
+            raise ValueError(
+                f"Import path is outside allowed roots: {filepath} "
+                f"(set WLK_IMPORT_ALLOWED_ROOTS to widen the allowlist)"
+            )
+
         size = path.stat().st_size
         if size > _MAX_FILE_SIZE_BYTES:
             raise ValueError(

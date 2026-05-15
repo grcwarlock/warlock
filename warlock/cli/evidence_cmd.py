@@ -229,7 +229,7 @@ def evidence_attach(control_id: str, file_path: str, description: str) -> None:
     from pathlib import Path
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, ControlResult
+    from warlock.db.models import ControlResult
 
     path = Path(file_path)
     if not path.exists():
@@ -237,7 +237,6 @@ def evidence_attach(control_id: str, file_path: str, description: str) -> None:
 
     init_db()
     actor = _get_actor()
-    now = datetime.now(timezone.utc)
 
     # Compute file hash
     file_hash = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -261,24 +260,16 @@ def evidence_attach(control_id: str, file_path: str, description: str) -> None:
         ev_ids.append(ev_ref)
         result.evidence_ids = ev_ids
 
-        # Audit trail
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:evidence_attached:{result.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="evidence_attached",
             entity_type="control_result",
             entity_id=result.id,
             actor=actor,
             evidence_sha256=file_hash,
-            extra={
+            metadata={
                 "evidence_ref": ev_ref,
                 "file": str(path.name),
                 "description": description,
@@ -286,9 +277,7 @@ def evidence_attach(control_id: str, file_path: str, description: str) -> None:
                 "control_id": control_id,
                 "framework": result.framework,
             },
-            created_at=now,
         )
-        session.add(audit)
         session.commit()
 
     console.print(
@@ -921,7 +910,7 @@ def requests_create(control: str, description: str, due_date: str | None) -> Non
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, ControlResult, EvidenceRequest
+    from warlock.db.models import ControlResult, EvidenceRequest
 
     init_db()
     actor = _get_actor()
@@ -958,28 +947,16 @@ def requests_create(control: str, description: str, due_date: str | None) -> Non
         )
         session.add(req)
 
-        # Audit
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        import hashlib
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        payload = f"{seq}:{prev_hash}:evidence_request_created:{req.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
-
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="evidence_request_created",
             entity_type="evidence_request",
             entity_id=req.id,
             actor=actor,
-            extra={"control_id": control, "framework": framework, "due_date": due_date},
-            created_at=now,
+            metadata={"control_id": control, "framework": framework, "due_date": due_date},
         )
-        session.add(audit)
         session.commit()
 
         console.print(
@@ -1039,7 +1016,7 @@ def requests_fulfill(request_id: str, file_path: str | None, notes: str | None) 
     from pathlib import Path
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, EvidenceRequest
+    from warlock.db.models import EvidenceRequest
 
     init_db()
     actor = _get_actor()
@@ -1070,31 +1047,21 @@ def requests_fulfill(request_id: str, file_path: str | None, notes: str | None) 
             ev_ids.append(str(uuid.uuid4()))
             req.evidence_ids = ev_ids
 
-        # Audit
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:evidence_request_fulfilled:{req.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="evidence_request_fulfilled",
             entity_type="evidence_request",
             entity_id=req.id,
             actor=actor,
             evidence_sha256=file_hash,
-            extra={
+            metadata={
                 "notes": notes,
                 "file_sha256": file_hash,
                 "file": file_path,
             },
-            created_at=now,
         )
-        session.add(audit)
         session.commit()
 
     console.print(f"[green]Evidence request {request_id[:8]} fulfilled.[/green]")

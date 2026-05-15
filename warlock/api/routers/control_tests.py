@@ -5,7 +5,6 @@ Mirrors warlock/cli/control_tests_cmd.py using ControlResult model.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -21,7 +20,7 @@ from warlock.api.deps import (
     require_permission,
 )
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
-from warlock.db.models import AuditEntry, ControlResult, User
+from warlock.db.models import ControlResult, User
 from warlock.utils import ensure_aware
 
 router = APIRouter()
@@ -146,27 +145,17 @@ def record_control_test(
     )
     db.add(result)
 
-    # Audit entry
-    last = db.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-    actor = f"api:{current_user.email}"
-    payload = f"{seq}:{prev_hash}:control_test:{result_id}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
-    audit = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    actor = f"api:{current_user.email}"
+    AuditTrail(db).record(
         action="control_tested",
         entity_type="control_result",
         entity_id=result_id,
         actor=actor,
-        extra={"notes": req.notes},
-        created_at=now,
+        metadata={"notes": req.notes},
     )
-    db.add(audit)
 
     return ControlTestResponse(
         id=result.id,

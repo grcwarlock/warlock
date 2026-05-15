@@ -7,9 +7,6 @@ Top-level command:
 
 from __future__ import annotations
 
-import hashlib
-import json
-import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -36,28 +33,23 @@ def _write_audit_entry(
     actor: str,
     extra: dict,
 ) -> None:
-    """Append a hash-chained audit entry for a training workflow action."""
-    from warlock.db.models import AuditEntry
+    """Append a hash-chained audit entry for a training workflow action.
 
-    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
+    SEC-C4: delegates to ``AuditTrail.record`` so the entry's ``entry_hash``
+    matches the canonical content-hash format used by
+    :meth:`AuditTrail.verify_chain`. The previous hand-rolled hash format
+    ``hashlib.sha256(prev:payload)`` produced rows that always failed
+    chain verification.
+    """
+    from warlock.db.audit import AuditTrail
 
-    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
-    entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-    entry = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    AuditTrail(session).record(
         action=action,
         entity_type="personnel",
         entity_id=entity_id,
         actor=actor,
-        extra=extra,
+        metadata=extra,
     )
-    session.add(entry)
     session.commit()
 
 

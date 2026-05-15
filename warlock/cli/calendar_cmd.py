@@ -9,7 +9,6 @@ from every GRC domain.
 from __future__ import annotations
 
 import csv
-import hashlib
 import io
 import json
 import uuid
@@ -36,16 +35,9 @@ def _parse_date(value: str) -> datetime:
     return dt.replace(tzinfo=timezone.utc)
 
 
-def _make_hash(payload: str) -> str:
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def _next_sequence(session) -> int:
-    from sqlalchemy import func
-
-    from warlock.db.models import AuditEntry
-
-    return (session.query(func.max(AuditEntry.sequence)).scalar() or 0) + 1
+# SEC-C4: prior ``_make_hash`` / ``_next_sequence`` helpers produced a hash
+# format that did not match :meth:`AuditTrail.verify_chain`. Removed in
+# favour of routing every audit write through ``AuditTrail.record()``.
 
 
 # ---------------------------------------------------------------------------
@@ -456,8 +448,8 @@ def calendar_list(item_type: str | None, since: str | None, until: str | None, f
 )
 def calendar_add(title: str, item_type: str, due_date: str, recurring: str | None) -> None:
     """Add a compliance calendar item."""
+    from warlock.db.audit import AuditTrail
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     due_dt = _parse_date(due_date)
     init_db()
@@ -465,16 +457,12 @@ def calendar_add(title: str, item_type: str, due_date: str, recurring: str | Non
     item_id = uuid.uuid4().hex
 
     with get_session() as session:
-        entry = AuditEntry(
-            id=uuid.uuid4().hex,
-            sequence=_next_sequence(session),
-            previous_hash="genesis",
-            entry_hash=_make_hash(f"{item_id}:{title}:{due_date}"),
+        AuditTrail(session).record(
             action="calendar_item",
             entity_type="calendar",
             entity_id=item_id,
             actor=actor,
-            extra={
+            metadata={
                 "title": title,
                 "type": item_type,
                 "due_date": due_dt.isoformat(),
@@ -483,7 +471,6 @@ def calendar_add(title: str, item_type: str, due_date: str, recurring: str | Non
                 "created_at": datetime.now(timezone.utc).isoformat(),
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Calendar item added:[/green] [cyan]{item_id[:8]}[/cyan]")
@@ -598,6 +585,9 @@ def calendar_export(fmt: str, output: str | None) -> None:
     all_items.sort(key=lambda x: x["due_date"])
 
     if fmt == "csv":
+        # SEC-C11: neutralize spreadsheet formula prefixes.
+        from warlock.utils.csv_safety import neutralize_row
+
         buf = io.StringIO()
         writer = csv.DictWriter(
             buf, fieldnames=["id", "source", "type", "title", "due_date", "detail"]
@@ -605,14 +595,16 @@ def calendar_export(fmt: str, output: str | None) -> None:
         writer.writeheader()
         for i in all_items:
             writer.writerow(
-                {
-                    "id": i["id"],
-                    "source": i["source"],
-                    "type": i["type"],
-                    "title": i["title"],
-                    "due_date": _format_due(i["due_date"]),
-                    "detail": i.get("detail", ""),
-                }
+                neutralize_row(
+                    {
+                        "id": i["id"],
+                        "source": i["source"],
+                        "type": i["type"],
+                        "title": i["title"],
+                        "due_date": _format_due(i["due_date"]),
+                        "detail": i.get("detail", ""),
+                    }
+                )
             )
         content = buf.getvalue()
         if output:

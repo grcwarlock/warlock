@@ -406,8 +406,17 @@ class TemporalPackager:
         Returns:
             CSV string.
         """
+        # SEC-C11: neutralize spreadsheet formula prefixes via a writer adapter.
+        from warlock.utils.csv_safety import neutralize_list
+
         output = io.StringIO()
-        writer = csv.writer(output)
+        _raw_writer = csv.writer(output)
+
+        class _SafeWriter:
+            def writerow(self, row):
+                _raw_writer.writerow(neutralize_list(list(row)))
+
+        writer = _SafeWriter()
 
         # Header
         writer.writerow(

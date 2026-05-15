@@ -15,7 +15,14 @@ class Settings(BaseSettings):
     pgbouncer_mode: bool = False  # When True: pool_size=1, max_overflow=0, no prepared stmts
 
     # Multi-tenancy
-    multi_tenancy_enabled: bool = False  # When True, all queries are tenant-scoped
+    # SEC-C8: default ON. When True, all SELECT/UPDATE/DELETE statements
+    # against tenant-scoped tables are filtered by current_tenant_id.
+    # Set WLK_MULTI_TENANCY_ENABLED=false ONLY for single-tenant deployments
+    # where tenant scoping would add overhead without benefit (e.g. a
+    # developer's local single-account install). Multi-tenant SaaS MUST
+    # leave this enabled — disabling lets a tenant read/mutate another
+    # tenant's rows by guessing UUIDs.
+    multi_tenancy_enabled: bool = True
     default_tenant_id: str = "00000000-0000-0000-0000-000000000000"  # System tenant
     tenant_jwt_claim: str = "tenant_id"  # JWT claim that holds the tenant identifier
 
@@ -438,6 +445,12 @@ class Settings(BaseSettings):
     sso_client_id: str = ""
     sso_client_secret: str = ""
     sso_callback_url: str = "/api/v1/auth/sso/callback"
+    # SEC-C3: server-side allowlist of absolute ``redirect_uri`` values
+    # accepted from the ``/auth/sso/login`` query parameter. The relative
+    # default ``sso_callback_url`` is always implicitly allowed. Any
+    # absolute URL passed by the client MUST exact-match one of these.
+    # Format: comma-separated list. Set via ``WLK_SSO_ALLOWED_REDIRECT_URIS``.
+    sso_allowed_redirect_uris: str = ""
     sso_auto_create_users: bool = True  # auto-create user on first SSO login
     sso_default_role: str = "viewer"  # role for auto-created SSO users
     # IdP claim holding groups/roles (e.g. "groups", "roles"). Empty = use sso_default_role only.

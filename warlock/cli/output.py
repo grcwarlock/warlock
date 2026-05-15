@@ -185,7 +185,18 @@ def render_csv(
 
 
 def _plain(value: Any) -> str:
-    """Convert a value to a plain string suitable for CSV."""
+    """Convert a value to a plain string suitable for CSV.
+
+    SEC-C11: prefix dangerous formula-injection characters (``=``, ``+``,
+    ``-``, ``@``, ``\\t``, ``\\r``) with a single quote so spreadsheets
+    render the cell as text instead of evaluating it as a formula. Every
+    CSV produced via ``_render_csv`` / ``render_csv`` flows through this
+    function, so the fix covers all CLI CSV exports in one place.
+    """
+    from warlock.utils.csv_safety import neutralize_csv_value
+
     if value is None:
         return ""
-    return str(value)
+    s = str(value)
+    out = neutralize_csv_value(s)
+    return out if isinstance(out, str) else str(out)

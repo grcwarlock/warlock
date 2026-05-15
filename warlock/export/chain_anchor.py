@@ -6,6 +6,7 @@ so an external party can verify the audit chain has not been tampered with.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -15,6 +16,31 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from warlock.db.models import AuditEntry
+
+
+def _recompute_entry_hash(entry: AuditEntry) -> str:
+    """Recompute the canonical content hash for an AuditEntry row.
+
+    Must stay byte-identical to ``AuditTrail.record()`` and
+    ``AuditTrail.verify_chain()`` (``warlock/db/audit.py``). Used by the
+    anchor verifier so a row whose ``entry_hash`` column was tampered
+    without touching ``previous_hash`` linkage is still detected.
+    """
+    content = json.dumps(
+        {
+            "sequence": int(entry.sequence),
+            "previous_hash": entry.previous_hash,
+            "action": entry.action,
+            "entity_type": entry.entity_type,
+            "entity_id": entry.entity_id,
+            "actor": entry.actor,
+            "evidence_sha256": entry.evidence_sha256 or "",
+        },
+        sort_keys=True,
+        default=str,
+    )
+    return hashlib.sha256(content.encode()).hexdigest()
+
 
 log = logging.getLogger(__name__)
 
@@ -103,21 +129,42 @@ class ChainAnchor:
                 "stored": stored,
             }
 
-        match = entry.entry_hash == stored["chain_head"]
+        # SEC-C7: Recompute the content hash from the row's columns rather
+        # than trusting ``entry.entry_hash``. An attacker with DB write
+        # access who modifies ``action``/``entity_id``/``actor``/``extra``/
+        # ``evidence_sha256`` *and* updates ``entry_hash`` to match the new
+        # content would still be caught by chain-link verification; but an
+        # attacker who modifies *only* the content fields and leaves
+        # ``entry_hash`` alone was previously not detected by this anchor.
+        recomputed = _recompute_entry_hash(entry)
+        stored_matches_db = entry.entry_hash == stored["chain_head"]
+        recomputed_matches_db = recomputed == entry.entry_hash
+        match = stored_matches_db and recomputed_matches_db
+
         result: dict[str, object] = {
             "valid": match,
             "stored_hash": stored["chain_head"],
             "current_hash": entry.entry_hash,
+            "recomputed_hash": recomputed,
             "sequence": stored["sequence"],
             "verified_at": datetime.now(timezone.utc).isoformat(),
         }
         if not match:
-            result["error"] = "Hash mismatch — chain may have been tampered with"
+            if not stored_matches_db:
+                err = "Anchor mismatch — chain head differs from stored value"
+            else:
+                err = (
+                    "Hash mismatch — row content does not produce the stored "
+                    "entry_hash (entry_hash column was tampered or content was "
+                    "modified without rehashing)"
+                )
+            result["error"] = err
             log.warning(
-                "Chain anchor verification FAILED at seq=%d: stored=%s current=%s",
+                "Chain anchor verification FAILED at seq=%d: stored=%s db=%s recomputed=%s",
                 stored["sequence"],
                 stored["chain_head"][:16],
                 entry.entry_hash[:16],
+                recomputed[:16],
             )
         else:
             log.info(

@@ -17,7 +17,6 @@ Commands registered on the CLI:
 
 from __future__ import annotations
 
-import hashlib
 import uuid as _uuid_mod
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -137,7 +136,7 @@ def _create_poam_for_result(session: Any, result: Any, actor: str) -> Any:
 
 def _create_exception_for_control(session: Any, framework: str, control_id: str, actor: str) -> str:
     """Create a minimal policy exception (PolicyOverride + AuditEntry) and return its ID."""
-    from warlock.db.models import AuditEntry, PolicyOverride
+    from warlock.db.models import PolicyOverride
 
     override = PolicyOverride(
         name=f"Exception: {framework}/{control_id}",
@@ -153,21 +152,17 @@ def _create_exception_for_control(session: Any, framework: str, control_id: str,
     session.add(override)
     session.flush()
 
-    seq: int = session.query(AuditEntry).count() + 1
-    payload = f"{override.id}:policy_exception:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
     expiry = (datetime.now(timezone.utc) + timedelta(days=90)).date().isoformat()
 
-    audit = AuditEntry(
-        sequence=seq,
-        previous_hash="genesis",
-        entry_hash=entry_hash,
+    AuditTrail(session).record(
         action="policy_exception",
         entity_type="exception",
         entity_id=override.id,
         actor=actor,
-        extra={
+        metadata={
             "framework": framework,
             "control_id": control_id,
             "status": "active",
@@ -176,7 +171,6 @@ def _create_exception_for_control(session: Any, framework: str, control_id: str,
             "approved_by": actor,
         },
     )
-    session.add(audit)
     session.commit()
     return override.id
 

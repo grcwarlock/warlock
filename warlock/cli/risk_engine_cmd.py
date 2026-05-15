@@ -59,34 +59,26 @@ def _store_record(
     payload: dict,
     actor: str,
 ) -> None:
-    """Persist a risk register / appetite / treatment record as an AuditEntry."""
+    """Persist a risk register / appetite / treatment record as an AuditEntry.
+
+    SEC-C4: routes through ``AuditTrail.record`` so the canonical content
+    hash is used. The prior hand-rolled format failed ``verify_chain``.
+    """
     import hashlib
 
-    from warlock.db.models import AuditEntry
+    from warlock.db.audit import AuditTrail
 
     blob = json.dumps(payload, sort_keys=True, default=str).encode()
     evidence_sha256 = hashlib.sha256(blob).hexdigest()
 
-    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    sequence = (last.sequence + 1) if last else 1
-
-    chain_blob = f"{prev_hash}{sequence}{action}{entity_type}{record_id}{actor}".encode()
-    entry_hash = hashlib.sha256(chain_blob).hexdigest()
-
-    entry = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=sequence,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    AuditTrail(session).record(
         action=action,
         entity_type=entity_type,
         entity_id=record_id,
         actor=actor,
         evidence_sha256=evidence_sha256,
-        extra=payload,
+        metadata=payload,
     )
-    session.add(entry)
     session.commit()
 
 

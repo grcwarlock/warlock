@@ -7,7 +7,6 @@ compliance checks for cross-team GRC collaboration.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from collections import defaultdict
@@ -30,16 +29,9 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _make_hash(payload: str) -> str:
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def _next_sequence(session) -> int:
-    from sqlalchemy import func
-
-    from warlock.db.models import AuditEntry
-
-    return (session.query(func.max(AuditEntry.sequence)).scalar() or 0) + 1
+# SEC-C4: prior ``_make_hash`` / ``_next_sequence`` helpers produced a hash
+# format incompatible with :meth:`AuditTrail.verify_chain`. Removed in
+# favour of routing every audit write through ``AuditTrail.record()``.
 
 
 def _parse_date(value: str) -> datetime:
@@ -139,18 +131,15 @@ def shared_dashboards(
         }
 
         with get_session() as session:
-            entry = AuditEntry(
-                id=str(uuid.uuid4()),
-                sequence=_next_sequence(session),
-                previous_hash="genesis",
-                entry_hash=_make_hash(f"{dash_id}:{create_name}:{actor}"),
+            from warlock.db.audit import AuditTrail
+
+            AuditTrail(session).record(
                 action="shared_dashboard",
                 entity_type="dashboard",
                 entity_id=dash_id,
                 actor=actor,
-                extra=extra,
+                metadata=extra,
             )
-            session.add(entry)
             session.commit()
 
         console.print(f"[green]Dashboard created:[/green] [cyan]{dash_id[:8]}[/cyan]")

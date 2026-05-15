@@ -447,10 +447,14 @@ def export(source: str | None, severities: tuple[str, ...], fmt: str, limit: int
     else:
         if not records:
             return
+        # SEC-C11: neutralize spreadsheet formula prefixes before CSV writing.
+        from warlock.utils.csv_safety import neutralize_rows
+
+        safe_records = neutralize_rows(records)
         out = io.StringIO()
-        writer = csv.DictWriter(out, fieldnames=list(records[0].keys()))
+        writer = csv.DictWriter(out, fieldnames=list(safe_records[0].keys()))
         writer.writeheader()
-        writer.writerows(records)
+        writer.writerows(safe_records)
         click.echo(out.getvalue())
 
 

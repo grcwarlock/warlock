@@ -141,11 +141,8 @@ def integrations_configure(
     Tokens are NOT persisted in the database. Set them as environment variables:
       WLK_INTEGRATION_<TYPE>_TOKEN (e.g. WLK_INTEGRATION_SLACK_TOKEN)
     """
-    import hashlib
-    import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     if token:
         console.print(
@@ -155,31 +152,21 @@ def integrations_configure(
 
     init_db()
     with get_session() as session:
-        # Record configuration event in audit trail
-        seq_row = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        next_seq = (seq_row.sequence + 1) if seq_row else 1
-        prev_hash = seq_row.entry_hash if seq_row else "genesis"
+        # SEC-C4: Record configuration event via canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        payload = f"{next_seq}:{integration_type}:{url or ''}:{channel or ''}"
-        entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=next_seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="integration_configured",
             entity_type="integration",
             entity_id=integration_type,
             actor="cli@warlock",
-            extra={
+            metadata={
                 "integration_type": integration_type,
                 "url": url,
                 "channel": channel,
                 "status": "active",
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Integration '{integration_type}' configured.[/green]")
@@ -490,37 +477,25 @@ def notifications_configure(channel: str, webhook_url: str | None, recipient: st
     Secrets should be set via environment variables:
       WLK_NOTIFY_<CHANNEL>_TOKEN
     """
-    import hashlib
-    import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     init_db()
     with get_session() as session:
-        seq_row = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        next_seq = (seq_row.sequence + 1) if seq_row else 1
-        prev_hash = seq_row.entry_hash if seq_row else "genesis"
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        payload = f"{next_seq}:notify:{channel}:{webhook_url or ''}:{recipient or ''}"
-        entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=next_seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="notification_channel_configured",
             entity_type="notification_channel",
             entity_id=channel,
             actor="cli@warlock",
-            extra={
+            metadata={
                 "channel": channel,
                 "webhook_url": webhook_url,
                 "recipient": recipient,
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Notification channel '{channel}' configured.[/green]")
@@ -642,39 +617,28 @@ def notifications_rules_list() -> None:
 )
 def notifications_rules_create(trigger: str, channel: str, severity: str) -> None:
     """Create a notification routing rule."""
-    import hashlib
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     init_db()
     rule_id = str(uuid.uuid4())
 
     with get_session() as session:
-        seq_row = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        next_seq = (seq_row.sequence + 1) if seq_row else 1
-        prev_hash = seq_row.entry_hash if seq_row else "genesis"
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        payload = f"{next_seq}:rule:{rule_id}:{trigger}:{channel}:{severity}"
-        entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=next_seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="notification_rule_created",
             entity_type="notification_rule",
             entity_id=rule_id,
             actor="cli@warlock",
-            extra={
+            metadata={
                 "trigger": trigger,
                 "channel": channel,
                 "severity": severity,
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Notification rule created: {rule_id[:8]}[/green]")
@@ -692,8 +656,6 @@ def notifications_rules_create(trigger: str, channel: str, severity: str) -> Non
 @click.argument("rule_id")
 def notifications_rules_delete(rule_id: str) -> None:
     """Delete a notification routing rule (recorded as deletion event)."""
-    import hashlib
-    import uuid
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
@@ -711,25 +673,16 @@ def notifications_rules_delete(rule_id: str) -> None:
         if not existing:
             _error(f"Notification rule not found: {rule_id}")
 
-        seq_row = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        next_seq = (seq_row.sequence + 1) if seq_row else 1
-        prev_hash = seq_row.entry_hash if seq_row else "genesis"
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        payload = f"{next_seq}:rule_delete:{existing.entity_id}"
-        entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-        del_entry = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=next_seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="notification_rule_deleted",
             entity_type="notification_rule",
             entity_id=existing.entity_id,
             actor="cli@warlock",
-            extra={"deleted_rule_id": existing.entity_id},
+            metadata={"deleted_rule_id": existing.entity_id},
         )
-        session.add(del_entry)
         session.commit()
 
     console.print(f"[yellow]Notification rule {existing.entity_id[:8]} deleted.[/yellow]")

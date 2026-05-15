@@ -240,11 +240,22 @@ def _install_tenant_filter() -> None:
 
     @event.listens_for(Session, "do_orm_execute")
     def _apply_tenant_filter(orm_execute_state):
-        """Auto-apply ``WHERE tenant_id = ?`` to every tenant-scoped SELECT."""
-        if not orm_execute_state.is_select:
-            return
+        """Auto-apply ``WHERE tenant_id = ?`` to every tenant-scoped statement.
+
+        SEC-C8: previously short-circuited on non-SELECT statements, which
+        allowed UPDATE/DELETE to bypass tenant scoping entirely — letting a
+        user authenticated to tenant A mutate tenant B's rows by guessing
+        the row UUID. Now extended to UPDATE and DELETE.
+        """
         if orm_execute_state.execution_options.get("skip_tenant_filter", False):
             return
+
+        is_select = orm_execute_state.is_select
+        is_update = orm_execute_state.is_update
+        is_delete = orm_execute_state.is_delete
+        if not (is_select or is_update or is_delete):
+            return
+
         tid = current_tenant_id.get()
         if tid is None:
             tid = settings.default_tenant_id
@@ -255,7 +266,26 @@ def _install_tenant_filter() -> None:
         entity = mapper.class_
         if entity is Tenant:
             return
+        if not hasattr(entity, "__table__"):
+            return
         if not isinstance(entity, type) or not issubclass(entity, TenantMixin):
             return
-        # Use filter_criteria to add the tenant condition
-        orm_execute_state.statement = orm_execute_state.statement.where(entity.tenant_id == tid)
+
+        if is_select:
+            # ``with_loader_criteria`` propagates the predicate into JOINed
+            # eager-loaders so cross-tenant rows are filtered out even when
+            # joined as related entities (not just the primary entity).
+            from sqlalchemy.orm import with_loader_criteria
+
+            orm_execute_state.statement = orm_execute_state.statement.options(
+                with_loader_criteria(
+                    entity,
+                    entity.tenant_id == tid,
+                    include_aliases=True,
+                )
+            )
+        else:
+            # ORM-enabled UPDATE/DELETE: inject the predicate directly on the
+            # statement so mutations cannot reach cross-tenant rows even if
+            # the caller filtered only by primary key.
+            orm_execute_state.statement = orm_execute_state.statement.where(entity.tenant_id == tid)

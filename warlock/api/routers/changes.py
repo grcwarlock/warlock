@@ -6,7 +6,6 @@ and entity_type='change_mgmt', mirroring warlock/cli/change_mgmt_cmd.py.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -17,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from warlock.api.deps import get_db, get_pagination, require_permission
 from warlock.api.routers.schemas import PaginatedResponse, _dt_str
-from warlock.db.models import AuditEntry, ChangeRequest, User
+from warlock.db.models import ChangeRequest, User
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -144,27 +143,17 @@ def create_change(
     )
     db.add(cr)
 
-    # Audit entry
-    last = db.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-    actor = f"api:{current_user.email}"
-    payload = f"{seq}:{prev_hash}:change_created:{cr_id}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
-    audit = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    actor = f"api:{current_user.email}"
+    AuditTrail(db).record(
         action="change_request",
         entity_type="change_mgmt",
         entity_id=cr_id,
         actor=actor,
-        extra={"change_type": req.change_type, "risk_level": req.risk_level},
-        created_at=now,
+        metadata={"change_type": req.change_type, "risk_level": req.risk_level},
     )
-    db.add(audit)
 
     return ChangeResponse(
         id=cr.id,

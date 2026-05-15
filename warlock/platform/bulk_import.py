@@ -331,11 +331,21 @@ class BulkImporter:
 
     @staticmethod
     def _normalize_record(record: dict[str, Any], entity_type: str) -> dict[str, Any]:
-        """Normalize field values (lowercase severity, trim strings, etc.)."""
+        """Normalize field values (lowercase severity, trim strings, etc.).
+
+        SEC-C11: also neutralise spreadsheet formula-injection prefixes at
+        ingest time. The CSV/Excel scrubber runs at export time, but
+        scrubbing here as well is defense in depth — a poisoned cell that
+        sneaks past the export-time hook (e.g. via a new export path that
+        forgets to wrap its writer) is still neutralised in storage.
+        """
+        from warlock.utils.csv_safety import neutralize_csv_value
+
         normalized = {}
         for k, v in record.items():
             if isinstance(v, str):
                 v = v.strip()
+                v = neutralize_csv_value(v)
             normalized[k] = v
 
         if entity_type == "finding" and "severity" in normalized:
@@ -403,7 +413,38 @@ class BulkImporter:
 
     @staticmethod
     def _validate_path(filepath: str) -> Path:
-        path = Path(filepath).resolve()
+        """Validate bulk-import path is bounded to an allowed root.
+
+        SEC-C10: prior version simply resolved the path; combined with any
+        future API endpoint that took a JSON ``filepath``, this is an
+        arbitrary file read. Now the path must live under CWD, ``$TMPDIR``,
+        or ``WLK_IMPORT_ALLOWED_ROOTS``; symlinks are rejected.
+        """
+        import os as _os
+        import tempfile
+
+        raw = Path(filepath)
+        if raw.is_symlink():
+            raise ValueError(f"Symlinked import paths are not permitted: {filepath}")
+        path = raw.resolve(strict=False)
         if not path.is_file():
             raise FileNotFoundError(f"File not found: {filepath}")
+
+        allowed_roots: list[Path] = [Path.cwd().resolve(), Path(tempfile.gettempdir()).resolve()]
+        extra = _os.environ.get("WLK_IMPORT_ALLOWED_ROOTS", "").strip()
+        if extra:
+            allowed_roots.extend(Path(p.strip()).resolve() for p in extra.split(":") if p.strip())
+
+        def _is_relative_to(p: Path, root: Path) -> bool:
+            try:
+                p.relative_to(root)
+                return True
+            except ValueError:
+                return False
+
+        if not any(_is_relative_to(path, root) for root in allowed_roots):
+            raise ValueError(
+                f"Import path is outside allowed roots: {filepath} "
+                f"(set WLK_IMPORT_ALLOWED_ROOTS to widen the allowlist)"
+            )
         return path

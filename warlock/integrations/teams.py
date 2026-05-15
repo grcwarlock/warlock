@@ -69,6 +69,18 @@ class TeamsNotifier:
         if not webhook_url:
             raise TeamsNotifierError("webhook_url is required")
 
+        # SEC-C13: validate the Teams webhook URL is not an internal
+        # service or metadata endpoint. Although Teams webhooks are
+        # typically operator-controlled, a tenant admin who can edit
+        # integration settings would otherwise be able to flip the URL
+        # to ``http://169.254.169.254/...``.
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        try:
+            validate_outbound_url(webhook_url)
+        except UnsafeURLError as exc:
+            raise TeamsNotifierError(f"Unsafe webhook URL: {exc}") from exc
+
         # Ensure the payload has the Adaptive Card wrapper
         if "type" not in card_data or card_data.get("type") != "message":
             card_data = {

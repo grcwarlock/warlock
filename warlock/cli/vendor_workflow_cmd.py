@@ -80,31 +80,20 @@ def _risk_tier_color(tier: str | None) -> str:
 
 
 def _write_audit_entry(session, action: str, entity_id: str, extra: dict) -> None:
-    """Append a hash-chained audit entry for a vendor workflow action."""
-    import hashlib
-    import json
+    """Append a hash-chained audit entry for a vendor workflow action.
 
-    from warlock.db.models import AuditEntry
+    SEC-C4: routes through ``AuditTrail.record`` so the canonical content
+    hash is used. The prior hand-rolled hash format failed ``verify_chain``.
+    """
+    from warlock.db.audit import AuditTrail
 
-    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-
-    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
-    entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-    entry = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    AuditTrail(session).record(
         action=action,
         entity_type="vendor",
         entity_id=entity_id,
         actor=_get_actor(),
-        extra=extra,
+        metadata=extra,
     )
-    session.add(entry)
     session.commit()
 
 

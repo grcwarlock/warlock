@@ -456,7 +456,14 @@ async def sso_login(
         .decode()
     )
 
-    # Determine callback URL
+    # SEC-C3: validate the ``redirect_uri`` query parameter. The previous
+    # implementation accepted any absolute URL the caller supplied and
+    # passed it through to the IdP unchanged — an attacker who crafted
+    # ``?redirect_uri=https://attacker.tld/cb`` would receive the
+    # authorization code if the IdP allowlist was even slightly lax. The
+    # fix: a relative path is built into an absolute URL using the
+    # request host (as before), but absolute URLs must exact-match one
+    # of ``settings.sso_allowed_redirect_uris``.
     callback_url = redirect_uri or settings.sso_callback_url
     if callback_url.startswith("/"):
         # Relative path — build absolute URL from request.
@@ -470,6 +477,20 @@ async def sso_login(
             scheme = request.url.scheme
             host = request.url.netloc
         callback_url = f"{scheme}://{host}{callback_url}"
+    elif redirect_uri:
+        # Caller supplied an absolute URL — must be in the allowlist.
+        allowed = [
+            u.strip() for u in (settings.sso_allowed_redirect_uris or "").split(",") if u.strip()
+        ]
+        if callback_url not in allowed:
+            log.warning("SSO login rejected: redirect_uri=%s not in allowlist", callback_url)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "redirect_uri is not in the configured allowlist. "
+                    "Set WLK_SSO_ALLOWED_REDIRECT_URIS to permit this URL."
+                ),
+            )
 
     # Store state for validation on callback (Redis or in-memory)
     _store_sso_state(

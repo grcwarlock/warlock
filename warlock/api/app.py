@@ -238,8 +238,15 @@ def create_app() -> FastAPI:
                     from warlock.db.models import User
 
                     with get_session() as session:
-                        user = session.query(User).filter(User.email == sub).first()
-                        if user is not None and user.is_active:
+                        # SEC-C1: JWT sub claim is user.id (UUID), not email.
+                        # Querying by email matched nothing; OPA gate saw all
+                        # bearer-token requests as anonymous.
+                        user = (
+                            session.query(User)
+                            .filter(User.id == sub, User.is_active == True)  # noqa: E712
+                            .first()
+                        )
+                        if user is not None:
                             request.state.user = user
             except Exception:
                 pass  # invalid token — let per-route auth surface raise the 401

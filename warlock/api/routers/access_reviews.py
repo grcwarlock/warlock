@@ -6,7 +6,6 @@ mirroring warlock/cli/access_review_cmd.py.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -160,23 +159,16 @@ def create_campaign(
     now = datetime.now(timezone.utc)
     campaign_id = str(uuid.uuid4())
 
-    last = db.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-    actor = f"api:{current_user.email}"
-    payload = f"{seq}:{prev_hash}:access_review_campaign:{campaign_id}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
-    audit = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    actor = f"api:{current_user.email}"
+    AuditTrail(db).record(
         action="access_review_campaign",
         entity_type="access_review",
         entity_id=campaign_id,
         actor=actor,
-        extra={
+        metadata={
             "scope": req.scope,
             "reviewer": req.reviewer,
             "deadline": req.deadline,
@@ -184,9 +176,7 @@ def create_campaign(
             "certifications": [],
             "notes": req.notes,
         },
-        created_at=now,
     )
-    db.add(audit)
 
     return CampaignResponse(
         id=campaign_id,

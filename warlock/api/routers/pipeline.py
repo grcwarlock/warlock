@@ -53,6 +53,8 @@ class HashChainVerifyResponse(BaseModel):
     verified: int
     broken_at_sequence: int | None = None
     verified_at: str
+    valid: bool = True
+    errors: list[str] = []
 
 
 class SchedulerStartRequest(BaseModel):
@@ -195,40 +197,41 @@ def verify_hash_chain(
 ):
     """Verify the audit trail hash chain integrity.
 
-    Queries AuditEntry records ordered by sequence and verifies each
-    entry's previous_hash matches the prior entry's entry_hash. Returns
-    the total entries checked, how many verified, and where the chain
-    broke (if at all).
+    SEC-C6: previously only checked ``previous_hash`` linkage, which let an
+    attacker with DB write access modify ``action``/``entity_id``/``actor``/
+    ``extra``/``evidence_sha256`` columns without breaking this verifier.
+    Now delegates to :meth:`AuditTrail.verify_chain` which recomputes the
+    canonical content hash for every row and compares against the stored
+    ``entry_hash``.
     """
     from datetime import datetime, timezone
 
+    from warlock.db.audit import AuditTrail
+
     repos = get_repos(db)
     total = repos.audit_entries.total_count()
-    verified = 0
-    broken_at: int | None = None
-    prev_entry_hash: str | None = None
+    valid, errors = AuditTrail(db).verify_chain()
 
-    for entry in repos.audit_entries.all_by_sequence():
-        if prev_entry_hash is None:
-            # Genesis entry — previous_hash should be "genesis"
-            if entry.previous_hash == "genesis":
-                verified += 1
-            else:
-                broken_at = entry.sequence
-                break
-        else:
-            if entry.previous_hash == prev_entry_hash:
-                verified += 1
-            else:
-                broken_at = entry.sequence
-                break
-        prev_entry_hash = entry.entry_hash
+    broken_at: int | None = None
+    if errors:
+        # Extract the first sequence number mentioned in any error line.
+        # AuditTrail emits messages of the form
+        # "Chain broken at sequence N: ..." / "Hash mismatch at sequence N: ..."
+        import re
+
+        m = re.search(r"sequence (\d+)", errors[0])
+        if m:
+            broken_at = int(m.group(1))
+
+    verified = total - len(errors) if valid else max(total - len(errors), 0)
 
     return HashChainVerifyResponse(
         total=total,
         verified=verified,
         broken_at_sequence=broken_at,
         verified_at=datetime.now(timezone.utc).isoformat(),
+        valid=valid,
+        errors=errors,
     )
 
 

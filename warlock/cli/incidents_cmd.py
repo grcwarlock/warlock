@@ -84,11 +84,10 @@ def incidents_create(
     description: str | None,
 ) -> None:
     """Create a new incident."""
-    import hashlib
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue
+    from warlock.db.models import Issue
 
     init_db()
     actor = _get_actor()
@@ -109,30 +108,20 @@ def incidents_create(
         )
         session.add(issue)
 
-        # Audit entry
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:incident_created:{issue.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="incident_created",
             entity_type="issue",
             entity_id=issue.id,
             actor=actor,
-            extra={
+            metadata={
                 "severity": severity,
                 "classification": classification,
                 "title": title,
             },
-            created_at=now,
         )
-        session.add(audit)
         session.commit()
 
         console.print(
@@ -318,11 +307,10 @@ def incidents_show(incident_id: str) -> None:
 @click.option("--note", default=None, help="Optional note to add alongside the status change")
 def incidents_update(incident_id: str, status: str, note: str | None) -> None:
     """Update the status of an incident."""
-    import hashlib
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue, IssueComment
+    from warlock.db.models import Issue, IssueComment
 
     init_db()
     actor = _get_actor()
@@ -348,26 +336,16 @@ def incidents_update(incident_id: str, status: str, note: str | None) -> None:
             )
             session.add(comment)
 
-        # Audit
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:incident_updated:{issue.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="incident_updated",
             entity_type="issue",
             entity_id=issue.id,
             actor=actor,
-            extra={"old_status": old_status, "new_status": status, "note": note},
-            created_at=now,
+            metadata={"old_status": old_status, "new_status": status, "note": note},
         )
-        session.add(audit)
         session.commit()
 
     st_style = _STATUS_STYLES.get(status, "")
@@ -388,11 +366,10 @@ def incidents_update(incident_id: str, status: str, note: str | None) -> None:
 @click.option("--lessons-learned", default=None, help="Lessons learned from this incident")
 def incidents_close(incident_id: str, resolution: str, lessons_learned: str | None) -> None:
     """Close an incident with a resolution and optional lessons learned."""
-    import hashlib
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue, IssueComment
+    from warlock.db.models import Issue, IssueComment
 
     init_db()
     actor = _get_actor()
@@ -423,25 +400,16 @@ def incidents_close(incident_id: str, resolution: str, lessons_learned: str | No
         )
         session.add(comment)
 
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:incident_closed:{issue.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="incident_closed",
             entity_type="issue",
             entity_id=issue.id,
             actor=actor,
-            extra={"resolution": resolution, "lessons_learned": lessons_learned},
-            created_at=now,
+            metadata={"resolution": resolution, "lessons_learned": lessons_learned},
         )
-        session.add(audit)
         session.commit()
 
     console.print(f"[green]Incident {incident_id[:8]} closed.[/green]")
@@ -505,40 +473,28 @@ def incidents_timeline(incident_id: str) -> None:
 @click.option("--description", "-d", required=True, help="Event description")
 def incidents_add_event(incident_id: str, event_type: str, description: str) -> None:
     """Append a manual event to an incident's audit trail."""
-    import hashlib
-    import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, Issue
+    from warlock.db.models import Issue
 
     init_db()
     actor = _get_actor()
-    now = datetime.now(timezone.utc)
 
     with get_session() as session:
         issue = session.query(Issue).filter(Issue.id.startswith(incident_id)).first()
         if not issue:
             _error(f"Incident not found: {incident_id}")
 
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:{event_type}:{issue.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action=event_type,
             entity_type="issue",
             entity_id=issue.id,
             actor=actor,
-            extra={"description": description},
-            created_at=now,
+            metadata={"description": description},
         )
-        session.add(audit)
         session.commit()
 
     console.print(

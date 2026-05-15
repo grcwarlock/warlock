@@ -439,6 +439,266 @@ class TestAuditTrailIntegrity:
 
 
 # ---------------------------------------------------------------------------
+# SEC-C4: Canonical hash-chained writers (no hand-rolled entry_hash)
+# ---------------------------------------------------------------------------
+
+
+class TestNoCustomAuditChainWriters:
+    """Audit-chain writers must route through ``AuditTrail.record``.
+
+    A hand-rolled ``hashlib.sha256(...)`` next to a hand-built
+    ``AuditEntry(...)`` produces an ``entry_hash`` that does NOT match
+    ``AuditTrail.verify_chain``. The fix consolidates every writer onto
+    the canonical API; this test guards against regression.
+    """
+
+    def test_no_custom_entry_hash_construction(self):
+        import re
+        from pathlib import Path
+
+        repo_root = Path(__file__).parent.parent / "warlock"
+        # Files that legitimately implement the chain
+        allow = {
+            repo_root / "db" / "audit.py",
+            repo_root / "db" / "models.py",
+            repo_root / "export" / "audit_sink.py",
+            repo_root / "export" / "chain_anchor.py",  # uses _recompute helper
+        }
+        pattern_kwarg = re.compile(r"entry_hash\s*=\s*hashlib\.")
+        pattern_inline = re.compile(r"entry_hash\s*=\s*hashlib\.sha256")
+        offenders: list[str] = []
+        for py in repo_root.rglob("*.py"):
+            if py in allow:
+                continue
+            text = py.read_text(encoding="utf-8")
+            if pattern_kwarg.search(text) or pattern_inline.search(text):
+                offenders.append(str(py.relative_to(repo_root)))
+        assert not offenders, (
+            "These files build entry_hash by hand instead of routing through "
+            "AuditTrail.record(): " + ", ".join(offenders)
+        )
+
+    def test_no_orphan_AuditEntry_construction(self):
+        """Constructing AuditEntry outside the canonical writer is forbidden."""
+        import re
+        from pathlib import Path
+
+        repo_root = Path(__file__).parent.parent / "warlock"
+        allow = {
+            repo_root / "db" / "audit.py",
+            repo_root / "db" / "models.py",
+            repo_root / "export" / "audit_sink.py",
+        }
+        # Match ``entry = AuditEntry(`` / ``audit = AuditEntry(`` / standalone
+        # ``AuditEntry(`` opening a constructor (not a query usage).
+        pat = re.compile(r"^\s*(?:entry|audit|del_entry|addressed_entry)\s*=\s*AuditEntry\(", re.M)
+        offenders: list[str] = []
+        for py in repo_root.rglob("*.py"):
+            if py in allow:
+                continue
+            text = py.read_text(encoding="utf-8")
+            if pat.search(text):
+                offenders.append(str(py.relative_to(repo_root)))
+        assert not offenders, (
+            "These files instantiate AuditEntry directly. Use AuditTrail.record(): "
+            + ", ".join(offenders)
+        )
+
+
+class TestVerifyChainAPIRecomputes:
+    """SEC-C6: ``/pipeline/verify-chain`` must recompute every row's content hash.
+
+    Previously the endpoint only checked ``previous_hash`` linkage which
+    let a DB-write attacker mutate ``action``/``entity_id``/``actor``/
+    ``extra``/``evidence_sha256`` without detection.
+    """
+
+    def test_verify_chain_detects_content_tamper(self, session):
+        from warlock.db.audit import AuditTrail
+        from warlock.db.models import AuditEntry
+
+        trail = AuditTrail(session)
+        e1 = trail.record("a1", "t1", "id-1", actor="actor-1")
+        e2 = trail.record("a2", "t1", "id-2", actor="actor-2")
+        session.flush()
+
+        # Tamper with row content without updating entry_hash.
+        e2_row = session.query(AuditEntry).filter(AuditEntry.sequence == e2.sequence).one()
+        e2_row.action = "tampered_action"
+        session.flush()
+
+        valid, errors = AuditTrail(session).verify_chain()
+        assert not valid
+        assert any("Hash mismatch" in err for err in errors)
+        assert any(f"sequence {e2.sequence}" in err for err in errors)
+        # Ensure e1 still verifies clean (only e2 should be flagged).
+        assert not any(f"sequence {e1.sequence}" in err for err in errors)
+
+
+class TestCSVFormulaInjectionScrubber:
+    """SEC-C11: spreadsheet formula-injection prefixes must be neutralised."""
+
+    def test_neutralizes_leading_equals(self):
+        from warlock.utils.csv_safety import neutralize_csv_value
+
+        assert neutralize_csv_value('=HYPERLINK("http://x","y")') == (
+            "'=HYPERLINK(\"http://x\",\"y\")"
+        )
+
+    def test_neutralizes_each_dangerous_prefix(self):
+        from warlock.utils.csv_safety import neutralize_csv_value
+
+        for prefix in ("=", "+", "-", "@", "\t", "\r"):
+            assert neutralize_csv_value(f"{prefix}danger").startswith("'" + prefix)
+
+    def test_leaves_safe_values_unchanged(self):
+        from warlock.utils.csv_safety import neutralize_csv_value
+
+        assert neutralize_csv_value("normal text") == "normal text"
+        assert neutralize_csv_value("") == ""
+        assert neutralize_csv_value(42) == 42
+        assert neutralize_csv_value(None) is None
+
+    def test_cli_output_render_csv_neutralises(self):
+        import csv
+        import io
+
+        from warlock.cli.output import render_csv
+
+        # Capture stdout
+        buf = io.StringIO()
+        import sys
+
+        old = sys.stdout
+        sys.stdout = buf
+        try:
+            render_csv(
+                [{"title": "=cmd|'/c calc'!A0", "id": "abc"}],
+                keys=["id", "title"],
+                headers=["ID", "Title"],
+            )
+        finally:
+            sys.stdout = old
+
+        reader = csv.DictReader(io.StringIO(buf.getvalue()))
+        rows = list(reader)
+        assert rows[0]["Title"].startswith("'="), (
+            f"Formula prefix must be neutralised, got: {rows[0]['Title']!r}"
+        )
+
+
+class TestTenantFilterCoversUpdateDelete:
+    """SEC-C8: tenant filter must cover UPDATE and DELETE, not just SELECT.
+
+    Previously the ``do_orm_execute`` listener short-circuited on non-SELECT
+    statements, so a user authenticated to tenant A could mutate tenant B's
+    rows by guessing the primary key UUID.
+    """
+
+    def test_multi_tenancy_enabled_by_default(self):
+        from warlock.config import Settings
+
+        s = Settings()
+        assert s.multi_tenancy_enabled is True, (
+            "multi_tenancy_enabled must default to True so the tenant filter "
+            "is active out-of-the-box. SEC-C8."
+        )
+
+
+class TestOutboundURLSafetyHelper:
+    """SEC-C12/C13: ``validate_outbound_url`` must reject SSRF-prone targets."""
+
+    def test_rejects_loopback_literal(self):
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        with pytest.raises(UnsafeURLError):
+            validate_outbound_url("https://127.0.0.1/admin")
+
+    def test_rejects_metadata_service(self):
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        with pytest.raises(UnsafeURLError):
+            validate_outbound_url("http://169.254.169.254/latest/meta-data/")
+
+    def test_rejects_rfc1918_literal(self):
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        with pytest.raises(UnsafeURLError):
+            validate_outbound_url("https://10.0.0.1/")
+
+    def test_rejects_userinfo(self):
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        with pytest.raises(UnsafeURLError):
+            validate_outbound_url("https://attacker@victim.example/")
+
+    def test_rejects_non_https_by_default(self):
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        with pytest.raises(UnsafeURLError):
+            validate_outbound_url("http://example.com/")
+
+    def test_accepts_https_public(self):
+        from warlock.utils.url_safety import validate_outbound_url
+
+        # A public, well-known DNS name. If the test environment cannot
+        # resolve DNS, validation still passes — unresolvable hostnames
+        # are not rejected (they would simply fail to connect, no
+        # credential exfiltration).
+        out = validate_outbound_url("https://example.com/api")
+        assert out == "https://example.com/api"
+
+    def test_hostname_allowlist_pin(self):
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        with pytest.raises(UnsafeURLError):
+            validate_outbound_url(
+                "https://attacker.example/",
+                allowed_hosts=["*.okta.com"],
+            )
+
+
+class TestSSOAllowedRedirectURIs:
+    """SEC-C3: ``/auth/sso/login`` must reject absolute redirect_uri values
+    that are not in the operator-configured allowlist."""
+
+    def test_setting_exists_and_defaults_empty(self):
+        from warlock.config import Settings
+
+        s = Settings()
+        assert hasattr(s, "sso_allowed_redirect_uris")
+        # Default empty = no absolute URLs accepted unless explicitly added.
+        assert s.sso_allowed_redirect_uris == ""
+
+
+class TestChainAnchorRecomputes:
+    """SEC-C7: ``ChainAnchor.verify_anchor`` must recompute content hash."""
+
+    def test_anchor_detects_content_tamper(self, session, tmp_path):
+        from warlock.db.audit import AuditTrail
+        from warlock.db.models import AuditEntry
+        from warlock.export.chain_anchor import ChainAnchor
+
+        trail = AuditTrail(session)
+        trail.record("a", "t", "id-1", actor="u")
+        session.flush()
+        session.commit()
+
+        anchor_file = tmp_path / "anchor.json"
+        anchor = ChainAnchor()
+        anchor.publish(session, target="file", path=str(anchor_file))
+
+        # Mutate the row content without rehashing.
+        row = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
+        row.action = "tampered"
+        session.commit()
+
+        result = anchor.verify_anchor(session, target="file", path=str(anchor_file))
+        assert result["valid"] is False
+        assert "error" in result
+
+
+# ---------------------------------------------------------------------------
 # M-5: julianday replaced with Python sorting
 # ---------------------------------------------------------------------------
 

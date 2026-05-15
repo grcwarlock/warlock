@@ -663,16 +663,12 @@ def roles_assign(user_id: str, role: str) -> None:
 
     USER_ID can be a full UUID, UUID prefix, or email address.
     """
-    import hashlib
-    import uuid as _uuid
-    from datetime import datetime, timezone
-
+    from warlock.db.audit import AuditTrail
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, User
+    from warlock.db.models import User
 
     init_db()
     actor = _get_actor()
-    now = datetime.now(timezone.utc)
 
     with get_session() as session:
         u = (
@@ -690,20 +686,17 @@ def roles_assign(user_id: str, role: str) -> None:
 
         u.role = role
 
-        audit = AuditEntry(
-            id=str(_uuid.uuid4()),
+        # SEC-C5: previously instantiated AuditEntry with non-existent kwargs
+        # (target_type, target_id, detail, timestamp) and omitted the required
+        # ``sequence`` column. SQLAlchemy raised TypeError on every call —
+        # the role-grant audit trail was missing entirely.
+        AuditTrail(session).record(
             action="role_assign",
+            entity_type="user",
+            entity_id=u.id,
             actor=actor,
-            target_type="user",
-            target_id=u.id,
-            detail={"old_role": old_role, "new_role": role},
-            timestamp=now,
-            previous_hash="genesis",
-            entry_hash=hashlib.sha256(
-                f"role_assign:{u.id}:{role}:{now.isoformat()}".encode()
-            ).hexdigest(),
+            metadata={"old_role": old_role, "new_role": role},
         )
-        session.add(audit)
 
     console.print(f"[green]Role changed for {escape(u.email)}: {old_role} -> {role}[/green]")
 
@@ -717,16 +710,12 @@ def roles_revoke(user_id: str, role: str) -> None:
     USER_ID can be a full UUID, UUID prefix, or email address.
     If the user currently has the specified ROLE, they are demoted to 'viewer'.
     """
-    import hashlib
-    import uuid as _uuid
-    from datetime import datetime, timezone
-
+    from warlock.db.audit import AuditTrail
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, User
+    from warlock.db.models import User
 
     init_db()
     actor = _get_actor()
-    now = datetime.now(timezone.utc)
 
     with get_session() as session:
         u = (
@@ -747,20 +736,15 @@ def roles_revoke(user_id: str, role: str) -> None:
         old_role = u.role
         u.role = "viewer"
 
-        audit = AuditEntry(
-            id=str(_uuid.uuid4()),
+        # SEC-C5: same as roles_grant above — replaced the hand-rolled
+        # AuditEntry (broken kwargs + missing sequence) with AuditTrail.record().
+        AuditTrail(session).record(
             action="role_revoke",
+            entity_type="user",
+            entity_id=u.id,
             actor=actor,
-            target_type="user",
-            target_id=u.id,
-            detail={"revoked_role": old_role, "new_role": "viewer"},
-            timestamp=now,
-            previous_hash="genesis",
-            entry_hash=hashlib.sha256(
-                f"role_revoke:{u.id}:{old_role}:{now.isoformat()}".encode()
-            ).hexdigest(),
+            metadata={"revoked_role": old_role, "new_role": "viewer"},
         )
-        session.add(audit)
 
     console.print(
         f"[green]Role '{role}' revoked from {escape(u.email)}. Reset to 'viewer'.[/green]"

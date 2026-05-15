@@ -90,11 +90,10 @@ def poam_create(
     resource_allocation: str | None,
 ) -> None:
     """Create a new POA&M entry."""
-    import hashlib
     import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import POAM, AuditEntry
+    from warlock.db.models import POAM
 
     init_db()
     actor = _get_actor()
@@ -127,31 +126,21 @@ def poam_create(
         )
         session.add(poam)
 
-        # Audit entry
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:poam_created:{poam.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="poam_created",
             entity_type="poam",
             entity_id=poam.id,
             actor=actor,
-            extra={
+            metadata={
                 "framework": framework,
                 "control_id": control,
                 "severity": severity,
                 "weakness": weakness[:200],
             },
-            created_at=now,
         )
-        session.add(audit)
         session.commit()
 
         console.print(
@@ -363,11 +352,9 @@ def poam_show(poam_id: str) -> None:
 @click.option("--note", "-n", default="Completed", help="Completion note")
 def poam_close(poam_id: str, note: str) -> None:
     """Mark a POA&M as completed and closed."""
-    import hashlib
-    import uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import POAM, AuditEntry
+    from warlock.db.models import POAM
 
     init_db()
     actor = _get_actor()
@@ -384,32 +371,22 @@ def poam_close(poam_id: str, note: str) -> None:
         poam.updated_by = actor
         poam.updated_at = now
 
-        # Audit entry
-        last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = last.entry_hash if last else "genesis"
-        seq = (last.sequence + 1) if last else 1
-        payload = f"{seq}:{prev_hash}:poam_closed:{poam.id}:{actor}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        audit = AuditEntry(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="poam_closed",
             entity_type="poam",
             entity_id=poam.id,
             actor=actor,
-            extra={
+            metadata={
                 "old_status": old_status,
                 "new_status": "completed",
                 "note": note,
                 "framework": poam.framework,
                 "control_id": poam.control_id,
             },
-            created_at=now,
         )
-        session.add(audit)
         session.commit()
 
     console.print(f"[green]POA&M {poam_id[:8]} closed:[/green] {old_status} \u2192 completed")

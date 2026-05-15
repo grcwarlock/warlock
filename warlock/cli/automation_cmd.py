@@ -611,24 +611,17 @@ def rules_create(trigger: str, action: str, conditions: str, enabled: bool) -> N
         --action auto-issue \\
         --conditions "framework=nist_800_53"
     """
-    import hashlib
     import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     init_db()
     actor = _get_actor()
     rule_id = str(_uuid.uuid4())
 
     with get_session() as session:
-        # Get the current sequence + 1
-        from sqlalchemy import func
-
-        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
-        seq = max_seq + 1
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
         extra: dict = {
             "trigger": trigger,
@@ -637,21 +630,13 @@ def rules_create(trigger: str, action: str, conditions: str, enabled: bool) -> N
             "enabled": enabled,
             "rule_id": rule_id,
         }
-        payload = json.dumps(extra, sort_keys=True)
-        entry_hash = hashlib.sha256(f"{seq}:{prev_hash}:{rule_id}:{payload}".encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=str(_uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="automation_rule",
             entity_type="automation_rule",
             entity_id=rule_id,
             actor=actor,
-            extra=extra,
+            metadata=extra,
         )
-        session.add(entry)
         session.commit()
 
     console.print("[green]Automation rule created.[/green]")
@@ -669,8 +654,6 @@ def rules_delete(rule_id: str) -> None:
 
     RULE_ID: rule UUID or prefix (from 'warlock automation rules list').
     """
-    import hashlib
-    import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
@@ -696,35 +679,21 @@ def rules_delete(rule_id: str) -> None:
             console.print(f"[yellow]Rule {row.entity_id[:8]} is already deleted.[/yellow]")
             return
 
-        from sqlalchemy import func
-
-        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
-        seq = max_seq + 1
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
         del_extra = {
             "trigger": extra.get("trigger"),
             "action": extra.get("action"),
             "deleted": True,
         }
-        payload = json.dumps(del_extra, sort_keys=True)
-        entry_hash = hashlib.sha256(
-            f"{seq}:{prev_hash}:{row.entity_id}:{payload}".encode()
-        ).hexdigest()
-
-        del_entry = AuditEntry(
-            id=str(_uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="automation_rule",
             entity_type="automation_rule",
             entity_id=row.entity_id,
             actor=actor,
-            extra=del_extra,
+            metadata=del_extra,
         )
-        session.add(del_entry)
         session.commit()
 
     console.print(f"[yellow]Automation rule {row.entity_id[:8]} deleted.[/yellow]")
@@ -921,23 +890,17 @@ def webhook_create(
         --event finding.critical \\
         --secret my-shared-secret
     """
-    import hashlib
     import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     init_db()
     actor = _get_actor()
     webhook_id = str(_uuid.uuid4())
 
     with get_session() as session:
-        from sqlalchemy import func
-
-        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
-        seq = max_seq + 1
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
         extra: dict = {
             "name": name,
@@ -947,23 +910,13 @@ def webhook_create(
             "enabled": enabled,
             "webhook_id": webhook_id,
         }
-        payload = json.dumps(extra, sort_keys=True)
-        entry_hash = hashlib.sha256(
-            f"{seq}:{prev_hash}:{webhook_id}:{payload}".encode()
-        ).hexdigest()
-
-        entry = AuditEntry(
-            id=str(_uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="automation_webhook",
             entity_type="automation_webhook",
             entity_id=webhook_id,
             actor=actor,
-            extra=extra,
+            metadata=extra,
         )
-        session.add(entry)
         session.commit()
 
     console.print("[green]Webhook registered.[/green]")
@@ -1047,8 +1000,6 @@ def webhook_delete(webhook_id: str) -> None:
 
     WEBHOOK_ID: webhook UUID or prefix (from 'warlock automation webhook list').
     """
-    import hashlib
-    import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import AuditEntry
@@ -1074,31 +1025,17 @@ def webhook_delete(webhook_id: str) -> None:
             console.print(f"[yellow]Webhook {row.entity_id[:8]} is already deleted.[/yellow]")
             return
 
-        from sqlalchemy import func
-
-        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
-        seq = max_seq + 1
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
         del_extra = {"name": extra.get("name"), "deleted": True}
-        payload = json.dumps(del_extra, sort_keys=True)
-        entry_hash = hashlib.sha256(
-            f"{seq}:{prev_hash}:{row.entity_id}:{payload}".encode()
-        ).hexdigest()
-
-        del_entry = AuditEntry(
-            id=str(_uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="automation_webhook",
             entity_type="automation_webhook",
             entity_id=row.entity_id,
             actor=actor,
-            extra=del_extra,
+            metadata=del_extra,
         )
-        session.add(del_entry)
         session.commit()
 
     console.print(f"[yellow]Webhook {row.entity_id[:8]} deleted.[/yellow]")
@@ -1266,44 +1203,30 @@ def schedules_set(name: str, cron: str, enabled: bool) -> None:
         --cron "0 2 * * *" \\
         --enabled
     """
-    import hashlib
     import uuid as _uuid
 
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     init_db()
     actor = _get_actor()
     sched_id = str(_uuid.uuid4())
 
     with get_session() as session:
-        from sqlalchemy import func
-
-        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-        prev_entry = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-        prev_hash = prev_entry.entry_hash if prev_entry else "genesis"
-        seq = max_seq + 1
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
         extra: dict = {
             "name": name,
             "cron": cron,
             "enabled": enabled,
         }
-        payload = json.dumps(extra, sort_keys=True)
-        entry_hash = hashlib.sha256(f"{seq}:{prev_hash}:{sched_id}:{payload}".encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=str(_uuid.uuid4()),
-            sequence=seq,
-            previous_hash=prev_hash,
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="automation_schedule",
             entity_type="automation_schedule",
             entity_id=sched_id,
             actor=actor,
-            extra=extra,
+            metadata=extra,
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Schedule '{name}' saved.[/green]")

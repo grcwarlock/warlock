@@ -2,11 +2,33 @@
 
 from __future__ import annotations
 
+import os
+
 import click
 from rich.markup import escape
 from rich.table import Table
 
 from warlock.cli import cli, console
+
+
+def _resolve_actor(actor: str | None) -> str:
+    """SEC-C9: require an authenticated principal for delegation actions.
+
+    The previous CLI grant path inserted ``DelegationGrant`` rows directly
+    with no actor binding, no privilege check, and no audit. Now an actor
+    is required via ``--actor`` or ``WLK_CLI_ACTOR`` so the manager-level
+    gates (role + subset checks) and the hash-chained trail have something
+    to attribute the action to.
+    """
+    if actor:
+        return actor
+    env_actor = os.environ.get("WLK_CLI_ACTOR", "").strip()
+    if env_actor:
+        return env_actor
+    raise click.UsageError(
+        "Delegation actions require an authenticated principal. "
+        "Pass --actor <user-id-or-email> or set WLK_CLI_ACTOR in the environment."
+    )
 
 
 @cli.group("delegation", invoke_without_command=True)
@@ -73,17 +95,35 @@ def delegation_list(active: bool, limit: int) -> None:
     help="Comma-separated permissions to delegate",
 )
 @click.option("--expires-days", default=None, type=int, help="Grant expiry in days")
+@click.option(
+    "--actor",
+    default=None,
+    help="Authenticated principal performing the grant (or WLK_CLI_ACTOR env)",
+)
 def delegation_grant(
     delegator: str,
     delegate: str,
     permissions: str,
     expires_days: int | None,
+    actor: str | None,
 ) -> None:
-    """Create a new delegation grant."""
+    """Create a new delegation grant.
+
+    SEC-C9: routes through :class:`DelegationManager.delegate_admin` so the
+    role + subset + self-delegation checks fire. The CLI previously inserted
+    a ``DelegationGrant`` row directly with no privilege check, letting any
+    caller with DB access escalate themselves to admin. The DB row is now
+    written only after the manager-level gates accept the request.
+    """
     from datetime import datetime, timedelta, timezone
 
+    from warlock.db.audit import AuditTrail
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import DelegationGrant, User, _uuid
+    from warlock.platform.delegation import DelegationManager
+
+    actor_id = _resolve_actor(actor)
+    perm_list = [p.strip() for p in permissions.split(",") if p.strip()]
 
     init_db()
     with get_session() as session:
@@ -96,6 +136,22 @@ def delegation_grant(
             console.print(f"[red]Delegate not found: {escape(delegate)}[/red]")
             return
 
+        # SEC-C9: run the privilege checks (role, subset of granting perms,
+        # self-delegation) BEFORE persisting anything. ``delegate_admin``
+        # raises PermissionError / ValueError on failure.
+        manager = DelegationManager()
+        try:
+            manager.delegate_admin(
+                session,
+                from_user_id=d1.id,
+                to_user_id=d2.id,
+                scope={"actions": perm_list},
+                actor=actor_id,
+            )
+        except (PermissionError, ValueError) as exc:
+            console.print(f"[red]Delegation rejected: {escape(str(exc))}[/red]")
+            raise SystemExit(1) from exc
+
         expires_at = None
         if expires_days:
             expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
@@ -104,21 +160,43 @@ def delegation_grant(
             id=_uuid(),
             delegator_id=d1.id,
             delegate_id=d2.id,
-            permissions=[p.strip() for p in permissions.split(",")],
+            permissions=perm_list,
             expires_at=expires_at,
             is_active=True,
         )
         session.add(grant)
+        session.flush()
+
+        AuditTrail(session).record(
+            action="delegation_grant",
+            entity_type="delegation",
+            entity_id=grant.id,
+            actor=actor_id,
+            metadata={
+                "delegator_id": d1.id,
+                "delegate_id": d2.id,
+                "permissions": perm_list,
+                "expires_at": expires_at.isoformat() if expires_at else None,
+            },
+        )
 
     console.print(f"[green]Delegation grant created: {grant.id[:8]}[/green]")
 
 
 @delegation.command("revoke")
 @click.argument("grant_id")
-def delegation_revoke(grant_id: str) -> None:
+@click.option(
+    "--actor",
+    default=None,
+    help="Authenticated principal performing the revoke (or WLK_CLI_ACTOR env)",
+)
+def delegation_revoke(grant_id: str, actor: str | None) -> None:
     """Revoke a delegation grant."""
+    from warlock.db.audit import AuditTrail
     from warlock.db.engine import get_session, init_db
     from warlock.db.models import DelegationGrant
+
+    actor_id = _resolve_actor(actor)
 
     init_db()
     with get_session() as session:
@@ -129,5 +207,14 @@ def delegation_revoke(grant_id: str) -> None:
             console.print(f"[red]Grant not found: {escape(grant_id)}[/red]")
             return
         grant.is_active = False
+        session.flush()
+
+        AuditTrail(session).record(
+            action="delegation_revoke",
+            entity_type="delegation",
+            entity_id=grant.id,
+            actor=actor_id,
+            metadata={"delegator_id": grant.delegator_id, "delegate_id": grant.delegate_id},
+        )
 
     console.print(f"[green]Delegation grant {grant_id[:8]} revoked.[/green]")

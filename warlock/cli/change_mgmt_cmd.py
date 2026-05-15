@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from datetime import datetime, timezone
@@ -34,17 +33,9 @@ def _load_change(session, change_id: str):
     )
 
 
-def _next_sequence(session) -> int:
-    """Return the next audit sequence number."""
-    from sqlalchemy import func
-
-    from warlock.db.models import AuditEntry
-
-    return (session.query(func.max(AuditEntry.sequence)).scalar() or 0) + 1
-
-
-def _make_hash(payload: str) -> str:
-    return hashlib.sha256(payload.encode()).hexdigest()
+# SEC-C4: prior ``_next_sequence`` / ``_make_hash`` helpers produced a hash
+# format that did not match :meth:`AuditTrail.verify_chain`. Removed in
+# favour of routing every audit write through ``AuditTrail.record()``.
 
 
 @cli.group("changes", invoke_without_command=True)
@@ -73,8 +64,8 @@ def changes(ctx: click.Context) -> None:
 @click.option("--description", required=True, help="Change description")
 def changes_create(change_type: str, title: str, impact: str, description: str) -> None:
     """Create a new change request."""
+    from warlock.db.audit import AuditTrail
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     init_db()
     actor = _get_actor()
@@ -82,16 +73,12 @@ def changes_create(change_type: str, title: str, impact: str, description: str) 
     now = datetime.now(timezone.utc)
 
     with get_session() as session:
-        entry = AuditEntry(
-            id=uuid.uuid4().hex,
-            sequence=_next_sequence(session),
-            previous_hash="genesis",
-            entry_hash=_make_hash(f"{change_id}:{change_type}:{title}"),
+        AuditTrail(session).record(
             action="change_request",
             entity_type="change_mgmt",
             entity_id=change_id,
             actor=actor,
-            extra={
+            metadata={
                 "type": change_type,
                 "title": title,
                 "impact": impact,
@@ -108,7 +95,6 @@ def changes_create(change_type: str, title: str, impact: str, description: str) 
                 ],
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Change request created:[/green] [cyan]{change_id[:8]}[/cyan]")

@@ -92,7 +92,6 @@ def access_review(ctx: click.Context) -> None:
 def access_review_create(scope: str, reviewer: str, deadline: str) -> None:
     """Create a new access review campaign."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry
 
     deadline_dt = _parse_deadline(deadline)
     init_db()
@@ -100,27 +99,15 @@ def access_review_create(scope: str, reviewer: str, deadline: str) -> None:
     campaign_id = uuid.uuid4().hex
 
     with get_session() as session:
-        # Compute next sequence
-        from sqlalchemy import func
+        # SEC-C4: canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
 
-        max_seq = session.query(func.max(AuditEntry.sequence)).scalar() or 0
-
-        # Build entry hash from campaign content
-        import hashlib
-
-        payload = f"{campaign_id}:{scope}:{reviewer}:{deadline}"
-        entry_hash = hashlib.sha256(payload.encode()).hexdigest()
-
-        entry = AuditEntry(
-            id=uuid.uuid4().hex,
-            sequence=max_seq + 1,
-            previous_hash="genesis",
-            entry_hash=entry_hash,
+        AuditTrail(session).record(
             action="access_review_campaign",
             entity_type="access_review",
             entity_id=campaign_id,
             actor=actor,
-            extra={
+            metadata={
                 "scope": scope,
                 "reviewer": reviewer,
                 "deadline": deadline_dt.isoformat(),
@@ -130,7 +117,6 @@ def access_review_create(scope: str, reviewer: str, deadline: str) -> None:
                 "total_users": 0,
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Access review campaign created:[/green] [cyan]{campaign_id[:8]}[/cyan]")

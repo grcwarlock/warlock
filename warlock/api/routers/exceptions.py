@@ -6,7 +6,6 @@ metadata in AuditEntry extra blobs, mirroring warlock/cli/exceptions_cmd.py.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -167,32 +166,22 @@ def create_exception(
     )
     db.add(override)
 
-    # Store metadata in audit entry
-    last = db.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-    actor = f"api:{current_user.email}"
-    payload = f"{seq}:{prev_hash}:policy_exception:{exc_id}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
+    # SEC-C4: store metadata via canonical hash-chained trail.
+    from warlock.db.audit import AuditTrail
 
-    audit = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    actor = f"api:{current_user.email}"
+    AuditTrail(db).record(
         action="policy_exception",
         entity_type="exception",
         entity_id=exc_id,
         actor=actor,
-        extra={
+        metadata={
             "status": "active",
             "justification": req.justification,
             "expiry": expiry.isoformat(),
             "scope": req.scope,
         },
-        created_at=now,
     )
-    db.add(audit)
 
     return ExceptionResponse(
         id=exc_id,

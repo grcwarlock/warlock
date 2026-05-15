@@ -75,31 +75,20 @@ def _write_audit_entry(
     actor: str,
     extra: dict,
 ) -> None:
-    """Append an AuditEntry row (does not commit -- caller must commit)."""
-    from warlock.db.models import AuditEntry
+    """Append an AuditEntry row (does not commit -- caller must commit).
 
-    # Derive sequence and previous_hash from the last entry
-    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    sequence = (last.sequence + 1) if last else 1
-    prev_hash = last.entry_hash if last else "genesis"
+    SEC-C4: routes through ``AuditTrail.record`` so the canonical content
+    hash is used. The prior hand-rolled format failed ``verify_chain``.
+    """
+    from warlock.db.audit import AuditTrail
 
-    import hashlib
-
-    payload = f"{sequence}:{entity_type}:{entity_id}:{action}:{actor}"
-    entry_hash = hashlib.sha256(payload.encode()).hexdigest()
-
-    entry = AuditEntry(
-        id=str(uuid4()),
-        sequence=sequence,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    AuditTrail(session).record(
         action=action,
         entity_type=entity_type,
         entity_id=entity_id,
         actor=actor,
-        extra=extra,
+        metadata=extra,
     )
-    session.add(entry)
 
 
 def _load_dsar_records(session, status_filter: str | None = None) -> list[dict]:

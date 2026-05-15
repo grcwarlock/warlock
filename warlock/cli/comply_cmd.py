@@ -1405,7 +1405,6 @@ def observation_period(
     in the hash-chained audit trail.
     """
     import hashlib
-    import uuid
 
     from warlock.cli import _get_actor
     from warlock.db.engine import get_session, init_db
@@ -1436,29 +1435,20 @@ def observation_period(
             if set_end:
                 payload["observation_period_end"] = set_end
 
+            # SEC-C4: canonical hash-chained trail.
+            from warlock.db.audit import AuditTrail
+
             blob = json.dumps(payload, sort_keys=True, default=str).encode()
             evidence_sha256 = hashlib.sha256(blob).hexdigest()
 
-            last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-            prev_hash = last.entry_hash if last else "genesis"
-            sequence = (last.sequence + 1) if last else 1
-
-            chain_blob = (f"{prev_hash}{sequence}updated{entity_type}{entity_id}{actor}").encode()
-            entry_hash = hashlib.sha256(chain_blob).hexdigest()
-
-            entry = AuditEntry(
-                id=str(uuid.uuid4()),
-                sequence=sequence,
-                previous_hash=prev_hash,
-                entry_hash=entry_hash,
+            AuditTrail(session).record(
                 action="updated",
                 entity_type=entity_type,
                 entity_id=entity_id,
                 actor=actor,
                 evidence_sha256=evidence_sha256,
-                extra=payload,
+                metadata=payload,
             )
-            session.add(entry)
             session.commit()
             current = payload
             console.print("[green]Observation period updated.[/green]")

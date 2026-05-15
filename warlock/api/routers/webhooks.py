@@ -67,6 +67,20 @@ def register_webhook(
     current_user: User = Depends(require_permission("manage_users")),
 ) -> dict:
     """Register a new webhook destination."""
+    # SEC-C13: refuse to persist a webhook URL that the safety helper
+    # would reject. Without this, a caller with ``manage_users`` permission
+    # can register ``http://169.254.169.254/...`` and the delivery worker
+    # will POST signed pipeline events (with the HMAC secret oracle) to
+    # the metadata service. Validation runs BEFORE persistence — there is
+    # no "saved-but-disabled" state that could later be re-enabled by
+    # toggling a flag.
+    from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+    try:
+        validate_outbound_url(body.url)
+    except UnsafeURLError as exc:
+        raise HTTPException(status_code=400, detail=f"Unsafe webhook URL: {exc}")
+
     webhook_id = _uuid()
     now = datetime.now(timezone.utc)
 

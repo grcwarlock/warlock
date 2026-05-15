@@ -11,7 +11,6 @@ privacy compliance obligations:
 
 from __future__ import annotations
 
-import json
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -113,30 +112,19 @@ def _gdpr_deadline(days: int = 30) -> str:
 
 
 def _write_audit_entry(session, action: str, entity_type: str, entity_id: str, extra: dict) -> None:
-    """Append a hash-chained audit entry."""
-    import hashlib
+    """Append a hash-chained audit entry.
 
-    from warlock.db.models import AuditEntry
+    SEC-C4: routes through ``AuditTrail.record``; prior hash failed verify_chain.
+    """
+    from warlock.db.audit import AuditTrail
 
-    last = session.query(AuditEntry).order_by(AuditEntry.sequence.desc()).first()
-    prev_hash = last.entry_hash if last else "genesis"
-    seq = (last.sequence + 1) if last else 1
-
-    payload = json.dumps({"action": action, "entity_id": entity_id, "extra": extra}, sort_keys=True)
-    entry_hash = hashlib.sha256(f"{prev_hash}:{payload}".encode()).hexdigest()
-
-    entry = AuditEntry(
-        id=str(uuid.uuid4()),
-        sequence=seq,
-        previous_hash=prev_hash,
-        entry_hash=entry_hash,
+    AuditTrail(session).record(
         action=action,
         entity_type=entity_type,
         entity_id=entity_id,
         actor=_get_actor(),
-        extra=extra,
+        metadata=extra,
     )
-    session.add(entry)
     session.commit()
 
 

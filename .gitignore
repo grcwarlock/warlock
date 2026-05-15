@@ -3,6 +3,8 @@ __pycache__/
 *.pyo
 .venv/
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 *.egg-info/
 .eggs/
@@ -30,3 +32,6 @@ frontend/dist/
 
 # Brainstorm mockups
 .superpowers/
+
+# Local audit scans output (not for commit)
+scans/

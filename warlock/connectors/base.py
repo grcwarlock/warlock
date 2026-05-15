@@ -200,13 +200,76 @@ class BaseConnector(ABC):
         """Can we reach the source?"""
         ...
 
+    # Keys in ``self.config.settings`` whose values are URLs that must pass
+    # the outbound-URL safety gate. Subclasses with non-standard key names
+    # may extend this list. SEC-C12.
+    URL_SETTING_KEYS: list[str] = [
+        "base_url",
+        "domain",
+        "endpoint",
+        "vault_url",
+        "instance_url",
+        "api_url",
+    ]
+
+    def _validate_configured_urls(self) -> list[str]:
+        """Pre-flight SSRF safety check on every URL-like config value.
+
+        SEC-C12: ~40 connectors read a URL from ``self.config.settings``
+        (operator-controlled) and attach credentials to outbound HTTP
+        requests against it. An attacker who flips a single config value
+        to ``http://169.254.169.254/...`` exfiltrates the connector's
+        bearer token to AWS metadata service. Running the safety helper
+        on every URL-like key before calling ``collect()`` closes the
+        gap centrally — no subclass changes required.
+        """
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        errors: list[str] = []
+        settings = getattr(self.config, "settings", None) or {}
+        for key in self.URL_SETTING_KEYS:
+            value = settings.get(key)
+            if not value or not isinstance(value, str):
+                continue
+            # ``domain``-style settings are bare hostnames; promote to https://
+            candidate = value if "://" in value else f"https://{value}"
+            try:
+                validate_outbound_url(
+                    candidate,
+                    allowed_hosts=self.URL_ALLOWED_HOSTS or None,
+                )
+            except UnsafeURLError as exc:
+                errors.append(f"{key}={value!r}: {exc}")
+        return errors
+
     def collect_safe(self) -> ConnectorResult:
         """Execute ``collect()`` through the circuit breaker.
 
         When the circuit is open, returns an error result immediately
-        instead of calling the remote source.
+        instead of calling the remote source. SEC-C12: also runs the
+        outbound-URL safety gate before delegating.
         """
         from warlock.connectors.circuit_breaker import CircuitOpenError
+
+        # SEC-C12: refuse to collect if any configured URL fails safety
+        # validation. Fail-closed: the credentialed call never happens.
+        url_errors = self._validate_configured_urls()
+        if url_errors:
+            log.warning(
+                "Connector %s blocked by outbound-URL safety gate: %s",
+                self.name,
+                "; ".join(url_errors),
+            )
+            result = ConnectorResult(
+                connector_name=self.name,
+                source=self.source,
+                source_type=self.source_type,
+                provider=self.provider,
+            )
+            for err in url_errors:
+                result.errors.append(f"Unsafe outbound URL: {err}")
+            result.complete("error")
+            return result
 
         try:
             return self._circuit_breaker.call(self.collect)
@@ -234,6 +297,31 @@ class BaseConnector(ABC):
         if not value:
             log.warning("Secret env var %s is not set for connector %s", env_var, self.name)
         return value
+
+    # Per-connector URL allowlist. Subclasses may set ``URL_ALLOWED_HOSTS``
+    # to a list of ``*.vendor.com`` patterns to pin requests to a known
+    # vendor domain. SEC-C12.
+    URL_ALLOWED_HOSTS: list[str] = []
+
+    def safe_url(self, url: str, *, allowed_hosts: list[str] | None = None) -> str:
+        """Validate ``url`` is safe for an outbound request with credentials.
+
+        SEC-C12: every connector that reads a URL from operator-controlled
+        config (``settings.base_url``, ``settings.domain``, etc.) must
+        route through this method before attaching a bearer token / API
+        key / HMAC signature. Without it, an attacker who can mutate the
+        config (compromised admin, SQL injection in another path, env-var
+        override) can redirect the connector to
+        ``http://169.254.169.254/...`` and exfiltrate credentials.
+
+        Raises :class:`UnsafeURLError` on rejection.
+        """
+        from warlock.utils.url_safety import validate_outbound_url
+
+        return validate_outbound_url(
+            url,
+            allowed_hosts=allowed_hosts or self.URL_ALLOWED_HOSTS or None,
+        )
 
 
 # ---------------------------------------------------------------------------

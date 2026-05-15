@@ -741,21 +741,26 @@ def findings_export(
             "resource_id",
             "observed_at",
         ]
+        # SEC-C11: neutralize spreadsheet formula prefixes.
+        from warlock.utils.csv_safety import neutralize_row
+
         writer = csv.DictWriter(buf, fieldnames=fields)
         writer.writeheader()
         for r in rows:
             writer.writerow(
-                {
-                    "id": r.id,
-                    "title": r.title,
-                    "severity": r.severity,
-                    "observation_type": r.observation_type,
-                    "source": r.source,
-                    "source_type": r.source_type,
-                    "provider": r.provider,
-                    "resource_id": r.resource_id or "",
-                    "observed_at": str(r.observed_at),
-                }
+                neutralize_row(
+                    {
+                        "id": r.id,
+                        "title": r.title,
+                        "severity": r.severity,
+                        "observation_type": r.observation_type,
+                        "source": r.source,
+                        "source_type": r.source_type,
+                        "provider": r.provider,
+                        "resource_id": r.resource_id or "",
+                        "observed_at": str(r.observed_at),
+                    }
+                )
             )
         payload = buf.getvalue()
 

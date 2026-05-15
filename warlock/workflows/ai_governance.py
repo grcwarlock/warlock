@@ -253,17 +253,22 @@ class AIModelInventory:
         return models
 
     def register_model(self, session, model: AIModelRecord, actor: str = "system") -> AIModelRecord:
-        """Register a new AI model in the inventory."""
-        from warlock.db.models import AuditEntry
+        """Register a new AI model in the inventory.
 
-        entry = AuditEntry(
-            id=str(uuid4()),
+        SEC-C4: previously instantiated AuditEntry directly with the
+        non-existent ``timestamp=`` kwarg (column is ``created_at``) and
+        without ``sequence`` / ``previous_hash`` / ``entry_hash`` — the
+        constructor raised TypeError on every call. Routed through
+        ``AuditTrail.record()`` for canonical hash-chained writes.
+        """
+        from warlock.db.audit import AuditTrail
+
+        AuditTrail(session).record(
+            action="registered",
             entity_type="ai_model",
             entity_id=model.id,
-            action="registered",
             actor=actor,
-            timestamp=datetime.now(timezone.utc),
-            extra={
+            metadata={
                 "name": model.name,
                 "version": model.version,
                 "provider": model.provider,
@@ -277,5 +282,4 @@ class AIModelInventory:
                 "data_sources": model.data_sources,
             },
         )
-        session.add(entry)
         return model

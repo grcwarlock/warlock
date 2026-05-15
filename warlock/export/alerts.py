@@ -101,7 +101,22 @@ class WebhookSubscriber:
             urls = [u.strip() for u in raw.split(",") if u.strip()]
         if not secret:
             secret = os.environ.get("WLK_WEBHOOK_SECRET", "")
-        self.urls: list[str] = urls
+
+        # SEC-C13: filter out any URL that fails the outbound-URL safety
+        # gate. An attacker who can flip ``WLK_WEBHOOK_URLS`` to
+        # ``http://169.254.169.254/...`` would otherwise get signed
+        # pipeline events delivered to AWS metadata service.
+        from warlock.utils.url_safety import UnsafeURLError, validate_outbound_url
+
+        safe_urls: list[str] = []
+        for u in urls:
+            try:
+                validate_outbound_url(u)
+                safe_urls.append(u)
+            except UnsafeURLError as exc:
+                log.error("WebhookSubscriber: refusing unsafe URL %s — %s", u, exc)
+
+        self.urls: list[str] = safe_urls
         self._secret: str = secret
 
     # ------------------------------------------------------------------

@@ -236,9 +236,16 @@ class StatementOfApplicability:
     ) -> str:
         """CSV export for auditors who prefer spreadsheets."""
         data = self.generate(session, system_profile_id)
+        # SEC-C11: neutralize spreadsheet formula prefixes via a writer adapter.
+        from warlock.utils.csv_safety import neutralize_list
+
         output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(
+        _raw_writer = csv.writer(output)
+
+        def _safe_writerow(row):
+            _raw_writer.writerow(neutralize_list(list(row)))
+
+        _safe_writerow(
             [
                 "Control ID",
                 "Family",
@@ -252,7 +259,7 @@ class StatementOfApplicability:
             ]
         )
         for entry in data["entries"]:
-            writer.writerow(
+            _safe_writerow(
                 [
                     entry["control_id"],
                     entry["family"],

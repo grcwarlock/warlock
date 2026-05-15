@@ -8,7 +8,6 @@ changes while reusing the existing models.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -29,16 +28,9 @@ def _parse_date(value: str) -> datetime:
     return dt.replace(tzinfo=timezone.utc)
 
 
-def _make_hash(payload: str) -> str:
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def _next_sequence(session) -> int:
-    from sqlalchemy import func
-
-    from warlock.db.models import AuditEntry
-
-    return (session.query(func.max(AuditEntry.sequence)).scalar() or 0) + 1
+# SEC-C4: prior ``_make_hash`` / ``_next_sequence`` helpers produced a hash
+# format incompatible with :meth:`AuditTrail.verify_chain`. Removed in
+# favour of routing every audit write through ``AuditTrail.record()``.
 
 
 def _load_exception_meta(session, exception_id: str) -> dict:
@@ -211,7 +203,7 @@ def exceptions_create(
 ) -> None:
     """Create a new policy exception."""
     from warlock.db.engine import get_session, init_db
-    from warlock.db.models import AuditEntry, PolicyOverride
+    from warlock.db.models import PolicyOverride
 
     expiry_dt = _parse_date(expiry)
     init_db()
@@ -231,17 +223,15 @@ def exceptions_create(
         )
         session.add(override)
 
-        # Store lifecycle metadata in AuditEntry
-        entry = AuditEntry(
-            id=uuid.uuid4().hex,
-            sequence=_next_sequence(session),
-            previous_hash="genesis",
-            entry_hash=_make_hash(f"{exception_id}:{policy}:{expiry}"),
+        # SEC-C4: Store lifecycle metadata in the canonical hash-chained trail.
+        from warlock.db.audit import AuditTrail
+
+        AuditTrail(session).record(
             action="policy_exception",
             entity_type="exception",
             entity_id=exception_id,
             actor=actor,
-            extra={
+            metadata={
                 "policy": policy,
                 "justification": justification,
                 "approver": approver,
@@ -252,7 +242,6 @@ def exceptions_create(
                 "renewals": [],
             },
         )
-        session.add(entry)
         session.commit()
 
     console.print(f"[green]Policy exception created:[/green] [cyan]{exception_id[:8]}[/cyan]")
@@ -359,17 +348,15 @@ def exceptions_renew(exception_id: str, justification: str, new_expiry: str) -> 
             extra["renewals"] = renewals
             existing.extra = extra
         else:
-            # No existing meta; create a fresh one
-            entry = AuditEntry(
-                id=uuid.uuid4().hex,
-                sequence=_next_sequence(session),
-                previous_hash="genesis",
-                entry_hash=_make_hash(f"{ov.id}:renewal:{new_expiry}"),
+            # SEC-C4: No existing meta — write fresh entry via canonical trail.
+            from warlock.db.audit import AuditTrail
+
+            AuditTrail(session).record(
                 action="policy_exception",
                 entity_type="exception",
                 entity_id=ov.id,
                 actor=actor,
-                extra={
+                metadata={
                     "status": "active",
                     "expiry": new_expiry_dt.isoformat(),
                     "renewals": [
@@ -382,7 +369,6 @@ def exceptions_renew(exception_id: str, justification: str, new_expiry: str) -> 
                     ],
                 },
             )
-            session.add(entry)
         session.commit()
 
     console.print(

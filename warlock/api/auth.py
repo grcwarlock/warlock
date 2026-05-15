@@ -964,8 +964,12 @@ def rotate_refresh_token(old_token: str, session: Session) -> tuple[str, str]:
     if not user:
         raise ValueError("User not found")
 
-    # Invalidate old token by overwriting the hash with the new one
-    new_refresh = secrets.token_urlsafe(48)
+    # SEC-C2: rotated token must carry the same ``.{exp}`` suffix that
+    # ``generate_refresh_token`` emits. Without it, ``verify_refresh_token``
+    # takes the legacy expiry-less branch and accepts the token indefinitely,
+    # silently bypassing REFRESH_TOKEN_EXPIRE_DAYS after the first rotation.
+    exp = int((datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)).timestamp())
+    new_refresh = f"{secrets.token_urlsafe(48)}.{exp}"
     user.refresh_token_hash = _hash_refresh_token(new_refresh)
     session.flush()
 
